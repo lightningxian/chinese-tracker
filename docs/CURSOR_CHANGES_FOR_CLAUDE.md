@@ -6,6 +6,25 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-08-05 — Push-notes rule + initial GitHub release
+
+**What changed**
+- `.cursor/rules/push-notes.mdc`: every commit/push must include an overall
+  summary note (commit body + GitHub release/PR when meaningful). Future
+  author preference: `Wilsin Kuonadi <wilsinkarimunwkk@gmail.com>` (first
+  commit author left as-is; do not rewrite).
+- GitHub release `v0.1.0-initial` on `lightningxian/chinese-tracker` documenting
+  what the first push contained.
+
+**Why**
+- User wants every push to carry a plain-language overall note; first snapshot
+  documented on GitHub rather than only in chat.
+
+**For Claude to review**
+- Release notes accuracy vs actual tree; rule scope is always-on.
+
+---
+
 ## 2026-08-05 — Initial git commit + private GitHub remote
 
 **What changed**
