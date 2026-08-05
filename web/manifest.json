@@ -1,0 +1,35 @@
+{
+    "name": "Easy Study",
+    "short_name": "Easy Study",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#F5F6F8",
+    "theme_color": "#1B2A4A",
+    "description": "Chinese tutoring app for teachers and students — lessons, exercises, and progress.",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-maskable-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icons/Icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}

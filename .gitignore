@@ -1,0 +1,40 @@
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Node
+node_modules/
+
+# Firebase CLI cache
+.firebase/
+
+# Redundant archive of docs/
+docs.zip
+
+# Firebase (keep firebase_options.dart after configure)
+# google-services.json and GoogleService-Info.plist are project-specific
+
+# macOS
+.DS_Store
+
+# Env / secrets
+.env
+*.env
+lib/core/constants/secrets.g.dart
+*.jks
+*.keystore
+android/key.properties
+nas-backup-key.json
+
+# Coverage
+coverage/
+artifacts/

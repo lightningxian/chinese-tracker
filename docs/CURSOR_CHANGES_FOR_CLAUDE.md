@@ -1,0 +1,641 @@
+# Cursor changes — for Claude to review
+
+Append-only log of changes Cursor made, newest first. Each entry lists what
+changed, why, and what Claude should focus on when reviewing (security, rules,
+edge cases, and any manual/deploy steps still required).
+
+---
+
+## 2026-08-05 — Initial git commit + private GitHub remote
+
+**What changed**
+- `.gitignore`: added `node_modules/`, `.firebase/`, and `docs.zip`.
+- Removed a stale `.git/index.lock` (dated 2026-07-17) that blocked staging.
+- First commit of the full project (~441 files) as author Wilsin Karimun
+  (`wilsinkarimunwkk@gmail.com`), without writing global `git config`.
+- Created private GitHub repo under `lightningxian` and pushed `main`.
+
+**Why**
+- The project previously had zero commits and no remote — single point of failure
+  on one local disk.
+
+**For Claude to review**
+- Confirm the private repo exists and `main` is the only branch.
+- Confirm `.figma-import/` (design-reference Vite project) should stay tracked.
+- Next priorities unchanged: Midtrans sandbox payment test, then security
+  hardening (§4 in `docs/RECOMMENDATIONS_FOR_CURSOR.md`).
+
+---
+
+## 2026-07-22 — Fix startup crash (fontSizeFactor assertion)
+
+**What changed**
+- `lib/core/theme/app_theme.dart`: removed `fontSizeFactor: 1.12` from
+  `TextTheme.apply()` — it asserted when some Google Fonts styles had null
+  `fontSize`.
+- `lib/app.dart`: applies the same ~12% text scale via `TextScaler.linear(1.12)`
+  in `MaterialApp.router` builder instead.
+- Rebuilt and redeployed hosting.
+
+**Why**
+- App crashed on startup (`text_style.dart` assertion) blocking local dev and
+  potentially causing a blank page on the live site.
+
+**For Claude to review**
+- Confirm `TextScaler.linear(1.12)` respects accessibility expectations vs the
+  old `fontSizeFactor` approach; consider clamping if system text scale should
+  compound.
+
+---
+
+## 2026-07-22 — Hosting redeploy + cache headers (site access fix)
+
+**What changed**
+- Rebuilt and deployed hosting with the new landing page bundle (was only local
+  before — live site still served the pre-restyle build).
+- `firebase.json`: `Cache-Control: no-cache` on `index.html`, `flutter_bootstrap.js`,
+  `flutter_service_worker.js`, and `main.dart.js` so browser/PWA caches don't stick
+  on old bundles after deploys.
+
+**Why**
+- User reported the website could not be accessed; live curl returned 200 but the
+  landing restyle had never been deployed to hosting.
+
+**For Claude to review**
+- If users still see a blank page, have them hard-refresh or clear site data for
+  `chinese-tracker.web.app` (Flutter service worker).
+
+---
+
+**What changed**
+- `landing_screen.dart`: full restyle to match `docs/landing_mockup.html` — sticky
+  nav (Features / For you), hero with preview card + background image, trust bar,
+  6 feature cards, 4 roles (**Orang Tua** included), how-it-works steps, CTA,
+  footer.
+- `landing_media.dart` + `widgets/landing_youtube_embed*.dart`: Unsplash photos
+  (classroom, study, calligraphy) and embedded YouTube showcase on web.
+- `pubspec.yaml`: added `web` for iframe embed.
+- `RECOMMENDATIONS_FOR_CURSOR.md`: landing marked done; Midtrans sandbox test
+  deferred.
+
+**Why**
+- User requested professional landing with internet photos/video; Midtrans test
+  queued for later.
+
+**For Claude to review**
+- Eyeball landing at mobile (~360px) and desktop; confirm Unsplash/YouTube load
+  on deployed hosting (needs `firebase deploy --only hosting` to go live).
+- YouTube embed id `sWqnIyquCbM` — swap if a centre-specific promo video is preferred.
+
+---
+
+## 2026-07-22 — Deploy per RECOMMENDATIONS_FOR_CURSOR.md §1
+
+**What changed** (deploy)
+- `npm install` in `functions/`, then `firebase deploy --only functions` — all
+  9 functions updated (payment-integrity fixes + `@google-cloud/firestore` dep).
+- `flutter build web --release` with `CONTENT_OWNER_ID` + `MIDTRANS_CLIENT_KEY`,
+  then `firebase deploy --only hosting,storage` — live bundle includes question
+  bank upgrade + `question_bank_media` storage rules.
+- `flutter analyze` — 0 errors.
+- Updated `docs/RECOMMENDATIONS_FOR_CURSOR.md` (§1 + question bank marked done).
+
+**Why**
+- User asked to execute Claude's recommendations list top-down.
+
+**For Claude to review**
+- Manual sandbox payment test still outstanding (§2).
+- Node 20 deprecation warning on functions deploy — plan upgrade before Oct 2026.
+
+---
+
+## 2026-07-22 — Question bank upgrade (all 4 phases)
+
+**What changed**
+- **Phase 1 — metadata + table:** `QuestionDifficulty` enum; `QuestionBankItem` gains
+  `difficulty`, `usageCount`, `lastUsedAt`, `updatedAt`, `sourceExerciseId`.
+  Bank list is now `AppDataTable` (Prompt/Type/Level/Difficulty/Tags/Used/Actions)
+  with difficulty filter and client-side sort. Editor adds difficulty selector.
+- **Phase 2 — bulk import:** `addQuestionBankItems` (batched writes) in
+  `firestore_service.dart`. Worksheet import + paste import via
+  `question_bank_bulk_import.dart` (reuses `WorksheetImportService` /
+  `QuestionImportUtils`). Picker gets "Select all (filtered)"; `incrementQuestionBankUsage`
+  on confirm.
+- **Phase 3 — harvest:** `question_bank_harvest.dart` — "Import from exercises"
+  flattens `watchAllExercises()`, dedupes by prompt+type, batch-inserts new ones.
+- **Phase 4 — media + quizzes:** `audioUrl` on `ExerciseQuestion`; image/audio
+  upload via `QuestionBankMediaService` → `question_bank_media/{ownerId}/…`;
+  `storage.rules` updated. Minimal quiz authoring: `QuizListScreen` +
+  `QuizEditorScreen` with "From bank" picker; `createQuiz`/`updateQuiz`/
+  `watchQuizzesForTeacher`/`deleteQuiz`. Routes `/admin/quizzes` and
+  `/teacher/quizzes`; entry from Exercises tab.
+
+**Why**
+- Ran `docs/CURSOR_QUESTION_BANK_UPGRADE_PROMPT.md` from Claude.
+
+**For Claude to review**
+- Deploy `storage.rules` for `question_bank_media` before testing uploads.
+- Quiz model still uses `QuizQuestion` (MC-only) at runtime — bank items with
+  image/audio map through on save; student `QuizScreen` does not yet render
+  per-question media (future enhancement).
+- `usageCount` bumps in picker confirm — exercise "From bank" path inherits this
+  automatically (no double-count).
+
+---
+
+**What changed**
+- `scripts/setup_nas_backup_gcp.sh`: one-shot Mac script — creates
+  `gs://chinese-tracker-backups`, IAM for `scheduledFirestoreExport`, read-only
+  `nas-backup` SA + `nas-backup-key.json`, and writes `scripts/nas/rclone.conf`
+  with the project number.
+- `scripts/nas/nas_backup_sync.sh`: Docker-based daily pull for UGOS (Firestore
+  exports + Firebase Storage files → `/volume1/backups/easystudy/`).
+- `docs/NAS_BACKUP_SETUP.md`: added Quick start (UGREEN UGOS) section.
+- `.gitignore`: `nas-backup-key.json`.
+- Installed `gcloud` CLI via Homebrew on the dev Mac (was missing).
+
+**Why**
+- User asked to connect backups to their UGREEN NAS.
+
+**For Claude to review**
+- GCP script not run yet — `gcloud auth login` required on the Mac first.
+- Confirm gen2 runtime SA (`{projectNumber}-compute@developer.gserviceaccount.com`)
+  is correct for `scheduledFirestoreExport` IAM; adjust if the function uses a
+  custom SA in console.
+- After setup: verify first export lands in GCS, then NAS sync copies locally.
+
+---
+
+**What was checked**
+- Opened `https://chinese-tracker.web.app` in browser: landing loads with the
+  restyled LinguaHub UI (hero, features, roles). Flutter `flutter-view` present.
+- Navigated to `#/login`: AuthScaffold split-screen login renders ("Learn
+  Chinese, the easy way.", email/password form after "Sign in with another
+  email").
+- Live `main.dart.js` size `5156546` matches the local rebuild; contains
+  `CONTENT_OWNER_ID` uid; client-key literal tree-shaken as expected
+  (`hasMidtransClientKey` constant-folded).
+
+**Blocked**
+- Admin login (`admin@test.chinesetracker`) was not completed — password fill
+  in the live browser was rejected by the approval gate. So the invoices-screen
+  "client key not configured" banner and Users/Payments tables were **not**
+  visually confirmed while authenticated.
+
+**For Claude to review**
+- Owner can finish the authenticated half: sign in as admin → Payments →
+  confirm no Midtrans warning → Users/Vouchers/Grades tables render.
+
+---
+
+## 2026-07-18 — Hosting rebuilt + redeployed (client key wired, fixes live)
+
+**What changed** (deploy)
+- Rebuilt web with
+  `--dart-define=CONTENT_OWNER_ID=2orTXFeyAhSlxfTgIlcYgs6ZuCG2` and the Midtrans
+  **sandbox** client key (`Mid-client-…`, no `SB-` prefix — matches Midtrans's
+  current sandbox format), then `firebase deploy --only hosting` (50 files,
+  release complete). Live site returns `200`.
+- The live bundle now includes today's shared-`AppDataTable` fixes (Users /
+  Payments / Vouchers / Grades display), the Storage-backed Materials/profile
+  paths, and a non-empty `MIDTRANS_CLIENT_KEY` so Snap checkout can initialize.
+
+**Why**
+- Previous live bundle was from 2026-07-14 with no client key and stale UI.
+
+**Verification done**
+- `CONTENT_OWNER_ID` concern (Claude flagged it as a possible dead dev
+  placeholder): **resolved** — signed in as admin and read
+  `users/2orTXFeyAhSlxfTgIlcYgs6ZuCG2` from production Firestore; it **exists
+  and is `role: teacher`** ("Test Teacher" / teacher@test.chinesetracker), i.e.
+  the seeded content-owning teacher. Correct for the current sandbox/testing
+  phase; swap to the real teacher uid when a production teacher is onboarded.
+- Client-key-in-bundle: the literal `Mid-client-…` is intentionally **not**
+  present in `main.dart.js`. It's only referenced via
+  `AppConstants.hasMidtransClientKey` (`.isNotEmpty`), which dart2js
+  constant-folds to `true`, so the string is tree-shaken. Checkout does **not**
+  need the client key client-side: `createInvoice` (server, uses the secret
+  server key) returns a Snap `redirectUrl`, and the app opens it via
+  `launchUrl`. The client key only toggles the "not configured" admin warning.
+- Live site returns `200`; served bundle references the freshly deployed
+  `main.dart.js` (buildConfig hash present in `flutter_bootstrap.js`).
+
+**For Claude to review**
+- Confirm the reasoning that the public client key is unnecessary in-bundle for
+  the redirect-based Snap flow (no client-side Snap.js embed) — if you intended
+  an embedded Snap popup instead of a redirect, that path would need the key at
+  runtime and a code change.
+- Server key never leaves Functions secrets (unchanged).
+
+---
+
+## 2026-07-18 — Deploy status recheck (hosting rebuild still pending key)
+
+**Current live state (verified)**
+- Functions: 9/9 `v2` deployed and listed.
+- Storage: rules deployed, bucket live (see entry below).
+- Webhook `midtransNotification`: `GET=405`, `POST {}=400` (healthy).
+- Hosting `https://chinese-tracker.web.app`: `200` — but still the
+  **2026-07-14 bundle** (no `MIDTRANS_CLIENT_KEY`, and missing today's
+  table/display + Storage-dependent fixes).
+
+**Blocked on owner input**
+- Hosting rebuild is queued but waiting on the **Midtrans sandbox client key**
+  (`SB-Mid-client-…`). Decided `CONTENT_OWNER_ID=2orTXFeyAhSlxfTgIlcYgs6ZuCG2`
+  (per user). Planned command:
+  `flutter build web --release --dart-define=CONTENT_OWNER_ID=2orTXFeyAhSlxfTgIlcYgs6ZuCG2 --dart-define=MIDTRANS_CLIENT_KEY=<sandbox-client-key>` then
+  `firebase deploy --only hosting`.
+- The client key is not stored anywhere in the repo (only injected via
+  `--dart-define`); `app_constants.dart` reads it from the environment.
+
+**For Claude to review**
+- No code change in this entry — purely a state snapshot. Nothing to review
+  beyond confirming the pending hosting rebuild is the only gap before the live
+  site reflects current `main`.
+
+---
+
+## 2026-07-18 — Firebase Storage initialized + rules deployed
+
+**What changed** (deploy)
+- `firebase deploy --only storage` succeeded: enabled
+  `firebasestorage.googleapis.com` and released `storage.rules`. This clears the
+  earlier "Storage has not been set up" blocker.
+
+**Why**
+- Materials feature + profile photos need a live Storage bucket and rules.
+
+**For Claude to review**
+- Confirm `storage.rules` (`isStaff()` gate, `materials/` and `profile_photos/`
+  paths) matches intended access; verify an actual upload/download round-trip
+  from the Materials screen once hosting is rebuilt.
+
+---
+
+## 2026-07-18 — Backend deploy verified; remaining config gaps flagged
+
+**What changed** (no code — deploy/verification pass)
+- Confirmed all 9 Cloud Functions are live: `createInvoice`,
+  `midtransNotification`, `linkChild`, `resolveLinkCode`, `resolveChildCode`,
+  `cleanupExpiredLinkCodes`, `scheduledFirestoreExport` (us-central1) plus
+  `onUserCreated`, `onExerciseResultCreated` (asia-southeast2). The two
+  asia-southeast2 triggers that previously failed with an Eventarc Service
+  Agent permission error deployed successfully on retry (transient first-time
+  2nd-gen propagation).
+- `MIDTRANS_SERVER_KEY` secret has an enabled version bound to the functions'
+  runtime SA; validated it authenticates against the Midtrans **sandbox** API
+  (404 "transaction doesn't exist", not 401). Earlier "duplicated prefix" was a
+  terminal display artifact, not a bad key.
+- Live webhook health: `GET → 405`, `POST {} → 400` (rejects non-POST /
+  invalid payloads as expected). Hosting `https://chinese-tracker.web.app → 200`.
+
+**Why**
+- User asked for a general post-deploy status check.
+
+**For Claude to review — open items (need owner action, not code):**
+- **Midtrans dashboard**: Payment Notification URL must be set to
+  `https://us-central1-chinese-tracker.cloudfunctions.net/midtransNotification`.
+- **Hosted web build is stale + missing client key**: last hosting deploy
+  (2026-07-14) used only `CONTENT_OWNER_ID`, no
+  `--dart-define=MIDTRANS_CLIENT_KEY=…`, so Snap checkout won't open on the
+  live site, and today's table/display fixes are not yet deployed. Needs a
+  rebuild + `firebase deploy --only hosting`.
+- **Firebase Storage**: still needs "Get Started" in console for Materials +
+  profile photos (storage rules deploy previously blocked).
+- **Secret hygiene**: 4 enabled `MIDTRANS_SERVER_KEY` versions; only latest is
+  used — old ones can be destroyed.
+
+---
+
+## 2026-07-17 — Fix user/student lists blank or overflowing with sidebar
+
+**What changed**
+- `lib/core/widgets/app_data_table.dart`: breakpoint and horizontal scroll now
+  use the **content pane width** (`LayoutBuilder`), not `MediaQuery` window
+  width. With the 240px sidebar, a ~800–1100px window was choosing the desktop
+  table while the pane was too narrow for the fixed columns → `RenderFlex`
+  overflow (and in some cases an empty-looking body). Narrow panes now fall
+  back to the card grid; slightly-tight panes get horizontal scroll.
+- Also stopped wrapping left-aligned cells in `Align` (loosened width broke
+  `Expanded` name cells) and simplified sortable headers.
+- `watchAllUsers()` now also merges the `parent` role; admin Users role filter
+  includes Orang Tua.
+- `teacher_students_tab.dart`: clearer error when the students query fails;
+  roster still renders if supporting streams are empty/errored.
+- Grades "New grade" student picker: admins see all murid (not only
+  `teacherId == contentTeacherId`).
+
+**Why**
+- User reported users still not displaying for admin and teacher after the
+  shared-table refactor.
+
+**For Claude to review**
+- Spot-check Users / Payments / Vouchers / Grades at ~900px and ~1200px
+  window widths (sidebar on).
+- Confirm parent docs appear for admins and stay invisible to teachers'
+  student queries.
+
+---
+
+## 2026-07-17 — Shared AppDataTable + Payments/Vouchers/Grades converted
+
+Implements `docs/CURSOR_TABLES_PROMPT.md`. Visual/refactor only — no changes to
+queries, models, rules, functions, or routes. `flutter analyze` clean
+(pre-existing infos only).
+
+**Task 1 — `lib/core/widgets/app_data_table.dart` (new)**
+- `AppTableColumn<T>` (id, label, width|flex, sortable, alignment, cell
+  builder) + `AppDataTable<T>` extracted from the Users tab's private
+  `_UsersTable` / `_SortableHeaderCell` / `_UserTableRow`: navy-tinted header,
+  sortable header cells with up/down arrows, striped rows with bottom borders,
+  wrapped in `AppCard(padding: zero)` + `ClipRRect(16)`. Parent owns sort state
+  (`sortColumnId` / `sortAscending` / `onSort(columnId)`); optional `onRowTap`.
+- Below `mobileBreakpoint` (default 720, checked against screen width exactly
+  like the Users tab did) it renders `mobileCardBuilder` cards in a
+  `ResponsiveCardGrid` instead of the table.
+- `admin_users_tab.dart` refactored onto it — the three private table classes
+  were deleted, the name cell became `_UserNameCell`, sort/filter state and the
+  `_UserSortColumn` enum stay in the tab (ids map via `enum.name`). Columns,
+  widths, styles, actions, and the `_UserMobileCard` fallback are unchanged.
+
+**Task 2 — three tabs converted (desktop table + existing card fallback)**
+- Payments (`admin_invoices_tab.dart`): now stateful for sort state. Columns
+  Invoice # · Student · Package · Amount (IDR via `NumberFormat.currency`) ·
+  Due · Status (`StatusPill`: paid=success, pending=brandYellow, failed=error,
+  expired=grey). Mobile fallback = the existing `InvoiceCard` (still exported,
+  student payments tab untouched). Create-invoice toolbar, payments-disabled
+  gate, and info banner unchanged.
+- Vouchers (`admin_vouchers_tab.dart`): columns Code (monospace) · Student
+  (same `usersById` lookup) · Package · Sessions left (`x/N`) · Deadline ·
+  Status pill · Actions (edit/delete, same handlers incl. delete confirm).
+  Mobile fallback = existing `_VoucherCard`. Search box unchanged.
+- Grades (`teacher_grades_tab.dart`): now stateful; kept the
+  pending-vs-recorded split as **two** `AppDataTable`s sharing one sort state.
+  Columns Student (same async `_StudentLine` lookup) · Assessment · Category ·
+  Score · Letter · Status pill (graded=success, pending=brandYellow) · Date
+  (`gradedAt ?? createdAt`) · Actions. Row tap still opens the score/edit
+  sheet; mobile fallback = existing `_GradeCard`.
+
+**Beyond styling (small, flagged per the prompt's acceptance note)**
+- Payments/Vouchers/Grades gained *local* sort state (the old list/card views
+  had none); default order (no sort selected) is the stream's original order.
+- Grades desktop rows expose a **Delete** action directly (confirm dialog →
+  same `deleteGrade`); previously delete was only inside the edit sheet, which
+  still has it. `_GradeIconAction` mirrors the voucher icon-action style.
+- Vouchers: removed a now-unneeded outer `LayoutBuilder` (grid width is
+  computed inside `AppDataTable`'s mobile branch instead).
+
+**For Claude to review**
+- Users tab must be pixel/behavior identical — the extraction is faithful
+  except the table's inner `ClipRRect` radius went 12 → 16 to match the
+  restyled `AppCard` radius (the old 12 predates the redesign).
+- `AppDataTable` wraps every cell in `Align(column.alignment)` — spot-check no
+  cell relied on stretching to full column width.
+
+---
+
+## 2026-07-17 — NAS backup CF, partial deploy, LinguaHub restyle
+
+Ran three prompts: `docs/NAS_BACKUP_SETUP.md` (code half),
+`docs/CURSOR_DEPLOY_PROMPT.md` (as far as possible without the user), and
+`docs/CURSOR_REDESIGN_PROMPT.md` (full visual restyle). `flutter analyze` clean
+(pre-existing infos only); `node --check functions/index.js` passes.
+
+**1) NAS backup (code side done, GCP side pending)**
+- `functions/`: installed `@google-cloud/firestore`; appended
+  `scheduledFirestoreExport` (daily 02:00 Asia/Jakarta) exporting all
+  collections to `gs://chinese-tracker-backups/firestore/<date>`.
+- NOT done (needs user/gcloud — gcloud CLI is not installed on this Mac):
+  creating the backup bucket, the IAM bindings for the runtime SA, the
+  read-only `nas-backup` SA + key, and the NAS-side rclone jobs.
+- The function itself deploys with the rest of functions once Blaze is active.
+
+**2) Deploy (go-live §0–§5) — partially done, blocked on user**
+- §0 verify: pub get + analyze clean, functions install + syntax check pass.
+- §2: `firestore:rules` and `firestore:indexes` deployed successfully to
+  `chinese-tracker`. (Console reports 3 stale remote indexes not in the local
+  file — left in place, can be cleaned with `--force` later.)
+- §2 storage: **failed** — Firebase Storage is not set up on the project yet
+  (user must click "Get Started" in the console first).
+- §1/§3: **blocked** — functions deploy requires the Blaze plan (error
+  confirmed); `MIDTRANS_SERVER_KEY` secret not set (user must paste it).
+- §4/§5: not run (needs `CONTENT_OWNER_ID`, Midtrans client key, and hosting
+  deploy after the web build).
+
+**3) LinguaHub restyle (visual only, no logic changes)**
+- `app_theme.dart`: new tokens (`sidebarBg`, `sidebarActive #14181F`,
+  `pageBg`, 4 pastel chip tint pairs); scaffold bg = `pageBg`; CardTheme radius
+  16 + border + soft shadow; Filled/Outlined button themes (navy, radius 10);
+  AppBarTheme flat white; inputs soft-filled.
+- `app_shell.dart`: sidebar is now **white** with a right border; active nav
+  item is a solid near-black navy **pill** with white text; inactive items are
+  muted gray. Top bar gained a light-gray **role chip** and shows name + role
+  next to the avatar. Mobile Figma app bar flipped from navy to white.
+- `app_card.dart`: radius 16, default padding 20, very soft drop shadow,
+  `margin: zero`.
+- New `lib/core/widgets/stat_card.dart`: shared `StatCard` (muted label, 28px
+  bold value, green subtitle, 44px tinted rounded-square icon chip) +
+  `StatChipTint` (green/blue/purple/amber) with a `fromColor` mapper.
+  `AdminStatCard` is now a thin wrapper delegating to it (all admin/teacher
+  dashboard tiles restyled with zero call-site churn); parent overview
+  `_StatCard` also delegates.
+- `status_pill.dart`: radius 20 → 8, weight 700 (soft pastel pills kept).
+- `auth_scaffold.dart`: brand panel now matches the reference (logo top-left,
+  large white headline, muted subtitle, © footer); form panel is white.
+  `test_login_screen.dart` now uses `AuthScaffold` (same split layout as
+  login/register); its redundant logo card was removed.
+
+**What Claude should focus on**
+- Restyle only: verify no behavioral drift (nav `IndexedStack` indices,
+  `AppShellScaffold` API — one added required-with-default param `roleLabel`
+  on the private `_AppTopBar` only).
+- `AppCard` now sets `margin: EdgeInsets.zero` (Card's default 4px margin
+  removed) — spot-check dense lists for spacing regressions.
+- Deploy follow-ups for the user: Blaze upgrade, Storage "Get Started",
+  `firebase functions:secrets:set MIDTRANS_SERVER_KEY`, then
+  `firebase deploy --only functions` (9 functions incl.
+  `scheduledFirestoreExport`), then web build with `CONTENT_OWNER_ID` +
+  `MIDTRANS_CLIENT_KEY` and hosting deploy; NAS doc §A bucket/IAM via gcloud.
+
+---
+
+## 2026-07-17 — Tier 3: Org Settings, Audit log, Materials, Evaluations, Financials
+
+Implements `docs/CURSOR_TIER3_PROMPT.md`. Per the prompt's scope decision (single
+centre, one admin) we built **Phases 1–5** and intentionally **skipped Phase 6**
+(granular admin permissions — only needed with >1 admin) and the separate Owner
+role / teacher ratings. `flutter analyze` is clean (only pre-existing infos);
+`node --check functions/index.js` passes.
+
+**What changed**
+
+Phase 1 — Org Settings (`settings/org`)
+- Model `lib/models/org_settings.dart` (defaults: payments on, reschedule on,
+  eval forms closed, verification/auto-password off). Falls back to defaults
+  when the doc is missing.
+- Service: `watchOrgSettings()` / `getOrgSettings()` / `updateOrgSettings()`
+  (merge write, stamps `updatedAt`/`updatedBy`).
+- `lib/features/admin/org_settings_screen.dart` — admin-only toggles; each
+  toggle persists immediately. Links to Audit logs + Materials. Reached from the
+  admin **Account** tab → "Centre settings" card (`/admin/settings`).
+- Gates wired:
+  - `enablePayments` gates the Buy/invoice UI — `AdminInvoicesTab` and
+    `StudentPaymentsTab` show a "Payments are disabled" state when off.
+  - `evaluationFormsOpen` gates evaluation create/edit (Phase 4 UI).
+  - `allowTeacherReschedule` gates the teacher session **Edit** action in
+    `teacher_session_detail_screen.dart` (admins always allowed).
+- `requireEmailVerification` and `autoGenerateStaffPasswords` are **stored
+  preferences only** — not yet enforced in auth flows (flagged for later).
+
+Phase 2 — Audit log (`audit_logs`)
+- Model `lib/models/audit_log.dart`; `watchAuditLogs()` (newest first, limit
+  200). `lib/features/admin/audit_logs_screen.dart` (admin read-only).
+- Cloud Functions: added `writeAudit(entry)` helper (best-effort; never breaks
+  the audited action). Emits `invoice.created` (in `createInvoice`, actor = the
+  admin caller) and `invoice.paid` (in `midtransNotification`, actor = system).
+- Rules: `audit_logs` — `read: if isAdmin(); create/update/delete: if false;`
+  (all writes via admin SDK).
+
+Phase 3 — Materials (`materials` + Storage)
+- Model `lib/models/material_item.dart` (named `MaterialItem` to avoid clashing
+  with Flutter's `Material`). Service CRUD + `watchMaterials(ownerId)` (staff)
+  and `watchPublishedMaterials(ownerId)` (student/parent).
+- `lib/services/materials_storage_service.dart` — mirrors `ProfilePhotoService`;
+  validates extension + caps at 25 MB; uploads to `materials/{ownerId}/...`.
+  Provided in `app.dart`.
+- `lib/features/materials/materials_screen.dart` — staff CRUD + upload +
+  publish toggle; read-only published list for students/parents (opens files via
+  `url_launcher`). Entry points: teacher dashboard card, admin Settings card,
+  student home card (`/student/materials`), parent overview card
+  (`/parent/materials/:childId`, guarded by linked-child check).
+- Rules: `materials` — read for staff OR `status == 'published'`; write staff.
+  Storage rules: staff write under `materials/{ownerId}`, read for signed-in.
+
+Phase 4 — Semester evaluations (`evaluations`)
+- Model `lib/models/evaluation.dart`; service watch (teacher / student, with
+  `publishedOnly`) + CRUD.
+- Teacher: `lib/features/evaluations/student_evaluations_section.dart` embedded
+  in the teacher **student detail** screen — create/edit/publish/delete per term
+  with a 1–5 star rating; New/Edit disabled unless `evaluationFormsOpen`.
+- Student/Parent: published evaluations render as a "Teacher evaluations"
+  section in `TranscriptView` (reused for both).
+- Rules: staff write; student reads own **published**; parent reads linked
+  child's published (`isParentOf`).
+
+Phase 5 — Admin financial summary
+- `_FinancialSummarySection` on the admin dashboard, computed from `invoices`:
+  revenue this month (paid, `paidAt` in current month), outstanding (pending),
+  and the 5 most recent payments. Read-only; reuses `AdminStatCard`.
+
+Indexes: added `materials(ownerId, createdAt DESC)` and
+`materials(ownerId, status, createdAt DESC)`. Evaluations queries filter by a
+single equality field and sort client-side, so no composite index is required.
+
+**What Claude should focus on when reviewing**
+- Rules: confirm students/parents cannot read `audit_logs`, draft `materials`,
+  or unpublished/other students' `evaluations`; confirm parent reads are limited
+  to linked children (`isParentOf`).
+- `evaluationFormsOpen` is enforced **only in the UI** (Firestore rules can't
+  cheaply read another doc per write). If server enforcement is required, move
+  evaluation writes into a callable that checks `settings/org`.
+- `requireEmailVerification` / `autoGenerateStaffPasswords` are not yet enforced.
+- Materials `ownerId` uses `AppConstants.contentOwnerFor(user)` so staff writes
+  and student/parent reads resolve to the same owner — verify this matches the
+  content-owner model for admins vs teachers.
+- Deploy still required: `firebase deploy --only
+  firestore:rules,firestore:indexes,functions` and `firebase deploy --only
+  storage` (materials Storage rules). Functions need the Blaze plan.
+
+---
+
+## 2026-07-17 — Tier 2: Gradebook, Question Bank, Class metadata
+
+Implements `docs/CURSOR_TIER2_PROMPT.md` in three phases. `flutter analyze` is
+clean (only pre-existing infos); `node --check functions/index.js` passes.
+
+**What changed**
+
+Phase 1 — Gradebook
+- New `grades` collection. Model `lib/models/grade.dart` (`GradeCategory`,
+  `GradeStatus`, derived `displayLetter`).
+- `lib/core/utils/grade_utils.dart` — `letterGradeFor(score)` (90 A · 85 B+ ·
+  80 B · 75 C+ · 70 C · 60 D · else E), reused everywhere.
+- `firestore_service.dart`: `watchTeacherGrades`, `watchTeacherPendingGrades`,
+  `watchStudentGrades`, `createGrade`, `setGradeScore`, `updateGradeMeta`,
+  `deleteGrade`; plus `watchStudentQuizResults` + `lib/models/quiz_result.dart`
+  for the transcript.
+- Teacher **Grades** tab (`lib/features/teacher/teacher_grades_tab.dart`):
+  pending queue + recorded list, create/score/edit/delete bottom sheet. Wired
+  into `teacher_shell.dart` (new tab) and a live "Gradebook · N pending" card on
+  `teacher_dashboard_tab.dart` that opens `/teacher/grades`.
+- Read-only transcript (`lib/features/grades/transcript_view.dart`) merging
+  grades + quiz + exercise scores. Reached from student home
+  (`/student/grades`) and parent overview (`/parent/grades/:childId`, guarded to
+  linked children).
+- Rules: `grades` — staff read/write, student reads own, parent reads linked
+  child's. Indexes: `grades(teacherId,createdAt)` and `grades(studentId,createdAt)`.
+
+Phase 2 — Question Bank
+- New `question_bank` collection. `lib/models/question_bank_item.dart` wraps
+  `ExerciseQuestion` (same serialization → drops into exercises).
+- `firestore_service.dart`: `watchQuestionBank(ownerId)` + create/update/delete.
+  Index `question_bank(ownerId,createdAt)`.
+- Screen `lib/features/question_bank/question_bank_screen.dart`: list, filter by
+  type/level, search prompt/tags, full editor (MC/listening/compose/matching +
+  level/skill/tags), and `showQuestionBankPicker(...)`.
+- Exercise authoring form (`teacher_exercise_form_screen.dart`): "From bank"
+  button opens a type-filtered picker and appends selected questions to drafts.
+- Entry point from the Exercises tab; routes `/admin/question-bank` and
+  `/teacher/question-bank`.
+- Rules: `question_bank` scoped to **staff only** (read + write) so students
+  never read raw answers.
+
+Phase 3 — Class metadata
+- `lib/models/class_session.dart`: added optional `mode` (`SessionMode`:
+  offline/online/hybrid), `room`, `registrationState` (`RegistrationState`:
+  draft/open/active/closed) + `isOpenForRegistration`. Older sessions stay valid.
+- `firestore_service.dart`: `createClassSession`/`updateClassSession` accept the
+  new fields (update clears via `FieldValue.delete()` when unset).
+- Session form exposes mode/room/registration. Calendar tiles
+  (`class_calendar_screen.dart`) show `mode · room · Cap N` + an "Open for
+  registration" badge. Session detail shows mode/room + a registration pill.
+
+**Why**
+- First-class grades give teachers a pending queue and students/parents a real
+  transcript; a reusable question bank avoids re-authoring; class metadata makes
+  the calendar/class views informative and enables an open-for-registration state.
+
+**For Claude to review**
+- Rules tests: student cannot write `grades`; parent can read only their linked
+  child's grades; students cannot read `question_bank`.
+- Confirm the gradebook `teacherId` (uses `AppConstants.contentTeacherId`) lines
+  up with the dashboard pending-count query (`teacherId = contentOwnerFor`) for
+  admins with `CONTENT_OWNER_ID` set — they match for teachers; double-check the
+  admin-with-override case.
+- Question Bank + "From bank" are gated to authoring-capable staff (admin on web
+  per `ExerciseAuthoringPlatform`). Decide if teachers should build/browse the
+  bank on web even though exercise authoring stays admin-only.
+- Deploy still required (adds rules + composite indexes):
+  `firebase deploy --only firestore:rules,firestore:indexes`.
+
+---
+
+## 2026-07-17 — Tier 1 review fixes (payments / parent / calendar)
+
+Follow-up to `docs/CURSOR_TIER1_REVIEW.md`.
+
+**What changed**
+- R-2: `functions/index.js` `createInvoice` now derives `amount` from a
+  server-side `PACKAGE_PRICES` table (8 → Rp 800k, 16 → Rp 1.5M) and ignores the
+  client-supplied amount. Matches `AppConstants.packagePricesIdr` (display only).
+- Verified R-1 (parent link authorization) and the webhook double-credit
+  transaction fix were already applied and correct: `linkChild` callable +
+  rules blocking client writes to `studentIds`/`teacherIds`.
+
+**Why**
+- Prices should be authoritative on the server so a caller can't misprice a sale.
+
+**For Claude to review**
+- Deploy prerequisites (Blaze): `firebase functions:secrets:set
+  MIDTRANS_SERVER_KEY`, then deploy functions/rules/indexes, register the
+  `midtransNotification` URL, and set a sandbox Client Key before end-to-end test.

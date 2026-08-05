@@ -1,0 +1,49 @@
+---
+description: Invariants for registration, teacher link codes, and notifications
+globs:
+  - lib/services/auth_service.dart
+  - lib/services/teacher_link_code_service.dart
+  - lib/services/notification_service.dart
+  - lib/features/auth/**
+  - functions/index.js
+  - firestore.rules
+alwaysApply: false
+---
+
+# Auth, link codes & notifications — invariants
+
+Do not regress these when editing the files above. Details in
+[docs/FIREBASE_BACKEND.md](../../docs/FIREBASE_BACKEND.md).
+
+## Registration order
+
+- In `AuthService.register()`, resolve the teacher link code **before**
+  `createUserWithEmailAndPassword`. Creating the auth account first and then
+  hitting an invalid code leaves an orphaned account whose email can't be
+  reused.
+
+## Link-code resolution is server-side
+
+- Students resolve codes through the `resolveLinkCode` Cloud Function
+  (`functions/index.js`), called from `TeacherLinkCodeService.resolveTeacherId`
+  via `cloud_functions`. Do **not** reintroduce a direct Firestore read of
+  `teacher_link_codes` for resolution — it must work pre-sign-in and must not
+  expose the collection.
+- `teacher_link_codes` rules deny anonymous reads; a teacher may read only
+  their own code docs (and non-existent candidates while generating). Code
+  generation in `ensureLinkCode` treats a permission-denied read as "taken."
+
+## Notifications are staff-only writes
+
+- Clients cannot write to `notifications` (rules require staff). Registration
+  notifications are created by the `onUserCreated` Firestore trigger. Do not
+  add client-side notification writes in the student registration flow.
+
+## Progress ownership
+
+- `student_progress` updates require the existing doc to already belong to the
+  caller. Keep the ownership check on both create and update.
+
+## After backend changes
+
+- Deploy: `firebase deploy --only firestore:rules,functions` (Blaze plan).

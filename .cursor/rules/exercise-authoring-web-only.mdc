@@ -1,0 +1,29 @@
+---
+description: Exercise create/edit/delete is admin-only on web — enforce in router, UI, and Firestore
+globs: lib/**/*exercise*,lib/**/firestore_service.dart,lib/core/router/app_router.dart
+alwaysApply: false
+---
+
+# Exercise authoring — admin only on web
+
+Creating, editing, and deleting exercises must only be available to **admins** on **web** (`kIsWeb`).
+
+Teachers can view exercises and student progress but cannot create, edit, delete, or export worksheet inventory reports.
+
+## Enforcement layers
+
+1. **Platform gate** — `ExerciseAuthoringPlatform.canManageExercises(user)` in `lib/core/constants/exercise_authoring_platform.dart`
+2. **Router** — redirects exercise authoring routes for non-admins
+3. **Admin shell** — **New exercise** only when `canManageExercises`
+4. **Teacher shell** — no **New exercise** action; exercises tab is read-only
+5. **Form screen** — shows unsupported message for non-admins
+6. **Firestore** — `createExercise`, `updateExercise`, `deleteExercise` verify admin role; rules: exercises write = `isAdmin()`
+
+## Related
+
+Worksheet upload is also admin-only on web (`WorksheetImportPlatform.isSupportedFor(user)`).
+
+## Do not
+
+- Expose exercise authoring to teachers without updating all layers above
+- Add report export UI to teacher dashboard or profile

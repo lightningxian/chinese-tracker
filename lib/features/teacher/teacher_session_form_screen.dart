@@ -1,0 +1,399 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+
+import '../../core/theme/app_theme.dart';
+import '../../core/widgets/app_card.dart';
+import '../../core/widgets/shell_nested_page.dart';
+import '../../models/class_session.dart';
+import '../../services/firestore_service.dart';
+
+class TeacherSessionFormScreen extends StatefulWidget {
+  const TeacherSessionFormScreen({
+    super.key,
+    required this.teacherId,
+    this.session,
+    this.embedded = false,
+  });
+
+  final String teacherId;
+  final ClassSession? session;
+  final bool embedded;
+
+  bool get isEditing => session != null;
+
+  @override
+  State<TeacherSessionFormScreen> createState() =>
+      _TeacherSessionFormScreenState();
+}
+
+class _TeacherSessionFormScreenState extends State<TeacherSessionFormScreen> {
+  static const _durationPresets = [60, 90, 120];
+
+  final _formKey = GlobalKey<FormState>();
+  final _titleController = TextEditingController();
+  final _capacityController = TextEditingController();
+  final _roomController = TextEditingController();
+  late DateTime _selectedDate;
+  late TimeOfDay _startTime;
+  late TimeOfDay _endTime;
+  late bool _isOpen;
+  SessionMode? _mode;
+  RegistrationState? _registrationState;
+  bool _saving = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    final session = widget.session;
+    _selectedDate = session != null
+        ? DateTime.tryParse(session.sessionDate) ?? DateTime.now()
+        : DateTime.now();
+    _titleController.text = session?.sessionTitle ?? '';
+    final startMinutes = session?.startMinutes ?? (15 * 60);
+    final endMinutes = session?.endMinutes ?? (16 * 60 + 30);
+    _startTime = TimeOfDay(hour: startMinutes ~/ 60, minute: startMinutes % 60);
+    _endTime = TimeOfDay(hour: endMinutes ~/ 60, minute: endMinutes % 60);
+    _capacityController.text = '${session?.capacity ?? 20}';
+    _isOpen = session?.isOpen ?? true;
+    _mode = session?.mode;
+    _roomController.text = session?.room ?? '';
+    _registrationState = session?.registrationState;
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _capacityController.dispose();
+    _roomController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+    );
+    if (picked != null) setState(() => _selectedDate = picked);
+  }
+
+  Future<void> _pickStartTime() async {
+    final picked = await showTimePicker(context: context, initialTime: _startTime);
+    if (picked != null) setState(() => _startTime = picked);
+  }
+
+  Future<void> _pickEndTime() async {
+    final picked = await showTimePicker(context: context, initialTime: _endTime);
+    if (picked != null) setState(() => _endTime = picked);
+  }
+
+  void _applyDurationPreset(int minutes) {
+    final start = FirestoreService.minutesOfDay(_startTime);
+    final endMinutes = start + minutes;
+    if (endMinutes >= 24 * 60) return;
+    setState(() {
+      _endTime = TimeOfDay(
+        hour: endMinutes ~/ 60,
+        minute: endMinutes % 60,
+      );
+    });
+  }
+
+  int get _selectedDurationMinutes {
+    final diff =
+        FirestoreService.minutesOfDay(_endTime) - FirestoreService.minutesOfDay(_startTime);
+    return diff > 0 ? diff : 0;
+  }
+
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final startMinutes = FirestoreService.minutesOfDay(_startTime);
+    final endMinutes = FirestoreService.minutesOfDay(_endTime);
+    if (endMinutes <= startMinutes) {
+      setState(() => _error = 'End time must be after start time.');
+      return;
+    }
+
+    final capacity = int.tryParse(_capacityController.text.trim()) ?? 20;
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+
+    try {
+      final firestore = context.read<FirestoreService>();
+      if (widget.isEditing) {
+        await firestore.updateClassSession(
+          sessionId: widget.session!.id,
+          date: _selectedDate,
+          sessionTitle: _titleController.text,
+          startMinutes: startMinutes,
+          endMinutes: endMinutes,
+          capacity: capacity,
+          isOpen: _isOpen,
+          mode: _mode,
+          room: _roomController.text,
+          registrationState: _registrationState,
+        );
+      } else {
+        await firestore.createClassSession(
+          teacherId: widget.teacherId,
+          date: _selectedDate,
+          sessionTitle: _titleController.text,
+          startMinutes: startMinutes,
+          endMinutes: endMinutes,
+          capacity: capacity,
+          isOpen: _isOpen,
+          mode: _mode,
+          room: _roomController.text,
+          registrationState: _registrationState,
+        );
+      }
+      if (mounted) context.pop();
+    } catch (e) {
+      setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dateLabel = DateFormat('EEE, d MMM yyyy').format(_selectedDate);
+
+    return ShellNestedPage(
+      embedded: widget.embedded,
+      title: widget.isEditing ? 'Edit class' : 'New class',
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (_error != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    _error!,
+                    style: const TextStyle(color: AppColors.error),
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+              TextFormField(
+                controller: _titleController,
+                decoration: const InputDecoration(
+                  labelText: 'Class title',
+                  hintText: 'e.g. HSK 3 — Speaking practice',
+                ),
+                validator: (v) => v == null || v.trim().isEmpty
+                    ? 'Enter a class title'
+                    : null,
+              ),
+              const SizedBox(height: 16),
+              AppCard(
+                onTap: _pickDate,
+                child: Row(
+                  children: [
+                    const Icon(Icons.calendar_today_outlined, color: AppColors.teal),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Date',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          Text(
+                            dateLabel,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.navy,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: AppCard(
+                      onTap: _pickStartTime,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Start',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          Text(
+                            _startTime.format(context),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.navy,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: AppCard(
+                      onTap: _pickEndTime,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'End',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          Text(
+                            _endTime.format(context),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.navy,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Duration',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.navy,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: _durationPresets.map((minutes) {
+                  final selected = _selectedDurationMinutes == minutes;
+                  return ChoiceChip(
+                    label: Text('$minutes min'),
+                    selected: selected,
+                    onSelected: (_) => _applyDurationPreset(minutes),
+                    selectedColor: AppColors.teal.withValues(alpha: 0.15),
+                    labelStyle: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: selected ? AppColors.teal : AppColors.textSecondary,
+                    ),
+                    side: BorderSide(
+                      color: selected ? AppColors.teal : AppColors.border,
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _capacityController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Capacity',
+                  hintText: 'Max students who can join',
+                ),
+                validator: (v) {
+                  final n = int.tryParse(v?.trim() ?? '');
+                  if (n == null || n < 1) return 'Enter a capacity of at least 1';
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<SessionMode?>(
+                initialValue: _mode,
+                isExpanded: true,
+                decoration: const InputDecoration(labelText: 'Mode (optional)'),
+                items: [
+                  const DropdownMenuItem(value: null, child: Text('Not set')),
+                  for (final m in SessionMode.values)
+                    DropdownMenuItem(value: m, child: Text(m.label)),
+                ],
+                onChanged: (v) => setState(() => _mode = v),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _roomController,
+                decoration: const InputDecoration(
+                  labelText: 'Room / link (optional)',
+                  hintText: 'e.g. Room 2, or a meeting link',
+                ),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<RegistrationState?>(
+                initialValue: _registrationState,
+                isExpanded: true,
+                decoration: const InputDecoration(
+                  labelText: 'Registration state (optional)',
+                ),
+                items: [
+                  const DropdownMenuItem(value: null, child: Text('Not set')),
+                  for (final s in RegistrationState.values)
+                    DropdownMenuItem(value: s, child: Text(s.label)),
+                ],
+                onChanged: (v) => setState(() => _registrationState = v),
+              ),
+              const SizedBox(height: 16),
+              AppCard(
+                child: SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Open for students to join'),
+                  subtitle: const Text(
+                    'Students can join from Home while the class is open.',
+                  ),
+                  value: _isOpen,
+                  onChanged: (v) => setState(() => _isOpen = v),
+                ),
+              ),
+              const SizedBox(height: 24),
+              FilledButton(
+                onPressed: _saving ? null : _save,
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.navy,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                child: _saving
+                    ? const SizedBox(
+                        height: 22,
+                        width: 22,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(widget.isEditing ? 'Save changes' : 'Create class'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

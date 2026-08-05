@@ -1,0 +1,270 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+
+import '../../core/theme/app_theme.dart';
+import '../../core/utils/exercise_utils.dart';
+import '../../core/utils/progress_utils.dart';
+import '../../core/widgets/app_card.dart';
+import '../../core/widgets/exercise_widgets.dart';
+import '../../core/widgets/responsive_card_grid.dart';
+import '../../models/app_user.dart';
+import '../../models/exercise.dart';
+import '../../models/exercise_result.dart';
+import '../../models/lesson.dart';
+import '../../models/student_progress.dart';
+import '../../services/firestore_service.dart';
+
+class StudentLessonsTab extends StatelessWidget {
+  const StudentLessonsTab({
+    super.key,
+    required this.contentOwnerId,
+    required this.student,
+  });
+
+  final String contentOwnerId;
+  final AppUser student;
+
+  @override
+  Widget build(BuildContext context) {
+    final firestore = context.read<FirestoreService>();
+
+    return StreamBuilder<List<Exercise>>(
+      stream: firestore.watchAvailableExercisesForStudent(student),
+      builder: (context, exercisesSnap) {
+        final availableExercises = exercisesSnap.data ?? [];
+
+        return StreamBuilder(
+          stream: firestore.watchLessons(contentOwnerId),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting &&
+                exercisesSnap.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            final allLessons = snapshot.data ?? [];
+            final lessons =
+                ProgressUtils.lessonsForStudent(allLessons, student);
+
+            if (lessons.isEmpty && availableExercises.isEmpty) {
+              return EmptyState(
+                icon: Icons.menu_book_outlined,
+                title: 'No content yet',
+                subtitle: contentOwnerId.isEmpty
+                    ? 'No demo data yet — run scripts/seed_test_accounts.sh then '
+                        'python3 scripts/seed_report_demo_data.py'
+                    : student.level == null
+                        ? 'Set your HSK level in Profile to unlock practice and lessons.'
+                        : 'Published ${student.level} exercises and lessons will appear here.',
+              );
+            }
+
+            final byTerm = ProgressUtils.groupLessonsByTerm(lessons);
+
+            return StreamBuilder(
+              stream: firestore.watchStudentProgress(student.uid),
+              builder: (context, progressSnap) {
+                return StreamBuilder<List<ExerciseResult>>(
+                  stream: firestore.watchStudentExerciseResults(student.uid),
+                  builder: (context, resultsSnap) {
+                    final progressByLesson =
+                        ProgressUtils.progressByLessonId(progressSnap.data ?? []);
+                    final bestScores =
+                        ExerciseUtils.bestScores(resultsSnap.data ?? []);
+                    final sortedExercises = [...availableExercises]
+                      ..sort(
+                        (a, b) => ExerciseUtils.compareExercises(
+                          a,
+                          b,
+                          bestScores: bestScores,
+                        ),
+                      );
+
+                    final counts = ExerciseUtils.practiceCounts(
+                      sortedExercises,
+                      bestScores: bestScores,
+                    );
+
+                    return LayoutBuilder(
+                      builder: (context, constraints) {
+                        final columns = ResponsiveCardGrid.columnCount(
+                          constraints.maxWidth,
+                          minCardWidth: 300,
+                        );
+                        final compact = columns > 1;
+
+                        return ListView(
+                          padding: const EdgeInsets.all(20),
+                          children: [
+                            if (sortedExercises.isNotEmpty) ...[
+                              SectionHeader(
+                                title:
+                                    '${student.level ?? 'Your level'} exercises (${sortedExercises.length})',
+                              ),
+                              HomeworkSummaryBar(
+                                pending: counts.pending,
+                                overdue: counts.overdue,
+                                done: counts.done,
+                              ),
+                              ResponsiveCardGrid(
+                                width: constraints.maxWidth,
+                                children: [
+                                  for (final exercise in sortedExercises)
+                                    AssignedExerciseCard(
+                                      exercise: exercise,
+                                      bestScore: bestScores[exercise.id],
+                                      compact: compact,
+                                      onTap: () => context.push(
+                                        '/student/exercise/${exercise.id}',
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                            ] else ...[
+                              EmptyState(
+                                icon: Icons.fitness_center_outlined,
+                                title: 'No exercises yet',
+                                subtitle: student.level == null
+                                    ? 'Set your HSK level in Profile to see practice exercises.'
+                                    : 'No published ${student.level} exercises yet.',
+                              ),
+                              const SizedBox(height: 16),
+                            ],
+                            if (lessons.isNotEmpty) ...[
+                              AppCard(
+                                child: Text(
+                                  '${student.level ?? 'Your level'} · ${student.lessonsPerTerm} lessons per term',
+                                  style: const TextStyle(
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              for (final entry in byTerm.entries) ...[
+                                SectionHeader(
+                                  title:
+                                      'Term ${entry.key} (${entry.value.length} lessons)',
+                                ),
+                                ResponsiveCardGrid(
+                                  width: constraints.maxWidth,
+                                  children: [
+                                    for (final lesson in entry.value)
+                                      _LessonCard(
+                                        lesson: lesson,
+                                        record: progressByLesson[lesson.id],
+                                        compact: compact,
+                                        onTap: () => context.push(
+                                          '/student/lesson/${lesson.id}',
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                              ],
+                            ],
+                          ],
+                        );
+                      },
+                    );
+                  },
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+class _LessonCard extends StatelessWidget {
+  const _LessonCard({
+    required this.lesson,
+    required this.record,
+    required this.compact,
+    required this.onTap,
+  });
+
+  final Lesson lesson;
+  final StudentProgress? record;
+  final bool compact;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final done = record?.completed ?? false;
+    final score = record?.score;
+
+    return AppCard(
+      onTap: onTap,
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 14 : 16,
+        vertical: compact ? 12 : 14,
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: compact ? 36 : 40,
+            height: compact ? 36 : 40,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: done
+                  ? AppColors.success.withValues(alpha: 0.12)
+                  : AppColors.navy.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: done
+                ? Icon(
+                    Icons.check,
+                    color: AppColors.success,
+                    size: compact ? 20 : 22,
+                  )
+                : Text(
+                    '${lesson.order}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.navy,
+                    ),
+                  ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  lesson.title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: compact ? 14 : 16,
+                  ),
+                ),
+                if ([
+                  if (lesson.level != null) lesson.level!,
+                  if (score != null) 'Quiz: $score%',
+                  if (done && score == null) 'Completed',
+                ].isNotEmpty)
+                  Text(
+                    [
+                      if (lesson.level != null) lesson.level!,
+                      if (score != null) 'Quiz: $score%',
+                      if (done && score == null) 'Completed',
+                    ].join(' · '),
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 13,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const Icon(
+            Icons.chevron_right,
+            color: AppColors.textSecondary,
+          ),
+        ],
+      ),
+    );
+  }
+}

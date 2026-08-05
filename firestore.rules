@@ -1,0 +1,379 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function hasUserProfile() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function isTeacher() {
+      return isSignedIn() &&
+        hasUserProfile() &&
+        userDoc().data.get('role', '') == 'teacher';
+    }
+
+    function isAdmin() {
+      return isSignedIn() &&
+        hasUserProfile() &&
+        userDoc().data.get('role', '') == 'admin';
+    }
+
+    function isStaff() {
+      return isTeacher() || isAdmin();
+    }
+
+    function isStudent() {
+      return isSignedIn() &&
+        hasUserProfile() &&
+        userDoc().data.get('role', 'student') == 'student';
+    }
+
+    function isParent() {
+      return isSignedIn() &&
+        hasUserProfile() &&
+        userDoc().data.get('role', '') == 'parent';
+    }
+
+    // True when the caller is a parent linked to the given studentId.
+    function isParentOf(studentId) {
+      return isParent() &&
+        (studentId in userDoc().data.get('studentIds', []));
+    }
+
+    function sessionData(sessionId) {
+      return get(/databases/$(database)/documents/class_sessions/$(sessionId)).data;
+    }
+
+    function sessionExists(sessionId) {
+      return exists(/databases/$(database)/documents/class_sessions/$(sessionId));
+    }
+
+    function sessionIsOpen(sessionId) {
+      return sessionExists(sessionId) &&
+        sessionData(sessionId).get('isOpen', true) != false &&
+        sessionData(sessionId).get('isConcluded', false) != true;
+    }
+
+    function hasJoinedSession(sessionId) {
+      return exists(
+        /databases/$(database)/documents/attendance/$(sessionId + '_' + request.auth.uid)
+      );
+    }
+
+    function isStaffRole(role) {
+      return role == 'teacher' || role == 'admin';
+    }
+
+    function userCanReadOther() {
+      // Caller is reading someone else's profile — safe to get() the caller's doc.
+      return isAdmin() ||
+        (isTeacher() && resource.data.get('role', '') == 'student') ||
+        (isStudent() && isStaffRole(resource.data.get('role', '')));
+    }
+
+    function selfUserCreateValid() {
+      let data = request.resource.data;
+      let role = data.get('role', '');
+      return role in ['teacher', 'student', 'parent'] &&
+        data.get('email', '') is string &&
+        data.get('name', '') is string &&
+        data.get('active', true) == true &&
+        (role != 'student' || (
+          data.get('teacherId', '') is string &&
+          data.get('teacherId', '').size() > 0 &&
+          data.get('level', '') is string &&
+          data.get('termSize', 0) in [8, 16]
+        )) &&
+        // Parents self-register with NO linked children. Linking is done only
+        // by the linkChild Cloud Function (admin SDK), which verifies the child
+        // access code server-side — so a parent can't link to an arbitrary
+        // student by writing studentIds directly.
+        (role != 'parent' || (
+          data.get('studentIds', []) == [] &&
+          data.get('teacherIds', []) == []
+        ));
+    }
+
+    function selfUserUpdateValid() {
+      let data = request.resource.data;
+      let existing = resource.data;
+      return data.role == existing.role &&
+        data.email == existing.email &&
+        data.get('active', true) == existing.get('active', true) &&
+        data.get('teacherId', '') == existing.get('teacherId', '') &&
+        // Child links are managed only by the linkChild Cloud Function.
+        data.get('studentIds', []) == existing.get('studentIds', []) &&
+        data.get('teacherIds', []) == existing.get('teacherIds', []);
+    }
+
+    function adminUserCreateValid() {
+      let data = request.resource.data;
+      return data.get('role', '') in ['teacher', 'student', 'admin', 'parent'] &&
+        data.get('email', '') is string &&
+        data.get('name', '') is string;
+    }
+
+    function notificationVisible() {
+      let data = resource.data;
+      let targetUser = data.get('userId', '');
+      let audience = data.get('forRole', 'all');
+      return (targetUser == '' || targetUser == request.auth.uid) && (
+        (isAdmin() && (audience in ['admin', 'all'] || targetUser == request.auth.uid)) ||
+        (isTeacher() && (audience in ['teacher', 'all'] || targetUser == request.auth.uid)) ||
+        (isStudent() && (audience in ['student', 'all'] || targetUser == request.auth.uid)) ||
+        (!isAdmin() && !isTeacher() && !isStudent() && targetUser == request.auth.uid)
+      );
+    }
+
+    function notificationMarkReadValid() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['read']) &&
+        request.resource.data.read == true;
+    }
+
+    match /users/{userId} {
+      // Self-read must NOT call get(users/$(uid)) — that recurses and denies
+      // teacher/student profile loads (breaking test login after Auth succeeds).
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      // NOTE: must not require `request.auth.uid != userId` here — Firestore
+      // cannot prove that for collection queries (the caller's own doc could
+      // match), which silently denies the role-filtered user list queries
+      // used by the admin Users tab and teacher student lists.
+      allow read: if isSignedIn() && userCanReadOther();
+      // Parents may read the profiles of their linked children.
+      allow read: if isParentOf(userId);
+      allow create: if isSignedIn() && (
+        (request.auth.uid == userId && selfUserCreateValid()) ||
+        (isAdmin() && adminUserCreateValid())
+      );
+      allow update: if isSignedIn() && (
+        (request.auth.uid == userId && selfUserUpdateValid()) ||
+        isAdmin()
+      );
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && notificationVisible();
+      allow create: if isStaff();
+      allow update: if isSignedIn() &&
+        notificationVisible() &&
+        notificationMarkReadValid();
+      allow delete: if isAdmin();
+    }
+
+    match /class_sessions/{sessionId} {
+      // Admin: all sessions. Teachers: own sessions. Students: their centre's.
+      // Parents: sessions for any teacher linked to one of their children.
+      allow read: if isAdmin() ||
+        (isTeacher() && resource.data.get('teacherId', '') == request.auth.uid) ||
+        (isStudent() &&
+          resource.data.get('teacherId', '') != '' &&
+          resource.data.get('teacherId', '') ==
+            userDoc().data.get('teacherId', '')) ||
+        (isParent() &&
+          resource.data.get('teacherId', '') != '' &&
+          resource.data.get('teacherId', '') in
+            userDoc().data.get('teacherIds', []));
+      allow create: if isStaff();
+      allow update, delete: if isStaff();
+    }
+
+    match /lessons/{lessonId} {
+      allow read: if isSignedIn();
+      allow write: if isStaff();
+    }
+
+    match /quizzes/{quizId} {
+      allow read: if isSignedIn();
+      allow write: if isStaff();
+    }
+
+    match /exercises/{exerciseId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /exercise_assignments/{assignmentId} {
+      allow read: if isSignedIn() && (
+        isStaff() ||
+        resource.data.get('studentId', '') == request.auth.uid
+      );
+      allow create, update, delete: if isStaff();
+    }
+
+    match /invoices/{invoiceId} {
+      allow read: if isSignedIn() && (
+        isStaff() ||
+        resource.data.get('studentId', '') == request.auth.uid ||
+        isParentOf(resource.data.get('studentId', ''))
+      );
+      // Creation goes through the createInvoice callable (admin SDK) so the
+      // Snap token + order id are set atomically; direct client writes are off.
+      allow create, update, delete: if false;
+    }
+
+    match /grades/{gradeId} {
+      // Staff manage the gradebook; students see their own grades; parents see
+      // their linked children's grades (read-only).
+      allow read: if isSignedIn() && (
+        isStaff() ||
+        resource.data.get('studentId', '') == request.auth.uid ||
+        isParentOf(resource.data.get('studentId', ''))
+      );
+      allow create, update, delete: if isStaff();
+    }
+
+    match /question_bank/{questionId} {
+      // Scoped to staff: students never read raw answers.
+      allow read: if isStaff();
+      allow create, update, delete: if isStaff();
+    }
+
+    match /settings/{docId} {
+      // Centre-wide settings are readable by any signed-in user (so gates can
+      // be evaluated client-side); only admins may change them.
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /audit_logs/{logId} {
+      // Append-only ledger. Only admins read; all writes go through Cloud
+      // Functions (admin SDK), so direct client writes are off.
+      allow read: if isAdmin();
+      allow create, update, delete: if false;
+    }
+
+    match /materials/{materialId} {
+      // Staff manage materials; signed-in users may read published ones.
+      allow read: if isSignedIn() && (
+        isStaff() ||
+        resource.data.get('status', 'draft') == 'published'
+      );
+      allow create, update, delete: if isStaff();
+    }
+
+    match /evaluations/{evaluationId} {
+      // Staff write. Students read their own published evaluations; parents
+      // read their linked child's published evaluations.
+      allow read: if isSignedIn() && (
+        isStaff() ||
+        (resource.data.get('status', 'draft') == 'published' && (
+          resource.data.get('studentId', '') == request.auth.uid ||
+          isParentOf(resource.data.get('studentId', ''))
+        ))
+      );
+      allow create, update, delete: if isStaff();
+    }
+
+    match /exercise_results/{resultId} {
+      allow read: if isSignedIn() && (
+        resource == null ||
+        resource.data.studentId == request.auth.uid ||
+        isStaff() ||
+        isParentOf(resource.data.get('studentId', ''))
+      );
+      allow create: if isSignedIn() &&
+        request.resource.data.studentId == request.auth.uid;
+    }
+
+    match /student_progress/{progressId} {
+      allow read: if isSignedIn() && (
+        resource == null ||
+        resource.data.studentId == request.auth.uid ||
+        isStaff() ||
+        isParentOf(resource.data.get('studentId', ''))
+      );
+      allow create: if isSignedIn() &&
+        request.resource.data.studentId == request.auth.uid;
+      // On update the existing doc must already belong to the caller, so a
+      // student cannot overwrite another student's progress by guessing its id.
+      allow update: if isSignedIn() &&
+        resource.data.studentId == request.auth.uid &&
+        request.resource.data.studentId == request.auth.uid;
+    }
+
+    match /quiz_results/{resultId} {
+      allow read: if isSignedIn() && (
+        resource == null ||
+        resource.data.studentId == request.auth.uid ||
+        isStaff() ||
+        isParentOf(resource.data.get('studentId', ''))
+      );
+      allow create: if isSignedIn() &&
+        request.resource.data.studentId == request.auth.uid;
+    }
+
+    match /student_class_terms/{termId} {
+      allow read: if isSignedIn() && (
+        isStaff() ||
+        resource.data.get('studentId', '') == request.auth.uid ||
+        isParentOf(resource.data.get('studentId', ''))
+      );
+      allow create: if isStaff() &&
+        request.resource.data.get('studentId', '') is string &&
+        request.resource.data.get('packageSize', 0) in [8, 16] &&
+        request.resource.data.get('sessionsRemaining', 0) == request.resource.data.packageSize &&
+        request.resource.data.get('startDate', '') is string &&
+        request.resource.data.get('deadlineDate', '') is string;
+      allow update: if isStaff();
+      allow delete: if isStaff();
+    }
+
+    match /attendance/{recordId} {
+      allow read: if isSignedIn() && (
+        resource == null ||
+        isStaff() ||
+        resource.data.get('studentId', '') == request.auth.uid ||
+        isParentOf(resource.data.get('studentId', '')) ||
+        hasJoinedSession(resource.data.get('sessionId', '')) ||
+        (isStudent() && sessionIsOpen(resource.data.get('sessionId', '')))
+      );
+      allow create: if isSignedIn() && (
+        (request.auth.uid == request.resource.data.studentId &&
+          request.resource.data.get('joinedBy', '') == 'student' &&
+          request.resource.data.get('attended', false) == true &&
+          request.resource.data.get('sessionCredited', false) == false &&
+          sessionIsOpen(request.resource.data.sessionId)) ||
+        (isStaff() &&
+          request.resource.data.get('joinedBy', '') == 'teacher' &&
+          request.resource.data.get('sessionCredited', false) == false)
+      );
+      allow update: if isStaff();
+      allow delete: if isSignedIn() && (
+        isStaff() ||
+        (resource.data.get('studentId', '') == request.auth.uid &&
+          resource.data.get('joinedBy', '') == 'student')
+      );
+    }
+
+    match /teacher_link_codes/{code} {
+      // Students resolve codes via the resolveLinkCode Cloud Function (admin
+      // privileges), so clients never read this collection directly. Teachers
+      // may read their own code docs (and non-existent candidates) while
+      // generating/rotating; reads of another teacher's code are denied, which
+      // prevents anonymous or cross-teacher enumeration of codes -> teachers.
+      allow read: if isSignedIn() && (
+        resource == null ||
+        resource.data.teacherId == request.auth.uid
+      );
+      allow create: if isSignedIn() &&
+        request.resource.data.teacherId == request.auth.uid;
+      allow update: if isSignedIn() &&
+        resource.data.teacherId == request.auth.uid &&
+        request.resource.data.teacherId == request.auth.uid;
+      allow delete: if isSignedIn() &&
+        resource.data.teacherId == request.auth.uid;
+    }
+
+    match /teacher_link_state/{teacherId} {
+      allow read, write: if isSignedIn() && request.auth.uid == teacherId;
+    }
+  }
+}

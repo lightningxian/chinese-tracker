@@ -1,0 +1,78 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc() {
+      return firestore.get(/databases/(default)/documents/users/$(request.auth.uid));
+    }
+
+    function isAdmin() {
+      return isSignedIn() && userDoc().data.role == 'admin';
+    }
+
+    function isTeacher() {
+      return isSignedIn() && userDoc().data.role == 'teacher';
+    }
+
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+
+    match /ocr_uploads/{teacherId}/{fileName} {
+      allow read: if isSignedIn() &&
+        request.auth.uid == teacherId &&
+        isTeacher();
+
+      allow write: if isSignedIn() &&
+        request.auth.uid == teacherId &&
+        isTeacher() &&
+        request.resource.size < 15 * 1024 * 1024;
+
+      allow delete: if isSignedIn() &&
+        request.auth.uid == teacherId &&
+        isTeacher();
+    }
+
+    match /profile_photos/{userId}/{fileName} {
+      allow read: if isSignedIn();
+
+      allow write: if isSignedIn() &&
+        (request.auth.uid == userId || isAdmin()) &&
+        isImage() &&
+        request.resource.size < 5 * 1024 * 1024;
+
+      allow delete: if isSignedIn() &&
+        (request.auth.uid == userId || isAdmin());
+    }
+
+    function isStaff() {
+      return isAdmin() || isTeacher();
+    }
+
+    // Shared teaching materials. Staff upload; any signed-in user may read
+    // (Firestore rules gate which materials are actually surfaced/published).
+    match /materials/{ownerId}/{fileName} {
+      allow read: if isSignedIn();
+
+      allow write: if isSignedIn() &&
+        isStaff() &&
+        request.resource.size < 25 * 1024 * 1024;
+
+      allow delete: if isSignedIn() && isStaff();
+    }
+
+    // Question-bank media (images/audio per question). Staff write; signed-in read.
+    match /question_bank_media/{ownerId}/{fileName} {
+      allow read: if isSignedIn();
+
+      allow write: if isSignedIn() &&
+        isStaff() &&
+        request.resource.size < 10 * 1024 * 1024;
+
+      allow delete: if isSignedIn() && isStaff();
+    }
+  }
+}
