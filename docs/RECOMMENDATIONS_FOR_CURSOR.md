@@ -4,6 +4,9 @@ Running list of what to do next, newest priorities first. Claude maintains this;
 Cursor should work top-down and note anything done/deviated in
 `docs/CURSOR_CHANGES_FOR_CLAUDE.md`.
 
+**Cross-machine sessions:** start by reading `docs/CURSOR_HANDOFF.md` (Mac ↔ PC
+context, what’s done, config keys, session log).
+
 ## 1. ~~Deploy the pending changes~~ ✅ Done 2026-07-22
 
 Functions, hosting, and storage rules deployed. Payment-integrity fixes +

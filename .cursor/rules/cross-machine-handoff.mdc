@@ -1,0 +1,15 @@
+---
+description: Read CURSOR_HANDOFF.md when starting on a different machine
+alwaysApply: true
+---
+
+# Cross-machine handoff
+
+At the start of a session (especially on a different PC/Mac than the last
+known work), read `docs/CURSOR_HANDOFF.md` before making large changes.
+
+- It lists what is already shipped, live config, and the priority backlog.
+- The user may assign a **different** task than the backlog — still use the
+  handoff so you do not redo finished work or invent a new Firebase/repo.
+- After meaningful work, update the **Session log** in that file, plus
+  `docs/CURSOR_CHANGES_FOR_CLAUDE.md`, then commit/push with an overall note.

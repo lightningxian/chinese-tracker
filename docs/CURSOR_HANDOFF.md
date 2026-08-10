@@ -1,0 +1,173 @@
+# Cursor handoff — Mac ↔ PC
+
+**Read this first** when starting a Cursor session on another machine.
+Chat history does **not** sync between Mac and PC. This file + git history do.
+
+Repo: https://github.com/lightningxian/chinese-tracker (private)  
+Live site: https://chinese-tracker.web.app  
+Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkarimunwkk@gmail.com>`
+
+---
+
+## How to start on this PC
+
+```bash
+git pull
+```
+
+Then tell Cursor:
+
+> Read `docs/CURSOR_HANDOFF.md` and `docs/RECOMMENDATIONS_FOR_CURSOR.md`. I want to work on: **\<your task\>**.
+
+Before you finish a session: commit, push, and **update this handoff** (What changed / What’s next).
+
+---
+
+## Product (one paragraph)
+
+**Easy Study / 易华文教中心** — Flutter + Firebase LMS for a Chinese teaching centre.  
+Roles: **admin**, **teacher**, **student**, **parent**.  
+Stack: Flutter web (primary), Firestore, Cloud Functions (v2), Midtrans sandbox payments, Firebase Hosting.
+
+---
+
+## Already done — do not redo
+
+| Area | Status |
+|------|--------|
+| Full app (4 roles) | Live |
+| Firebase functions (9), Firestore + storage rules | Deployed |
+| Midtrans server + client wiring (sandbox) | Deployed — **payment E2E test not run** |
+| Question bank upgrade (difficulty, bulk import, harvest, media, quiz editor) | Done |
+| Landing page restyle | Done + hosted |
+| Startup crash (`fontSizeFactor` assertion) | Fixed via `TextScaler.linear(1.12)` in `lib/app.dart` |
+| Git history + private remote | Done (`main`) |
+| Initial GitHub release notes | `v0.1.0-initial` |
+| Push-notes Cursor rule | `.cursor/rules/push-notes.mdc` |
+
+Detailed change log (newest first): `docs/CURSOR_CHANGES_FOR_CLAUDE.md`  
+Priority backlog Claude maintains: `docs/RECOMMENDATIONS_FOR_CURSOR.md`
+
+---
+
+## Priority backlog (do top-down unless user overrides)
+
+1. **Midtrans sandbox payment test** (highest)  
+   Invoice → pay sandbox → status paid → sessions credited → replay webhook → **no double-credit**.
+
+2. **Security hardening**  
+   - Student registration / link-code: move validation server-side (like parent `linkChild`)  
+   - Storage `materials/{ownerId}` writes: uid-scope (`auth.uid == ownerId \|\| isAdmin()`)  
+   - Enforce display-only settings: `requireEmailVerification`, `autoGenerateStaffPasswords`  
+   - Consolidate `contentTeacherId` vs `contentOwnerFor`
+
+3. **Tests + CI**  
+   - Firestore rules unit tests  
+   - Midtrans webhook unit test  
+   - GitHub Action: `flutter analyze` + `flutter test` + `node --check`
+
+4. **Later / optional**  
+   - Student quiz UI: render per-question image/audio  
+   - Narrow-width (~360px) overflow pass after text scale  
+   - NAS backup scripts (on hold; git + Firestore export cover a lot)  
+   - Multi-teacher scoping of published materials (fine for one centre)
+
+---
+
+## Key config (production / hosting builds)
+
+```text
+CONTENT_OWNER_ID=2orTXFeyAhSlxfTgIlcYgs6ZuCG2
+MIDTRANS_CLIENT_KEY=Mid-client-kQ_Bo0DQepeH8IhU
+```
+
+- Content owner uid = “Test Teacher” in production Firestore  
+- Midtrans is **sandbox** (client key has no `SB-` prefix; that is normal for this account)  
+- Webhook: `https://us-central1-chinese-tracker.cloudfunctions.net/midtransNotification`  
+- Demo teacher content is per-teacher (`AppConstants.contentOwnerFor`) — do **not** require `CONTENT_OWNER_ID` for normal local runs  
+
+Test login (if still seeded): `admin@test.chinesetracker` / `testpass123`
+
+### Local run
+
+```bash
+flutter pub get
+flutter run -d chrome
+```
+
+Rebuild + hosting (only when shipping UI/backend to live):
+
+```bash
+flutter build web --release \
+  --dart-define=CONTENT_OWNER_ID=2orTXFeyAhSlxfTgIlcYgs6ZuCG2 \
+  --dart-define=MIDTRANS_CLIENT_KEY=Mid-client-kQ_Bo0DQepeH8IhU
+firebase deploy --only hosting
+```
+
+After code changes, relaunch locally per `.cursor/rules/relaunch-after-changes.mdc`.
+
+---
+
+## Project rules Cursor must follow
+
+| Rule | Path |
+|------|------|
+| Log every change for Claude | `.cursor/rules/log-changes-for-claude.mdc` → `docs/CURSOR_CHANGES_FOR_CLAUDE.md` |
+| Relaunch app after code changes | `.cursor/rules/relaunch-after-changes.mdc` |
+| Push notes (overall summary on commit/push) | `.cursor/rules/push-notes.mdc` |
+| Auth / link codes | `.cursor/rules/auth-and-link-codes.mdc` |
+| Exercise authoring web-only | `.cursor/rules/exercise-authoring-web-only.mdc` |
+| Worksheet import web-only | `.cursor/rules/worksheet-import-web-only.mdc` |
+
+Commit author preference (via env vars, not global git config):  
+`Wilsin Kuonadi <wilsinkarimunwkk@gmail.com>`
+
+---
+
+## Useful paths
+
+| What | Where |
+|------|--------|
+| App entry | `lib/main.dart`, `lib/app.dart` |
+| Theme / text scale | `lib/core/theme/app_theme.dart`, `lib/app.dart` |
+| Landing | `lib/features/landing/` |
+| Question bank | `lib/features/question_bank/` |
+| Payments (client) | `lib/services/payment_service.dart` |
+| Cloud Functions | `functions/index.js` |
+| Firestore rules | `firestore.rules` |
+| Storage rules | `storage.rules` |
+| Go-live runbook | `docs/GO_LIVE_CHECKLIST.md` |
+
+---
+
+## Session log (newest first)
+
+Update this section when you push from Mac or PC.
+
+### 2026-08-10 — Handoff doc for PC Cursor
+
+- Added this file so PC sessions can see Mac work without chat history.
+- User will run **different tasks** on PC; do not assume Midtrans is next unless they ask.
+- Repo was already private on GitHub; pull before starting.
+
+### 2026-08-05 — Git + GitHub baseline
+
+- First commit + private remote `lightningxian/chinese-tracker`
+- Release `v0.1.0-initial` summarizing the full snapshot
+- Push-notes rule added
+
+### 2026-07-22 — Feature / deploy wave (summary)
+
+- Question bank upgrade (4 phases)
+- Landing restyle + hosting redeploy + cache headers
+- Font crash fix (`TextScaler` instead of `fontSizeFactor`)
+- Functions / storage / hosting deployed; Midtrans sandbox E2E still deferred
+
+---
+
+## For the agent on PC
+
+1. **Do not** recreate Firebase, re-run `flutterfire configure`, or invent a new repo.  
+2. **Do not** assume you must continue the Mac backlog — the user may assign a new task. Still skim this file so you don’t undo finished work.  
+3. After any code/config change: update `docs/CURSOR_CHANGES_FOR_CLAUDE.md`, update **Session log** above, commit with an overall push note, and `git push`.  
+4. If the user asks “what’s next?”, point at **Priority backlog** above / `docs/RECOMMENDATIONS_FOR_CURSOR.md`.

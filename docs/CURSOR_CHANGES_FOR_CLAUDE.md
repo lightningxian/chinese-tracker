@@ -6,6 +6,22 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-08-10 — PC handoff doc
+
+**What changed**
+- Added `docs/CURSOR_HANDOFF.md` — Mac ↔ PC agent brief (done work, backlog,
+  config keys, rules, session log).
+- `docs/RECOMMENDATIONS_FOR_CURSOR.md`: pointer to the handoff at the top.
+
+**Why**
+- User runs Cursor on a PC with different tasks; chat history does not sync, so
+  the repo needs a durable handoff file.
+
+**For Claude to review**
+- Keep handoff session log updated when priorities or live config change.
+
+---
+
 ## 2026-08-05 — Push-notes rule + initial GitHub release
 
 **What changed**
