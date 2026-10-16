@@ -3,6 +3,9 @@
 **Read this first** when starting a Cursor session on another machine.
 Chat history does **not** sync between Mac and PC. This file + git history do.
 
+**Full Claude ownership handoff (preferred for Claude):**  
+`docs/CLAUDE_FULL_HANDOFF.md`
+
 Repo: https://github.com/lightningxian/chinese-tracker (private)  
 Live site: https://chinese-tracker.web.app  
 Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkarimunwkk@gmail.com>`
@@ -143,6 +146,12 @@ Commit author preference (via env vars, not global git config):
 ## Session log (newest first)
 
 Update this section when you push from Mac or PC.
+
+### 2026-10-16 — Full handoff to Claude
+
+- Added `docs/CLAUDE_FULL_HANDOFF.md` (GitHub location, done/backlog, config,
+  architecture, risks). User continues all further work with Claude.
+- No feature code changes in this session.
 
 ### 2026-08-10 — Handoff doc for PC Cursor
 

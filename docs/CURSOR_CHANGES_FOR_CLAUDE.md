@@ -6,6 +6,25 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-10-16 — Full Claude ownership handoff
+
+**What changed**
+- Added `docs/CLAUDE_FULL_HANDOFF.md` — complete handoff for Claude to continue
+  all work: GitHub URL, Firebase/live config, done vs backlog, architecture map,
+  risks, conventions, suggested first actions.
+- Pointed `docs/CURSOR_HANDOFF.md` and `docs/RECOMMENDATIONS_FOR_CURSOR.md` at it.
+
+**Why**
+- User is switching ownership of ongoing work to Claude; chat history will not
+  carry over; need a durable MD in the private GitHub repo.
+
+**For Claude to review**
+- Treat `docs/CLAUDE_FULL_HANDOFF.md` as the starting brief; update it when
+  priorities or live config change.
+- Code of record: https://github.com/lightningxian/chinese-tracker
+
+---
+
 ## 2026-08-10 — PC handoff doc
 
 **What changed**
