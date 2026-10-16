@@ -7,6 +7,9 @@
 
 This is the single source of truth for continuing the project without Cursor chat history. Read this first, then `docs/RECOMMENDATIONS_FOR_CURSOR.md` and the newest entries in `docs/CURSOR_CHANGES_FOR_CLAUDE.md`.
 
+**Cursor conversation history (separate MD):** `docs/CURSOR_CHAT_HISTORY.md` —
+timeline of what the user asked Cursor, decisions made, and what’s unfinished.
+
 ---
 
 ## 1. Where the code lives
@@ -232,6 +235,7 @@ Today’s tests are thin: constants check, PDF import probe, question import uti
 | Doc | Purpose |
 |-----|---------|
 | `docs/CLAUDE_FULL_HANDOFF.md` | **This file** — full Claude ownership handoff |
+| `docs/CURSOR_CHAT_HISTORY.md` | Cursor ↔ user chat timeline + brief rundown |
 | `docs/CURSOR_HANDOFF.md` | Shorter Mac↔PC Cursor session brief |
 | `docs/RECOMMENDATIONS_FOR_CURSOR.md` | Priority backlog Claude maintains |
 | `docs/CURSOR_CHANGES_FOR_CLAUDE.md` | Append-only change history |

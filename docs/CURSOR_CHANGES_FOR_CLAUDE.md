@@ -6,21 +6,22 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
-## 2026-10-16 — Full Claude ownership handoff
+## 2026-10-16 — Cursor chat history MD + Claude handoff
 
 **What changed**
-- Added `docs/CLAUDE_FULL_HANDOFF.md` — complete handoff for Claude to continue
-  all work: GitHub URL, Firebase/live config, done vs backlog, architecture map,
-  risks, conventions, suggested first actions.
-- Pointed `docs/CURSOR_HANDOFF.md` and `docs/RECOMMENDATIONS_FOR_CURSOR.md` at it.
+- Added `docs/CURSOR_CHAT_HISTORY.md` — brief rundown + dated timeline of Cursor
+  sessions (git/GitHub, Mac↔PC, Midtrans deferrals, handoff to Claude).
+- Added `docs/CLAUDE_FULL_HANDOFF.md` — complete ownership brief (GitHub URL,
+  Firebase/Midtrans config, done vs P0–P3, architecture, risks).
+- Cross-linked from `CURSOR_HANDOFF.md` / `RECOMMENDATIONS_FOR_CURSOR.md`.
 
 **Why**
-- User is switching ownership of ongoing work to Claude; chat history will not
-  carry over; need a durable MD in the private GitHub repo.
+- User continues all work with Claude; chat UI does not sync — need durable MDs
+  in the private GitHub repo including conversation context.
 
 **For Claude to review**
-- Treat `docs/CLAUDE_FULL_HANDOFF.md` as the starting brief; update it when
-  priorities or live config change.
+- Start: `docs/CLAUDE_FULL_HANDOFF.md`; conversation context:
+  `docs/CURSOR_CHAT_HISTORY.md`.
 - Code of record: https://github.com/lightningxian/chinese-tracker
 
 ---
