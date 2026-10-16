@@ -147,6 +147,18 @@ Commit author preference (via env vars, not global git config):
 
 Update this section when you push from Mac or PC.
 
+### 2026-10-17 — Claude: security fixes + emulator; billing problem found
+
+- Closed teacher self-registration, enforced deactivation, teacher-only link
+  codes, fixed the notifications query. Rules + hosting deployed; **functions
+  deploy blocked: Firebase project billing is disabled** (Secret Manager 403).
+  Re-enable billing, then `firebase deploy --only functions`.
+- Firebase emulators configured; `rules-tests/` added (18 pass, 1 skipped).
+- Thesis spec saved to `docs/THESIS_FEATURE_BACKLOG.md`; audit in
+  `docs/THESIS_FEATURE_AUDIT.md`. Decisions: keep parent/materials; Indonesian
+  + English switch later; next = design system (direction A, calmer inside),
+  then Phase 1.
+
 ### 2026-10-16 — Claude: first fixes shipped + redesign started
 
 - Added `CLAUDE.md` (project guide Claude reads every session) and a local

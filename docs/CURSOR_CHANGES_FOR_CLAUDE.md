@@ -6,6 +6,27 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-10-17 — Claude: security fixes, emulator + rules tests, billing problem found
+
+**What changed**
+- Teacher self-registration closed (Register + Complete-profile screens, `selfUserCreateValid`). Admins create teachers.
+- Deactivated accounts: rules helper `isActive()` strips role rights; app signs them out at sign-in and launch.
+- `teacher_link_codes` / `teacher_link_state` writes now require `isTeacher()`; `resolveLinkCode` checks the owner is an active teacher.
+- Notifications: two provable queries in `watchNotificationsForUser`; broadcasts stored with `userId: ''` (app model + functions). Parents see `all` broadcasts.
+- `firebase.json`: emulators (auth 9099, firestore 8080, functions 5001, storage 9199, UI 4000).
+- `rules-tests/`: 19 Firestore rules tests (`npm --prefix rules-tests run test:emulator`). 18 pass, 1 skipped (emulator evaluates broad queries against data, production refuses them). Needs Java: `brew install openjdk@21`, then `export PATH=/opt/homebrew/opt/openjdk@21/bin:$PATH`.
+- `docs/THESIS_FEATURE_BACKLOG.md` (spec) and `docs/THESIS_FEATURE_AUDIT.md` (status table, defects, decisions).
+
+**Deploy status**
+- Rules + hosting: deploy attempted 2026-10-17 (check `firebase hosting` release list / rules in console).
+- **Functions NOT deployed: Secret Manager returned 403 "requires billing to be enabled"** → the project appears to have lost its Blaze/billing link. This also explains `scheduledFirestoreExport` PERMISSION_DENIED since 13 Oct. Owner must re-enable billing in the Google Cloud console, then run `firebase deploy --only functions`.
+
+**For review**
+- Until functions redeploy, `resolveLinkCode` owner check and `userId: ''` on function-written broadcasts are not live; app-written broadcasts already use `''`.
+- Test checklist item PUB-08 ("Register a new Guru") is now expected to show no Teacher option.
+
+---
+
 ## 2026-10-16 — Claude: deep links, forgot password, landing media (not deployed yet)
 
 **What changed**
