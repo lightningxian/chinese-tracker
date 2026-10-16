@@ -26,7 +26,6 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
   final _parentPhoneController = TextEditingController();
   final _linkCodeController = TextEditingController();
 
-  bool _isTeacher = false;
   String _level = AppConstants.hskLevels.first;
   int _termSize = AppConstants.defaultTermSize;
   bool _loading = false;
@@ -52,24 +51,17 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
 
     try {
       final auth = context.read<AuthService>();
-      if (_isTeacher) {
-        await auth.completeTeacherProfile(
-          nameIndonesian: _nameIndonesianController.text,
-          nameChinese: _nameChineseController.text,
-          whatsapp: _whatsappController.text,
-        );
-      } else {
-        await auth.completeProfile(
-          nameIndonesian: _nameIndonesianController.text,
-          nameChinese: _nameChineseController.text,
-          whatsapp: _whatsappController.text,
-          parentName: _parentNameController.text,
-          parentPhone: _parentPhoneController.text,
-          level: _level,
-          termSize: _termSize,
-          linkCode: _linkCodeController.text,
-        );
-      }
+      // Teacher accounts are created by admins; this screen is students only.
+      await auth.completeProfile(
+        nameIndonesian: _nameIndonesianController.text,
+        nameChinese: _nameChineseController.text,
+        whatsapp: _whatsappController.text,
+        parentName: _parentNameController.text,
+        parentPhone: _parentPhoneController.text,
+        level: _level,
+        termSize: _termSize,
+        linkCode: _linkCodeController.text,
+      );
     } on TeacherLinkCodeException catch (e) {
       setState(() => _error = e.message);
     } on FirebaseAuthException catch (e) {
@@ -145,16 +137,6 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                   ),
                   const SizedBox(height: 16),
                 ],
-                SegmentedButton<bool>(
-                  segments: const [
-                    ButtonSegment(value: false, label: Text('Student')),
-                    ButtonSegment(value: true, label: Text('Teacher')),
-                  ],
-                  selected: {_isTeacher},
-                  onSelectionChanged: (s) =>
-                      setState(() => _isTeacher = s.first),
-                ),
-                const SizedBox(height: 16),
                 Form(
                   key: _formKey,
                   child: Column(
@@ -164,14 +146,14 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                         nameChineseController: _nameChineseController,
                         whatsappController: _whatsappController,
                         enabled: !_loading,
-                        requireChineseName: !_isTeacher,
+                        requireChineseName: true,
                         requireWhatsapp: true,
-                        showParentFields: !_isTeacher,
-                        requireParentFields: !_isTeacher,
+                        showParentFields: true,
+                        requireParentFields: true,
                         parentNameController: _parentNameController,
                         parentPhoneController: _parentPhoneController,
                       ),
-                      if (!_isTeacher) ...[
+                      ...[
                         const SizedBox(height: 16),
                         TextFormField(
                           controller: _linkCodeController,

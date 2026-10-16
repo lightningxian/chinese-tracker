@@ -13,15 +13,23 @@ service cloud.firestore {
       return exists(/databases/$(database)/documents/users/$(request.auth.uid));
     }
 
+    // Deactivated accounts keep their profile doc but lose every role-based
+    // right. The app also signs them out (AuthService.signIn / init).
+    function isActive() {
+      return userDoc().data.get('active', true) == true;
+    }
+
     function isTeacher() {
       return isSignedIn() &&
         hasUserProfile() &&
+        isActive() &&
         userDoc().data.get('role', '') == 'teacher';
     }
 
     function isAdmin() {
       return isSignedIn() &&
         hasUserProfile() &&
+        isActive() &&
         userDoc().data.get('role', '') == 'admin';
     }
 
@@ -32,12 +40,14 @@ service cloud.firestore {
     function isStudent() {
       return isSignedIn() &&
         hasUserProfile() &&
+        isActive() &&
         userDoc().data.get('role', 'student') == 'student';
     }
 
     function isParent() {
       return isSignedIn() &&
         hasUserProfile() &&
+        isActive() &&
         userDoc().data.get('role', '') == 'parent';
     }
 
@@ -81,7 +91,9 @@ service cloud.firestore {
     function selfUserCreateValid() {
       let data = request.resource.data;
       let role = data.get('role', '');
-      return role in ['teacher', 'student', 'parent'] &&
+      // Teachers are created by admins only (adminUserCreateValid); anyone
+      // could otherwise self-register as staff.
+      return role in ['student', 'parent'] &&
         data.get('email', '') is string &&
         data.get('name', '') is string &&
         data.get('active', true) == true &&
@@ -128,7 +140,8 @@ service cloud.firestore {
         (isAdmin() && (audience in ['admin', 'all'] || targetUser == request.auth.uid)) ||
         (isTeacher() && (audience in ['teacher', 'all'] || targetUser == request.auth.uid)) ||
         (isStudent() && (audience in ['student', 'all'] || targetUser == request.auth.uid)) ||
-        (!isAdmin() && !isTeacher() && !isStudent() && targetUser == request.auth.uid)
+        (isParent() && (audience == 'all' || targetUser == request.auth.uid)) ||
+        (!isAdmin() && !isTeacher() && !isStudent() && !isParent() && targetUser == request.auth.uid)
       );
     }
 
@@ -363,9 +376,11 @@ service cloud.firestore {
         resource == null ||
         resource.data.teacherId == request.auth.uid
       );
-      allow create: if isSignedIn() &&
+      // Only teachers mint codes; a student must not be able to create a code
+      // that points at themselves.
+      allow create: if isTeacher() &&
         request.resource.data.teacherId == request.auth.uid;
-      allow update: if isSignedIn() &&
+      allow update: if isTeacher() &&
         resource.data.teacherId == request.auth.uid &&
         request.resource.data.teacherId == request.auth.uid;
       allow delete: if isSignedIn() &&
@@ -373,7 +388,7 @@ service cloud.firestore {
     }
 
     match /teacher_link_state/{teacherId} {
-      allow read, write: if isSignedIn() && request.auth.uid == teacherId;
+      allow read, write: if isTeacher() && request.auth.uid == teacherId;
     }
   }
 }

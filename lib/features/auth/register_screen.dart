@@ -36,7 +36,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String _level = AppConstants.hskLevels.first;
   int _termSize = AppConstants.defaultTermSize;
 
-  bool get _isTeacher => _role == AppConstants.roleTeacher;
   bool get _isParent => _role == AppConstants.roleParent;
   bool get _isStudent => _role == AppConstants.roleStudent;
 
@@ -63,15 +62,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     final auth = context.read<AuthService>();
     try {
-      if (_isTeacher) {
-        await auth.registerTeacher(
-          nameIndonesian: _nameIndonesianController.text,
-          nameChinese: _nameChineseController.text,
-          whatsapp: _whatsappController.text,
-          email: _emailController.text,
-          password: _passwordController.text,
-        );
-      } else if (_isParent) {
+      if (_isParent) {
         await auth.registerParent(
           nameIndonesian: _nameIndonesianController.text,
           nameChinese: _nameChineseController.text,
@@ -150,10 +141,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ButtonSegment(
                 value: AppConstants.roleStudent,
                 label: Text('Student'),
-              ),
-              ButtonSegment(
-                value: AppConstants.roleTeacher,
-                label: Text('Teacher'),
               ),
               ButtonSegment(
                 value: AppConstants.roleParent,
@@ -299,11 +286,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : Text(
-                    _isTeacher
-                        ? 'Register as teacher'
-                        : _isParent
-                            ? 'Register as parent'
-                            : 'Create account',
+                    _isParent ? 'Register as parent' : 'Create account',
                   ),
           ),
         ],

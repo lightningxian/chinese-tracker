@@ -113,6 +113,17 @@ exports.resolveLinkCode = onCall(async (request) => {
     );
   }
 
+  // The code must belong to an active teacher. Rules now stop non-teachers
+  // from minting codes, but older docs or a stale owner still fail here.
+  const ownerSnap = await db.collection(USERS).doc(teacherId).get();
+  const owner = ownerSnap.exists ? ownerSnap.data() || {} : {};
+  if (owner.role !== "teacher" || owner.active === false) {
+    throw new HttpsError(
+      "failed-precondition",
+      "This link code is no longer valid. Ask your teacher for a new one.",
+    );
+  }
+
   return {teacherId};
 });
 
@@ -155,6 +166,7 @@ exports.onUserCreated = onDocumentCreated(`${USERS}/{uid}`, async (event) => {
       `${studentName} signed up with ${teacherName}'s centre.` :
       `${studentName} registered in Easy Study.`,
     forRole: "admin",
+    userId: "", // broadcast; stored as '' so clients can query it
     targetRoute: "/admin",
     read: false,
     createdAt: now,
@@ -165,6 +177,7 @@ exports.onUserCreated = onDocumentCreated(`${USERS}/{uid}`, async (event) => {
     title: "New student registered",
     body: `${studentName} joined your centre.`,
     forRole: "teacher",
+    userId: "",
     targetRoute: "/teacher",
     read: false,
     createdAt: now,
@@ -229,6 +242,7 @@ exports.onExerciseResultCreated = onDocumentCreated(
       title: "Practice submitted",
       body: `${studentName} scored ${score}% on ${exerciseTitle}.`,
       forRole: "teacher",
+      userId: "",
       targetRoute: "/teacher",
       read: false,
       createdAt: now,

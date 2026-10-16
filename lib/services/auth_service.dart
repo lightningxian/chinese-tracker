@@ -34,6 +34,11 @@ class AuthService extends ChangeNotifier {
       final user = firebaseUser;
       if (user != null) {
         await _loadProfile(user.uid);
+        if (_appUser?.active == false) {
+          // Deactivated while signed in: drop the session on next launch.
+          await _auth.signOut();
+          _appUser = null;
+        }
       }
     } finally {
       _isInitializing = false;
@@ -71,41 +76,6 @@ class AuthService extends ChangeNotifier {
     }
 
     _appUser = AppUser.fromFirestore(doc);
-  }
-
-  Future<AppUser> registerTeacher({
-    required String nameIndonesian,
-    required String email,
-    required String password,
-    String? nameChinese,
-    String? whatsapp,
-  }) async {
-    final credential = await _auth.createUserWithEmailAndPassword(
-      email: email.trim(),
-      password: password,
-    );
-    final uid = credential.user!.uid;
-    final indonesian = nameIndonesian.trim();
-
-    final profile = AppUser(
-      uid: uid,
-      email: email.trim(),
-      name: indonesian,
-      nameIndonesian: indonesian,
-      nameChinese: _optional(nameChinese),
-      whatsapp: _optional(whatsapp),
-      role: AppConstants.roleTeacher,
-      createdAt: DateTime.now(),
-    );
-
-    await _firestore
-        .collection(AppConstants.usersCollection)
-        .doc(uid)
-        .set(profile.toMap());
-
-    _appUser = profile;
-    notifyListeners();
-    return profile;
   }
 
   Future<AppUser> register({
@@ -313,6 +283,15 @@ class AuthService extends ChangeNotifier {
       password: password,
     );
     await _loadProfile(credential.user!.uid);
+    if (_appUser?.active == false) {
+      await _auth.signOut();
+      _appUser = null;
+      notifyListeners();
+      throw FirebaseAuthException(
+        code: 'user-disabled',
+        message: 'This account has been deactivated. Please contact the centre.',
+      );
+    }
     notifyListeners();
     if (_appUser == null) {
       throw FirebaseAuthException(
@@ -322,41 +301,6 @@ class AuthService extends ChangeNotifier {
       );
     }
     return _appUser!;
-  }
-
-  Future<AppUser> completeTeacherProfile({
-    required String nameIndonesian,
-    String? nameChinese,
-    String? whatsapp,
-  }) async {
-    final user = firebaseUser;
-    if (user == null) {
-      throw FirebaseAuthException(
-        code: 'not-signed-in',
-        message: 'Please sign in again.',
-      );
-    }
-
-    final indonesian = nameIndonesian.trim();
-    final profile = AppUser(
-      uid: user.uid,
-      email: user.email ?? '',
-      name: indonesian,
-      nameIndonesian: indonesian,
-      nameChinese: _optional(nameChinese),
-      whatsapp: _optional(whatsapp),
-      role: AppConstants.roleTeacher,
-      createdAt: DateTime.now(),
-    );
-
-    await _firestore
-        .collection(AppConstants.usersCollection)
-        .doc(user.uid)
-        .set(profile.toMap());
-
-    _appUser = profile;
-    notifyListeners();
-    return profile;
   }
 
   Future<AppUser> completeProfile({

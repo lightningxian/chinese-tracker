@@ -63,7 +63,8 @@ class AppNotification {
         'title': title,
         'body': body,
         'forRole': forRole,
-        if (userId != null && userId!.isNotEmpty) 'userId': userId,
+        // Broadcasts store '' (not a missing field) so clients can query them.
+        'userId': userId ?? '',
         'read': read,
         'createdAt': FieldValue.serverTimestamp(),
         if (targetRoute != null && targetRoute!.isNotEmpty)

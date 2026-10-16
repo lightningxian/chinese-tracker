@@ -1352,36 +1352,65 @@ class FirestoreService {
     );
   }
 
+  /// Notifications addressed to this user plus broadcasts for their role.
+  ///
+  /// Firestore rules cannot filter a broad query, so this asks only for what
+  /// the rules allow: `userId == uid`, and `userId == '' && forRole in (...)`.
+  /// Broadcasts are stored with `userId: ''` (see AppNotification.toMap and
+  /// functions/index.js); older broadcasts without the field are not shown.
   Stream<List<AppNotification>> watchNotificationsForUser(AppUser user) {
-    return _db
-        .collection(AppConstants.notificationsCollection)
-        .snapshots()
-        .map((snap) {
-          final items = snap.docs.map(AppNotification.fromFirestore).where((n) {
-            if (n.userId != null && n.userId!.isNotEmpty) {
-              return n.userId == user.uid;
-            }
-            if (user.isAdmin) {
-              return n.forRole == AppConstants.roleAdmin || n.forRole == 'all';
-            }
-            if (user.isTeacher) {
-              return n.forRole == AppConstants.roleTeacher || n.forRole == 'all';
-            }
-            if (user.isParent) {
-              return n.forRole == 'all';
-            }
-            return n.forRole == AppConstants.roleStudent || n.forRole == 'all';
-          }).toList();
-          items.sort((a, b) {
-            final aAt = a.createdAt;
-            final bAt = b.createdAt;
-            if (aAt == null && bAt == null) return 0;
-            if (aAt == null) return 1;
-            if (bAt == null) return -1;
-            return bAt.compareTo(aAt);
-          });
-          return items;
-        });
+    final col = _db.collection(AppConstants.notificationsCollection);
+    final audiences = <String>[
+      if (user.isAdmin) AppConstants.roleAdmin,
+      if (user.isTeacher) AppConstants.roleTeacher,
+      if (user.isStudent) AppConstants.roleStudent,
+      'all',
+    ];
+    final mine = col.where('userId', isEqualTo: user.uid).snapshots();
+    final broadcast = col
+        .where('userId', isEqualTo: '')
+        .where('forRole', whereIn: audiences)
+        .snapshots();
+
+    final controller = StreamController<List<AppNotification>>();
+    var ownItems = const <AppNotification>[];
+    var broadcastItems = const <AppNotification>[];
+    var gotOwn = false;
+    var gotBroadcast = false;
+    StreamSubscription? ownSub;
+    StreamSubscription? broadcastSub;
+
+    void emit() {
+      if (!gotOwn || !gotBroadcast) return;
+      final items = [...ownItems, ...broadcastItems];
+      items.sort((a, b) {
+        final aAt = a.createdAt;
+        final bAt = b.createdAt;
+        if (aAt == null && bAt == null) return 0;
+        if (aAt == null) return 1;
+        if (bAt == null) return -1;
+        return bAt.compareTo(aAt);
+      });
+      controller.add(items);
+    }
+
+    controller.onListen = () {
+      ownSub = mine.listen((snap) {
+        ownItems = snap.docs.map(AppNotification.fromFirestore).toList();
+        gotOwn = true;
+        emit();
+      }, onError: controller.addError);
+      broadcastSub = broadcast.listen((snap) {
+        broadcastItems = snap.docs.map(AppNotification.fromFirestore).toList();
+        gotBroadcast = true;
+        emit();
+      }, onError: controller.addError);
+    };
+    controller.onCancel = () async {
+      await ownSub?.cancel();
+      await broadcastSub?.cancel();
+    };
+    return controller.stream;
   }
 
   Future<void> createNotification(AppNotification notification) async {
