@@ -206,6 +206,71 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _forgotPassword() async {
+    final emailController = TextEditingController(text: _manualEmail.text.trim());
+    final email = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Reset your password'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Enter your account email. We'll send a link to set a new password.",
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: emailController,
+              autofocus: true,
+              keyboardType: TextInputType.emailAddress,
+              autofillHints: const [AutofillHints.email],
+              decoration: const InputDecoration(
+                labelText: 'Email',
+                border: OutlineInputBorder(),
+              ),
+              onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, emailController.text.trim()),
+            child: const Text('Send reset link'),
+          ),
+        ],
+      ),
+    );
+    emailController.dispose();
+    if (email == null || email.isEmpty || !mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await context.read<AuthService>().sendPasswordResetEmail(email);
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            'If $email has an account, a reset link is on its way. '
+            'Check your inbox and spam folder.',
+          ),
+        ),
+      );
+    } on FirebaseAuthException catch (e) {
+      final message = switch (e.code) {
+        'invalid-email' =>
+          "That email address doesn't look right. Check it and try again.",
+        'too-many-requests' =>
+          'Too many attempts. Wait a few minutes and try again.',
+        _ => e.message ?? "Couldn't send the reset link. Try again.",
+      };
+      messenger.showSnackBar(SnackBar(content: Text(message)));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final savedService = context.watch<SavedAccountsService>();
@@ -283,6 +348,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         border: OutlineInputBorder(),
                       ),
                       onSubmitted: (_) => _manualSignIn(),
+                    ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: _forgotPassword,
+                        child: const Text('Forgot password?'),
+                      ),
                     ),
                     CheckboxListTile(
                       contentPadding: EdgeInsets.zero,

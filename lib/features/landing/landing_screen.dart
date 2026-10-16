@@ -800,11 +800,19 @@ class _VisualShowcaseSection extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const LandingYoutubeEmbed(height: 280),
+                          LandingMedia.hasVideo
+                              ? const LandingYoutubeEmbed(height: 280)
+                              : const _NetworkPhoto(
+                                  url: LandingMedia.videoPoster,
+                                  height: 280,
+                                ),
                           const SizedBox(height: 16),
                           Text(
-                            'Watch how structured Mandarin teaching works — '
-                            'from vocabulary to live conversation practice.',
+                            LandingMedia.hasVideo
+                                ? 'Watch how structured Mandarin teaching works — '
+                                    'from vocabulary to live conversation practice.'
+                                : 'Structured Mandarin teaching — from first '
+                                    'characters to live conversation practice.',
                             style: TextStyle(
                               color: AppColors.textSecondary.withValues(alpha: 0.9),
                               fontSize: 14,
@@ -817,7 +825,12 @@ class _VisualShowcaseSection extends StatelessWidget {
                   ],
                 )
               else ...[
-                const LandingYoutubeEmbed(height: 220),
+                LandingMedia.hasVideo
+                    ? const LandingYoutubeEmbed(height: 220)
+                    : const _NetworkPhoto(
+                        url: LandingMedia.videoPoster,
+                        height: 220,
+                      ),
                 const SizedBox(height: 16),
                 _NetworkPhoto(
                   url: LandingMedia.showcaseClassroom,

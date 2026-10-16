@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
-
 import '../../models/app_user.dart';
 import 'exercise_authoring_platform.dart';
 

@@ -54,8 +54,22 @@ class AppRouter {
       refreshListenable: auth,
       redirect: (context, state) {
         final location = state.matchedLocation;
+        // Hold on the splash while the profile loads, remembering where the
+        // user was headed so deep links and browser refreshes land there.
         if (auth.isInitializing) {
-          return location == '/splash' ? null : '/splash';
+          if (location == '/splash') return null;
+          return Uri(
+            path: '/splash',
+            queryParameters: {'from': state.uri.toString()},
+          ).toString();
+        }
+        if (location == '/splash') {
+          final from = state.uri.queryParameters['from'];
+          final safe = from != null &&
+              from.startsWith('/') &&
+              !from.startsWith('//') &&
+              !from.startsWith('/splash');
+          return safe ? from : '/';
         }
 
         final signedIn = auth.firebaseUser != null;

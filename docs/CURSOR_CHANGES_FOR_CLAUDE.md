@@ -6,6 +6,37 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-10-16 — Claude: deep links, forgot password, landing media (not deployed yet)
+
+**What changed**
+- `lib/main.dart` + `pubspec.yaml`: `usePathUrlStrategy()` (adds `flutter_web_plugins`).
+  Web addresses are now `/login`, not `/#/login`. Hosting already rewrites `**`
+  to `index.html`. Old `/#/...` links open the app at `/`.
+- `lib/core/router/app_router.dart`: while auth initialises, redirect to
+  `/splash?from=<target>` and return to `from` afterwards (internal paths only),
+  so deep links and browser refreshes keep their page.
+- `lib/services/auth_service.dart` + `lib/features/auth/login_screen.dart`:
+  "Forgot password?" under the manual sign-in form, using Firebase's
+  `sendPasswordResetEmail` with a neutral confirmation message.
+- `lib/features/landing/landing_media.dart` + `landing_screen.dart`: replaced
+  3 Unsplash photo IDs that returned 404. The YouTube video (`sWqnIyquCbM`) is
+  unavailable, so the ID is now empty and the section shows a photo until the
+  centre provides its own video.
+- `lib/core/constants/worksheet_import_platform.dart`: removed unused import
+  (analyzer now 0 errors, 0 warnings).
+
+**Why**
+- Found while writing the full test checklist: broken landing photos and video,
+  `/login` and `/register` links opening the home page, and no password reset.
+
+**For review**
+- Verified locally (release web build): `/login` and `/register` open directly,
+  reset dialog appears, all landing photos load. Reset email itself not sent in
+  testing. `flutter test` 7/7 pass.
+- Needs `flutter build web` + `firebase deploy --only hosting` to go live.
+
+---
+
 ## 2026-10-16 — Cursor chat history MD + Claude handoff
 
 **What changed**

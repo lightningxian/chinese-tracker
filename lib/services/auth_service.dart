@@ -299,6 +299,11 @@ class AuthService extends ChangeNotifier {
     return teacherIds.toList();
   }
 
+  /// Sends Firebase's password-reset email. Firebase does not reveal whether
+  /// the address has an account, so callers should show a neutral message.
+  Future<void> sendPasswordResetEmail(String email) =>
+      _auth.sendPasswordResetEmail(email: email.trim());
+
   Future<AppUser> signIn({
     required String email,
     required String password,

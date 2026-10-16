@@ -147,6 +147,18 @@ Commit author preference (via env vars, not global git config):
 
 Update this section when you push from Mac or PC.
 
+### 2026-10-16 — Claude: first fixes shipped + redesign started
+
+- Added `CLAUDE.md` (project guide Claude reads every session) and a local
+  preview config in `.claude/launch.json`.
+- Web now uses clean addresses (`/login`, not `/#/login`); deep links and
+  refreshes keep their page. "Forgot password?" added to sign-in. Three dead
+  landing photos replaced; dead YouTube video swapped for a photo until the
+  centre supplies its own video. Deployed to hosting.
+- Full manual test checklist published (claude.ai artifact, owner-only) and
+  three landing page design directions built from the real logo/mascot.
+  User approved the landing direction and asked for a redesign of all pages.
+
 ### 2026-10-16 — Full handoff to Claude
 
 - Added `docs/CLAUDE_FULL_HANDOFF.md` (GitHub location, done/backlog, config,
