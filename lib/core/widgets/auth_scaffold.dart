@@ -111,19 +111,10 @@ class _BrandPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const AppLogo(variant: AppLogoVariant.mascot, height: 36),
-              const SizedBox(width: 12),
-              const Text(
-                AppConstants.brandName,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 18,
-                ),
-              ),
-            ],
+          // Logo artwork with the white tagline, made for dark backgrounds.
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: AppLogo(variant: AppLogoVariant.withTagline, height: 64),
           ),
           const Spacer(),
           const Text(

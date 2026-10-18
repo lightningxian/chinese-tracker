@@ -6,6 +6,29 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-10-18 — Claude: landing fixes (back buttons, prices section, plan cards)
+
+**What changed**
+- Landing CTAs use `context.push` instead of `go`, so Register/Login have a
+  page to go back to. Register and Login back arrows fall back to `/` when
+  there is nothing to pop. Login now shows a back arrow.
+- New **Prices** section from the centre's flyer: registration Rp 100.000;
+  8 meetings (12 h) Rp 2.450.000; 16 meetings (24 h) Rp 3.950.000; both valid
+  2 months; 1.5 h per meeting; 6–8 students; ages 13+; HSK materials and book
+  Rp 250.000; open class times; Midtrans payment note. Plan cards replace the
+  old term tickets. Nav link "Prices".
+- Footer: address (Jl. Manyar Tirtomoyo 7/11, Surabaya), phone, Instagram.
+- Auth brand panel uses the logo-with-tagline artwork.
+
+**For review**
+- **Price mismatch:** `functions/index.js` `PACKAGE_PRICES` still charges
+  Rp 800.000 / 1.500.000 for 8/16 sessions, and `student_class_terms` use a
+  90-day validity. The flyer says Rp 2.450.000 / 3.950.000 and 2 months.
+  Align when Phase 4 (voucher packages) is built; until then, invoices created
+  in the app use the old prices.
+
+---
+
 ## 2026-10-18 — Claude: app design system ("A, calmer"), emulator mode, seed script
 
 **What changed**

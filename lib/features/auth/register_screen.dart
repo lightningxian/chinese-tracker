@@ -132,7 +132,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       title: 'Create account',
       subtitle: 'Join Easy Study as a student or parent',
       showBackButton: true,
-      onBack: () => context.pop(),
+      // Opened by a direct link there is nothing to pop; go home instead.
+      onBack: () => context.canPop() ? context.pop() : context.go('/'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

@@ -279,6 +279,8 @@ class _LoginScreenState extends State<LoginScreen> {
     return AuthScaffold(
       title: AppConstants.brandName,
       subtitle: 'Tap an account to sign in',
+      showBackButton: true,
+      onBack: () => context.canPop() ? context.pop() : context.go('/'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
