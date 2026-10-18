@@ -1,5 +1,7 @@
 # EASY STUDY APP — Feature Backlog from the Revised TA Proposal
 
+> **Version 2 (18 Oct 2026).** Changed from v1: grading is now *pass 3 different HSK test codes* (no NA/NL/NG formula), leaderboard per test code, optional placement test, tests only at Easy Study with a teacher token, 1 practice set per level. If you already built anything from v1's grading section, tell Will what must change.
+
 > **For Claude Code.** This file lists everything the Easy Study app must have so that it matches the revised thesis proposal (Oct 2026). The owner (Will) is a beginner in Flutter/Firebase: explain each step in simple English, one step at a time, and ask before any big or hard-to-undo decision.
 
 Thesis title: **"Aplikasi Multiplatform Sistem Kursus Bahasa Mandarin Easy Study menggunakan Flutter"** (ISTTS, NRP 221310660, Wilsin).
@@ -35,7 +37,7 @@ Thesis title: **"Aplikasi Multiplatform Sistem Kursus Bahasa Mandarin Easy Study
 - Easy Study has **4 teachers** and **1 admin**. Classes are face-to-face in Surabaya.
 - Levels: **HSK 1–6** (old 6-level HSK) grouped as **Beginner (HSK 1–2), Intermediate (HSK 3–4), Advance (HSK 5–6)**.
 - **Admin assigns the teacher** to every schedule. **Students do NOT choose teachers** — they choose a *session* by level and time. The teacher's name is shown only as information.
-- Students self-register; the account works only after **admin approval**. Admin sets the starting level (from a placement test).
+- Students self-register; the account works only after **admin approval**. At registration the student chooses: **start at HSK 1**, or **take a placement test** (see section 8).
 
 **Jadwal vs Sesi (important — keep them as separate data)**
 - **Jadwal (schedule)** = a repeating weekly plan: level, class name, weekdays, start/end time, room, teacher, quota, valid-from/valid-to, active flag. No attendance.
@@ -49,19 +51,16 @@ Thesis title: **"Aplikasi Multiplatform Sistem Kursus Bahasa Mandarin Easy Study
 - **Izin (excused) before the session starts → no deduction. Hadir (present) or Alpa (absent without notice) → deduct 1 session.**
 - Expired voucher → cannot book.
 
-**Grading per level**
-- Three scores, each 0–100:
-  - **NU** (Nilai Ujian) = exam score: (total points ÷ max points) × 100
-  - **NL** (Nilai Latihan) = average of all practice scores in that HSK level
-  - **NG** (Nilai Evaluasi Guru) = teacher rubric: speaking & pronunciation 40%, participation 30%, assignments 30%
-- **NA = 0.6 × NU + 0.2 × NL + 0.2 × NG**
-- **Promote** to the next HSK level only if ALL are true: NA ≥ 70, NU ≥ 60, no exam section < 40, attendance in that level ≥ 75%. Then **admin verifies** before the level changes.
-- Grade bands: **A 85–100, B 70–84** (promote if other rules pass), **C 60–69** (remedial: teacher coaching + one retake exam), **D < 60** (repeat the level). NA ≥ 70 but attendance < 75% or a section < 40 → also remedial.
-- Weights and thresholds must be **editable by admin** (stored in a settings document), with the values above as defaults.
-- Worked example to use as a unit test: L 72, R 80, T 65 → 217/300 → NU 72.3; NL 78; NG 80 → **NA = 75.0 (B)** → recommend HSK 3 → HSK 4.
+**Grading = only for moving up an HSK level** (Easy Study is a course center, not a school: no report cards, no final-score formula)
+- Every **HSK simulation test** (tes simulasi) has a unique **test code** (kode tes), e.g. `H3216917Z` = an HSK 3 test. Each code is a different set of questions. The first two characters give the HSK level.
+- Section score 0–100 = round(points earned ÷ max points × 100) — the same way Easy Study's current "Nilai Simulasi HSK" web app stores scores. Total = sum of sections.
+- **Pass** a code: total ≥ **120** (HSK 1–2, max 200) or ≥ **180** (HSK 3–6, max 300).
+- **Move up** to the next HSK level = **passed at least 3 different test codes** at the student's current level. Each code can be taken **only once** per student. Then **admin verifies** before the level changes. After moving up, the count starts again from 0.
+- Practice scores, attendance and teacher notes do **not** affect promotion (they only show in the progress report).
+- Pass marks and the minimum number of codes (default 3) are **editable by admin** (settings document).
 
 **Out of scope (do NOT build)**
-Teacher payroll/salary calculation, accounting, inventory, marketing, online/video classes, learning materials, speaking tests (HSKK), students choosing teachers.
+Teacher payroll/salary calculation, accounting, inventory, marketing, online/video classes, learning materials, speaking tests (HSKK), students choosing teachers, report cards / NA formula / teacher score (NG), remedial flow.
 
 ---
 
@@ -148,26 +147,36 @@ Teacher payroll/salary calculation, accounting, inventory, marketing, online/vid
 | | T5 Free writing (essay) | write from keywords/picture | Advance | **teacher** (system helps) |
 
 - [ ] **Answer keys** in a separate collection `kunci_jawaban` that **students can never read** (only Cloud Functions + admin/teacher). Never send keys to the student's device.
-- [ ] **Practice vs Exam**
+- [ ] **Practice vs HSK simulation test**
 
-| | Latihan (practice) | Ujian (exam) |
+| | Latihan (practice) | Tes simulasi HSK |
 |---|---|---|
-| Time limit | none | yes, opened by the teacher |
-| Attempts | unlimited | 1 (except remedial retake) |
+| Where | anywhere | **only at Easy Study, supervised, needs a token from the teacher** |
+| Time limit | none | per HSK format (table below) |
+| Attempts | unlimited | **1 per test code** |
 | Listening audio | replay any number of times | **max 2 plays** |
-| Pembahasan | right after answering | after the exam time ends |
-| Counts as | NL | NU |
+| Pembahasan | right after answering | after the test time ends |
+| Score is used for | progress report only | promotion + leaderboard |
 
-- [ ] Teacher builds a latihan/ujian package from the bank (type, level, duration) and assigns it to a student or class → students notified.
-- [ ] **Exam format per level** (ujian tingkat):
+- [ ] Teacher builds a practice package from the bank (type, level) and assigns it to a student or class → students notified. Admin builds **test packages**, each with a unique **test code**.
+- [ ] **Test format per HSK level** (official HSK structure; Typing replaces 书写 writing):
 
-| Level | Sections | Questions | Time | Max / Pass |
-|---|---|---|---|---|
-| Beginner | Listening, Reading (Typing = practice only) | 30 (15 L + 15 R) | 35 min | 200 / 120 |
-| Intermediate | Listening, Reading, Typing | 45 (15 + 15 + 15) | 60 min | 300 / 180 |
-| Advance | Listening, Reading, Typing | 60 (20 + 20 + 20, incl. 2× T5) | 90 min | 300 / 180 |
+| Level | Listening | Reading | Typing | Total | Time | Max / Pass |
+|---|---|---|---|---|---|---|
+| HSK 1 | 20 | 20 | – | 40 | 35 min | 200 / 120 |
+| HSK 2 | 35 | 25 | – | 60 | 50 min | 200 / 120 |
+| HSK 3 | 40 | 30 | 10 (5× T4 + 5× T3) | 80 | 85 min | 300 / 180 |
+| HSK 4 | 45 | 40 | 15 (10× T4 + 5× T5) | 100 | 100 min | 300 / 180 |
+| HSK 5 | 45 | 45 | 10 (8× T4 + 2× T5) | 100 | 120 min | 300 / 180 |
+| HSK 6 | 50 | 50 | 1 (T5) | 101 | 135 min | 300 / 180 |
 
-- [ ] **Exam timing uses server time**: start time is saved by the server; answers sent after the deadline are **rejected** even if the phone clock is changed (test PN-05).
+  Objective questions = 1 point; T5 = 10 points (teacher rubric).
+- [ ] **Supervised test flow**:
+  - **Cloud Function `openTestSession`** (callable, teacher only): pick a test code → returns a **6-character token valid 15 minutes**.
+  - Student enters the token to start; no valid token = cannot start (so tests can't be done at home).
+  - **Test mode**: no other menus; every time the student leaves the test page (app goes to background / browser tab hidden) save an event; show these events live on the **teacher's supervision screen**.
+  - Teacher can mark a result **tidak sah** (invalid) → not counted for promotion or leaderboard.
+- [ ] **Test timing uses server time**: start time is saved by the server; answers sent after the deadline are **rejected** even if the phone clock is changed (test PN-05).
 - [ ] **Cloud Function `gradeSubmission`** (callable): the app sends only the answers; the function loads the keys, scores, saves the score. Section score = (points ÷ max points) × 100. Choice/true-false/matching/ordering: right = full points, wrong = 0.
 - [ ] **Typing answer-matching algorithm** (inside `gradeSubmission`):
   1. **Normalize** both answer and key: trim spaces; full-width ↔ half-width punctuation (“，” = “,”); remove ending punctuation; **traditional → simplified hanzi** with OpenCC (`opencc-js` in Node); for pinyin: lowercase, treat `ü` = `v` = `u:`, convert tone marks to tone numbers (`nǐ hǎo` → `ni3 hao3`), split by syllable.
@@ -177,22 +186,35 @@ Teacher payroll/salary calculation, accounting, inventory, marketing, online/vid
   5. Every partial answer is flagged **"perlu ditinjau"** → appears in the teacher's review queue; the teacher can approve or change the score.
   - Unit-test cases: 你好 vs 你好！ → 100% · 谢谢 vs 謝謝 → 100% · nǐ hǎo vs ni3 hao3 → 100% · nǐ hǎo vs ni hao → 50% · 我很喜欢喝茶 vs 我很喜欢和茶 → 50% + review · 把书放在桌子上 vs 书把放在桌子上 (T4) → 0%.
 - [ ] **T5 essay grading screen** (teacher): shows character count and which required keywords appear / are missing; teacher scores with rubric **grammar 40%, vocabulary 30%, content 30%**.
-- [ ] **Student screens**: do practice/exam (audio player with play counter in exams), see score + pembahasan + history.
+- [ ] **Student screens**: do practice/test (audio player with play counter in tests), see score + pembahasan + history.
 
-## 8. Phase 6 — Level grading & promotion
+## 8. Phase 6 — Promotion, placement test & leaderboard
 
-- [ ] Teacher enters **NG** with the rubric (speaking 40 / participation 30 / assignments 30).
-- [ ] **Cloud Function `calculateFinalScore`** (callable): reads NU (with per-section scores), NL, NG and attendance %; computes NA; applies the promotion rules from section 2; returns the recommendation **naik / remedial / ulang** and the grade band.
-- [ ] **Admin verification screen**: approve the promotion → level updated + **level history** saved (date, from, to, NA) → student notified.
-- [ ] **Remedial flow**: teacher sees students marked remedial; can open one retake exam for them.
-- [ ] Moving HSK 2 → 3 means Beginner → Intermediate; HSK 4 → 5 means Intermediate → Advance (level group is derived from the HSK level).
-- [ ] Admin screen **"Mengelola Level & Penilaian"** to edit weights and thresholds.
+**Promotion**
+- [ ] **Cloud Function `checkLevelPromotion`** (Firestore trigger on a new valid test score): count **distinct passed test codes** at the student's current HSK level; if ≥ the minimum (default 3) → create a `kenaikan_tingkat` recommendation (status: waiting for admin).
+- [ ] **Admin verification screen**: approve → level updated + **level history** saved (date, from, to, the passed codes) → student notified. Count resets for the new level.
+- [ ] Block taking the same test code twice (test LV-02).
+- [ ] Moving HSK 2 → 3 = Beginner → Intermediate; HSK 4 → 5 = Intermediate → Advance (group derived from the HSK level).
+- [ ] Unit-test example: HSK 3 student — Code A 170 (fail), Code B 195, Code C 200, Code D 205 → 3 passes → recommend HSK 4.
+
+**Placement test (optional, for new students)**
+- [ ] Registration form: "Mulai dari HSK 1" or "Ikut tes penempatan" + **target level (HSK 2–6)**.
+- [ ] After approval, the student takes **one existing simulation test of the level just below the target** (target HSK 4 → take an HSK 3 code), at Easy Study with a teacher token. No new question bank needed.
+- [ ] Pass → recommend the target level; fail → recommend the tested level. Admin confirms the starting level (no test → HSK 1).
+- [ ] The code used counts as "already taken" by that student, but placement results are **not shown in the leaderboard**.
+
+**Leaderboard per test code**
+- [ ] **Cloud Function `updateLeaderboard`** (trigger on a new valid, non-placement test score) writes `leaderboard/{kodeTes}/entri/{muridId}`.
+- [ ] Order: total score (high → low); tie → shorter time taken first.
+- [ ] Shows rank, name, section scores, total, pass/fail; highlights the viewer's own row.
+- [ ] **Privacy**: students see other students as first name + initial (e.g. "Angeline S."); teachers and admin see full names. Students cannot read other students' `nilai` directly — only the `leaderboard` collection.
+- [ ] **Import old results**: script to import past results for a code from the "Nilai Simulasi HSK" Firestore project (`easy-study-hsk`, collections `students` and `records`, field `set` = test code) so codes like `H3216917Z` already have a leaderboard. Ask Will before reading that project.
 
 ## 9. Phase 7 — Student progress report (monitoring)
 
 - [ ] **One summary document per student** (`progress_summary/{studentId}`) so the report screen reads **one doc**. Updated by the trigger **`updateProgressSummary`** whenever a score, attendance or voucher changes. It holds:
-  - current level + HSK level + % of material done toward the next level exam;
-  - weekly practice & exam scores (for a line chart);
+  - current level + HSK level + **number of passed test codes at this level (e.g. 2 of 3)**;
+  - weekly practice scores (for a line chart) + test history (code, date, scores, pass/fail, leaderboard rank);
   - average per skill: Listening, Reading, Typing;
   - attendance % and history;
   - voucher remaining sessions + expiry;
@@ -205,11 +227,11 @@ Teacher payroll/salary calculation, accounting, inventory, marketing, online/vid
 | 2 | Score drop | avg practice in last 2 weeks < 60, or dropped ≥ 10 points | teacher |
 | 3 | Inactive | no practice for 14 days | student + teacher |
 | 4 | Voucher | ≤ 2 sessions left or expires within 7 days | student + admin |
-| 5 | Level exam | NA < 70 | teacher + admin |
+| 5 | Simulation tests | failed 2 tests in a row | teacher + admin |
 
 - [ ] **Status label**: 0 warnings = **Progres Baik**, 1 = **Perlu Perhatian**, ≥ 2 = **Perlu Tindak Lanjut**.
 - [ ] **Access**: student → only own report · teacher → students in their classes + list of students who need attention + can add follow-up notes · admin → all students, filter by level, teacher, period.
-- [ ] **Report screen** layout (see wireframe in the proposal, "Laporan Progress Murid"): header with status chip → level progress bar → 4 KPI cards (attendance, practice avg, last exam, voucher left) → weekly score line chart (practice line + exam points) → per-skill bars → latest teacher note.
+- [ ] **Report screen** layout (see wireframe in the proposal, "Laporan Progress Murid"): header with status chip → "2 of 3 codes passed" progress → 4 KPI cards (attendance, practice avg, tests passed, voucher left) → weekly practice line chart → per-skill bars + latest teacher note → test history table with leaderboard rank.
 
 ## 10. Phase 8 — Admin reports & dashboard
 
@@ -223,7 +245,7 @@ Teacher payroll/salary calculation, accounting, inventory, marketing, online/vid
 - [ ] Session reminder 1 h before (→ teacher, students) · late check-in (→ admin)
 - [ ] Substitute teacher / session moved / session cancelled (→ booked students)
 - [ ] Booking confirmed or rejected (→ student)
-- [ ] New practice/exam (→ students) · score ready (→ student, teacher)
+- [ ] New practice (→ students) · score ready (→ student, teacher) · promotion recommendation (→ admin)
 - [ ] Payment success / failed (→ student) · voucher low or expiring (→ student, admin)
 - [ ] Progress warnings (→ as in the table above) · promotion result (→ student)
 
@@ -233,7 +255,9 @@ Teacher payroll/salary calculation, accounting, inventory, marketing, online/vid
 |---|---|---|---|---|
 | `kunci_jawaban` | no read/write | write (own questions) | read/write | read |
 | `jawaban_murid` | create own answers; **cannot set score** | read (own class) | read | read + write score |
-| `nilai` | read own | read; write Typing-review score and NG | read | write |
+| `nilai` | read own | read; write T5 score and Typing-review score; mark result invalid | read | write |
+| `leaderboard` | read (other names masked) | read | read | write |
+| `pelaksanaan_tes` (tokens) | no read (token checked by function) | create via `openTestSession` | read | read/write |
 | `voucher`, `riwayat_voucher` | read own | read (own class) | read | write |
 | `pembayaran` | read own | no read | read | write |
 
@@ -242,7 +266,7 @@ Plus: a student can read only their own `users`, `progress_summary`, bookings. V
 ## 13. Testing (must exist before the thesis trial)
 
 - [ ] **Seed script** (emulator + staging): 1 admin, **4 teachers**, **30 students** (12 Beginner, 10 Intermediate, 8 Advance), rooms, voucher packages, schedules.
-- [ ] **Question bank target**: 1 exam package per HSK level (2×30 + 2×45 + 2×60 = **270**) + 2 practice packages of 15 questions per HSK level (**180**) = **450 questions**. Build an **import tool** (CSV/JSON → Firestore + Storage audio) so Will can load real questions; do not invent Chinese content.
+- [ ] **Question bank target (reduced)**: **1 practice package of 15 questions per HSK level (90)** + **1 test code per HSK level** in full format (40+60+80+100+100+101 = **481**) + **2 extra HSK 3 codes** (160) so the 3-code rule can be tested for real = **731 questions**. Most come from Easy Study's existing simulation papers, so build a good **import tool** (CSV/JSON → Firestore + Storage audio). Do not invent Chinese content.
 - [ ] **Automated tests for the validation scenarios** (Functions + rules tests on the emulator):
 
 | ID | Scenario | Expected |
@@ -251,7 +275,15 @@ Plus: a student can read only their own `users`, `progress_summary`, bookings. V
 | PN-02 | Typing with full-width punctuation, spaces, traditional hanzi, tone numbers | 100% |
 | PN-03 | wrong tone / one wrong homophone character | 50% + flagged for review |
 | PN-04 | student tries to read `kunci_jawaban` or write a score via SDK | denied by rules |
-| PN-05 | exam answer sent after the deadline (phone clock changed) | rejected |
+| PN-05 | test answer sent after the deadline (phone clock changed) | rejected |
+| TS-01 | start a test with no token, a wrong token, or a token older than 15 min | rejected |
+| TS-02 | student leaves the test page and comes back | event saved and shown on the teacher's screen |
+| LV-01 | HSK 3 student passes a 3rd different code | promotion recommendation waiting for admin |
+| LV-02 | student tries the same code a 2nd time | rejected |
+| LV-03 | 2 passes + 1 fail | no recommendation; progress shows 2 of 3 |
+| LB-01 | leaderboard of `H3216917Z` (15 people) vs manual ranking | same order and scores; names masked for students |
+| PL-01 | new student, target HSK 4, passes the HSK 3 placement test | recommends HSK 4, waiting for admin |
+| PL-02 | new student skips the placement test | starts at HSK 1 |
 | VC-01 | close session: 3 hadir, 1 izin, 1 alpa | 4 vouchers +1 used; izin not deducted |
 | VC-02 | `closeSession` called twice | deducted once |
 | VC-03 | close session while the same student books another | both succeed, counts correct |
@@ -266,7 +298,7 @@ Plus: a student can read only their own `users`, `progress_summary`, bookings. V
 | JD-02 | two admins save the same teacher + time at once | only one saved |
 
 - [ ] A small **reconciliation script** for VC-05.
-- [ ] Unit tests for the NA formula (worked example in section 2) and for the Typing matcher (cases in section 7).
+- [ ] Unit tests for the promotion counter (example in section 8) and for the Typing matcher (cases in section 7).
 
 ## 14. Open questions — ask Will, do not guess
 
@@ -274,7 +306,7 @@ Plus: a student can read only their own `users`, `progress_summary`, bookings. V
 2. Midtrans sandbox server key + client key (give them as Functions secrets, never commit them).
 3. Voucher packages: names, number of sessions, validity days, prices.
 4. Room names.
-5. **Placement test**: is it an exam inside the app, or does admin just set the level after an offline test? (The proposal's activity diagram has admin set the starting level when approving the account.)
-6. **Ranking**: the proposal's comparison table (vs Angelita's thesis) says this app has a "Ranking" feature. Build a simple leaderboard per HSK level, or remove "Ranking" from the proposal table?
+5. Test code format: what do the characters in a code like `H3216917Z` mean, and who creates new codes (admin types it, or the app generates it)?
+6. Do the existing simulation papers come with audio files and answer keys in digital form (for the import tool)?
 7. Exact names already used in the repo for collections and screens (keep them; report the mapping).
 8. Should the "Rekap Jam Mengajar" tab and the "Ketersediaan" tab both be on the teacher's schedule screen (as in the wireframe), or separate screens?

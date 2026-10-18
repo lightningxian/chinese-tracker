@@ -1,7 +1,79 @@
 # Audit: Easy Study app vs. the thesis feature backlog
 
-**Date:** 2026-10-16 · **Spec:** `docs/THESIS_FEATURE_BACKLOG.md` (sections 3–11) · **By:** Claude
+**Date:** 2026-10-16, updated 2026-10-18 for spec v2 · **Spec:** `docs/THESIS_FEATURE_BACKLOG.md` (v2, 18 Oct 2026) · **Assets brief:** `docs/THESIS_PROPOSAL_ASSETS.md` · **By:** Claude
 **Method:** read the real code (models, services, screens, `functions/index.js`, rules, tests), not the docs.
+
+## 0. Update for spec v2 (18 Oct 2026)
+
+Version 2 keeps Phases 1–4 and 7–9 as they were and replaces the grading model.
+Sections 1–7 below were written against v1 and still hold, except where this
+section says otherwise.
+
+### What v2 changed, and where the app stands
+
+| v2 item | App today | Gap |
+|---|---|---|
+| **Promotion = pass ≥ 3 different HSK test codes** at the current level (≥120 of 200 for HSK 1–2, ≥180 of 300 for HSK 3–6), then admin verifies; count resets per level | No test codes, no pass marks, no promotion. `users.level` is a free string the **student can edit** (`student_profile_tab.dart`, rules allow it) | Missing |
+| **Test code** (e.g. `H3216917Z`), one question set per code, each code once per student | No concept of a test code; quizzes are per lesson, exercises per teacher | Missing |
+| **Supervised test**: `openTestSession` gives a 6-char token valid 15 min; test mode records "left the page" events; teacher supervision screen; result can be marked **tidak sah** | Nothing. Exercises and quizzes can be done anywhere, any number of times | Missing |
+| **Test format per HSK level** (40/60/80/100/100/101 questions, 35–135 min, objective = 1 pt, T5 = 10 pt) | No timer, no sections, no per-level format | Missing |
+| **Leaderboard per test code** (`leaderboard/{kodeTes}/entri/{muridId}`, names masked for students, own row highlighted) | Nothing | Missing |
+| **Placement test** at registration: "Mulai dari HSK 1" or "Ikut tes penempatan" + target HSK 2–6; later take one code of the level below the target | Register screen lets the student pick any HSK level directly | Missing (and the current behaviour contradicts v2) |
+| **Practice**: 1 package of 15 questions per level, built by the teacher from the bank | Exercises are built by **admins only** (web) and assigned per student with a due date; teachers can only assign | Partly, with the roles reversed |
+| **Settings**: pass marks and minimum number of codes editable by admin | `settings/org` has 5 booleans | Missing |
+| **Progress report**: "2 of 3 codes passed", test history with leaderboard rank; warning 5 = failed 2 tests in a row | Progress tab is a list of lessons/terms; no summary doc, no chart | Missing |
+| **Import of old results** from the "Nilai Simulasi HSK" project (`easy-study-hsk`) | Nothing; access to that project not yet checked | Missing, needs owner's go-ahead |
+| **Rules** for `leaderboard`, `pelaksanaan_tes` (tokens), `nilai` (teacher marks invalid) | Collections don't exist | Missing |
+| **Question bank target**: 731 questions (90 practice + 481 full-format codes + 160 extra HSK 3) via CSV/JSON + audio import tool | Paste and PDF/image/DOC OCR import only; no CSV/JSON, no batch audio; no form codes L1–T5 | Partly (import), Missing (forms) |
+
+### Dropped by v2 (no longer to be built)
+
+NA formula, NL/NU/NG, teacher rubric score, grade bands A–D, remedial retake.
+The §7 rows "P6 Teacher enters NG rubric", "P6 calculateFinalScore", "P6 Remedial
+retake" and "P6 Admin screen to edit weights" are superseded by the table above.
+
+### App features v2 now lists as out of scope
+
+| App feature | Where | v2 says | Suggested handling |
+|---|---|---|---|
+| Gradebook with letter grades A–E | `teacher_grades_tab.dart`, `grades` | "no report cards" | Keep for the centre's own use, leave out of the thesis, or hide behind a setting |
+| Evaluations (1–5 rating, strengths/improvements) | `evaluations`, `student_evaluations_section.dart` | "no teacher score (NG)" | Same |
+| Materials library | `materials` | "no learning materials" | Keep, outside the thesis (owner decision 2026-10-16) |
+| Parent role | `lib/features/parent/` | 3 roles only | Keep, outside the thesis (owner decision 2026-10-16) |
+| Class mode online/hybrid | `class_sessions.mode` | "no online classes" | Default to offline; hide the picker |
+
+### Screenshot readiness (assets brief, part B)
+
+| # | Screen the proposal needs | In the app today | Work before a screenshot is possible |
+|---|---|---|---|
+| 01 | Register with "Mulai dari HSK 1 / Ikut tes penempatan" + target level | Register exists; picks a level directly | Change the form (Phase 1 + placement) |
+| 02 | Sesi Kelas: level, time, room, teacher (info), seats left, **Daftar**, rejection reason | `student_join_session_section.dart`: "spots left", Join, "Class is full" dialog | Indonesian text, level filter, teacher name, seats; booking via function (Phase 2) |
+| 03 | R1 fill-in-the-blank with pembahasan | `reading_cloze` shows "coming soon"; no explanation field | Build R1 + pembahasan (Phase 5) |
+| 04 | T2/T3 hanzi typing question | Nothing | Build typing forms (Phase 5) |
+| 05 | Voucher Kursus: remaining, expiry, history, **Beli** | Term section shows remaining/expiry/visit history; no self-purchase | Add packages + Beli (Phase 4) |
+| 06 | Test token entry with code and duration | Nothing | Build (Phase 5 supervised flow) |
+| 07 | Leaderboard per code, masked names, own row highlighted | Nothing | Build (Phase 6) |
+| 08 | Laporan Progress: "2 dari 3", KPI cards, chart, per-skill, note, test history | List-style progress tab, no chart library | Build (Phase 7) |
+| 09 | Guru: Jadwal Mengajar with status, Mulai Sesi / Isi Absensi / Konfirmasi, availability | Classes tab + calendar; no status/check-in/confirm/availability | Build (Phase 2–3) |
+| 10 | Guru: supervision screen with big token and "left page" events | Nothing | Build (Phase 5) |
+| 11 | Admin: create jadwal with clash warning + free-slot suggestions | One-off session form, no clash check | Build jadwal + `checkScheduleConflict` (Phase 2) |
+| 12 | Admin: registration approval with placement choice | Nothing (accounts are active at once) | Build (Phase 1) |
+| 13 | Admin: promotion verification "HSK 3 → HSK 4" with 3 passed codes | Nothing | Build (Phase 6) |
+| 14 | Admin dashboard: pending registrations, unconfirmed schedules, late check-ins, unclosed sessions, students needing attention | Dashboard with totals, sign-ups, voucher alerts, finance | Rework after Phases 1–3 exist |
+| 15 | Admin: Pembayaran with lunas / pending / expire | Invoices tab with pending / paid / expired / failed (English) | Indonesian labels + filters (Phase 4) |
+
+Roughly: 2 screens exist in a usable form, 5 exist partly, 8 don't exist. Taking
+the 15 screenshots means building most of the Phase 1–7 UI first, on emulator
+demo data (the app has no emulator wiring yet).
+
+### New open questions for the owner (v2 §14 + assets brief)
+
+1. Test code format: what do the characters of `H3216917Z` mean, and who creates codes (admin types, or the app generates)?
+2. The old "Nilai Simulasi HSK" Firebase project `easy-study-hsk`: may Claude read it, and with which Google account? (Read-only export of `H3216917Z` results.)
+3. Do the existing simulation papers have digital audio files and answer keys?
+4. Voucher packages (names, sessions, validity, prices) and room names.
+5. Grades and Evaluations tabs: keep (outside the thesis), hide behind a setting, or remove?
+6. Teacher schedule screen: "Rekap Jam Mengajar" and "Ketersediaan" as tabs on one screen, or separate screens?
 
 ## 1. The short version
 
