@@ -6,6 +6,38 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-10-18 — Claude: app design system ("A, calmer"), emulator mode, seed script
+
+**What changed**
+- `lib/core/theme/app_theme.dart` rewritten: brand teal primary, green
+  secondary, yellow accent, warm off-white page, Lexend text, 12px radius
+  buttons, themed chips/segmented buttons/tabs/snackbars. Legacy names
+  `AppColors.navy` / `teal` now alias the brand colours so all ~360 call sites
+  restyle without edits. Sidebar shows the full logo lockup.
+- Emulator mode: `--dart-define=USE_EMULATORS=true` connects Auth, Firestore,
+  Functions and Storage to the local emulators (`lib/main.dart`,
+  `lib/core/constants/build_flags.dart`) and shows a red EMULATOR banner.
+- `scripts/seed_emulator.py`: demo data for the emulator (1 admin, 4 teachers,
+  30 students across HSK 1–6, 1 parent, terms, this week's sessions,
+  attendance, lessons, quizzes, exercises, results, grades, invoices).
+- Register subtitle: "as a student or parent".
+
+**Why**
+- Owner chose direction A for the landing and "A, calmer" inside. The emulator
+  lets Claude sign in locally with demo accounts to see and redesign screens
+  without touching live data, and is required by the thesis spec.
+
+**For review / lessons**
+- `flutter run -d web-server` serves whatever is already in `build/web` while
+  it compiles. A stale production bundle was served once on the emulator port
+  and the test admin login hit the live project for a few seconds (signed out
+  immediately, nothing changed). Mitigations: the EMULATOR banner, and
+  `rm -rf build/web` before an emulator run.
+- Run order: `firebase emulators:start --only auth,firestore,storage --project chinese-tracker`
+  → `python3 scripts/seed_emulator.py` → `flutter run ... --dart-define=USE_EMULATORS=true`.
+
+---
+
 ## 2026-10-18 — Claude: landing page rebuilt in brand direction "A · Pensil"
 
 **What changed**

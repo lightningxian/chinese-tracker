@@ -130,7 +130,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return AuthScaffold(
       title: 'Create account',
-      subtitle: 'Join Easy Study as a teacher or student',
+      subtitle: 'Join Easy Study as a student or parent',
       showBackButton: true,
       onBack: () => context.pop(),
       child: Column(

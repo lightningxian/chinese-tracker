@@ -1,130 +1,217 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+/// Design system for the signed-in app: direction "A · Pensil, calmer".
+///
+/// Same brand as the landing page (`lib/features/landing/landing_brand.dart`,
+/// colours from the logo) on white surfaces with less decoration: teal is the
+/// working colour, yellow is a highlight, green means success.
+///
+/// `navy` and `teal` are legacy names kept so the ~360 existing call sites keep
+/// compiling; they now resolve to the brand primary / secondary. New code
+/// should use `primary`, `secondary`, `accent`.
 abstract final class AppColors {
-  static const navy = Color(0xFF1B2A4A);
-  static const navyLight = Color(0xFF2A3F66);
-  static const teal = Color(0xFF2D6A7E);
-  static const tealLight = Color(0xFF3D8A9E);
-  static const surface = Color(0xFFF5F6F8);
-  static const card = Colors.white;
-  static const textPrimary = Color(0xFF1A1D26);
-  static const textSecondary = Color(0xFF5C6370);
-  static const border = Color(0xFFE2E5EB);
-  static const success = Color(0xFF2E7D5A);
-  static const error = Color(0xFFB53A3A);
-  static const brandYellow = Color(0xFFF5B800);
+  // Brand (from assets/brand/README.md)
+  static const primary = Color(0xFF006B54); // teal: lettering, pencil tip
+  static const primaryDark = Color(0xFF004D3C);
+  static const secondary = Color(0xFF0A8A4E); // green, darkened for text on white
+  static const secondaryLight = Color(0xFF3DBB7A);
+  static const accent = Color(0xFFF5B800); // yellow: pencil body
+  static const accentSoft = Color(0xFFFFF4CC);
+  static const ink = Color(0xFF16211C);
+
+  // Legacy names → brand
+  static const navy = primary;
+  static const navyLight = Color(0xFF0E8A6D);
+  static const teal = secondary;
+  static const tealLight = secondaryLight;
+  static const brandYellow = accent;
   static const brandGreen = Color(0xFF00A651);
 
-  // "LinguaHub" restyle tokens (docs/CURSOR_REDESIGN_PROMPT.md).
-  static const sidebarBg = Color(0xFFFFFFFF);
-  static const sidebarActive = Color(0xFF14181F);
-  static const pageBg = Color(0xFFF6F7F8);
+  // Surfaces and text
+  static const surface = Color(0xFFF7F6F1); // warm off-white page
+  static const pageBg = surface;
+  static const card = Colors.white;
+  static const border = Color(0xFFE4E2DA);
+  static const textPrimary = ink;
+  static const textSecondary = Color(0xFF5B665F);
+  static const success = secondary;
+  static const error = Color(0xFFB53A3A);
 
-  // Stat-chip pastel tints (background / foreground pairs).
-  static const chipGreenBg = Color(0xFFE7F5EF);
-  static const chipGreenFg = Color(0xFF2E7D5A);
-  static const chipBlueBg = Color(0xFFE8F0FE);
-  static const chipBlueFg = Color(0xFF2B5FB0);
+  // Sidebar
+  static const sidebarBg = Colors.white;
+  static const sidebarActive = primary;
+
+  // Stat-chip tints (background / foreground pairs)
+  static const chipGreenBg = Color(0xFFE3F5EA);
+  static const chipGreenFg = secondary;
+  static const chipBlueBg = Color(0xFFE6F1EE);
+  static const chipBlueFg = primary;
   static const chipPurpleBg = Color(0xFFF0EAFB);
   static const chipPurpleFg = Color(0xFF6B4FBF);
-  static const chipAmberBg = Color(0xFFFDF3E0);
-  static const chipAmberFg = Color(0xFFB7791F);
+  static const chipAmberBg = accentSoft;
+  static const chipAmberFg = Color(0xFF8A5A12);
 }
 
 abstract final class AppTheme {
   static ThemeData light() {
+    const radius = 12.0;
     final base = ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: AppColors.teal,
-        primary: AppColors.navy,
+        seedColor: AppColors.primary,
+        primary: AppColors.primary,
         onPrimary: Colors.white,
-        secondary: AppColors.teal,
-        surface: AppColors.surface,
+        secondary: AppColors.secondary,
+        onSecondary: Colors.white,
+        tertiary: AppColors.accent,
+        onTertiary: AppColors.ink,
+        surface: AppColors.card,
+        onSurface: AppColors.textPrimary,
         error: AppColors.error,
       ),
       scaffoldBackgroundColor: AppColors.pageBg,
       cardTheme: CardThemeData(
         color: AppColors.card,
         elevation: 0,
-        shadowColor: Colors.black.withValues(alpha: 0.04),
+        margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           side: const BorderSide(color: AppColors.border),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: AppColors.navy,
+          backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius)),
+          textStyle: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          elevation: 0,
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius)),
           textStyle: const TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.navy,
-          side: const BorderSide(color: AppColors.border),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
+          foregroundColor: AppColors.primary,
+          side: const BorderSide(color: AppColors.primary, width: 1.2),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius)),
           textStyle: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.primary,
+          textStyle: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+      ),
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: AppColors.accent,
+        foregroundColor: AppColors.ink,
+        elevation: 0,
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: AppColors.card,
+        selectedColor: AppColors.accentSoft,
+        side: const BorderSide(color: AppColors.border),
+        labelStyle: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w500),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+        showCheckmark: false,
+      ),
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: ButtonStyle(
+          backgroundColor: WidgetStateProperty.resolveWith(
+            (s) => s.contains(WidgetState.selected) ? AppColors.accentSoft : AppColors.card,
+          ),
+          foregroundColor: WidgetStateProperty.resolveWith(
+            (s) => s.contains(WidgetState.selected) ? AppColors.primary : AppColors.textSecondary,
+          ),
+          side: const WidgetStatePropertyAll(BorderSide(color: AppColors.border)),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: const Color(0xFFFAFBFC),
+        fillColor: const Color(0xFFFBFAF6),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(radius),
           borderSide: const BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(radius),
           borderSide: const BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.teal, width: 1.5),
+          borderRadius: BorderRadius.circular(radius),
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.6),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.card,
-        foregroundColor: AppColors.navy,
+        foregroundColor: AppColors.textPrimary,
         elevation: 0,
+        scrolledUnderElevation: 0,
         centerTitle: false,
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.card,
-        indicatorColor: AppColors.teal.withValues(alpha: 0.15),
+        indicatorColor: AppColors.accentSoft,
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          final selected = states.contains(WidgetState.selected);
+          return IconThemeData(color: selected ? AppColors.primary : AppColors.textSecondary);
+        }),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: AppColors.navy,
-            );
+            return const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary);
           }
           return const TextStyle(fontSize: 12, color: AppColors.textSecondary);
         }),
+      ),
+      tabBarTheme: const TabBarThemeData(
+        labelColor: AppColors.primary,
+        unselectedLabelColor: AppColors.textSecondary,
+        indicatorColor: AppColors.accent,
+        indicatorSize: TabBarIndicatorSize.label,
+      ),
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        color: AppColors.primary,
+        linearTrackColor: AppColors.accentSoft,
+      ),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: AppColors.ink,
+        contentTextStyle: const TextStyle(color: Colors.white),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius)),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: AppColors.card,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       ),
       dividerTheme: const DividerThemeData(color: AppColors.border, thickness: 1),
     );
 
     // Global ~12% text scale is applied in `app.dart` via [TextScaler] — not
     // `fontSizeFactor` here (that assert-fails on some TextTheme styles).
-    final textTheme = GoogleFonts.plusJakartaSansTextTheme(base.textTheme).apply(
+    // Lexend is the brand body face (same as the landing page); headings get
+    // a heavier weight instead of a second family to keep the inside calm.
+    final textTheme = GoogleFonts.lexendTextTheme(base.textTheme).apply(
       bodyColor: AppColors.textPrimary,
       displayColor: AppColors.textPrimary,
     );
     final chineseFallback = GoogleFonts.notoSansSc().fontFamily!;
 
-    TextStyle? withChinese(TextStyle? style) => style?.copyWith(
+    TextStyle? withChinese(TextStyle? style, {FontWeight? weight}) => style?.copyWith(
           fontFamilyFallback: [chineseFallback],
+          fontWeight: weight ?? style.fontWeight,
         );
 
     return base.copyWith(
@@ -132,15 +219,15 @@ abstract final class AppTheme {
         bodyLarge: withChinese(textTheme.bodyLarge),
         bodyMedium: withChinese(textTheme.bodyMedium),
         bodySmall: withChinese(textTheme.bodySmall),
-        titleLarge: withChinese(textTheme.titleLarge),
-        titleMedium: withChinese(textTheme.titleMedium),
-        titleSmall: withChinese(textTheme.titleSmall),
-        headlineLarge: withChinese(textTheme.headlineLarge),
-        headlineMedium: withChinese(textTheme.headlineMedium),
-        headlineSmall: withChinese(textTheme.headlineSmall),
-        displayLarge: withChinese(textTheme.displayLarge),
-        displayMedium: withChinese(textTheme.displayMedium),
-        displaySmall: withChinese(textTheme.displaySmall),
+        titleLarge: withChinese(textTheme.titleLarge, weight: FontWeight.w700),
+        titleMedium: withChinese(textTheme.titleMedium, weight: FontWeight.w600),
+        titleSmall: withChinese(textTheme.titleSmall, weight: FontWeight.w600),
+        headlineLarge: withChinese(textTheme.headlineLarge, weight: FontWeight.w700),
+        headlineMedium: withChinese(textTheme.headlineMedium, weight: FontWeight.w700),
+        headlineSmall: withChinese(textTheme.headlineSmall, weight: FontWeight.w700),
+        displayLarge: withChinese(textTheme.displayLarge, weight: FontWeight.w700),
+        displayMedium: withChinese(textTheme.displayMedium, weight: FontWeight.w700),
+        displaySmall: withChinese(textTheme.displaySmall, weight: FontWeight.w700),
         labelLarge: withChinese(textTheme.labelLarge),
         labelMedium: withChinese(textTheme.labelMedium),
         labelSmall: withChinese(textTheme.labelSmall),

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/constants/app_constants.dart';
+import 'core/constants/build_flags.dart';
 import 'services/auth_service.dart';
 import 'services/firestore_service.dart';
 import 'services/worksheet_import_service.dart';
@@ -89,11 +90,20 @@ class _ChineseTrackerAppState extends State<ChineseTrackerApp> {
             routerConfig: router,
             debugShowCheckedModeBanner: false,
             builder: (context, child) {
-              return MediaQuery(
+              final scaled = MediaQuery(
                 data: MediaQuery.of(context).copyWith(
                   textScaler: const TextScaler.linear(1.12),
                 ),
                 child: child ?? const SizedBox.shrink(),
+              );
+              if (!BuildFlags.useEmulators) return scaled;
+              // Loud reminder that this build talks to local emulators, so a
+              // stale production bundle is never mistaken for it.
+              return Banner(
+                message: 'EMULATOR',
+                location: BannerLocation.topStart,
+                color: const Color(0xFFB53A3A),
+                child: scaled,
               );
             },
           );

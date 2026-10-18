@@ -148,6 +148,15 @@ Commit author preference (via env vars, not global git config):
 
 Update this section when you push from Mac or PC.
 
+### 2026-10-18 (later) — Claude: design system + emulator mode
+
+- Signed-in app restyled through the theme ("A, calmer": teal/green/yellow on
+  warm white, Lexend). Emulator mode (`USE_EMULATORS`) + `scripts/seed_emulator.py`
+  so Claude can sign in locally with demo accounts. Cursor retired; docs renamed
+  (CHANGELOG, SESSION_LOG, BACKLOG). Thesis spec v2 compared in
+  `THESIS_FEATURE_AUDIT.md` §0; owner answered the open questions there.
+- Next: screen-by-screen polish on the new theme, then thesis Phase 1.
+
 ### 2026-10-18 — Claude: landing page rebuilt (direction A)
 
 - New landing page in the logo's yellow/teal/green with the pencil mascot,

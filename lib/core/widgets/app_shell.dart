@@ -193,35 +193,12 @@ class _AppSidebar extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    const AppLogo(variant: AppLogoVariant.mascot, height: 32),
-                    const SizedBox(width: 10),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            AppConstants.brandName,
-                            style: TextStyle(
-                              color: AppColors.textPrimary,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 14,
-                            ),
-                          ),
-                          Text(
-                            AppConstants.brandNameChinese,
-                            style: TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                // Full brand lockup (calligraphy + EASY STUDY badge + pencil).
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: AppLogo(variant: AppLogoVariant.primary, height: 46),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 18),
                 Row(
                   children: [
                     AppUserAvatar(
