@@ -66,14 +66,14 @@ Roughly: 2 screens exist in a usable form, 5 exist partly, 8 don't exist. Taking
 the 15 screenshots means building most of the Phase 1–7 UI first, on emulator
 demo data (the app has no emulator wiring yet).
 
-### New open questions for the owner (v2 §14 + assets brief)
+### Owner's answers (2026-10-18)
 
-1. Test code format: what do the characters of `H3216917Z` mean, and who creates codes (admin types, or the app generates)?
-2. The old "Nilai Simulasi HSK" Firebase project `easy-study-hsk`: may Claude read it, and with which Google account? (Read-only export of `H3216917Z` results.)
-3. Do the existing simulation papers have digital audio files and answer keys?
-4. Voucher packages (names, sessions, validity, prices) and room names.
-5. Grades and Evaluations tabs: keep (outside the thesis), hide behind a setting, or remove?
-6. Teacher schedule screen: "Rekap Jam Mengajar" and "Ketersediaan" as tabs on one screen, or separate screens?
+1. **Test code:** treat it as a random string. The **admin types the code** and also records the **HSK level** and the **year the code was released** as separate fields. Do not parse level from the code (the spec's "first two characters give the level" does not hold).
+2. **Old results project `easy-study-hsk`:** the owner has **no access**. The import script is dropped. The `H3216917Z` leaderboard for the proposal must come from a file the owner supplies, or be demo data.
+3. **Simulation papers:** digital audio and answer keys exist. The owner will send examples; design the import tool (CSV/JSON + audio) after seeing them.
+4. **Voucher package fields:** name **in Chinese**, validity (e.g. 2 months), **8 or 16 sessions**, and the day/date the student comes (their class slot). Prices and room names: still to confirm when Phase 4 / Phase 1 start.
+5. **Grades and Evaluations tabs:** **keep** them (outside the thesis text).
+6. Teacher schedule screen tabs vs separate screens: ask when Phase 2 starts.
 
 ## 1. The short version
 
