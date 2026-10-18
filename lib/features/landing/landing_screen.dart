@@ -462,23 +462,16 @@ class _HeroArt extends StatelessWidget {
         alignment: Alignment.center,
         clipBehavior: Clip.none,
         children: [
-          // First character of `assets/brand/mascot_writing.png` (易华文教中心).
-          // The glyph spans x 6–93 of the 827px-wide image, so clip at 12%.
+          // Big 易 ("easy", the first character of 易华). Drawn as text in the
+          // app's CJK font: the logo's cursive 易 looks like a fragment on its own.
           Positioned(
             left: 0,
             right: height * 0.18,
             child: Center(
-              child: ClipRect(
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  widthFactor: 0.12,
-                  child: Image.asset(
-                    'assets/brand/mascot_writing.png',
-                    height: hanHeight,
-                    fit: BoxFit.fitHeight,
-                    filterQuality: FilterQuality.medium,
-                  ),
-                ),
+              child: Text(
+                '易',
+                style: LandingBrand.han(size: hanHeight * 0.92, color: LandingBrand.green)
+                    .copyWith(fontWeight: FontWeight.w900, height: 1),
               ),
             ),
           ),
