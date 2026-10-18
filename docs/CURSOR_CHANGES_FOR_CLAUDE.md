@@ -6,6 +6,32 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-10-18 — Claude: landing page rebuilt in brand direction "A · Pensil"
+
+**What changed**
+- `lib/features/landing/landing_screen.dart` rewritten; `landing_brand.dart`
+  added (brand yellow/teal/green/black from the logo, Lilita One display,
+  Lexend body via google_fonts, flat "sticker" shadows).
+- Sections: nav (logo, anchors), yellow hero with the logo calligraphy 易
+  cropped from `mascot_writing.png`, pencil mascot and 你好 bubble; scallop
+  edge (pencil tip); teal HSK ruler (HSK 1–6 word counts); **About Easy Study**
+  (new: HSK-standard centre, exercises per level, past exam questions from the
+  real test, face-to-face classes at the centre); features; roles + 8/16
+  session tickets; get-the-app (web); CTA; black footer.
+- Copy corrected per owner: classes are at the centre only (no "from home").
+- Stock Unsplash photos and the YouTube block are no longer on the page
+  (`landing_media.dart` and the embed widget remain for a future real video).
+
+**Why**
+- Owner found the old navy page plain and off-brand; chose direction A for the
+  landing and "A, calmer" for the signed-in app (next: design system).
+
+**For review**
+- Verified locally at 1280px and 375px. `flutter analyze` 0 errors/warnings.
+- Fonts load from Google Fonts at runtime (same as the rest of the app).
+
+---
+
 ## 2026-10-17 — Claude: security fixes, emulator + rules tests, billing problem found
 
 **What changed**

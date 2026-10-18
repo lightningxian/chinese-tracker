@@ -1,17 +1,22 @@
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/app_constants.dart';
-import '../../core/theme/app_theme.dart';
-import '../../core/widgets/app_card.dart';
 import '../../core/widgets/app_logo.dart';
-import 'landing_media.dart';
-import 'widgets/landing_youtube_embed.dart';
+import 'landing_brand.dart';
 
 /// Debug → one-click test login; release → real login.
 String get _signInRoute => kDebugMode ? '/dev-login' : '/login';
+
+const _maxWidth = 1120.0;
+const _wideBreak = 900.0;
+const _midBreak = 600.0;
+
+double _gutter(double width) => width >= _wideBreak ? 48 : 20;
 
 class LandingScreen extends StatefulWidget {
   const LandingScreen({super.key});
@@ -23,7 +28,9 @@ class LandingScreen extends StatefulWidget {
 class _LandingScreenState extends State<LandingScreen> {
   final _scroll = ScrollController();
   final _featuresKey = GlobalKey();
+  final _levelsKey = GlobalKey();
   final _rolesKey = GlobalKey();
+  final _aboutKey = GlobalKey();
 
   void _scrollTo(GlobalKey key) {
     final ctx = key.currentContext;
@@ -43,379 +50,495 @@ class _LandingScreenState extends State<LandingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final showLinks = width >= 760;
+
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: LandingBrand.white,
       body: CustomScrollView(
         controller: _scroll,
         slivers: [
           SliverAppBar(
             pinned: true,
             elevation: 0,
-            backgroundColor: AppColors.card.withValues(alpha: 0.95),
+            scrolledUnderElevation: 0,
+            backgroundColor: LandingBrand.white,
             surfaceTintColor: Colors.transparent,
-            toolbarHeight: 66,
-            title: const _NavBrand(),
-            actions: [
-              if (MediaQuery.sizeOf(context).width >= 520) ...[
-                TextButton(
-                  onPressed: () => _scrollTo(_featuresKey),
-                  child: const Text('Features'),
-                ),
-                TextButton(
-                  onPressed: () => _scrollTo(_rolesKey),
-                  child: const Text('For you'),
-                ),
-              ],
-              TextButton(
-                onPressed: () => context.go(_signInRoute),
-                child: const Text('Sign in'),
+            toolbarHeight: 72,
+            titleSpacing: _gutter(width),
+            title: AppLogo(
+              variant: AppLogoVariant.primary,
+              height: width >= _midBreak ? 54 : 44,
+            ),
+            bottom: const PreferredSize(
+              preferredSize: Size.fromHeight(3),
+              child: ColoredBox(
+                color: LandingBrand.black,
+                child: SizedBox(height: 3, width: double.infinity),
               ),
+            ),
+            actions: [
+              if (showLinks) ...[
+                _NavLink('Classes', () => _scrollTo(_featuresKey)),
+                _NavLink('HSK levels', () => _scrollTo(_levelsKey)),
+                _NavLink('About', () => _scrollTo(_aboutKey)),
+                _NavLink('For parents', () => _scrollTo(_rolesKey)),
+                _NavLink('Sign in', () => context.go(_signInRoute)),
+                const SizedBox(width: 8),
+              ] else
+                _NavLink('Sign in', () => context.go(_signInRoute)),
               Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: FilledButton(
+                padding: EdgeInsets.only(right: _gutter(width)),
+                child: _BrandButton(
+                  label: 'Sign up',
+                  compact: true,
                   onPressed: () => context.go('/register'),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.navy,
-                  ),
-                  child: const Text('Get started'),
                 ),
               ),
             ],
           ),
-          SliverToBoxAdapter(child: _HeroSection()),
-          SliverToBoxAdapter(child: _TrustBar()),
+          const SliverToBoxAdapter(child: _HeroSection()),
+          const SliverToBoxAdapter(child: _Scallop()),
           SliverToBoxAdapter(
-            child: KeyedSubtree(key: _featuresKey, child: _FeaturesSection()),
+            child: KeyedSubtree(key: _levelsKey, child: const _RulerSection()),
           ),
           SliverToBoxAdapter(
-            child: KeyedSubtree(key: _rolesKey, child: _RolesSection()),
+            child: KeyedSubtree(key: _aboutKey, child: const _AboutSection()),
           ),
-          SliverToBoxAdapter(child: _HowItWorksSection()),
-          SliverToBoxAdapter(child: _VisualShowcaseSection()),
-          if (kIsWeb) SliverToBoxAdapter(child: _DownloadAppSection()),
-          SliverToBoxAdapter(child: _CtaSection()),
-          SliverToBoxAdapter(child: const _LandingFooter()),
+          SliverToBoxAdapter(
+            child: KeyedSubtree(
+              key: _featuresKey,
+              child: const _FeaturesSection(),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: KeyedSubtree(key: _rolesKey, child: const _RolesSection()),
+          ),
+          if (kIsWeb) const SliverToBoxAdapter(child: _DownloadAppSection()),
+          const SliverToBoxAdapter(child: _CtaSection()),
+          const SliverToBoxAdapter(child: _LandingFooter()),
         ],
       ),
     );
   }
 }
 
-class _NavBrand extends StatelessWidget {
-  const _NavBrand();
+// ---------------------------------------------------------------------------
+// Shared pieces
+// ---------------------------------------------------------------------------
+
+class _NavLink extends StatelessWidget {
+  const _NavLink(this.label, this.onTap);
+
+  final String label;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const AppLogo(variant: AppLogoVariant.mascot, height: 32),
-        const SizedBox(width: 8),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              AppConstants.brandName,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.navy,
-                  ),
-            ),
-            const Text(
-              AppConstants.brandNameChinese,
-              style: TextStyle(fontSize: 10, color: AppColors.textSecondary),
-            ),
-          ],
-        ),
-      ],
+    return TextButton(
+      onPressed: onTap,
+      style: TextButton.styleFrom(
+        foregroundColor: LandingBrand.ink,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+      ),
+      child: Text(
+        label,
+        style: LandingBrand.body(size: 15, weight: FontWeight.w500),
+      ),
     );
   }
 }
 
-class _HeroSection extends StatelessWidget {
+enum _Tone { teal, white, yellow }
+
+class _BrandButton extends StatelessWidget {
+  const _BrandButton({
+    required this.label,
+    required this.onPressed,
+    this.tone = _Tone.teal,
+    this.icon,
+    this.compact = false,
+  });
+
+  final String label;
+  final VoidCallback onPressed;
+  final _Tone tone;
+  final IconData? icon;
+  final bool compact;
+
   @override
   Widget build(BuildContext context) {
-    final isWide = MediaQuery.sizeOf(context).width >= 900;
-    return Container(
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.navy, Color(0xFF14181F)],
-        ),
+    final (bg, fg) = switch (tone) {
+      _Tone.teal => (LandingBrand.teal, LandingBrand.white),
+      _Tone.white => (LandingBrand.white, LandingBrand.teal),
+      _Tone.yellow => (LandingBrand.yellow, LandingBrand.teal),
+    };
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        boxShadow: LandingBrand.lift(compact ? 3 : 4),
       ),
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: Opacity(
-              opacity: 0.12,
-              child: Image.network(
-                LandingMedia.heroBackground,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-              ),
-            ),
-          ),
-          Padding(
+      child: Material(
+        color: bg,
+        shape: const StadiumBorder(
+          side: BorderSide(color: LandingBrand.black, width: 3),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onPressed,
+          child: Padding(
             padding: EdgeInsets.symmetric(
-              horizontal: isWide ? 48 : 24,
-              vertical: isWide ? 72 : 48,
+              horizontal: compact ? 16 : 24,
+              vertical: compact ? 7 : 11,
             ),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1120),
-                child: isWide
-                    ? Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Expanded(child: _heroCopy(context)),
-                          const SizedBox(width: 48),
-                          Expanded(child: _HeroPreviewCard()),
-                        ],
-                      )
-                    : Column(
-                        children: [
-                          const _HeroPreviewCard(),
-                          const SizedBox(height: 32),
-                          _heroCopy(context),
-                        ],
-                      ),
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (icon != null) ...[
+                  Icon(icon, size: 20, color: fg),
+                  const SizedBox(width: 8),
+                ],
+                Text(
+                  label,
+                  style: LandingBrand.display(
+                    size: compact ? 15 : 18,
+                    color: fg,
+                    height: 1.2,
+                  ),
+                ),
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
+}
 
-  Widget _heroCopy(BuildContext context) {
+class _Section extends StatelessWidget {
+  const _Section({
+    required this.child,
+    this.color = LandingBrand.white,
+    this.vertical = 64,
+  });
+
+  final Widget child;
+  final Color color;
+  final double vertical;
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    return ColoredBox(
+      color: color,
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: _gutter(width),
+          vertical: vertical,
+        ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: _maxWidth),
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle(this.title, {this.sub, this.color = LandingBrand.teal, this.subColor = LandingBrand.ink2});
+
+  final String title;
+  final String? sub;
+  final Color color;
+  final Color subColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final wide = MediaQuery.sizeOf(context).width >= _wideBreak;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _Eyebrow(
-          label: 'Mandarin learning platform',
-          background: AppColors.teal.withValues(alpha: 0.25),
-          color: const Color(0xFF8EC5D4),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'Learn Chinese.\nTeach with confidence.',
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
-                height: 1.12,
-                fontSize: 40,
-              ),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'One platform for your Chinese course — HSK-aligned lessons, live '
-          'classes, progress tracking, and online payments. For students, '
-          'parents, teachers, and your centre.',
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.72),
-            fontSize: 17,
-            height: 1.55,
+        Text(title, style: LandingBrand.display(size: wide ? 40 : 30, color: color, height: 1.05)),
+        if (sub != null) ...[
+          const SizedBox(height: 8),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560),
+            child: Text(sub!, style: LandingBrand.body(size: 16, color: subColor)),
           ),
-        ),
-        const SizedBox(height: 28),
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            FilledButton(
-              onPressed: () => context.go('/register'),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.teal,
-                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
-              ),
-              child: const Text('Create free account →'),
-            ),
-            OutlinedButton(
-              onPressed: () => context.go(_signInRoute),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.white,
-                side: BorderSide(color: Colors.white.withValues(alpha: 0.35)),
-                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
-              ),
-              child: const Text('Sign in'),
-            ),
-          ],
-        ),
-        const SizedBox(height: 34),
-        const Wrap(
-          spacing: 28,
-          runSpacing: 12,
-          children: [
-            _HeroStat(value: 'HSK 1–6', label: 'Structured levels'),
-            _HeroStat(value: '8 / 16', label: 'Sessions per term'),
-            _HeroStat(value: 'Web + mobile', label: 'Learn anywhere'),
-          ],
-        ),
+        ],
       ],
     );
   }
 }
 
-class _HeroPreviewCard extends StatelessWidget {
-  const _HeroPreviewCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.35),
-            blurRadius: 60,
-            offset: const Offset(0, 30),
-          ),
-        ],
-      ),
-      child: Column(
-        children: const [
-          _PreviewRow(
-            icon: Icons.check_circle_outline,
-            iconBg: Color(0xFFE7F5EF),
-            iconColor: AppColors.success,
-            title: 'Lesson 3 · Greetings',
-            subtitle: '你好 · Completed',
-            pill: '92%',
-          ),
-          _PreviewRow(
-            icon: Icons.headphones_outlined,
-            iconBg: Color(0xFFE8F0FE),
-            iconColor: Color(0xFF2B5FB0),
-            title: 'Listening practice',
-            subtitle: 'HSK 2 · Due today',
-          ),
-          _PreviewRow(
-            icon: Icons.videocam_outlined,
-            iconBg: Color(0xFFF0EAFB),
-            iconColor: Color(0xFF6B4FBF),
-            title: 'Live class · 16:00',
-            subtitle: 'Beginner A · Room A',
-          ),
-          _PreviewRow(
-            icon: Icons.payments_outlined,
-            iconBg: Color(0xFFFDF3E0),
-            iconColor: Color(0xFFB7791F),
-            title: '8-session package',
-            subtitle: 'Paid · Rp 800,000',
-            pill: 'Active',
-            isLast: true,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PreviewRow extends StatelessWidget {
-  const _PreviewRow({
-    required this.icon,
-    required this.iconBg,
-    required this.iconColor,
-    required this.title,
-    required this.subtitle,
-    this.pill,
-    this.isLast = false,
+/// Lays children in equal-width columns that collapse as the width shrinks.
+class _ResponsiveGrid extends StatelessWidget {
+  const _ResponsiveGrid({
+    required this.children,
+    this.minItemWidth = 220,
+    this.maxColumns = 4,
   });
 
-  final IconData icon;
-  final Color iconBg;
-  final Color iconColor;
-  final String title;
-  final String subtitle;
-  final String? pill;
-  final bool isLast;
+  static const gap = 18.0;
+
+  final List<Widget> children;
+  final double minItemWidth;
+  final int maxColumns;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: isLast ? 0 : 10),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          border: Border.all(color: AppColors.border),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final w = constraints.maxWidth;
+        var cols = ((w + gap) / (minItemWidth + gap)).floor().clamp(1, maxColumns);
+        if (cols > children.length) cols = children.length;
+        final itemW = (w - gap * (cols - 1)) / cols;
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
           children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: iconBg,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, color: iconColor, size: 20),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w700, fontSize: 14)),
-                  Text(subtitle,
-                      style: const TextStyle(
-                          fontSize: 12, color: AppColors.textSecondary)),
-                ],
-              ),
-            ),
-            if (pill != null)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE7F5EF),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  pill!,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.success,
-                  ),
-                ),
-              ),
+            for (final c in children) SizedBox(width: itemW, child: c),
           ],
-        ),
-      ),
+        );
+      },
     );
   }
 }
 
-class _HeroStat extends StatelessWidget {
-  const _HeroStat({required this.value, required this.label});
+// ---------------------------------------------------------------------------
+// Hero
+// ---------------------------------------------------------------------------
 
-  final String value;
+class _HeroSection extends StatelessWidget {
+  const _HeroSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final wide = width >= _wideBreak;
+
+    final copy = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _Chip('HSK 1–6 · kids, teens and adults'),
+        const SizedBox(height: 18),
+        _Headline(size: wide ? 64 : 42),
+        const SizedBox(height: 16),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 440),
+          child: Text(
+            'Face-to-face classes at our centre, exercises written to the HSK '
+            'standard, and progress parents can see in the app.',
+            style: LandingBrand.body(size: 17, height: 1.55),
+          ),
+        ),
+        const SizedBox(height: 26),
+        Wrap(
+          spacing: 14,
+          runSpacing: 14,
+          children: [
+            _BrandButton(
+              label: 'Start learning',
+              onPressed: () => context.go('/register'),
+            ),
+            _BrandButton(
+              label: "I'm a parent",
+              tone: _Tone.white,
+              onPressed: () => context.go('/register'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        Text(
+          'Already a student? Ask your teacher for the link code when you register.',
+          style: LandingBrand.body(size: 13, color: LandingBrand.ink2),
+        ),
+      ],
+    );
+
+    final art = _HeroArt(height: wide ? 420 : 280);
+
+    return _Section(
+      color: LandingBrand.yellow,
+      vertical: wide ? 64 : 40,
+      child: wide
+          ? Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(flex: 11, child: copy),
+                const SizedBox(width: 24),
+                Expanded(flex: 9, child: art),
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [copy, const SizedBox(height: 28), art],
+            ),
+    );
+  }
+}
+
+class _Chip extends StatelessWidget {
+  const _Chip(this.label);
+
   final String label;
 
   @override
   Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+      decoration: BoxDecoration(
+        color: LandingBrand.white,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: LandingBrand.black, width: 2),
+      ),
+      child: Text(
+        label,
+        style: LandingBrand.body(size: 14, weight: FontWeight.w500, height: 1.3),
+      ),
+    );
+  }
+}
+
+/// "Mandarin made easy." with the last word outlined in teal on white.
+class _Headline extends StatelessWidget {
+  const _Headline({required this.size});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final base = LandingBrand.display(size: size, height: 0.95);
+    final stroke = base.copyWith(
+      foreground: Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3
+        ..color = LandingBrand.teal,
+    );
+    final fill = base.copyWith(color: LandingBrand.white);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w800,
-            fontSize: 20,
+        Text('Mandarin', style: base),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Text('made ', style: base),
+            Stack(
+              children: [
+                Text('easy.', style: fill),
+                Text('easy.', style: stroke),
+              ],
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// Big brush 易 (cropped from the logo calligraphy), pencil mascot, bubble.
+class _HeroArt extends StatelessWidget {
+  const _HeroArt({required this.height});
+
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    final hanHeight = height * 0.78;
+    final pencilHeight = height * 0.8;
+    return SizedBox(
+      height: height,
+      child: Stack(
+        alignment: Alignment.center,
+        clipBehavior: Clip.none,
+        children: [
+          // First character of `assets/brand/mascot_writing.png` (易华文教中心).
+          // The glyph spans x 6–93 of the 827px-wide image, so clip at 12%.
+          Positioned(
+            left: 0,
+            right: height * 0.18,
+            child: Center(
+              child: ClipRect(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  widthFactor: 0.12,
+                  child: Image.asset(
+                    'assets/brand/mascot_writing.png',
+                    height: hanHeight,
+                    fit: BoxFit.fitHeight,
+                    filterQuality: FilterQuality.medium,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            right: height * 0.02,
+            bottom: 0,
+            child: Transform.rotate(
+              angle: 8 * math.pi / 180,
+              child: Image.asset(
+                'assets/brand/mascot_pencil.png',
+                height: pencilHeight,
+                fit: BoxFit.fitHeight,
+                filterQuality: FilterQuality.medium,
+              ),
+            ),
+          ),
+          Positioned(
+            top: height * 0.02,
+            left: height * 0.04,
+            child: const _SpeechBubble(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SpeechBubble extends StatelessWidget {
+  const _SpeechBubble();
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          padding: const EdgeInsets.fromLTRB(18, 8, 18, 6),
+          decoration: LandingBrand.card(radius: 22, liftBy: 4),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('你好!', style: LandingBrand.han(size: 30)),
+              Text(
+                'nǐ hǎo',
+                style: LandingBrand.body(size: 13, color: LandingBrand.ink2, height: 1.2),
+              ),
+            ],
           ),
         ),
-        Text(
-          label,
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.55),
-            fontSize: 13,
+        Positioned(
+          bottom: -11,
+          right: 24,
+          child: Transform.rotate(
+            angle: math.pi / 4,
+            child: Container(
+              width: 20,
+              height: 20,
+              decoration: const BoxDecoration(
+                color: LandingBrand.white,
+                border: Border(
+                  right: BorderSide(color: LandingBrand.black, width: 3),
+                  bottom: BorderSide(color: LandingBrand.black, width: 3),
+                ),
+              ),
+            ),
           ),
         ),
       ],
@@ -423,557 +546,467 @@ class _HeroStat extends StatelessWidget {
   }
 }
 
-class _TrustBar extends StatelessWidget {
-  static const _items = [
-    ('📗', 'HSK 1–6', 'curriculum-aligned'),
-    ('🗓️', '8 / 16 sessions', 'flexible terms'),
-    ('💳', 'Midtrans', 'cards & installments'),
-    ('📱', 'Web + Android + iPhone', ''),
-  ];
+/// The wavy line between the pencil's yellow body and its teal tip.
+class _Scallop extends StatelessWidget {
+  const _Scallop();
 
   @override
   Widget build(BuildContext context) {
-    final isWide = MediaQuery.sizeOf(context).width >= 720;
-    return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: isWide ? 48 : 20,
-        vertical: 26,
-      ),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1120),
-          child: Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 14,
-            runSpacing: 14,
-            children: [
-              for (final item in _items)
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: AppColors.card,
-                    border: Border.all(color: AppColors.border),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text('${item.$1} ${item.$2}',
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w600, color: AppColors.navy)),
-                      if (item.$3.isNotEmpty) ...[
-                        const SizedBox(width: 6),
-                        Text(item.$3,
-                            style: const TextStyle(
-                                fontSize: 13, color: AppColors.textSecondary)),
-                      ],
-                    ],
-                  ),
-                ),
-            ],
+    return const SizedBox(
+      height: 26,
+      width: double.infinity,
+      child: CustomPaint(painter: _ScallopPainter()),
+    );
+  }
+}
+
+class _ScallopPainter extends CustomPainter {
+  const _ScallopPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawRect(Offset.zero & size, Paint()..color = LandingBrand.teal);
+    final yellow = Paint()..color = LandingBrand.yellow;
+    const step = 34.0;
+    for (var x = step / 2; x < size.width + step; x += step) {
+      canvas.drawCircle(Offset(x, 0), 13, yellow);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// ---------------------------------------------------------------------------
+// HSK ruler
+// ---------------------------------------------------------------------------
+
+const _hskLevels = [
+  ('HSK 1', '150 words'),
+  ('HSK 2', '300 words'),
+  ('HSK 3', '600 words'),
+  ('HSK 4', '1,200 words'),
+  ('HSK 5', '2,500 words'),
+  ('HSK 6', '5,000 words'),
+];
+
+class _RulerSection extends StatelessWidget {
+  const _RulerSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final wide = MediaQuery.sizeOf(context).width >= _wideBreak;
+    return _Section(
+      color: LandingBrand.teal,
+      vertical: wide ? 56 : 44,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionTitle(
+            'Measure your Mandarin',
+            sub: 'Six HSK levels. Each one roughly doubles the words you know, '
+                'and every lesson and exercise is tagged with its level.',
+            color: LandingBrand.white,
+            subColor: LandingBrand.tealTint,
           ),
-        ),
+          const SizedBox(height: 30),
+          _RulerBar(columns: wide ? 6 : 3),
+        ],
       ),
     );
   }
 }
+
+class _RulerBar extends StatelessWidget {
+  const _RulerBar({required this.columns});
+
+  final int columns;
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = <List<(String, String)>>[];
+    for (var i = 0; i < _hskLevels.length; i += columns) {
+      rows.add(_hskLevels.sublist(i, math.min(i + columns, _hskLevels.length)));
+    }
+    const line = BorderSide(color: LandingBrand.black, width: 3);
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: LandingBrand.card(color: LandingBrand.yellow, radius: 10, liftBy: 6),
+      child: Column(
+        children: [
+          const SizedBox(
+            height: 16,
+            width: double.infinity,
+            child: CustomPaint(painter: _TickPainter()),
+          ),
+          Table(
+            border: const TableBorder(verticalInside: line, horizontalInside: line),
+            children: [
+              for (final row in rows)
+                TableRow(
+                  children: [
+                    for (final (level, words) in row)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(level, style: LandingBrand.display(size: 24, height: 1.1)),
+                            const SizedBox(height: 2),
+                            Text(words, style: LandingBrand.body(size: 13, height: 1.3)),
+                          ],
+                        ),
+                      ),
+                    for (var i = row.length; i < columns; i++) const SizedBox.shrink(),
+                  ],
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TickPainter extends CustomPainter {
+  const _TickPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = LandingBrand.black.withValues(alpha: 0.7)
+      ..strokeWidth = 2;
+    for (var x = 8.0; x < size.width; x += 14) {
+      final tall = ((x - 8) / 14).round() % 5 == 0;
+      canvas.drawLine(Offset(x, 0), Offset(x, tall ? size.height : size.height * 0.55), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// ---------------------------------------------------------------------------
+// About
+// ---------------------------------------------------------------------------
+
+class _AboutSection extends StatelessWidget {
+  const _AboutSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final wide = MediaQuery.sizeOf(context).width >= _wideBreak;
+
+    final story = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              'ABOUT EASY STUDY',
+              style: LandingBrand.body(size: 12, weight: FontWeight.w700, color: LandingBrand.teal)
+                  .copyWith(letterSpacing: 1.6),
+            ),
+            const SizedBox(width: 10),
+            Text('易华文教中心', style: LandingBrand.han(size: 14, color: LandingBrand.ink2)),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'Built around the HSK.',
+          style: LandingBrand.display(size: wide ? 40 : 30, height: 1.05),
+        ),
+        const SizedBox(height: 14),
+        Text(
+          'Easy Study is a Mandarin learning centre that teaches to the HSK '
+          'standard, from HSK 1 to HSK 6. Every lesson and exercise is written '
+          'for the level it serves, and practice includes past exam questions '
+          'taken directly from the test itself, so students meet the real '
+          'thing long before exam day.',
+          style: LandingBrand.body(size: 17, height: 1.6),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          'Classes are face-to-face at our centre, taught by our own teachers. '
+          'The app keeps the homework, scores and attendance in one place for '
+          'students and their parents.',
+          style: LandingBrand.body(size: 17, height: 1.6, color: LandingBrand.ink2),
+        ),
+      ],
+    );
+
+    const proofs = [
+      ('HSK 1–6', 'Lessons and exercises written to each level'),
+      ('Real past papers', 'Practice with questions from actual HSK tests'),
+      ('At the centre', 'Face-to-face classes, attendance counted in the app'),
+    ];
+    final proofColumn = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final (big, small) in proofs) ...[
+          Container(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
+            decoration: LandingBrand.card(color: LandingBrand.yellowSoft, liftBy: 4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(big, style: LandingBrand.display(size: 26, height: 1.1)),
+                const SizedBox(height: 4),
+                Text(small, style: LandingBrand.body(size: 14, color: LandingBrand.ink2, height: 1.4)),
+              ],
+            ),
+          ),
+          if (big != proofs.last.$1) const SizedBox(height: 14),
+        ],
+      ],
+    );
+
+    return _Section(
+      child: wide
+          ? Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(flex: 3, child: story),
+                const SizedBox(width: 48),
+                Expanded(flex: 2, child: proofColumn),
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [story, const SizedBox(height: 28), proofColumn],
+            ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Features
+// ---------------------------------------------------------------------------
 
 class _FeaturesSection extends StatelessWidget {
-  static const _features = [
-    (Icons.menu_book_outlined, 'Lessons & quizzes',
-        'HSK-aligned lessons with vocabulary, quizzes, and instant scoring.',
-        Color(0xFFE7F5EF), AppColors.success),
-    (Icons.edit_note_outlined, 'Practice exercises',
-        'Reading, listening, typing, and speaking — organised by HSK level.',
-        Color(0xFFE8F0FE), Color(0xFF2B5FB0)),
-    (Icons.videocam_outlined, 'Live classes & attendance',
-        'Students join scheduled sessions; teachers track attendance and terms.',
-        Color(0xFFF0EAFB), Color(0xFF6B4FBF)),
-    (Icons.grade_outlined, 'Progress & grades',
-        'Scores, letter grades, and semester evaluations — visible to parents too.',
-        Color(0xFFFDF3E0), Color(0xFFB7791F)),
-    (Icons.payments_outlined, 'Online payments',
-        'Pay session packages by card, bank transfer, or installments via Midtrans.',
-        Color(0xFFE7F5EF), AppColors.success),
-    (Icons.insights_outlined, 'Reports for admins',
-        'Revenue, outstanding invoices, and cohort activity at a glance.',
-        Color(0xFFE8F0FE), Color(0xFF2B5FB0)),
-  ];
+  const _FeaturesSection();
 
   @override
   Widget build(BuildContext context) {
-    final isWide = MediaQuery.sizeOf(context).width >= 900;
-    final padding = EdgeInsets.symmetric(
-      horizontal: isWide ? 48 : 24,
-      vertical: 64,
-    );
-
-    return Padding(
-      padding: padding,
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1120),
-          child: Column(
+    return _Section(
+      color: LandingBrand.yellowSoft,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionTitle(
+            'Everything your class needs',
+            sub: 'One place for lessons, homework, attendance and bills.',
+          ),
+          const SizedBox(height: 30),
+          const _ResponsiveGrid(
             children: [
-              const _SectionIntro(
-                eyebrow: 'Everything in one place',
-                title: 'Built for Mandarin education',
-                body:
-                    'Easy Study connects students, parents, teachers, and centre '
-                    'admins on a single platform.',
+              _FeatureCard(
+                icon: Icons.storefront_outlined,
+                title: 'Classes at the centre',
+                body: 'Face-to-face lessons with our teachers. Attendance is '
+                    'counted for you, session by session.',
               ),
-              const SizedBox(height: 40),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final cols = isWide ? 3 : 1;
-                  final gap = 18.0;
-                  final w = (constraints.maxWidth - gap * (cols - 1)) / cols;
-                  return Wrap(
-                    spacing: gap,
-                    runSpacing: gap,
-                    children: [
-                      for (final f in _features)
-                        SizedBox(
-                          width: cols == 1 ? double.infinity : w,
-                          child: AppCard(
-                            padding: const EdgeInsets.all(24),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                  width: 46,
-                                  height: 46,
-                                  decoration: BoxDecoration(
-                                    color: f.$4,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Icon(f.$1, color: f.$5, size: 22),
-                                ),
-                                const SizedBox(height: 14),
-                                Text(f.$2,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 17)),
-                                const SizedBox(height: 8),
-                                Text(f.$3,
-                                    style: const TextStyle(
-                                        color: AppColors.textSecondary,
-                                        fontSize: 14,
-                                        height: 1.45)),
-                              ],
-                            ),
-                          ),
-                        ),
-                    ],
-                  );
-                },
+              _FeatureCard(
+                icon: Icons.edit_outlined,
+                title: 'HSK practice',
+                body: 'Reading, listening, typing and speaking exercises, sorted '
+                    'by HSK level, including real past exam questions.',
+              ),
+              _FeatureCard(
+                icon: Icons.insights_outlined,
+                title: 'Progress and grades',
+                body: 'Scores, letter grades and teacher notes, all in one view.',
+              ),
+              _FeatureCard(
+                icon: Icons.credit_card_outlined,
+                title: 'Pay online',
+                body: 'Card, bank transfer or installments through Midtrans. '
+                    'Sessions are added as soon as payment clears.',
               ),
             ],
           ),
-        ),
+        ],
       ),
     );
   }
 }
+
+class _FeatureCard extends StatelessWidget {
+  const _FeatureCard({required this.icon, required this.title, required this.body});
+
+  final IconData icon;
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: LandingBrand.card(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: LandingBrand.yellow,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: LandingBrand.black, width: 2),
+            ),
+            child: Icon(icon, color: LandingBrand.teal, size: 26),
+          ),
+          const SizedBox(height: 12),
+          Text(title, style: LandingBrand.display(size: 22, height: 1.1)),
+          const SizedBox(height: 6),
+          Text(body, style: LandingBrand.body(size: 14.5, color: LandingBrand.ink2)),
+        ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Roles + term tickets
+// ---------------------------------------------------------------------------
 
 class _RolesSection extends StatelessWidget {
-  static const _roles = [
-    ('Students', 'Murid',
-        'Join classes, do homework, track HSK progress, and see sessions remaining.',
-        Icons.menu_book_outlined, AppColors.teal),
-    ('Teachers', 'Guru',
-        'Manage students, assign practice, run live classes, and record grades.',
-        Icons.school_outlined, AppColors.navy),
-    ('Centre operators', 'Admin',
-        'Users, vouchers, payments, reports, and platform-wide activity.',
-        Icons.verified_user_outlined, Color(0xFF6B4FBF)),
-    ('Families', 'Orang Tua',
-        'Parents follow their child\'s progress, attendance, grades, and bills.',
-        Icons.family_restroom_outlined, AppColors.teal),
-  ];
+  const _RolesSection();
 
   @override
   Widget build(BuildContext context) {
-    final isWide = MediaQuery.sizeOf(context).width >= 900;
-    return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.card,
-        border: Border(
-          top: BorderSide(color: AppColors.border),
-          bottom: BorderSide(color: AppColors.border),
-        ),
-      ),
-      padding: EdgeInsets.symmetric(
-        horizontal: isWide ? 48 : 24,
-        vertical: 64,
-      ),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1120),
-          child: Column(
+    return _Section(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionTitle('One app for the whole family'),
+          const SizedBox(height: 30),
+          const _ResponsiveGrid(
             children: [
-              const _SectionIntro(
-                eyebrow: 'Built for every role',
-                title: 'One app, four experiences',
-              ),
-              const SizedBox(height: 40),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final w = constraints.maxWidth;
-                  final cols = w >= 900 ? 4 : (w >= 520 ? 2 : 1);
-                  final gap = 16.0;
-                  final cardW = (w - gap * (cols - 1)) / cols;
-                  return Wrap(
-                    spacing: gap,
-                    runSpacing: gap,
-                    children: [
-                      for (final r in _roles)
-                        SizedBox(
-                          width: cols == 1 ? double.infinity : cardW,
-                          child: AppCard(
-                            padding: const EdgeInsets.all(22),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(r.$1,
-                                    style: const TextStyle(
-                                        fontSize: 12,
-                                        color: AppColors.textSecondary)),
-                                Text(r.$2,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 19,
-                                        color: AppColors.navy)),
-                                const SizedBox(height: 8),
-                                Text(r.$3,
-                                    style: const TextStyle(
-                                        fontSize: 13.5,
-                                        color: AppColors.textSecondary,
-                                        height: 1.45)),
-                                const SizedBox(height: 12),
-                                Icon(r.$4, color: r.$5, size: 28),
-                              ],
-                            ),
-                          ),
-                        ),
-                    ],
-                  );
-                },
-              ),
+              _RoleCard('Murid', 'Students', 'Classes, homework and your HSK progress.'),
+              _RoleCard('Guru', 'Teachers', 'Run classes, assign practice, record grades.'),
+              _RoleCard('Orang Tua', 'Parents', 'Attendance, grades and bills for your child.'),
+              _RoleCard('Admin', 'Centre', 'Users, vouchers, payments and reports.'),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _HowItWorksSection extends StatelessWidget {
-  static const _steps = [
-    ('Register with your teacher\'s code',
-        'Pick your HSK level and term size, and enter the code from your teacher.'),
-    ('Learn & attend classes',
-        'Work through lessons and exercises, and join scheduled live sessions.'),
-    ('Track progress & pay online',
-        'See grades and sessions left; top up packages securely when you need to.'),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    final isWide = MediaQuery.sizeOf(context).width >= 900;
-    return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: isWide ? 48 : 24,
-        vertical: 64,
-      ),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1120),
-          child: Column(
-            children: [
-              const _SectionIntro(
-                eyebrow: 'How it works',
-                title: 'Up and running in minutes',
-              ),
-              const SizedBox(height: 40),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final cols = isWide ? 3 : 1;
-                  final gap = 18.0;
-                  final w = (constraints.maxWidth - gap * (cols - 1)) / cols;
-                  return Wrap(
-                    spacing: gap,
-                    runSpacing: gap,
-                    children: [
-                      for (var i = 0; i < _steps.length; i++)
-                        SizedBox(
-                          width: cols == 1 ? double.infinity : w,
-                          child: AppCard(
-                            padding: const EdgeInsets.all(24),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                CircleAvatar(
-                                  radius: 17,
-                                  backgroundColor: AppColors.navy,
-                                  child: Text(
-                                    '${i + 1}',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                Text(_steps[i].$1,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 16)),
-                                const SizedBox(height: 6),
-                                Text(_steps[i].$2,
-                                    style: const TextStyle(
-                                        color: AppColors.textSecondary,
-                                        fontSize: 14,
-                                        height: 1.45)),
-                              ],
-                            ),
-                          ),
-                        ),
-                    ],
-                  );
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _VisualShowcaseSection extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final isWide = MediaQuery.sizeOf(context).width >= 900;
-    return Container(
-      color: const Color(0xFFF0F2F5),
-      padding: EdgeInsets.symmetric(
-        horizontal: isWide ? 48 : 24,
-        vertical: 64,
-      ),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1120),
-          child: Column(
-            children: [
-              const _SectionIntro(
-                eyebrow: 'See it in action',
-                title: 'Professional Mandarin learning, beautifully organised',
-                body:
-                    'Structured lessons, live classes, and real progress — '
-                    'the way a modern language centre should work.',
-              ),
-              const SizedBox(height: 32),
-              if (isWide)
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        children: [
-                          _NetworkPhoto(
-                            url: LandingMedia.showcaseClassroom,
-                            height: 200,
-                          ),
-                          const SizedBox(height: 16),
-                          _NetworkPhoto(
-                            url: LandingMedia.showcaseStudy,
-                            height: 200,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 24),
-                    Expanded(
-                      flex: 2,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          LandingMedia.hasVideo
-                              ? const LandingYoutubeEmbed(height: 280)
-                              : const _NetworkPhoto(
-                                  url: LandingMedia.videoPoster,
-                                  height: 280,
-                                ),
-                          const SizedBox(height: 16),
-                          Text(
-                            LandingMedia.hasVideo
-                                ? 'Watch how structured Mandarin teaching works — '
-                                    'from vocabulary to live conversation practice.'
-                                : 'Structured Mandarin teaching — from first '
-                                    'characters to live conversation practice.',
-                            style: TextStyle(
-                              color: AppColors.textSecondary.withValues(alpha: 0.9),
-                              fontSize: 14,
-                              height: 1.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                )
-              else ...[
-                LandingMedia.hasVideo
-                    ? const LandingYoutubeEmbed(height: 220)
-                    : const _NetworkPhoto(
-                        url: LandingMedia.videoPoster,
-                        height: 220,
-                      ),
-                const SizedBox(height: 16),
-                _NetworkPhoto(
-                  url: LandingMedia.showcaseClassroom,
-                  height: 180,
-                ),
-                const SizedBox(height: 12),
-                _NetworkPhoto(
-                  url: LandingMedia.showcaseStudy,
-                  height: 180,
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _NetworkPhoto extends StatelessWidget {
-  const _NetworkPhoto({required this.url, required this.height});
-
-  final String url;
-  final double height;
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: Image.network(
-        url,
-        height: height,
-        width: double.infinity,
-        fit: BoxFit.cover,
-        loadingBuilder: (_, child, progress) {
-          if (progress == null) return child;
-          return Container(
-            height: height,
-            color: AppColors.border,
-            child: const Center(
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-          );
-        },
-        errorBuilder: (_, __, ___) => Container(
-          height: height,
-          color: AppColors.border,
-          child: const Center(
-            child: Icon(Icons.image_not_supported_outlined,
-                color: AppColors.textSecondary),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _CtaSection extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final isWide = MediaQuery.sizeOf(context).width >= 720;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(isWide ? 48 : 24, 48, isWide ? 48 : 24, 64),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1120),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(44),
-            decoration: BoxDecoration(
-              color: AppColors.navy,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Column(
+          const SizedBox(height: 40),
+          Text('Pick a term', style: LandingBrand.display(size: 28, height: 1.1)),
+          const SizedBox(height: 18),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 760),
+            child: const _ResponsiveGrid(
+              minItemWidth: 280,
+              maxColumns: 2,
               children: [
-                Text(
-                  'Ready to start learning?',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                      ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  'Create your account in minutes — choose your HSK level, pick a '
-                  'term size, and join your teacher\'s centre.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.72),
-                    fontSize: 15,
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: [
-                    FilledButton(
-                      onPressed: () => context.go('/register'),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.teal,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 28,
-                          vertical: 14,
-                        ),
-                      ),
-                      child: const Text('Get started free'),
-                    ),
-                    OutlinedButton(
-                      onPressed: () => context.go(_signInRoute),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        side: BorderSide(
-                          color: Colors.white.withValues(alpha: 0.35),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 28,
-                          vertical: 14,
-                        ),
-                      ),
-                      child: const Text('Sign in'),
-                    ),
-                  ],
-                ),
+                _TermTicket(sessions: 8, note: 'One term. A good start for HSK 1–2 or a busy schedule.'),
+                _TermTicket(sessions: 16, note: 'One term. Steadier progress, two classes a week.'),
               ],
             ),
           ),
-        ),
+          const SizedBox(height: 16),
+          Text(
+            'Pay by card, bank transfer or installments. Sessions are added to '
+            'your term as soon as payment clears.',
+            style: LandingBrand.body(size: 14, color: LandingBrand.ink2),
+          ),
+        ],
       ),
     );
   }
 }
+
+class _RoleCard extends StatelessWidget {
+  const _RoleCard(this.who, this.en, this.body);
+
+  final String who;
+  final String en;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: LandingBrand.card(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            en.toUpperCase(),
+            style: LandingBrand.body(size: 12, weight: FontWeight.w700, color: LandingBrand.ink2)
+                .copyWith(letterSpacing: 1.2),
+          ),
+          const SizedBox(height: 4),
+          Text(who, style: LandingBrand.display(size: 28, height: 1.05)),
+          const SizedBox(height: 8),
+          Text(body, style: LandingBrand.body(size: 14.5, color: LandingBrand.ink2)),
+        ],
+      ),
+    );
+  }
+}
+
+class _TermTicket extends StatelessWidget {
+  const _TermTicket({required this.sessions, required this.note});
+
+  final int sessions;
+  final String note;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget notch() => Container(
+          width: 22,
+          height: 22,
+          decoration: BoxDecoration(
+            color: LandingBrand.white,
+            shape: BoxShape.circle,
+            border: Border.all(color: LandingBrand.black, width: 3),
+          ),
+        );
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(28, 20, 28, 22),
+          decoration: LandingBrand.card(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              RichText(
+                text: TextSpan(
+                  text: '$sessions ',
+                  style: LandingBrand.display(size: 52, height: 1),
+                  children: [
+                    TextSpan(
+                      text: 'sessions',
+                      style: LandingBrand.display(size: 20, color: LandingBrand.ink, height: 1),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(note, style: LandingBrand.body(size: 14.5, color: LandingBrand.ink2)),
+            ],
+          ),
+        ),
+        Positioned(left: -12, top: 0, bottom: 5, child: Center(child: notch())),
+        Positioned(right: -12, top: 0, bottom: 5, child: Center(child: notch())),
+      ],
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Get the app (web only)
+// ---------------------------------------------------------------------------
 
 class _DownloadAppSection extends StatelessWidget {
+  const _DownloadAppSection();
+
   Future<void> _openApk(BuildContext context) async {
     if (!AppConstants.hasAndroidApk) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Android download will be available soon.'),
-        ),
+        const SnackBar(content: Text('Android download will be available soon.')),
       );
       return;
     }
@@ -990,26 +1023,16 @@ class _DownloadAppSection extends StatelessWidget {
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
-      builder: (context) => const Padding(
-        padding: EdgeInsets.fromLTRB(24, 8, 24, 32),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Install on iPhone or iPad',
-              style: TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 18,
-                color: AppColors.navy,
-              ),
-            ),
-            SizedBox(height: 16),
-            _IosStep(number: '1', text: 'Open this page in Safari.'),
-            _IosStep(
-              number: '2',
-              text: 'Tap Share → “Add to Home Screen”.',
-            ),
+            Text('Install on iPhone or iPad', style: LandingBrand.display(size: 22, height: 1.1)),
+            const SizedBox(height: 16),
+            const _IosStep(number: '1', text: 'Open this page in Safari.'),
+            const _IosStep(number: '2', text: 'Tap Share → "Add to Home Screen".'),
           ],
         ),
       ),
@@ -1018,54 +1041,41 @@ class _DownloadAppSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isWide = MediaQuery.sizeOf(context).width >= 720;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(isWide ? 48 : 24, 0, isWide ? 48 : 24, 0),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1120),
-          child: AppCard(
-            padding: const EdgeInsets.all(36),
-            child: Column(
+    return _Section(
+      color: LandingBrand.yellowSoft,
+      vertical: 48,
+      child: Container(
+        padding: const EdgeInsets.all(32),
+        decoration: LandingBrand.card(),
+        child: Column(
+          children: [
+            Text('Learn on your phone', style: LandingBrand.display(size: 30, height: 1.1)),
+            const SizedBox(height: 8),
+            Text(
+              'Install Easy Study on Android, or add it to your iPhone home screen from Safari.',
+              textAlign: TextAlign.center,
+              style: LandingBrand.body(size: 15, color: LandingBrand.ink2),
+            ),
+            const SizedBox(height: 22),
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 14,
+              runSpacing: 14,
               children: [
-                const _Eyebrow(label: 'Get the app'),
-                const SizedBox(height: 10),
-                Text(
-                  'Learn on your phone',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        color: AppColors.navy,
-                        fontWeight: FontWeight.w800,
-                      ),
+                _BrandButton(
+                  label: 'Download for Android',
+                  icon: Icons.android,
+                  onPressed: () => _openApk(context),
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Install Easy Study on Android, or add it to your iPhone home screen from Safari.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.textSecondary, height: 1.5),
-                ),
-                const SizedBox(height: 22),
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: 12,
-                  children: [
-                    FilledButton.icon(
-                      onPressed: () => _openApk(context),
-                      icon: const Icon(Icons.android),
-                      label: const Text('Download for Android'),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.navy,
-                      ),
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: () => _showIosInstructions(context),
-                      icon: const Icon(Icons.phone_iphone),
-                      label: const Text('Install on iPhone'),
-                    ),
-                  ],
+                _BrandButton(
+                  label: 'Install on iPhone',
+                  icon: Icons.phone_iphone,
+                  tone: _Tone.white,
+                  onPressed: () => _showIosInstructions(context),
                 ),
               ],
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -1086,20 +1096,75 @@ class _IosStep extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           CircleAvatar(
-            radius: 12,
-            backgroundColor: AppColors.teal,
+            radius: 13,
+            backgroundColor: LandingBrand.teal,
             child: Text(
               number,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              ),
+              style: LandingBrand.display(size: 14, color: LandingBrand.white, height: 1.2),
             ),
           ),
           const SizedBox(width: 12),
-          Expanded(child: Text(text)),
+          Expanded(child: Text(text, style: LandingBrand.body(size: 15))),
         ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// CTA + footer
+// ---------------------------------------------------------------------------
+
+class _CtaSection extends StatelessWidget {
+  const _CtaSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final wide = MediaQuery.sizeOf(context).width >= _midBreak;
+    final title = RichText(
+      text: TextSpan(
+        style: LandingBrand.display(size: wide ? 40 : 30, height: 1.05),
+        children: [
+          const TextSpan(text: 'Ready for your first '),
+          TextSpan(text: '字', style: LandingBrand.han(size: wide ? 44 : 34, color: LandingBrand.green)),
+          const TextSpan(text: '?'),
+        ],
+      ),
+    );
+    final buttons = Wrap(
+      spacing: 14,
+      runSpacing: 14,
+      children: [
+        _BrandButton(label: 'Create a free account', onPressed: () => context.go('/register')),
+        _BrandButton(label: 'Sign in', tone: _Tone.white, onPressed: () => context.go(_signInRoute)),
+      ],
+    );
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: LandingBrand.black, width: 3)),
+      ),
+      child: _Section(
+        color: LandingBrand.yellow,
+        vertical: 44,
+        child: Row(
+          children: [
+            Transform.rotate(
+              angle: -8 * math.pi / 180,
+              child: Image.asset(
+                'assets/brand/mascot_pencil.png',
+                height: wide ? 150 : 100,
+                fit: BoxFit.fitHeight,
+              ),
+            ),
+            const SizedBox(width: 28),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [title, const SizedBox(height: 16), buttons],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1110,121 +1175,27 @@ class _LandingFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 32, 24, 48),
-      child: Center(
-        child: Column(
-          children: [
-            const AppLogo(variant: AppLogoVariant.mascot, height: 40),
-            const SizedBox(height: 12),
-            Text(
-              '${AppConstants.brandNameChinese} · ${AppConstants.brandName}',
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              AppConstants.brandTagline,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
-            ),
-            const SizedBox(height: 16),
-            Wrap(
-              alignment: WrapAlignment.center,
-              spacing: 20,
-              children: [
-                TextButton(
-                  onPressed: () => context.go('/register'),
-                  child: const Text('Register'),
-                ),
-                TextButton(
-                  onPressed: () => context.go(_signInRoute),
-                  child: const Text('Sign in'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '© ${DateTime.now().year} ${AppConstants.brandName}',
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SectionIntro extends StatelessWidget {
-  const _SectionIntro({
-    required this.eyebrow,
-    required this.title,
-    this.body,
-  });
-
-  final String eyebrow;
-  final String title;
-  final String? body;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        _Eyebrow(label: eyebrow),
-        const SizedBox(height: 12),
-        Text(
-          title,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 30,
-            fontWeight: FontWeight.w800,
-            color: AppColors.navy,
-            letterSpacing: -0.4,
+    return _Section(
+      color: LandingBrand.black,
+      vertical: 28,
+      child: Wrap(
+        alignment: WrapAlignment.spaceBetween,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 28,
+        runSpacing: 14,
+        children: [
+          Image.asset(
+            'assets/brand/mascot_writing.png',
+            height: 32,
+            fit: BoxFit.fitHeight,
+            semanticLabel: '易华文教中心',
           ),
-        ),
-        if (body != null) ...[
-          const SizedBox(height: 10),
           Text(
-            body!,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 16,
-              height: 1.55,
-            ),
+            'Mandarin Education Center & China Education Consultant · '
+            '© ${DateTime.now().year} Easy Study',
+            style: LandingBrand.body(size: 13, color: const Color(0xFFB8C4BE)),
           ),
         ],
-      ],
-    );
-  }
-}
-
-class _Eyebrow extends StatelessWidget {
-  const _Eyebrow({
-    required this.label,
-    this.background,
-    this.color,
-  });
-
-  final String label;
-  final Color? background;
-  final Color? color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: background ?? const Color(0xFFE7F5EF),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label.toUpperCase(),
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.4,
-          color: color ?? AppColors.teal,
-        ),
       ),
     );
   }

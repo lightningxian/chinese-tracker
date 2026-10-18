@@ -147,6 +147,14 @@ Commit author preference (via env vars, not global git config):
 
 Update this section when you push from Mac or PC.
 
+### 2026-10-18 — Claude: landing page rebuilt (direction A)
+
+- New landing page in the logo's yellow/teal/green with the pencil mascot,
+  HSK ruler and an About section (HSK standard, past exam questions, classes
+  at the centre). Deployed to hosting. Next: design system for the signed-in
+  app ("A, calmer"), then thesis Phase 1. Billing still needs re-enabling
+  before functions can deploy.
+
 ### 2026-10-17 — Claude: security fixes + emulator; billing problem found
 
 - Closed teacher self-registration, enforced deactivation, teacher-only link
