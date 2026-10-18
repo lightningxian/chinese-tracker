@@ -4,7 +4,7 @@ Upgrade the question bank: **richer metadata + table**, **bulk import & add**,
 **harvest from existing exercises**, and **quizzes + media**. Build in the phases
 below; each must `flutter analyze` clean and reuse existing patterns. Don't break
 the current bank editor, filters, or `showQuestionBankPicker` (which exercises
-already use). Log the work in `docs/CURSOR_CHANGES_FOR_CLAUDE.md`.
+already use). Log the work in `docs/CHANGELOG.md`.
 
 ## Grounding (what already exists — reuse, don't rebuild)
 - Model `lib/models/question_bank_item.dart` wraps `ExerciseQuestion` (same

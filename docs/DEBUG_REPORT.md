@@ -33,7 +33,7 @@ Root cause: content ownership was read from **two sources** that only line up wh
 - Students → `AppConstants.lessonsOwnerId(user)` = the student's `teacherId`.
 - Teacher/admin lesson views → `AppConstants.contentOwnerId` (the dart-define).
 
-`.cursor/rules/relaunch-after-changes.mdc` launches with
+`CLAUDE.md` launches with
 `CONTENT_OWNER_ID=2orTXFeyAhSlxfTgIlcYgs6ZuCG2`, which is not the freshly-seeded
 `teacher@test.chinesetracker` uid, so the teacher demo saw the wrong owner's
 lessons. After F-11 the teacher demo no longer needs that dart-define.

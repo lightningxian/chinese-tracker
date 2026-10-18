@@ -103,6 +103,6 @@ with a Status column). Columns: **Student** (resolved name) · **Assessment**
 - Users tab is visually/behaviorally unchanged.
 - Payments, Vouchers, and Grades render as sortable tables on desktop with the
   card fallback on mobile, statuses shown via `StatusPill`, all actions working.
-- Append a summary to `docs/CURSOR_CHANGES_FOR_CLAUDE.md` (note anything you had
+- Append a summary to `docs/CHANGELOG.md` (note anything you had
   to change beyond styling).
 ```

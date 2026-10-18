@@ -38,3 +38,8 @@ nas-backup-key.json
 # Coverage
 coverage/
 artifacts/
+
+# Firebase emulator logs
+firestore-debug.log
+firebase-debug.log
+ui-debug.log

@@ -38,7 +38,7 @@ Mac↔PC handoff → status rundowns → relaunches → full Claude handoff.
 - User asked for a **full handover MD for Claude**, including where code is on
   GitHub → created `docs/CLAUDE_FULL_HANDOFF.md`, committed, pushed to `main`.
 - User asked to **include chat history in a separate MD** + brief rundown
-  → this file (`docs/CURSOR_CHAT_HISTORY.md`).
+  → this file (`docs/archive/cursor/CURSOR_CHAT_HISTORY.md`).
 
 ### 2026-10-03 — Status rundown
 
@@ -61,7 +61,7 @@ Mac↔PC handoff → status rundowns → relaunches → full Claude handoff.
 - User going to use Cursor on PC; asked how it works.
 - Clarified: same GitHub repo, clone once, pull/push; chat does not sync.
 - User asked for an MD so PC Cursor can see prior work →
-  `docs/CURSOR_HANDOFF.md` + rule `cross-machine-handoff.mdc`, pushed.
+  `docs/SESSION_LOG.md` + rule `cross-machine-handoff.mdc`, pushed.
 - Note: user may assign **different** tasks on PC; don’t assume Midtrans.
 
 ### 2026-08-05 — Git + GitHub connection
@@ -77,7 +77,7 @@ Mac↔PC handoff → status rundowns → relaunches → full Claude handoff.
 - First commit as “Wilsin Karimun” (mistake); user said real name is
   **Wilsin Kuonadi** — leave first commit as-is; future commits use Kuonadi.
 - Private repo created: `lightningxian/chinese-tracker`, pushed `main`.
-- User: every push needs an overall note → `.cursor/rules/push-notes.mdc` +
+- User: every push needs an overall note → `CLAUDE.md` +
   GitHub release `v0.1.0-initial`.
 
 ### ~2026-07-22 — Features, deploy, crash, “can’t access”
@@ -144,7 +144,7 @@ Mac↔PC handoff → status rundowns → relaunches → full Claude handoff.
 | GitHub | https://github.com/lightningxian/chinese-tracker |
 | Live app | https://chinese-tracker.web.app |
 | Claude handoff | `docs/CLAUDE_FULL_HANDOFF.md` |
-| Mac↔PC brief | `docs/CURSOR_HANDOFF.md` |
-| Change log | `docs/CURSOR_CHANGES_FOR_CLAUDE.md` |
-| Backlog | `docs/RECOMMENDATIONS_FOR_CURSOR.md` |
+| Mac↔PC brief | `docs/SESSION_LOG.md` |
+| Change log | `docs/CHANGELOG.md` |
+| Backlog | `docs/BACKLOG.md` |
 | Initial release | https://github.com/lightningxian/chinese-tracker/releases/tag/v0.1.0-initial |

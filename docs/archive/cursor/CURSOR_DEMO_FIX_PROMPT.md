@@ -62,7 +62,7 @@ query (student, teacher, admin). Remove the ad-hoc `contentOwnerId` locals.
   student dashboards instead of a blank list.
 - Now that teacher/student demos don't need it, drop the hardcoded
   `CONTENT_OWNER_ID=2orTXFeyAhSlxfTgIlcYgs6ZuCG2` from
-  `.cursor/rules/relaunch-after-changes.mdc` (or set it to the seeded teacher uid).
+  `CLAUDE.md` (or set it to the seeded teacher uid).
 
 ### 6. Deploy (after analyze passes)
 ```bash

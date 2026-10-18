@@ -1,11 +1,11 @@
-# Recommendations for Cursor
+# Backlog (pre-thesis items)
 
-Running list of what to do next, newest priorities first. Claude maintains this;
-Cursor should work top-down and note anything done/deviated in
-`docs/CURSOR_CHANGES_FOR_CLAUDE.md`.
+Running list of what to do next, newest priorities first. Claude maintains this and
+notes anything done or deviated in `docs/CHANGELOG.md`. Thesis work is tracked in
+`docs/THESIS_FEATURE_AUDIT.md`.
 
 **Claude ownership:** start with `docs/CLAUDE_FULL_HANDOFF.md` (full brief +
-GitHub URL). Cross-machine Cursor sessions: also `docs/CURSOR_HANDOFF.md`.
+GitHub URL). Cross-machine Cursor sessions: also `docs/SESSION_LOG.md`.
 
 ## 1. ~~Deploy the pending changes~~ ✅ Done 2026-07-22
 

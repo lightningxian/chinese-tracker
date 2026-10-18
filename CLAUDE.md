@@ -2,12 +2,23 @@
 
 Flutter web + Firebase LMS for a Chinese teaching centre (易华文教中心).
 Roles: admin · teacher · student · parent. Live at https://chinese-tracker.web.app.
-Claude owns this project as of 2026-10-16 (handed over from Cursor).
+The owner (Wilsin, a Flutter/Firebase beginner) works **only with Claude Code**, on a Mac
+and a PC. Chat does not sync between machines: the docs in this repo are the shared memory,
+so keep them current. Explain steps in simple English and ask before big or hard-to-undo
+decisions. This app is also the owner's thesis project (see the thesis docs below).
 
 ## Read first
-1. `docs/CLAUDE_FULL_HANDOFF.md`: status, live config, what's done, P0–P3 backlog, architecture map.
-2. `docs/CURSOR_CHAT_HISTORY.md`: conversation context and decisions the user made.
-3. `docs/RECOMMENDATIONS_FOR_CURSOR.md` (the backlog) and the top of `docs/CURSOR_CHANGES_FOR_CLAUDE.md`.
+1. `docs/CLAUDE_FULL_HANDOFF.md`: live config, what's built, architecture map.
+2. `docs/THESIS_FEATURE_AUDIT.md`: the thesis spec (`docs/THESIS_FEATURE_BACKLOG.md`, v2) compared with the code, open questions, suggested order. `docs/THESIS_PROPOSAL_ASSETS.md` lists the screenshots the proposal needs.
+3. `docs/SESSION_LOG.md` (newest session first) and the top of `docs/CHANGELOG.md`.
+4. `docs/BACKLOG.md` for the older non-thesis backlog.
+
+## Decisions already made by the owner (don't re-ask)
+- Design: landing page = direction "A · Pensil" (shipped 2026-10-18, `lib/features/landing/`); signed-in app = the same brand, calmer (white surfaces, less decoration). Brand tokens: `lib/features/landing/landing_brand.dart`, logo assets in `assets/brand/`.
+- Keep the parent role, materials library and class modes even though the thesis leaves them out.
+- UI language: Indonesian + English switch, to be built in thesis Phase 1 (app is English today).
+- Teacher self-registration is closed; admins create teachers.
+- Order of work: quick security fixes (done) → emulator (done) → design system → thesis phases in order, rebuilding each screen in the new design as its phase touches it, with ViewModels.
 
 ## Never
 - Create a new GitHub repo or Firebase project, or re-run `flutterfire configure`.
@@ -15,27 +26,32 @@ Claude owns this project as of 2026-10-16 (handed over from Cursor).
 - Commit the Midtrans **server** key. It lives in Firebase Secret Manager as `MIDTRANS_SERVER_KEY`.
 - Switch Midtrans to production keys before the sandbox payment E2E test passes.
 - Rewrite old commits (the first commit's author name is wrong, and that's accepted).
+- Sign in to the live site with a password yourself; the owner signs in. Local emulator accounts are fine.
 
-## Conventions (carried over from `.cursor/rules/`)
-- **Commit author:** set `GIT_AUTHOR_NAME="Wilsin Kuonadi"` `GIT_AUTHOR_EMAIL=wilsinkarimunwkk@gmail.com`
+## Conventions
+- **Commit author:** `GIT_AUTHOR_NAME="Wilsin Kuonadi" GIT_AUTHOR_EMAIL=wilsinkarimunwkk@gmail.com`
   (and matching `GIT_COMMITTER_*`) per commit. Don't change global git config.
-- **Push notes:** each commit body has a 2–6 bullet plain-language summary of the change. For
-  milestones, also publish it on GitHub (`gh release create` or the PR body).
-- **Change log:** after any code, rules, functions or config change, add an entry at the **top** of
-  `docs/CURSOR_CHANGES_FOR_CLAUDE.md` (What changed / Why / For review).
-- **After shipping:** update the backlog checkmarks in `RECOMMENDATIONS_FOR_CURSOR.md`, the
-  "already done" section of `CLAUDE_FULL_HANDOFF.md`, and the session log in `docs/CURSOR_HANDOFF.md`
-  (the user still uses Cursor on PC sometimes).
-- **Scoped invariants:** before editing auth, link codes, exercises or worksheet import, read the
-  matching `.cursor/rules/*.mdc` file. Exercise authoring and worksheet import are admin-only on web.
+- **Push notes:** each commit body has a 2–6 bullet plain-language summary. For milestones and deploys, also `gh release create vX.Y.Z` with the same summary (latest: v0.1.2).
+- **Change log:** after any code, rules, functions or config change, add an entry at the **top** of `docs/CHANGELOG.md` (What changed / Why / For review).
+- **Session log:** when a session ships something, add a dated entry at the top of `docs/SESSION_LOG.md`. Update `docs/THESIS_FEATURE_AUDIT.md` status when a spec item is finished.
+- **Scoped invariants:** `.claude/rules/*.md` (auth and link codes, exercise authoring admin/web-only, worksheet import web-only). Read the matching file before editing those areas.
+- **Deploys change the live site.** Confirm with the owner before `firebase deploy`, unless they have already said to go ahead in the current session.
+- There is **no staging**: a local `flutter run` talks to the live database. Use the emulator (below) for anything that writes test data.
 
 ## Commands
 ```bash
 flutter pub get
-flutter run -d chrome            # no CONTENT_OWNER_ID needed locally
-flutter analyze                  # baseline 2026-10-16: 0 errors, 1 warning, 48 infos
-flutter test                     # baseline 2026-10-16: 7/7 pass
+flutter run -d chrome                 # no CONTENT_OWNER_ID needed locally; talks to LIVE Firebase
+flutter analyze                       # baseline: 0 errors, 0 warnings, ~35 infos
+flutter test                          # 7/7 pass
 node --check functions/index.js
+
+# Firestore rules tests (needs Java 21: brew install openjdk@21)
+export PATH="/opt/homebrew/opt/openjdk@21/bin:$PATH"
+npm --prefix rules-tests run test:emulator      # 18 pass, 1 skipped (emulator limitation)
+
+# Full emulator suite (auth 9099, firestore 8080, functions 5001, storage 9199, UI 4000)
+firebase emulators:start --project demo-chinese-tracker
 
 # Hosting deploy (sandbox config)
 flutter build web --release \
@@ -43,4 +59,7 @@ flutter build web --release \
   --dart-define=MIDTRANS_CLIENT_KEY=Mid-client-kQ_Bo0DQepeH8IhU
 firebase deploy --only hosting
 ```
-Deploys hit the **live** site, so confirm with the user before running `firebase deploy`.
+
+## Known blockers (update when resolved)
+- **Firebase project billing is disabled** (found 2026-10-17): Cloud Functions cannot be deployed (Secret Manager 403) and the nightly Firestore export fails. Owner must re-enable billing (Blaze), then `firebase deploy --only functions` and re-check the backup.
+- Test accounts on the live project: `admin@`, `teacher@`, `student1-3@test.chinesetracker`, password in `docs/CLAUDE_FULL_HANDOFF.md`. No test parent yet.

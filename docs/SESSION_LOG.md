@@ -1,6 +1,7 @@
-# Cursor handoff — Mac ↔ PC
+# Session log — Mac ↔ PC
 
-**Read this first** when starting a Cursor session on another machine.
+**Read this first** when starting a session on another machine. Cursor was retired on
+2026-10-18; the owner works only with Claude Code now.
 Chat history does **not** sync between Mac and PC. This file + git history do.
 
 **Full Claude ownership handoff (preferred for Claude):**  
@@ -20,7 +21,7 @@ git pull
 
 Then tell Cursor:
 
-> Read `docs/CURSOR_HANDOFF.md` and `docs/RECOMMENDATIONS_FOR_CURSOR.md`. I want to work on: **\<your task\>**.
+> Read `docs/SESSION_LOG.md` and `docs/BACKLOG.md`. I want to work on: **\<your task\>**.
 
 Before you finish a session: commit, push, and **update this handoff** (What changed / What’s next).
 
@@ -46,10 +47,10 @@ Stack: Flutter web (primary), Firestore, Cloud Functions (v2), Midtrans sandbox 
 | Startup crash (`fontSizeFactor` assertion) | Fixed via `TextScaler.linear(1.12)` in `lib/app.dart` |
 | Git history + private remote | Done (`main`) |
 | Initial GitHub release notes | `v0.1.0-initial` |
-| Push-notes Cursor rule | `.cursor/rules/push-notes.mdc` |
+| Push-notes Cursor rule | `CLAUDE.md` |
 
-Detailed change log (newest first): `docs/CURSOR_CHANGES_FOR_CLAUDE.md`  
-Priority backlog Claude maintains: `docs/RECOMMENDATIONS_FOR_CURSOR.md`
+Detailed change log (newest first): `docs/CHANGELOG.md`  
+Priority backlog Claude maintains: `docs/BACKLOG.md`
 
 ---
 
@@ -107,7 +108,7 @@ flutter build web --release \
 firebase deploy --only hosting
 ```
 
-After code changes, relaunch locally per `.cursor/rules/relaunch-after-changes.mdc`.
+After code changes, relaunch locally per `CLAUDE.md`.
 
 ---
 
@@ -115,12 +116,12 @@ After code changes, relaunch locally per `.cursor/rules/relaunch-after-changes.m
 
 | Rule | Path |
 |------|------|
-| Log every change for Claude | `.cursor/rules/log-changes-for-claude.mdc` → `docs/CURSOR_CHANGES_FOR_CLAUDE.md` |
-| Relaunch app after code changes | `.cursor/rules/relaunch-after-changes.mdc` |
-| Push notes (overall summary on commit/push) | `.cursor/rules/push-notes.mdc` |
-| Auth / link codes | `.cursor/rules/auth-and-link-codes.mdc` |
-| Exercise authoring web-only | `.cursor/rules/exercise-authoring-web-only.mdc` |
-| Worksheet import web-only | `.cursor/rules/worksheet-import-web-only.mdc` |
+| Log every change for Claude | `CLAUDE.md` → `docs/CHANGELOG.md` |
+| Relaunch app after code changes | `CLAUDE.md` |
+| Push notes (overall summary on commit/push) | `CLAUDE.md` |
+| Auth / link codes | `.claude/rules/auth-and-link-codes.md` |
+| Exercise authoring web-only | `.claude/rules/exercise-authoring-web-only.md` |
+| Worksheet import web-only | `.claude/rules/worksheet-import-web-only.md` |
 
 Commit author preference (via env vars, not global git config):  
 `Wilsin Kuonadi <wilsinkarimunwkk@gmail.com>`
@@ -210,5 +211,5 @@ Update this section when you push from Mac or PC.
 
 1. **Do not** recreate Firebase, re-run `flutterfire configure`, or invent a new repo.  
 2. **Do not** assume you must continue the Mac backlog — the user may assign a new task. Still skim this file so you don’t undo finished work.  
-3. After any code/config change: update `docs/CURSOR_CHANGES_FOR_CLAUDE.md`, update **Session log** above, commit with an overall push note, and `git push`.  
-4. If the user asks “what’s next?”, point at **Priority backlog** above / `docs/RECOMMENDATIONS_FOR_CURSOR.md`.
+3. After any code/config change: update `docs/CHANGELOG.md`, update **Session log** above, commit with an overall push note, and `git push`.  
+4. If the user asks “what’s next?”, point at **Priority backlog** above / `docs/BACKLOG.md`.

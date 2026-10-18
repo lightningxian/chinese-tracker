@@ -8,7 +8,7 @@ chosen phases. Follow existing patterns and don't regress the fixes in
 parent `linkChild` security, server-authoritative pricing).
 
 Prereqs: `flutter pub get && flutter analyze` clean. Append a summary to
-`docs/CURSOR_CHANGES_FOR_CLAUDE.md` when done, flagging anything incomplete.
+`docs/CHANGELOG.md` when done, flagging anything incomplete.
 
 ## Scope decision (do this first)
 This is a single Chinese centre (one owner/admin). Recommended order:

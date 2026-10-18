@@ -1,7 +1,7 @@
-# Cursor changes — for Claude to review
+# Change log
 
-Append-only log of changes Cursor made, newest first. Each entry lists what
-changed, why, and what Claude should focus on when reviewing (security, rules,
+Append-only log of changes, newest first (Cursor until 2026-10-16, Claude after).
+Each entry lists what changed, why, and what to check when reviewing (security, rules,
 edge cases, and any manual/deploy steps still required).
 
 ---
@@ -87,11 +87,11 @@ edge cases, and any manual/deploy steps still required).
 ## 2026-10-16 — Cursor chat history MD + Claude handoff
 
 **What changed**
-- Added `docs/CURSOR_CHAT_HISTORY.md` — brief rundown + dated timeline of Cursor
+- Added `docs/archive/cursor/CURSOR_CHAT_HISTORY.md` — brief rundown + dated timeline of Cursor
   sessions (git/GitHub, Mac↔PC, Midtrans deferrals, handoff to Claude).
 - Added `docs/CLAUDE_FULL_HANDOFF.md` — complete ownership brief (GitHub URL,
   Firebase/Midtrans config, done vs P0–P3, architecture, risks).
-- Cross-linked from `CURSOR_HANDOFF.md` / `RECOMMENDATIONS_FOR_CURSOR.md`.
+- Cross-linked from `SESSION_LOG.md` / `BACKLOG.md`.
 
 **Why**
 - User continues all work with Claude; chat UI does not sync — need durable MDs
@@ -99,7 +99,7 @@ edge cases, and any manual/deploy steps still required).
 
 **For Claude to review**
 - Start: `docs/CLAUDE_FULL_HANDOFF.md`; conversation context:
-  `docs/CURSOR_CHAT_HISTORY.md`.
+  `docs/archive/cursor/CURSOR_CHAT_HISTORY.md`.
 - Code of record: https://github.com/lightningxian/chinese-tracker
 
 ---
@@ -107,9 +107,9 @@ edge cases, and any manual/deploy steps still required).
 ## 2026-08-10 — PC handoff doc
 
 **What changed**
-- Added `docs/CURSOR_HANDOFF.md` — Mac ↔ PC agent brief (done work, backlog,
+- Added `docs/SESSION_LOG.md` — Mac ↔ PC agent brief (done work, backlog,
   config keys, rules, session log).
-- `docs/RECOMMENDATIONS_FOR_CURSOR.md`: pointer to the handoff at the top.
+- `docs/BACKLOG.md`: pointer to the handoff at the top.
 
 **Why**
 - User runs Cursor on a PC with different tasks; chat history does not sync, so
@@ -123,7 +123,7 @@ edge cases, and any manual/deploy steps still required).
 ## 2026-08-05 — Push-notes rule + initial GitHub release
 
 **What changed**
-- `.cursor/rules/push-notes.mdc`: every commit/push must include an overall
+- `CLAUDE.md`: every commit/push must include an overall
   summary note (commit body + GitHub release/PR when meaningful). Future
   author preference: `Wilsin Kuonadi <wilsinkarimunwkk@gmail.com>` (first
   commit author left as-is; do not rewrite).
@@ -156,7 +156,7 @@ edge cases, and any manual/deploy steps still required).
 - Confirm the private repo exists and `main` is the only branch.
 - Confirm `.figma-import/` (design-reference Vite project) should stay tracked.
 - Next priorities unchanged: Midtrans sandbox payment test, then security
-  hardening (§4 in `docs/RECOMMENDATIONS_FOR_CURSOR.md`).
+  hardening (§4 in `docs/BACKLOG.md`).
 
 ---
 
@@ -208,7 +208,7 @@ edge cases, and any manual/deploy steps still required).
 - `landing_media.dart` + `widgets/landing_youtube_embed*.dart`: Unsplash photos
   (classroom, study, calligraphy) and embedded YouTube showcase on web.
 - `pubspec.yaml`: added `web` for iframe embed.
-- `RECOMMENDATIONS_FOR_CURSOR.md`: landing marked done; Midtrans sandbox test
+- `BACKLOG.md`: landing marked done; Midtrans sandbox test
   deferred.
 
 **Why**
@@ -222,7 +222,7 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
-## 2026-07-22 — Deploy per RECOMMENDATIONS_FOR_CURSOR.md §1
+## 2026-07-22 — Deploy per BACKLOG.md §1
 
 **What changed** (deploy)
 - `npm install` in `functions/`, then `firebase deploy --only functions` — all
@@ -231,7 +231,7 @@ edge cases, and any manual/deploy steps still required).
   then `firebase deploy --only hosting,storage` — live bundle includes question
   bank upgrade + `question_bank_media` storage rules.
 - `flutter analyze` — 0 errors.
-- Updated `docs/RECOMMENDATIONS_FOR_CURSOR.md` (§1 + question bank marked done).
+- Updated `docs/BACKLOG.md` (§1 + question bank marked done).
 
 **Why**
 - User asked to execute Claude's recommendations list top-down.
