@@ -28,6 +28,12 @@ edge cases, and any manual/deploy steps still required).
   disabled for this project". Student registration, parent linking, invoices
   and the Midtrans webhook are all down until billing is re-enabled.
 
+**Later the same day: billing re-enabled (Blaze)**
+- All 9 Cloud Functions redeployed (includes the 17 Oct changes: link-code
+  owner check, `userId: ''` on broadcasts). Website redeployed with the
+  Android APK at `/downloads/easy-study.apk` and the landing button wired to it.
+- Backup: watch the 02:00 Jakarta `scheduledFirestoreExport` run.
+
 **For review**
 - No native iOS app: needs a full Xcode install and an Apple Developer
   account. Web app on the iPhone home screen works (owner confirmed).
