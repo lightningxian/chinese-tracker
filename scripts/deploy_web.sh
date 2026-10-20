@@ -41,7 +41,7 @@ rm -rf build/web
 flutter build web --release \
   --dart-define=CONTENT_OWNER_ID="$CONTENT_OWNER_ID" \
   --dart-define=MIDTRANS_CLIENT_KEY="$MIDTRANS_CLIENT_KEY" \
-  "${APK_DEFINE[@]}"
+  ${APK_DEFINE[@]+"${APK_DEFINE[@]}"}   # empty-array-safe on macOS bash 3.2
 
 if [[ "$MODE" != "--web-only" ]]; then
   mkdir -p build/web/downloads
