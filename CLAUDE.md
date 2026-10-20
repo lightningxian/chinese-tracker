@@ -56,12 +56,16 @@ npm --prefix rules-tests run test:emulator      # 18 pass, 1 skipped (emulator l
 # Full emulator suite (auth 9099, firestore 8080, functions 5001, storage 9199, UI 4000)
 firebase emulators:start --project demo-chinese-tracker
 
-# Hosting deploy (sandbox config)
-flutter build web --release \
-  --dart-define=CONTENT_OWNER_ID=2orTXFeyAhSlxfTgIlcYgs6ZuCG2 \
-  --dart-define=MIDTRANS_CLIENT_KEY=Mid-client-kQ_Bo0DQepeH8IhU
-firebase deploy --only hosting
+# Hosting deploy: ALWAYS via the script. It builds web with the live config,
+# copies the Android APK to /downloads/easy-study.apk (hosting deploys are
+# full snapshots, a bare deploy would drop the APK) and deploys.
+scripts/deploy_web.sh            # reuse last APK build
+scripts/deploy_web.sh --apk      # rebuild the APK too (~6 min, needs JDK 21)
 ```
+Android: `flutter config --jdk-dir=/opt/homebrew/opt/openjdk@21` is set on this Mac; the
+release keystore is referenced by `android/key.properties` (never commit the keystore).
+iOS: no native app; Xcode is incomplete on this Mac and there is no Apple Developer
+account on record. Users add the web app to the home screen from Safari.
 
 ## Known blockers (update when resolved)
 - **Firebase project billing is disabled** (found 2026-10-17): Cloud Functions cannot be deployed (Secret Manager 403) and the nightly Firestore export fails. Owner must re-enable billing (Blaze), then `firebase deploy --only functions` and re-check the backup.

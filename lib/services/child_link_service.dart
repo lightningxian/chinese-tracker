@@ -52,6 +52,16 @@ abstract final class ChildLinkService {
         studentName: data['studentName'] as String?,
       );
     } on FirebaseFunctionsException catch (e) {
+      // 'internal' / 'unavailable' mean the server could not run the check
+      // (for example Cloud Functions switched off), not a bad code.
+      if (e.code == 'internal' ||
+          e.code == 'unavailable' ||
+          e.code == 'deadline-exceeded') {
+        throw ChildLinkException(
+          "We couldn't check the child access code right now. Please try "
+          'again in a few minutes, or contact the centre on WhatsApp.',
+        );
+      }
       throw ChildLinkException(
         e.message ?? 'Invalid child access code. Check your child\'s profile.',
       );
@@ -85,6 +95,16 @@ abstract final class ChildLinkService {
         studentName: data['studentName'] as String?,
       );
     } on FirebaseFunctionsException catch (e) {
+      // 'internal' / 'unavailable' mean the server could not run the check
+      // (for example Cloud Functions switched off), not a bad code.
+      if (e.code == 'internal' ||
+          e.code == 'unavailable' ||
+          e.code == 'deadline-exceeded') {
+        throw ChildLinkException(
+          "We couldn't check the child access code right now. Please try "
+          'again in a few minutes, or contact the centre on WhatsApp.',
+        );
+      }
       throw ChildLinkException(
         e.message ?? 'Invalid child access code. Check your child\'s profile.',
       );

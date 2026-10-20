@@ -113,6 +113,16 @@ abstract final class TeacherLinkCodeService {
       }
       return teacherId;
     } on FirebaseFunctionsException catch (e) {
+      // 'internal' / 'unavailable' mean the server could not run the check
+      // (for example Cloud Functions switched off), not a bad code.
+      if (e.code == 'internal' ||
+          e.code == 'unavailable' ||
+          e.code == 'deadline-exceeded') {
+        throw TeacherLinkCodeException(
+          "We couldn't check the link code right now. Please try again in a "
+          'few minutes, or contact the centre on WhatsApp.',
+        );
+      }
       throw TeacherLinkCodeException(
         e.message ??
             'Invalid link code. Ask your teacher for the current code.',

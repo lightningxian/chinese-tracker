@@ -6,6 +6,31 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-10-20 — Claude: Android APK download, clearer link-code errors (owner test results)
+
+**What changed**
+- `scripts/deploy_web.sh`: builds web with `ANDROID_APK_URL`, copies the
+  release APK to `build/web/downloads/easy-study.apk` and deploys hosting.
+  **Use it for every hosting deploy**; a bare deploy drops the APK.
+- Android release APK built on this Mac (JDK 21 via `flutter config
+  --jdk-dir`, release keystore from `android/key.properties`). ~98 MB universal.
+- Link-code and child-code checks now say "couldn't check right now, try again
+  or contact the centre" when the Cloud Function returns internal/unavailable,
+  instead of showing "internal".
+
+**Why**
+- Owner's test run: PUB-05 failed (no Android download), PUB-09 failed with an
+  "internal" error. The error is the project's **disabled billing**: the live
+  `resolveLinkCode` function answers HTTP 503 and its log says "billing is
+  disabled for this project". Student registration, parent linking, invoices
+  and the Midtrans webhook are all down until billing is re-enabled.
+
+**For review**
+- No native iOS app: needs a full Xcode install and an Apple Developer
+  account. Web app on the iPhone home screen works (owner confirmed).
+
+---
+
 ## 2026-10-20 — Claude: Students table, class form trimmed, landing menu/scroll
 
 **What changed**
