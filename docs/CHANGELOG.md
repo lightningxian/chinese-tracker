@@ -25,6 +25,10 @@ edge cases, and any manual/deploy steps still required).
 - Landing: **WhatsApp** button in the hero and a floating round button
   (bottom corner) that open `wa.me/6282333836362` with an Indonesian greeting.
   Number from the flyer; change `_whatsAppNumber` in `landing_screen.dart`.
+- Landing is now **WhatsApp-first** (owner's decision): "Start learning" and
+  "I'm a parent" removed from the hero; plan cards say "Ask on WhatsApp"; the
+  bottom CTA is "WhatsApp us" + "Sign in". Self sign-up remains only via the
+  top-bar "Sign up" button and `/register`.
 
 **For review**
 - `SessionMode` / `RegistrationState` enums and the `room` field stay in the

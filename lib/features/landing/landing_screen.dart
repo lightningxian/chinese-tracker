@@ -415,19 +415,11 @@ class _HeroSection extends StatelessWidget {
           spacing: 14,
           runSpacing: 14,
           children: [
-            _BrandButton(
-              label: 'Start learning',
-              onPressed: () => context.push('/register'),
-            ),
-            _BrandButton(
-              label: "I'm a parent",
-              tone: _Tone.white,
-              onPressed: () => context.push('/register'),
-            ),
+            // WhatsApp first: prospective students and parents ask the centre
+            // before anything else. Sign in / Sign up stay in the top bar.
             _BrandButton(
               label: 'WhatsApp us',
               icon: Icons.chat_outlined,
-              tone: _Tone.white,
               onPressed: () => _openWhatsApp(context),
             ),
           ],
@@ -1061,7 +1053,7 @@ class _PricingSection extends StatelessWidget {
                 hours: 12,
                 price: 'Rp 2.450.000',
                 note: 'A good start for HSK 1–2, or for a busy schedule.',
-                onPressed: () => context.push('/register'),
+                onPressed: () => _openWhatsApp(context),
               ),
               _PlanCard(
                 sessions: 16,
@@ -1070,7 +1062,7 @@ class _PricingSection extends StatelessWidget {
                 note: 'Steady progress with two classes a week.',
                 highlight: true,
                 tag: 'Best value',
-                onPressed: () => context.push('/register'),
+                onPressed: () => _openWhatsApp(context),
               ),
             ],
           ),
@@ -1204,7 +1196,8 @@ class _PlanCard extends StatelessWidget {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: _BrandButton(
-                      label: 'Start learning',
+                      label: 'Ask on WhatsApp',
+                      icon: Icons.chat_outlined,
                       tone: highlight ? _Tone.teal : _Tone.white,
                       onPressed: onPressed,
                     ),
@@ -1412,8 +1405,9 @@ class _CtaSection extends StatelessWidget {
       runSpacing: 14,
       children: [
         _BrandButton(
-            label: 'Create a free account',
-            onPressed: () => context.push('/register')),
+            label: 'WhatsApp us',
+            icon: Icons.chat_outlined,
+            onPressed: () => _openWhatsApp(context)),
         _BrandButton(
             label: 'Sign in',
             tone: _Tone.white,
