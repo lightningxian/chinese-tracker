@@ -17,6 +17,59 @@ const _maxWidth = 1120.0;
 const _wideBreak = 900.0;
 const _midBreak = 600.0;
 
+/// Centre WhatsApp number from the course flyer (0823-3383-6362), in the
+/// international form wa.me expects.
+const _whatsAppNumber = '6282333836362';
+const _whatsAppGreeting =
+    'Halo Easy Study, saya ingin bertanya tentang kursus Mandarin.';
+
+Future<void> _openWhatsApp(BuildContext context) async {
+  final uri = Uri.parse(
+    'https://wa.me/$_whatsAppNumber?text=${Uri.encodeComponent(_whatsAppGreeting)}',
+  );
+  final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+  if (!ok && context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Could not open WhatsApp. Message us on 0823-3383-6362.'),
+      ),
+    );
+  }
+}
+
+/// Round WhatsApp button pinned to the bottom corner of the landing page.
+class _WhatsAppFab extends StatelessWidget {
+  const _WhatsAppFab();
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: 'Chat with us on WhatsApp',
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: LandingBrand.lift(4),
+        ),
+        child: Material(
+          color: const Color(0xFF25D366), // WhatsApp green
+          shape: const CircleBorder(
+            side: BorderSide(color: LandingBrand.black, width: 3),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: () => _openWhatsApp(context),
+            child: const SizedBox(
+              width: 58,
+              height: 58,
+              child: Icon(Icons.chat_rounded, color: Colors.white, size: 28),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 double _gutter(double width) => width >= _wideBreak ? 48 : 20;
 
 class LandingScreen extends StatefulWidget {
@@ -63,6 +116,7 @@ class _LandingScreenState extends State<LandingScreen> {
 
     return Scaffold(
       backgroundColor: LandingBrand.white,
+      floatingActionButton: const _WhatsAppFab(),
       body: CustomScrollView(
         controller: _scroll,
         slivers: [
@@ -369,6 +423,12 @@ class _HeroSection extends StatelessWidget {
               label: "I'm a parent",
               tone: _Tone.white,
               onPressed: () => context.push('/register'),
+            ),
+            _BrandButton(
+              label: 'WhatsApp us',
+              icon: Icons.chat_outlined,
+              tone: _Tone.white,
+              onPressed: () => _openWhatsApp(context),
             ),
           ],
         ),

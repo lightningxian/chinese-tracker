@@ -22,6 +22,9 @@ edge cases, and any manual/deploy steps still required).
 - Landing: top menu in page order; menu clicks scroll sections to sit below
   the sticky bar; plan-card corners no longer painted over; hero 易 drawn as
   text (the cursive logo crop looked broken).
+- Landing: **WhatsApp** button in the hero and a floating round button
+  (bottom corner) that open `wa.me/6282333836362` with an Indonesian greeting.
+  Number from the flyer; change `_whatsAppNumber` in `landing_screen.dart`.
 
 **For review**
 - `SessionMode` / `RegistrationState` enums and the `room` field stay in the
