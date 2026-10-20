@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show RenderAbstractViewport;
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -33,11 +34,17 @@ class _LandingScreenState extends State<LandingScreen> {
   final _aboutKey = GlobalKey();
   final _pricingKey = GlobalKey();
 
+  /// Height of the pinned top bar (toolbar + black rule). Sections scroll to
+  /// sit just below it instead of under it.
+  static const _navHeight = 72.0 + 3;
+
   void _scrollTo(GlobalKey key) {
-    final ctx = key.currentContext;
-    if (ctx == null) return;
-    Scrollable.ensureVisible(
-      ctx,
+    final target = key.currentContext?.findRenderObject();
+    if (target == null || !_scroll.hasClients) return;
+    final viewport = RenderAbstractViewport.of(target);
+    final offset = viewport.getOffsetToReveal(target, 0).offset - _navHeight;
+    _scroll.animateTo(
+      offset.clamp(0.0, _scroll.position.maxScrollExtent),
       duration: const Duration(milliseconds: 450),
       curve: Curves.easeInOut,
     );
@@ -80,11 +87,12 @@ class _LandingScreenState extends State<LandingScreen> {
             ),
             actions: [
               if (showLinks) ...[
-                _NavLink('Classes', () => _scrollTo(_featuresKey)),
+                // Same order as the sections appear down the page.
                 _NavLink('HSK levels', () => _scrollTo(_levelsKey)),
                 _NavLink('About', () => _scrollTo(_aboutKey)),
-                _NavLink('Prices', () => _scrollTo(_pricingKey)),
+                _NavLink('Classes', () => _scrollTo(_featuresKey)),
                 _NavLink('For parents', () => _scrollTo(_rolesKey)),
+                _NavLink('Prices', () => _scrollTo(_pricingKey)),
                 _NavLink('Sign in', () => context.push(_signInRoute)),
                 const SizedBox(width: 8),
               ] else
@@ -117,7 +125,8 @@ class _LandingScreenState extends State<LandingScreen> {
             child: KeyedSubtree(key: _rolesKey, child: const _RolesSection()),
           ),
           SliverToBoxAdapter(
-            child: KeyedSubtree(key: _pricingKey, child: const _PricingSection()),
+            child:
+                KeyedSubtree(key: _pricingKey, child: const _PricingSection()),
           ),
           if (kIsWeb) const SliverToBoxAdapter(child: _DownloadAppSection()),
           const SliverToBoxAdapter(child: _CtaSection()),
@@ -253,7 +262,10 @@ class _Section extends StatelessWidget {
 }
 
 class _SectionTitle extends StatelessWidget {
-  const _SectionTitle(this.title, {this.sub, this.color = LandingBrand.teal, this.subColor = LandingBrand.ink2});
+  const _SectionTitle(this.title,
+      {this.sub,
+      this.color = LandingBrand.teal,
+      this.subColor = LandingBrand.ink2});
 
   final String title;
   final String? sub;
@@ -266,12 +278,15 @@ class _SectionTitle extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: LandingBrand.display(size: wide ? 40 : 30, color: color, height: 1.05)),
+        Text(title,
+            style: LandingBrand.display(
+                size: wide ? 40 : 30, color: color, height: 1.05)),
         if (sub != null) ...[
           const SizedBox(height: 8),
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 560),
-            child: Text(sub!, style: LandingBrand.body(size: 16, color: subColor)),
+            child:
+                Text(sub!, style: LandingBrand.body(size: 16, color: subColor)),
           ),
         ],
       ],
@@ -298,7 +313,8 @@ class _ResponsiveGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final w = constraints.maxWidth;
-        var cols = ((w + gap) / (minItemWidth + gap)).floor().clamp(1, maxColumns);
+        var cols =
+            ((w + gap) / (minItemWidth + gap)).floor().clamp(1, maxColumns);
         if (cols > children.length) cols = children.length;
         final itemW = (w - gap * (cols - 1)) / cols;
         return Wrap(
@@ -402,7 +418,8 @@ class _Chip extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: LandingBrand.body(size: 14, weight: FontWeight.w500, height: 1.3),
+        style:
+            LandingBrand.body(size: 14, weight: FontWeight.w500, height: 1.3),
       ),
     );
   }
@@ -470,7 +487,8 @@ class _HeroArt extends StatelessWidget {
             child: Center(
               child: Text(
                 '易',
-                style: LandingBrand.han(size: hanHeight * 0.92, color: LandingBrand.green)
+                style: LandingBrand.han(
+                        size: hanHeight * 0.92, color: LandingBrand.green)
                     .copyWith(fontWeight: FontWeight.w900, height: 1),
               ),
             ),
@@ -516,7 +534,8 @@ class _SpeechBubble extends StatelessWidget {
               Text('你好!', style: LandingBrand.han(size: 30)),
               Text(
                 'nǐ hǎo',
-                style: LandingBrand.body(size: 13, color: LandingBrand.ink2, height: 1.2),
+                style: LandingBrand.body(
+                    size: 13, color: LandingBrand.ink2, height: 1.2),
               ),
             ],
           ),
@@ -629,7 +648,8 @@ class _RulerBar extends StatelessWidget {
     const line = BorderSide(color: LandingBrand.black, width: 3);
     return Container(
       clipBehavior: Clip.antiAlias,
-      decoration: LandingBrand.card(color: LandingBrand.yellow, radius: 10, liftBy: 6),
+      decoration:
+          LandingBrand.card(color: LandingBrand.yellow, radius: 10, liftBy: 6),
       child: Column(
         children: [
           const SizedBox(
@@ -638,7 +658,8 @@ class _RulerBar extends StatelessWidget {
             child: CustomPaint(painter: _TickPainter()),
           ),
           Table(
-            border: const TableBorder(verticalInside: line, horizontalInside: line),
+            border:
+                const TableBorder(verticalInside: line, horizontalInside: line),
             children: [
               for (final row in rows)
                 TableRow(
@@ -649,13 +670,18 @@ class _RulerBar extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(level, style: LandingBrand.display(size: 24, height: 1.1)),
+                            Text(level,
+                                style: LandingBrand.display(
+                                    size: 24, height: 1.1)),
                             const SizedBox(height: 2),
-                            Text(words, style: LandingBrand.body(size: 13, height: 1.3)),
+                            Text(words,
+                                style:
+                                    LandingBrand.body(size: 13, height: 1.3)),
                           ],
                         ),
                       ),
-                    for (var i = row.length; i < columns; i++) const SizedBox.shrink(),
+                    for (var i = row.length; i < columns; i++)
+                      const SizedBox.shrink(),
                   ],
                 ),
             ],
@@ -676,7 +702,8 @@ class _TickPainter extends CustomPainter {
       ..strokeWidth = 2;
     for (var x = 8.0; x < size.width; x += 14) {
       final tall = ((x - 8) / 14).round() % 5 == 0;
-      canvas.drawLine(Offset(x, 0), Offset(x, tall ? size.height : size.height * 0.55), paint);
+      canvas.drawLine(Offset(x, 0),
+          Offset(x, tall ? size.height : size.height * 0.55), paint);
     }
   }
 
@@ -702,11 +729,15 @@ class _AboutSection extends StatelessWidget {
           children: [
             Text(
               'ABOUT EASY STUDY',
-              style: LandingBrand.body(size: 12, weight: FontWeight.w700, color: LandingBrand.teal)
+              style: LandingBrand.body(
+                      size: 12,
+                      weight: FontWeight.w700,
+                      color: LandingBrand.teal)
                   .copyWith(letterSpacing: 1.6),
             ),
             const SizedBox(width: 10),
-            Text('易华文教中心', style: LandingBrand.han(size: 14, color: LandingBrand.ink2)),
+            Text('易华文教中心',
+                style: LandingBrand.han(size: 14, color: LandingBrand.ink2)),
           ],
         ),
         const SizedBox(height: 12),
@@ -728,7 +759,8 @@ class _AboutSection extends StatelessWidget {
           'Classes are face-to-face at our centre, taught by our own teachers. '
           'The app keeps the homework, scores and attendance in one place for '
           'students and their parents.',
-          style: LandingBrand.body(size: 17, height: 1.6, color: LandingBrand.ink2),
+          style: LandingBrand.body(
+              size: 17, height: 1.6, color: LandingBrand.ink2),
         ),
       ],
     );
@@ -744,13 +776,16 @@ class _AboutSection extends StatelessWidget {
         for (final (big, small) in proofs) ...[
           Container(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
-            decoration: LandingBrand.card(color: LandingBrand.yellowSoft, liftBy: 4),
+            decoration:
+                LandingBrand.card(color: LandingBrand.yellowSoft, liftBy: 4),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(big, style: LandingBrand.display(size: 26, height: 1.1)),
                 const SizedBox(height: 4),
-                Text(small, style: LandingBrand.body(size: 14, color: LandingBrand.ink2, height: 1.4)),
+                Text(small,
+                    style: LandingBrand.body(
+                        size: 14, color: LandingBrand.ink2, height: 1.4)),
               ],
             ),
           ),
@@ -807,13 +842,15 @@ class _FeaturesSection extends StatelessWidget {
               _FeatureCard(
                 icon: Icons.edit_outlined,
                 title: 'HSK practice',
-                body: 'Reading, listening, typing and speaking exercises, sorted '
+                body:
+                    'Reading, listening, typing and speaking exercises, sorted '
                     'by HSK level, including real past exam questions.',
               ),
               _FeatureCard(
                 icon: Icons.insights_outlined,
                 title: 'Progress and grades',
-                body: 'Scores, letter grades and teacher notes, all in one view.',
+                body:
+                    'Scores, letter grades and teacher notes, all in one view.',
               ),
               _FeatureCard(
                 icon: Icons.credit_card_outlined,
@@ -830,7 +867,8 @@ class _FeaturesSection extends StatelessWidget {
 }
 
 class _FeatureCard extends StatelessWidget {
-  const _FeatureCard({required this.icon, required this.title, required this.body});
+  const _FeatureCard(
+      {required this.icon, required this.title, required this.body});
 
   final IconData icon;
   final String title;
@@ -857,7 +895,8 @@ class _FeatureCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(title, style: LandingBrand.display(size: 22, height: 1.1)),
           const SizedBox(height: 6),
-          Text(body, style: LandingBrand.body(size: 14.5, color: LandingBrand.ink2)),
+          Text(body,
+              style: LandingBrand.body(size: 14.5, color: LandingBrand.ink2)),
         ],
       ),
     );
@@ -881,10 +920,14 @@ class _RolesSection extends StatelessWidget {
           const SizedBox(height: 30),
           const _ResponsiveGrid(
             children: [
-              _RoleCard('Murid', 'Students', 'Classes, homework and your HSK progress.'),
-              _RoleCard('Guru', 'Teachers', 'Run classes, assign practice, record grades.'),
-              _RoleCard('Orang Tua', 'Parents', 'Attendance, grades and bills for your child.'),
-              _RoleCard('Admin', 'Centre', 'Users, vouchers, payments and reports.'),
+              _RoleCard('Murid', 'Students',
+                  'Classes, homework and your HSK progress.'),
+              _RoleCard('Guru', 'Teachers',
+                  'Run classes, assign practice, record grades.'),
+              _RoleCard('Orang Tua', 'Parents',
+                  'Attendance, grades and bills for your child.'),
+              _RoleCard(
+                  'Admin', 'Centre', 'Users, vouchers, payments and reports.'),
             ],
           ),
         ],
@@ -910,13 +953,15 @@ class _RoleCard extends StatelessWidget {
         children: [
           Text(
             en.toUpperCase(),
-            style: LandingBrand.body(size: 12, weight: FontWeight.w700, color: LandingBrand.ink2)
+            style: LandingBrand.body(
+                    size: 12, weight: FontWeight.w700, color: LandingBrand.ink2)
                 .copyWith(letterSpacing: 1.2),
           ),
           const SizedBox(height: 4),
           Text(who, style: LandingBrand.display(size: 28, height: 1.05)),
           const SizedBox(height: 8),
-          Text(body, style: LandingBrand.body(size: 14.5, color: LandingBrand.ink2)),
+          Text(body,
+              style: LandingBrand.body(size: 14.5, color: LandingBrand.ink2)),
         ],
       ),
     );
@@ -939,7 +984,8 @@ class _PricingSection extends StatelessWidget {
         children: [
           const _SectionTitle(
             'Pick a term',
-            sub: 'Face-to-face classes at our centre, 1.5 hours each, 6–8 students '
+            sub:
+                'Face-to-face classes at our centre, 1.5 hours each, 6–8 students '
                 'per class, for students aged 13 and above. Both terms are valid '
                 'for 2 months.',
           ),
@@ -981,12 +1027,14 @@ class _PricingSection extends StatelessWidget {
               _InfoTile(
                 icon: Icons.schedule_outlined,
                 title: 'Open class times (WIB)',
-                body: 'Tue, Wed, Fri 15:00–16:30 · Sat 10:00–11:30 and 11:30–13:00.',
+                body:
+                    'Tue, Wed, Fri 15:00–16:30 · Sat 10:00–11:30 and 11:30–13:00.',
               ),
               _InfoTile(
                 icon: Icons.credit_card_outlined,
                 title: 'Pay online',
-                body: 'Card, bank transfer or installments through Midtrans. Sessions are '
+                body:
+                    'Card, bank transfer or installments through Midtrans. Sessions are '
                     'added to your term as soon as payment clears.',
               ),
             ],
@@ -1023,7 +1071,9 @@ class _PlanCard extends StatelessWidget {
           children: [
             Icon(icon, size: 20, color: LandingBrand.teal),
             const SizedBox(width: 10),
-            Expanded(child: Text(text, style: LandingBrand.body(size: 14.5, height: 1.4))),
+            Expanded(
+                child: Text(text,
+                    style: LandingBrand.body(size: 14.5, height: 1.4))),
           ],
         ),
       );
@@ -1031,70 +1081,87 @@ class _PlanCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      clipBehavior: Clip.antiAlias,
       decoration: LandingBrand.card(liftBy: 6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Container(
-            padding: const EdgeInsets.fromLTRB(22, 16, 22, 14),
-            decoration: BoxDecoration(
-              color: highlight ? LandingBrand.yellow : LandingBrand.white,
-              border: const Border(bottom: BorderSide(color: LandingBrand.black, width: 3)),
-            ),
-            child: Row(
-              children: [
-                Text('$sessions sessions', style: LandingBrand.display(size: 26, height: 1.1)),
-                const Spacer(),
-                if (tag != null)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: LandingBrand.black,
-                      borderRadius: BorderRadius.circular(999),
+      // Round the content to the border's inner curve (18 − 3 px) so the
+      // header fill never paints over the card's corners.
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(15),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              padding: const EdgeInsets.fromLTRB(22, 16, 22, 14),
+              decoration: BoxDecoration(
+                color: highlight ? LandingBrand.yellow : LandingBrand.white,
+                border: const Border(
+                    bottom: BorderSide(color: LandingBrand.black, width: 3)),
+              ),
+              child: Row(
+                children: [
+                  Text('$sessions sessions',
+                      style: LandingBrand.display(size: 26, height: 1.1)),
+                  const Spacer(),
+                  if (tag != null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: LandingBrand.black,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        tag!,
+                        style: LandingBrand.display(
+                            size: 13, color: LandingBrand.yellow, height: 1.2),
+                      ),
                     ),
-                    child: Text(
-                      tag!,
-                      style: LandingBrand.display(size: 13, color: LandingBrand.yellow, height: 1.2),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(22, 20, 22, 22),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(price,
+                      style: LandingBrand.display(
+                          size: 40, color: LandingBrand.ink, height: 1)),
+                  const SizedBox(height: 4),
+                  Text('per term',
+                      style: LandingBrand.body(
+                          size: 14, color: LandingBrand.ink2)),
+                  const SizedBox(height: 16),
+                  _row(Icons.event_available_outlined,
+                      '$sessions meetings of 1.5 hours ($hours hours in total)'),
+                  _row(Icons.calendar_month_outlined,
+                      'Valid for 2 months from the first class'),
+                  _row(Icons.groups_outlined, '6–8 students per class'),
+                  const SizedBox(height: 8),
+                  Text(note,
+                      style: LandingBrand.body(
+                          size: 14.5, color: LandingBrand.ink2)),
+                  const SizedBox(height: 18),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: _BrandButton(
+                      label: 'Start learning',
+                      tone: highlight ? _Tone.teal : _Tone.white,
+                      onPressed: onPressed,
                     ),
                   ),
-              ],
+                ],
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(22, 20, 22, 22),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(price, style: LandingBrand.display(size: 40, color: LandingBrand.ink, height: 1)),
-                const SizedBox(height: 4),
-                Text('per term', style: LandingBrand.body(size: 14, color: LandingBrand.ink2)),
-                const SizedBox(height: 16),
-                _row(Icons.event_available_outlined, '$sessions meetings of 1.5 hours ($hours hours in total)'),
-                _row(Icons.calendar_month_outlined, 'Valid for 2 months from the first class'),
-                _row(Icons.groups_outlined, '6–8 students per class'),
-                const SizedBox(height: 8),
-                Text(note, style: LandingBrand.body(size: 14.5, color: LandingBrand.ink2)),
-                const SizedBox(height: 18),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: _BrandButton(
-                    label: 'Start learning',
-                    tone: highlight ? _Tone.teal : _Tone.white,
-                    onPressed: onPressed,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
 class _InfoTile extends StatelessWidget {
-  const _InfoTile({required this.icon, required this.title, required this.body});
+  const _InfoTile(
+      {required this.icon, required this.title, required this.body});
 
   final IconData icon;
   final String title;
@@ -1123,9 +1190,12 @@ class _InfoTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: LandingBrand.display(size: 18, height: 1.15)),
+                Text(title,
+                    style: LandingBrand.display(size: 18, height: 1.15)),
                 const SizedBox(height: 4),
-                Text(body, style: LandingBrand.body(size: 14, color: LandingBrand.ink2, height: 1.45)),
+                Text(body,
+                    style: LandingBrand.body(
+                        size: 14, color: LandingBrand.ink2, height: 1.45)),
               ],
             ),
           ),
@@ -1145,7 +1215,8 @@ class _DownloadAppSection extends StatelessWidget {
   Future<void> _openApk(BuildContext context) async {
     if (!AppConstants.hasAndroidApk) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Android download will be available soon.')),
+        const SnackBar(
+            content: Text('Android download will be available soon.')),
       );
       return;
     }
@@ -1168,10 +1239,12 @@ class _DownloadAppSection extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Install on iPhone or iPad', style: LandingBrand.display(size: 22, height: 1.1)),
+            Text('Install on iPhone or iPad',
+                style: LandingBrand.display(size: 22, height: 1.1)),
             const SizedBox(height: 16),
             const _IosStep(number: '1', text: 'Open this page in Safari.'),
-            const _IosStep(number: '2', text: 'Tap Share → "Add to Home Screen".'),
+            const _IosStep(
+                number: '2', text: 'Tap Share → "Add to Home Screen".'),
           ],
         ),
       ),
@@ -1187,7 +1260,8 @@ class _DownloadAppSection extends StatelessWidget {
         decoration: LandingBrand.card(),
         child: Column(
           children: [
-            Text('Learn on your phone', style: LandingBrand.display(size: 30, height: 1.1)),
+            Text('Learn on your phone',
+                style: LandingBrand.display(size: 30, height: 1.1)),
             const SizedBox(height: 8),
             Text(
               'Install Easy Study on Android, or add it to your iPhone home screen from Safari.',
@@ -1238,7 +1312,8 @@ class _IosStep extends StatelessWidget {
             backgroundColor: LandingBrand.teal,
             child: Text(
               number,
-              style: LandingBrand.display(size: 14, color: LandingBrand.white, height: 1.2),
+              style: LandingBrand.display(
+                  size: 14, color: LandingBrand.white, height: 1.2),
             ),
           ),
           const SizedBox(width: 12),
@@ -1264,7 +1339,10 @@ class _CtaSection extends StatelessWidget {
         style: LandingBrand.display(size: wide ? 40 : 30, height: 1.05),
         children: [
           const TextSpan(text: 'Ready for your first '),
-          TextSpan(text: '字', style: LandingBrand.han(size: wide ? 44 : 34, color: LandingBrand.green)),
+          TextSpan(
+              text: '字',
+              style: LandingBrand.han(
+                  size: wide ? 44 : 34, color: LandingBrand.green)),
           const TextSpan(text: '?'),
         ],
       ),
@@ -1273,8 +1351,13 @@ class _CtaSection extends StatelessWidget {
       spacing: 14,
       runSpacing: 14,
       children: [
-        _BrandButton(label: 'Create a free account', onPressed: () => context.push('/register')),
-        _BrandButton(label: 'Sign in', tone: _Tone.white, onPressed: () => context.push(_signInRoute)),
+        _BrandButton(
+            label: 'Create a free account',
+            onPressed: () => context.push('/register')),
+        _BrandButton(
+            label: 'Sign in',
+            tone: _Tone.white,
+            onPressed: () => context.push(_signInRoute)),
       ],
     );
     return DecoratedBox(
@@ -1333,12 +1416,14 @@ class _LandingFooter extends StatelessWidget {
             children: [
               Text(
                 'Jl. Manyar Tirtomoyo 7/11, Surabaya · Phone 0823-3383-6362 · Instagram @easystudy.sby',
-                style: LandingBrand.body(size: 13, color: const Color(0xFFE6ECE9)),
+                style:
+                    LandingBrand.body(size: 13, color: const Color(0xFFE6ECE9)),
               ),
               Text(
                 'Mandarin Education Center & China Education Consultant · '
                 '© ${DateTime.now().year} Easy Study',
-                style: LandingBrand.body(size: 13, color: const Color(0xFFB8C4BE)),
+                style:
+                    LandingBrand.body(size: 13, color: const Color(0xFFB8C4BE)),
               ),
             ],
           ),
