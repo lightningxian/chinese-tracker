@@ -37,6 +37,52 @@ Future<void> _openWhatsApp(BuildContext context) async {
   }
 }
 
+/// WhatsApp mark drawn with widgets (no asset, no icon font): green bubble
+/// with a tail and a white handset.
+class _WhatsAppMark extends StatelessWidget {
+  const _WhatsAppMark({this.size = 24});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    const green = Color(0xFF25D366);
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // Tail at the bottom-left, under the bubble.
+          Positioned(
+            left: size * 0.02,
+            bottom: size * 0.02,
+            child: Transform.rotate(
+              angle: math.pi / 4,
+              child: Container(
+                width: size * 0.3,
+                height: size * 0.3,
+                decoration: BoxDecoration(
+                  color: green,
+                  borderRadius: BorderRadius.circular(size * 0.05),
+                ),
+              ),
+            ),
+          ),
+          Container(
+            width: size,
+            height: size,
+            decoration:
+                const BoxDecoration(color: green, shape: BoxShape.circle),
+            alignment: Alignment.center,
+            child: Icon(Icons.phone, color: Colors.white, size: size * 0.56),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// Round WhatsApp button pinned to the bottom corner of the landing page.
 class _WhatsAppFab extends StatelessWidget {
   const _WhatsAppFab();
@@ -51,7 +97,7 @@ class _WhatsAppFab extends StatelessWidget {
           boxShadow: LandingBrand.lift(4),
         ),
         child: Material(
-          color: const Color(0xFF25D366), // WhatsApp green
+          color: LandingBrand.white,
           shape: const CircleBorder(
             side: BorderSide(color: LandingBrand.black, width: 3),
           ),
@@ -59,9 +105,9 @@ class _WhatsAppFab extends StatelessWidget {
           child: InkWell(
             onTap: () => _openWhatsApp(context),
             child: const SizedBox(
-              width: 58,
-              height: 58,
-              child: Icon(Icons.chat_rounded, color: Colors.white, size: 28),
+              width: 60,
+              height: 60,
+              child: Center(child: _WhatsAppMark(size: 34)),
             ),
           ),
         ),
@@ -225,6 +271,7 @@ class _BrandButton extends StatelessWidget {
     required this.onPressed,
     this.tone = _Tone.teal,
     this.icon,
+    this.leading,
     this.compact = false,
   });
 
@@ -232,6 +279,7 @@ class _BrandButton extends StatelessWidget {
   final VoidCallback onPressed;
   final _Tone tone;
   final IconData? icon;
+  final Widget? leading;
   final bool compact;
 
   @override
@@ -262,7 +310,10 @@ class _BrandButton extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (icon != null) ...[
+                if (leading != null) ...[
+                  leading!,
+                  const SizedBox(width: 9),
+                ] else if (icon != null) ...[
                   Icon(icon, size: 20, color: fg),
                   const SizedBox(width: 8),
                 ],
@@ -419,7 +470,7 @@ class _HeroSection extends StatelessWidget {
             // before anything else. Sign in / Sign up stay in the top bar.
             _BrandButton(
               label: 'WhatsApp us',
-              icon: Icons.chat_outlined,
+              leading: const _WhatsAppMark(size: 20),
               onPressed: () => _openWhatsApp(context),
             ),
           ],
@@ -1197,7 +1248,7 @@ class _PlanCard extends StatelessWidget {
                     alignment: Alignment.centerLeft,
                     child: _BrandButton(
                       label: 'Ask on WhatsApp',
-                      icon: Icons.chat_outlined,
+                      leading: const _WhatsAppMark(size: 20),
                       tone: highlight ? _Tone.teal : _Tone.white,
                       onPressed: onPressed,
                     ),
@@ -1406,7 +1457,7 @@ class _CtaSection extends StatelessWidget {
       children: [
         _BrandButton(
             label: 'WhatsApp us',
-            icon: Icons.chat_outlined,
+            leading: const _WhatsAppMark(size: 20),
             onPressed: () => _openWhatsApp(context)),
         _BrandButton(
             label: 'Sign in',

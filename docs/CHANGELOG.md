@@ -29,6 +29,9 @@ edge cases, and any manual/deploy steps still required).
   "I'm a parent" removed from the hero; plan cards say "Ask on WhatsApp"; the
   bottom CTA is "WhatsApp us" + "Sign in". Self sign-up remains only via the
   top-bar "Sign up" button and `/register`.
+- WhatsApp mark drawn with widgets (`_WhatsAppMark`: green bubble + tail +
+  white handset); floating button is white with the mark. No icon font or
+  asset needed, so it cannot render blank.
 
 **For review**
 - `SessionMode` / `RegistrationState` enums and the `room` field stay in the
