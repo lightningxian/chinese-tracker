@@ -14,6 +14,9 @@ edge cases, and any manual/deploy steps still required).
   **Use it for every hosting deploy**; a bare deploy drops the APK.
 - Android release APK built on this Mac (JDK 21 via `flutter config
   --jdk-dir`, release keystore from `android/key.properties`). ~98 MB universal.
+  **Not published yet:** Hosting on the free plan rejected it ("Executable
+  files are forbidden on the Spark billing plan"). `deploy_web.sh --web-only`
+  deploys without it until billing is enabled.
 - Link-code and child-code checks now say "couldn't check right now, try again
   or contact the centre" when the Cloud Function returns internal/unavailable,
   instead of showing "internal".

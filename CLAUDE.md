@@ -59,7 +59,8 @@ firebase emulators:start --project demo-chinese-tracker
 # Hosting deploy: ALWAYS via the script. It builds web with the live config,
 # copies the Android APK to /downloads/easy-study.apk (hosting deploys are
 # full snapshots, a bare deploy would drop the APK) and deploys.
-scripts/deploy_web.sh            # reuse last APK build
+scripts/deploy_web.sh --web-only # until billing is enabled (free plan refuses .apk uploads)
+scripts/deploy_web.sh            # web + APK, reuse last APK build (needs Blaze)
 scripts/deploy_web.sh --apk      # rebuild the APK too (~6 min, needs JDK 21)
 ```
 Android: `flutter config --jdk-dir=/opt/homebrew/opt/openjdk@21` is set on this Mac; the
@@ -68,5 +69,5 @@ iOS: no native app; Xcode is incomplete on this Mac and there is no Apple Develo
 account on record. Users add the web app to the home screen from Safari.
 
 ## Known blockers (update when resolved)
-- **Firebase project billing is disabled** (found 2026-10-17): Cloud Functions cannot be deployed (Secret Manager 403) and the nightly Firestore export fails. Owner must re-enable billing (Blaze), then `firebase deploy --only functions` and re-check the backup.
+- **Firebase project billing is disabled** (found 2026-10-17, confirmed 2026-10-20): the live Cloud Functions answer HTTP 503 ("billing is disabled"), so student registration, parent linking, invoices and the Midtrans webhook are all down; functions cannot be deployed (Secret Manager 403); the nightly Firestore export fails; Hosting refuses the Android APK. Owner must re-enable billing (Blaze), then `firebase deploy --only functions`, `scripts/deploy_web.sh --apk`, and re-check the backup.
 - Test accounts on the live project: `admin@`, `teacher@`, `student1-3@test.chinesetracker`, password in `docs/CLAUDE_FULL_HANDOFF.md`. No test parent yet.
