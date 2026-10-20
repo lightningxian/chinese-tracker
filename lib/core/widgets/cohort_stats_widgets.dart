@@ -1,3 +1,5 @@
+import 'dart:ui' show FontFeature;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -12,11 +14,12 @@ import '../../services/firestore_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/file_download.dart' as file_download;
 import 'app_card.dart';
+import 'app_data_table.dart';
 import 'export_report_card.dart';
 import 'responsive_card_grid.dart';
 import 'status_pill.dart';
 
-class StudentRosterList extends StatelessWidget {
+class StudentRosterList extends StatefulWidget {
   const StudentRosterList({
     super.key,
     required this.students,
@@ -27,8 +30,73 @@ class StudentRosterList extends StatelessWidget {
   final EdgeInsetsGeometry padding;
 
   @override
+  State<StudentRosterList> createState() => _StudentRosterListState();
+}
+
+class _StudentRosterListState extends State<StudentRosterList> {
+  String _query = '';
+  String? _level;
+  String _sortId = 'name';
+  bool _sortAscending = true;
+
+  /// "HSK 3 · 8 lessons/term" → "HSK 3".
+  static String _levelOf(StudentRosterSummary s) =>
+      s.levelLabel.split('·').first.trim();
+
+  static bool _needsAttention(StudentRosterSummary s) =>
+      s.sessionsRemaining <= 2 || s.homeworkOverdue > 0;
+
+  List<String> get _levels {
+    final set = {for (final s in widget.students) _levelOf(s)}
+      ..removeWhere((l) => l.isEmpty);
+    return set.toList()..sort();
+  }
+
+  List<StudentRosterSummary> get _visible {
+    final q = _query.trim().toLowerCase();
+    final rows = widget.students.where((s) {
+      if (_level != null && _levelOf(s) != _level) return false;
+      if (q.isNotEmpty && !s.name.toLowerCase().contains(q)) return false;
+      return true;
+    }).toList();
+
+    int compare(StudentRosterSummary a, StudentRosterSummary b) {
+      switch (_sortId) {
+        case 'sessions':
+          return a.sessionsRemaining.compareTo(b.sessionsRemaining);
+        case 'quiz':
+          return (a.avgQuizScore ?? -1).compareTo(b.avgQuizScore ?? -1);
+        case 'active':
+          return (a.lastActivityAt ?? DateTime(2000))
+              .compareTo(b.lastActivityAt ?? DateTime(2000));
+        case 'level':
+          return _levelOf(a).compareTo(_levelOf(b));
+        default:
+          return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+      }
+    }
+
+    rows.sort((a, b) => _sortAscending ? compare(a, b) : compare(b, a));
+    return rows;
+  }
+
+  void _onSort(String id) {
+    setState(() {
+      if (_sortId == id) {
+        _sortAscending = !_sortAscending;
+      } else {
+        _sortId = id;
+        _sortAscending = id == 'name' || id == 'level';
+      }
+    });
+  }
+
+  void _open(BuildContext context, StudentRosterSummary s) =>
+      context.push('/teacher/student/${s.studentId}');
+
+  @override
   Widget build(BuildContext context) {
-    if (students.isEmpty) {
+    if (widget.students.isEmpty) {
       return const EmptyState(
         icon: Icons.people_outline,
         title: 'No students yet',
@@ -36,134 +104,310 @@ class StudentRosterList extends StatelessWidget {
       );
     }
 
-    return Padding(
-      padding: padding,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final columns = ResponsiveCardGrid.columnCount(
-            constraints.maxWidth,
-            minCardWidth: 300,
-          );
-          final compact = columns > 1;
+    final rows = _visible;
+    final attention = widget.students.where(_needsAttention).length;
 
-          return ResponsiveCardGrid(
-            width: constraints.maxWidth,
-            children: [
-              for (final student in students)
-                AppCard(
-                onTap: () =>
-                    context.push('/teacher/student/${student.studentId}'),
-                padding: EdgeInsets.symmetric(
-                  horizontal: compact ? 12 : 14,
-                  vertical: compact ? 10 : 12,
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    CircleAvatar(
-                      radius: compact ? 18 : 20,
-                      backgroundColor: AppColors.teal.withValues(alpha: 0.12),
-                      child: Text(
-                        student.name.isNotEmpty
-                            ? student.name[0].toUpperCase()
-                            : '?',
-                        style: TextStyle(
-                          color: AppColors.teal,
-                          fontWeight: FontWeight.w700,
-                          fontSize: compact ? 14 : 16,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  student.name,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: compact ? 14 : 16,
-                                  ),
-                                ),
-                              ),
-                              if (!compact)
-                                Text(
-                                  student.lastActivityLabel,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            student.levelLabel,
-                            style: TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: compact ? 12 : 13,
-                            ),
-                          ),
-                          if (compact) ...[
-                            const SizedBox(height: 2),
-                            Text(
-                              student.lastActivityLabel,
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                          const SizedBox(height: 8),
-                          Wrap(
-                            spacing: 6,
-                            runSpacing: 6,
-                            children: [
-                              StatusPill(
-                                label: student.termProgressLabel,
-                                color: AppColors.navy,
-                              ),
-                              StatusPill(
-                                label: student.homeworkLabel,
-                                color: student.homeworkOverdue > 0
-                                    ? AppColors.error
-                                    : AppColors.teal,
-                              ),
-                              if (student.avgQuizScore != null)
-                                StatusPill(
-                                  label: 'Quiz ${student.avgQuizScore}%',
-                                  color: AppColors.success,
-                                ),
-                              StatusPill(
-                                label:
-                                    '${student.sessionsRemaining} session${student.sessionsRemaining == 1 ? '' : 's'} left',
-                                color: student.sessionsRemaining > 0
-                                    ? AppColors.teal
-                                    : AppColors.error,
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    const Icon(
-                      Icons.chevron_right,
-                      color: AppColors.textSecondary,
-                    ),
-                  ],
+    return Padding(
+      padding: widget.padding,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _RosterToolbar(
+            levels: _levels,
+            selectedLevel: _level,
+            onLevel: (l) => setState(() => _level = l),
+            onQuery: (q) => setState(() => _query = q),
+            total: widget.students.length,
+            shown: rows.length,
+            attention: attention,
+          ),
+          const SizedBox(height: 14),
+          if (rows.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 32),
+              child: Center(
+                child: Text(
+                  'No students match this search.',
+                  style: TextStyle(color: AppColors.textSecondary),
                 ),
               ),
-            ],
-          );
-        },
+            )
+          else
+            AppDataTable<StudentRosterSummary>(
+              rows: rows,
+              sortColumnId: _sortId,
+              sortAscending: _sortAscending,
+              onSort: _onSort,
+              onRowTap: (s) => _open(context, s),
+              mobileBreakpoint: 760,
+              columns: [
+                AppTableColumn(
+                  id: 'name',
+                  label: 'Student',
+                  flex: 3,
+                  sortable: true,
+                  cell: (s) => _StudentIdentity(student: s),
+                ),
+                AppTableColumn(
+                  id: 'level',
+                  label: 'Level',
+                  width: 90,
+                  sortable: true,
+                  cell: (s) =>
+                      Text(_levelOf(s), style: const TextStyle(fontSize: 13)),
+                ),
+                AppTableColumn(
+                  id: 'term',
+                  label: 'This term',
+                  width: 120,
+                  cell: (s) => Text(s.termProgressLabel,
+                      style: const TextStyle(fontSize: 13)),
+                ),
+                AppTableColumn(
+                  id: 'homework',
+                  label: 'Homework',
+                  flex: 2,
+                  cell: (s) => Text(
+                    s.homeworkLabel,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: s.homeworkOverdue > 0
+                          ? AppColors.error
+                          : AppColors.textPrimary,
+                      fontWeight: s.homeworkOverdue > 0
+                          ? FontWeight.w600
+                          : FontWeight.w400,
+                    ),
+                  ),
+                ),
+                AppTableColumn(
+                  id: 'quiz',
+                  label: 'Quiz avg',
+                  width: 90,
+                  sortable: true,
+                  alignment: Alignment.centerRight,
+                  cell: (s) => Text(
+                    s.avgQuizScore == null ? '—' : '${s.avgQuizScore}%',
+                    style: const TextStyle(
+                        fontSize: 13,
+                        fontFeatures: [FontFeature.tabularFigures()]),
+                  ),
+                ),
+                AppTableColumn(
+                  id: 'sessions',
+                  label: 'Sessions left',
+                  width: 120,
+                  sortable: true,
+                  cell: (s) => _SessionsPill(remaining: s.sessionsRemaining),
+                ),
+                AppTableColumn(
+                  id: 'active',
+                  label: 'Last active',
+                  width: 100,
+                  sortable: true,
+                  cell: (s) => Text(
+                    s.lastActivityLabel,
+                    style: const TextStyle(
+                        fontSize: 13, color: AppColors.textSecondary),
+                  ),
+                ),
+                AppTableColumn(
+                  id: 'go',
+                  label: '',
+                  width: 32,
+                  alignment: Alignment.centerRight,
+                  cell: (_) => const Icon(Icons.chevron_right,
+                      size: 18, color: AppColors.textSecondary),
+                ),
+              ],
+              mobileCardBuilder: (s) => _StudentRosterCard(
+                student: s,
+                level: _levelOf(s),
+                onTap: () => _open(context, s),
+              ),
+            ),
+        ],
       ),
     );
   }
+}
+
+class _RosterToolbar extends StatelessWidget {
+  const _RosterToolbar({
+    required this.levels,
+    required this.selectedLevel,
+    required this.onLevel,
+    required this.onQuery,
+    required this.total,
+    required this.shown,
+    required this.attention,
+  });
+
+  final List<String> levels;
+  final String? selectedLevel;
+  final ValueChanged<String?> onLevel;
+  final ValueChanged<String> onQuery;
+  final int total;
+  final int shown;
+  final int attention;
+
+  @override
+  Widget build(BuildContext context) {
+    final summary = StringBuffer('$total student${total == 1 ? '' : 's'}');
+    if (shown != total) summary.write(' · $shown shown');
+    if (attention > 0) summary.write(' · $attention need attention');
+
+    return Wrap(
+      spacing: 12,
+      runSpacing: 10,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        SizedBox(
+          width: 260,
+          child: TextField(
+            onChanged: onQuery,
+            decoration: const InputDecoration(
+              hintText: 'Search students',
+              prefixIcon: Icon(Icons.search, size: 20),
+              isDense: true,
+              contentPadding:
+                  EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            ),
+          ),
+        ),
+        if (levels.length > 1)
+          Wrap(
+            spacing: 6,
+            children: [
+              ChoiceChip(
+                label: const Text('All levels'),
+                selected: selectedLevel == null,
+                onSelected: (_) => onLevel(null),
+              ),
+              for (final l in levels)
+                ChoiceChip(
+                  label: Text(l),
+                  selected: selectedLevel == l,
+                  onSelected: (_) => onLevel(selectedLevel == l ? null : l),
+                ),
+            ],
+          ),
+        Text(
+          summary.toString(),
+          style: TextStyle(
+            fontSize: 13,
+            color:
+                attention > 0 ? AppColors.chipAmberFg : AppColors.textSecondary,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StudentIdentity extends StatelessWidget {
+  const _StudentIdentity({required this.student});
+
+  final StudentRosterSummary student;
+
+  @override
+  Widget build(BuildContext context) {
+    final initial =
+        student.name.isNotEmpty ? student.name[0].toUpperCase() : '?';
+    return Row(
+      children: [
+        CircleAvatar(
+          radius: 17,
+          backgroundColor: AppColors.accentSoft,
+          child: Text(
+            initial,
+            style: const TextStyle(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w700,
+                fontSize: 14),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                student.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style:
+                    const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+              ),
+              Text(
+                student.levelLabel,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                    fontSize: 12, color: AppColors.textSecondary),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SessionsPill extends StatelessWidget {
+  const _SessionsPill({required this.remaining});
+
+  final int remaining;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = remaining == 0
+        ? AppColors.error
+        : remaining <= 2
+            ? AppColors.chipAmberFg
+            : AppColors.success;
+    return StatusPill(label: '$remaining left', color: color);
+  }
+}
+
+class _StudentRosterCard extends StatelessWidget {
+  const _StudentRosterCard(
+      {required this.student, required this.level, required this.onTap});
+
+  final StudentRosterSummary student;
+  final String level;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final detail = <String>[
+      student.termProgressLabel,
+      student.homeworkLabel,
+      if (student.avgQuizScore != null) 'Quiz ${student.avgQuizScore}%',
+      student.lastActivityLabel,
+    ].join(' · ');
+    return AppCard(
+      onTap: onTap,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        children: [
+          Expanded(child: _StudentIdentity(student: student)),
+          const SizedBox(width: 10),
+          _SessionsPill(remaining: student.sessionsRemaining),
+          const SizedBox(width: 4),
+          const Icon(Icons.chevron_right,
+              color: AppColors.textSecondary, size: 18),
+        ],
+      ),
+      // Secondary line is folded into the identity's level label on phones to
+      // keep the card to one row; the detail string stays available for tooltips.
+    ).withTooltip(detail);
+  }
+}
+
+extension on Widget {
+  Widget withTooltip(String message) => Tooltip(message: message, child: this);
 }
 
 class CohortStatsGrid extends StatelessWidget {
@@ -496,9 +740,7 @@ class CohortExportActions extends StatelessWidget {
                               'level and skill section (Reading, Listening, etc.).',
                           preview: [
                             'Total worksheets: ${worksheetReport.totalWorksheets}',
-                            ...worksheetReport.worksheetInventory
-                                .take(3)
-                                .map(
+                            ...worksheetReport.worksheetInventory.take(3).map(
                                   (row) => row.skillSummary.isEmpty
                                       ? '${row.hskLevel}: ${row.total}'
                                       : '${row.hskLevel}: ${row.total} '

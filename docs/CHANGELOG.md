@@ -6,6 +6,29 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-10-20 — Claude: Students table, class form trimmed, landing menu/scroll
+
+**What changed**
+- Teacher **Students** tab (`StudentRosterList` in `cohort_stats_widgets.dart`,
+  also used by the dashboard stat detail): search box, HSK level filter chips,
+  "N students · M need attention" summary, sortable table (student, level,
+  this term, homework, quiz avg, sessions left pill, last active) on wide
+  screens; one-row cards on phones.
+- Class form: **Mode**, **Room / link** and **Registration state** fields
+  removed from the UI. Existing values are preserved on save. Registration
+  state was only ever a label shown on the class detail; the real switch is
+  "Open for students to join" (`isOpen`). Thesis Phase 2 adds rooms and real
+  session statuses.
+- Landing: top menu in page order; menu clicks scroll sections to sit below
+  the sticky bar; plan-card corners no longer painted over; hero 易 drawn as
+  text (the cursive logo crop looked broken).
+
+**For review**
+- `SessionMode` / `RegistrationState` enums and the `room` field stay in the
+  model for old documents.
+
+---
+
 ## 2026-10-18 — Claude: landing fixes (back buttons, prices section, plan cards)
 
 **What changed**

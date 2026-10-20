@@ -82,12 +82,14 @@ class _TeacherSessionFormScreenState extends State<TeacherSessionFormScreen> {
   }
 
   Future<void> _pickStartTime() async {
-    final picked = await showTimePicker(context: context, initialTime: _startTime);
+    final picked =
+        await showTimePicker(context: context, initialTime: _startTime);
     if (picked != null) setState(() => _startTime = picked);
   }
 
   Future<void> _pickEndTime() async {
-    final picked = await showTimePicker(context: context, initialTime: _endTime);
+    final picked =
+        await showTimePicker(context: context, initialTime: _endTime);
     if (picked != null) setState(() => _endTime = picked);
   }
 
@@ -104,8 +106,8 @@ class _TeacherSessionFormScreenState extends State<TeacherSessionFormScreen> {
   }
 
   int get _selectedDurationMinutes {
-    final diff =
-        FirestoreService.minutesOfDay(_endTime) - FirestoreService.minutesOfDay(_startTime);
+    final diff = FirestoreService.minutesOfDay(_endTime) -
+        FirestoreService.minutesOfDay(_startTime);
     return diff > 0 ? diff : 0;
   }
 
@@ -205,7 +207,8 @@ class _TeacherSessionFormScreenState extends State<TeacherSessionFormScreen> {
                 onTap: _pickDate,
                 child: Row(
                   children: [
-                    const Icon(Icons.calendar_today_outlined, color: AppColors.teal),
+                    const Icon(Icons.calendar_today_outlined,
+                        color: AppColors.teal),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -228,7 +231,8 @@ class _TeacherSessionFormScreenState extends State<TeacherSessionFormScreen> {
                         ],
                       ),
                     ),
-                    const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                    const Icon(Icons.chevron_right,
+                        color: AppColors.textSecondary),
                   ],
                 ),
               ),
@@ -307,7 +311,8 @@ class _TeacherSessionFormScreenState extends State<TeacherSessionFormScreen> {
                     selectedColor: AppColors.teal.withValues(alpha: 0.15),
                     labelStyle: TextStyle(
                       fontWeight: FontWeight.w600,
-                      color: selected ? AppColors.teal : AppColors.textSecondary,
+                      color:
+                          selected ? AppColors.teal : AppColors.textSecondary,
                     ),
                     side: BorderSide(
                       color: selected ? AppColors.teal : AppColors.border,
@@ -325,45 +330,16 @@ class _TeacherSessionFormScreenState extends State<TeacherSessionFormScreen> {
                 ),
                 validator: (v) {
                   final n = int.tryParse(v?.trim() ?? '');
-                  if (n == null || n < 1) return 'Enter a capacity of at least 1';
+                  if (n == null || n < 1)
+                    return 'Enter a capacity of at least 1';
                   return null;
                 },
               ),
               const SizedBox(height: 16),
-              DropdownButtonFormField<SessionMode?>(
-                initialValue: _mode,
-                isExpanded: true,
-                decoration: const InputDecoration(labelText: 'Mode (optional)'),
-                items: [
-                  const DropdownMenuItem(value: null, child: Text('Not set')),
-                  for (final m in SessionMode.values)
-                    DropdownMenuItem(value: m, child: Text(m.label)),
-                ],
-                onChanged: (v) => setState(() => _mode = v),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _roomController,
-                decoration: const InputDecoration(
-                  labelText: 'Room / link (optional)',
-                  hintText: 'e.g. Room 2, or a meeting link',
-                ),
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<RegistrationState?>(
-                initialValue: _registrationState,
-                isExpanded: true,
-                decoration: const InputDecoration(
-                  labelText: 'Registration state (optional)',
-                ),
-                items: [
-                  const DropdownMenuItem(value: null, child: Text('Not set')),
-                  for (final s in RegistrationState.values)
-                    DropdownMenuItem(value: s, child: Text(s.label)),
-                ],
-                onChanged: (v) => setState(() => _registrationState = v),
-              ),
-              const SizedBox(height: 16),
+              // Mode, room and registration state are not shown: the centre
+              // has one location and no rooms yet, and registration state was
+              // a label only. Existing values are kept on save untouched.
+              // Thesis Phase 2 brings rooms and real session statuses.
               AppCard(
                 child: SwitchListTile(
                   contentPadding: EdgeInsets.zero,
