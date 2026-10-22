@@ -148,6 +148,26 @@ Commit author preference (via env vars, not global git config):
 
 Update this section when you push from Mac or PC.
 
+### 2026-10-22 — Claude: handoff to a new chat (end of the first Claude session)
+
+Where things stand, so the next session can start without this chat:
+- **Live:** landing page (direction A, WhatsApp-first, prices from the flyer),
+  brand design system inside the app, Students table, simplified class form,
+  Android APK at `/downloads/easy-study.apk`, all 9 Cloud Functions (Blaze
+  since 2026-10-20). Latest release notes: v0.1.4.
+- **Owner checklist:** PUB-01…09 pass except PUB-05 (Android, re-test now the
+  APK is live). Remaining sections (AUTH, ADM, TCH, STU, PAR, PAY, SYS, DEV)
+  not started.
+- **Open problems:** nightly backup PERMISSION_DENIED (IAM fix in CLAUDE.md
+  "Known blockers"); functions still charge old prices Rp 800k / 1.5M vs flyer
+  Rp 2.45M / 3.95M (fix in thesis Phase 4); no native iOS app (needs Apple
+  Developer account, owner deciding).
+- **Next planned work:** thesis Phase 1 (registration approval with starting
+  level, rooms list, settings docs, teacher teachable levels, FCM tokens,
+  Indonesian + English text), per `docs/THESIS_FEATURE_AUDIT.md`. Waiting on
+  the owner's sample simulation paper (audio + answer key) for Phase 5.
+- Owner enabled Caveman for Claude Code on this Mac (see CLAUDE.md "Tools").
+
 ### 2026-10-18 (later) — Claude: design system + emulator mode
 
 - Signed-in app restyled through the theme ("A, calmer": teal/green/yellow on

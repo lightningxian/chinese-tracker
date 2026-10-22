@@ -69,5 +69,10 @@ iOS: no native app; Xcode is incomplete on this Mac and there is no Apple Develo
 account on record. Users add the web app to the home screen from Safari.
 
 ## Known blockers (update when resolved)
-- Billing was off 2026-10-13 → 2026-10-20 (functions returned 503, Hosting refused the APK). Owner upgraded to **Blaze on 2026-10-20**; all 9 functions and the APK were redeployed the same day. **Still to confirm:** that the nightly `scheduledFirestoreExport` (02:00 Jakarta) now succeeds; it logged PERMISSION_DENIED while billing was off. Check `firebase functions:log` the next morning; if it still fails, grant the function's service account the Datastore Import/Export role and write access to `gs://chinese-tracker-backups`.
+- Billing was off 2026-10-13 → 2026-10-20. Owner upgraded to **Blaze on 2026-10-20**; all 9 functions and the APK were redeployed and work (owner re-test PUB-09 passed).
+- **Nightly backup still fails** (`scheduledFirestoreExport`, 02:00 Jakarta): `PERMISSION_DENIED` again on 2026-10-22 with billing on, so it is an IAM problem. Fix in Google Cloud console (gcloud on this Mac is not signed in and reports a broken install): IAM → grant the functions' runtime service account `345172802163-compute@developer.gserviceaccount.com` the role **Cloud Datastore Import Export Admin**, and give it **Storage Object Admin** on bucket `gs://chinese-tracker-backups` (create the bucket in `asia-southeast2` if it doesn't exist). Then confirm in `firebase functions:log` after the next run.
 - Test accounts on the live project: `admin@`, `teacher@`, `student1-3@test.chinesetracker`, password in `docs/CLAUDE_FULL_HANDOFF.md`. No test parent yet.
+
+## Tools on the owner's Mac
+- **Caveman** (`@caveman-ai/cli`, getcaveman.dev) is enabled for Claude Code since 2026-10-22: traffic goes through a local proxy (`ANTHROPIC_BASE_URL=http://127.0.0.1:8787/w/claude` in `~/.claude/settings.json`), plus hooks that add context notes to prompts. If Claude can't connect, the proxy isn't running: run `caveman status`, or undo with `caveman disable claude`.
+- **Owner test checklist:** https://claude.ai/artifact/7U7WnXt1rKRArcDDvoiBEb (results in its db collection `results`, read with the Artifact tool `read_db`). PUB-01…09 checked; PUB-05 (Android) needs a re-test since the APK went live.
