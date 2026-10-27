@@ -28,21 +28,37 @@ const MIDTRANS_SNAP_URL =
   "https://app.sandbox.midtrans.com/snap/v1/transactions";
 
 const ALLOWED_PACKAGE_SIZES = [8, 16];
-const TERM_VALID_DAYS = 90;
 
-// Authoritative price table (whole IDR) keyed by package size. The invoice
-// amount is derived from this server-side — the client value is ignored so a
-// caller can never set an arbitrary price. Keep in sync with the sizes above
-// and AppConstants.packagePricesIdr in the app (display only).
-const PACKAGE_PRICES = {
-  8: 800000,
-  16: 1500000,
+// Prices (whole IDR) and term validity live in Firestore `settings/pricing`,
+// edited by admins in the app (Settings → Prices). These are the fallbacks
+// when the document is missing: the course flyer, Oct 2026. The invoice
+// amount is always derived server-side; a client value is ignored.
+const PRICING_DEFAULTS = {
+  package8: 2450000,
+  package16: 3950000,
+  book: 250000,
+  registration: 100000,
+  termValidDays: 60,
 };
+const SETTINGS = "settings";
 
-// Non-session items. "book" = HSK materials and textbook (Rp 250.000 on the
-// course flyer). Paying a book invoice credits no sessions.
+async function loadPricing() {
+  const snap = await db.collection(SETTINGS).doc("pricing").get();
+  const data = snap.exists ? snap.data() || {} : {};
+  const pick = (key) => {
+    const v = Number(data[key]);
+    return Number.isInteger(v) && v > 0 ? v : PRICING_DEFAULTS[key];
+  };
+  return {
+    packagePrices: {8: pick("package8"), 16: pick("package16")},
+    book: pick("book"),
+    termValidDays: pick("termValidDays"),
+  };
+}
+
+// Non-session item. "book" = HSK materials and textbook. Paying a book
+// invoice credits no sessions.
 const BOOK_ITEM = "book";
-const BOOK_PRICE = 250000;
 const BOOK_DESCRIPTION = "HSK materials and book";
 
 // Worksheet import runs locally in the Flutter web app (Tesseract.js + PDF/Word
@@ -434,7 +450,10 @@ exports.createInvoice = onCall(
 
     // Amount is authoritative on the server — derive from the price table and
     // ignore any client-supplied value so a caller can't misprice a sale.
-    const amount = item === BOOK_ITEM ? BOOK_PRICE : PACKAGE_PRICES[packageSize];
+    const pricing = await loadPricing();
+    const amount = item === BOOK_ITEM ?
+      pricing.book :
+      pricing.packagePrices[packageSize];
     if (!Number.isInteger(amount) || amount <= 0) {
       throw new HttpsError(
         "failed-precondition",
@@ -638,6 +657,7 @@ exports.midtransNotification = onRequest(
     // uncredited invoices (a transient failure after marking paid). Only the
     // transaction that performs the flip returns the payload to notify.
     let credited = null;
+    const {termValidDays} = await loadPricing();
     await db.runTransaction(async (tx) => {
       const snap = await tx.get(invoiceRef);
       const invoice = snap.data() || {};
@@ -663,7 +683,7 @@ exports.midtransNotification = onRequest(
         return;
       }
       const now = new Date();
-      const deadline = new Date(now.getTime() + TERM_VALID_DAYS * 86400000);
+      const deadline = new Date(now.getTime() + termValidDays * 86400000);
       const fmt = (d) => d.toISOString().slice(0, 10);
       tx.set(db.collection(CLASS_TERMS).doc(), {
         studentId: invoice.studentId,

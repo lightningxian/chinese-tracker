@@ -32,6 +32,7 @@ abstract final class AppConstants {
   static const questionBankCollection = 'question_bank';
   static const settingsCollection = 'settings';
   static const orgSettingsDoc = 'org';
+  static const pricingSettingsDoc = 'pricing';
   static const auditLogsCollection = 'audit_logs';
   static const materialsCollection = 'materials';
   static const evaluationsCollection = 'evaluations';
@@ -53,9 +54,11 @@ abstract final class AppConstants {
 
   /// Price (in whole IDR) for each sellable session package. Aligns with
   /// [termSizes]; adjust to your real pricing before going live.
+  /// Fallback only: live prices come from `settings/pricing`
+  /// (PricingSettings); admins edit them in Settings → Prices.
   static const packagePricesIdr = <int, int>{
-    8: 800000,
-    16: 1500000,
+    8: 2450000,
+    16: 3950000,
   };
 
   static int priceForPackage(int packageSize) =>

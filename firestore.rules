@@ -249,6 +249,12 @@ service cloud.firestore {
       allow create, update, delete: if isStaff();
     }
 
+    // Prices are public: the landing page shows them before sign-in.
+    match /settings/pricing {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /settings/{docId} {
       // Centre-wide settings are readable by any signed-in user (so gates can
       // be evaluated client-side); only admins may change them.

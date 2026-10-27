@@ -109,6 +109,19 @@ describe("deactivated accounts", () => {
   });
 });
 
+describe("settings/pricing", () => {
+  it("is readable without signing in (landing page)", async () => {
+    await assertSucceeds(getDoc(doc(env.unauthenticatedContext().firestore(), "settings", "pricing")));
+  });
+  it("admin can write it", async () => {
+    await assertSucceeds(setDoc(doc(as("admin1"), "settings", "pricing"), { package8: 2450000, package16: 3950000 }));
+  });
+  it("teacher and student cannot write it", async () => {
+    await assertFails(setDoc(doc(as("teacher1"), "settings", "pricing"), { package8: 1 }));
+    await assertFails(setDoc(doc(as("student1"), "settings", "pricing"), { package8: 1 }));
+  });
+});
+
 describe("teacher link codes", () => {
   const codeDoc = (uid) => ({ teacherId: uid, expiresAt: Timestamp.fromMillis(Date.now() + 900000), createdAt: Timestamp.now() });
   it("a teacher can mint a code for themselves", async () => {

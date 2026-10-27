@@ -31,6 +31,7 @@ import '../models/evaluation.dart';
 import '../models/invoice.dart';
 import '../models/material_item.dart';
 import '../models/org_settings.dart';
+import '../models/pricing_settings.dart';
 import '../models/lesson.dart';
 import '../models/quiz.dart';
 import '../models/quiz_result.dart';
@@ -1852,6 +1853,24 @@ class FirestoreService {
       .doc(AppConstants.orgSettingsDoc);
 
   /// Centre-wide settings. Emits defaults until the doc exists.
+  DocumentReference<Map<String, dynamic>> get _pricingRef => _db
+      .collection(AppConstants.settingsCollection)
+      .doc(AppConstants.pricingSettingsDoc);
+
+  Stream<PricingSettings> watchPricing() => _pricingRef.snapshots().map(
+        (doc) => doc.exists
+            ? PricingSettings.fromSnapshot(doc)
+            : PricingSettings.defaults,
+      );
+
+  Future<void> updatePricing(PricingSettings pricing) async {
+    await _pricingRef.set({
+      ...pricing.toMap(),
+      'updatedAt': FieldValue.serverTimestamp(),
+      'updatedBy': FirebaseAuth.instance.currentUser?.uid,
+    }, SetOptions(merge: true));
+  }
+
   Stream<OrgSettings> watchOrgSettings() {
     return _orgSettingsRef.snapshots().map(
           (doc) => doc.exists ? OrgSettings.fromSnapshot(doc) : OrgSettings.defaults,

@@ -1,13 +1,16 @@
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show RenderAbstractViewport;
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/widgets/app_logo.dart';
+import '../../models/pricing_settings.dart';
 import 'landing_brand.dart';
 
 /// Debug → one-click test login; release → real login.
@@ -1078,8 +1081,25 @@ class _RoleCard extends StatelessWidget {
 class _PricingSection extends StatelessWidget {
   const _PricingSection();
 
+  static String _rp(int v) => 'Rp ${NumberFormat('#,##0', 'id_ID').format(v)}';
+
   @override
   Widget build(BuildContext context) {
+    // Live prices from settings/pricing (public read); flyer values until the
+    // document loads or if it is missing.
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('settings')
+          .doc('pricing')
+          .snapshots(),
+      builder: (context, snap) {
+        final pricing = PricingSettings.fromMap(snap.data?.data());
+        return _buildSection(context, pricing);
+      },
+    );
+  }
+
+  Widget _buildSection(BuildContext context, PricingSettings pricing) {
     return _Section(
       color: LandingBrand.yellowSoft,
       child: Column(
@@ -1093,7 +1113,7 @@ class _PricingSection extends StatelessWidget {
                 'for 2 months.',
           ),
           const SizedBox(height: 16),
-          const _Chip('One-time registration: Rp 100.000'),
+          _Chip('One-time registration: ${_rp(pricing.registration)}'),
           const SizedBox(height: 26),
           _ResponsiveGrid(
             minItemWidth: 300,
@@ -1102,14 +1122,14 @@ class _PricingSection extends StatelessWidget {
               _PlanCard(
                 sessions: 8,
                 hours: 12,
-                price: 'Rp 2.450.000',
+                price: _rp(pricing.package8),
                 note: 'A good start for HSK 1–2, or for a busy schedule.',
                 onPressed: () => _openWhatsApp(context),
               ),
               _PlanCard(
                 sessions: 16,
                 hours: 24,
-                price: 'Rp 3.950.000',
+                price: _rp(pricing.package16),
                 note: 'Steady progress with two classes a week.',
                 highlight: true,
                 tag: 'Best value',
@@ -1118,22 +1138,22 @@ class _PricingSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 18),
-          const _ResponsiveGrid(
+          _ResponsiveGrid(
             minItemWidth: 250,
             maxColumns: 3,
             children: [
               _InfoTile(
                 icon: Icons.menu_book_outlined,
                 title: 'HSK materials and book',
-                body: 'Rp 250.000.',
+                body: '${_rp(pricing.book)}.',
               ),
-              _InfoTile(
+              const _InfoTile(
                 icon: Icons.schedule_outlined,
                 title: 'Open class times (WIB)',
                 body:
                     'Tue, Wed, Fri 15:00–16:30 · Sat 10:00–11:30 and 11:30–13:00.',
               ),
-              _InfoTile(
+              const _InfoTile(
                 icon: Icons.credit_card_outlined,
                 title: 'Pay online',
                 body:

@@ -6,6 +6,30 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-10-27 — Claude: editable prices (`settings/pricing`)
+
+**What changed**
+- New `settings/pricing` document (`PricingSettings` model): 8-session,
+  16-session, HSK book, registration (display only) and term validity days.
+  Defaults = the course flyer: Rp 2.450.000 / 3.950.000 / 250.000 / 100.000,
+  60 days. Public read (landing page), admin write (`firestore.rules`).
+- Admin **Settings → Prices** card edits it (`org_settings_screen.dart`).
+- `functions/index.js`: `createInvoice` and the webhook read the document
+  (`loadPricing()`); hard-coded `PACKAGE_PRICES` / `BOOK_PRICE` /
+  `TERM_VALID_DAYS = 90` removed. Term validity is now 60 days by default.
+- Admin Create invoice dropdown and the landing Prices section show the live
+  values. `AppConstants.packagePricesIdr` is a fallback only.
+- Rules tests: +3 (22 total, 21 pass, 1 skipped). Seed writes the doc.
+
+**Why**
+- Owner: prices must be editable by admin, and the old Rp 800k / 1.5M were
+  wrong.
+
+**For review**
+- Deploy needs rules + all functions + hosting.
+
+---
+
 ## 2026-10-27 — Claude: owner's admin review (review_web.pdf), 5 items
 
 **What changed**

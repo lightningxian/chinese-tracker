@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -9,6 +11,7 @@ import '../../core/widgets/app_data_table.dart';
 import '../../core/widgets/status_pill.dart';
 import '../../models/app_user.dart';
 import '../../models/invoice.dart';
+import '../../models/pricing_settings.dart';
 import '../../models/org_settings.dart';
 import '../../services/firestore_service.dart';
 import '../../services/payment_service.dart';
@@ -390,7 +393,28 @@ class _CreateInvoiceSheet extends StatefulWidget {
 class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
   AppUser? _student;
   int _packageSize = AppConstants.termSizes.first;
-  late int _amount = AppConstants.priceForPackage(_packageSize);
+  PricingSettings _pricing = PricingSettings.defaults;
+  late int _amount = _pricing.priceForPackage(_packageSize);
+  StreamSubscription<PricingSettings>? _pricingSub;
+
+  @override
+  void initState() {
+    super.initState();
+    _pricingSub = context.read<FirestoreService>().watchPricing().listen((p) {
+      if (!mounted) return;
+      setState(() {
+        _pricing = p;
+        _amount = _packageSize == 0 ? p.book : p.priceForPackage(_packageSize);
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _pricingSub?.cancel();
+    super.dispose();
+  }
+
   DateTime _dueDate = DateTime.now().add(const Duration(days: 7));
   bool _loading = false;
   String? _error;
@@ -472,7 +496,7 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
                     value: size,
                     child: Text(
                       '$size sessions · '
-                      '${currency.format(AppConstants.priceForPackage(size))}',
+                      '${currency.format(_pricing.priceForPackage(size))}',
                     ),
                   ),
                 // 0 = book / materials item: no sessions are credited.
@@ -480,15 +504,15 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
                   value: 0,
                   child: Text(
                     '${AppConstants.bookItemLabel} · '
-                    '${currency.format(AppConstants.bookPriceIdr)}',
+                    '${currency.format(_pricing.book)}',
                   ),
                 ),
               ],
               onChanged: (v) => setState(() {
                 _packageSize = v ?? _packageSize;
                 _amount = _packageSize == 0
-                    ? AppConstants.bookPriceIdr
-                    : AppConstants.priceForPackage(_packageSize);
+                    ? _pricing.book
+                    : _pricing.priceForPackage(_packageSize);
               }),
             ),
             const SizedBox(height: 16),

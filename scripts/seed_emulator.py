@@ -243,6 +243,8 @@ def main():
     put("notifications", "n_2", {"kind": "grading", "title": "Practice submitted",
         "body": f"{student_names[0]} scored 100% on HSK 1 Reading.", "forRole": "teacher", "userId": t0,
         "read": False, "createdAt": ts(-2, 18), "targetRoute": "/teacher"})
+    put("settings", "pricing", {"package8": 2450000, "package16": 3950000, "book": 250000,
+        "registration": 100000, "termValidDays": 60, "updatedAt": created, "updatedBy": admin_uid})
     put("settings", "org", {"enablePayments": True, "allowTeacherReschedule": True,
         "evaluationFormsOpen": True, "requireEmailVerification": False,
         "autoGenerateStaffPasswords": False, "updatedAt": created, "updatedBy": admin_uid})

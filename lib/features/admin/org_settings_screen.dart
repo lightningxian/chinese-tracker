@@ -6,6 +6,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/shell_nested_page.dart';
 import '../../models/org_settings.dart';
+import '../../models/pricing_settings.dart';
 import '../../services/firestore_service.dart';
 
 /// Admin-only centre settings. Toggles persist immediately to `settings/org`
@@ -26,8 +27,8 @@ class OrgSettingsScreen extends StatelessWidget {
         stream: firestore.watchOrgSettings(),
         builder: (context, snap) {
           final settings = snap.data ?? OrgSettings.defaults;
-          final loading = snap.connectionState == ConnectionState.waiting &&
-              !snap.hasData;
+          final loading =
+              snap.connectionState == ConnectionState.waiting && !snap.hasData;
           if (loading) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -58,8 +59,7 @@ class OrgSettingsScreen extends StatelessWidget {
                     'admins. Turn off to hide billing entirely.',
                 icon: Icons.receipt_long_outlined,
                 value: settings.enablePayments,
-                onChanged: (v) =>
-                    update(settings.copyWith(enablePayments: v)),
+                onChanged: (v) => update(settings.copyWith(enablePayments: v)),
               ),
               _ToggleCard(
                 title: 'Evaluation forms open',
@@ -103,6 +103,9 @@ class OrgSettingsScreen extends StatelessWidget {
                 onChanged: (v) =>
                     update(settings.copyWith(autoGenerateStaffPasswords: v)),
               ),
+              const SizedBox(height: 12),
+              const SectionHeader(title: 'Prices'),
+              const _PricingCard(),
               const SizedBox(height: 12),
               const SectionHeader(title: 'Administration'),
               AppCard(
@@ -204,8 +207,7 @@ class _NavRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title,
-                  style: const TextStyle(fontWeight: FontWeight.w600)),
+              Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
               const SizedBox(height: 2),
               Text(
                 subtitle,
@@ -219,6 +221,165 @@ class _NavRow extends StatelessWidget {
         ),
         const Icon(Icons.chevron_right, color: AppColors.textSecondary),
       ],
+    );
+  }
+}
+
+/// Editable prices and term validity (`settings/pricing`). The server reads
+/// the same document when it creates invoices, so what the admin types here
+/// is what students are charged. The landing page shows these too.
+class _PricingCard extends StatefulWidget {
+  const _PricingCard();
+
+  @override
+  State<_PricingCard> createState() => _PricingCardState();
+}
+
+class _PricingCardState extends State<_PricingCard> {
+  final _formKey = GlobalKey<FormState>();
+  final _c8 = TextEditingController();
+  final _c16 = TextEditingController();
+  final _book = TextEditingController();
+  final _registration = TextEditingController();
+  final _days = TextEditingController();
+  PricingSettings? _loaded;
+  bool _saving = false;
+  bool _dirty = false;
+
+  @override
+  void dispose() {
+    for (final c in [_c8, _c16, _book, _registration, _days]) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  void _fill(PricingSettings p) {
+    _loaded = p;
+    _c8.text = '${p.package8}';
+    _c16.text = '${p.package16}';
+    _book.text = '${p.book}';
+    _registration.text = '${p.registration}';
+    _days.text = '${p.termValidDays}';
+    _dirty = false;
+  }
+
+  String? _positiveInt(String? v) {
+    final n = int.tryParse((v ?? '').replaceAll('.', '').trim());
+    if (n == null || n <= 0) return 'Enter a whole number above 0';
+    return null;
+  }
+
+  int _parse(TextEditingController c) =>
+      int.parse(c.text.replaceAll('.', '').trim());
+
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _saving = true);
+    try {
+      await context.read<FirestoreService>().updatePricing(
+            PricingSettings(
+              package8: _parse(_c8),
+              package16: _parse(_c16),
+              book: _parse(_book),
+              registration: _parse(_registration),
+              termValidDays: _parse(_days),
+            ),
+          );
+      if (mounted) {
+        setState(() => _dirty = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Prices saved. New invoices use them.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Could not save: $e'),
+              backgroundColor: AppColors.error),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  Widget _field(TextEditingController c, String label,
+      {String? helper, String prefix = 'Rp '}) {
+    return TextFormField(
+      controller: c,
+      enabled: !_saving,
+      keyboardType: TextInputType.number,
+      decoration: InputDecoration(
+          labelText: label, prefixText: prefix, helperText: helper),
+      validator: _positiveInt,
+      onChanged: (_) {
+        if (!_dirty) setState(() => _dirty = true);
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<PricingSettings>(
+      stream: context.read<FirestoreService>().watchPricing(),
+      builder: (context, snap) {
+        final remote = snap.data;
+        // Fill once, and again whenever the stored doc changes while the form
+        // is clean (another admin saved), without clobbering unsaved typing.
+        if (remote != null &&
+            (_loaded == null ||
+                (!_dirty && remote.updatedAt != _loaded!.updatedAt))) {
+          _fill(remote);
+        }
+        return AppCard(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Used for every new invoice and shown on the website. Existing '
+                  'invoices keep the price they were created with.',
+                  style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 13,
+                      height: 1.4),
+                ),
+                const SizedBox(height: 14),
+                _field(_c8, '8-session term'),
+                const SizedBox(height: 12),
+                _field(_c16, '16-session term'),
+                const SizedBox(height: 12),
+                _field(_book, 'HSK materials & book'),
+                const SizedBox(height: 12),
+                _field(_registration, 'One-time registration',
+                    helper: 'Shown on the website only.'),
+                const SizedBox(height: 12),
+                _field(_days, 'Term validity',
+                    prefix: '',
+                    helper:
+                        'Days a paid term stays valid (flyer: 2 months = 60).'),
+                const SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: FilledButton.icon(
+                    onPressed: _saving || !_dirty ? null : _save,
+                    icon: _saving
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Icon(Icons.save_outlined, size: 18),
+                    label: const Text('Save prices'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
