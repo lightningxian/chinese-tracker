@@ -161,7 +161,8 @@ Update this section when you push from Mac or PC.
 - Sign-in race guard (`isProfileLoading`) so a valid account is not bounced to
   `/complete-profile` mid sign-in.
 - Verified on the emulator (release build): calendar, Levels create + assignment
-  docs, Reports tab. Deploy: rules + hosting (owner runs it; see CHANGELOG).
+  docs, Reports tab. **Deployed by the owner the same day** (rules + hosting,
+  release v0.1.5 at commit 75cc6e1); live bundle checked for the new screens.
 - Worksheet scanner detects the form (R1 fill in the blank, R2 matching,
   R3 comprehension + passage, R4 order sentences, true/false, L3 listening);
   fill in the blank is editable and playable; reading passage field added.
