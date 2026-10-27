@@ -6,6 +6,26 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-10-27 — Claude: Cloud Functions on Node 22
+
+**What changed**
+- `functions/package.json`: `engines.node` 20 → **22**; `firebase-functions`
+  5.1 → 7.4, `firebase-admin` 12.7 → 14.5, `@google-cloud/firestore` 7 → 9.
+  No code changes were needed (all imports are the explicit v2 modules).
+  `node --check` and a local `require()` of `index.js` list all 10 functions.
+
+**Why**
+- The deploy on 2026-10-27 warned that the Node.js 20 runtime is
+  decommissioned on **2026-10-30**; after that date functions cannot be
+  deployed without this upgrade.
+
+**For review**
+- Redeploy: `firebase deploy --only functions --project chinese-tracker --force`.
+  Each function is recreated on the Node 22 runtime; a few seconds of cold
+  start on first call afterwards.
+
+---
+
 ## 2026-10-27 — Claude: payments ↔ vouchers linked, Price list tab
 
 **What changed**
