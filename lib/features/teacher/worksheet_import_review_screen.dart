@@ -72,11 +72,12 @@ class _WorksheetImportReviewScreenState
     });
   }
 
-  int get _previewCount => switch (_selectedType) {
-        ExerciseType.composeSentences => _parsed.composeQuestions.length,
-        ExerciseType.matching => _parsed.matchingQuestions.length,
-        _ => _parsed.mcQuestions.length,
-      };
+  int get _previewCount => WorksheetParseResult.countFor(
+        _selectedType,
+        mc: _parsed.mcQuestions.length,
+        compose: _parsed.composeQuestions.length,
+        bank: _parsed.matchingQuestions.length,
+      );
 
   bool get _canImport => _selectedType.isImplemented && _previewCount > 0;
 
@@ -94,6 +95,7 @@ class _WorksheetImportReviewScreenState
       composeQuestions: result.composeQuestions,
       matchingOptions: result.matchingOptions,
       matchingQuestions: result.matchingQuestions,
+      passage: result.passage,
     );
   }
 
@@ -394,7 +396,8 @@ class _WorksheetImportReviewScreenState
         ),
       );
     }
-    if (_selectedType == ExerciseType.matching) {
+    if (_selectedType == ExerciseType.matching ||
+        _selectedType == ExerciseType.readingCloze) {
       final question = _parsed.matchingQuestions[index];
       final letter = String.fromCharCode(65 + question.correctIndex);
       return Padding(

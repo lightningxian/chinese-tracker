@@ -60,10 +60,14 @@ class AuthService extends ChangeNotifier {
   }
 
   Future<void> _loadProfile(String uid) async {
-    final doc = await _firestore
-        .collection(AppConstants.usersCollection)
-        .doc(uid)
-        .get();
+    final ref = _firestore.collection(AppConstants.usersCollection).doc(uid);
+    var doc = await ref.get();
+    if (!doc.exists && doc.metadata.isFromCache) {
+      // Right after a cold start the SDK can answer from an empty cache
+      // while the connection is still coming up; ask the server before
+      // treating the profile as missing.
+      doc = await ref.get(const GetOptions(source: Source.server));
+    }
     if (!doc.exists) {
       _appUser = null;
       return;

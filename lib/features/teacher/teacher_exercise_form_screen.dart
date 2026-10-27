@@ -138,9 +138,21 @@ class _ComposeQuestionDraft {
 }
 
 class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
+  /// Matching and fill-in-the-blank share the editor: one answer bank (A–F)
+  /// and one prompt per item with the letter of the right answer.
+  static bool _usesBank(ExerciseType type) =>
+      type == ExerciseType.matching || type == ExerciseType.readingCloze;
+
+  /// Types that can show a reading passage above the questions.
+  static bool _hasPassage(ExerciseType type) =>
+      type == ExerciseType.multipleChoice ||
+      type == ExerciseType.listening ||
+      type == ExerciseType.readingCloze;
+
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _instructionsController = TextEditingController();
+  final _passageController = TextEditingController();
   final List<_McQuestionDraft> _mcQuestions = [];
   final List<_ComposeQuestionDraft> _composeQuestions = [];
   final List<MatchingQuestionDraft> _matchingQuestions = [];
@@ -160,6 +172,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
     if (exercise != null) {
       _titleController.text = exercise.title;
       _instructionsController.text = exercise.instructions;
+      _passageController.text = exercise.passage;
       _level = exercise.level ?? AppConstants.hskLevels.first;
       _skillCategory = exercise.skillCategory;
       _type = exercise.type;
@@ -171,7 +184,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
               segments: q.segments,
             ),
           );
-        } else if (exercise.type == ExerciseType.matching) {
+        } else if (_usesBank(exercise.type)) {
           _matchingQuestions.add(
             MatchingQuestionDraft(
               prompt: q.prompt,
@@ -194,7 +207,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
           );
         }
       }
-      if (exercise.type == ExerciseType.matching) {
+      if (_usesBank(exercise.type)) {
         MatchingExerciseEditor.disposeOptionControllers(_matchingOptionControllers);
         final options = exercise.matchingOptions;
         _matchingOptionControllers = MatchingExerciseEditor.createOptionControllers(
@@ -210,7 +223,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
       if (_composeQuestions.isEmpty) {
         _composeQuestions.add(_ComposeQuestionDraft());
       }
-    } else if (_type == ExerciseType.matching) {
+    } else if (_usesBank(_type)) {
       if (_matchingQuestions.isEmpty) {
         _matchingQuestions.add(MatchingQuestionDraft());
       }
@@ -240,6 +253,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
   void dispose() {
     _titleController.dispose();
     _instructionsController.dispose();
+    _passageController.dispose();
     for (final q in _mcQuestions) {
       q.dispose();
     }
@@ -279,7 +293,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
     setState(() {
       if (_type == ExerciseType.composeSentences) {
         _composeQuestions.add(_ComposeQuestionDraft());
-      } else if (_type == ExerciseType.matching) {
+      } else if (_usesBank(_type)) {
         _matchingQuestions.add(MatchingQuestionDraft());
       } else {
         _mcQuestions.add(_McQuestionDraft());
@@ -304,7 +318,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
           _composeQuestions.add(
             _ComposeQuestionDraft(prompt: q.prompt, segments: q.segments),
           );
-        } else if (_type == ExerciseType.matching) {
+        } else if (_usesBank(_type)) {
           _matchingQuestions.add(
             MatchingQuestionDraft(
               prompt: q.prompt,
@@ -337,7 +351,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
         _composeQuestions[index].dispose();
         _composeQuestions.removeAt(index);
       });
-    } else if (_type == ExerciseType.matching) {
+    } else if (_usesBank(_type)) {
       if (_matchingQuestions.length <= 1) return;
       setState(() {
         _matchingQuestions[index].dispose();
@@ -457,7 +471,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
         if (isEmpty) draft.dispose();
         return isEmpty;
       });
-    } else if (_type == ExerciseType.matching) {
+    } else if (_usesBank(_type)) {
       _matchingQuestions.removeWhere((draft) {
         final isEmpty = draft.promptController.text.trim().isEmpty;
         if (isEmpty) draft.dispose();
@@ -503,6 +517,9 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
       if (result.instructions.isNotEmpty) {
         _instructionsController.text = result.instructions;
       }
+      if (result.passage.isNotEmpty) {
+        _passageController.text = result.passage;
+      }
 
       if (result.suggestedLevel != null) {
         _level = result.suggestedLevel!;
@@ -518,7 +535,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
             ),
           );
         }
-      } else if (_type == ExerciseType.matching) {
+      } else if (_usesBank(_type)) {
         MatchingExerciseEditor.disposeOptionControllers(_matchingOptionControllers);
         final options = result.matchingOptions;
         _matchingOptionControllers = MatchingExerciseEditor.createOptionControllers(
@@ -573,7 +590,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
 
     if (_type == ExerciseType.composeSentences) {
       builtQuestions = _composeQuestions.map((q) => q.toQuestion()).toList();
-    } else if (_type == ExerciseType.matching) {
+    } else if (_usesBank(_type)) {
       builtQuestions = _matchingQuestions.map((q) => q.toQuestion()).toList();
       matchingOptions = _matchingOptionControllers
           .map((controller) => controller.text.trim())
@@ -582,7 +599,9 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
         matchingOptions = matchingOptions.sublist(0, matchingOptions.length - 1);
       }
       if (matchingOptions.length < 2) {
-        setState(() => _error = 'Add at least 2 options in the answer bank (A–B).');
+        setState(() => _error = _type == ExerciseType.readingCloze
+            ? 'Add at least 2 words to the word bank (A–B).'
+            : 'Add at least 2 options in the answer bank (A–B).');
         return;
       }
     } else {
@@ -596,6 +615,8 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
             'Each sentence needs at least 2 parts in the correct order.',
           ExerciseType.matching =>
             'Each prompt needs text and a correct answer letter.',
+          ExerciseType.readingCloze =>
+            'Each blank needs a sentence and the letter of the right word.',
           _ =>
             'Each question needs a prompt and at least 2 answer options.',
         };
@@ -623,6 +644,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
           questions: questions,
           type: _type,
           matchingOptions: matchingOptions,
+          passage: _hasPassage(_type) ? _passageController.text : '',
           level: _level,
           skillCategory: _skillCategory,
           isPublished: publish,
@@ -635,6 +657,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
           questions: questions,
           type: _type,
           matchingOptions: matchingOptions,
+          passage: _hasPassage(_type) ? _passageController.text : '',
           level: _level,
           skillCategory: _skillCategory,
           isPublished: publish,
@@ -656,7 +679,8 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
           'Students drag word parts into the correct sentence order',
         ExerciseType.matching => 'Students match each prompt to an answer letter',
         ExerciseType.listening => 'Students listen and choose the correct answer',
-        ExerciseType.readingCloze => 'Students fill blanks in a reading passage',
+        ExerciseType.readingCloze =>
+          'Students pick the word for each blank from a shared word bank (A–F)',
         ExerciseType.pictureSentence =>
           'Students write a sentence using the keyword and picture',
       };
@@ -690,7 +714,9 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
 
     final questionCount = switch (_type) {
       ExerciseType.composeSentences => _composeQuestions.length,
-      ExerciseType.matching => _matchingQuestions.length,
+      ExerciseType.matching ||
+      ExerciseType.readingCloze =>
+        _matchingQuestions.length,
       _ => _mcQuestions.length,
     };
     final isWide = MediaQuery.sizeOf(context).width >= 900;
@@ -866,6 +892,20 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
               alignLabelWithHint: true,
             ),
           ),
+          if (_hasPassage(_type)) ...[
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _passageController,
+              minLines: 3,
+              maxLines: 10,
+              decoration: const InputDecoration(
+                labelText: 'Reading passage (optional)',
+                hintText: 'Shown above every question, e.g. the short text of '
+                    'a reading comprehension (阅读理解)',
+                alignLabelWithHint: true,
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -924,7 +964,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          if (_type == ExerciseType.matching)
+          if (_usesBank(_type))
             MatchingExerciseEditor(
               optionControllers: _matchingOptionControllers,
               questions: _matchingQuestions,

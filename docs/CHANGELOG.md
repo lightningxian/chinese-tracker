@@ -6,6 +6,43 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-10-27 — Claude: worksheet scanner detects the exercise form
+
+**What changed**
+- `QuestionImportUtils.parseWorksheet` (`lib/core/utils/question_import_utils.dart`)
+  now recognises, besides multiple choice / compose / matching:
+  **R1 fill in the blank** (blanks + word bank → `reading_cloze`),
+  **R3 reading comprehension** (passage + A–D → multiple choice with
+  `passage`), **R4 order the sentences** (lettered sentences + optional
+  answer key → compose sentences), **true/false** (√/× marks → 对/错 options)
+  and **L3 listening** (listening type, audio attached later). The detection
+  summary names the form and what still needs a hand (unmarked blanks,
+  statements without √/×, groups without a key). Full table in
+  `docs/WORKSHEET_IMPORT.md`.
+- **Fill in the blank is now playable and editable**: `reading_cloze` reuses
+  the matching data (shared bank + one prompt per blank), so the form shows
+  the A–F bank editor and the student screen plays it like matching
+  ("Blank 1 of 5", "Choose the word for the blank").
+- **Reading passage** field on the exercise form (multiple choice, listening,
+  fill in the blank); saved as `passage` and shown in a card above every
+  question in the student screen. `createExercise` / `updateExercise` take
+  `passage`.
+- Tests: `test/worksheet_forms_detection_test.dart` (7 cases, incl. a guard
+  that per-question A–C options are not mistaken for a matching bank).
+  38 tests pass.
+
+**Why**
+- Owner's admin review item 2: upload a PDF and let the scanner determine
+  what kind of exercise it is.
+
+**For review**
+- No rules or function changes; hosting deploy only.
+- Still not detected: typing forms (T1–T3 pinyin/hanzi) and picture
+  exercises (images are not extracted from PDFs). Listening worksheets
+  import their questions but the form has no audio upload yet.
+
+---
+
 ## 2026-10-27 — Claude: Classes calendar, Levels bundles, 8 admin reports
 
 **What changed**

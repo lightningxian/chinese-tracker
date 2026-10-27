@@ -47,13 +47,19 @@ Always review before saving — OCR can misread handwriting, small text, or wate
 
 After text is extracted, `QuestionImportUtils` (`lib/core/utils/question_import_utils.dart`) inspects layout and keywords to pick an exercise type and parse questions.
 
-| Detected type | Worksheet signals | Student UI |
-|---------------|-------------------|------------|
-| **Compose sentences (组词成句)** | Keywords like 组词成句; spaced segments e.g. `南方的 / 夏天 / 热极了` | Reorder word parts |
-| **Matching (对话配对)** | Answer bank **A–F** + numbered prompts; LATIHAN SOAL HSK patterns | Match prompts to options |
-| **Multiple choice** | Numbered questions with **A–D** options | Pick one answer |
-| **Reading cloze** | ISILAH DENGAN KATA YANG TEPAT; passage + blank choices | Detected only — editor coming soon |
-| **Picture + keyword** | Buatlah Kalimat + keyword | Detected only — editor coming soon |
+| Detected form (thesis code) | Worksheet signals | Saved as | Student UI |
+|---|---|---|---|
+| **Multiple choice** | Numbered questions with **A–D** options; `*`/`✓` marks the key | `multiple_choice` | Pick one answer |
+| **R1 Fill in the blank (选词填空)** | 选词填空 / ISILAH DENGAN KATA; sentences with `（ ）`, `（B）` or `____`; a word bank (`A. 的 B. 了 …` or `（喜欢 因为 所以）`) | `reading_cloze` (shared word bank + one prompt per blank, same data as matching) | Choose the word for each blank |
+| **R2 Matching (对话配对)** | Answer bank **A–F** listed once + numbered prompts ending `（ ）`/`（A）`; LATIHAN SOAL patterns | `matching` | Match prompts to options |
+| **R3 Reading comprehension (阅读理解)** | 阅读理解 / 短文 / bacalah; a paragraph before numbered A–D questions | `multiple_choice` + `passage` | Passage card above every question |
+| **R4 Order the sentences (句子排序)** | 句子排序 / urutkan; `1.` then lettered sentences `A …` `B …`; optional key `答案：BCA` | `compose_sentences` (one sentence per part, in the key's order) | Drag sentences into order |
+| **True/false (判断对错, P1/L2)** | 判断对错 / benar atau salah; statements ending `（√）` `（×）` / 对 错 / (T) (F) | `multiple_choice` with options 对 (True) / 错 (False) | Pick 对 or 错 |
+| **L3 Listening (听力)** | 听力 / 听录音 / dengarkan + A–D questions | `listening` (questions only; attach audio in the form) | Listen and pick |
+| **Compose sentences (组词成句)** | 组词成句 / menyusun kalimat; spaced or `/`-separated parts | `compose_sentences` | Reorder word parts |
+| **Picture + keyword** | Buatlah Kalimat + gambar | detected only, not editable yet | — |
+
+The review screen names the detected form and counts in its summary (e.g. "Detected R1 fill in the blank (选词填空) · HSK 2 — 3 blanks, 4 words in the bank. 1 blank without an answer letter: set the correct word in the editor."). Unmarked true/false statements default to 对; unmarked blanks default to A; ordering groups without a key keep the printed order and say so in the prompt, so the admin fixes them before saving. The type dropdown on the review screen overrides the guess.
 
 The parser also tries to read **HSK level** from the worksheet title (e.g. “HSK 3”) and filters noise (page numbers, watermarks).
 

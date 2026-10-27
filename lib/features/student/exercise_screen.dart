@@ -90,7 +90,8 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   }
 
   List<String> _currentOptions(Exercise exercise) {
-    if (exercise.type == ExerciseType.matching) {
+    if (exercise.type == ExerciseType.matching ||
+        exercise.type == ExerciseType.readingCloze) {
       return exercise.matchingOptions;
     }
     return exercise.questions[_currentIndex].options;
@@ -257,7 +258,9 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     final question = exercise.questions[_currentIndex];
     final progress = (_currentIndex + 1) / exercise.questions.length;
     final isCompose = exercise.type == ExerciseType.composeSentences;
-    final isMatching = exercise.type == ExerciseType.matching;
+    final isCloze = exercise.type == ExerciseType.readingCloze;
+    // Fill in the blank plays like matching: one shared bank, pick a letter.
+    final isMatching = exercise.type == ExerciseType.matching || isCloze;
     final options = _currentOptions(exercise);
     final isLast = _currentIndex + 1 >= exercise.questions.length;
 
@@ -273,6 +276,15 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
           ),
           const SizedBox(height: 16),
         ],
+        if (exercise.passage.isNotEmpty) ...[
+          AppCard(
+            child: SelectableText(
+              exercise.passage,
+              style: const TextStyle(height: 1.7, fontSize: 16),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
         LinearProgressIndicator(
           value: progress,
           backgroundColor: AppColors.border,
@@ -284,9 +296,11 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
         Text(
           isCompose
               ? 'Sentence ${_currentIndex + 1} of ${exercise.questions.length}'
-              : isMatching
-                  ? 'Match ${_currentIndex + 1} of ${exercise.questions.length}'
-                  : 'Question ${_currentIndex + 1} of ${exercise.questions.length}',
+              : isCloze
+                  ? 'Blank ${_currentIndex + 1} of ${exercise.questions.length}'
+                  : isMatching
+                      ? 'Match ${_currentIndex + 1} of ${exercise.questions.length}'
+                      : 'Question ${_currentIndex + 1} of ${exercise.questions.length}',
           style: const TextStyle(color: AppColors.textSecondary),
         ),
         const SizedBox(height: 24),
@@ -478,9 +492,11 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Prompt',
-                style: TextStyle(
+              Text(
+                exercise.type == ExerciseType.readingCloze
+                    ? 'Choose the word for the blank'
+                    : 'Prompt',
+                style: const TextStyle(
                   fontWeight: FontWeight.w600,
                   color: AppColors.textSecondary,
                   fontSize: 12,

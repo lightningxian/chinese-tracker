@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -61,6 +62,17 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.message ?? 'Sign in failed')),
+      );
+    } on FirebaseException catch (e) {
+      // Profile read failed (network, rules): say so instead of a silent stop.
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Signed in, but your profile could not be loaded '
+            '(${e.code}). Check your connection and try again.',
+          ),
+        ),
       );
     } finally {
       if (mounted) setState(() => _signingInEmail = null);

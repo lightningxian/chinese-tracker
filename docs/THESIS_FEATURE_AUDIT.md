@@ -48,7 +48,7 @@ retake" and "P6 Admin screen to edit weights" are superseded by the table above.
 |---|---|---|---|
 | 01 | Register with "Mulai dari HSK 1 / Ikut tes penempatan" + target level | Register exists; picks a level directly | Change the form (Phase 1 + placement) |
 | 02 | Sesi Kelas: level, time, room, teacher (info), seats left, **Daftar**, rejection reason | `student_join_session_section.dart`: "spots left", Join, "Class is full" dialog | Indonesian text, level filter, teacher name, seats; booking via function (Phase 2) |
-| 03 | R1 fill-in-the-blank with pembahasan | `reading_cloze` shows "coming soon"; no explanation field | Build R1 + pembahasan (Phase 5) |
+| 03 | R1 fill-in-the-blank with pembahasan | **Partly (2026-10-27):** `reading_cloze` is editable (word bank A–F) and playable, and the worksheet scanner imports it; no explanation (pembahasan) field yet | Add pembahasan (Phase 5) |
 | 04 | T2/T3 hanzi typing question | Nothing | Build typing forms (Phase 5) |
 | 05 | Voucher Kursus: remaining, expiry, history, **Beli** | Term section shows remaining/expiry/visit history; no self-purchase | Add packages + Beli (Phase 4) |
 | 06 | Test token entry with code and duration | Nothing | Build (Phase 5 supervised flow) |
@@ -198,7 +198,7 @@ Status per spec item. Evidence is `file:line` in this repo.
 | P4 Admin payments screen with filters | Partly | Sortable table, no status/date filters (`admin_invoices_tab.dart`) | AdminInvoicesTab |
 | P4 expireVouchers daily + low-balance reminders | Missing | Expiry only checked in app (`student_class_term.dart:42-58`) | voucherAlerts |
 | **P5** Question bank with form/topic/explanation/audio | Partly | Has type, level, skill, tags, difficulty, image/audio; no form code, no explanation (`question_bank_item.dart`) | question_bank |
-| P5 Question forms L1–L3, R1–R4, T1–T5 | Missing | 6 generic types, 2 unimplemented (`exercise_type.dart:1-32`) | ExerciseType |
+| P5 Question forms L1–L3, R1–R4, T1–T5 | Partly | R1 (fill in the blank), R2 (matching), R3 (passage + choice), R4 (order sentences, via compose), true/false and L3 (listening, no audio upload) exist and are detected by the worksheet scanner (2026-10-27); T1–T3 typing and picture forms missing (`exercise_type.dart`) | ExerciseType |
 | P5 Answer keys students cannot read | Missing | Keys inside `exercises`/`quizzes`, readable by all signed-in (`firestore.rules`) | — |
 | P5 Practice vs exam | Missing | Unlimited attempts, best score (`exercise_utils.dart:8-25`); no timer | — |
 | P5 Teacher builds and assigns packages | Partly | Exercises admin-only; teachers assign with due date (`firestore_service.dart:524-554`); per-lesson quizzes | exercise_assignments, quiz_editor |

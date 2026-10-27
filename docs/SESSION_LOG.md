@@ -162,8 +162,11 @@ Update this section when you push from Mac or PC.
   `/complete-profile` mid sign-in.
 - Verified on the emulator (release build): calendar, Levels create + assignment
   docs, Reports tab. Deploy: rules + hosting (owner runs it; see CHANGELOG).
-- Still to do from the owner's list: PDF exercise scanner with type detection
-  (item 2).
+- Worksheet scanner detects the form (R1 fill in the blank, R2 matching,
+  R3 comprehension + passage, R4 order sentences, true/false, L3 listening);
+  fill in the blank is editable and playable; reading passage field added.
+  All five owner items from the admin review are now built; owner tests on
+  the live site after deploy.
 
 ### 2026-10-27 — Claude: admin review fixes
 
