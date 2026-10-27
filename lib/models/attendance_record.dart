@@ -33,16 +33,39 @@ class AttendanceRecord {
   final String? studentName;
   final String? notes;
   final DateTime? joinedAt;
+
   /// Paid term package this class visit was deducted from.
   final String? classTermId;
   final bool sessionCredited;
-  /// `present`, `absent`, or null if not marked yet.
+
+  /// `hadir` (present, charged), `izin` (excused before class, not charged),
+  /// `alpa` (absent without notice, charged), or null if not marked yet.
+  /// Legacy values `present` / `absent` read as hadir / izin.
   final String? attendanceStatus;
+
+  static const hadir = 'hadir';
+  static const izin = 'izin';
+  static const alpa = 'alpa';
+
+  /// Normalises legacy values; null stays null.
+  static String? normalizeStatus(String? raw) {
+    switch (raw) {
+      case 'present':
+        return hadir;
+      case 'absent':
+        return izin;
+      default:
+        return raw;
+    }
+  }
+
+  String? get normalizedStatus => normalizeStatus(attendanceStatus);
+  bool get isExcused => normalizedStatus == izin;
 
   bool get joinedByStudent => joinedBy == 'student';
   bool get joinedByTeacher => joinedBy == 'teacher';
-  bool get markedPresent => attendanceStatus == 'present';
-  bool get markedAbsent => attendanceStatus == 'absent';
+  bool get markedPresent => normalizedStatus == hadir;
+  bool get markedAbsent => normalizedStatus == izin || normalizedStatus == alpa;
   String get timeRangeLabel => _formatTimeRange(startMinutes, endMinutes);
 
   factory AttendanceRecord.fromFirestore(

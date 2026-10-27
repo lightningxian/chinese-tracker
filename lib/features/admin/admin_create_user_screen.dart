@@ -227,9 +227,10 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
                             prefixIcon: Icon(Icons.lock_outline),
                             helperText: 'Minimum 6 characters',
                           ),
-                          validator: (value) => value == null || value.length < 6
-                              ? 'Minimum 6 characters'
-                              : null,
+                          validator: (value) =>
+                              value == null || value.length < 6
+                                  ? 'Minimum 6 characters'
+                                  : null,
                         ),
                         if (_isParent) ...[
                           const SizedBox(height: 16),
@@ -375,26 +376,92 @@ class _ChildPicker extends StatelessWidget {
                   child: Text('No students to link yet.'),
                 );
               }
-              return ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 260),
-                child: ListView(
+              return _SearchableStudentList(
+                students: students,
+                selectedIds: selectedIds,
+                onToggle: onToggle,
+                enabled: enabled,
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Student checklist with a search box, so a parent's children can be found
+/// in a long roster.
+class _SearchableStudentList extends StatefulWidget {
+  const _SearchableStudentList({
+    required this.students,
+    required this.selectedIds,
+    required this.onToggle,
+    required this.enabled,
+  });
+
+  final List<AppUser> students;
+  final Set<String> selectedIds;
+  final void Function(String uid, bool selected) onToggle;
+  final bool enabled;
+
+  @override
+  State<_SearchableStudentList> createState() => _SearchableStudentListState();
+}
+
+class _SearchableStudentListState extends State<_SearchableStudentList> {
+  String _query = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final q = _query.trim().toLowerCase();
+    final shown = widget.students.where((s) {
+      if (q.isEmpty) return true;
+      return s.displayNameIndonesian.toLowerCase().contains(q) ||
+          s.name.toLowerCase().contains(q) ||
+          s.email.toLowerCase().contains(q) ||
+          (s.level ?? '').toLowerCase().contains(q);
+    }).toList();
+    final selectedCount = widget.selectedIds.length;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
+          child: TextField(
+            enabled: widget.enabled,
+            onChanged: (v) => setState(() => _query = v),
+            decoration: InputDecoration(
+              hintText: 'Search by name, email or HSK level',
+              prefixIcon: const Icon(Icons.search, size: 20),
+              isDense: true,
+              suffixText: selectedCount == 0 ? null : '$selectedCount selected',
+            ),
+          ),
+        ),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 260),
+          child: shown.isEmpty
+              ? const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Text('No students match this search.'),
+                )
+              : ListView(
                   shrinkWrap: true,
                   children: [
-                    for (final s in students)
+                    for (final s in shown)
                       CheckboxListTile(
                         dense: true,
-                        value: selectedIds.contains(s.uid),
+                        value: widget.selectedIds.contains(s.uid),
                         title: Text(s.displayNameIndonesian),
                         subtitle: s.level != null ? Text(s.level!) : null,
-                        onChanged: enabled
-                            ? (v) => onToggle(s.uid, v ?? false)
+                        onChanged: widget.enabled
+                            ? (v) => widget.onToggle(s.uid, v ?? false)
                             : null,
                       ),
                   ],
                 ),
-              );
-            },
-          ),
         ),
       ],
     );

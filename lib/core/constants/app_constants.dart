@@ -61,6 +61,12 @@ abstract final class AppConstants {
   static int priceForPackage(int packageSize) =>
       packagePricesIdr[packageSize] ?? 0;
 
+  /// Non-session invoice item: HSK materials and textbook (course flyer).
+  /// Mirrors BOOK_PRICE in functions/index.js (server-authoritative).
+  static const bookItem = 'book';
+  static const bookPriceIdr = 250000;
+  static const bookItemLabel = 'HSK materials & book';
+
   /// Optional override for who owns content when an **admin** creates it.
   /// Demo teacher/student flows do **not** need this — they use per-teacher ids.
   static const contentOwnerId = String.fromEnvironment(

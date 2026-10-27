@@ -10,6 +10,7 @@ import '../../core/errors/conclude_errors.dart';
 import '../../core/errors/session_errors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
+import '../../core/widgets/conclude_class_dialog.dart';
 import '../../core/widgets/responsive_card_grid.dart';
 import '../../core/widgets/status_pill.dart';
 import '../../models/app_user.dart';
@@ -81,8 +82,7 @@ class _ClassSessionList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthService>().appUser;
-    final teacherId =
-        user == null ? '' : AppConstants.contentTeacherId(user);
+    final teacherId = user == null ? '' : AppConstants.contentTeacherId(user);
 
     return StreamBuilder<List<ClassSession>>(
       stream: context.read<FirestoreService>().watchTeacherSessions(teacherId),
@@ -168,45 +168,28 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
   bool get historyMode => widget.historyMode;
 
   Future<void> _confirmConclude() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Conclude this class?'),
-        content: const Text(
-          'This ends the class and deducts 1 session from each joined '
-          "student's active term. Students who have no sessions left will "
-          'not be charged. This cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Conclude class'),
-          ),
-        ],
-      ),
+    final statuses = await ConcludeClassDialog.show(
+      context,
+      sessionId: session.id,
+      sessionTitle: session.sessionTitle,
     );
-
-    if (confirm != true || !mounted) return;
+    if (statuses == null || !mounted) return;
 
     setState(() => _concluding = true);
     final firestore = context.read<FirestoreService>();
     final notifications = context.read<NotificationService>();
     try {
-      final result = await firestore.concludeClassSession(session.id);
+      final result =
+          await firestore.concludeClassSession(session.id, statuses: statuses);
       await notifications.notifySession(
-            title: 'Class concluded',
-            body:
-                '${session.sessionTitle} concluded. ${result.creditedCount} student(s) charged.',
-          );
+        title: 'Class concluded',
+        body: '${session.sessionTitle} concluded. ${result.summary}.',
+      );
       if (mounted) {
         final msg = result.hasFailures
             ? 'Class concluded. ${result.creditedCount} charged; '
                 'could not charge: ${result.failedStudents.join(', ')}'
-            : 'Class concluded. ${result.creditedCount} student(s) charged.';
+            : 'Class concluded. ${result.summary}.';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(msg)),
         );
@@ -322,9 +305,8 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
     List<AppUser> allStudents,
     Set<String> joinedIds,
   ) async {
-    final available = allStudents
-        .where((s) => !joinedIds.contains(s.uid))
-        .toList();
+    final available =
+        allStudents.where((s) => !joinedIds.contains(s.uid)).toList();
 
     if (available.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(

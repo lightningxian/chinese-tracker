@@ -39,11 +39,13 @@ class PaymentService {
     required int packageSize,
     required int amount,
     required String dueDate,
+    String item = 'package',
   }) async {
     try {
       final callable = _functions.httpsCallable('createInvoice');
       final result = await callable.call({
         'studentId': studentId,
+        'item': item,
         'packageSize': packageSize,
         'amount': amount,
         'dueDate': dueDate,

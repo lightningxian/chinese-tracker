@@ -39,6 +39,12 @@ const PACKAGE_PRICES = {
   16: 1500000,
 };
 
+// Non-session items. "book" = HSK materials and textbook (Rp 250.000 on the
+// course flyer). Paying a book invoice credits no sessions.
+const BOOK_ITEM = "book";
+const BOOK_PRICE = 250000;
+const BOOK_DESCRIPTION = "HSK materials and book";
+
 // Worksheet import runs locally in the Flutter web app (Tesseract.js + PDF/Word
 // parsers). No cloud AI or API keys are required for teachers.
 
@@ -412,13 +418,14 @@ exports.createInvoice = onCall(
 
     const data = request.data || {};
     const studentId = String(data.studentId || "").trim();
-    const packageSize = Number(data.packageSize);
+    const item = data.item === BOOK_ITEM ? BOOK_ITEM : "package";
+    const packageSize = item === BOOK_ITEM ? 0 : Number(data.packageSize);
     const dueDate = String(data.dueDate || "").trim();
 
     if (!studentId) {
       throw new HttpsError("invalid-argument", "studentId is required.");
     }
-    if (!ALLOWED_PACKAGE_SIZES.includes(packageSize)) {
+    if (item !== BOOK_ITEM && !ALLOWED_PACKAGE_SIZES.includes(packageSize)) {
       throw new HttpsError(
         "invalid-argument",
         `packageSize must be one of ${ALLOWED_PACKAGE_SIZES.join(", ")}.`,
@@ -427,13 +434,16 @@ exports.createInvoice = onCall(
 
     // Amount is authoritative on the server — derive from the price table and
     // ignore any client-supplied value so a caller can't misprice a sale.
-    const amount = PACKAGE_PRICES[packageSize];
+    const amount = item === BOOK_ITEM ? BOOK_PRICE : PACKAGE_PRICES[packageSize];
     if (!Number.isInteger(amount) || amount <= 0) {
       throw new HttpsError(
         "failed-precondition",
         `No price configured for package size ${packageSize}.`,
       );
     }
+    const description = item === BOOK_ITEM ?
+      BOOK_DESCRIPTION :
+      `${packageSize}-session package`;
 
     const studentSnap = await db.collection(USERS).doc(studentId).get();
     if (!studentSnap.exists) {
@@ -459,6 +469,8 @@ exports.createInvoice = onCall(
       studentId,
       studentName,
       teacherId,
+      item,
+      description,
       packageSize,
       amount,
       currency: "IDR",
@@ -637,6 +649,12 @@ exports.midtransNotification = onRequest(
       });
       if (newStatus !== "paid") return;
 
+      // Book / materials: nothing to credit, just record the payment.
+      if (invoice.item === BOOK_ITEM) {
+        credited = {invoice, packageSize: 0, book: true};
+        return;
+      }
+
       const packageSize = Number(invoice.packageSize) || 0;
       if (!invoice.studentId || !ALLOWED_PACKAGE_SIZES.includes(packageSize)) {
         logger.warn("midtransNotification: paid invoice with invalid package", {
@@ -672,7 +690,10 @@ exports.midtransNotification = onRequest(
         actorName: "Midtrans",
         targetType: "invoice",
         targetId: invoiceRef.id,
-        detail:
+        detail: credited.book ?
+          `${orderId} · Rp ${credited.invoice.amount || 0} · ` +
+          `${BOOK_DESCRIPTION} paid by ` +
+          `${credited.invoice.studentName || credited.invoice.studentId}` :
           `${orderId} · Rp ${credited.invoice.amount || 0} · ` +
           `${credited.packageSize} sessions credited to ` +
           `${credited.invoice.studentName || credited.invoice.studentId}`,
@@ -692,10 +713,13 @@ async function notifyInvoicePaid(invoice, packageSize) {
   try {
     const now = FieldValue.serverTimestamp();
     const batch = db.batch();
+    const isBook = packageSize === 0;
     batch.set(db.collection(NOTIFICATIONS).doc(), {
       kind: "session",
       title: "Payment received",
-      body: `${packageSize} sessions have been added to your account.`,
+      body: isBook ?
+        `Your payment for ${BOOK_DESCRIPTION} was received.` :
+        `${packageSize} sessions have been added to your account.`,
       forRole: "student",
       userId: invoice.studentId,
       targetRoute: "/student",
@@ -706,7 +730,9 @@ async function notifyInvoicePaid(invoice, packageSize) {
       batch.set(db.collection(NOTIFICATIONS).doc(), {
         kind: "session",
         title: "Invoice paid",
-        body: `${invoice.studentName || "A student"} paid for a ${packageSize}-session package.`,
+        body: isBook ?
+          `${invoice.studentName || "A student"} paid for ${BOOK_DESCRIPTION}.` :
+          `${invoice.studentName || "A student"} paid for a ${packageSize}-session package.`,
         forRole: "teacher",
         userId: invoice.teacherId,
         targetRoute: "/teacher",

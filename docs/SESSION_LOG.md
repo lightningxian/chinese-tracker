@@ -148,6 +148,13 @@ Commit author preference (via env vars, not global git config):
 
 Update this section when you push from Mac or PC.
 
+### 2026-10-27 — Claude: admin review fixes
+
+- Owner's `review_web.pdf` (5 admin items) done and deployed: children search
+  in Create user, admin term editing on Edit user, Vouchers explanation, HSK
+  book invoice item, Hadir/Izin/Alpa attendance on Conclude class (Izin not
+  charged). Details in CHANGELOG. Caveman mode on in this chat at owner's request.
+
 ### 2026-10-22 — Claude: handoff to a new chat (end of the first Claude session)
 
 Where things stand, so the next session can start without this chat:

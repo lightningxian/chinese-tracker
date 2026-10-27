@@ -6,6 +6,39 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-10-27 — Claude: owner's admin review (review_web.pdf), 5 items
+
+**What changed**
+1. Create user → Ortu: the **Linked children** list has a search box (name,
+   email, HSK level) and shows how many are selected
+   (`admin_create_user_screen.dart`, `_SearchableStudentList`).
+2. Admin **Edit user** for a student now embeds the same **term editor** the
+   teacher has (add term, edit sessions and deadline, delete):
+   `StudentClassTermSection(allowManage: true)` in `admin_edit_user_screen.dart`.
+3. **Vouchers** tab explains what a voucher is (a student's paid 8/16-session
+   term with a deadline, same as "Term packages" on the student page); column
+   renamed "Voucher code".
+4. **HSK materials & book** invoice item (Rp 250.000, no sessions credited):
+   `functions/index.js` (`item: "book"`, `BOOK_PRICE`, webhook skips term
+   creation, notifications/audit wording), `Invoice.item/itemLabel`,
+   `PaymentService.createInvoice(item:)`, admin Create invoice dropdown.
+5. **Conclude class** now opens an attendance dialog
+   (`core/widgets/conclude_class_dialog.dart`): each joined student is Hadir /
+   Izin / Alpa. Hadir and Alpa charge 1 session; **Izin is not charged**.
+   `concludeClassSession(sessionId, statuses:)` writes `attendanceStatus`
+   (`hadir|izin|alpa`; legacy `present|absent` normalised) and reports
+   "N charged, M excused". Used by the Classes tab and the class detail page.
+
+**Why**
+- Owner review of the admin account (`review_web.pdf`, 27 Oct).
+
+**For review**
+- Verified on the emulator: conclude with 1 Izin → "4 charged, 1 excused".
+- Functions redeployed (book item). Package prices are still the old
+  Rp 800k / 1.5M (flyer: Rp 2.45M / 3.95M); owner has not asked to change them.
+
+---
+
 ## 2026-10-20 — Claude: Android APK download, clearer link-code errors (owner test results)
 
 **What changed**

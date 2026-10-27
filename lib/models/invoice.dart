@@ -39,6 +39,7 @@ class Invoice {
     required this.studentId,
     required this.teacherId,
     required this.packageSize,
+    this.item = 'package',
     required this.amount,
     this.currency = 'IDR',
     required this.status,
@@ -57,6 +58,8 @@ class Invoice {
   final String studentId;
   final String teacherId;
   final int packageSize;
+  /// `package` (default) or `book` (HSK materials and textbook, no sessions).
+  final String item;
   final int amount;
   final String currency;
   final InvoiceStatus status;
@@ -71,6 +74,12 @@ class Invoice {
   final DateTime? createdAt;
   final DateTime? paidAt;
 
+  bool get isBook => item == 'book';
+
+  /// What the invoice is for, for lists and cards.
+  String get itemLabel =>
+      isBook ? 'HSK materials & book' : '$packageSize sessions';
+
   bool get isPending => status == InvoiceStatus.pending;
   bool get isPaid => status == InvoiceStatus.paid;
   bool get isPayable => status == InvoiceStatus.pending;
@@ -83,6 +92,7 @@ class Invoice {
       studentId: data['studentId'] as String? ?? '',
       teacherId: data['teacherId'] as String? ?? '',
       packageSize: data['packageSize'] as int? ?? 0,
+      item: data['item'] as String? ?? 'package',
       amount: (data['amount'] as num?)?.toInt() ?? 0,
       currency: data['currency'] as String? ?? 'IDR',
       status: InvoiceStatus.fromValue(data['status'] as String?),

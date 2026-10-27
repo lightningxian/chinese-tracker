@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
+import '../../core/widgets/class_term_widgets.dart';
 import '../../core/widgets/profile_widgets.dart';
 import '../../core/widgets/shell_nested_page.dart';
 import '../../models/app_user.dart';
@@ -222,6 +223,16 @@ class _AdminEditUserScreenState extends State<AdminEditUserScreen> {
                         ),
                       ),
                     ),
+                    if (user.isStudent) ...[
+                      const SizedBox(height: 16),
+                      // Same term editor the teacher has on the student page,
+                      // so admins can add terms and change deadlines too.
+                      StudentClassTermSection(
+                        studentId: user.uid,
+                        showAddButton: true,
+                        allowManage: true,
+                      ),
+                    ],
                     const SizedBox(height: 16),
                     ProfileAccountMeta(user: user),
                     const SizedBox(height: 24),

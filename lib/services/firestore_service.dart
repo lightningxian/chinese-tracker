@@ -1097,7 +1097,14 @@ class FirestoreService {
         .delete();
   }
 
-  Future<ConcludeClassResult> concludeClassSession(String sessionId) async {
+  /// Concludes a class. [statuses] maps studentId → `hadir` | `izin` | `alpa`
+  /// (see [AttendanceRecord]); students not in the map keep their stored
+  /// status, defaulting to hadir. Hadir and alpa charge one session; izin
+  /// (excused before class) is recorded but not charged.
+  Future<ConcludeClassResult> concludeClassSession(
+    String sessionId, {
+    Map<String, String> statuses = const {},
+  }) async {
     final session = await getClassSession(sessionId);
     if (session == null) {
       throw const ClassConcludeException('Class not found.');
@@ -1112,11 +1119,21 @@ class FirestoreService {
         .get();
 
     var creditedCount = 0;
+    var excusedCount = 0;
     final failedStudents = <String>[];
 
     for (final doc in attendanceSnap.docs) {
       final record = AttendanceRecord.fromFirestore(doc);
       if (!record.attended || record.sessionCredited) continue;
+
+      final status = statuses[record.studentId] ??
+          record.normalizedStatus ??
+          AttendanceRecord.hadir;
+      if (status == AttendanceRecord.izin) {
+        await doc.reference.update({'attendanceStatus': status});
+        excusedCount++;
+        continue;
+      }
 
       final name = record.studentName?.isNotEmpty == true
           ? record.studentName!
@@ -1127,9 +1144,11 @@ class FirestoreService {
         await doc.reference.update({
           'classTermId': classTermId,
           'sessionCredited': true,
+          'attendanceStatus': status,
         });
         creditedCount++;
       } on NoClassCreditsException {
+        await doc.reference.update({'attendanceStatus': status});
         failedStudents.add(name);
       }
     }
@@ -1143,6 +1162,7 @@ class FirestoreService {
     return ConcludeClassResult(
       creditedCount: creditedCount,
       failedStudents: failedStudents,
+      excusedCount: excusedCount,
     );
   }
 

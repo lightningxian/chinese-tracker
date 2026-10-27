@@ -128,7 +128,7 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
                   icon: Icons.receipt_long_outlined,
                   title: 'No invoices yet',
                   subtitle:
-                      'Tap "Create invoice" to bill a student for a session package.',
+                      'Tap "Create invoice" to bill a student for a session package or the HSK book.',
                 );
               }
               return ListView(
@@ -196,7 +196,7 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
         sortable: true,
         width: 110,
         cell: (invoice) => Text(
-          '${invoice.packageSize} sessions',
+          invoice.itemLabel,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: metaStyle,
@@ -290,7 +290,7 @@ class InvoiceCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            '${invoice.packageSize} sessions · ${currency.format(invoice.amount)}',
+            '${invoice.itemLabel} · ${currency.format(invoice.amount)}',
             style: const TextStyle(color: AppColors.textSecondary),
           ),
           const SizedBox(height: 2),
@@ -475,10 +475,20 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
                       '${currency.format(AppConstants.priceForPackage(size))}',
                     ),
                   ),
+                // 0 = book / materials item: no sessions are credited.
+                DropdownMenuItem(
+                  value: 0,
+                  child: Text(
+                    '${AppConstants.bookItemLabel} · '
+                    '${currency.format(AppConstants.bookPriceIdr)}',
+                  ),
+                ),
               ],
               onChanged: (v) => setState(() {
                 _packageSize = v ?? _packageSize;
-                _amount = AppConstants.priceForPackage(_packageSize);
+                _amount = _packageSize == 0
+                    ? AppConstants.bookPriceIdr
+                    : AppConstants.priceForPackage(_packageSize);
               }),
             ),
             const SizedBox(height: 16),
@@ -486,7 +496,7 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
               decoration: const InputDecoration(
                 labelText: 'Amount (IDR)',
                 prefixIcon: Icon(Icons.payments_outlined),
-                helperText: 'Set by package size (server-authoritative)',
+                helperText: 'Set by the item chosen (server-authoritative)',
               ),
               child: Text('Rp $_amount'),
             ),
@@ -549,6 +559,7 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
       await context.read<PaymentService>().createInvoice(
             studentId: _student!.uid,
             packageSize: _packageSize,
+            item: _packageSize == 0 ? AppConstants.bookItem : 'package',
             amount: _amount,
             dueDate: DateFormat('yyyy-MM-dd').format(_dueDate),
           );

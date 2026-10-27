@@ -132,7 +132,7 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
     return [
       AppTableColumn<StudentClassTerm>(
         id: 'code',
-        label: 'Code',
+        label: 'Voucher code',
         sortable: true,
         flex: 2,
         cell: (term) => Text(
@@ -310,6 +310,21 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
             return ListView(
               padding: const EdgeInsets.all(_horizontalPadding),
               children: [
+                const Padding(
+                  padding: EdgeInsets.only(bottom: 12),
+                  child: Text(
+                    "A voucher is a student's paid term: 8 or 16 class sessions "
+                    'with a start date and a deadline. The same packages appear '
+                    'under "Term packages" on the student\'s page, and one session '
+                    'is deducted each time a class is concluded. Codes are '
+                    'optional labels you can set when editing.',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 13,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
                 TextField(
                   controller: _searchController,
                   onChanged: (value) => setState(() => _query = value),

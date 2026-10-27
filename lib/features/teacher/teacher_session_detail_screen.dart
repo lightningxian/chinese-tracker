@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
+import '../../core/widgets/conclude_class_dialog.dart';
 import '../../core/widgets/app_shell.dart';
 import '../../core/widgets/status_pill.dart';
 import '../../core/widgets/shell_nested_page.dart';
@@ -31,7 +32,8 @@ class TeacherSessionDetailScreen extends StatefulWidget {
       _TeacherSessionDetailScreenState();
 }
 
-class _TeacherSessionDetailScreenState extends State<TeacherSessionDetailScreen> {
+class _TeacherSessionDetailScreenState
+    extends State<TeacherSessionDetailScreen> {
   bool _deleting = false;
   bool _concluding = false;
 
@@ -88,50 +90,28 @@ class _TeacherSessionDetailScreenState extends State<TeacherSessionDetailScreen>
   }
 
   Future<void> _confirmConclude(ClassSession session) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Conclude this class?'),
-        content: const Text(
-          'This ends the class and deducts 1 session from each joined '
-          "student's active term. Students who have no sessions left will "
-          'not be charged. This cannot be undone.',
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: const BorderSide(color: AppColors.border),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: FilledButton.styleFrom(backgroundColor: AppColors.navy),
-            child: const Text('Conclude class'),
-          ),
-        ],
-      ),
+    final statuses = await ConcludeClassDialog.show(
+      context,
+      sessionId: session.id,
+      sessionTitle: session.sessionTitle,
     );
-
-    if (confirm != true || !mounted) return;
+    if (statuses == null || !mounted) return;
 
     setState(() => _concluding = true);
     final firestore = context.read<FirestoreService>();
     final notifications = context.read<NotificationService>();
     try {
-      final result = await firestore.concludeClassSession(session.id);
+      final result =
+          await firestore.concludeClassSession(session.id, statuses: statuses);
       await notifications.notifySession(
-            title: 'Class concluded',
-            body:
-                '${session.sessionTitle} concluded. ${result.creditedCount} student(s) charged.',
-          );
+        title: 'Class concluded',
+        body: '${session.sessionTitle} concluded. ${result.summary}.',
+      );
       if (mounted) {
         final msg = result.hasFailures
             ? 'Class concluded. ${result.creditedCount} charged; '
                 'could not charge: ${result.failedStudents.join(', ')}'
-            : 'Class concluded. ${result.creditedCount} student(s) charged.';
+            : 'Class concluded. ${result.summary}.';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(msg)),
         );
@@ -222,195 +202,207 @@ class _TeacherSessionDetailScreenState extends State<TeacherSessionDetailScreen>
                 child: Stack(
                   children: [
                     StreamBuilder<List<AppUser>>(
-                stream: firestore.watchAllStudents(),
-                builder: (context, studentsSnap) {
-                  final studentsById = {
-                    for (final s in studentsSnap.data ?? []) s.uid: s,
-                  };
+                      stream: firestore.watchAllStudents(),
+                      builder: (context, studentsSnap) {
+                        final studentsById = {
+                          for (final s in studentsSnap.data ?? []) s.uid: s,
+                        };
 
-                  return StreamBuilder(
-                    stream: firestore.watchSessionAttendance(session.id),
-                    builder: (context, attendanceSnap) {
-                      final records = attendanceSnap.data ?? [];
-                      final joined = records.length;
-                      final isFull = joined >= session.capacity;
+                        return StreamBuilder(
+                          stream: firestore.watchSessionAttendance(session.id),
+                          builder: (context, attendanceSnap) {
+                            final records = attendanceSnap.data ?? [];
+                            final joined = records.length;
+                            final isFull = joined >= session.capacity;
 
-                      return ListView(
-                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
-                        children: [
-                          AppCard(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            return ListView(
+                              padding:
+                                  const EdgeInsets.fromLTRB(20, 20, 20, 120),
                               children: [
-                                Text(
-                                  dateLabel,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 18,
-                                    color: AppColors.navy,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  '${session.timeRangeLabel} · $durationMinutes min',
-                                  style: const TextStyle(
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                                if (session.mode != null ||
-                                    (session.room != null &&
-                                        session.room!.isNotEmpty)) ...[
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    [
-                                      if (session.mode != null)
-                                        session.mode!.label,
-                                      if (session.room != null &&
-                                          session.room!.isNotEmpty)
-                                        session.room!,
-                                    ].join(' · '),
-                                    style: const TextStyle(
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
-                                ],
-                                const SizedBox(height: 12),
-                                Wrap(
-                                  spacing: 8,
-                                  runSpacing: 8,
-                                  children: [
-                                    if (session.isConcluded)
-                                      StatusPills.concluded()
-                                    else if (session.isOpen)
-                                      StatusPills.open()
-                                    else
-                                      StatusPills.closed(),
-                                    if (isFull && !session.isConcluded)
-                                      StatusPills.full(),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.teal.withValues(alpha: 0.12),
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                      child: Text(
-                                        '$joined / ${session.capacity} joined',
+                                AppCard(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        dateLabel,
                                         style: const TextStyle(
-                                          color: AppColors.teal,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 18,
+                                          color: AppColors.navy,
                                         ),
                                       ),
-                                    ),
-                                    if (session.registrationState != null)
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 10,
-                                          vertical: 4,
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        '${session.timeRangeLabel} · $durationMinutes min',
+                                        style: const TextStyle(
+                                          color: AppColors.textSecondary,
                                         ),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.navy
-                                              .withValues(alpha: 0.08),
-                                          borderRadius:
-                                              BorderRadius.circular(20),
-                                        ),
-                                        child: Text(
-                                          session.registrationState!.label,
+                                      ),
+                                      if (session.mode != null ||
+                                          (session.room != null &&
+                                              session.room!.isNotEmpty)) ...[
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          [
+                                            if (session.mode != null)
+                                              session.mode!.label,
+                                            if (session.room != null &&
+                                                session.room!.isNotEmpty)
+                                              session.room!,
+                                          ].join(' · '),
                                           style: const TextStyle(
-                                            color: AppColors.navy,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.textSecondary,
                                           ),
                                         ),
-                                      ),
-                                  ],
-                                ),
-                                if (session.isConcluded &&
-                                    session.concludedAt != null) ...[
-                                  const SizedBox(height: 10),
-                                  Text(
-                                    'Concluded ${DateFormat('d MMM yyyy, HH:mm').format(session.concludedAt!)}',
-                                    style: const TextStyle(
-                                      color: AppColors.textSecondary,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          const SectionHeader(title: 'Students who joined'),
-                          if (records.isEmpty)
-                            const AppCard(
-                              child: Text(
-                                'No students have joined yet.',
-                                style: TextStyle(color: AppColors.textSecondary),
-                              ),
-                            )
-                          else
-                            ...records.map((record) {
-                              final student = studentsById[record.studentId];
-                              final name = record.studentName?.isNotEmpty == true
-                                  ? record.studentName!
-                                  : (student?.name ?? 'Student');
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 8),
-                                child: AppCard(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 14,
-                                    vertical: 12,
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      AppUserAvatar(
-                                        initials: userInitials(name),
-                                        size: 36,
-                                        backgroundColor: AppColors.teal,
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              name,
+                                      ],
+                                      const SizedBox(height: 12),
+                                      Wrap(
+                                        spacing: 8,
+                                        runSpacing: 8,
+                                        children: [
+                                          if (session.isConcluded)
+                                            StatusPills.concluded()
+                                          else if (session.isOpen)
+                                            StatusPills.open()
+                                          else
+                                            StatusPills.closed(),
+                                          if (isFull && !session.isConcluded)
+                                            StatusPills.full(),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 10,
+                                              vertical: 4,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.teal
+                                                  .withValues(alpha: 0.12),
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                            ),
+                                            child: Text(
+                                              '$joined / ${session.capacity} joined',
                                               style: const TextStyle(
+                                                color: AppColors.teal,
+                                                fontSize: 12,
                                                 fontWeight: FontWeight.w600,
                                               ),
                                             ),
-                                            Text(
-                                              record.joinedByStudent
-                                                  ? 'Self join'
-                                                  : 'Added by teacher',
-                                              style: const TextStyle(
-                                                color: AppColors.textSecondary,
-                                                fontSize: 12,
+                                          ),
+                                          if (session.registrationState != null)
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                horizontal: 10,
+                                                vertical: 4,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: AppColors.navy
+                                                    .withValues(alpha: 0.08),
+                                                borderRadius:
+                                                    BorderRadius.circular(20),
+                                              ),
+                                              child: Text(
+                                                session
+                                                    .registrationState!.label,
+                                                style: const TextStyle(
+                                                  color: AppColors.navy,
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                      if (session.isConcluded &&
+                                          session.concludedAt != null) ...[
+                                        const SizedBox(height: 10),
+                                        Text(
+                                          'Concluded ${DateFormat('d MMM yyyy, HH:mm').format(session.concludedAt!)}',
+                                          style: const TextStyle(
+                                            color: AppColors.textSecondary,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                const SectionHeader(
+                                    title: 'Students who joined'),
+                                if (records.isEmpty)
+                                  const AppCard(
+                                    child: Text(
+                                      'No students have joined yet.',
+                                      style: TextStyle(
+                                          color: AppColors.textSecondary),
+                                    ),
+                                  )
+                                else
+                                  ...records.map((record) {
+                                    final student =
+                                        studentsById[record.studentId];
+                                    final name =
+                                        record.studentName?.isNotEmpty == true
+                                            ? record.studentName!
+                                            : (student?.name ?? 'Student');
+                                    return Padding(
+                                      padding: const EdgeInsets.only(bottom: 8),
+                                      child: AppCard(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 14,
+                                          vertical: 12,
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            AppUserAvatar(
+                                              initials: userInitials(name),
+                                              size: 36,
+                                              backgroundColor: AppColors.teal,
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    name,
+                                                    style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    record.joinedByStudent
+                                                        ? 'Self join'
+                                                        : 'Added by teacher',
+                                                    style: const TextStyle(
+                                                      color: AppColors
+                                                          .textSecondary,
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                             ),
                                           ],
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            }),
-                        ],
-                      );
-                    },
-                  );
-                },
-              ),
-              if (busy)
-                const ColoredBox(
-                  color: Color(0x88000000),
-                  child: Center(child: CircularProgressIndicator()),
-                ),
+                                    );
+                                  }),
+                              ],
+                            );
+                          },
+                        );
+                      },
+                    ),
+                    if (busy)
+                      const ColoredBox(
+                        color: Color(0x88000000),
+                        child: Center(child: CircularProgressIndicator()),
+                      ),
                   ],
                 ),
               ),
@@ -438,7 +430,8 @@ class _TeacherSessionDetailScreenState extends State<TeacherSessionDetailScreen>
                       children: [
                         Expanded(
                           child: OutlinedButton.icon(
-                            onPressed: busy ? null : () => _confirmDelete(session),
+                            onPressed:
+                                busy ? null : () => _confirmDelete(session),
                             icon: const Icon(Icons.delete_outline),
                             label: const Text('Delete'),
                             style: OutlinedButton.styleFrom(
