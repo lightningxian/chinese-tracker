@@ -84,6 +84,14 @@ class Invoice {
   bool get isPaid => status == InvoiceStatus.paid;
   bool get isPayable => status == InvoiceStatus.pending;
 
+  /// `dueDate` is stored as `yyyy-MM-dd` by the server; tolerate a Timestamp
+  /// (older or hand-written docs) instead of failing the whole list.
+  static String _dateString(Object? raw) {
+    if (raw is String) return raw;
+    if (raw is Timestamp) return raw.toDate().toIso8601String().substring(0, 10);
+    return '';
+  }
+
   factory Invoice.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? {};
     return Invoice(
@@ -96,7 +104,7 @@ class Invoice {
       amount: (data['amount'] as num?)?.toInt() ?? 0,
       currency: data['currency'] as String? ?? 'IDR',
       status: InvoiceStatus.fromValue(data['status'] as String?),
-      dueDate: data['dueDate'] as String? ?? '',
+      dueDate: _dateString(data['dueDate']),
       midtransOrderId: data['midtransOrderId'] as String?,
       snapToken: data['snapToken'] as String?,
       redirectUrl: data['redirectUrl'] as String?,

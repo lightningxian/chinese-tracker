@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -21,6 +22,7 @@ import '../models/exercise.dart';
 import '../models/exercise_skill_category.dart';
 import '../models/exercise_type.dart';
 import '../models/exercise_assignment.dart';
+import '../models/exercise_level.dart';
 import '../models/exercise_result.dart';
 import '../models/grade.dart';
 import '../models/question_bank_item.dart';
@@ -552,6 +554,103 @@ class FirestoreService {
         .collection(AppConstants.exerciseAssignmentsCollection)
         .doc(ExerciseAssignment.docId(exerciseId, studentId))
         .set(data, SetOptions(merge: true));
+  }
+
+  // ---------------------------------------------------------------- Levels
+
+  Stream<List<ExerciseLevel>> watchExerciseLevels() => _db
+      .collection(AppConstants.exerciseLevelsCollection)
+      .orderBy('name')
+      .snapshots()
+      .map((snap) => snap.docs.map(ExerciseLevel.fromFirestore).toList());
+
+  Future<ExerciseLevel?> getExerciseLevel(String id) async {
+    final doc = await _db
+        .collection(AppConstants.exerciseLevelsCollection)
+        .doc(id)
+        .get();
+    return doc.exists ? ExerciseLevel.fromFirestore(doc) : null;
+  }
+
+  /// Creates or updates a level, then makes the assignments match it: one
+  /// `exercise_assignments` doc per (exercise, student) tagged `levelId`.
+  /// Returns the level id.
+  Future<String> saveExerciseLevel(
+    ExerciseLevel level, {
+    required String teacherId,
+  }) async {
+    final col = _db.collection(AppConstants.exerciseLevelsCollection);
+    final ref = level.id.isEmpty ? col.doc() : col.doc(level.id);
+    await ref.set({
+      ...level.toMap(),
+      'updatedAt': FieldValue.serverTimestamp(),
+      if (level.id.isEmpty) 'createdAt': FieldValue.serverTimestamp(),
+      if (level.id.isEmpty) 'createdBy': teacherId,
+    }, SetOptions(merge: true));
+    await _syncLevelAssignments(
+      levelId: ref.id,
+      exerciseIds: level.exerciseIds,
+      studentIds: level.studentIds,
+      teacherId: teacherId,
+    );
+    return ref.id;
+  }
+
+  /// Deletes the level and every assignment it created.
+  Future<void> deleteExerciseLevel(String levelId) async {
+    await _syncLevelAssignments(
+      levelId: levelId,
+      exerciseIds: const [],
+      studentIds: const [],
+      teacherId: '',
+    );
+    await _db
+        .collection(AppConstants.exerciseLevelsCollection)
+        .doc(levelId)
+        .delete();
+  }
+
+  Future<void> _syncLevelAssignments({
+    required String levelId,
+    required List<String> exerciseIds,
+    required List<String> studentIds,
+    required String teacherId,
+  }) async {
+    final assignments = _db.collection(AppConstants.exerciseAssignmentsCollection);
+    final existing = await assignments.where('levelId', isEqualTo: levelId).get();
+    final existingIds = {for (final d in existing.docs) d.id};
+    final desired = <String, Map<String, dynamic>>{
+      for (final e in exerciseIds)
+        for (final st in studentIds)
+          ExerciseAssignment.docId(e, st): {
+            'exerciseId': e,
+            'studentId': st,
+            'teacherId': teacherId,
+            'levelId': levelId,
+          },
+    };
+
+    final ops = <void Function(WriteBatch)>[];
+    for (final entry in desired.entries) {
+      if (existingIds.contains(entry.key)) continue;
+      ops.add((b) => b.set(
+            assignments.doc(entry.key),
+            {...entry.value, 'assignedAt': FieldValue.serverTimestamp()},
+            SetOptions(merge: true),
+          ));
+    }
+    for (final id in existingIds) {
+      if (desired.containsKey(id)) continue;
+      ops.add((b) => b.delete(assignments.doc(id)));
+    }
+    // Firestore batches cap at 500 writes.
+    for (var i = 0; i < ops.length; i += 400) {
+      final batch = _db.batch();
+      for (final op in ops.sublist(i, math.min(i + 400, ops.length))) {
+        op(batch);
+      }
+      await batch.commit();
+    }
   }
 
   Future<void> unassignExerciseFromStudent({

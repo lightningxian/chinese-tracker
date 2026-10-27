@@ -17,6 +17,7 @@ abstract final class AppConstants {
   static const lessonsCollection = 'lessons';
   static const exercisesCollection = 'exercises';
   static const exerciseAssignmentsCollection = 'exercise_assignments';
+  static const exerciseLevelsCollection = 'exercise_levels';
   static const progressCollection = 'student_progress';
   static const quizzesCollection = 'quizzes';
   static const quizResultsCollection = 'quiz_results';

@@ -1,14 +1,29 @@
+import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
+import '../core/reports/admin_ops_reports_pdf.dart';
 import '../core/reports/admin_platform_reports_pdf.dart';
+import 'admin_ops_report_service.dart';
 import 'admin_report_service.dart';
 import 'firestore_service.dart';
 
 enum AdminExportReport {
-  userRoster,
-  registrationGrowth,
-  voucherSessions,
-  worksheetInventory,
+  attendanceMonthly('attendance_monthly'),
+  termBalanceAlerts('term_balance_alerts'),
+  revenueMonthly('revenue_monthly'),
+  studentRetention('students_retention'),
+  classFillRate('class_fill_rate'),
+  teacherRecap('teacher_recap'),
+  progressByLevel('progress_by_level'),
+  overdueHomework('overdue_homework'),
+  userRoster('user_roster'),
+  registrationGrowth('monthly_registration'),
+  voucherSessions('voucher_sessions'),
+  worksheetInventory('worksheet_inventory');
+
+  const AdminExportReport(this.fileStem);
+
+  final String fileStem;
 }
 
 class AdminReportExportService {
@@ -29,53 +44,72 @@ class AdminReportExportService {
     );
   }
 
-  Future<void> exportPdf(AdminExportReport type) async {
-    final generatedAt = DateTime.now();
-    final users = await _firestore.watchAllUsers().first;
+  Future<AdminOpsReportData> _buildOpsReport() async {
+    final f = _firestore;
+    return AdminOpsReportService.build(
+      users: await f.watchAllUsers().first,
+      exercises: await f.watchAllExercises().first,
+      classTerms: await f.watchAllClassTerms().first,
+      attendance: await f.watchAllAttendance().first,
+      sessions: await f.watchAllClassSessions().first,
+      invoices: await f.watchAllInvoices().first,
+      assignments: await f.watchAllExerciseAssignments().first,
+      results: await f.watchAllExerciseResults().first,
+    );
+  }
 
+  Future<void> exportPdf(AdminExportReport type) async {
+    final doc = await _document(type, DateTime.now());
+    await Printing.layoutPdf(
+      onLayout: (_) async => doc.save(),
+      name: '${type.fileStem}_${_dateStamp()}.pdf',
+    );
+  }
+
+  Future<pw.Document> _document(
+    AdminExportReport type,
+    DateTime generatedAt,
+  ) async {
     switch (type) {
+      case AdminExportReport.attendanceMonthly:
+        return AdminOpsReportsPdf.attendance(await _buildOpsReport());
+      case AdminExportReport.termBalanceAlerts:
+        return AdminOpsReportsPdf.termAlerts(await _buildOpsReport());
+      case AdminExportReport.revenueMonthly:
+        return AdminOpsReportsPdf.revenue(await _buildOpsReport());
+      case AdminExportReport.studentRetention:
+        return AdminOpsReportsPdf.retention(await _buildOpsReport());
+      case AdminExportReport.classFillRate:
+        return AdminOpsReportsPdf.fillRate(await _buildOpsReport());
+      case AdminExportReport.teacherRecap:
+        return AdminOpsReportsPdf.teacherRecap(await _buildOpsReport());
+      case AdminExportReport.progressByLevel:
+        return AdminOpsReportsPdf.progressByLevel(await _buildOpsReport());
+      case AdminExportReport.overdueHomework:
+        return AdminOpsReportsPdf.overdueHomework(await _buildOpsReport());
       case AdminExportReport.userRoster:
-        final doc = await AdminPlatformReportsPdf.userRoster(
-          users: users,
+        return AdminPlatformReportsPdf.userRoster(
+          users: await _firestore.watchAllUsers().first,
           generatedAt: generatedAt,
-        );
-        await Printing.layoutPdf(
-          onLayout: (_) async => doc.save(),
-          name: 'user_roster_${_dateStamp()}.pdf',
         );
       case AdminExportReport.registrationGrowth:
-        final report = await _buildReport();
-        final doc = await AdminPlatformReportsPdf.registrationGrowth(
-          report: report,
+        return AdminPlatformReportsPdf.registrationGrowth(
+          report: await _buildReport(),
           generatedAt: generatedAt,
         );
-        await Printing.layoutPdf(
-          onLayout: (_) async => doc.save(),
-          name: 'monthly_registration_${_dateStamp()}.pdf',
-        );
       case AdminExportReport.voucherSessions:
-        final terms = await _firestore.watchAllClassTerms().first;
+        final users = await _firestore.watchAllUsers().first;
         final report = await _buildReport();
-        final usersById = {for (final u in users) u.uid: u};
-        final doc = await AdminPlatformReportsPdf.voucherSessions(
-          terms: terms,
-          usersById: usersById,
+        return AdminPlatformReportsPdf.voucherSessions(
+          terms: await _firestore.watchAllClassTerms().first,
+          usersById: {for (final u in users) u.uid: u},
           vouchersIssuedByMonth: report.vouchersIssuedByMonth,
           generatedAt: generatedAt,
         );
-        await Printing.layoutPdf(
-          onLayout: (_) async => doc.save(),
-          name: 'voucher_sessions_${_dateStamp()}.pdf',
-        );
       case AdminExportReport.worksheetInventory:
-        final report = await _buildReport();
-        final doc = await AdminPlatformReportsPdf.worksheetInventory(
-          report: report,
+        return AdminPlatformReportsPdf.worksheetInventory(
+          report: await _buildReport(),
           generatedAt: generatedAt,
-        );
-        await Printing.layoutPdf(
-          onLayout: (_) async => doc.save(),
-          name: 'worksheet_inventory_${_dateStamp()}.pdf',
         );
     }
   }

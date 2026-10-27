@@ -122,6 +122,18 @@ describe("settings/pricing", () => {
   });
 });
 
+describe("exercise levels", () => {
+  const lvl = { name: "HSK 1 · Term 1", exerciseIds: ["ex_1"], studentIds: ["student1"] };
+  it("teacher and admin can write", async () => {
+    await assertSucceeds(setDoc(doc(as("teacher1"), "exercise_levels", "l1"), lvl));
+    await assertSucceeds(setDoc(doc(as("admin1"), "exercise_levels", "l2"), lvl));
+  });
+  it("student cannot read or write", async () => {
+    await assertFails(getDoc(doc(as("student1"), "exercise_levels", "l1")));
+    await assertFails(setDoc(doc(as("student1"), "exercise_levels", "l3"), lvl));
+  });
+});
+
 describe("teacher link codes", () => {
   const codeDoc = (uid) => ({ teacherId: uid, expiresAt: Timestamp.fromMillis(Date.now() + 900000), createdAt: Timestamp.now() });
   it("a teacher can mint a code for themselves", async () => {

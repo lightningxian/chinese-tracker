@@ -231,8 +231,8 @@ def main():
     # Invoices: one pending, one paid, one expired
     for k, (status, u) in enumerate([("pending", student_uids[0]), ("paid", student_uids[1]), ("expired", student_uids[2])]):
         put("invoices", f"inv_{k + 1}", {"invoiceNumber": f"ES-INV-17920000{k}-DEMO", "studentId": u,
-            "studentName": student_names[k], "teacherId": t0, "packageSize": 8, "amount": 800000,
-            "currency": "IDR", "status": status, "dueDate": ts(7), "midtransOrderId": f"ES-INV-17920000{k}-DEMO",
+            "studentName": student_names[k], "teacherId": t0, "packageSize": 8, "amount": 2450000,
+            "currency": "IDR", "status": status, "dueDate": ymd(7), "midtransOrderId": f"ES-INV-17920000{k}-DEMO",
             "createdBy": admin_uid, "createdAt": ts(-10 - k),
             **({"paidAt": ts(-9)} if status == "paid" else {})})
 

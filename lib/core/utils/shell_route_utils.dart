@@ -17,6 +17,7 @@ abstract final class ShellRouteUtils {
     if (location.contains('/users')) return 1;
     if (location.contains('/exercise')) return 2;
     if (location.contains('/question-bank')) return 2;
+    if (location.contains('/levels')) return 2;
     if (location.contains('/session')) return 3;
     if (location.contains('/vouchers')) return 4;
     return null;
@@ -30,6 +31,7 @@ abstract final class ShellRouteUtils {
     if (location.contains('/calendar')) return 3;
     if (location.contains('/grades')) return 4;
     if (location.contains('/question-bank')) return 2;
+    if (location.contains('/levels')) return 2;
     return null;
   }
 
@@ -61,6 +63,11 @@ abstract final class ShellRouteUtils {
       return 'Class details';
     }
     if (location.endsWith('/question-bank')) return 'Question bank';
+    if (location.endsWith('/levels')) return 'Levels';
+    if (location.endsWith('/levels/new')) return 'New level';
+    if (location.contains('/levels/') && location.endsWith('/edit')) {
+      return 'Edit level';
+    }
     if (location.contains('/quizzes')) return 'Quizzes';
     if (location.endsWith('/settings')) return 'Settings';
     if (location.endsWith('/audit-logs')) return 'Audit logs';
@@ -89,6 +96,11 @@ abstract final class ShellRouteUtils {
     if (location.endsWith('/calendar')) return 'Calendar';
     if (location.endsWith('/grades')) return 'Grades';
     if (location.endsWith('/question-bank')) return 'Question bank';
+    if (location.endsWith('/levels')) return 'Levels';
+    if (location.endsWith('/levels/new')) return 'New level';
+    if (location.contains('/levels/') && location.endsWith('/edit')) {
+      return 'Edit level';
+    }
     if (location.contains('/quizzes')) return 'Quizzes';
     if (location.endsWith('/materials')) return 'Materials';
     return 'Guru';

@@ -26,6 +26,8 @@ import '../../features/grades/transcript_view.dart';
 import '../../features/materials/materials_screen.dart';
 import '../../features/parent/parent_shell.dart';
 import '../../features/question_bank/question_bank_screen.dart';
+import '../../features/teacher/exercise_levels_screen.dart';
+import '../../features/teacher/exercise_level_editor_screen.dart';
 import '../../features/teacher/quiz_editor_screen.dart';
 import '../../features/teacher/teacher_dashboard_stat_detail_screen.dart';
 import '../../features/teacher/teacher_grades_tab.dart';
@@ -82,7 +84,11 @@ class AppRouter {
         final onComplete = location == '/complete-profile';
 
         if (!signedIn && !onPublic) return '/';
-        if (signedIn && !hasProfile && !onComplete) return '/complete-profile';
+        if (signedIn && !hasProfile && !onComplete) {
+          // Mid sign-in the auth user exists before the profile is loaded;
+          // wait for AuthService to notify instead of redirecting.
+          return auth.isProfileLoading ? null : '/complete-profile';
+        }
 
         if (signedIn && hasProfile) {
           final user = auth.appUser!;
@@ -223,10 +229,13 @@ class AppRouter {
                 ),
                 GoRoute(
                   path: 'session/new',
-                  builder: (context, _) {
+                  builder: (context, state) {
                     final user = auth.appUser!;
                     return TeacherSessionFormScreen(
                       teacherId: AppConstants.contentTeacherId(user),
+                      initialDate: DateTime.tryParse(
+                        state.uri.queryParameters['date'] ?? '',
+                      ),
                       embedded: true,
                     );
                   },
@@ -240,8 +249,26 @@ class AppRouter {
                 ),
                 GoRoute(
                   path: 'question-bank',
+                  builder: (_, __) => const QuestionBankScreen(embedded: true),
+                ),
+                GoRoute(
+                  path: 'levels',
                   builder: (_, __) =>
-                      const QuestionBankScreen(embedded: true),
+                      const ExerciseLevelsScreen(embedded: true),
+                  routes: [
+                    GoRoute(
+                      path: 'new',
+                      builder: (_, __) =>
+                          const ExerciseLevelEditorScreen(embedded: true),
+                    ),
+                    GoRoute(
+                      path: ':id/edit',
+                      builder: (_, state) => ExerciseLevelEditorScreen(
+                        embedded: true,
+                        levelId: state.pathParameters['id'],
+                      ),
+                    ),
+                  ],
                 ),
                 GoRoute(
                   path: 'quizzes',
@@ -331,8 +358,11 @@ class AppRouter {
                 ),
                 GoRoute(
                   path: 'session/new',
-                  builder: (context, _) => TeacherSessionFormScreen(
+                  builder: (context, state) => TeacherSessionFormScreen(
                     teacherId: auth.appUser!.uid,
+                    initialDate: DateTime.tryParse(
+                      state.uri.queryParameters['date'] ?? '',
+                    ),
                     embedded: true,
                   ),
                 ),
@@ -371,8 +401,26 @@ class AppRouter {
                 ),
                 GoRoute(
                   path: 'question-bank',
+                  builder: (_, __) => const QuestionBankScreen(embedded: true),
+                ),
+                GoRoute(
+                  path: 'levels',
                   builder: (_, __) =>
-                      const QuestionBankScreen(embedded: true),
+                      const ExerciseLevelsScreen(embedded: true),
+                  routes: [
+                    GoRoute(
+                      path: 'new',
+                      builder: (_, __) =>
+                          const ExerciseLevelEditorScreen(embedded: true),
+                    ),
+                    GoRoute(
+                      path: ':id/edit',
+                      builder: (_, state) => ExerciseLevelEditorScreen(
+                        embedded: true,
+                        levelId: state.pathParameters['id'],
+                      ),
+                    ),
+                  ],
                 ),
                 GoRoute(
                   path: 'quizzes',
@@ -444,8 +492,7 @@ class AppRouter {
                 return ClassCalendarScreen(
                   title: 'Calendar',
                   sessions: firestore.watchTeacherSessions(ownerId),
-                  onTapSession: (s) =>
-                      context.push('/student/class/${s.id}'),
+                  onTapSession: (s) => context.push('/student/class/${s.id}'),
                 );
               },
             ),

@@ -29,6 +29,12 @@ class AuthService extends ChangeNotifier {
   bool _isInitializing = true;
   bool get isInitializing => _isInitializing;
 
+  /// True while [signIn] already has a Firebase user but is still fetching
+  /// the profile. The router stays put during this window instead of
+  /// bouncing a valid account to `/complete-profile`.
+  bool _profileLoading = false;
+  bool get isProfileLoading => _profileLoading;
+
   Future<void> init() async {
     try {
       final user = firebaseUser;
@@ -278,11 +284,16 @@ class AuthService extends ChangeNotifier {
     required String email,
     required String password,
   }) async {
-    final credential = await _auth.signInWithEmailAndPassword(
-      email: email.trim(),
-      password: password,
-    );
-    await _loadProfile(credential.user!.uid);
+    _profileLoading = true;
+    try {
+      final credential = await _auth.signInWithEmailAndPassword(
+        email: email.trim(),
+        password: password,
+      );
+      await _loadProfile(credential.user!.uid);
+    } finally {
+      _profileLoading = false;
+    }
     if (_appUser?.active == false) {
       await _auth.signOut();
       _appUser = null;

@@ -6,6 +6,63 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-10-27 — Claude: Classes calendar, Levels bundles, 8 admin reports
+
+**What changed**
+- **Classes tab is a calendar** (teacher and admin, `teacher_attendance_tab.dart`):
+  month/week `TableCalendar`, dots per day (teal = open, grey = concluded),
+  tap a day to see its classes and **New class this day** (pre-filled date via
+  `session/new?date=yyyy-MM-dd`). The Active / History lists are gone; the
+  same class card and Conclude dialog are reused.
+- **Levels** (`exercise_levels` collection, `ExerciseLevel` model): a named
+  bundle of published exercises assigned to a group of students. Saving a
+  level materialises one `exercise_assignments` doc per (exercise, student),
+  tagged `levelId`; editing the level adds/removes those docs for everyone
+  in it, deleting the level removes them. Student views, stats and reports
+  are unchanged because they already read `exercise_assignments`.
+  Screens: Exercises → **Levels** (list, delete) and the editor (name, HSK
+  filter, searchable exercise/student checklists with "Select all shown").
+  Staff only (rules: `exercise_levels` read/write for teacher + admin;
+  rules tests +2, 24 total: 23 pass, 1 skipped).
+- **Admin → Reports**: eight new operational reports, each a card with live
+  numbers and a PDF export (`admin_ops_report_service.dart` pure
+  calculations, `admin_ops_reports_pdf.dart` layouts, unit tests
+  `test/admin_ops_report_service_test.dart`, 8 cases):
+  1. Attendance per student per month (Hadir/Izin/Alpa, present %).
+  2. Term balance alerts (≤2 sessions, expiring ≤7 days, expired with balance).
+  3. Revenue per month by item (8/16 sessions, book) + unpaid and overdue invoices.
+  4. New students per month + retention (active = term with sessions left or a
+     class in the last 30 days; retention over students who joined 60+ days ago).
+  5. Class fill rate (seats taken / capacity, per month and per class).
+  6. Teacher recap per month (scheduled, concluded, hours, students, attendance %).
+  7. Student progress per HSK level (assigned, done, best-score average, no activity).
+  8. Overdue homework per teacher (student's teacher; most overdue first).
+  The four older exports stay below as 9–12. PDFs use the Noto Sans SC theme so
+  Chinese names render. `formatRupiah` helper in `core/utils/money_format.dart`.
+- Shell titles: Levels / New level / Edit level; levels routes highlight the
+  Exercises tab.
+- Sign-in race guard: `AuthService.isProfileLoading` is true between
+  `signInWithEmailAndPassword` and the profile read; the router no longer
+  redirects to `/complete-profile` during that window (seen once on the
+  emulator with the saved-account button in a release build).
+- Class form: Mode / Room / Registration fields hidden (one location, no
+  rooms yet); existing values are kept on save.
+
+**Why**
+- Owner's admin review items 3, 4 and 5 (Levels, richer reports, calendar
+  instead of Active/History).
+
+**For review**
+- Deploy needs rules + hosting (`firebase deploy --only firestore:rules` and
+  `scripts/deploy_web.sh`). No function changes in this entry.
+- Levels write up to (exercises × students) assignment docs in 400-doc
+  batches; a level with 20 exercises × 30 students = 600 writes, fine for
+  the centre's size.
+- Attendance report counts a concluded class with no Hadir/Izin/Alpa mark as
+  Alpa (pre-feature data); open classes are skipped.
+
+---
+
 ## 2026-10-27 — Claude: editable prices (`settings/pricing`)
 
 **What changed**

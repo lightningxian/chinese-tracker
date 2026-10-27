@@ -249,6 +249,12 @@ service cloud.firestore {
       allow create, update, delete: if isStaff();
     }
 
+    // Exercise bundles ("Levels"): staff manage; students never read them,
+    // they only see the assignments the app materialises from a level.
+    match /exercise_levels/{levelId} {
+      allow read, write: if isStaff();
+    }
+
     // Prices are public: the landing page shows them before sign-in.
     match /settings/pricing {
       allow read: if true;

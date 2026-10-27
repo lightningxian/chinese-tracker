@@ -31,8 +31,7 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
 
   List<Exercise> _filterExercises(List<Exercise> exercises) {
     return exercises.where((exercise) {
-      final hskMatch =
-          _selectedHsk == null || exercise.level == _selectedHsk;
+      final hskMatch = _selectedHsk == null || exercise.level == _selectedHsk;
       final skillMatch =
           _selectedSkill == null || exercise.skillCategory == _selectedSkill;
       return hskMatch && skillMatch;
@@ -43,7 +42,8 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
     List<Exercise> exercises,
   ) {
     final grouped = {
-      for (final category in ExerciseSkillCategory.values) category: <Exercise>[],
+      for (final category in ExerciseSkillCategory.values)
+        category: <Exercise>[],
     };
     for (final exercise in exercises) {
       grouped[exercise.skillCategory]!.add(exercise);
@@ -229,26 +229,37 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
   }
 
   Widget _buildQuestionBankButton(BuildContext context, bool canManage) {
-    if (!canManage) return const SizedBox.shrink();
+    // Levels (assignment bundles) are for all staff; authoring tools stay
+    // admin-only on web.
     final isAdmin = GoRouterState.of(context).uri.path.startsWith('/admin');
     final base = isAdmin ? '/admin' : '/teacher';
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       child: Row(
         children: [
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: () => context.push('$base/question-bank'),
-              icon: const Icon(Icons.inventory_2_outlined),
-              label: const Text('Question bank'),
+          if (canManage) ...[
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => context.push('$base/question-bank'),
+                icon: const Icon(Icons.inventory_2_outlined),
+                label: const Text('Question bank'),
+              ),
             ),
-          ),
-          const SizedBox(width: 10),
+            const SizedBox(width: 10),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => context.push('$base/quizzes'),
+                icon: const Icon(Icons.quiz_outlined),
+                label: const Text('Quizzes'),
+              ),
+            ),
+            const SizedBox(width: 10),
+          ],
           Expanded(
             child: OutlinedButton.icon(
-              onPressed: () => context.push('$base/quizzes'),
-              icon: const Icon(Icons.quiz_outlined),
-              label: const Text('Quizzes'),
+              onPressed: () => context.push('$base/levels'),
+              icon: const Icon(Icons.layers_outlined),
+              label: const Text('Levels'),
             ),
           ),
         ],
@@ -271,9 +282,7 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
     return students
         .where(
           (student) =>
-              student.isStudent &&
-              student.active &&
-              student.level == level,
+              student.isStudent && student.active && student.level == level,
         )
         .toList();
   }

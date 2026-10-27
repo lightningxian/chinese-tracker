@@ -15,11 +15,15 @@ class TeacherSessionFormScreen extends StatefulWidget {
     required this.teacherId,
     this.session,
     this.embedded = false,
+    this.initialDate,
   });
 
   final String teacherId;
   final ClassSession? session;
   final bool embedded;
+
+  /// Pre-selects the date when opened from the calendar (`?date=yyyy-MM-dd`).
+  final DateTime? initialDate;
 
   bool get isEditing => session != null;
 
@@ -50,7 +54,7 @@ class _TeacherSessionFormScreenState extends State<TeacherSessionFormScreen> {
     final session = widget.session;
     _selectedDate = session != null
         ? DateTime.tryParse(session.sessionDate) ?? DateTime.now()
-        : DateTime.now();
+        : widget.initialDate ?? DateTime.now();
     _titleController.text = session?.sessionTitle ?? '';
     final startMinutes = session?.startMinutes ?? (15 * 60);
     final endMinutes = session?.endMinutes ?? (16 * 60 + 30);

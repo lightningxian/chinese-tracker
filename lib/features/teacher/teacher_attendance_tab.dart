@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:table_calendar/table_calendar.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/errors/class_term_errors.dart';
@@ -20,6 +21,8 @@ import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/notification_service.dart';
 
+/// Classes tab: one calendar for upcoming and past classes. Tap a day to see
+/// its classes (open or concluded) and to create a class on that date.
 class TeacherAttendanceTab extends StatefulWidget {
   const TeacherAttendanceTab({super.key});
 
@@ -27,62 +30,37 @@ class TeacherAttendanceTab extends StatefulWidget {
   State<TeacherAttendanceTab> createState() => _TeacherAttendanceTabState();
 }
 
-class _TeacherAttendanceTabState extends State<TeacherAttendanceTab>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabController;
+class _TeacherAttendanceTabState extends State<TeacherAttendanceTab> {
+  CalendarFormat _format = CalendarFormat.month;
+  DateTime _focusedDay = DateTime.now();
+  DateTime _selectedDay = DateTime.now();
 
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+  static DateTime _dayKey(DateTime d) => DateTime.utc(d.year, d.month, d.day);
+
+  Map<DateTime, List<ClassSession>> _group(List<ClassSession> sessions) {
+    final map = <DateTime, List<ClassSession>>{};
+    for (final s in sessions) {
+      final parsed = DateTime.tryParse(s.sessionDate);
+      if (parsed == null) continue;
+      map.putIfAbsent(_dayKey(parsed), () => []).add(s);
+    }
+    for (final list in map.values) {
+      list.sort((a, b) => a.startMinutes.compareTo(b.startMinutes));
+    }
+    return map;
   }
 
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
+  void _newClass(BuildContext context, AppUser user) {
+    final date = DateFormat('yyyy-MM-dd').format(_selectedDay);
+    final base = user.isAdmin ? '/admin' : '/teacher';
+    context.push('$base/session/new?date=$date');
   }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Material(
-          color: Colors.white,
-          child: TabBar(
-            controller: _tabController,
-            labelColor: AppColors.navy,
-            unselectedLabelColor: AppColors.textSecondary,
-            indicatorColor: AppColors.teal,
-            tabs: const [
-              Tab(text: 'Active'),
-              Tab(text: 'History'),
-            ],
-          ),
-        ),
-        Expanded(
-          child: TabBarView(
-            controller: _tabController,
-            children: const [
-              _ClassSessionList(historyMode: false),
-              _ClassSessionList(historyMode: true),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ClassSessionList extends StatelessWidget {
-  const _ClassSessionList({required this.historyMode});
-
-  final bool historyMode;
 
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthService>().appUser;
-    final teacherId = user == null ? '' : AppConstants.contentTeacherId(user);
+    if (user == null) return const SizedBox.shrink();
+    final teacherId = AppConstants.contentTeacherId(user);
 
     return StreamBuilder<List<ClassSession>>(
       stream: context.read<FirestoreService>().watchTeacherSessions(teacherId),
@@ -90,7 +68,6 @@ class _ClassSessionList extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-
         if (snapshot.hasError) {
           return Center(
             child: Padding(
@@ -104,39 +81,133 @@ class _ClassSessionList extends StatelessWidget {
           );
         }
 
-        final sessions = (snapshot.data ?? [])
-            .where((s) => historyMode ? s.isConcluded : !s.isConcluded)
-            .toList();
-
-        if (sessions.isEmpty) {
-          return EmptyState(
-            icon: historyMode ? Icons.history : Icons.event_outlined,
-            title: historyMode ? 'No class history yet' : 'No active classes',
-            subtitle: historyMode
-                ? 'Concluded classes appear here after you tap Conclude class.'
-                : 'Tap New class to create a session students can join.',
-          );
-        }
+        final byDay = _group(snapshot.data ?? const []);
+        final selected = byDay[_dayKey(_selectedDay)] ?? const <ClassSession>[];
+        final openCount = selected.where((s) => !s.isConcluded).length;
 
         return LayoutBuilder(
           builder: (context, constraints) {
             const padding = 16.0;
             final gridWidth = constraints.maxWidth - padding * 2;
-
             return ListView(
-              padding: const EdgeInsets.fromLTRB(padding, padding, padding, 88),
+              padding: const EdgeInsets.fromLTRB(padding, 8, padding, 88),
               children: [
-                ResponsiveCardGrid(
-                  width: gridWidth,
-                  minCardWidth: 340,
-                  children: [
-                    for (final session in sessions)
-                      _TeacherClassCard(
-                        session: session,
-                        historyMode: historyMode,
+                AppCard(
+                  padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
+                  child: TableCalendar<ClassSession>(
+                    firstDay: DateTime.utc(2024, 1, 1),
+                    lastDay: DateTime.utc(2030, 12, 31),
+                    focusedDay: _focusedDay,
+                    calendarFormat: _format,
+                    startingDayOfWeek: StartingDayOfWeek.monday,
+                    availableCalendarFormats: const {
+                      CalendarFormat.month: 'Month',
+                      CalendarFormat.week: 'Week',
+                    },
+                    selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+                    eventLoader: (day) => byDay[_dayKey(day)] ?? const [],
+                    onDaySelected: (selectedDay, focusedDay) => setState(() {
+                      _selectedDay = selectedDay;
+                      _focusedDay = focusedDay;
+                    }),
+                    onFormatChanged: (f) => setState(() => _format = f),
+                    onPageChanged: (focused) => _focusedDay = focused,
+                    headerStyle: const HeaderStyle(
+                      titleCentered: true,
+                      formatButtonShowsNext: false,
+                    ),
+                    calendarStyle: CalendarStyle(
+                      todayDecoration: BoxDecoration(
+                        color: AppColors.accentSoft,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.accent),
                       ),
+                      todayTextStyle: const TextStyle(
+                        color: AppColors.ink,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      selectedDecoration: const BoxDecoration(
+                        color: AppColors.primary,
+                        shape: BoxShape.circle,
+                      ),
+                      markersMaxCount: 3,
+                      markerSize: 6,
+                    ),
+                    calendarBuilders: CalendarBuilders(
+                      // Open classes = teal dot, concluded = grey dot.
+                      singleMarkerBuilder: (context, day, session) => Container(
+                        width: 6,
+                        height: 6,
+                        margin: const EdgeInsets.symmetric(horizontal: 1),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: session.isConcluded
+                              ? AppColors.textSecondary.withValues(alpha: 0.5)
+                              : AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            DateFormat('EEEE, d MMM yyyy').format(_selectedDay),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                            ),
+                          ),
+                          Text(
+                            selected.isEmpty
+                                ? 'No classes'
+                                : '${selected.length} class${selected.length == 1 ? '' : 'es'}'
+                                    '${openCount < selected.length ? ' · ${selected.length - openCount} concluded' : ''}',
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    FilledButton.icon(
+                      onPressed: () => _newClass(context, user),
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text('New class this day'),
+                    ),
                   ],
                 ),
+                const SizedBox(height: 12),
+                if (selected.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24),
+                    child: Text(
+                      'Pick another day, or create a class on this date. '
+                      'Dots on the calendar mark days with classes: teal = open, grey = concluded.',
+                      style: TextStyle(
+                          color: AppColors.textSecondary, height: 1.4),
+                      textAlign: TextAlign.center,
+                    ),
+                  )
+                else
+                  ResponsiveCardGrid(
+                    width: gridWidth,
+                    minCardWidth: 340,
+                    children: [
+                      for (final session in selected)
+                        _TeacherClassCard(
+                          key: ValueKey(session.id),
+                          session: session,
+                          historyMode: session.isConcluded,
+                        ),
+                    ],
+                  ),
               ],
             );
           },
@@ -148,6 +219,7 @@ class _ClassSessionList extends StatelessWidget {
 
 class _TeacherClassCard extends StatefulWidget {
   const _TeacherClassCard({
+    super.key,
     required this.session,
     required this.historyMode,
   });

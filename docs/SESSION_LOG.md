@@ -148,6 +148,23 @@ Commit author preference (via env vars, not global git config):
 
 Update this section when you push from Mac or PC.
 
+### 2026-10-27 (later) — Claude: calendar, Levels, 8 reports
+
+- Classes tab is now a month/week calendar (teacher + admin); Active/History
+  lists removed; New class from a day.
+- **Levels**: bundles of exercises assigned to a group of students
+  (`exercise_levels` → materialised `exercise_assignments` with `levelId`).
+  Exercises → Levels for all staff.
+- Admin → Reports: 8 operational reports with PDF export (attendance per
+  student, term alerts, revenue, retention, fill rate, teacher recap, progress
+  per HSK level, overdue homework) + the old 4 below. Unit tests for the maths.
+- Sign-in race guard (`isProfileLoading`) so a valid account is not bounced to
+  `/complete-profile` mid sign-in.
+- Verified on the emulator (release build): calendar, Levels create + assignment
+  docs, Reports tab. Deploy: rules + hosting (owner runs it; see CHANGELOG).
+- Still to do from the owner's list: PDF exercise scanner with type detection
+  (item 2).
+
 ### 2026-10-27 — Claude: admin review fixes
 
 - Owner's `review_web.pdf` (5 admin items) done and deployed: children search
