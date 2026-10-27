@@ -319,6 +319,20 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
             _ComposeQuestionDraft(prompt: q.prompt, segments: q.segments),
           );
         } else if (_usesBank(_type)) {
+          // An empty exercise takes the word bank stored with the question.
+          final bankEmpty = _matchingOptionControllers
+              .every((c) => c.text.trim().isEmpty);
+          if (bankEmpty && q.options.isNotEmpty) {
+            MatchingExerciseEditor.disposeOptionControllers(
+                _matchingOptionControllers);
+            _matchingOptionControllers =
+                MatchingExerciseEditor.createOptionControllers(
+              List.generate(
+                6,
+                (i) => i < q.options.length ? q.options[i] : '',
+              ),
+            );
+          }
           _matchingQuestions.add(
             MatchingQuestionDraft(
               prompt: q.prompt,

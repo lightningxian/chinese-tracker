@@ -148,6 +148,14 @@ Commit author preference (via env vars, not global git config):
 
 Update this section when you push from Mac or PC.
 
+### 2026-10-27 (evening) — Claude: owner's second review
+
+- Question bank is scanner-first (Scan worksheet → check list → add); quiz
+  editor can scan a worksheet too; Reports tab tidied into sections with
+  uniform tiles. Details in CHANGELOG.
+- Open decision for the owner: payments ↔ vouchers link and a Price list tab
+  (asked in chat; not built yet).
+
 ### 2026-10-27 (later) — Claude: calendar, Levels, 8 reports
 
 - Classes tab is now a month/week calendar (teacher + admin); Active/History

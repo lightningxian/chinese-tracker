@@ -6,6 +6,38 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-10-27 — Claude: scanner-first question bank, quiz scan, tidier Reports
+
+**What changed**
+- **Question bank**: the main button is now **Scan worksheet** (upload a PDF,
+  Word file or photo; the scanner detects each question's type and answer).
+  Before anything is added, a **Check before adding** screen lists every
+  detected question with its type chip and the answer the scanner read;
+  untick wrong ones, set HSK level and difficulty for the batch, then add.
+  Typing a question by hand moved to a **Type a question** button; paste and
+  "Import from exercises" stay in the ⋮ menu. Fill-in-the-blank questions
+  keep their word bank in the bank item (`options`), and pulling one into an
+  empty fill-in-the-blank exercise fills the exercise's word bank.
+  Shared scan flow: `lib/features/teacher/worksheet_scan_flow.dart`;
+  review screen: `lib/features/question_bank/question_bank_import_review.dart`.
+- **Quiz editor**: new **Scan worksheet** button next to **From bank**; the
+  scanner's multiple-choice questions (incl. true/false and listening forms)
+  are added to the quiz with their answers for the admin to check before
+  saving.
+- **Admin → Reports** redesigned: four sections (Students, Classes &
+  teachers, Money, Platform exports), one uniform tile per report (number,
+  title, one-line description, three figures, PDF button), two columns on
+  wide screens. (`ExportReportCard` stays for the teacher cohort exports.)
+
+**Why**
+- Owner's second review: "New question should just upload to the scanner",
+  "the report looks messy", "upload a quiz and check it".
+
+**For review**
+- Hosting deploy only.
+
+---
+
 ## 2026-10-27 — Claude: worksheet scanner detects the exercise form
 
 **What changed**

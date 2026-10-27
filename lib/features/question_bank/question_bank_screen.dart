@@ -92,15 +92,15 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
       embedded: widget.embedded,
       title: 'Question bank',
       actions: [
+        TextButton.icon(
+          onPressed: () => _openEditor(ownerId: ownerId),
+          icon: const Icon(Icons.edit_outlined, size: 18),
+          label: const Text('Type a question'),
+        ),
         PopupMenuButton<String>(
           icon: const Icon(Icons.more_vert),
           onSelected: (action) async {
             switch (action) {
-              case 'worksheet':
-                await runQuestionBankWorksheetImport(
-                  context,
-                  ownerId: ownerId,
-                );
               case 'paste':
                 await showQuestionBankPasteImport(context, ownerId: ownerId);
               case 'harvest':
@@ -114,10 +114,6 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
             }
           },
           itemBuilder: (_) => const [
-            PopupMenuItem(
-              value: 'worksheet',
-              child: Text('Bulk import — worksheet'),
-            ),
             PopupMenuItem(value: 'paste', child: Text('Bulk import — paste')),
             PopupMenuItem(
               value: 'harvest',
@@ -126,11 +122,16 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
           ],
         ),
       ],
+      // Scanner first: upload a worksheet, the app detects each question's
+      // type and answer, and the admin checks the list before it is added.
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _openEditor(ownerId: ownerId),
+        onPressed: () => runQuestionBankWorksheetImport(
+          context,
+          ownerId: ownerId,
+        ),
         backgroundColor: AppColors.navy,
-        icon: const Icon(Icons.add),
-        label: const Text('New question'),
+        icon: const Icon(Icons.document_scanner_outlined),
+        label: const Text('Scan worksheet'),
       ),
       child: StreamBuilder<List<QuestionBankItem>>(
         stream: firestore.watchQuestionBank(ownerId),

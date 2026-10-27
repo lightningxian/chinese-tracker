@@ -1,20 +1,13 @@
-import 'dart:async';
-
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/constants/app_constants.dart';
-import '../../core/constants/worksheet_import_platform.dart';
 import '../../models/exercise_type.dart';
 import '../../models/question_bank_item.dart';
 import '../../models/question_difficulty.dart';
-import '../../models/worksheet_import_stage.dart';
-import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
-import '../../services/worksheet_import_service.dart';
-import '../teacher/worksheet_import_review_screen.dart';
-import '../teacher/widgets/worksheet_import_progress_dialog.dart';
+import '../teacher/worksheet_scan_flow.dart';
+import 'question_bank_import_review.dart';
 import 'question_bank_import_utils.dart';
 
 /// Paste-text bulk import into the question bank.
@@ -129,122 +122,60 @@ Future<void> showQuestionBankPasteImport(
   await _confirmAndInsert(context, ownerId: ownerId, items: items);
 }
 
-/// Worksheet file bulk import into the question bank.
+/// Worksheet file bulk import into the question bank: scan, review what was
+/// detected (type + answer per question), then add.
 Future<void> runQuestionBankWorksheetImport(
   BuildContext context, {
   required String ownerId,
 }) async {
-  final user = context.read<AuthService>().appUser;
-  if (!WorksheetImportPlatform.isSupportedFor(user)) {
+  final result = await scanWorksheet(context);
+  if (result == null || !context.mounted) return;
+
+  final items = QuestionBankImportUtils.fromParseResult(
+    result: result.parseResult!,
+    ownerId: ownerId,
+    typeOverride: result.selectedType,
+  );
+  if (items.isEmpty) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text(WorksheetImportPlatform.unsupportedMessage)),
+      const SnackBar(content: Text('No questions to import.')),
     );
     return;
   }
-
-  final picked = await FilePicker.platform.pickFiles(
-    type: FileType.custom,
-    allowedExtensions: WorksheetImportService.allowedExtensions.toList(),
-    withData: true,
+  await _confirmAndInsert(
+    context,
+    ownerId: ownerId,
+    items: items,
+    summary: result.parseResult!.detectionSummary,
   );
-  if (picked == null || picked.files.isEmpty || !context.mounted) return;
-
-  final file = picked.files.first;
-  final bytes = file.bytes;
-  if (bytes == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Could not read the selected file.')),
-    );
-    return;
-  }
-
-  final progress = ValueNotifier(WorksheetImportStage.prepare());
-  unawaited(
-    showWorksheetImportProgress(
-      context: context,
-      fileName: file.name,
-      progress: progress,
-    ),
-  );
-
-  try {
-    final text = await context.read<WorksheetImportService>().extractTextFromWorksheet(
-          bytes: bytes,
-          fileName: file.name,
-          onProgress: (s) => progress.value = s,
-        );
-    progress.value = WorksheetImportStage.analyze();
-    if (!context.mounted) return;
-    Navigator.of(context).pop();
-
-    final result = await Navigator.of(context).push<WorksheetImportReviewResult>(
-      MaterialPageRoute(
-        builder: (_) => WorksheetImportReviewScreen(
-          extractedText: text,
-          fileName: file.name,
-        ),
-      ),
-    );
-    if (result == null ||
-        result.action != WorksheetImportReviewAction.importQuestions ||
-        result.parseResult == null ||
-        !context.mounted) {
-      return;
-    }
-
-    final items = QuestionBankImportUtils.fromParseResult(
-      result: result.parseResult!,
-      ownerId: ownerId,
-      typeOverride: result.selectedType,
-    );
-    if (items.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No questions to import.')),
-      );
-      return;
-    }
-    await _confirmAndInsert(context, ownerId: ownerId, items: items);
-  } catch (e) {
-    if (context.mounted) {
-      Navigator.of(context, rootNavigator: true).popUntil(
-        (route) => route is! PopupRoute || route.isFirst,
-      );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Import failed: $e')),
-      );
-    }
-  }
 }
 
 Future<void> _confirmAndInsert(
   BuildContext context, {
   required String ownerId,
   required List<QuestionBankItem> items,
+  String? summary,
 }) async {
-  final ok = await showDialog<bool>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: const Text('Add to bank?'),
-      content: Text('Import ${items.length} question(s) into the bank?'),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.pop(ctx, true),
-          child: const Text('Import'),
-        ),
-      ],
+  final confirmed = await Navigator.of(context).push<List<QuestionBankItem>>(
+    MaterialPageRoute(
+      fullscreenDialog: true,
+      builder: (_) => QuestionBankImportReviewScreen(
+        items: items,
+        summary: summary ??
+            '${items.length} question${items.length == 1 ? '' : 's'} parsed '
+                'from the pasted text.',
+      ),
     ),
   );
-  if (ok != true || !context.mounted) return;
+  if (confirmed == null || confirmed.isEmpty || !context.mounted) return;
 
   try {
-    await context.read<FirestoreService>().addQuestionBankItems(items);
+    await context.read<FirestoreService>().addQuestionBankItems(confirmed);
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Added ${items.length} question(s) to the bank.')),
+      SnackBar(
+        content: Text('Added ${confirmed.length} question(s) to the bank.'),
+      ),
     );
   } catch (e) {
     if (!context.mounted) return;

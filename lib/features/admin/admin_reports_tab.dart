@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/app_card.dart';
 import '../../core/utils/money_format.dart';
-import '../../core/widgets/export_report_card.dart';
 import '../../core/widgets/responsive_card_grid.dart';
 import '../../models/app_user.dart';
 import '../../models/attendance_record.dart';
@@ -117,12 +117,29 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
       assignments: _assignments!,
       results: _results!,
     );
+    final month = ops.attendance.last.month.label;
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth >= 720;
         final horizontalPadding = isWide ? 32.0 : 20.0;
         final gridWidth = constraints.maxWidth - horizontalPadding * 2;
+
+        Widget section(String title, List<_ReportTile> tiles) => Padding(
+              padding: const EdgeInsets.only(bottom: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SectionHeader(title: title),
+                  ResponsiveCardGrid(
+                    width: gridWidth,
+                    minCardWidth: 360,
+                    maxColumns: 2,
+                    children: tiles,
+                  ),
+                ],
+              ),
+            );
 
         return ListView(
           padding: EdgeInsets.all(horizontalPadding),
@@ -134,173 +151,158 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
                     color: AppColors.navy,
                   ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
-              '${report.totalUsers} users '
-              '(${report.totalMurid} murid · ${report.totalTeachers} guru · '
-              '${report.totalAdmins} admin). Numbers below are live; '
-              'each PDF covers the last 6 months.',
+              'Live numbers for $month. Each PDF covers the last 6 months.',
               style: const TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 14,
               ),
             ),
-            const SizedBox(height: 20),
-            ResponsiveCardGrid(
-              width: gridWidth,
-              children: _opsCards(ops, export),
-            ),
-            const SizedBox(height: 28),
-            const Text(
-              'Platform exports',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 16,
-                color: AppColors.navy,
-              ),
-            ),
-            const SizedBox(height: 12),
-            ResponsiveCardGrid(
-              width: gridWidth,
-              children: _platformCards(report, export),
-            ),
+            const SizedBox(height: 24),
+            section('Students', _studentTiles(ops, export)),
+            section('Classes & teachers', _classTiles(ops, export)),
+            section('Money', _moneyTiles(ops, export)),
+            section('Platform exports', _platformTiles(report, export)),
           ],
         );
       },
     );
   }
 
-  List<Widget> _opsCards(
+  List<_ReportTile> _studentTiles(
     AdminOpsReportData ops,
     AdminReportExportService export,
   ) {
     final attendance = ops.attendance.last;
-    final alerts = ops.termAlerts;
-    final revenue = ops.revenue;
     final retention = ops.retention;
-    final fill = ops.fillRate.last;
-    final recap = ops.teacherRecap.last;
+    final levels = ops.progressByLevel;
+    final students = levels.fold(0, (s, l) => s + l.studentCount);
+    final assigned = levels.fold(0, (s, l) => s + l.assigned);
+    final completed = levels.fold(0, (s, l) => s + l.completed);
     final overdue = ops.overdueHomework;
-
     return [
-      ExportReportCard(
-        title: '1. Attendance per student',
+      _ReportTile(
+        number: 1,
+        title: 'Attendance per student',
         description:
-            'Hadir / Izin / Alpa for every student, month by month, with a '
-            'present percentage. Open classes are not counted yet.',
-        preview: [
-          '${attendance.month.label}: ${attendance.rows.length} students · '
-              '${attendance.presentPercent}% present',
-          'Hadir ${attendance.hadir} · Izin ${attendance.izin} · '
-              'Alpa ${attendance.alpa}',
+            'Hadir / Izin / Alpa for every student, month by month.',
+        stats: [
+          ('Students', '${attendance.rows.length}'),
+          ('Present', '${attendance.presentPercent}%'),
+          ('Alpa', '${attendance.alpa}'),
         ],
         onExport: () => export.exportPdf(AdminExportReport.attendanceMonthly),
       ),
-      ExportReportCard(
-        title: '2. Term balance alerts',
+      _ReportTile(
+        number: 4,
+        title: 'New students & retention',
         description:
-            'Who to call this week: 2 or fewer sessions left, term expiring '
-            'within 7 days, or expired with sessions unused.',
-        preview: [
-          '${alerts.count(TermAlertKind.lowBalance)} low balance',
-          '${alerts.count(TermAlertKind.expiringSoon)} expiring within 7 days',
-          '${alerts.count(TermAlertKind.expiredWithBalance)} expired with sessions left',
-          '${alerts.activeTerms} active terms in total',
-        ],
-        onExport: () => export.exportPdf(AdminExportReport.termBalanceAlerts),
-      ),
-      ExportReportCard(
-        title: '3. Revenue per month',
-        description:
-            'Paid invoices by month and item (8 sessions, 16 sessions, book), '
-            'plus every unpaid invoice and how overdue it is.',
-        preview: [
-          '${revenue.thisMonth.month.label}: '
-              '${formatRupiah(revenue.thisMonth.total)} '
-              '(${revenue.thisMonth.invoices} paid)',
-          'Unpaid: ${formatRupiah(revenue.outstandingAmount)} '
-              '(${revenue.outstanding.length})',
-          'Overdue: ${revenue.overdue.length} · '
-              '${formatRupiah(revenue.overdueAmount)}',
-        ],
-        onExport: () => export.exportPdf(AdminExportReport.revenueMonthly),
-      ),
-      ExportReportCard(
-        title: '4. New students & retention',
-        description:
-            'Sign-ups per month and how many of each group are still active '
-            '(a term with sessions left, or a class in the last 30 days).',
-        preview: [
-          'New this month: ${retention.newThisMonth}',
-          'Active now: ${retention.activeStudents} of '
-              '${retention.totalStudents}',
-          'Retention: ${retention.retentionPercent}% '
-              '(${retention.retained} of ${retention.eligible} who joined '
-              '60+ days ago)',
+            'Sign-ups per month and how many are still active today.',
+        stats: [
+          ('New this month', '${retention.newThisMonth}'),
+          ('Active', '${retention.activeStudents} / ${retention.totalStudents}'),
+          ('Retention', '${retention.retentionPercent}%'),
         ],
         onExport: () => export.exportPdf(AdminExportReport.studentRetention),
       ),
-      ExportReportCard(
-        title: '5. Class fill rate',
+      _ReportTile(
+        number: 7,
+        title: 'Progress per HSK level',
         description:
-            'Seats taken against capacity per month, and every class this '
-            'month with its teacher and how full it was.',
-        preview: [
-          '${fill.month.label}: ${fill.classes} classes · '
-              '${fill.fillPercent}% full',
-          '${fill.joined} of ${fill.capacity} seats taken',
-          '${fill.empty} empty · ${fill.full} full',
-        ],
-        onExport: () => export.exportPdf(AdminExportReport.classFillRate),
-      ),
-      ExportReportCard(
-        title: '6. Teacher recap per month',
-        description:
-            'Per teacher: classes scheduled and concluded, teaching hours, '
-            'students taught and their attendance rate. Last 3 months.',
-        preview: [
-          if (recap.rows.isEmpty)
-            '${recap.month.label}: no classes yet'
-          else
-            for (final r in recap.rows.take(3))
-              '${r.name}: ${r.concluded} of ${r.scheduled} classes · '
-                  '${r.teachingHours.toStringAsFixed(1)} h · '
-                  '${r.studentsTaught} students',
-        ],
-        onExport: () => export.exportPdf(AdminExportReport.teacherRecap),
-      ),
-      ExportReportCard(
-        title: '7. Student progress per HSK level',
-        description:
-            'For each HSK level: students, exercises assigned and done, '
-            'average best score and who has no activity at all.',
-        preview: [
-          if (ops.progressByLevel.isEmpty)
-            'No active students yet'
-          else
-            for (final l in ops.progressByLevel.take(4))
-              '${l.level}: ${l.studentCount} students · '
-                  '${l.completionPercent}% done · '
-                  'avg ${l.averageScore ?? '—'}',
+            'Exercises assigned and done, average best score, no activity.',
+        stats: [
+          ('Students', '$students'),
+          ('Done', assigned == 0 ? '—' : '${(completed * 100 / assigned).round()}%'),
+          ('No activity', '${levels.fold(0, (s, l) => s + l.inactive)}'),
         ],
         onExport: () => export.exportPdf(AdminExportReport.progressByLevel),
       ),
-      ExportReportCard(
-        title: '8. Overdue homework per teacher',
+      _ReportTile(
+        number: 8,
+        title: 'Overdue homework',
         description:
-            'Assignments past their due date with no submission, grouped by '
-            'the student\'s teacher so follow-up is clear.',
-        preview: [
-          '${overdue.total} overdue of ${overdue.open} open assignments',
-          for (final g in overdue.groups.take(3))
-            '${g.teacherName}: ${g.count} overdue · ${g.students} students',
+            'Past-due assignments without a submission, per teacher.',
+        stats: [
+          ('Overdue', '${overdue.total}'),
+          ('Open', '${overdue.open}'),
+          ('Teachers', '${overdue.groups.length}'),
         ],
         onExport: () => export.exportPdf(AdminExportReport.overdueHomework),
       ),
     ];
   }
 
-  List<Widget> _platformCards(
+  List<_ReportTile> _classTiles(
+    AdminOpsReportData ops,
+    AdminReportExportService export,
+  ) {
+    final fill = ops.fillRate.last;
+    final recap = ops.teacherRecap.last;
+    final held = recap.rows.fold(0, (s, r) => s + r.concluded);
+    final hours = recap.rows.fold(0.0, (s, r) => s + r.teachingHours);
+    return [
+      _ReportTile(
+        number: 5,
+        title: 'Class fill rate',
+        description: 'Seats taken against capacity, per month and per class.',
+        stats: [
+          ('Classes', '${fill.classes}'),
+          ('Full', '${fill.fillPercent}%'),
+          ('Empty', '${fill.empty}'),
+        ],
+        onExport: () => export.exportPdf(AdminExportReport.classFillRate),
+      ),
+      _ReportTile(
+        number: 6,
+        title: 'Teacher recap',
+        description:
+            'Classes, teaching hours, students taught and attendance per teacher.',
+        stats: [
+          ('Teachers', '${recap.rows.length}'),
+          ('Classes held', '$held'),
+          ('Hours', hours.toStringAsFixed(1)),
+        ],
+        onExport: () => export.exportPdf(AdminExportReport.teacherRecap),
+      ),
+    ];
+  }
+
+  List<_ReportTile> _moneyTiles(
+    AdminOpsReportData ops,
+    AdminReportExportService export,
+  ) {
+    final alerts = ops.termAlerts;
+    final revenue = ops.revenue;
+    return [
+      _ReportTile(
+        number: 2,
+        title: 'Term balance alerts',
+        description:
+            'Who to call: 2 or fewer sessions left, expiring within 7 days, expired.',
+        stats: [
+          ('Low balance', '${alerts.count(TermAlertKind.lowBalance)}'),
+          ('Expiring', '${alerts.count(TermAlertKind.expiringSoon)}'),
+          ('Expired', '${alerts.count(TermAlertKind.expiredWithBalance)}'),
+        ],
+        onExport: () => export.exportPdf(AdminExportReport.termBalanceAlerts),
+      ),
+      _ReportTile(
+        number: 3,
+        title: 'Revenue per month',
+        description:
+            'Paid invoices by item, plus every unpaid invoice and how overdue it is.',
+        stats: [
+          ('This month', formatRupiah(revenue.thisMonth.total)),
+          ('Unpaid', formatRupiah(revenue.outstandingAmount)),
+          ('Overdue', '${revenue.overdue.length}'),
+        ],
+        onExport: () => export.exportPdf(AdminExportReport.revenueMonthly),
+      ),
+    ];
+  }
+
+  List<_ReportTile> _platformTiles(
     AdminReportData report,
     AdminReportExportService export,
   ) {
@@ -310,58 +312,189 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
     final thisMonthStudents = report.newStudentsByMonth.isEmpty
         ? 0
         : report.newStudentsByMonth.last.count;
+    final sixMonths =
+        report.newStudentsByMonth.fold(0, (s, m) => s + m.count);
     return [
-      ExportReportCard(
-        title: '9. User roster',
-        description:
-            'Full account list — Admin, Guru, and Murid with role, join date, '
-            'and active status.',
-        preview: [
-          'Total: ${report.totalUsers}',
-          'Active murid: ${report.activeStudents}',
-          'Inactive: ${report.inactiveUsers}',
+      _ReportTile(
+        number: 9,
+        title: 'User roster',
+        description: 'Every account with role, join date and status.',
+        stats: [
+          ('Users', '${report.totalUsers}'),
+          ('Active murid', '${report.activeStudents}'),
+          ('Inactive', '${report.inactiveUsers}'),
         ],
         onExport: () => export.exportPdf(AdminExportReport.userRoster),
       ),
-      ExportReportCard(
-        title: '10. Monthly registration & growth',
-        description:
-            'New murid sign-ups per month (last 6 months) and current HSK '
-            'level bands.',
-        preview: [
-          'This month: $thisMonthStudents new murid',
-          ...report.newStudentsByMonth
-              .map((m) => '${m.label}: ${m.count} new')
-              .take(3),
+      _ReportTile(
+        number: 10,
+        title: 'Registration & growth',
+        description: 'New murid per month and current HSK level bands.',
+        stats: [
+          ('This month', '$thisMonthStudents'),
+          ('Last 6 months', '$sixMonths'),
         ],
         onExport: () => export.exportPdf(AdminExportReport.registrationGrowth),
       ),
-      ExportReportCard(
-        title: '11. Vouchers & packages',
-        description:
-            'All session packages with codes and balance, and vouchers issued '
-            'per month.',
-        preview: [
-          'Packages: ${_terms!.length}',
-          'Low balance: ${report.lowVouchers}',
-          'This month: $thisMonthVouchers issued',
+      _ReportTile(
+        number: 11,
+        title: 'Vouchers & packages',
+        description: 'All session packages with codes and balance.',
+        stats: [
+          ('Packages', '${_terms!.length}'),
+          ('Low balance', '${report.lowVouchers}'),
+          ('Issued this month', '$thisMonthVouchers'),
         ],
         onExport: () => export.exportPdf(AdminExportReport.voucherSessions),
       ),
-      ExportReportCard(
-        title: '12. Worksheet inventory',
-        description:
-            'All practice worksheets, grouped by HSK level and skill section.',
-        preview: [
-          'Total worksheets: ${report.totalWorksheets}',
-          ...report.worksheetInventory.take(4).map(
-                (row) => row.skillSummary.isEmpty
-                    ? '${row.hskLevel}: ${row.total}'
-                    : '${row.hskLevel}: ${row.total} (${row.skillSummary})',
-              ),
+      _ReportTile(
+        number: 12,
+        title: 'Worksheet inventory',
+        description: 'Practice worksheets by HSK level and skill section.',
+        stats: [
+          ('Worksheets', '${report.totalWorksheets}'),
+          ('Published', '${report.totalExercises}'),
+          ('Draft', '${report.totalWorksheets - report.totalExercises}'),
         ],
         onExport: () => export.exportPdf(AdminExportReport.worksheetInventory),
       ),
     ];
+  }
+}
+
+/// One report: number badge, title, one-line description, up to three
+/// figures in a fixed row, and the PDF button. Same shape for every report so
+/// the page reads as a list, not a wall of bullet points.
+class _ReportTile extends StatelessWidget {
+  const _ReportTile({
+    required this.number,
+    required this.title,
+    required this.description,
+    required this.stats,
+    required this.onExport,
+  });
+
+  final int number;
+  final String title;
+  final String description;
+  final List<(String label, String value)> stats;
+  final VoidCallback onExport;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AppColors.accentSoft,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '$number',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: AppColors.navy,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                        color: AppColors.navy,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      description,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12.5,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                onPressed: onExport,
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  visualDensity: VisualDensity.compact,
+                ),
+                icon: const Icon(Icons.picture_as_pdf_outlined, size: 16),
+                label: const Text('PDF'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              children: [
+                for (var i = 0; i < stats.length; i++) ...[
+                  if (i > 0)
+                    Container(
+                      width: 1,
+                      height: 30,
+                      color: AppColors.border,
+                      margin: const EdgeInsets.symmetric(horizontal: 12),
+                    ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          stats[i].$2,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                            color: AppColors.navy,
+                          ),
+                        ),
+                        Text(
+                          stats[i].$1,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 11.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

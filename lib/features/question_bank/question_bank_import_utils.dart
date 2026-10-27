@@ -37,7 +37,9 @@ abstract final class QuestionBankImportUtils {
               difficulty: difficulty,
             ),
         ],
-      ExerciseType.matching => [
+      // Matching and fill in the blank share one answer bank; each bank
+      // item keeps a copy of it so the question stays usable on its own.
+      ExerciseType.matching || ExerciseType.readingCloze => [
           for (final q in result.matchingQuestions)
             QuestionBankItem(
               id: '',
@@ -45,6 +47,7 @@ abstract final class QuestionBankImportUtils {
               type: type,
               question: ExerciseQuestion(
                 prompt: q.prompt,
+                options: result.matchingOptions,
                 correctIndex: q.correctIndex,
               ),
               skillCategory: skill,

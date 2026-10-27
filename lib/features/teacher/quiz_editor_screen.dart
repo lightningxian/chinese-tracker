@@ -12,6 +12,7 @@ import '../../models/quiz.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../question_bank/question_bank_screen.dart';
+import 'worksheet_scan_flow.dart';
 
 /// Staff quiz editor — tie a quiz to a lesson and pull MC questions from the bank.
 class QuizEditorScreen extends StatefulWidget {
@@ -73,6 +74,46 @@ class _QuizEditorScreenState extends State<QuizEditorScreen> {
         );
       }
     });
+  }
+
+  /// Upload a worksheet; the scanner's multiple-choice questions (incl.
+  /// true/false and listening) become quiz questions after the review.
+  Future<void> _scanWorksheet() async {
+    final result = await scanWorksheet(context);
+    if (result == null || !mounted) return;
+    final parsed = result.parseResult!;
+    final usable = parsed.mcQuestions
+        .where((q) => q.options.length >= 2)
+        .toList();
+    if (usable.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Quizzes take multiple-choice questions. ${parsed.detectionSummary}',
+          ),
+        ),
+      );
+      return;
+    }
+    setState(() {
+      for (final q in usable) {
+        _questions.add(
+          QuizQuestion(
+            question: q.prompt,
+            options: q.options,
+            correctIndex: q.correctIndex,
+          ),
+        );
+      }
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Added ${usable.length} question${usable.length == 1 ? '' : 's'}. '
+          'Check the answers below before saving.',
+        ),
+      ),
+    );
   }
 
   Future<void> _save(String teacherId) async {
@@ -164,6 +205,12 @@ class _QuizEditorScreenState extends State<QuizEditorScreen> {
                       ),
                     ),
                     const Spacer(),
+                    OutlinedButton.icon(
+                      onPressed: _scanWorksheet,
+                      icon: const Icon(Icons.document_scanner_outlined),
+                      label: const Text('Scan worksheet'),
+                    ),
+                    const SizedBox(width: 8),
                     OutlinedButton.icon(
                       onPressed: () => _addFromBank(ownerId),
                       icon: const Icon(Icons.inventory_2_outlined),
