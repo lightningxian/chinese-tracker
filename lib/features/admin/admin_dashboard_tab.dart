@@ -9,6 +9,7 @@ import '../../core/widgets/responsive_card_grid.dart';
 import '../../models/admin_dashboard_stat_kind.dart';
 import '../../models/app_user.dart';
 import '../../models/invoice.dart';
+import '../../models/student_class_term.dart';
 import '../../models/teacher_dashboard_stat_kind.dart';
 import '../../services/admin_report_service.dart';
 import '../../services/auth_service.dart';
@@ -94,7 +95,11 @@ class AdminDashboardTab extends StatelessWidget {
                       _needsAttention(context, voucherAlerts),
                     ],
                     const SizedBox(height: 24),
-                    const _FinancialSummarySection(),
+                    _FinancialSummarySection(
+                      terms: termsSnap.data ?? const [],
+                      onOpenPayments: () => onSwitchTab(5),
+                      onOpenVouchers: () => onSwitchTab(4),
+                    ),
                     const SizedBox(height: 24),
                     AdminCentreMetricsSection(
                       onCentreStatTap: (kind) => _openCentreStat(context, kind),
@@ -232,10 +237,19 @@ class AdminDashboardTab extends StatelessWidget {
   }
 }
 
-/// Read-only financial overview derived from `invoices`: revenue this month,
-/// outstanding (pending), and the most recent payments.
+/// Financial overview from `invoices`: revenue this month, pending payments
+/// (count + amount, incl. the oldest ones to chase), vouchers that have no
+/// payment record, and the most recent payments.
 class _FinancialSummarySection extends StatelessWidget {
-  const _FinancialSummarySection();
+  const _FinancialSummarySection({
+    required this.terms,
+    required this.onOpenPayments,
+    required this.onOpenVouchers,
+  });
+
+  final List<StudentClassTerm> terms;
+  final VoidCallback onOpenPayments;
+  final VoidCallback onOpenVouchers;
 
   @override
   Widget build(BuildContext context) {
@@ -254,6 +268,7 @@ class _FinancialSummarySection extends StatelessWidget {
 
         var revenueThisMonth = 0;
         var outstanding = 0;
+        final pending = <Invoice>[];
         for (final inv in invoices) {
           if (inv.isPaid) {
             final paidAt = inv.paidAt;
@@ -264,8 +279,16 @@ class _FinancialSummarySection extends StatelessWidget {
             }
           } else if (inv.isPending) {
             outstanding += inv.amount;
+            pending.add(inv);
           }
         }
+        pending.sort((a, b) => a.dueDate.compareTo(b.dueDate));
+        final invoiceIds = {for (final i in invoices) i.id};
+        final vouchersWithoutPayment = terms
+            .where((t) =>
+                t.isActive &&
+                (!t.hasPayment || !invoiceIds.contains(t.sourceInvoiceId)))
+            .length;
 
         final recentPaid = invoices.where((i) => i.isPaid).toList()
           ..sort((a, b) {
@@ -280,23 +303,85 @@ class _FinancialSummarySection extends StatelessWidget {
             const AdminSectionHeader(title: 'Financial summary'),
             ResponsiveCardGrid(
               minCardWidth: 220,
-              maxColumns: 2,
+              maxColumns: 3,
               children: [
                 AdminStatCard(
                   label: 'Revenue this month',
                   value: currency.format(revenueThisMonth),
                   icon: Icons.trending_up,
                   color: AppColors.success,
+                  onTap: onOpenPayments,
                 ),
                 AdminStatCard(
-                  label: 'Outstanding',
-                  value: currency.format(outstanding),
+                  label: 'Pending payments',
+                  value: '${pending.length}',
+                  subtitle: currency.format(outstanding),
                   icon: Icons.pending_actions_outlined,
-                  color: AppColors.navy,
+                  color: AppColors.brandYellow,
+                  onTap: onOpenPayments,
+                ),
+                AdminStatCard(
+                  label: 'Vouchers without payment',
+                  value: '$vouchersWithoutPayment',
+                  subtitle: 'Active vouchers with no invoice',
+                  icon: Icons.confirmation_number_outlined,
+                  color: AppColors.error,
+                  onTap: onOpenVouchers,
                 ),
               ],
             ),
             const SizedBox(height: 12),
+            if (pending.isNotEmpty) ...[
+              AppCard(
+                onTap: onOpenPayments,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Pending payments to chase',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.navy,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    for (final inv in pending.take(5))
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                '${inv.studentName?.isNotEmpty == true ? inv.studentName! : inv.invoiceNumber} · ${inv.itemLabel}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 13),
+                              ),
+                            ),
+                            Text(
+                              inv.isOverdue ? 'overdue · ' : 'due ${inv.dueDate} · ',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: inv.isOverdue
+                                    ? AppColors.error
+                                    : AppColors.textSecondary,
+                              ),
+                            ),
+                            Text(
+                              currency.format(inv.amount),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
             if (recentPaid.isEmpty)
               const AppCard(
                 child: Text(

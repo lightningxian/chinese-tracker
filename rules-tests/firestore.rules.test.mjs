@@ -11,11 +11,13 @@ import {
 } from "@firebase/rules-unit-testing";
 import {
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
   query,
   setDoc,
+  updateDoc,
   where,
   Timestamp,
 } from "firebase/firestore";
@@ -119,6 +121,30 @@ describe("settings/pricing", () => {
   it("teacher and student cannot write it", async () => {
     await assertFails(setDoc(doc(as("teacher1"), "settings", "pricing"), { package8: 1 }));
     await assertFails(setDoc(doc(as("student1"), "settings", "pricing"), { package8: 1 }));
+  });
+});
+
+describe("invoices", () => {
+  const manual = (by) => ({
+    invoiceNumber: "ES-INV-1-M1", studentId: "student1", studentName: "S", teacherId: "teacher1",
+    item: "package", description: "8 class sessions", packageSize: 8, priceItemId: "package8",
+    kind: "sessions", sessions: 8, amount: 2450000, currency: "IDR", status: "pending",
+    paymentMethod: "manual", dueDate: "2026-11-30", createdBy: by, createdAt: Timestamp.now(),
+  });
+  it("staff can record a pending cash/transfer invoice", async () => {
+    await assertSucceeds(setDoc(doc(as("teacher1"), "invoices", "inv_m1"), manual("teacher1")));
+    await assertSucceeds(setDoc(doc(as("admin1"), "invoices", "inv_m2"), manual("admin1")));
+  });
+  it("a client can never create a paid or online invoice, nor settle one", async () => {
+    await assertFails(setDoc(doc(as("admin1"), "invoices", "inv_m3"), { ...manual("admin1"), status: "paid" }));
+    await assertFails(setDoc(doc(as("admin1"), "invoices", "inv_m4"), { ...manual("admin1"), paymentMethod: "midtrans" }));
+    await assertFails(updateDoc(doc(as("admin1"), "invoices", "inv_m1"), { status: "paid" }));
+  });
+  it("students cannot create invoices; only admin deletes a pending one", async () => {
+    await assertFails(setDoc(doc(as("student1"), "invoices", "inv_m5"), manual("student1")));
+    await assertSucceeds(setDoc(doc(as("teacher1"), "invoices", "inv_m6"), manual("teacher1")));
+    await assertFails(deleteDoc(doc(as("teacher1"), "invoices", "inv_m6")));
+    await assertSucceeds(deleteDoc(doc(as("admin1"), "invoices", "inv_m6")));
   });
 });
 

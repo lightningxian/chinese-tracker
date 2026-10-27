@@ -32,23 +32,22 @@ class PaymentService {
 
   final FirebaseFunctions _functions;
 
-  /// Staff creates an invoice for [studentId]. Returns the Snap token /
-  /// redirect URL so the caller can open the payment page.
+  /// Staff creates an online invoice for [studentId] from a Price list row.
+  /// The server looks up the price; [classTermId] links the invoice to a term
+  /// that already exists. Returns the Snap token / redirect URL.
   Future<CreatedInvoice> createInvoice({
     required String studentId,
-    required int packageSize,
-    required int amount,
+    required String priceItemId,
     required String dueDate,
-    String item = 'package',
+    String? classTermId,
   }) async {
     try {
       final callable = _functions.httpsCallable('createInvoice');
       final result = await callable.call({
         'studentId': studentId,
-        'item': item,
-        'packageSize': packageSize,
-        'amount': amount,
+        'priceItemId': priceItemId,
         'dueDate': dueDate,
+        if (classTermId != null) 'classTermId': classTermId,
       });
       final data = (result.data as Map).cast<String, dynamic>();
       return CreatedInvoice(
@@ -59,6 +58,26 @@ class PaymentService {
     } on FirebaseFunctionsException catch (e) {
       throw PaymentException(
         e.message ?? 'Could not create the invoice. Try again.',
+      );
+    }
+  }
+
+  /// Admin records a cash or bank-transfer payment. The server flips the
+  /// invoice to paid and credits the sessions (or marks the linked term paid).
+  Future<void> markInvoicePaid({
+    required String invoiceId,
+    required String method, // 'cash' | 'transfer'
+    String? note,
+  }) async {
+    try {
+      await _functions.httpsCallable('markInvoicePaid').call({
+        'invoiceId': invoiceId,
+        'method': method,
+        if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
+      });
+    } on FirebaseFunctionsException catch (e) {
+      throw PaymentException(
+        e.message ?? 'Could not record the payment. Try again.',
       );
     }
   }

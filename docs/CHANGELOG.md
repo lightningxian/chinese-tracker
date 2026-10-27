@@ -6,6 +6,64 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-10-27 — Claude: payments ↔ vouchers linked, Price list tab
+
+**What changed**
+- **Price list** (`/admin/price-list`, button on Payments and a card in
+  Settings): the rows a payment can be for — name, price, what it gives
+  (N class sessions, book, registration, other) — plus voucher validity days.
+  Stored as `settings/pricing.items[]` (`PriceItem`); the four legacy fields
+  are still written and read as a fallback. Defaults = the flyer.
+  `functions/index.js` `loadPricing()` / `findPriceItem()` read the same list,
+  so the charged amount is always the list price.
+- **Every voucher belongs to a payment.** `student_class_terms.sourceInvoiceId`
+  links a term to its invoice (the Midtrans webhook already wrote it).
+  - Admin → Vouchers → **New voucher** requires picking the student's paid or
+    pending session invoice (or **Record a cash / transfer payment** right
+    there); package size comes from the payment.
+  - Teacher **Add term** on a student page still works and now also records
+    a **pending** cash/transfer invoice linked to that term (`classTermId`),
+    so the admin sees it under Payments.
+  - Vouchers tab: **Payment** column (Paid · date / Pending payment /
+    No payment) with filter chips; term cards on the student page show the
+    same line.
+- **Payments tab**: Create invoice picks an item from the Price list and a
+  method: **Cash / transfer** (pending manual invoice, written by the client;
+  rules allow staff to create `status: pending, paymentMethod: manual` only)
+  or **Online link** (Midtrans via `createInvoice`, now taking `priceItemId`
+  and an optional `classTermId`). Pending invoices have a menu: **Mark as
+  paid (cash / transfer)** → new callable `markInvoicePaid` (admin only;
+  one transaction: flips to paid, then credits via the shared
+  `creditPaidInvoice()`: marks the linked term paid or opens a new voucher;
+  book/registration credit nothing; notifies + audit) and **Delete pending
+  invoice** (admin, manual only; rules allow delete of pending only).
+  Method column, Overdue pill.
+- **Admin dashboard**: Financial summary now shows Revenue this month,
+  **Pending payments** (count + Rp) with the oldest five to chase, and
+  **Vouchers without payment** (active terms with no invoice: the old ones),
+  each tapping through to Payments / Vouchers.
+- Student Payments: a manual pending invoice says "Pay at the centre by cash
+  or bank transfer" instead of a Pay now button.
+- Rules: `student_class_terms.packageSize` any positive int (was 8/16) so a
+  price-list row like a trial class can become a voucher; rules tests +3
+  (invoices) → 27 total, 26 pass, 1 skipped. Flutter tests +3
+  (`pricing_settings_test.dart`) → 33. Seed writes the items.
+
+**Why**
+- Owner: "connect payment and voucher; a voucher needs a payment; a separate
+  tab with the list of things a payment can be for; teachers can add a term
+  but admin must see a pending payment; old vouchers show as pending on the
+  dashboard."
+
+**For review**
+- Deploy needs **functions** (`createInvoice`, `markInvoicePaid`,
+  `midtransNotification`), **rules** and **hosting**. `markInvoicePaid`
+  cannot run on the emulator (no functions emulator), so the cash path was
+  checked on the live site by the owner.
+- `createInvoice` still accepts the old `item` / `packageSize` arguments.
+
+---
+
 ## 2026-10-27 — Claude: scanner-first question bank, quiz scan, tidier Reports
 
 **What changed**

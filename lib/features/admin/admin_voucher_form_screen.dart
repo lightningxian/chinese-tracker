@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -7,7 +9,10 @@ import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/shell_nested_page.dart';
+import '../../core/utils/money_format.dart';
 import '../../models/app_user.dart';
+import '../../models/invoice.dart';
+import '../../models/pricing_settings.dart';
 import '../../models/student_class_term.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
@@ -44,19 +49,88 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
   late DateTime _startDate;
   late DateTime _deadlineDate;
 
+  /// The payment this voucher belongs to. Required for new vouchers: a
+  /// voucher is always backed by a paid or pending invoice.
+  Invoice? _invoice;
+  PricingSettings _pricing = PricingSettings.defaults;
+  StreamSubscription<PricingSettings>? _pricingSub;
+
   @override
   void initState() {
     super.initState();
     final now = DateTime.now();
     _startDate = now;
-    _deadlineDate = now.add(const Duration(days: 90));
+    _deadlineDate = now.add(const Duration(days: 60));
+    _pricingSub = context.read<FirestoreService>().watchPricing().listen((p) {
+      if (!mounted) return;
+      setState(() {
+        _pricing = p;
+        if (!widget.isEditing && _invoice == null) {
+          _deadlineDate = _startDate.add(Duration(days: p.termValidDays));
+        }
+      });
+    });
     _load();
   }
 
   @override
   void dispose() {
+    _pricingSub?.cancel();
     _notesController.dispose();
     super.dispose();
+  }
+
+  void _selectInvoice(Invoice? invoice) {
+    setState(() {
+      _invoice = invoice;
+      if (invoice != null && invoice.sessions > 0) {
+        _packageSize = invoice.sessions;
+        _sessionsRemaining = invoice.sessions;
+      }
+    });
+  }
+
+  /// Record a cash / transfer payment now and use it for this voucher.
+  Future<void> _recordNewPayment(AppUser student) async {
+    final items = _pricing.sessionItems;
+    if (items.isEmpty) {
+      setState(() => _error = 'Add a sessions item to the Price list first.');
+      return;
+    }
+    final item = await showDialog<PriceItem>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: const Text('Record a payment for'),
+        children: [
+          for (final it in items)
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(ctx, it),
+              child: Text('${it.name} · ${formatRupiah(it.price)}'),
+            ),
+        ],
+      ),
+    );
+    if (item == null || !mounted) return;
+    final staffId = context.read<AuthService>().appUser?.uid;
+    if (staffId == null) return;
+    try {
+      final firestore = context.read<FirestoreService>();
+      final id = await firestore.createManualInvoice(
+        student: student,
+        item: item,
+        createdBy: staffId,
+        dueDate: DateTime.now().add(const Duration(days: 7)),
+      );
+      final created = await firestore.watchStudentInvoices(student.uid).first;
+      Invoice? match;
+      for (final inv in created) {
+        if (inv.id == id) match = inv;
+      }
+      if (!mounted) return;
+      _selectInvoice(match);
+    } catch (e) {
+      if (mounted) setState(() => _error = 'Could not record the payment: $e');
+    }
   }
 
   Future<void> _load() async {
@@ -139,6 +213,15 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
           notes: _notesController.text,
         );
       } else {
+        final invoice = _invoice;
+        if (invoice == null) {
+          setState(() {
+            _error = 'Choose the payment this voucher belongs to, or record '
+                'a new one.';
+            _saving = false;
+          });
+          return;
+        }
         await firestore.createClassTermPackage(
           studentId: _studentId!,
           packageSize: _packageSize,
@@ -146,6 +229,7 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
           startDate: _startDate,
           deadlineDate: _deadlineDate,
           notes: _notesController.text,
+          sourceInvoiceId: invoice.id,
         );
       }
 
@@ -215,8 +299,10 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
                       const Padding(
                         padding: EdgeInsets.only(bottom: 12),
                         child: Text(
-                          'A unique code is generated automatically '
-                          '(e.g. 2026_07_001).',
+                          'Every voucher belongs to a payment. Pick the '
+                          'student, then the invoice that pays for it (or '
+                          'record a cash / transfer payment here). A unique '
+                          'code is generated automatically (e.g. 2026_07_001).',
                           style: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 13,
@@ -274,8 +360,25 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
                               ),
                             const SizedBox(height: 16),
                             if (widget.isEditing)
+                              _PaymentStatusField(term: _term!)
+                            else if (_studentId != null)
+                              _PaymentPicker(
+                                studentId: _studentId!,
+                                selected: _invoice,
+                                onChanged: _saving ? null : _selectInvoice,
+                                onRecordNew: _saving
+                                    ? null
+                                    : (student) => _recordNewPayment(student),
+                              ),
+                            const SizedBox(height: 16),
+                            if (widget.isEditing)
                               _ReadOnlyField(
                                 label: 'Package size',
+                                value: '$_packageSize sessions',
+                              )
+                            else if (_invoice != null && _invoice!.sessions > 0)
+                              _ReadOnlyField(
+                                label: 'Package size (from the payment)',
                                 value: '$_packageSize sessions',
                               )
                             else
@@ -412,6 +515,137 @@ class _ReadOnlyField extends StatelessWidget {
         prefixIcon: const Icon(Icons.lock_outline, size: 18),
       ),
       child: Text(value),
+    );
+  }
+}
+
+/// Create mode: the student's session invoices that no voucher uses yet.
+class _PaymentPicker extends StatelessWidget {
+  const _PaymentPicker({
+    required this.studentId,
+    required this.selected,
+    required this.onChanged,
+    required this.onRecordNew,
+  });
+
+  final String studentId;
+  final Invoice? selected;
+  final ValueChanged<Invoice?>? onChanged;
+  final ValueChanged<AppUser>? onRecordNew;
+
+  @override
+  Widget build(BuildContext context) {
+    final firestore = context.read<FirestoreService>();
+    return StreamBuilder<List<Invoice>>(
+      stream: firestore.watchStudentInvoices(studentId),
+      builder: (context, invSnap) {
+        return StreamBuilder<List<StudentClassTerm>>(
+          stream: firestore.watchStudentClassTerms(studentId),
+          builder: (context, termSnap) {
+            final used = {
+              for (final t in termSnap.data ?? const <StudentClassTerm>[])
+                if (t.sourceInvoiceId != null) t.sourceInvoiceId!,
+            };
+            final candidates = (invSnap.data ?? const <Invoice>[])
+                .where((i) =>
+                    i.creditsSessions &&
+                    (i.isPending || i.isPaid) &&
+                    i.classTermId == null &&
+                    !used.contains(i.id))
+                .toList();
+            final selectedId = candidates.any((i) => i.id == selected?.id)
+                ? selected!.id
+                : null;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                DropdownButtonFormField<String>(
+                  key: ValueKey('payment-$selectedId-${candidates.length}'),
+                  initialValue: selectedId,
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Payment',
+                    prefixIcon: Icon(Icons.receipt_long_outlined),
+                    helperText: 'Paid or pending session invoices without a '
+                        'voucher yet',
+                  ),
+                  items: [
+                    for (final inv in candidates)
+                      DropdownMenuItem(
+                        value: inv.id,
+                        child: Text(
+                          '${inv.itemLabel} · ${formatRupiah(inv.amount)} · '
+                          '${inv.isPaid ? 'Paid' : 'Pending'} · '
+                          '${inv.invoiceNumber}',
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                  ],
+                  onChanged: onChanged == null
+                      ? null
+                      : (id) {
+                          Invoice? match;
+                          for (final inv in candidates) {
+                            if (inv.id == id) match = inv;
+                          }
+                          onChanged!(match);
+                        },
+                  validator: (v) => v == null
+                      ? 'Choose a payment or record a new one'
+                      : null,
+                ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: FutureBuilder<AppUser?>(
+                    future: firestore.getUser(studentId),
+                    builder: (context, userSnap) => TextButton.icon(
+                      onPressed: onRecordNew == null || userSnap.data == null
+                          ? null
+                          : () => onRecordNew!(userSnap.data!),
+                      icon: const Icon(Icons.add_card_outlined, size: 18),
+                      label: const Text('Record a cash / transfer payment'),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+/// Edit mode: which payment this voucher has, and whether it is settled.
+class _PaymentStatusField extends StatelessWidget {
+  const _PaymentStatusField({required this.term});
+
+  final StudentClassTerm term;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!term.hasPayment) {
+      return const _ReadOnlyField(
+        label: 'Payment',
+        value: 'No payment recorded (older voucher)',
+      );
+    }
+    return StreamBuilder<List<Invoice>>(
+      stream:
+          context.read<FirestoreService>().watchStudentInvoices(term.studentId),
+      builder: (context, snap) {
+        Invoice? inv;
+        for (final i in snap.data ?? const <Invoice>[]) {
+          if (i.id == term.sourceInvoiceId) inv = i;
+        }
+        final value = inv == null
+            ? 'Invoice ${term.sourceInvoiceId}'
+            : '${inv.invoiceNumber} · ${formatRupiah(inv.amount)} · '
+                '${inv.isPaid ? 'Paid' : inv.status.label}'
+                '${inv.paidAt != null ? ' ${DateFormat('d MMM yyyy').format(inv.paidAt!)}' : ''}';
+        return _ReadOnlyField(label: 'Payment', value: value);
+      },
     );
   }
 }

@@ -20,7 +20,8 @@ decisions. This app is also the owner's thesis project (see the thesis docs belo
 - Teacher self-registration is closed; admins create teachers.
 - Keep the Grades and Evaluations tabs (outside the thesis).
 - Thesis test codes are random strings typed by the admin, with HSK level and release year as separate fields. No access to the old `easy-study-hsk` project: no import of old results.
-- Voucher packages: Chinese name, validity (e.g. 2 months), 8 or 16 sessions, the student's class day. Prices TBC.
+- Voucher packages: Chinese name, validity (e.g. 2 months), 8 or 16 sessions, the student's class day. Prices live in the admin **Price list** (`settings/pricing.items`, flyer defaults).
+- **Payments ↔ vouchers (2026-10-27):** every voucher links to an invoice (`sourceInvoiceId`). Admin records cash/transfer payments (`markInvoicePaid` callable); teachers may still add a term on a student page, which creates a pending invoice for the admin; old vouchers without a payment are shown on the admin dashboard as "Vouchers without payment".
 - Order of work: quick security fixes (done) → emulator (done) → design system → thesis phases in order, rebuilding each screen in the new design as its phase touches it, with ViewModels.
 
 ## Never

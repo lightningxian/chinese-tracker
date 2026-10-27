@@ -27,33 +27,68 @@ const MIDTRANS_SERVER_KEY = defineSecret("MIDTRANS_SERVER_KEY");
 const MIDTRANS_SNAP_URL =
   "https://app.sandbox.midtrans.com/snap/v1/transactions";
 
-const ALLOWED_PACKAGE_SIZES = [8, 16];
-
-// Prices (whole IDR) and term validity live in Firestore `settings/pricing`,
-// edited by admins in the app (Settings → Prices). These are the fallbacks
-// when the document is missing: the course flyer, Oct 2026. The invoice
-// amount is always derived server-side; a client value is ignored.
-const PRICING_DEFAULTS = {
-  package8: 2450000,
-  package16: 3950000,
-  book: 250000,
-  registration: 100000,
-  termValidDays: 60,
-};
+// The Price list and term validity live in Firestore `settings/pricing`,
+// edited by admins in the app (Payments → Price list). `items` is the source
+// of truth; the four legacy fields are read when `items` is missing. These are
+// the fallbacks (course flyer, Oct 2026). The invoice amount is always derived
+// server-side; a client value is ignored.
+const DEFAULT_PRICE_ITEMS = [
+  {id: "registration", name: "Registration (one-time)", price: 100000,
+    kind: "registration", sessions: 0},
+  {id: "package8", name: "8 class sessions", price: 2450000,
+    kind: "sessions", sessions: 8},
+  {id: "package16", name: "16 class sessions", price: 3950000,
+    kind: "sessions", sessions: 16},
+  {id: "book", name: "HSK materials & book", price: 250000,
+    kind: "book", sessions: 0},
+];
+const DEFAULT_TERM_VALID_DAYS = 60;
 const SETTINGS = "settings";
 
 async function loadPricing() {
   const snap = await db.collection(SETTINGS).doc("pricing").get();
   const data = snap.exists ? snap.data() || {} : {};
-  const pick = (key) => {
-    const v = Number(data[key]);
-    return Number.isInteger(v) && v > 0 ? v : PRICING_DEFAULTS[key];
-  };
+  const positiveInt = (v, fallback) =>
+    Number.isInteger(Number(v)) && Number(v) > 0 ? Number(v) : fallback;
+  let items = Array.isArray(data.items) ?
+    data.items
+        .filter((it) => it && it.id && positiveInt(it.price, 0) > 0)
+        .map((it) => ({
+          id: String(it.id),
+          name: String(it.name || it.id),
+          price: Number(it.price),
+          kind: String(it.kind || "other"),
+          sessions: it.kind === "sessions" ? positiveInt(it.sessions, 0) : 0,
+        })) :
+    [];
+  if (items.length === 0) {
+    const legacy = {
+      package8: positiveInt(data.package8, 2450000),
+      package16: positiveInt(data.package16, 3950000),
+      book: positiveInt(data.book, 250000),
+      registration: positiveInt(data.registration, 100000),
+    };
+    items = DEFAULT_PRICE_ITEMS.map((it) => ({...it, price: legacy[it.id]}));
+  }
   return {
-    packagePrices: {8: pick("package8"), 16: pick("package16")},
-    book: pick("book"),
-    termValidDays: pick("termValidDays"),
+    items,
+    termValidDays: positiveInt(data.termValidDays, DEFAULT_TERM_VALID_DAYS),
   };
+}
+
+// Resolve the price-list row for an invoice request. New clients send
+// `priceItemId`; older ones send `item` + `packageSize`.
+function findPriceItem(pricing, {priceItemId, item, packageSize}) {
+  if (priceItemId) {
+    return pricing.items.find((it) => it.id === priceItemId) || null;
+  }
+  if (item === BOOK_ITEM) {
+    return pricing.items.find((it) => it.kind === "book") || null;
+  }
+  const n = Number(packageSize);
+  return pricing.items.find(
+      (it) => it.kind === "sessions" && it.sessions === n,
+  ) || null;
 }
 
 // Non-session item. "book" = HSK materials and textbook. Paying a book
@@ -434,35 +469,31 @@ exports.createInvoice = onCall(
 
     const data = request.data || {};
     const studentId = String(data.studentId || "").trim();
-    const item = data.item === BOOK_ITEM ? BOOK_ITEM : "package";
-    const packageSize = item === BOOK_ITEM ? 0 : Number(data.packageSize);
     const dueDate = String(data.dueDate || "").trim();
+    const classTermId = String(data.classTermId || "").trim() || null;
 
     if (!studentId) {
       throw new HttpsError("invalid-argument", "studentId is required.");
     }
-    if (item !== BOOK_ITEM && !ALLOWED_PACKAGE_SIZES.includes(packageSize)) {
-      throw new HttpsError(
-        "invalid-argument",
-        `packageSize must be one of ${ALLOWED_PACKAGE_SIZES.join(", ")}.`,
-      );
-    }
 
-    // Amount is authoritative on the server — derive from the price table and
+    // Amount is authoritative on the server — derive from the Price list and
     // ignore any client-supplied value so a caller can't misprice a sale.
     const pricing = await loadPricing();
-    const amount = item === BOOK_ITEM ?
-      pricing.book :
-      pricing.packagePrices[packageSize];
-    if (!Number.isInteger(amount) || amount <= 0) {
+    const priceItem = findPriceItem(pricing, {
+      priceItemId: data.priceItemId,
+      item: data.item,
+      packageSize: data.packageSize,
+    });
+    if (!priceItem) {
       throw new HttpsError(
-        "failed-precondition",
-        `No price configured for package size ${packageSize}.`,
+          "failed-precondition",
+          "That item is not on the Price list.",
       );
     }
-    const description = item === BOOK_ITEM ?
-      BOOK_DESCRIPTION :
-      `${packageSize}-session package`;
+    const amount = priceItem.price;
+    const item = priceItem.kind === "book" ? BOOK_ITEM : "package";
+    const packageSize = priceItem.sessions;
+    const description = priceItem.name;
 
     const studentSnap = await db.collection(USERS).doc(studentId).get();
     if (!studentSnap.exists) {
@@ -491,11 +522,16 @@ exports.createInvoice = onCall(
       item,
       description,
       packageSize,
+      priceItemId: priceItem.id,
+      kind: priceItem.kind,
+      sessions: priceItem.sessions,
       amount,
       currency: "IDR",
       status: "pending",
+      paymentMethod: "midtrans",
       dueDate,
       midtransOrderId: orderId,
+      ...(classTermId ? {classTermId} : {}),
       createdBy: auth.uid,
       createdAt: FieldValue.serverTimestamp(),
     });
@@ -522,10 +558,10 @@ exports.createInvoice = onCall(
           },
           item_details: [
             {
-              id: `pkg-${packageSize}`,
+              id: priceItem.id,
               price: amount,
               quantity: 1,
-              name: `${packageSize} session package`,
+              name: priceItem.name.slice(0, 50),
             },
           ],
           customer_details: {
@@ -566,12 +602,135 @@ exports.createInvoice = onCall(
       targetType: "invoice",
       targetId: invoiceRef.id,
       detail:
-        `${orderId} · ${packageSize} sessions · Rp ${amount} for ${studentName}`,
+        `${orderId} · ${description} · Rp ${amount} for ${studentName}`,
     });
 
     return {invoiceId: invoiceRef.id, snapToken, redirectUrl};
   },
 );
+
+/**
+ * Inside a transaction that just flipped `invoiceRef` to paid: give the
+ * student what the invoice is for. A sessions invoice linked to an existing
+ * term (`classTermId`, teacher added the term first) marks that term paid;
+ * otherwise a new term is created. Book / registration / other credit nothing.
+ * Returns what was credited, for the notification and the audit line.
+ */
+function creditPaidInvoice(tx, invoiceRef, invoice, termValidDays) {
+  const sessions = Number(invoice.sessions);
+  const credits = invoice.kind === "sessions" ?
+    sessions > 0 :
+    (invoice.item !== BOOK_ITEM && Number(invoice.packageSize) > 0);
+  const packageSize = invoice.kind === "sessions" ?
+    sessions :
+    Number(invoice.packageSize) || 0;
+  if (!credits || !invoice.studentId) {
+    return {invoice, packageSize: 0, book: true};
+  }
+  if (invoice.classTermId) {
+    tx.update(db.collection(CLASS_TERMS).doc(invoice.classTermId), {
+      sourceInvoiceId: invoiceRef.id,
+      paidAt: FieldValue.serverTimestamp(),
+    });
+    return {invoice, packageSize, existingTerm: true};
+  }
+  const now = new Date();
+  const deadline = new Date(now.getTime() + termValidDays * 86400000);
+  const fmt = (d) => d.toISOString().slice(0, 10);
+  tx.set(db.collection(CLASS_TERMS).doc(), {
+    studentId: invoice.studentId,
+    packageSize,
+    sessionsRemaining: packageSize,
+    sessionsUsed: 0,
+    status: "active",
+    startDate: fmt(now),
+    deadlineDate: fmt(deadline),
+    sourceInvoiceId: invoiceRef.id,
+    createdBy: invoice.paymentMethod === "midtrans" ? "midtrans" : "admin",
+    purchasedAt: FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
+  });
+  return {invoice, packageSize};
+}
+
+function paidAuditDetail(credited, ref) {
+  const inv = credited.invoice;
+  const who = inv.studentName || inv.studentId;
+  let what;
+  if (credited.book) {
+    what = `${inv.description || BOOK_DESCRIPTION} paid by ${who}`;
+  } else if (credited.existingTerm) {
+    what = `${credited.packageSize}-session voucher of ${who} marked paid`;
+  } else {
+    what = `${credited.packageSize} sessions credited to ${who}`;
+  }
+  return `${ref} · Rp ${inv.amount || 0} · ${what}`;
+}
+
+/**
+ * Admin records a payment made by hand (cash or bank transfer at the centre).
+ * Same crediting as the Midtrans webhook, in one transaction, idempotent.
+ */
+exports.markInvoicePaid = onCall(async (request) => {
+  const auth = request.auth;
+  if (!auth) {
+    throw new HttpsError("unauthenticated", "Sign in first.");
+  }
+  const callerSnap = await db.collection(USERS).doc(auth.uid).get();
+  const caller = callerSnap.exists ? callerSnap.data() : {};
+  if (!caller || caller.role !== "admin" || caller.active === false) {
+    throw new HttpsError(
+        "permission-denied", "Only admins can record payments.",
+    );
+  }
+  const data = request.data || {};
+  const invoiceId = String(data.invoiceId || "").trim();
+  const method = data.method === "transfer" ? "transfer" : "cash";
+  const note = String(data.note || "").trim().slice(0, 200);
+  if (!invoiceId) {
+    throw new HttpsError("invalid-argument", "invoiceId is required.");
+  }
+
+  const invoiceRef = db.collection(INVOICES).doc(invoiceId);
+  const {termValidDays} = await loadPricing();
+  let credited = null;
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(invoiceRef);
+    if (!snap.exists) {
+      throw new HttpsError("not-found", "Invoice not found.");
+    }
+    const invoice = snap.data() || {};
+    if (invoice.status && invoice.status !== "pending") {
+      throw new HttpsError(
+          "failed-precondition",
+          `This invoice is already ${invoice.status}.`,
+      );
+    }
+    tx.update(invoiceRef, {
+      status: "paid",
+      paidAt: FieldValue.serverTimestamp(),
+      paymentMethod: method,
+      paidBy: auth.uid,
+      ...(note ? {note} : {}),
+    });
+    credited = creditPaidInvoice(
+        tx, invoiceRef, {...invoice, paymentMethod: method}, termValidDays,
+    );
+  });
+
+  if (credited) {
+    await notifyInvoicePaid(credited.invoice, credited.packageSize);
+    await writeAudit({
+      action: "invoice.paid",
+      actorId: auth.uid,
+      actorName: caller.name || caller.nameIndonesian || "Admin",
+      targetType: "invoice",
+      targetId: invoiceId,
+      detail: `${paidAuditDetail(credited, invoiceId)} (${method})`,
+    });
+  }
+  return {ok: true};
+});
 
 function midtransStatusToInvoice(transactionStatus, fraudStatus) {
   if (
@@ -668,37 +827,7 @@ exports.midtransNotification = onRequest(
         ...(newStatus === "paid" ? {paidAt: FieldValue.serverTimestamp()} : {}),
       });
       if (newStatus !== "paid") return;
-
-      // Book / materials: nothing to credit, just record the payment.
-      if (invoice.item === BOOK_ITEM) {
-        credited = {invoice, packageSize: 0, book: true};
-        return;
-      }
-
-      const packageSize = Number(invoice.packageSize) || 0;
-      if (!invoice.studentId || !ALLOWED_PACKAGE_SIZES.includes(packageSize)) {
-        logger.warn("midtransNotification: paid invoice with invalid package", {
-          orderId,
-        });
-        return;
-      }
-      const now = new Date();
-      const deadline = new Date(now.getTime() + termValidDays * 86400000);
-      const fmt = (d) => d.toISOString().slice(0, 10);
-      tx.set(db.collection(CLASS_TERMS).doc(), {
-        studentId: invoice.studentId,
-        packageSize,
-        sessionsRemaining: packageSize,
-        sessionsUsed: 0,
-        status: "active",
-        startDate: fmt(now),
-        deadlineDate: fmt(deadline),
-        sourceInvoiceId: invoiceRef.id,
-        createdBy: "midtrans",
-        purchasedAt: FieldValue.serverTimestamp(),
-        createdAt: FieldValue.serverTimestamp(),
-      });
-      credited = {invoice, packageSize};
+      credited = creditPaidInvoice(tx, invoiceRef, invoice, termValidDays);
     });
 
     if (credited) {
@@ -710,13 +839,7 @@ exports.midtransNotification = onRequest(
         actorName: "Midtrans",
         targetType: "invoice",
         targetId: invoiceRef.id,
-        detail: credited.book ?
-          `${orderId} · Rp ${credited.invoice.amount || 0} · ` +
-          `${BOOK_DESCRIPTION} paid by ` +
-          `${credited.invoice.studentName || credited.invoice.studentId}` :
-          `${orderId} · Rp ${credited.invoice.amount || 0} · ` +
-          `${credited.packageSize} sessions credited to ` +
-          `${credited.invoice.studentName || credited.invoice.studentId}`,
+        detail: paidAuditDetail(credited, orderId),
       });
     }
 

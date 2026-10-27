@@ -5,9 +5,11 @@ import 'package:provider/provider.dart';
 import '../constants/app_constants.dart';
 import '../theme/app_theme.dart';
 import '../../models/attendance_record.dart';
+import '../../models/invoice.dart';
 import '../../models/student_class_term.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
+import '../utils/money_format.dart';
 import 'app_card.dart';
 
 String _formatDateKey(DateTime date) =>
@@ -318,12 +320,28 @@ class ClassTermPackagesList extends StatelessWidget {
     super.key,
     required this.terms,
     this.visitsByTermId = const {},
+    this.invoicesById = const {},
     this.allowManage = false,
   });
 
   final List<StudentClassTerm> terms;
   final Map<String, List<AttendanceRecord>> visitsByTermId;
+
+  /// The student's invoices, to show whether each term is paid.
+  final Map<String, Invoice> invoicesById;
   final bool allowManage;
+
+  (String, Color) _paymentLine(StudentClassTerm term) {
+    final inv = invoicesById[term.sourceInvoiceId];
+    if (inv == null) {
+      return ('No payment recorded', AppColors.textSecondary);
+    }
+    if (inv.isPaid) {
+      final when = inv.paidAt == null ? '' : ' · ${_displayDate(inv.paidAt!.toIso8601String())}';
+      return ('Paid ${formatRupiah(inv.amount)} (${inv.methodLabel.toLowerCase()})$when', AppColors.success);
+    }
+    return ('Pending payment · ${formatRupiah(inv.amount)}', AppColors.error);
+  }
 
   Future<void> _editTerm(BuildContext context, StudentClassTerm term) async {
     final result = await showDialog<({
@@ -472,6 +490,17 @@ class ClassTermPackagesList extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
+                Builder(builder: (context) {
+                  final (label, color) = _paymentLine(term);
+                  return Text(
+                    label,
+                    style: TextStyle(
+                      color: color,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  );
+                }),
                 const SizedBox(height: 8),
                 Row(
                   children: [
@@ -861,18 +890,48 @@ class AddClassTermButton extends StatelessWidget {
     if (dates == null || !context.mounted) return;
 
     try {
-      await context.read<FirestoreService>().createClassTermPackage(
-            studentId: studentId,
-            packageSize: packageSize,
-            createdByTeacherId: teacherId,
-            startDate: dates.start,
-            deadlineDate: dates.deadline,
+      final firestore = context.read<FirestoreService>();
+      final termId = await firestore.createClassTermPackage(
+        studentId: studentId,
+        packageSize: packageSize,
+        createdByTeacherId: teacherId,
+        startDate: dates.start,
+        deadlineDate: dates.deadline,
+      );
+      // Every voucher needs a payment: record a pending cash/transfer
+      // invoice for the admin to settle (Payments → Mark as paid).
+      String paymentNote = '';
+      try {
+        final pricing = await firestore.watchPricing().first;
+        final item = pricing.itemForSessions(packageSize);
+        final student = await firestore.getUser(studentId);
+        if (item != null && student != null) {
+          final invoiceId = await firestore.createManualInvoice(
+            student: student,
+            item: item,
+            createdBy: teacherId,
+            dueDate: DateTime.now().add(const Duration(days: 7)),
+            classTermId: termId,
           );
+          await firestore.linkClassTermToInvoice(
+            termId: termId,
+            invoiceId: invoiceId,
+          );
+          paymentNote = ' Pending payment of ${formatRupiah(item.price)} '
+              'recorded for the admin.';
+        } else {
+          paymentNote = ' No price-list item for $packageSize sessions: the '
+              'admin must add the payment by hand.';
+        }
+      } catch (e) {
+        paymentNote = ' Could not record the payment ($e); the admin must add '
+            'it in Payments.';
+      }
       onAdded?.call();
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Added $packageSize-session term package'),
+            content: Text('Added $packageSize-session term.$paymentNote'),
           ),
         );
       }
@@ -970,6 +1029,40 @@ class StudentClassTermSection extends StatelessWidget {
           builder: (context, historySnap) {
             final history = historySnap.data ?? [];
             final visitsByTermId = firestore.visitsByTermId(history);
+            return StreamBuilder<List<Invoice>>(
+              stream: firestore.watchStudentInvoices(studentId),
+              builder: (context, invSnap) {
+                final invoicesById = {
+                  for (final i in invSnap.data ?? const <Invoice>[]) i.id: i,
+                };
+                return _body(
+                  context,
+                  termsSnap: termsSnap,
+                  terms: terms,
+                  history: history,
+                  visitsByTermId: visitsByTermId,
+                  invoicesById: invoicesById,
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _body(
+    BuildContext context, {
+    required AsyncSnapshot<List<StudentClassTerm>> termsSnap,
+    required List<StudentClassTerm> terms,
+    required List<AttendanceRecord> history,
+    required Map<String, List<AttendanceRecord>> visitsByTermId,
+    required Map<String, Invoice> invoicesById,
+  }) {
+    {
+      {
+        {
+          {
             final unlinkedVisits = history
                 .where(
                   (r) => r.classTermId == null || r.classTermId!.isEmpty,
@@ -1001,6 +1094,7 @@ class StudentClassTermSection extends StatelessWidget {
                   ClassTermPackagesList(
                     terms: terms,
                     visitsByTermId: visitsByTermId,
+                    invoicesById: invoicesById,
                     allowManage: allowManage,
                   ),
                   if (unlinkedVisits.isNotEmpty) ...[
@@ -1013,9 +1107,9 @@ class StudentClassTermSection extends StatelessWidget {
                 ],
               ],
             );
-          },
-        );
-      },
-    );
+          }
+        }
+      }
+    }
   }
 }

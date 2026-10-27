@@ -8,6 +8,7 @@ import '../../core/widgets/app_card.dart';
 import '../../core/widgets/app_data_table.dart';
 import '../../core/widgets/status_pill.dart';
 import '../../models/app_user.dart';
+import '../../models/invoice.dart';
 import '../../models/student_class_term.dart';
 import '../../services/firestore_service.dart';
 
@@ -18,11 +19,36 @@ class AdminVouchersTab extends StatefulWidget {
   State<AdminVouchersTab> createState() => _AdminVouchersTabState();
 }
 
+/// Payment state of a voucher, from its linked invoice.
+enum _PaymentState { paid, pending, none }
+
 class _AdminVouchersTabState extends State<AdminVouchersTab> {
   final _searchController = TextEditingController();
   String _query = '';
   String? _sortColumnId;
   bool _sortAscending = true;
+
+  /// null = all; otherwise only vouchers in that payment state.
+  _PaymentState? _paymentFilter;
+  Map<String, Invoice> _invoicesById = const {};
+
+  _PaymentState _paymentState(StudentClassTerm term) {
+    final inv = _invoicesById[term.sourceInvoiceId];
+    if (inv == null) return _PaymentState.none;
+    return inv.isPaid ? _PaymentState.paid : _PaymentState.pending;
+  }
+
+  (String label, Color color) _paymentLabel(StudentClassTerm term) {
+    final inv = _invoicesById[term.sourceInvoiceId];
+    return switch (_paymentState(term)) {
+      _PaymentState.paid => (
+          'Paid${inv?.paidAt != null ? ' · ${DateFormat('d MMM').format(inv!.paidAt!)}' : ''}',
+          AppColors.success,
+        ),
+      _PaymentState.pending => ('Pending payment', AppColors.brandYellow),
+      _PaymentState.none => ('No payment', AppColors.error),
+    };
+  }
 
   @override
   void dispose() {
@@ -59,6 +85,7 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
         'remaining' => a.sessionsRemaining.compareTo(b.sessionsRemaining),
         'deadline' => a.deadlineDate.compareTo(b.deadlineDate),
         'status' => a.voucherStatusLabel.compareTo(b.voucherStatusLabel),
+        'payment' => _paymentState(a).index.compareTo(_paymentState(b).index),
         _ => 0,
       };
       return _sortAscending ? compare : -compare;
@@ -85,9 +112,11 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
     Map<String, String> usersById,
   ) {
     final q = _query.trim().toLowerCase();
-    if (q.isEmpty) return terms;
-
     return terms.where((term) {
+      if (_paymentFilter != null && _paymentState(term) != _paymentFilter) {
+        return false;
+      }
+      if (q.isEmpty) return true;
       final studentName = (usersById[term.studentId] ?? '').toLowerCase();
       final code = (term.voucherCode ?? '').toLowerCase();
       return studentName.contains(q) || code.contains(q);
@@ -110,6 +139,7 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
       mobileCardBuilder: (term) => _VoucherCard(
         term: term,
         studentName: usersById[term.studentId] ?? 'Unknown student',
+        payment: _paymentLabel(term),
         statusColor: _statusColor(term.voucherStatusLabel),
         displayDate: _displayDate,
         onEdit: () => context.push('/admin/vouchers/${term.id}/edit'),
@@ -207,6 +237,16 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
         ),
       ),
       AppTableColumn<StudentClassTerm>(
+        id: 'payment',
+        label: 'Payment',
+        sortable: true,
+        width: 130,
+        cell: (term) {
+          final (label, color) = _paymentLabel(term);
+          return StatusPill(label: label, color: color);
+        },
+      ),
+      AppTableColumn<StudentClassTerm>(
         id: 'actions',
         label: 'Actions',
         width: 100,
@@ -301,6 +341,28 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
             if (termsSnap.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
+            return StreamBuilder<List<Invoice>>(
+              stream: firestore.watchAllInvoices(),
+              builder: (context, invSnap) {
+                _invoicesById = {
+                  for (final i in invSnap.data ?? const <Invoice>[]) i.id: i,
+                };
+                return _buildPage(context, termsSnap, usersSnap);
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildPage(
+    BuildContext context,
+    AsyncSnapshot<List<StudentClassTerm>> termsSnap,
+    AsyncSnapshot<List<AppUser>> usersSnap,
+  ) {
+    {
+      {
 
             final usersById = <String, String>{
               for (final u in usersSnap.data ?? []) u.uid: u.name,
@@ -314,10 +376,11 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
                   padding: EdgeInsets.only(bottom: 12),
                   child: Text(
                     "A voucher is a student's paid term: 8 or 16 class sessions "
-                    'with a start date and a deadline. The same packages appear '
-                    'under "Term packages" on the student\'s page, and one session '
-                    'is deducted each time a class is concluded. Codes are '
-                    'optional labels you can set when editing.',
+                    'with a start date and a deadline, always linked to a '
+                    'payment (Payments tab). "Pending payment" means the '
+                    'invoice is not settled yet; "No payment" is an older '
+                    'voucher created before payments were linked. One session '
+                    'is deducted each time a class is concluded.',
                     style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 13,
@@ -342,6 +405,27 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
                       borderSide: const BorderSide(color: AppColors.border),
                     ),
                   ),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  children: [
+                    for (final (label, value) in <(String, _PaymentState?)>[
+                      ('All', null),
+                      ('Pending payment', _PaymentState.pending),
+                      ('No payment', _PaymentState.none),
+                      ('Paid', _PaymentState.paid),
+                    ])
+                      ChoiceChip(
+                        label: Text(label),
+                        selected: _paymentFilter == value,
+                        onSelected: (_) =>
+                            setState(() => _paymentFilter = value),
+                        selectedColor: AppColors.teal.withValues(alpha: 0.15),
+                        checkmarkColor: AppColors.teal,
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 16),
                 if (terms.isEmpty)
@@ -398,10 +482,8 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
                   ),
               ],
             );
-          },
-        );
-      },
-    );
+      }
+    }
   }
 }
 
@@ -409,6 +491,7 @@ class _VoucherCard extends StatelessWidget {
   const _VoucherCard({
     required this.term,
     required this.studentName,
+    required this.payment,
     required this.statusColor,
     required this.displayDate,
     required this.onEdit,
@@ -417,6 +500,7 @@ class _VoucherCard extends StatelessWidget {
 
   final StudentClassTerm term;
   final String studentName;
+  final (String, Color) payment;
   final Color statusColor;
   final String Function(String) displayDate;
   final VoidCallback onEdit;
@@ -488,9 +572,16 @@ class _VoucherCard extends StatelessWidget {
                   ],
                 ),
               ),
-              StatusPill(
-                label: term.voucherStatusLabel,
-                color: statusColor,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  StatusPill(
+                    label: term.voucherStatusLabel,
+                    color: statusColor,
+                  ),
+                  const SizedBox(height: 6),
+                  StatusPill(label: payment.$1, color: payment.$2),
+                ],
               ),
             ],
           ),

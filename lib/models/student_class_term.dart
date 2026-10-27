@@ -15,6 +15,7 @@ class StudentClassTerm {
     this.voucherCode,
     this.purchasedAt,
     this.createdAt,
+    this.sourceInvoiceId,
   });
 
   final String id;
@@ -32,6 +33,12 @@ class StudentClassTerm {
   final String? voucherCode;
   final DateTime? purchasedAt;
   final DateTime? createdAt;
+
+  /// The invoice this voucher was paid (or is to be paid) with. Null on
+  /// vouchers from before payments were linked.
+  final String? sourceInvoiceId;
+
+  bool get hasPayment => (sourceInvoiceId ?? '').isNotEmpty;
 
   bool get isActive =>
       status == StudentClassTerm.statusActive && sessionsRemaining > 0;
@@ -83,6 +90,7 @@ class StudentClassTerm {
       voucherCode: data['voucherCode'] as String?,
       purchasedAt: (data['purchasedAt'] as Timestamp?)?.toDate(),
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
+      sourceInvoiceId: data['sourceInvoiceId'] as String?,
     );
   }
 
@@ -98,6 +106,8 @@ class StudentClassTerm {
         if (notes != null && notes!.isNotEmpty) 'notes': notes,
         if (voucherCode != null && voucherCode!.isNotEmpty)
           'voucherCode': voucherCode,
+        if (sourceInvoiceId != null && sourceInvoiceId!.isNotEmpty)
+          'sourceInvoiceId': sourceInvoiceId,
         'purchasedAt': purchasedAt != null
             ? Timestamp.fromDate(purchasedAt!)
             : FieldValue.serverTimestamp(),

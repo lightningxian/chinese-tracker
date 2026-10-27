@@ -153,8 +153,11 @@ Update this section when you push from Mac or PC.
 - Question bank is scanner-first (Scan worksheet → check list → add); quiz
   editor can scan a worksheet too; Reports tab tidied into sections with
   uniform tiles. Details in CHANGELOG.
-- Open decision for the owner: payments ↔ vouchers link and a Price list tab
-  (asked in chat; not built yet).
+- Payments ↔ vouchers linked (owner's answers: admin records cash/transfer;
+  teachers may add a term but a pending invoice is created for the admin;
+  old vouchers without payment are flagged on the dashboard). New Price list
+  tab (`settings/pricing.items`). New callable `markInvoicePaid`. Details in
+  CHANGELOG. Needs functions + rules + hosting deploy.
 
 ### 2026-10-27 (later) — Claude: calendar, Levels, 8 reports
 

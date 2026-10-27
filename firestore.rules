@@ -227,9 +227,19 @@ service cloud.firestore {
         resource.data.get('studentId', '') == request.auth.uid ||
         isParentOf(resource.data.get('studentId', ''))
       );
-      // Creation goes through the createInvoice callable (admin SDK) so the
-      // Snap token + order id are set atomically; direct client writes are off.
-      allow create, update, delete: if false;
+      // Online invoices are created by the createInvoice callable (admin SDK)
+      // so the Snap token + order id are set atomically. Staff may record a
+      // pending cash/transfer invoice directly; settling it is server-side
+      // (markInvoicePaid callable), so update stays closed to clients.
+      allow create: if isStaff() &&
+        request.resource.data.get('status', '') == 'pending' &&
+        request.resource.data.get('paymentMethod', '') == 'manual' &&
+        request.resource.data.get('createdBy', '') == request.auth.uid &&
+        request.resource.data.get('studentId', '') is string &&
+        request.resource.data.get('amount', 0) is int &&
+        request.resource.data.amount > 0;
+      allow update: if false;
+      allow delete: if isAdmin() && resource.data.get('status', '') == 'pending';
     }
 
     match /grades/{gradeId} {
@@ -343,7 +353,8 @@ service cloud.firestore {
       );
       allow create: if isStaff() &&
         request.resource.data.get('studentId', '') is string &&
-        request.resource.data.get('packageSize', 0) in [8, 16] &&
+        request.resource.data.get('packageSize', 0) is int &&
+        request.resource.data.packageSize > 0 &&
         request.resource.data.get('sessionsRemaining', 0) == request.resource.data.packageSize &&
         request.resource.data.get('startDate', '') is string &&
         request.resource.data.get('deadlineDate', '') is string;

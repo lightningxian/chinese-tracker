@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
@@ -13,6 +14,7 @@ import '../../models/app_user.dart';
 import '../../models/invoice.dart';
 import '../../models/pricing_settings.dart';
 import '../../models/org_settings.dart';
+import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/payment_service.dart';
 
@@ -100,6 +102,12 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
                   ),
                 ),
               ),
+              OutlinedButton.icon(
+                onPressed: () => context.push('/admin/price-list'),
+                icon: const Icon(Icons.sell_outlined, size: 18),
+                label: const Text('Price list'),
+              ),
+              const SizedBox(width: 8),
               FilledButton.icon(
                 onPressed: () => _openCreateInvoice(context),
                 style: FilledButton.styleFrom(backgroundColor: AppColors.navy),
@@ -143,8 +151,12 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
                     sortColumnId: _sortColumnId,
                     sortAscending: _sortAscending,
                     onSort: _onSort,
-                    mobileCardBuilder: (invoice) =>
-                        InvoiceCard(invoice: invoice),
+                    mobileCardBuilder: (invoice) => InvoiceCard(
+                      invoice: invoice,
+                      onRecordPayment: invoice.isPending
+                          ? () => _recordPayment(context, invoice)
+                          : null,
+                    ),
                   ),
                 ],
               );
@@ -195,9 +207,9 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
       ),
       AppTableColumn<Invoice>(
         id: 'package',
-        label: 'Package',
+        label: 'Item',
         sortable: true,
-        width: 110,
+        width: 150,
         cell: (invoice) => Text(
           invoice.itemLabel,
           maxLines: 1,
@@ -230,21 +242,128 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
         ),
       ),
       AppTableColumn<Invoice>(
+        id: 'method',
+        label: 'Method',
+        width: 100,
+        cell: (invoice) => Text(
+          invoice.methodLabel,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: metaStyle,
+        ),
+      ),
+      AppTableColumn<Invoice>(
         id: 'status',
         label: 'Status',
         sortable: true,
         width: 96,
         cell: (invoice) => StatusPill(
-          label: invoice.status.label,
+          label: invoice.isOverdue ? 'Overdue' : invoice.status.label,
           color: switch (invoice.status) {
             InvoiceStatus.paid => AppColors.success,
-            InvoiceStatus.pending => AppColors.brandYellow,
+            InvoiceStatus.pending =>
+              invoice.isOverdue ? AppColors.error : AppColors.brandYellow,
             InvoiceStatus.failed => AppColors.error,
             InvoiceStatus.expired => AppColors.textSecondary,
           },
         ),
       ),
+      AppTableColumn<Invoice>(
+        id: 'actions',
+        label: '',
+        width: 56,
+        alignment: Alignment.centerRight,
+        cell: (invoice) => invoice.isPending
+            ? PopupMenuButton<String>(
+                tooltip: 'Actions',
+                icon: const Icon(Icons.more_vert, size: 20),
+                onSelected: (action) {
+                  switch (action) {
+                    case 'paid':
+                      _recordPayment(context, invoice);
+                    case 'delete':
+                      _deleteInvoice(context, invoice);
+                  }
+                },
+                itemBuilder: (_) => [
+                  const PopupMenuItem(
+                    value: 'paid',
+                    child: Text('Mark as paid (cash / transfer)'),
+                  ),
+                  if (!invoice.isOnline)
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Text('Delete pending invoice'),
+                    ),
+                ],
+              )
+            : const SizedBox.shrink(),
+      ),
     ];
+  }
+
+  /// Admin records money received by hand. The server flips the invoice to
+  /// paid and credits the sessions or marks the linked voucher paid.
+  Future<void> _recordPayment(BuildContext context, Invoice invoice) async {
+    final result = await showDialog<({String method, String note})>(
+      context: context,
+      builder: (_) => _RecordPaymentDialog(invoice: invoice),
+    );
+    if (result == null || !context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await context.read<PaymentService>().markInvoicePaid(
+            invoiceId: invoice.id,
+            method: result.method,
+            note: result.note,
+          );
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            'Recorded: ${invoice.studentName ?? 'student'} paid '
+            '${invoice.itemLabel} by ${result.method}.',
+          ),
+        ),
+      );
+    } on PaymentException catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(e.message), backgroundColor: AppColors.error),
+      );
+    }
+  }
+
+  Future<void> _deleteInvoice(BuildContext context, Invoice invoice) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete this pending invoice?'),
+        content: Text(
+          '${invoice.invoiceNumber} · ${invoice.itemLabel} for '
+          '${invoice.studentName ?? invoice.studentId}. A voucher linked to it '
+          'will show "No payment" again.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    try {
+      await context.read<FirestoreService>().deleteInvoice(invoice.id);
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not delete: $e')),
+      );
+    }
   }
 
   Future<void> _openCreateInvoice(BuildContext context) async {
@@ -258,10 +377,20 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
 }
 
 class InvoiceCard extends StatelessWidget {
-  const InvoiceCard({super.key, required this.invoice, this.onPay});
+  const InvoiceCard({
+    super.key,
+    required this.invoice,
+    this.onPay,
+    this.onRecordPayment,
+  });
 
   final Invoice invoice;
+
+  /// Student side: open the online payment page (only when a link exists).
   final VoidCallback? onPay;
+
+  /// Admin side: record a cash / transfer payment.
+  final VoidCallback? onRecordPayment;
 
   @override
   Widget build(BuildContext context) {
@@ -299,13 +428,14 @@ class InvoiceCard extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             'Invoice ${invoice.invoiceNumber}'
-            '${invoice.dueDate.isNotEmpty ? ' · due ${invoice.dueDate}' : ''}',
+            '${invoice.dueDate.isNotEmpty ? ' · due ${invoice.dueDate}' : ''}'
+            ' · ${invoice.methodLabel}',
             style: const TextStyle(
               color: AppColors.textSecondary,
               fontSize: 12,
             ),
           ),
-          if (onPay != null && invoice.isPayable) ...[
+          if (onPay != null && invoice.isPayable && invoice.isOnline) ...[
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
@@ -314,6 +444,24 @@ class InvoiceCard extends StatelessWidget {
                 style: FilledButton.styleFrom(backgroundColor: AppColors.teal),
                 icon: const Icon(Icons.payment, size: 18),
                 label: const Text('Pay now'),
+              ),
+            ),
+          ] else if (onPay != null && invoice.isPayable) ...[
+            const SizedBox(height: 10),
+            const Text(
+              'Pay at the centre by cash or bank transfer. The admin marks it '
+              'paid and your sessions are added.',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
+            ),
+          ],
+          if (onRecordPayment != null && invoice.isPending) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: onRecordPayment,
+                icon: const Icon(Icons.price_check, size: 18),
+                label: const Text('Mark as paid'),
               ),
             ),
           ],
@@ -392,10 +540,16 @@ class _CreateInvoiceSheet extends StatefulWidget {
 
 class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
   AppUser? _student;
-  int _packageSize = AppConstants.termSizes.first;
   PricingSettings _pricing = PricingSettings.defaults;
-  late int _amount = _pricing.priceForPackage(_packageSize);
+  PriceItem? _item;
   StreamSubscription<PricingSettings>? _pricingSub;
+
+  /// false = paid at the centre (cash / transfer, admin marks it paid later);
+  /// true = online payment link (Midtrans).
+  bool _online = false;
+  DateTime _dueDate = DateTime.now().add(const Duration(days: 7));
+  bool _loading = false;
+  String? _error;
 
   @override
   void initState() {
@@ -404,7 +558,8 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
       if (!mounted) return;
       setState(() {
         _pricing = p;
-        _amount = _packageSize == 0 ? p.book : p.priceForPackage(_packageSize);
+        _item = p.itemById(_item?.id) ??
+            (p.items.isNotEmpty ? p.sessionItems.firstOrNull ?? p.items.first : null);
       });
     });
   }
@@ -414,10 +569,6 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
     _pricingSub?.cancel();
     super.dispose();
   }
-
-  DateTime _dueDate = DateTime.now().add(const Duration(days: 7));
-  bool _loading = false;
-  String? _error;
 
   @override
   Widget build(BuildContext context) {
@@ -484,46 +635,69 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
               },
             ),
             const SizedBox(height: 16),
-            DropdownButtonFormField<int>(
-              initialValue: _packageSize,
+            DropdownButtonFormField<String>(
+              initialValue: _item?.id,
+              isExpanded: true,
               decoration: const InputDecoration(
-                labelText: 'Package',
-                prefixIcon: Icon(Icons.card_membership_outlined),
+                labelText: 'Item (from the Price list)',
+                prefixIcon: Icon(Icons.sell_outlined),
               ),
               items: [
-                for (final size in AppConstants.termSizes)
+                for (final it in _pricing.items)
                   DropdownMenuItem(
-                    value: size,
-                    child: Text(
-                      '$size sessions · '
-                      '${currency.format(_pricing.priceForPackage(size))}',
-                    ),
+                    value: it.id,
+                    child: Text('${it.name} · ${currency.format(it.price)}'),
                   ),
-                // 0 = book / materials item: no sessions are credited.
-                DropdownMenuItem(
-                  value: 0,
-                  child: Text(
-                    '${AppConstants.bookItemLabel} · '
-                    '${currency.format(_pricing.book)}',
-                  ),
+              ],
+              onChanged: (id) => setState(() => _item = _pricing.itemById(id)),
+            ),
+            if (_item != null) ...[
+              const SizedBox(height: 6),
+              Text(
+                'Gives ${_item!.givesLabel}. '
+                '${_item!.creditsSessions ? 'A voucher is opened when this is paid.' : ''}',
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 12.5,
+                ),
+              ),
+            ],
+            const SizedBox(height: 16),
+            SegmentedButton<bool>(
+              segments: const [
+                ButtonSegment(
+                  value: false,
+                  icon: Icon(Icons.storefront_outlined, size: 18),
+                  label: Text('Cash / transfer'),
+                ),
+                ButtonSegment(
+                  value: true,
+                  icon: Icon(Icons.link, size: 18),
+                  label: Text('Online link'),
                 ),
               ],
-              onChanged: (v) => setState(() {
-                _packageSize = v ?? _packageSize;
-                _amount = _packageSize == 0
-                    ? _pricing.book
-                    : _pricing.priceForPackage(_packageSize);
-              }),
+              selected: {_online},
+              onSelectionChanged: (v) => setState(() => _online = v.first),
             ),
-            const SizedBox(height: 16),
-            InputDecorator(
-              decoration: const InputDecoration(
-                labelText: 'Amount (IDR)',
-                prefixIcon: Icon(Icons.payments_outlined),
-                helperText: 'Set by the item chosen (server-authoritative)',
+            const SizedBox(height: 6),
+            Text(
+              _online
+                  ? 'The student gets a Midtrans payment link; the sessions '
+                      'are added automatically when they pay.'
+                  : 'Recorded as pending. When the money arrives, open the '
+                      'invoice menu and choose Mark as paid.',
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12.5,
               ),
-              child: Text('Rp $_amount'),
             ),
+            if (_online && !AppConstants.hasMidtransClientKey) ...[
+              const SizedBox(height: 8),
+              const _InfoBanner(
+                text: 'Online payments need Midtrans keys and the Cloud '
+                    'Functions deployed.',
+              ),
+            ],
             const SizedBox(height: 16),
             ListTile(
               contentPadding: EdgeInsets.zero,
@@ -548,7 +722,11 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('Create invoice'),
+                  : Text(
+                      _item == null
+                          ? 'Create invoice'
+                          : 'Create invoice · ${currency.format(_item!.price)}',
+                    ),
             ),
           ],
         ),
@@ -567,32 +745,45 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
   }
 
   Future<void> _submit() async {
-    if (_student == null) {
+    final student = _student;
+    final item = _item;
+    if (student == null) {
       setState(() => _error = 'Choose a student.');
       return;
     }
-    if (_amount <= 0) {
-      setState(() => _error = 'Enter a valid amount.');
+    if (item == null) {
+      setState(() => _error = 'Choose an item from the Price list.');
       return;
     }
+    final uid = context.read<AuthService>().appUser?.uid;
+    if (uid == null) return;
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
-      await context.read<PaymentService>().createInvoice(
-            studentId: _student!.uid,
-            packageSize: _packageSize,
-            item: _packageSize == 0 ? AppConstants.bookItem : 'package',
-            amount: _amount,
-            dueDate: DateFormat('yyyy-MM-dd').format(_dueDate),
-          );
+      if (_online) {
+        await context.read<PaymentService>().createInvoice(
+              studentId: student.uid,
+              priceItemId: item.id,
+              dueDate: DateFormat('yyyy-MM-dd').format(_dueDate),
+            );
+      } else {
+        await context.read<FirestoreService>().createManualInvoice(
+              student: student,
+              item: item,
+              createdBy: uid,
+              dueDate: _dueDate,
+            );
+      }
       if (!mounted) return;
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content:
-              Text('Invoice created for ${_student!.displayNameIndonesian}'),
+          content: Text(
+            'Invoice created for ${student.displayNameIndonesian}'
+            '${_online ? '' : ' · pending until you mark it paid'}',
+          ),
         ),
       );
     } on PaymentException catch (e) {
@@ -602,5 +793,95 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+}
+
+/// "Mark as paid": how the money came in, plus an optional note.
+class _RecordPaymentDialog extends StatefulWidget {
+  const _RecordPaymentDialog({required this.invoice});
+
+  final Invoice invoice;
+
+  @override
+  State<_RecordPaymentDialog> createState() => _RecordPaymentDialogState();
+}
+
+class _RecordPaymentDialogState extends State<_RecordPaymentDialog> {
+  String _method = 'cash';
+  final _note = TextEditingController();
+
+  @override
+  void dispose() {
+    _note.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final inv = widget.invoice;
+    final currency = NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    );
+    return AlertDialog(
+      title: const Text('Mark as paid'),
+      content: SizedBox(
+        width: 420,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              '${inv.studentName ?? inv.studentId} · ${inv.itemLabel} · '
+              '${currency.format(inv.amount)}',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 14),
+            SegmentedButton<String>(
+              segments: const [
+                ButtonSegment(value: 'cash', label: Text('Cash')),
+                ButtonSegment(value: 'transfer', label: Text('Bank transfer')),
+              ],
+              selected: {_method},
+              onSelectionChanged: (v) => setState(() => _method = v.first),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: _note,
+              decoration: const InputDecoration(
+                labelText: 'Note (optional)',
+                hintText: 'e.g. BCA transfer 27 Oct',
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              inv.creditsSessions
+                  ? (inv.classTermId != null
+                      ? 'The linked voucher is marked paid.'
+                      : 'A ${inv.sessions}-session voucher is opened for the student.')
+                  : 'No sessions are added for this item.',
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12.5,
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(
+            context,
+            (method: _method, note: _note.text.trim()),
+          ),
+          child: const Text('Confirm payment'),
+        ),
+      ],
+    );
   }
 }

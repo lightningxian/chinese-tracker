@@ -20,6 +20,7 @@ abstract final class ShellRouteUtils {
     if (location.contains('/levels')) return 2;
     if (location.contains('/session')) return 3;
     if (location.contains('/vouchers')) return 4;
+    if (location.contains('/price-list')) return 5;
     return null;
   }
 
@@ -70,6 +71,7 @@ abstract final class ShellRouteUtils {
     }
     if (location.contains('/quizzes')) return 'Quizzes';
     if (location.endsWith('/settings')) return 'Settings';
+    if (location.endsWith('/price-list')) return 'Price list';
     if (location.endsWith('/audit-logs')) return 'Audit logs';
     if (location.endsWith('/materials')) return 'Materials';
     return 'Admin';

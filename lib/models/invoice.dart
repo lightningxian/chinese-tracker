@@ -51,7 +51,18 @@ class Invoice {
     this.createdBy,
     this.createdAt,
     this.paidAt,
-  });
+    this.priceItemId,
+    String? kind,
+    int? sessions,
+    this.description,
+    String? paymentMethod,
+    this.classTermId,
+    this.paidBy,
+    this.note,
+  })  : kind = kind ?? (item == 'book' ? 'book' : 'sessions'),
+        sessions = sessions ?? packageSize,
+        paymentMethod =
+            paymentMethod ?? (midtransOrderId != null ? 'midtrans' : 'manual');
 
   final String id;
   final String invoiceNumber;
@@ -74,11 +85,50 @@ class Invoice {
   final DateTime? createdAt;
   final DateTime? paidAt;
 
+  /// Row of the admin Price list this invoice was made from.
+  final String? priceItemId;
+
+  /// What paying gives: `sessions`, `book`, `registration` or `other`.
+  final String kind;
+
+  /// Sessions credited on payment (0 for book / registration / other).
+  final int sessions;
+  final String? description;
+
+  /// `midtrans` (online link), `manual` (recorded by staff, unpaid),
+  /// `cash` or `transfer` (settled by hand by an admin).
+  final String paymentMethod;
+
+  /// Set when the invoice pays for a term that already exists (a teacher
+  /// added the term first); payment then marks that term paid instead of
+  /// creating a new one.
+  final String? classTermId;
+  final String? paidBy;
+  final String? note;
+
+  bool get creditsSessions => kind == 'sessions' && sessions > 0;
+  bool get isOnline => (redirectUrl ?? '').isNotEmpty;
+  bool get isOverdue =>
+      isPending &&
+      dueDate.isNotEmpty &&
+      (DateTime.tryParse(dueDate)?.isBefore(DateTime.now()) ?? false);
+
+  String get methodLabel => switch (paymentMethod) {
+        'midtrans' => 'Online',
+        'cash' => 'Cash',
+        'transfer' => 'Transfer',
+        _ => isPending ? 'At the centre' : 'Manual',
+      };
+
   bool get isBook => item == 'book';
 
   /// What the invoice is for, for lists and cards.
-  String get itemLabel =>
-      isBook ? 'HSK materials & book' : '$packageSize sessions';
+  String get itemLabel {
+    if (description != null && description!.isNotEmpty) return description!;
+    if (isBook) return 'HSK materials & book';
+    if (creditsSessions) return '$sessions sessions';
+    return kind;
+  }
 
   bool get isPending => status == InvoiceStatus.pending;
   bool get isPaid => status == InvoiceStatus.paid;
@@ -112,6 +162,14 @@ class Invoice {
       createdBy: data['createdBy'] as String?,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
       paidAt: (data['paidAt'] as Timestamp?)?.toDate(),
+      priceItemId: data['priceItemId'] as String?,
+      kind: data['kind'] as String?,
+      sessions: (data['sessions'] as num?)?.toInt(),
+      description: data['description'] as String?,
+      paymentMethod: data['paymentMethod'] as String?,
+      classTermId: data['classTermId'] as String?,
+      paidBy: data['paidBy'] as String?,
+      note: data['note'] as String?,
     );
   }
 }

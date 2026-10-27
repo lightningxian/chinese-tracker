@@ -20,6 +20,7 @@ import '../../features/admin/admin_edit_user_screen.dart';
 import '../../features/admin/admin_voucher_form_screen.dart';
 import '../../features/admin/admin_shell.dart';
 import '../../features/admin/audit_logs_screen.dart';
+import '../../features/admin/admin_price_list_screen.dart';
 import '../../features/admin/org_settings_screen.dart';
 import '../../features/calendar/class_calendar_screen.dart';
 import '../../features/grades/transcript_view.dart';
@@ -291,6 +292,11 @@ class AppRouter {
                 GoRoute(
                   path: 'settings',
                   builder: (_, __) => const OrgSettingsScreen(embedded: true),
+                ),
+                GoRoute(
+                  path: 'price-list',
+                  builder: (_, __) =>
+                      const AdminPriceListScreen(embedded: true),
                 ),
                 GoRoute(
                   path: 'audit-logs',

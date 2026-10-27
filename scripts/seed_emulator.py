@@ -232,6 +232,8 @@ def main():
     for k, (status, u) in enumerate([("pending", student_uids[0]), ("paid", student_uids[1]), ("expired", student_uids[2])]):
         put("invoices", f"inv_{k + 1}", {"invoiceNumber": f"ES-INV-17920000{k}-DEMO", "studentId": u,
             "studentName": student_names[k], "teacherId": t0, "packageSize": 8, "amount": 2450000,
+            "item": "package", "description": "8 class sessions", "priceItemId": "package8", "kind": "sessions",
+            "sessions": 8, "paymentMethod": "midtrans",
             "currency": "IDR", "status": status, "dueDate": ymd(7), "midtransOrderId": f"ES-INV-17920000{k}-DEMO",
             "createdBy": admin_uid, "createdAt": ts(-10 - k),
             **({"paidAt": ts(-9)} if status == "paid" else {})})
@@ -243,8 +245,15 @@ def main():
     put("notifications", "n_2", {"kind": "grading", "title": "Practice submitted",
         "body": f"{student_names[0]} scored 100% on HSK 1 Reading.", "forRole": "teacher", "userId": t0,
         "read": False, "createdAt": ts(-2, 18), "targetRoute": "/teacher"})
-    put("settings", "pricing", {"package8": 2450000, "package16": 3950000, "book": 250000,
-        "registration": 100000, "termValidDays": 60, "updatedAt": created, "updatedBy": admin_uid})
+    put("settings", "pricing", {
+        "items": [
+            {"id": "registration", "name": "Registration (one-time)", "price": 100000, "kind": "registration", "sessions": 0},
+            {"id": "package8", "name": "8 class sessions", "price": 2450000, "kind": "sessions", "sessions": 8},
+            {"id": "package16", "name": "16 class sessions", "price": 3950000, "kind": "sessions", "sessions": 16},
+            {"id": "book", "name": "HSK materials & book", "price": 250000, "kind": "book", "sessions": 0},
+        ],
+        "package8": 2450000, "package16": 3950000, "book": 250000, "registration": 100000,
+        "termValidDays": 60, "updatedAt": ts(-20)})
     put("settings", "org", {"enablePayments": True, "allowTeacherReschedule": True,
         "evaluationFormsOpen": True, "requireEmailVerification": False,
         "autoGenerateStaffPasswords": False, "updatedAt": created, "updatedBy": admin_uid})

@@ -1106,9 +1106,10 @@ class FirestoreService {
     required DateTime startDate,
     required DateTime deadlineDate,
     String? notes,
+    String? sourceInvoiceId,
   }) async {
-    if (!AppConstants.termSizes.contains(packageSize)) {
-      throw ArgumentError('packageSize must be 8 or 16');
+    if (packageSize <= 0) {
+      throw ArgumentError('packageSize must be at least 1');
     }
     if (deadlineDate.isBefore(startDate)) {
       throw ArgumentError('Deadline must be on or after the start date.');
@@ -1129,11 +1130,66 @@ class FirestoreService {
       'createdBy': createdByTeacherId,
       'voucherCode': voucherCode,
       if (notes != null && notes.trim().isNotEmpty) 'notes': notes.trim(),
+      if (sourceInvoiceId != null && sourceInvoiceId.isNotEmpty)
+        'sourceInvoiceId': sourceInvoiceId,
       'purchasedAt': FieldValue.serverTimestamp(),
       'createdAt': FieldValue.serverTimestamp(),
     });
     return doc.id;
   }
+
+  /// Links an existing term to the invoice that pays for it.
+  Future<void> linkClassTermToInvoice({
+    required String termId,
+    required String invoiceId,
+  }) =>
+      _db
+          .collection(AppConstants.studentClassTermsCollection)
+          .doc(termId)
+          .update({'sourceInvoiceId': invoiceId});
+
+  /// Pending invoice recorded by staff for a payment made at the centre
+  /// (cash or bank transfer). An admin settles it with
+  /// `PaymentService.markInvoicePaid`, which credits the sessions
+  /// server-side. [classTermId] links it to a term that already exists.
+  Future<String> createManualInvoice({
+    required AppUser student,
+    required PriceItem item,
+    required String createdBy,
+    required DateTime dueDate,
+    String? classTermId,
+  }) async {
+    final now = DateTime.now();
+    final number =
+        'ES-INV-${now.millisecondsSinceEpoch}-M${now.microsecond % 1000}';
+    final doc = await _db.collection(AppConstants.invoicesCollection).add({
+      'invoiceNumber': number,
+      'studentId': student.uid,
+      'studentName': student.displayNameIndonesian,
+      'teacherId': student.teacherId ?? createdBy,
+      'item': item.kind == PriceKind.book ? AppConstants.bookItem : 'package',
+      'description': item.name,
+      'packageSize': item.sessions,
+      'priceItemId': item.id,
+      'kind': item.kind.value,
+      'sessions': item.sessions,
+      'amount': item.price,
+      'currency': 'IDR',
+      'status': InvoiceStatus.pending.value,
+      'paymentMethod': 'manual',
+      'dueDate': sessionDateKey(dueDate),
+      if (classTermId != null && classTermId.isNotEmpty)
+        'classTermId': classTermId,
+      'createdBy': createdBy,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+    return doc.id;
+  }
+
+  /// Admin removes a pending invoice recorded by mistake (rules refuse
+  /// anything that is not pending).
+  Future<void> deleteInvoice(String invoiceId) =>
+      _db.collection(AppConstants.invoicesCollection).doc(invoiceId).delete();
 
   Future<String> _generateVoucherCode() async {
     final now = DateTime.now();
