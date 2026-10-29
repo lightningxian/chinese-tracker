@@ -6,6 +6,39 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-10-29 — Claude: exercise form is upload-only; site address easystudy.web.app
+
+**What changed**
+- **Exercise form**: no blank question to type into and no **Add question**
+  button. Questions come from **Import from worksheet** (scanner) or **From
+  bank**; imported questions stay editable so OCR mistakes can be fixed.
+  The matching / fill-in-the-blank editor keeps its **Add prompt** for a
+  missed line.
+- **Hosting**: `firebase.json` now deploys two sites: the app to the
+  **easystudy** site (https://easystudy.web.app) and a one-page redirect
+  (`hosting/redirect/`) to the old **chinese-tracker** site, so the old
+  address keeps working (301 for every path, APK link included).
+  `scripts/deploy_web.sh` and the docs point at the new address.
+  The site has to exist first: `firebase hosting:sites:create easystudy
+  --project chinese-tracker` (site ids are global; if taken, pick another
+  and change the two `site` values + the redirect targets).
+  After the first deploy, check Authentication → Settings → Authorized
+  domains contains `easystudy.web.app`; add it if sign-in says
+  `auth/unauthorized-domain`.
+- Owner's sample worksheets (`CONTOH LATIHAN SOAL.zip`, 10 PDFs) were run
+  through the app's PDF reader + scanner; recognition results and the forms
+  to build are listed in `docs/WORKSHEET_FORMS.md` (pending the owner's
+  confirmation before implementation).
+
+**Why**
+- Owner: "new questions only by upload", "change the web.app name to
+  easystudy.web.app", "check this zip and list what you recognise".
+
+**For review**
+- Hosting deploy only (after creating the site). No rules or functions.
+
+---
+
 ## 2026-10-27 — Claude: Cloud Functions on Node 22
 
 **What changed**

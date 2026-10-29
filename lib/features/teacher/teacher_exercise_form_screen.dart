@@ -218,19 +218,9 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
     _ensureAtLeastOneQuestion();
   }
 
-  void _ensureAtLeastOneQuestion() {
-    if (_type == ExerciseType.composeSentences) {
-      if (_composeQuestions.isEmpty) {
-        _composeQuestions.add(_ComposeQuestionDraft());
-      }
-    } else if (_usesBank(_type)) {
-      if (_matchingQuestions.isEmpty) {
-        _matchingQuestions.add(MatchingQuestionDraft());
-      }
-    } else if (_mcQuestions.isEmpty) {
-      _mcQuestions.add(_McQuestionDraft());
-    }
-  }
+  /// Questions come from the worksheet scanner (or the bank); the form never
+  /// starts with a blank question to type into.
+  void _ensureAtLeastOneQuestion() {}
 
   void _clearAllQuestionDrafts() {
     for (final q in _mcQuestions) {
@@ -965,20 +955,24 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
                 icon: const Icon(Icons.inventory_2_outlined, size: 18),
                 label: const Text('From bank'),
               ),
-              const SizedBox(width: 4),
-              TextButton.icon(
-                onPressed: _addQuestion,
-                icon: const Icon(Icons.add, size: 18),
-                label: Text(
-                  _type == ExerciseType.composeSentences
-                      ? 'Add sentence'
-                      : 'Add question',
-                ),
-              ),
             ],
           ),
           const SizedBox(height: 12),
-          if (_usesBank(_type))
+          if (questionCount == 0 && !_usesBank(_type))
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Text(
+                'No questions yet. Upload a worksheet (Import from worksheet) '
+                'and the scanner fills this list; you can then correct any '
+                'question before publishing. "From bank" adds questions that '
+                'were scanned earlier.',
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  height: 1.4,
+                ),
+              ),
+            )
+          else if (_usesBank(_type))
             MatchingExerciseEditor(
               optionControllers: _matchingOptionControllers,
               questions: _matchingQuestions,

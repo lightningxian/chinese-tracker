@@ -8,7 +8,7 @@ Chat history does **not** sync between Mac and PC. This file + git history do.
 `docs/CLAUDE_FULL_HANDOFF.md`
 
 Repo: https://github.com/lightningxian/chinese-tracker (private)  
-Live site: https://chinese-tracker.web.app  
+Live site: https://easystudy.web.app (chinese-tracker.web.app redirects)  
 Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkarimunwkk@gmail.com>`
 
 ---
@@ -147,6 +147,14 @@ Commit author preference (via env vars, not global git config):
 ## Session log (newest first)
 
 Update this section when you push from Mac or PC.
+
+### 2026-10-29 — Claude: upload-only exercise form, easystudy.web.app, sample worksheets
+
+- Exercise form has no manual question entry (scanner or bank only).
+- Hosting moved to the `easystudy` site with a redirect from the old one
+  (owner creates the site, then deploys).
+- Owner's 10 sample worksheets analysed; forms to build listed in
+  `docs/WORKSHEET_FORMS.md`, waiting for the owner's confirmation.
 
 ### 2026-10-27 (evening) — Claude: owner's second review
 
