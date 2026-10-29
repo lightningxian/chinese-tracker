@@ -409,9 +409,14 @@ class _WorksheetImportReviewScreenState
       );
     }
     final question = _parsed.mcQuestions[index];
-    final optionPreview = question.options.isEmpty
-        ? '(add options)'
-        : question.options.take(3).join(' · ');
+    final optionPreview = switch (_selectedType) {
+      ExerciseType.typeHanzi =>
+        'pinyin: ${question.keyword} → ${question.options.isEmpty ? '(type the hanzi in the editor)' : question.options.join(' / ')}',
+      ExerciseType.pictureSentence => 'keyword: ${question.keyword}',
+      _ => question.options.isEmpty
+          ? '(add options)'
+          : question.options.take(3).join(' · '),
+    };
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(

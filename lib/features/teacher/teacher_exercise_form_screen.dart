@@ -19,6 +19,7 @@ import '../../models/exercise_type.dart';
 import '../../models/worksheet_import_stage.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
+import '../../services/question_bank_media_service.dart';
 import '../../services/worksheet_import_service.dart';
 import '../question_bank/question_bank_screen.dart';
 import 'widgets/matching_exercise_editor.dart';
@@ -51,8 +52,10 @@ class _McQuestionDraft {
     this.correctIndex = 0,
   })  : promptController = TextEditingController(text: prompt),
         optionControllers = List.generate(
-          4,
-          (i) => TextEditingController(text: options?[i] ?? ''),
+          (options?.length ?? 0) > 4 ? options!.length : 4,
+          (i) => TextEditingController(
+            text: i < (options?.length ?? 0) ? options![i] : '',
+          ),
         );
 
   final TextEditingController promptController;
@@ -79,6 +82,50 @@ class _McQuestionDraft {
       options: options,
       correctIndex: index,
     );
+  }
+}
+
+/// "Type the hanzi" (sentence with （ ）, pinyin hint, accepted answers)
+/// and picture sentences (keyword, optional picture).
+class _TypedQuestionDraft {
+  _TypedQuestionDraft({
+    String prompt = '',
+    String keyword = '',
+    List<String> answers = const [],
+    this.imageUrl = '',
+  })  : promptController = TextEditingController(text: prompt),
+        keywordController = TextEditingController(text: keyword),
+        answersController = TextEditingController(text: answers.join(', '));
+
+  final TextEditingController promptController;
+  final TextEditingController keywordController;
+  final TextEditingController answersController;
+  String imageUrl;
+
+  void dispose() {
+    promptController.dispose();
+    keywordController.dispose();
+    answersController.dispose();
+  }
+
+  ExerciseQuestion? toQuestion(ExerciseType type) {
+    final prompt = promptController.text.trim();
+    final keyword = keywordController.text.trim();
+    if (type == ExerciseType.pictureSentence) {
+      if (keyword.isEmpty) return null;
+      return ExerciseQuestion(
+        prompt: prompt.isEmpty ? keyword : prompt,
+        keyword: keyword,
+        imageUrl: imageUrl,
+      );
+    }
+    final answers = answersController.text
+        .split(RegExp(r'[,，/、\n]'))
+        .map((a) => a.trim())
+        .where((a) => a.isNotEmpty)
+        .toList();
+    if (prompt.isEmpty || answers.isEmpty) return null;
+    return ExerciseQuestion(prompt: prompt, keyword: keyword, options: answers);
   }
 }
 
@@ -143,6 +190,10 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
   static bool _usesBank(ExerciseType type) =>
       type == ExerciseType.matching || type == ExerciseType.readingCloze;
 
+  /// Typed answers: type the hanzi, picture sentence.
+  static bool _usesTyped(ExerciseType type) =>
+      type == ExerciseType.typeHanzi || type == ExerciseType.pictureSentence;
+
   /// Types that can show a reading passage above the questions.
   static bool _hasPassage(ExerciseType type) =>
       type == ExerciseType.multipleChoice ||
@@ -156,6 +207,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
   final List<_McQuestionDraft> _mcQuestions = [];
   final List<_ComposeQuestionDraft> _composeQuestions = [];
   final List<MatchingQuestionDraft> _matchingQuestions = [];
+  final List<_TypedQuestionDraft> _typedQuestions = [];
   late List<TextEditingController> _matchingOptionControllers =
       MatchingExerciseEditor.createOptionControllers();
   ExerciseType _type = ExerciseType.multipleChoice;
@@ -189,6 +241,15 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
             MatchingQuestionDraft(
               prompt: q.prompt,
               correctIndex: q.correctIndex,
+            ),
+          );
+        } else if (_usesTyped(_type)) {
+          _typedQuestions.add(
+            _TypedQuestionDraft(
+              prompt: q.prompt,
+              keyword: q.keyword,
+              answers: q.options,
+              imageUrl: q.imageUrl,
             ),
           );
         } else {
@@ -232,9 +293,13 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
     for (final q in _matchingQuestions) {
       q.dispose();
     }
+    for (final q in _typedQuestions) {
+      q.dispose();
+    }
     _mcQuestions.clear();
     _composeQuestions.clear();
     _matchingQuestions.clear();
+    _typedQuestions.clear();
     MatchingExerciseEditor.disposeOptionControllers(_matchingOptionControllers);
     _matchingOptionControllers = MatchingExerciseEditor.createOptionControllers();
   }
@@ -251,6 +316,9 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
       q.dispose();
     }
     for (final q in _matchingQuestions) {
+      q.dispose();
+    }
+    for (final q in _typedQuestions) {
       q.dispose();
     }
     MatchingExerciseEditor.disposeOptionControllers(_matchingOptionControllers);
@@ -285,6 +353,8 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
         _composeQuestions.add(_ComposeQuestionDraft());
       } else if (_usesBank(_type)) {
         _matchingQuestions.add(MatchingQuestionDraft());
+      } else if (_usesTyped(_type)) {
+        _typedQuestions.add(_TypedQuestionDraft());
       } else {
         _mcQuestions.add(_McQuestionDraft());
       }
@@ -329,6 +399,15 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
               correctIndex: q.correctIndex,
             ),
           );
+        } else if (_usesTyped(_type)) {
+          _typedQuestions.add(
+            _TypedQuestionDraft(
+              prompt: q.prompt,
+              keyword: q.keyword,
+              answers: q.options,
+              imageUrl: q.imageUrl,
+            ),
+          );
         } else {
           final options = q.options.length >= 4
               ? q.options
@@ -360,6 +439,11 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
       setState(() {
         _matchingQuestions[index].dispose();
         _matchingQuestions.removeAt(index);
+      });
+    } else if (_usesTyped(_type)) {
+      setState(() {
+        _typedQuestions[index].dispose();
+        _typedQuestions.removeAt(index);
       });
     } else {
       if (_mcQuestions.length <= 1) return;
@@ -481,6 +565,13 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
         if (isEmpty) draft.dispose();
         return isEmpty;
       });
+    } else if (_usesTyped(_type)) {
+      _typedQuestions.removeWhere((draft) {
+        final isEmpty = draft.promptController.text.trim().isEmpty &&
+            draft.keywordController.text.trim().isEmpty;
+        if (isEmpty) draft.dispose();
+        return isEmpty;
+      });
     } else {
       _mcQuestions.removeWhere((draft) {
         final isEmpty = draft.promptController.text.trim().isEmpty &&
@@ -528,7 +619,12 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
       if (result.suggestedLevel != null) {
         _level = result.suggestedLevel!;
       }
-      _skillCategory = ExerciseSkillCategory.forExerciseType(_type);
+      _skillCategory =
+          result.suggestedSkill ?? ExerciseSkillCategory.forExerciseType(_type);
+      if (_titleController.text.trim().isEmpty &&
+          (result.suggestedTitle ?? '').isNotEmpty) {
+        _titleController.text = result.suggestedTitle!;
+      }
 
       if (_type == ExerciseType.composeSentences) {
         for (final question in result.composeQuestions) {
@@ -550,6 +646,16 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
             MatchingQuestionDraft(
               prompt: question.prompt,
               correctIndex: question.correctIndex,
+            ),
+          );
+        }
+      } else if (_usesTyped(_type)) {
+        for (final question in result.mcQuestions) {
+          _typedQuestions.add(
+            _TypedQuestionDraft(
+              prompt: question.prompt,
+              keyword: question.keyword,
+              answers: question.options,
             ),
           );
         }
@@ -608,6 +714,9 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
             : 'Add at least 2 options in the answer bank (A–B).');
         return;
       }
+    } else if (_usesTyped(_type)) {
+      builtQuestions =
+          _typedQuestions.map((q) => q.toQuestion(_type)).toList();
     } else {
       builtQuestions = _mcQuestions.map((q) => q.toQuestion()).toList();
     }
@@ -621,6 +730,9 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
             'Each prompt needs text and a correct answer letter.',
           ExerciseType.readingCloze =>
             'Each blank needs a sentence and the letter of the right word.',
+          ExerciseType.typeHanzi =>
+            'Each sentence needs at least one accepted hanzi answer.',
+          ExerciseType.pictureSentence => 'Each item needs a keyword.',
           _ =>
             'Each question needs a prompt and at least 2 answer options.',
         };
@@ -687,6 +799,8 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
           'Students pick the word for each blank from a shared word bank (A–F)',
         ExerciseType.pictureSentence =>
           'Students write a sentence using the keyword and picture',
+        ExerciseType.typeHanzi =>
+          'Students type the hanzi for the pinyin shown in the sentence',
       };
 
   @override
@@ -721,6 +835,9 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
       ExerciseType.matching ||
       ExerciseType.readingCloze =>
         _matchingQuestions.length,
+      ExerciseType.typeHanzi ||
+      ExerciseType.pictureSentence =>
+        _typedQuestions.length,
       _ => _mcQuestions.length,
     };
     final isWide = MediaQuery.sizeOf(context).width >= 900;
@@ -985,6 +1102,11 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
               questionCount,
               (index) => _buildComposeQuestionCard(index),
             )
+          else if (_usesTyped(_type))
+            ...List.generate(
+              questionCount,
+              (index) => _buildTypedQuestionCard(index),
+            )
           else
             ...List.generate(
               questionCount,
@@ -1133,7 +1255,6 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
   }
 
   Widget _buildMcQuestionCard(int index) {
-    const optionLetters = ['A', 'B', 'C', 'D'];
     final draft = _mcQuestions[index];
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -1178,7 +1299,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            ...List.generate(4, (optionIndex) {
+            ...List.generate(draft.optionControllers.length, (optionIndex) {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Row(
@@ -1186,7 +1307,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
                     SizedBox(
                       width: 28,
                       child: Text(
-                        optionLetters[optionIndex],
+                        String.fromCharCode(65 + optionIndex),
                         style: const TextStyle(
                           fontWeight: FontWeight.w700,
                           color: AppColors.navy,
@@ -1205,7 +1326,8 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
                       child: TextField(
                         controller: draft.optionControllers[optionIndex],
                         decoration: InputDecoration(
-                          hintText: 'Option ${optionLetters[optionIndex]}',
+                          hintText:
+                              'Option ${String.fromCharCode(65 + optionIndex)}',
                           border: const OutlineInputBorder(),
                           isDense: true,
                         ),
@@ -1219,6 +1341,148 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildTypedQuestionCard(int index) {
+    final draft = _typedQuestions[index];
+    final isPicture = _type == ExerciseType.pictureSentence;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.surface.withValues(alpha: 0.6),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(
+                  'Q${index + 1}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.navy,
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    color: AppColors.error,
+                    size: 20,
+                  ),
+                  onPressed: () => _removeQuestion(index),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            if (isPicture) ...[
+              TextField(
+                controller: draft.keywordController,
+                decoration: const InputDecoration(
+                  labelText: 'Keyword the sentence must use',
+                  hintText: 'e.g. 钥匙',
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  if (draft.imageUrl.isNotEmpty) ...[
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        draft.imageUrl,
+                        width: 72,
+                        height: 72,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) =>
+                            const Icon(Icons.broken_image_outlined),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                  ],
+                  OutlinedButton.icon(
+                    onPressed: () => _pickPicture(draft),
+                    icon: const Icon(Icons.image_outlined, size: 18),
+                    label: Text(
+                      draft.imageUrl.isEmpty ? 'Add picture' : 'Change picture',
+                    ),
+                  ),
+                  if (draft.imageUrl.isNotEmpty)
+                    TextButton(
+                      onPressed: () => setState(() => draft.imageUrl = ''),
+                      child: const Text('Remove'),
+                    ),
+                ],
+              ),
+            ] else ...[
+              TextField(
+                controller: draft.promptController,
+                decoration: const InputDecoration(
+                  labelText: 'Sentence with （ ） where the hanzi goes',
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: draft.keywordController,
+                      decoration: const InputDecoration(
+                        labelText: 'Pinyin hint',
+                        hintText: 'gāng',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    flex: 2,
+                    child: TextField(
+                      controller: draft.answersController,
+                      decoration: const InputDecoration(
+                        labelText: 'Accepted hanzi (comma for more than one)',
+                        hintText: '刚',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickPicture(_TypedQuestionDraft draft) async {
+    final user = context.read<AuthService>().appUser;
+    final ownerId =
+        user == null ? widget.teacherId : AppConstants.contentTeacherId(user);
+    try {
+      final url = await context
+          .read<QuestionBankMediaService>()
+          .pickAndUploadImage(ownerId);
+      if (!mounted) return;
+      setState(() => draft.imageUrl = url);
+    } on QuestionBankMediaCancelledException {
+      // nothing chosen
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not upload the picture: $e')),
+      );
+    }
   }
 
   Widget _buildComposeQuestionCard(int index) {

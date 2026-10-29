@@ -56,6 +56,8 @@ abstract final class QuestionBankImportUtils {
               difficulty: difficulty,
             ),
         ],
+      // Multiple choice, listening, type-the-hanzi (options = accepted
+      // answers, keyword = pinyin) and picture sentences (keyword).
       _ => [
           for (final q in result.mcQuestions)
             QuestionBankItem(
@@ -66,6 +68,7 @@ abstract final class QuestionBankImportUtils {
                 prompt: q.prompt,
                 options: q.options,
                 correctIndex: q.correctIndex,
+                keyword: q.keyword,
               ),
               skillCategory: skill,
               level: level,

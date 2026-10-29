@@ -6,6 +6,41 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-10-29 — Claude: scanner reads all ten of the centre's worksheet forms
+
+**What changed**
+- `lib/core/utils/worksheet_text_normalizer.dart` (+ `pinyin_syllables.dart`):
+  removes pinyin printed above the characters, re-joins the one-character
+  lines, keeps `（gāng）` hints, splits `… answers. 1. 妈妈…`, drops ➢ bullets.
+- `question_import_utils.dart` now also recognises: ★ true/false, inline
+  `A … B … C …` options and `A xxx` option lines, `46-48.` passages with
+  numbered gaps, several word lists per sheet (each blank gets its group's
+  words as choices), **type the hanzi** (pinyin hint) and **picture +
+  keyword** sheets, gaps drawn as lines on fill-in sheets, the centre's file
+  code (`320001-WRT` → HSK 3, typing) and the sheet heading as title.
+- Two new playable types: `type_hanzi` (student types the character; exact
+  match against the admin's accepted answers) and `picture_sentence` (keyword
+  + optional picture uploaded in the editor; the sentence must use the
+  keyword). Player, exercise form (cards, import, save) and bank import
+  support them. Multiple-choice cards now take any number of options.
+- Tests: `test/worksheet_fixtures_test.dart` runs the ten real worksheet
+  texts (`test/fixtures/worksheets/`); 43 tests pass. Results per sheet in
+  `docs/WORKSHEET_FORMS.md`.
+
+**Why**
+- Owner: "implement the scanner for all these exercise types; I want to make
+  exercises just from uploading."
+
+**For review**
+- Hosting deploy only.
+- Limits: answer keys are not on the sheets (admin sets them after import);
+  the vocabulary-matching sheet's two columns are drawings, so only its
+  sentences are read; pictures are not cut out of the PDF (add them in the
+  editor); the scanned exam page needs the on-device OCR, checked with a
+  transcription, not the real scan.
+
+---
+
 ## 2026-10-29 — Claude: exercise form is upload-only; site address easystudy.web.app
 
 **What changed**
@@ -14,17 +49,8 @@ edge cases, and any manual/deploy steps still required).
   bank**; imported questions stay editable so OCR mistakes can be fixed.
   The matching / fill-in-the-blank editor keeps its **Add prompt** for a
   missed line.
-- **Hosting**: `firebase.json` now deploys two sites: the app to the
-  **easystudy** site (https://easystudy.web.app) and a one-page redirect
-  (`hosting/redirect/`) to the old **chinese-tracker** site, so the old
-  address keeps working (301 for every path, APK link included).
-  `scripts/deploy_web.sh` and the docs point at the new address.
-  The site has to exist first: `firebase hosting:sites:create easystudy
-  --project chinese-tracker` (site ids are global; if taken, pick another
-  and change the two `site` values + the redirect targets).
-  After the first deploy, check Authentication → Settings → Authorized
-  domains contains `easystudy.web.app`; add it if sign-in says
-  `auth/unauthorized-domain`.
+- **Hosting**: a move to `easystudy.web.app` was prepared and then reverted
+  the same day; the owner keeps https://chinese-tracker.web.app.
 - Owner's sample worksheets (`CONTOH LATIHAN SOAL.zip`, 10 PDFs) were run
   through the app's PDF reader + scanner; recognition results and the forms
   to build are listed in `docs/WORKSHEET_FORMS.md` (pending the owner's

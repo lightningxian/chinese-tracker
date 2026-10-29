@@ -28,6 +28,12 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   int? _selectedIndex;
   List<String> _composeOrder = [];
   List<String> _composeBank = [];
+
+  /// Typed answers: hanzi for a pinyin hint, or a sentence with a keyword.
+  final _typedController = TextEditingController();
+
+  static bool _usesTyped(ExerciseType type) =>
+      type == ExerciseType.typeHanzi || type == ExerciseType.pictureSentence;
   bool _answerSubmitted = false;
   bool? _lastAnswerCorrect;
   int _correct = 0;
@@ -84,6 +90,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
       _composeBank = List<String>.from(segments)..shuffle(Random());
     } else {
       _selectedIndex = null;
+      _typedController.clear();
     }
     _answerSubmitted = false;
     _lastAnswerCorrect = null;
@@ -129,6 +136,23 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     if (exercise.type == ExerciseType.composeSentences) {
       if (!_answerSubmitted) {
         _checkComposeAnswer();
+        return;
+      }
+      _advanceQuestion();
+      return;
+    }
+
+    if (_usesTyped(exercise.type)) {
+      if (!_answerSubmitted) {
+        final typed = _typedController.text;
+        if (typed.trim().isEmpty) return;
+        final isCorrect = exercise.questions[_currentIndex]
+            .isCorrectTypedAnswer(exercise.type, typed);
+        if (isCorrect) _correct++;
+        setState(() {
+          _answerSubmitted = true;
+          _lastAnswerCorrect = isCorrect;
+        });
         return;
       }
       _advanceQuestion();
@@ -189,6 +213,12 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     // notifications, so this must not block or fail the submission.
 
     if (mounted) setState(() => _submitting = false);
+  }
+
+  @override
+  void dispose() {
+    _typedController.dispose();
+    super.dispose();
   }
 
   @override
@@ -259,6 +289,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     final progress = (_currentIndex + 1) / exercise.questions.length;
     final isCompose = exercise.type == ExerciseType.composeSentences;
     final isCloze = exercise.type == ExerciseType.readingCloze;
+    final isTyped = _usesTyped(exercise.type);
     // Fill in the blank plays like matching: one shared bank, pick a letter.
     final isMatching = exercise.type == ExerciseType.matching || isCloze;
     final options = _currentOptions(exercise);
@@ -323,6 +354,8 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
           ),
           const SizedBox(height: 16),
           _buildComposeList(question),
+        ] else if (isTyped) ...[
+          _buildTypedQuestion(exercise, question),
         ] else ...[
           Text(
             question.prompt,
@@ -422,9 +455,14 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                   : _composeOrder.isNotEmpty
                       ? _onPrimaryAction
                       : null)
-              : _selectedIndex == null
-                  ? null
-                  : _onPrimaryAction,
+              : isTyped
+                  ? (_answerSubmitted ||
+                          _typedController.text.trim().isNotEmpty
+                      ? _onPrimaryAction
+                      : null)
+                  : _selectedIndex == null
+                      ? null
+                      : _onPrimaryAction,
           style: FilledButton.styleFrom(
             backgroundColor: AppColors.navy,
             padding: const EdgeInsets.symmetric(vertical: 16),
@@ -445,6 +483,85 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                             : 'Next question',
           ),
         ),
+      ],
+    );
+  }
+
+  /// Type the hanzi: the sentence with a gap and its pinyin hint. Picture
+  /// sentence: the picture (if any) and the keyword to use.
+  Widget _buildTypedQuestion(Exercise exercise, ExerciseQuestion question) {
+    final isPicture = exercise.type == ExerciseType.pictureSentence;
+    final hint = question.keyword;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (isPicture && question.imageUrl.isNotEmpty) ...[
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.network(
+              question.imageUrl,
+              height: 220,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+        Text(
+          isPicture
+              ? 'Write a sentence that uses this word:'
+              : question.prompt,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: AppColors.navy,
+                height: 1.5,
+              ),
+        ),
+        if (hint.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.teal.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                hint,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.teal,
+                ),
+              ),
+            ),
+          ),
+        ],
+        const SizedBox(height: 16),
+        TextField(
+          controller: _typedController,
+          enabled: !_answerSubmitted,
+          autofocus: true,
+          maxLines: isPicture ? 3 : 1,
+          style: const TextStyle(fontSize: 20),
+          onChanged: (_) => setState(() {}),
+          onSubmitted: (_) => _onPrimaryAction(),
+          decoration: InputDecoration(
+            hintText: isPicture ? '用这个词写一个句子…' : '写汉字…',
+            border: const OutlineInputBorder(),
+          ),
+        ),
+        if (_answerSubmitted && !isPicture) ...[
+          const SizedBox(height: 10),
+          Text(
+            'Answer: ${question.acceptedAnswers.join(' / ')}',
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 15,
+            ),
+          ),
+        ],
       ],
     );
   }

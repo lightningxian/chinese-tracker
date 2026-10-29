@@ -65,7 +65,16 @@ After text is extracted, `QuestionImportUtils` (`lib/core/utils/question_import_
 | **True/false (判断对错, P1/L2)** | 判断对错 / benar atau salah; statements ending `（√）` `（×）` / 对 错 / (T) (F) | `multiple_choice` with options 对 (True) / 错 (False) | Pick 对 or 错 |
 | **L3 Listening (听力)** | 听力 / 听录音 / dengarkan + A–D questions | `listening` (questions only; attach audio in the form) | Listen and pick |
 | **Compose sentences (组词成句)** | 组词成句 / menyusun kalimat; spaced or `/`-separated parts | `compose_sentences` | Reorder word parts |
-| **Picture + keyword** | Buatlah Kalimat + gambar | detected only, not editable yet | — |
+| **True/false with ★ statements** | numbered text, then `★ statement （ ）` | `multiple_choice` 对 / 错 (text + statement in the prompt) | Pick 对 or 错 |
+| **Fill in the blank, several word lists** | boxed lists (`周末 带 游戏 跟 作业`) or lettered parts (`A想 B意思 …`), one per group of sentences | `multiple_choice`, each blank with its group's words | Pick the word |
+| **T2 Type the hanzi (写汉字)** | sentence with `（gāng）` pinyin in the gap | `type_hanzi` (keyword = pinyin, accepted answers typed by the admin) | Type the character |
+| **T5 Picture + keyword (看图写句子)** | Buatlah Kalimat + gambar; `1. 页：———` | `picture_sentence` (keyword, picture uploaded in the editor) | Write a sentence with the keyword |
+| **Exam passage with numbered gaps** | `46-48.` passage with `46` gaps, then `46. A … B … C … D …` | `multiple_choice`, prompt = passage + （46） | Pick A–D |
+| **Inline options** | `A 不是南方人 B 会说南方话 C 今天搬到南方` on one line, or `A xxx` lines | split into options before parsing | — |
+
+Pinyin printed above the characters (HSK 1–2 sheets) is removed first
+(`lib/core/utils/worksheet_text_normalizer.dart`), and the centre's file code
+(`320001-WRT`) gives the HSK level and skill section.
 
 The review screen names the detected form and counts in its summary (e.g. "Detected R1 fill in the blank (选词填空) · HSK 2 — 3 blanks, 4 words in the bank. 1 blank without an answer letter: set the correct word in the editor."). Unmarked true/false statements default to 对; unmarked blanks default to A; ordering groups without a key keep the printed order and say so in the prompt, so the admin fixes them before saving. The type dropdown on the review screen overrides the guess.
 

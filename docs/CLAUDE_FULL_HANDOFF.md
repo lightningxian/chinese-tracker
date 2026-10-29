@@ -42,7 +42,7 @@ flutter pub get
 | What | Value |
 |------|--------|
 | Product name | **Easy Study** / 易华文教中心 |
-| Live site | https://easystudy.web.app (chinese-tracker.web.app redirects there) |
+| Live site | https://chinese-tracker.web.app |
 | Firebase project | `chinese-tracker` |
 | Region (functions) | `us-central1` |
 | Stack | Flutter web (primary) · Firestore · Cloud Functions v2 · Hosting · Storage · Midtrans sandbox |

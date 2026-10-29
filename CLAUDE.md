@@ -1,7 +1,7 @@
 # Easy Study (`chinese-tracker`) — Claude project guide
 
 Flutter web + Firebase LMS for a Chinese teaching centre (易华文教中心).
-Roles: admin · teacher · student · parent. Live at https://easystudy.web.app (old address chinese-tracker.web.app redirects there).
+Roles: admin · teacher · student · parent. Live at https://chinese-tracker.web.app.
 The owner (Wilsin, a Flutter/Firebase beginner) works **only with Claude Code**, on a Mac
 and a PC. Chat does not sync between machines: the docs in this repo are the shared memory,
 so keep them current. Explain steps in simple English and ask before big or hard-to-undo

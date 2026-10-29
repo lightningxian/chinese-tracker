@@ -64,9 +64,13 @@ class _QuestionBankImportReviewScreenState
             ? ' ${q.options[q.correctIndex]}'
             : '';
         return 'Answer: $letter$word';
+      case ExerciseType.typeHanzi:
+        return 'Pinyin ${q.keyword} → '
+            '${q.options.isEmpty ? 'type the hanzi in the editor' : q.options.join(' / ')}';
+      case ExerciseType.pictureSentence:
+        return 'Keyword: ${q.keyword}';
       case ExerciseType.multipleChoice:
       case ExerciseType.listening:
-      case ExerciseType.pictureSentence:
         if (q.options.isEmpty) return 'No answer options read yet';
         return [
           for (var i = 0; i < q.options.length; i++)

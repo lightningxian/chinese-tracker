@@ -1,15 +1,24 @@
+import '../../models/exercise_skill_category.dart';
 import '../../models/exercise_type.dart';
+import 'worksheet_text_normalizer.dart';
 
 class ParsedMcQuestion {
   const ParsedMcQuestion({
     required this.prompt,
     this.options = const [],
     this.correctIndex = 0,
+    this.keyword = '',
   });
 
   final String prompt;
+
+  /// Choices; for "type the hanzi" the accepted answers (empty until the
+  /// admin fills them in).
   final List<String> options;
   final int correctIndex;
+
+  /// Pinyin hint (type the hanzi) or the required word (picture sentence).
+  final String keyword;
 }
 
 class ParsedComposeQuestion {
@@ -43,10 +52,18 @@ class WorksheetParseResult {
     this.matchingOptions = const [],
     this.matchingQuestions = const [],
     this.passage = '',
+    this.suggestedSkill,
+    this.suggestedTitle,
   });
 
   final String instructions;
   final String? suggestedLevel;
+
+  /// From the centre's file code (`320001-WRT` → typing) or the type.
+  final ExerciseSkillCategory? suggestedSkill;
+
+  /// The worksheet heading, e.g. "SOAL LATIHAN HSK 2 (A)".
+  final String? suggestedTitle;
   final ExerciseType suggestedType;
   final String detectionSummary;
   final List<ParsedMcQuestion> mcQuestions;
@@ -73,7 +90,7 @@ class WorksheetParseResult {
       case ExerciseType.readingCloze:
         return bank;
       case ExerciseType.pictureSentence:
-        return 0;
+      case ExerciseType.typeHanzi:
       case ExerciseType.multipleChoice:
       case ExerciseType.listening:
         return mc;
@@ -105,8 +122,24 @@ abstract final class QuestionImportUtils {
   );
   static final _numberedOnly = RegExp(r'^\s*(\d+)\s*[\.\)、:：\-]?\s*$');
   static final _optionLine = RegExp(
-    r'^\s*(?:\(([A-Da-d])\)|([A-Da-d])[\.\):\-])\s*(.+?)(?:\s*[\*✓√])?\s*$',
+    r'^\s*(?:\(([A-Da-d])\)|([A-Da-d])[\.\):\-]|([A-D])(?=\s+[\u4e00-\u9fff（(]))\s*(.+?)(?:\s*[\*✓√])?\s*$',
   );
+  static final _inlineOptionMarker = RegExp(r'(?:^|\s)([A-D])\s+(?=\S)');
+  static final _rangeHeader = RegExp(r'^\s*(\d+)\s*[-–]\s*(\d+)\s*[\.．]?\s*$');
+  static final _starLine = RegExp(r'^[★☆]\s*(.+?)\s*(?:[（(]\s*[)）])?\s*$');
+  static final _pinyinHint = RegExp(
+    r'[（(]\s*([a-zA-Züāáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ\u0300-\u036f][a-zA-Züāáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ\u0300-\u036f\s]{0,20})\s*[)）]',
+  );
+  static final _pictureLine = RegExp(
+    r'^\s*\d{1,2}[\.．、]\s*([\u4e00-\u9fff]{1,6})\s*[：:]\s*[—_\-–－]*\s*$',
+  );
+  static final _codeHeader = RegExp(r'^\s*(\d)\d{5,6}-(RDG|KLM|WRT|CRT|KK)\b');
+  // A blank drawn as a line (not in the text) leaves a gap inside the
+  // sentence: `全新的 。`, or a sentence starting with a comma.
+  static final _impliedBlank =
+      RegExp(r'(?<=[\u4e00-\u9fff，,])\s+(?=[\u4e00-\u9fff。，])');
+  static final _exampleLine = RegExp(r'^\s*(例如|e\.g\.)', caseSensitive: false);
+  static final _underscoresOnly = RegExp(r'^[_＿\s]+$');
   static final _correctMarker = RegExp(r'[\*✓√]\s*$|\(correct\)', caseSensitive: false);
   static final _instructionHeader = RegExp(
     r'^(?:instructions?|directions?)\s*[:：]\s*(.*)$',
@@ -122,7 +155,7 @@ abstract final class QuestionImportUtils {
     r'\d{1,2}|'
     r'\d{6}-[A-Z]+|'
     r'easy\s*study|'
-    r'\d{1,2}\s+(?:january|february|march|april|may|june|july|august|september|october|november|december))'
+    r'\d{1,2}\s+(?:january|february|march|april|may|june|july|august|september|october|november|december)(?:\s+\d{4})?(?:\s+\d{1,2})?)'
     r'$',
     caseSensitive: false,
   );
@@ -140,7 +173,8 @@ abstract final class QuestionImportUtils {
     caseSensitive: false,
   );
   static final _clozeKeywords = RegExp(
-    r'(isilah\s+dengan\s+kata|kata\s+yang\s+tepat|选词填空|选词)',
+    r'(isilah\s+dengan\s+kata|kata\s+yang\s+tepat|melengkapi\s+kalimat|lengkapi|'
+    r'选词填空|选词|填写|填入|填空|完成句子|词组)',
     caseSensitive: false,
   );
   static final _pictureKeywords = RegExp(
@@ -207,15 +241,28 @@ abstract final class QuestionImportUtils {
   /// true/false (P1/L2 → multiple choice 对/错), L3 listening (multiple choice
   /// under the listening type; audio is attached later).
   static WorksheetParseResult parseWorksheet(String text) {
-    final normalized = text.replaceAll('\r\n', '\n').trim();
+    final normalized =
+        WorksheetTextNormalizer.normalize(text.replaceAll('\r\n', '\n')).trim();
     if (normalized.isEmpty) return WorksheetParseResult.empty();
 
     final rawLines = normalized.split('\n').map((line) => line.trim()).toList();
-    final (rawInstructions, contentLines) = _splitInstructions(rawLines);
-    final filteredLines =
-        contentLines.where((line) => !_isNoiseLine(line)).toList();
+    final code = _readCode(rawLines);
+    final (rawInstructions, splitContent) = _splitInstructions(rawLines);
+    final contentLines = _mergeContinuations(
+      _attachRangePassages(
+        _explodeInlineOptions(
+          splitContent
+              .where((line) => !_isNoiseLine(line) && !_exampleLine.hasMatch(line))
+              .toList(),
+        ),
+      ),
+    );
+    final filteredLines = contentLines;
     final keywordText = '$rawInstructions\n$normalized';
-    final level = extractHskLevel(normalized);
+    final level = extractHskLevel(normalized) ?? code?.level;
+    final typing = _parseTypeHanzi(filteredLines);
+    final pictures = _parsePictureKeywords(filteredLines);
+    final starTrueFalse = _parseStarTrueFalse(filteredLines);
 
     final (instructions, passage) = _splitPassage(
       rawInstructions,
@@ -227,10 +274,20 @@ abstract final class QuestionImportUtils {
     final composeQuestions = _parseComposeQuestions(filteredLines);
     final matching = _parseMatching(filteredLines);
     final allLines = rawLines.where((line) => !_isNoiseLine(line)).toList();
-    final cloze = _parseCloze(filteredLines, bankSource: allLines);
+    final cloze = _parseCloze(
+      filteredLines,
+      bankSource: allLines,
+      // A gap drawn as a line only counts as a blank on a sheet that asks
+      // for words to be filled in; spaced words elsewhere are not blanks.
+      impliedBlanks: _clozeKeywords.hasMatch(keywordText),
+    );
     final orderingAny = _parseOrdering(filteredLines);
     final orderingBare = _parseOrdering(filteredLines, bareOnly: true);
     final trueFalse = _parseTrueFalse(filteredLines);
+    final isTyping = typing.length >= 2;
+    final isPicture = pictures.length >= 3 ||
+        (_pictureKeywords.hasMatch(keywordText) && pictures.isNotEmpty);
+    final isStarTrueFalse = starTrueFalse.length >= 2;
 
     final hasLetteredOptions =
         filteredLines.any((line) => _matchOption(line) != null);
@@ -238,9 +295,14 @@ abstract final class QuestionImportUtils {
         (_trueFalseKeywords.hasMatch(keywordText) ||
             (!hasLetteredOptions && trueFalse.where((q) => q.marked).length >= 2));
     final isListening = _listeningKeywords.hasMatch(keywordText);
-    final isCloze = cloze.prompts.isNotEmpty &&
-        (_clozeKeywords.hasMatch(keywordText) ||
-            (cloze.prompts.length >= 2 && cloze.options.length >= 2));
+    final isCloze = !isTyping &&
+        cloze.prompts.isNotEmpty &&
+        (_clozeKeywords.hasMatch(keywordText) || cloze.prompts.length >= 2);
+    // Several word lists (one per group of blanks), or one list too long
+    // for a shared A–H bank: each blank becomes a choice question with its
+    // own group's words.
+    final clozeAsChoices = isCloze &&
+        (cloze.banks.length >= 2 || cloze.options.length > 8);
     // Without an ordering keyword, only bare "1." groups of 3+ sentences
     // count, so multiple-choice items with long options are not mistaken.
     final orderingKeyword = _orderKeywords.hasMatch(keywordText);
@@ -254,9 +316,22 @@ abstract final class QuestionImportUtils {
 
     ExerciseType type;
     String form;
-    if (isListening) {
+    if (isTyping) {
+      type = ExerciseType.typeHanzi;
+      form = 'T2 type the hanzi for the pinyin (写汉字)';
+    } else if (isPicture) {
+      type = ExerciseType.pictureSentence;
+      form = 'T5 picture + keyword sentence (看图写句子)';
+    } else if (isStarTrueFalse) {
+      type = ExerciseType.multipleChoice;
+      form = 'true/false with ★ statements (判断对错)';
+    } else if (isListening) {
       type = ExerciseType.listening;
       form = isTrueFalse ? 'L2 listening true/false' : 'L3 listening';
+    } else if (clozeAsChoices) {
+      type = ExerciseType.multipleChoice;
+      form = 'R1 fill in the blank, ${cloze.banks.length} word list'
+          '${cloze.banks.length == 1 ? '' : 's'} (选词填空)';
     } else if (isTrueFalse) {
       type = ExerciseType.multipleChoice;
       form = 'true/false (判断对错)';
@@ -288,6 +363,7 @@ abstract final class QuestionImportUtils {
         ExerciseType.composeSentences => 'T4 compose sentences (组词成句)',
         ExerciseType.readingCloze => 'R1 fill in the blank (选词填空)',
         ExerciseType.pictureSentence => 'picture + keyword sentence',
+        ExerciseType.typeHanzi => 'T2 type the hanzi (写汉字)',
         ExerciseType.listening => 'L3 listening',
         ExerciseType.multipleChoice => 'multiple choice',
       };
@@ -311,12 +387,24 @@ abstract final class QuestionImportUtils {
     }
     final finalPassage = keepsPassage ? passage : '';
 
-    final finalMc = isTrueFalse
-        ? trueFalse.map((q) => q.question).toList()
-        : mcQuestions;
+    final finalMc = isTyping
+        ? typing
+        : isPicture
+            ? pictures
+            : isStarTrueFalse
+                ? starTrueFalse.map((q) => q.question).toList()
+                : clozeAsChoices
+                    ? _clozeAsChoices(cloze)
+                    : isTrueFalse
+                        ? trueFalse.map((q) => q.question).toList()
+                        : mcQuestions;
     final finalCompose = isOrdering ? ordering : composeQuestions;
-    final bankOptions = isCloze ? cloze.options : matching.options;
-    final bankPrompts = isCloze ? cloze.prompts : matching.prompts;
+    final bankOptions =
+        isCloze && !clozeAsChoices ? cloze.options : matching.options;
+    final bankPrompts =
+        isCloze && !clozeAsChoices ? cloze.prompts : matching.prompts;
+    final skill = code?.skill ?? ExerciseSkillCategory.forExerciseType(type);
+    final title = _readTitle(rawLines);
 
     final result = WorksheetParseResult(
       instructions: finalInstructions,
@@ -328,6 +416,8 @@ abstract final class QuestionImportUtils {
       matchingOptions: bankOptions,
       matchingQuestions: bankPrompts,
       passage: finalPassage,
+      suggestedSkill: skill,
+      suggestedTitle: title,
     );
     return WorksheetParseResult(
       instructions: result.instructions,
@@ -336,9 +426,14 @@ abstract final class QuestionImportUtils {
       detectionSummary: _summary(
         result,
         form,
-        unmarkedTrueFalse:
-            isTrueFalse ? trueFalse.where((q) => !q.marked).length : 0,
-        unmarkedBlanks: isCloze ? cloze.unmarked : 0,
+        unmarkedTrueFalse: isStarTrueFalse
+            ? starTrueFalse.where((q) => !q.marked).length
+            : isTrueFalse
+                ? trueFalse.where((q) => !q.marked).length
+                : 0,
+        unmarkedBlanks: isCloze
+            ? (clozeAsChoices ? cloze.prompts.length : cloze.unmarked)
+            : 0,
         unorderedGroups: isOrdering
             ? ordering.where((q) => q.prompt.contains('(order not')).length
             : 0,
@@ -350,7 +445,243 @@ abstract final class QuestionImportUtils {
       matchingOptions: bankOptions,
       matchingQuestions: bankPrompts,
       passage: finalPassage,
+      suggestedSkill: skill,
+      suggestedTitle: title,
     );
+  }
+
+  /// The centre's file code at the top of each sheet: first digit = HSK
+  /// level, suffix = section (RDG reading, CRT exam reading, KK vocabulary,
+  /// KLM sentences, WRT writing).
+  static ({String level, ExerciseSkillCategory skill})? _readCode(
+    List<String> lines,
+  ) {
+    for (final line in lines.take(6)) {
+      final m = _codeHeader.firstMatch(line);
+      if (m == null) continue;
+      final skill = switch (m.group(2)) {
+        'KLM' || 'WRT' => ExerciseSkillCategory.typing,
+        _ => ExerciseSkillCategory.reading,
+      };
+      return (level: 'HSK ${m.group(1)}', skill: skill);
+    }
+    return null;
+  }
+
+  static String? _readTitle(List<String> lines) {
+    for (final line in lines.take(8)) {
+      if (_isNoiseLine(line) || _codeHeader.hasMatch(line)) continue;
+      final t = line.trim();
+      if (t.runes.length < 6 || t.runes.length > 60) continue;
+      if (RegExp(r'HSK|LATIHAN|Soal|题|练习|Isilah|Buatlah|Menyusun',
+              caseSensitive: false)
+          .hasMatch(t)) {
+        return t;
+      }
+    }
+    return null;
+  }
+
+  /// `A 不是南方人 B 会说南方话 C 今天搬到南方` (and `46. A 繁荣 B 单调 …`)
+  /// become one option per line so the choice parser can read them.
+  static List<String> _explodeInlineOptions(List<String> lines) {
+    final out = <String>[];
+    for (final line in lines) {
+      final marks = _inlineOptionMarker.allMatches(line).toList();
+      // Letters must run in order (A, B, C…), starting at A or at the
+      // start of the line (a wrapped `C … D …` continuation).
+      var ok = marks.length >= 2 &&
+          (marks.first.group(1) == 'A' || marks.first.start == 0);
+      for (var i = 1; ok && i < marks.length; i++) {
+        if (marks[i].group(1)!.codeUnitAt(0) !=
+            marks[i - 1].group(1)!.codeUnitAt(0) + 1) {
+          ok = false;
+        }
+      }
+      if (!ok) {
+        out.add(line);
+        continue;
+      }
+      final head = line.substring(0, marks.first.start).trim();
+      if (head.isNotEmpty) out.add(head);
+      for (var i = 0; i < marks.length; i++) {
+        final start = marks[i].start;
+        final end = i + 1 < marks.length ? marks[i + 1].start : line.length;
+        final piece = line.substring(start, end).trim();
+        if (piece.isNotEmpty) out.add(piece);
+      }
+    }
+    return out;
+  }
+
+  /// `46-48.` followed by a passage with numbered gaps, then `46.` option
+  /// groups: the passage is attached to each of its questions.
+  static List<String> _attachRangePassages(List<String> lines) {
+    final out = <String>[];
+    var i = 0;
+    while (i < lines.length) {
+      final header = _rangeHeader.firstMatch(lines[i]);
+      if (header == null) {
+        out.add(lines[i]);
+        i++;
+        continue;
+      }
+      final from = int.parse(header.group(1)!);
+      final to = int.parse(header.group(2)!);
+      final passage = <String>[];
+      var j = i + 1;
+      while (j < lines.length &&
+          !_looksLikeQuestionStart(lines[j]) &&
+          _matchOption(lines[j]) == null &&
+          _rangeHeader.firstMatch(lines[j]) == null) {
+        passage.add(lines[j]);
+        j++;
+      }
+      final text = passage.join('');
+      while (j < lines.length && _rangeHeader.firstMatch(lines[j]) == null) {
+        final line = lines[j];
+        final q = _numberedLine.firstMatch(line);
+        final n = q == null ? null : int.tryParse(RegExp(r'\d+').firstMatch(line)!.group(0)!);
+        if (q != null && n != null && n >= from && n <= to) {
+          final rest = (q.group(1) ?? '').trim();
+          out.add('$n. $text （$n）${rest.isEmpty ? '' : ' $rest'}');
+        } else {
+          out.add(line);
+        }
+        j++;
+      }
+      i = j;
+    }
+    return out;
+  }
+
+  /// A wrapped sentence continues the numbered line above it.
+  static List<String> _mergeContinuations(List<String> lines) {
+    final out = <String>[];
+    var lastWasQuestion = false;
+    for (final line in lines) {
+      final isQuestion = _looksLikeQuestionStart(line) && !_numberedOnly.hasMatch(line);
+      final standalone = _numberedOnly.hasMatch(line) ||
+          _matchOption(line) != null ||
+          _starLine.hasMatch(line) ||
+          _looksLikeMatchingBankLine(line) ||
+          _isCjkWordBank(line) ||
+          _underscoresOnly.hasMatch(line) ||
+          _rangeHeader.hasMatch(line) ||
+          _looksLikeComposeLine(line);
+      if (!isQuestion && !standalone && lastWasQuestion && out.isNotEmpty) {
+        out[out.length - 1] = '${out.last} $line';
+        continue;
+      }
+      out.add(line);
+      lastWasQuestion = isQuestion;
+    }
+    return out;
+  }
+
+  /// True/false sheets: `1. text…` then `★ statement （ ）`.
+  static List<({ParsedMcQuestion question, bool marked})> _parseStarTrueFalse(
+    List<String> lines,
+  ) {
+    final out = <({ParsedMcQuestion question, bool marked})>[];
+    String? context;
+    for (final line in lines) {
+      final star = _starLine.firstMatch(line);
+      if (star != null) {
+        var statement = star.group(1)!.trim();
+        String? mark;
+        for (final re in [_tfBracketMark, _tfSymbolMark, _tfWordMark]) {
+          final m = re.firstMatch(statement);
+          if (m != null) {
+            mark = m.group(1)!.toUpperCase();
+            statement = statement.substring(0, m.start).trim();
+            break;
+          }
+        }
+        statement = statement.replaceAll(RegExp(r'[（(]\s*[)）]\s*$'), '').trim();
+        final prompt = context == null || context.isEmpty
+            ? '★ $statement'
+            : '$context\n★ $statement';
+        out.add((
+          question: ParsedMcQuestion(
+            prompt: prompt,
+            options: trueFalseOptions,
+            correctIndex: mark == null || _tfTrue.contains(mark) ? 0 : 1,
+          ),
+          marked: mark != null,
+        ));
+        context = null;
+        continue;
+      }
+      if (_looksLikeQuestionStart(line)) {
+        context = _stripNumberedPrefix(line);
+      } else if (context != null) {
+        context = '$context $line';
+      }
+    }
+    return out;
+  }
+
+  /// `1. 我（gāng）才…`: the student types the character for the pinyin.
+  static List<ParsedMcQuestion> _parseTypeHanzi(List<String> lines) {
+    final out = <ParsedMcQuestion>[];
+    for (final line in lines) {
+      if (!_looksLikeQuestionStart(line)) continue;
+      final stripped = _stripNumberedPrefix(line);
+      final hint = _pinyinHint.firstMatch(stripped);
+      if (hint == null) continue;
+      final pinyin = hint.group(1)!.trim();
+      if (!pinyin
+          .split(RegExp(r'\s+'))
+          .every(WorksheetTextNormalizer.isPinyinToken)) {
+        continue;
+      }
+      out.add(
+        ParsedMcQuestion(
+          prompt: stripped.replaceRange(hint.start, hint.end, '（ ）'),
+          keyword: pinyin,
+        ),
+      );
+    }
+    return out;
+  }
+
+  /// `1. 页：————` : a keyword (with a picture on the sheet) to write a
+  /// sentence about.
+  static List<ParsedMcQuestion> _parsePictureKeywords(List<String> lines) {
+    final out = <ParsedMcQuestion>[];
+    for (final line in lines) {
+      final m = _pictureLine.firstMatch(line);
+      if (m == null) continue;
+      out.add(ParsedMcQuestion(prompt: m.group(1)!, keyword: m.group(1)!));
+    }
+    return out;
+  }
+
+  /// Blanks with several word lists: question i takes the words of its
+  /// group (lists in order, blanks split evenly); one long list goes whole.
+  static List<ParsedMcQuestion> _clozeAsChoices(
+    ({
+      List<String> options,
+      List<ParsedMatchingQuestion> prompts,
+      int unmarked,
+      String? bankLine,
+      List<List<String>> banks,
+    }) cloze,
+  ) {
+    final banks = cloze.banks.isEmpty ? [cloze.options] : cloze.banks;
+    final n = cloze.prompts.length;
+    final perBank = banks.length > 1 && n % banks.length == 0
+        ? n ~/ banks.length
+        : n;
+    return [
+      for (var i = 0; i < n; i++)
+        ParsedMcQuestion(
+          prompt: cloze.prompts[i].prompt,
+          options: banks[(i ~/ perBank).clamp(0, banks.length - 1)],
+          correctIndex: 0,
+        ),
+    ];
   }
 
   /// R3: the long text before the first question is the passage, not an
@@ -390,14 +721,31 @@ abstract final class QuestionImportUtils {
     List<ParsedMatchingQuestion> prompts,
     int unmarked,
     String? bankLine,
-  }) _parseCloze(List<String> lines, {required List<String> bankSource}) {
-    final bank = _clozeBank(bankSource);
+    List<List<String>> banks,
+  }) _parseCloze(
+    List<String> lines, {
+    required List<String> bankSource,
+    bool impliedBlanks = false,
+  }) {
+    final banks = _clozeBanks(bankSource);
+    final bank = banks.isEmpty
+        ? (words: const <String>[], line: null)
+        : (words: banks.first.words, line: banks.first.line);
     final options = bank.words;
     final prompts = <ParsedMatchingQuestion>[];
     var unmarked = 0;
     for (final line in lines) {
       if (!_looksLikeQuestionStart(line)) continue;
-      final stripped = _stripNumberedPrefix(line);
+      var stripped = _stripNumberedPrefix(line);
+      if (impliedBlanks &&
+          !_blankMarker.hasMatch(stripped) &&
+          !_pinyinHint.hasMatch(stripped)) {
+        if (RegExp(r'^[,，]').hasMatch(stripped)) {
+          stripped = '（ ）$stripped';
+        } else if (_impliedBlank.hasMatch(stripped)) {
+          stripped = stripped.replaceFirst(_impliedBlank, '（ ）');
+        }
+      }
       final blank = _blankMarker.firstMatch(stripped);
       if (blank == null) continue;
       // A blank at the very end is a matching prompt "(  )", not a cloze.
@@ -421,7 +769,10 @@ abstract final class QuestionImportUtils {
       }
       if (correctIndex < 0) unmarked++;
       var prompt = stripped.replaceRange(blank.start, blank.end, '（ ）');
-      prompt = prompt.replaceAll(RegExp(r'[（(]\s*[A-Fa-f]\s*[)）]\s*$'), '').trim();
+      prompt = prompt
+          .replaceAll(RegExp(r'[（(]\s*[A-Fa-f]\s*[)）]\s*$'), '')
+          .replaceAll(RegExp(r'\s*（ ）\s*'), '（ ）')
+          .trim();
       prompts.add(
         ParsedMatchingQuestion(
           prompt: prompt,
@@ -434,44 +785,59 @@ abstract final class QuestionImportUtils {
       prompts: prompts,
       unmarked: unmarked,
       bankLine: bank.line,
+      banks: [for (final b in banks) b.words],
     );
   }
 
-  /// The word bank of a cloze worksheet: lettered short words (A. 的 B. 了,
-  /// on one line or several) or one line of short CJK words.
-  static ({List<String> words, String? line}) _clozeBank(List<String> lines) {
-    final lettered = <int, String>{};
-    String? letteredLine;
+  /// Every word list on the sheet, in order: lettered (`A想 B意思 …`, one
+  /// line or several) or plain boxed lists (`周末 带 游戏 跟 作业`).
+  static List<({List<String> words, String? line})> _clozeBanks(
+    List<String> lines,
+  ) {
+    final out = <({List<String> words, String? line})>[];
     final inlineLettered = RegExp(
       r'(?:^|\s)[（(]?([A-Fa-f])[)）\.、．]?\s*([\u4e00-\u9fff]{1,4})(?=\s|$|[（(][A-F])',
     );
+    Map<int, String>? lettered;
+    void flushLettered() {
+      if (lettered != null && lettered!.length >= 2) {
+        final max = lettered!.keys.reduce((a, b) => a > b ? a : b);
+        out.add((
+          words: [for (var i = 0; i <= max; i++) lettered![i] ?? ''],
+          line: null,
+        ));
+      }
+      lettered = null;
+    }
+
     for (final line in lines) {
-      if (_looksLikeQuestionStart(line)) continue;
-      final inline = inlineLettered.allMatches(line).toList();
-      if (inline.length >= 2) {
-        for (final m in inline) {
-          lettered[m.group(1)!.toUpperCase().codeUnitAt(0) - 65] = m.group(2)!;
-        }
-        letteredLine = line;
+      if (_looksLikeQuestionStart(line) || _blankMarker.hasMatch(line)) {
+        flushLettered();
         continue;
       }
-      final bank = _matchingBankLine.firstMatch(line);
-      if (bank != null) {
-        final word = bank.group(2)!.trim();
-        if (_isMostlyCjk(word) && word.length <= 4) {
-          lettered[bank.group(1)!.toUpperCase().codeUnitAt(0) - 65] = word;
-        }
+      final inline = inlineLettered.allMatches(line).toList();
+      if (inline.length >= 2) {
+        flushLettered();
+        out.add((
+          words: [
+            for (final m in inline) m.group(2)!,
+          ],
+          line: line,
+        ));
+        continue;
       }
-    }
-    if (lettered.length >= 2) {
-      final max = lettered.keys.reduce((a, b) => a > b ? a : b);
-      return (
-        words: [for (var i = 0; i <= max; i++) lettered[i] ?? ''],
-        line: letteredLine,
-      );
-    }
-    for (final line in lines) {
-      if (_looksLikeQuestionStart(line) || _blankMarker.hasMatch(line)) continue;
+      final bankLine = _matchingBankLine.firstMatch(line);
+      if (bankLine != null) {
+        final word = bankLine.group(2)!.trim();
+        if (_isMostlyCjk(word) && word.length <= 4) {
+          final idx = bankLine.group(1)!.toUpperCase().codeUnitAt(0) - 65;
+          lettered ??= {};
+          if (lettered!.containsKey(idx)) flushLettered();
+          lettered ??= {};
+          lettered![idx] = word;
+        }
+        continue;
+      }
       final cleaned = line.replaceAll(RegExp(r'[【】\[\]（）()「」《》]'), ' ');
       final parts = cleaned
           .split(RegExp(r'[\s、，,／/]+'))
@@ -480,10 +846,12 @@ abstract final class QuestionImportUtils {
       if (parts.length >= 3 &&
           parts.length <= 10 &&
           parts.every((p) => _isMostlyCjk(p) && p.length <= 4)) {
-        return (words: parts, line: line);
+        flushLettered();
+        out.add((words: parts, line: line));
       }
     }
-    return (words: const <String>[], line: null);
+    flushLettered();
+    return out;
   }
 
   /// R4: a numbered item followed by lettered (or ①②③) sentences, optionally
@@ -654,6 +1022,9 @@ abstract final class QuestionImportUtils {
         if (r.passage.isNotEmpty) {
           notes.add('Passage of ${r.passage.length} characters goes above the questions.');
         }
+        if (unmarkedBlanks > 0 && r.suggestedType == ExerciseType.multipleChoice) {
+          notes.add('Answers are not on the sheet: pick the right word for each blank in the editor.');
+        }
         if (unmarkedTrueFalse > 0) {
           notes.add('${n(unmarkedTrueFalse, 'statement')} without √/×: set 对 or 错 in the editor.');
         }
@@ -661,7 +1032,17 @@ abstract final class QuestionImportUtils {
           notes.add('Attach the audio in the exercise form.');
         }
       case ExerciseType.pictureSentence:
-        notes.insert(0, 'recognised but not editable in the app yet.');
+        notes.insert(
+          0,
+          '${n(r.mcQuestions.length, 'keyword')}. Students write a sentence '
+          'with each keyword; add the pictures in the editor.',
+        );
+      case ExerciseType.typeHanzi:
+        notes.insert(
+          0,
+          '${n(r.mcQuestions.length, 'sentence')} with a pinyin hint. Type '
+          'the hanzi answer for each in the editor.',
+        );
     }
     return 'Detected $form$level — ${notes.join(' ')}';
   }
@@ -1039,7 +1420,7 @@ abstract final class QuestionImportUtils {
     final match = _optionLine.firstMatch(trimmed);
     if (match == null) return null;
 
-    var text = match.group(3)?.trim() ?? '';
+    var text = match.group(4)?.trim() ?? '';
     if (text.isEmpty) return null;
 
     final isCorrect = _correctMarker.hasMatch(trimmed) ||

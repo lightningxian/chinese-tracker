@@ -8,7 +8,7 @@ Chat history does **not** sync between Mac and PC. This file + git history do.
 `docs/CLAUDE_FULL_HANDOFF.md`
 
 Repo: https://github.com/lightningxian/chinese-tracker (private)  
-Live site: https://easystudy.web.app (chinese-tracker.web.app redirects)  
+Live site: https://chinese-tracker.web.app  
 Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkarimunwkk@gmail.com>`
 
 ---
@@ -151,10 +151,13 @@ Update this section when you push from Mac or PC.
 ### 2026-10-29 — Claude: upload-only exercise form, easystudy.web.app, sample worksheets
 
 - Exercise form has no manual question entry (scanner or bank only).
-- Hosting moved to the `easystudy` site with a redirect from the old one
-  (owner creates the site, then deploys).
-- Owner's 10 sample worksheets analysed; forms to build listed in
-  `docs/WORKSHEET_FORMS.md`, waiting for the owner's confirmation.
+- Address stays https://chinese-tracker.web.app (owner decided against
+  easystudy.web.app after it was prepared; the hosting change was reverted).
+- Owner's 10 sample worksheets analysed and the scanner now reads all ten
+  (pinyin stripping, ★ true/false, inline options, exam passages, several
+  word lists, type-the-hanzi and picture-sentence types). Results per sheet
+  in `docs/WORKSHEET_FORMS.md`; fixture tests in
+  `test/worksheet_fixtures_test.dart`.
 
 ### 2026-10-27 (evening) — Claude: owner's second review
 

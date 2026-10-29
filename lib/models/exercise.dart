@@ -20,8 +20,12 @@ class ExerciseQuestion {
   final int correctIndex;
   /// Ordered parts of the sentence (compose sentences type).
   final List<String> segments;
-  /// Required word for picture sentence exercises.
+  /// Required word for picture sentence exercises; the pinyin hint for
+  /// "type the hanzi" questions.
   final String keyword;
+
+  /// Typed-answer questions: every accepted answer (trimmed, exact match).
+  List<String> get acceptedAnswers => options;
   final String imageUrl;
   /// Optional per-question audio (listening items in bank/quiz).
   final String audioUrl;
@@ -51,6 +55,14 @@ class ExerciseQuestion {
         return ExerciseQuestion(
           prompt: map['prompt'] as String? ?? '',
           keyword: map['keyword'] as String? ?? map['prompt'] as String? ?? '',
+          imageUrl: map['imageUrl'] as String? ?? '',
+          audioUrl: map['audioUrl'] as String? ?? '',
+        );
+      case ExerciseType.typeHanzi:
+        return ExerciseQuestion(
+          prompt: map['prompt'] as String? ?? '',
+          keyword: map['keyword'] as String? ?? '',
+          options: List<String>.from(map['options'] as List? ?? []),
           imageUrl: map['imageUrl'] as String? ?? '',
           audioUrl: map['audioUrl'] as String? ?? '',
         );
@@ -100,6 +112,13 @@ class ExerciseQuestion {
           'keyword': keyword,
           ...mediaFields(),
         };
+      case ExerciseType.typeHanzi:
+        return {
+          'prompt': prompt,
+          'keyword': keyword,
+          'options': options,
+          ...mediaFields(),
+        };
       case ExerciseType.readingCloze:
         return {
           'prompt': prompt,
@@ -117,6 +136,22 @@ class ExerciseQuestion {
           ...mediaFields(),
         };
     }
+  }
+
+  /// Typed answer check: exact match after trimming and removing spaces and
+  /// full-width punctuation (type the hanzi); for picture sentences the
+  /// sentence must contain the keyword and be more than the keyword alone.
+  bool isCorrectTypedAnswer(ExerciseType type, String typed) {
+    String clean(String s) => s
+        .replaceAll(RegExp(r'[\s。．.，,！!？?、：:；;「」『』“”"()（）]'), '')
+        .trim();
+    final answer = clean(typed);
+    if (answer.isEmpty) return false;
+    if (type == ExerciseType.pictureSentence) {
+      final k = clean(keyword);
+      return k.isEmpty ? answer.length >= 2 : answer.contains(k) && answer.length > k.length;
+    }
+    return acceptedAnswers.any((a) => clean(a) == answer);
   }
 
   bool isCorrectComposeOrder(List<String> order) {

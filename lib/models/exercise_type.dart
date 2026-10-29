@@ -4,7 +4,8 @@ enum ExerciseType {
   matching('matching', 'Matching (对话配对)'),
   listening('listening', 'Listening (听力)'),
   readingCloze('reading_cloze', 'Fill in the blank (选词填空)'),
-  pictureSentence('picture_sentence', 'Picture + keyword sentence');
+  pictureSentence('picture_sentence', 'Picture + keyword sentence'),
+  typeHanzi('type_hanzi', 'Type the hanzi (写汉字)');
 
   const ExerciseType(this.value, this.label);
 
@@ -27,9 +28,10 @@ enum ExerciseType {
       // Fill in the blank reuses the matching data: a shared word bank and one
       // sentence per blank with the index of the right word.
       case ExerciseType.readingCloze:
-        return true;
+      // Typed answers: hanzi for a pinyin hint, or a sentence with a keyword.
+      case ExerciseType.typeHanzi:
       case ExerciseType.pictureSentence:
-        return false;
+        return true;
     }
   }
 }

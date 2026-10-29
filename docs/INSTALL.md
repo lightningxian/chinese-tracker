@@ -19,7 +19,7 @@ cp /path/to/easy-study.apk build/web/downloads/easy-study.apk
 firebase deploy --only hosting
 ```
 
-Expected URL: `https://easystudy.web.app/downloads/easy-study.apk`
+Expected URL: `https://chinese-tracker.web.app/downloads/easy-study.apk`
 
 Until that is live, the release APK built on this Mac is at:
 
@@ -32,7 +32,7 @@ Share that file directly (AirDrop / Drive / WhatsApp) for Android testers.
 
 No App Store build. Install the live web app to Home Screen:
 
-1. Open **Safari** (not Chrome) → `https://easystudy.web.app`
+1. Open **Safari** (not Chrome) → `https://chinese-tracker.web.app`
 2. Tap **Share** → **Add to Home Screen**
 3. Confirm the name **Easy Study**, then **Add**
 4. Open the Home Screen icon — it should launch full-screen (standalone)

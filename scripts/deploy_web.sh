@@ -20,7 +20,7 @@ MODE="${1:-}"
 CONTENT_OWNER_ID="2orTXFeyAhSlxfTgIlcYgs6ZuCG2"
 MIDTRANS_CLIENT_KEY="Mid-client-kQ_Bo0DQepeH8IhU"   # sandbox
 APK_SRC="build/app/outputs/flutter-apk/app-release.apk"
-APK_URL="https://easystudy.web.app/downloads/easy-study.apk"
+APK_URL="https://chinese-tracker.web.app/downloads/easy-study.apk"
 
 export JAVA_HOME="${JAVA_HOME:-/opt/homebrew/opt/openjdk@21}"
 export PATH="$JAVA_HOME/bin:$PATH"
