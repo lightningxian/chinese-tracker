@@ -238,6 +238,12 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
       child: Row(
         children: [
           if (canManage) ...[
+            OutlinedButton.icon(
+              onPressed: () => context.push('$base/exercise/new'),
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text('Blank exercise'),
+            ),
+            const SizedBox(width: 8),
             Expanded(
               child: OutlinedButton.icon(
                 onPressed: () => context.push('$base/question-bank'),

@@ -1,0 +1,1847 @@
+{
+  "name": "CONTOH LATIHAN SOAL (centre samples, Oct 2025 – Sep 2026)",
+  "items": [
+    {
+      "set": "210001-RDG",
+      "type": "multiple_choice",
+      "level": "HSK 2",
+      "skill": "reading",
+      "tags": [
+        "210001-RDG",
+        "填写"
+      ],
+      "question": {
+        "prompt": "汉语很难，不过很有（ ）。",
+        "options": [
+          "想",
+          "意思",
+          "同屋",
+          "都",
+          "贵",
+          "一共"
+        ],
+        "correctIndex": 1
+      }
+    },
+    {
+      "set": "210001-RDG",
+      "type": "multiple_choice",
+      "level": "HSK 2",
+      "skill": "reading",
+      "tags": [
+        "210001-RDG",
+        "填写"
+      ],
+      "question": {
+        "prompt": "一斤苹果和一斤橘子，（ ）七块。",
+        "options": [
+          "想",
+          "意思",
+          "同屋",
+          "都",
+          "贵",
+          "一共"
+        ],
+        "correctIndex": 5
+      }
+    },
+    {
+      "set": "210001-RDG",
+      "type": "multiple_choice",
+      "level": "HSK 2",
+      "skill": "reading",
+      "tags": [
+        "210001-RDG",
+        "填写"
+      ],
+      "question": {
+        "prompt": "我们公司的职员（ ）不是中国人。",
+        "options": [
+          "想",
+          "意思",
+          "同屋",
+          "都",
+          "贵",
+          "一共"
+        ],
+        "correctIndex": 3
+      }
+    },
+    {
+      "set": "210001-RDG",
+      "type": "multiple_choice",
+      "level": "HSK 2",
+      "skill": "reading",
+      "tags": [
+        "210001-RDG",
+        "填写"
+      ],
+      "question": {
+        "prompt": "我的（ ）是美国人，他喜欢听音乐。",
+        "options": [
+          "想",
+          "意思",
+          "同屋",
+          "都",
+          "贵",
+          "一共"
+        ],
+        "correctIndex": 2
+      }
+    },
+    {
+      "set": "210001-RDG",
+      "type": "multiple_choice",
+      "level": "HSK 2",
+      "skill": "reading",
+      "tags": [
+        "210001-RDG",
+        "填写"
+      ],
+      "question": {
+        "prompt": "A：你要买什么书？B：我（ ）买一本《汉英词典》。",
+        "options": [
+          "想",
+          "意思",
+          "同屋",
+          "都",
+          "贵",
+          "一共"
+        ],
+        "correctIndex": 0
+      }
+    },
+    {
+      "set": "210001-RDG",
+      "type": "multiple_choice",
+      "level": "HSK 2",
+      "skill": "reading",
+      "tags": [
+        "210001-RDG",
+        "填写"
+      ],
+      "question": {
+        "prompt": "明天我想去银行（ ）钱。",
+        "options": [
+          "新",
+          "颜色",
+          "贵",
+          "取",
+          "邮票",
+          "职员"
+        ],
+        "correctIndex": 3
+      }
+    },
+    {
+      "set": "210001-RDG",
+      "type": "multiple_choice",
+      "level": "HSK 2",
+      "skill": "reading",
+      "tags": [
+        "210001-RDG",
+        "填写"
+      ],
+      "question": {
+        "prompt": "我哥哥是一家公司的（ ）。",
+        "options": [
+          "新",
+          "颜色",
+          "贵",
+          "取",
+          "邮票",
+          "职员"
+        ],
+        "correctIndex": 5
+      }
+    },
+    {
+      "set": "210001-RDG",
+      "type": "multiple_choice",
+      "level": "HSK 2",
+      "skill": "reading",
+      "tags": [
+        "210001-RDG",
+        "填写"
+      ],
+      "question": {
+        "prompt": "你的手机是什么（ ）的？",
+        "options": [
+          "新",
+          "颜色",
+          "贵",
+          "取",
+          "邮票",
+          "职员"
+        ],
+        "correctIndex": 1
+      }
+    },
+    {
+      "set": "210001-RDG",
+      "type": "multiple_choice",
+      "level": "HSK 2",
+      "skill": "reading",
+      "tags": [
+        "210001-RDG",
+        "填写"
+      ],
+      "question": {
+        "prompt": "我给你们介绍一下，这是我们班的（ ）同学。",
+        "options": [
+          "新",
+          "颜色",
+          "贵",
+          "取",
+          "邮票",
+          "职员"
+        ],
+        "correctIndex": 0
+      }
+    },
+    {
+      "set": "210001-RDG",
+      "type": "multiple_choice",
+      "level": "HSK 2",
+      "skill": "reading",
+      "tags": [
+        "210001-RDG",
+        "填写"
+      ],
+      "question": {
+        "prompt": "服务员 ：您买什么？顾客 ：我买一套（ ）。",
+        "options": [
+          "新",
+          "颜色",
+          "贵",
+          "取",
+          "邮票",
+          "职员"
+        ],
+        "correctIndex": 4
+      }
+    },
+    {
+      "set": "210002-RDG",
+      "type": "multiple_choice",
+      "level": "HSK 2",
+      "skill": "reading",
+      "tags": [
+        "210002-RDG",
+        "判断对错"
+      ],
+      "question": {
+        "prompt": "我们的大学又大又漂亮，就是离我住的地方有点儿远，我每天坐车要30分钟 。\n★ 从我住的地方到学校坐车要30分钟 。",
+        "options": [
+          "对 (True)",
+          "错 (False)"
+        ],
+        "correctIndex": 0
+      }
+    },
+    {
+      "set": "210002-RDG",
+      "type": "multiple_choice",
+      "level": "HSK 2",
+      "skill": "reading",
+      "tags": [
+        "210002-RDG",
+        "判断对错"
+      ],
+      "question": {
+        "prompt": "我爸爸在一家医院工作，他每天都有很多病人，工作很忙 。\n★ 我爸爸是大夫。",
+        "options": [
+          "对 (True)",
+          "错 (False)"
+        ],
+        "correctIndex": 0
+      }
+    },
+    {
+      "set": "210002-RDG",
+      "type": "multiple_choice",
+      "level": "HSK 2",
+      "skill": "reading",
+      "tags": [
+        "210002-RDG",
+        "判断对错"
+      ],
+      "question": {
+        "prompt": "我叫张亮，今年25岁，大学毕业已经两年了。\n★ 张亮25岁大学毕业。",
+        "options": [
+          "对 (True)",
+          "错 (False)"
+        ],
+        "correctIndex": 1
+      }
+    },
+    {
+      "set": "210002-RDG",
+      "type": "multiple_choice",
+      "level": "HSK 2",
+      "skill": "reading",
+      "tags": [
+        "210002-RDG",
+        "判断对错"
+      ],
+      "question": {
+        "prompt": "米饭、面条我都不想吃，我们吃饺子吧。\n★ 我不想吃饺子。",
+        "options": [
+          "对 (True)",
+          "错 (False)"
+        ],
+        "correctIndex": 1
+      }
+    },
+    {
+      "set": "210002-RDG",
+      "type": "multiple_choice",
+      "level": "HSK 2",
+      "skill": "reading",
+      "tags": [
+        "210002-RDG",
+        "判断对错"
+      ],
+      "question": {
+        "prompt": "我知道王老师家的电话号码，不知道她的手机号码，你能告诉我吗？\n★ 我想知道王老师家的电话号码。",
+        "options": [
+          "对 (True)",
+          "错 (False)"
+        ],
+        "correctIndex": 1
+      }
+    },
+    {
+      "set": "210002-RDG",
+      "type": "multiple_choice",
+      "level": "HSK 2",
+      "skill": "reading",
+      "tags": [
+        "210002-RDG",
+        "判断对错"
+      ],
+      "question": {
+        "prompt": "我先去食堂吃饭，下午再去图书馆 。\n★ 我现在去图书馆 。",
+        "options": [
+          "对 (True)",
+          "错 (False)"
+        ],
+        "correctIndex": 1
+      }
+    },
+    {
+      "set": "210002-RDG",
+      "type": "multiple_choice",
+      "level": "HSK 2",
+      "skill": "reading",
+      "tags": [
+        "210002-RDG",
+        "判断对错"
+      ],
+      "question": {
+        "prompt": "人太多了，还是别等公共汽车了，我们坐出租车去吧。\n★ 我们想要打的去。",
+        "options": [
+          "对 (True)",
+          "错 (False)"
+        ],
+        "correctIndex": 0
+      }
+    },
+    {
+      "set": "210002-RDG",
+      "type": "multiple_choice",
+      "level": "HSK 2",
+      "skill": "reading",
+      "tags": [
+        "210002-RDG",
+        "判断对错"
+      ],
+      "question": {
+        "prompt": "她叫田芳，我跟她一起学习。我教她英语，她教我汉语。\n★ 田芳跟我互相学习。",
+        "options": [
+          "对 (True)",
+          "错 (False)"
+        ],
+        "correctIndex": 0
+      }
+    },
+    {
+      "set": "210002-RDG",
+      "type": "multiple_choice",
+      "level": "HSK 2",
+      "skill": "reading",
+      "tags": [
+        "210002-RDG",
+        "判断对错"
+      ],
+      "question": {
+        "prompt": "我家有四口人，一人一辆自行车。\n★ 我家有四辆自行车。",
+        "options": [
+          "对 (True)",
+          "错 (False)"
+        ],
+        "correctIndex": 0
+      }
+    },
+    {
+      "set": "210002-RDG",
+      "type": "multiple_choice",
+      "level": "HSK 2",
+      "skill": "reading",
+      "tags": [
+        "210002-RDG",
+        "判断对错"
+      ],
+      "question": {
+        "prompt": "这衣服有红色的、黑色的和黄色的，就是没有我喜欢的蓝色的。\n★ 我想买蓝色的衣服。",
+        "options": [
+          "对 (True)",
+          "错 (False)"
+        ],
+        "correctIndex": 0
+      }
+    },
+    {
+      "set": "300001-KLM",
+      "type": "compose_sentences",
+      "level": "HSK 3",
+      "skill": "typing",
+      "tags": [
+        "300001-KLM",
+        "组词成句"
+      ],
+      "question": {
+        "prompt": "",
+        "segments": [
+          "南方的",
+          "夏天",
+          "热极了"
+        ]
+      }
+    },
+    {
+      "set": "300001-KLM",
+      "type": "compose_sentences",
+      "level": "HSK 3",
+      "skill": "typing",
+      "tags": [
+        "300001-KLM",
+        "组词成句"
+      ],
+      "question": {
+        "prompt": "",
+        "segments": [
+          "经理的",
+          "办公室在",
+          "二楼"
+        ]
+      }
+    },
+    {
+      "set": "300001-KLM",
+      "type": "compose_sentences",
+      "level": "HSK 3",
+      "skill": "typing",
+      "tags": [
+        "300001-KLM",
+        "组词成句"
+      ],
+      "question": {
+        "prompt": "",
+        "segments": [
+          "我",
+          "忘了",
+          "买笔记本"
+        ]
+      }
+    },
+    {
+      "set": "300001-KLM",
+      "type": "compose_sentences",
+      "level": "HSK 3",
+      "skill": "typing",
+      "tags": [
+        "300001-KLM",
+        "组词成句"
+      ],
+      "question": {
+        "prompt": "",
+        "segments": [
+          "她要求",
+          "大家",
+          "马上",
+          "离开那儿"
+        ]
+      }
+    },
+    {
+      "set": "300001-KLM",
+      "type": "compose_sentences",
+      "level": "HSK 3",
+      "skill": "typing",
+      "tags": [
+        "300001-KLM",
+        "组词成句"
+      ],
+      "question": {
+        "prompt": "",
+        "segments": [
+          "他",
+          "把办法",
+          "告诉我",
+          "了"
+        ]
+      }
+    },
+    {
+      "set": "300001-KLM",
+      "type": "compose_sentences",
+      "level": "HSK 3",
+      "skill": "typing",
+      "tags": [
+        "300001-KLM",
+        "组词成句"
+      ],
+      "question": {
+        "prompt": "",
+        "segments": [
+          "事情",
+          "已经被",
+          "他解决",
+          "了"
+        ]
+      }
+    },
+    {
+      "set": "300001-KLM",
+      "type": "compose_sentences",
+      "level": "HSK 3",
+      "skill": "typing",
+      "tags": [
+        "300001-KLM",
+        "组词成句"
+      ],
+      "question": {
+        "prompt": "",
+        "segments": [
+          "这儿",
+          "有",
+          "一双",
+          "筷子"
+        ]
+      }
+    },
+    {
+      "set": "300001-KLM",
+      "type": "compose_sentences",
+      "level": "HSK 3",
+      "skill": "typing",
+      "tags": [
+        "300001-KLM",
+        "组词成句"
+      ],
+      "question": {
+        "prompt": "",
+        "segments": [
+          "这个地方",
+          "的",
+          "变化",
+          "很大"
+        ]
+      }
+    },
+    {
+      "set": "300001-KLM",
+      "type": "compose_sentences",
+      "level": "HSK 3",
+      "skill": "typing",
+      "tags": [
+        "300001-KLM",
+        "组词成句"
+      ],
+      "question": {
+        "prompt": "",
+        "segments": [
+          "最近",
+          "一直",
+          "都是",
+          "阴天"
+        ]
+      }
+    },
+    {
+      "set": "300001-KLM",
+      "type": "compose_sentences",
+      "level": "HSK 3",
+      "skill": "typing",
+      "tags": [
+        "300001-KLM",
+        "组词成句"
+      ],
+      "question": {
+        "prompt": "",
+        "segments": [
+          "没有什么比",
+          "健康",
+          "更重要"
+        ]
+      }
+    },
+    {
+      "set": "310001-RDG",
+      "type": "multiple_choice",
+      "level": "HSK 3",
+      "skill": "reading",
+      "tags": [
+        "310001-RDG",
+        "阅读"
+      ],
+      "question": {
+        "prompt": "妈妈是个北方人，20 岁的时候跟爸爸一起搬到南方住，一直住到今天。南方话她现在能听 懂一点儿，但是一点儿也不会说。  妈妈 ：",
+        "options": [
+          "不是南方人",
+          "会说南方话",
+          "今天搬到南方"
+        ],
+        "correctIndex": 0
+      }
+    },
+    {
+      "set": "310001-RDG",
+      "type": "multiple_choice",
+      "level": "HSK 3",
+      "skill": "reading",
+      "tags": [
+        "310001-RDG",
+        "阅读"
+      ],
+      "question": {
+        "prompt": "我们小时候，下了课都在外边玩儿游戏，那时候的游戏是运动。现在的孩子也玩儿游戏，他 们在家里，坐在电脑桌前，玩儿的是电脑游戏。  现在的孩子们喜欢 ：",
+        "options": [
+          "运动",
+          "玩儿电脑游戏",
+          "在外边玩儿游戏"
+        ],
+        "correctIndex": 1
+      }
+    },
+    {
+      "set": "310001-RDG",
+      "type": "multiple_choice",
+      "level": "HSK 3",
+      "skill": "reading",
+      "tags": [
+        "310001-RDG",
+        "阅读"
+      ],
+      "question": {
+        "prompt": "中国人说：做事的时候别着急，要多想想，想好了再做。  中国人觉得做事不能：",
+        "options": [
+          "着急",
+          "想好",
+          "多想"
+        ],
+        "correctIndex": 0
+      }
+    },
+    {
+      "set": "310001-RDG",
+      "type": "multiple_choice",
+      "level": "HSK 3",
+      "skill": "reading",
+      "tags": [
+        "310001-RDG",
+        "阅读"
+      ],
+      "question": {
+        "prompt": "我爱旅游，喜欢走南走北，第一次去旅游，我买最便宜的火车票，因为那时候没有那么多钱。 现在，我可以开车去想去的地方，车上有电子地图，能告诉我怎么走。  我现在：",
+        "options": [
+          "没有那么多钱",
+          "喜欢坐火车",
+          "可以开车旅游"
+        ],
+        "correctIndex": 2
+      }
+    },
+    {
+      "set": "310001-RDG",
+      "type": "multiple_choice",
+      "level": "HSK 3",
+      "skill": "reading",
+      "tags": [
+        "310001-RDG",
+        "阅读"
+      ],
+      "question": {
+        "prompt": "南方我去过很多次，但是妻子一次也没去过。我说过很多次 “明年带你去” ，但是因为 工作忙，一直到现在也没带她去，我觉得很对不起妻子。  妻子：",
+        "options": [
+          "工作很忙",
+          "没去过南方",
+          "觉得很对不起"
+        ],
+        "correctIndex": 1
+      }
+    },
+    {
+      "set": "310001-RDG",
+      "type": "multiple_choice",
+      "level": "HSK 3",
+      "skill": "reading",
+      "tags": [
+        "310001-RDG",
+        "阅读"
+      ],
+      "question": {
+        "prompt": "现在的孩子真不容易。从周一到周五每天都要上课，下了课还要做作业。周末也不能休息， 起了床就出去学这学那，能不累吗？  现在的孩子：",
+        "options": [
+          "一点儿也不累",
+          "每天都很忙",
+          "周末起床很晚"
+        ],
+        "correctIndex": 1
+      }
+    },
+    {
+      "set": "310001-RDG",
+      "type": "multiple_choice",
+      "level": "HSK 3",
+      "skill": "reading",
+      "tags": [
+        "310001-RDG",
+        "阅读"
+      ],
+      "question": {
+        "prompt": "很多人都喜欢睡午觉。但是有些人吃了午饭就睡，这样对身体好吗？医生告诉我们：吃了午 饭要休息一下。睡午觉的时间也不能太长，一个小时最好。  睡午觉：",
+        "options": [
+          "对身体不好",
+          "不能吃饭",
+          "时间不能很长"
+        ],
+        "correctIndex": 2
+      }
+    },
+    {
+      "set": "320001-WRT",
+      "type": "type_hanzi",
+      "level": "HSK 3",
+      "skill": "typing",
+      "tags": [
+        "320001-WRT",
+        "写汉字"
+      ],
+      "question": {
+        "prompt": "我（ ）才一直在玩儿电脑游戏，可能没听见。",
+        "keyword": "gāng",
+        "options": [
+          "刚"
+        ]
+      }
+    },
+    {
+      "set": "320001-WRT",
+      "type": "type_hanzi",
+      "level": "HSK 3",
+      "skill": "typing",
+      "tags": [
+        "320001-WRT",
+        "写汉字"
+      ],
+      "question": {
+        "prompt": "这个问题我已经（ ）得很明白了，不要再问我了。",
+        "keyword": "jiǎng",
+        "options": [
+          "讲"
+        ]
+      }
+    },
+    {
+      "set": "320001-WRT",
+      "type": "type_hanzi",
+      "level": "HSK 3",
+      "skill": "typing",
+      "tags": [
+        "320001-WRT",
+        "写汉字"
+      ],
+      "question": {
+        "prompt": "中午休息的时候，大家都去公司楼下的饭馆吃饭,（ ）天儿。",
+        "keyword": "liáo",
+        "options": [
+          "聊"
+        ]
+      }
+    },
+    {
+      "set": "320001-WRT",
+      "type": "type_hanzi",
+      "level": "HSK 3",
+      "skill": "typing",
+      "tags": [
+        "320001-WRT",
+        "写汉字"
+      ],
+      "question": {
+        "prompt": "我家旁边有一个小公（ ），我每天都带我的小狗去那儿走 走。",
+        "keyword": "yuán",
+        "options": [
+          "园"
+        ]
+      }
+    },
+    {
+      "set": "320001-WRT",
+      "type": "type_hanzi",
+      "level": "HSK 3",
+      "skill": "typing",
+      "tags": [
+        "320001-WRT",
+        "写汉字"
+      ],
+      "question": {
+        "prompt": "他跑得（ ）别快，现在已经看不到他了。",
+        "keyword": "tè",
+        "options": [
+          "特"
+        ]
+      }
+    },
+    {
+      "set": "320001-WRT",
+      "type": "type_hanzi",
+      "level": "HSK 3",
+      "skill": "typing",
+      "tags": [
+        "320001-WRT",
+        "写汉字"
+      ],
+      "question": {
+        "prompt": "我对音乐（ ）兴趣，你呢？",
+        "keyword": "gǎn",
+        "options": [
+          "感"
+        ]
+      }
+    },
+    {
+      "set": "320001-WRT",
+      "type": "type_hanzi",
+      "level": "HSK 3",
+      "skill": "typing",
+      "tags": [
+        "320001-WRT",
+        "写汉字"
+      ],
+      "question": {
+        "prompt": "明天下午你去（ ）行吗？我跟你一起去吧。",
+        "keyword": "yín",
+        "options": [
+          "银"
+        ]
+      }
+    },
+    {
+      "set": "320001-WRT",
+      "type": "type_hanzi",
+      "level": "HSK 3",
+      "skill": "typing",
+      "tags": [
+        "320001-WRT",
+        "写汉字"
+      ],
+      "question": {
+        "prompt": "你是什么时候（ ）婚的？怎么都没告诉我们啊？",
+        "keyword": "jié",
+        "options": [
+          "结"
+        ]
+      }
+    },
+    {
+      "set": "320001-WRT",
+      "type": "type_hanzi",
+      "level": "HSK 3",
+      "skill": "typing",
+      "tags": [
+        "320001-WRT",
+        "写汉字"
+      ],
+      "question": {
+        "prompt": "您慢走，欢（ ）下次再来。",
+        "keyword": "yíng",
+        "options": [
+          "迎"
+        ]
+      }
+    },
+    {
+      "set": "320001-WRT",
+      "type": "type_hanzi",
+      "level": "HSK 3",
+      "skill": "typing",
+      "tags": [
+        "320001-WRT",
+        "写汉字"
+      ],
+      "question": {
+        "prompt": "我问你，你多（ ）没去公司上班了?",
+        "keyword": "jiǔ",
+        "options": [
+          "久"
+        ]
+      }
+    },
+    {
+      "set": "320001-WRT",
+      "type": "type_hanzi",
+      "level": "HSK 3",
+      "skill": "typing",
+      "tags": [
+        "320001-WRT",
+        "写汉字"
+      ],
+      "question": {
+        "prompt": "房间里很（ ）静，我很满意。",
+        "keyword": "ān",
+        "options": [
+          "安"
+        ]
+      }
+    },
+    {
+      "set": "320001-WRT",
+      "type": "type_hanzi",
+      "level": "HSK 3",
+      "skill": "typing",
+      "tags": [
+        "320001-WRT",
+        "写汉字"
+      ],
+      "question": {
+        "prompt": "太晚了我有点儿害（ ）， 你送我回家吧。",
+        "keyword": "pà",
+        "options": [
+          "怕"
+        ]
+      }
+    },
+    {
+      "set": "320001-WRT",
+      "type": "type_hanzi",
+      "level": "HSK 3",
+      "skill": "typing",
+      "tags": [
+        "320001-WRT",
+        "写汉字"
+      ],
+      "question": {
+        "prompt": "你住的楼里面有（ ）梯吗？",
+        "keyword": "diàn",
+        "options": [
+          "电"
+        ]
+      }
+    },
+    {
+      "set": "320001-WRT",
+      "type": "type_hanzi",
+      "level": "HSK 3",
+      "skill": "typing",
+      "tags": [
+        "320001-WRT",
+        "写汉字"
+      ],
+      "question": {
+        "prompt": "下课以后我（ ）上回家吃饭。",
+        "keyword": "mǎ",
+        "options": [
+          "马"
+        ]
+      }
+    },
+    {
+      "set": "320001-WRT",
+      "type": "type_hanzi",
+      "level": "HSK 3",
+      "skill": "typing",
+      "tags": [
+        "320001-WRT",
+        "写汉字"
+      ],
+      "question": {
+        "prompt": "你觉得工作和健康，哪个更（ ）要？",
+        "keyword": "zhòng",
+        "options": [
+          "重"
+        ]
+      }
+    },
+    {
+      "set": "320002-WRT",
+      "type": "multiple_choice",
+      "level": "HSK 3",
+      "skill": "reading",
+      "tags": [
+        "320002-WRT",
+        "填写"
+      ],
+      "question": {
+        "prompt": "你写完（ ）了吗？",
+        "options": [
+          "周末",
+          "带",
+          "游戏",
+          "跟",
+          "作业"
+        ],
+        "correctIndex": 4
+      }
+    },
+    {
+      "set": "320002-WRT",
+      "type": "multiple_choice",
+      "level": "HSK 3",
+      "skill": "reading",
+      "tags": [
+        "320002-WRT",
+        "填写"
+      ],
+      "question": {
+        "prompt": "上个（ ）我们去朋友家玩儿了。",
+        "options": [
+          "周末",
+          "带",
+          "游戏",
+          "跟",
+          "作业"
+        ],
+        "correctIndex": 0
+      }
+    },
+    {
+      "set": "320002-WRT",
+      "type": "multiple_choice",
+      "level": "HSK 3",
+      "skill": "reading",
+      "tags": [
+        "320002-WRT",
+        "填写"
+      ],
+      "question": {
+        "prompt": "别玩儿（ ）了，快去睡觉。",
+        "options": [
+          "周末",
+          "带",
+          "游戏",
+          "跟",
+          "作业"
+        ],
+        "correctIndex": 2
+      }
+    },
+    {
+      "set": "320002-WRT",
+      "type": "multiple_choice",
+      "level": "HSK 3",
+      "skill": "reading",
+      "tags": [
+        "320002-WRT",
+        "填写"
+      ],
+      "question": {
+        "prompt": "他说好请我吃饭，但是没（ ）钱。",
+        "options": [
+          "周末",
+          "带",
+          "游戏",
+          "跟",
+          "作业"
+        ],
+        "correctIndex": 1
+      }
+    },
+    {
+      "set": "320002-WRT",
+      "type": "multiple_choice",
+      "level": "HSK 3",
+      "skill": "reading",
+      "tags": [
+        "320002-WRT",
+        "填写"
+      ],
+      "question": {
+        "prompt": "明天我要上课，不能（ ）你们一起去玩儿。",
+        "options": [
+          "周末",
+          "带",
+          "游戏",
+          "跟",
+          "作业"
+        ],
+        "correctIndex": 3
+      }
+    },
+    {
+      "set": "320002-WRT",
+      "type": "multiple_choice",
+      "level": "HSK 3",
+      "skill": "reading",
+      "tags": [
+        "320002-WRT",
+        "填写"
+      ],
+      "question": {
+        "prompt": "这是你的（ ）吗？真大！",
+        "options": [
+          "楼",
+          "办公室",
+          "树",
+          "胖",
+          "难"
+        ],
+        "correctIndex": 1
+      }
+    },
+    {
+      "set": "320002-WRT",
+      "type": "multiple_choice",
+      "level": "HSK 3",
+      "skill": "reading",
+      "tags": [
+        "320002-WRT",
+        "填写"
+      ],
+      "question": {
+        "prompt": "今天的考试一点也不（ ）。",
+        "options": [
+          "楼",
+          "办公室",
+          "树",
+          "胖",
+          "难"
+        ],
+        "correctIndex": 4
+      }
+    },
+    {
+      "set": "320002-WRT",
+      "type": "multiple_choice",
+      "level": "HSK 3",
+      "skill": "reading",
+      "tags": [
+        "320002-WRT",
+        "填写"
+      ],
+      "question": {
+        "prompt": "我在 505 教室上课，我现在要上（ ）去。",
+        "options": [
+          "楼",
+          "办公室",
+          "树",
+          "胖",
+          "难"
+        ],
+        "correctIndex": 0
+      }
+    },
+    {
+      "set": "320002-WRT",
+      "type": "multiple_choice",
+      "level": "HSK 3",
+      "skill": "reading",
+      "tags": [
+        "320002-WRT",
+        "填写"
+      ],
+      "question": {
+        "prompt": "你看，小狗在（ ）下做什么呢？",
+        "options": [
+          "楼",
+          "办公室",
+          "树",
+          "胖",
+          "难"
+        ],
+        "correctIndex": 2
+      }
+    },
+    {
+      "set": "320002-WRT",
+      "type": "multiple_choice",
+      "level": "HSK 3",
+      "skill": "reading",
+      "tags": [
+        "320002-WRT",
+        "填写"
+      ],
+      "question": {
+        "prompt": "我太（ ），不能吃那么多饭。",
+        "options": [
+          "楼",
+          "办公室",
+          "树",
+          "胖",
+          "难"
+        ],
+        "correctIndex": 3
+      }
+    },
+    {
+      "set": "320002-WRT",
+      "type": "multiple_choice",
+      "level": "HSK 3",
+      "skill": "reading",
+      "tags": [
+        "320002-WRT",
+        "填写"
+      ],
+      "question": {
+        "prompt": "你想喝点儿什么？ 茶（ ）咖啡？",
+        "options": [
+          "舒服",
+          "裤子",
+          "衬衫",
+          "或者",
+          "还是"
+        ],
+        "correctIndex": 4
+      }
+    },
+    {
+      "set": "320002-WRT",
+      "type": "multiple_choice",
+      "level": "HSK 3",
+      "skill": "reading",
+      "tags": [
+        "320002-WRT",
+        "填写"
+      ],
+      "question": {
+        "prompt": "这条（ ）一点儿也不贵，买吧！",
+        "options": [
+          "舒服",
+          "裤子",
+          "衬衫",
+          "或者",
+          "还是"
+        ],
+        "correctIndex": 1
+      }
+    },
+    {
+      "set": "320002-WRT",
+      "type": "multiple_choice",
+      "level": "HSK 3",
+      "skill": "reading",
+      "tags": [
+        "320002-WRT",
+        "填写"
+      ],
+      "question": {
+        "prompt": "我每个周末都在家看电视（ ）听音乐，不工作。",
+        "options": [
+          "舒服",
+          "裤子",
+          "衬衫",
+          "或者",
+          "还是"
+        ],
+        "correctIndex": 3
+      }
+    },
+    {
+      "set": "320002-WRT",
+      "type": "multiple_choice",
+      "level": "HSK 3",
+      "skill": "reading",
+      "tags": [
+        "320002-WRT",
+        "填写"
+      ],
+      "question": {
+        "prompt": "你穿昨天新买的那件（ ）吧。",
+        "options": [
+          "舒服",
+          "裤子",
+          "衬衫",
+          "或者",
+          "还是"
+        ],
+        "correctIndex": 2
+      }
+    },
+    {
+      "set": "320002-WRT",
+      "type": "multiple_choice",
+      "level": "HSK 3",
+      "skill": "reading",
+      "tags": [
+        "320002-WRT",
+        "填写"
+      ],
+      "question": {
+        "prompt": "我不喜欢南方，太热了， 不（ ）。",
+        "options": [
+          "舒服",
+          "裤子",
+          "衬衫",
+          "或者",
+          "还是"
+        ],
+        "correctIndex": 0
+      }
+    },
+    {
+      "set": "320002-WRT",
+      "type": "multiple_choice",
+      "level": "HSK 3",
+      "skill": "reading",
+      "tags": [
+        "320002-WRT",
+        "填写"
+      ],
+      "question": {
+        "prompt": "（ ）快到了，快去洗水果。",
+        "options": [
+          "比赛",
+          "超市",
+          "客人",
+          "饿",
+          "认真"
+        ],
+        "correctIndex": 2
+      }
+    },
+    {
+      "set": "320002-WRT",
+      "type": "multiple_choice",
+      "level": "HSK 3",
+      "skill": "reading",
+      "tags": [
+        "320002-WRT",
+        "填写"
+      ],
+      "question": {
+        "prompt": "工作到下午三点的时候，我常常很（ ）。",
+        "options": [
+          "比赛",
+          "超市",
+          "客人",
+          "饿",
+          "认真"
+        ],
+        "correctIndex": 3
+      }
+    },
+    {
+      "set": "320002-WRT",
+      "type": "multiple_choice",
+      "level": "HSK 3",
+      "skill": "reading",
+      "tags": [
+        "320002-WRT",
+        "填写"
+      ],
+      "question": {
+        "prompt": "这个孩子工作的时候很（ ），大家都喜欢他。",
+        "options": [
+          "比赛",
+          "超市",
+          "客人",
+          "饿",
+          "认真"
+        ],
+        "correctIndex": 4
+      }
+    },
+    {
+      "set": "320002-WRT",
+      "type": "multiple_choice",
+      "level": "HSK 3",
+      "skill": "reading",
+      "tags": [
+        "320002-WRT",
+        "填写"
+      ],
+      "question": {
+        "prompt": "这是什么（ ）？ 你能给我介绍一下吗？",
+        "options": [
+          "比赛",
+          "超市",
+          "客人",
+          "饿",
+          "认真"
+        ],
+        "correctIndex": 0
+      }
+    },
+    {
+      "set": "320002-WRT",
+      "type": "multiple_choice",
+      "level": "HSK 3",
+      "skill": "reading",
+      "tags": [
+        "320002-WRT",
+        "填写"
+      ],
+      "question": {
+        "prompt": "我下楼去（ ）买点儿东西。",
+        "options": [
+          "比赛",
+          "超市",
+          "客人",
+          "饿",
+          "认真"
+        ],
+        "correctIndex": 1
+      }
+    },
+    {
+      "set": "400003-KLM",
+      "type": "picture_sentence",
+      "level": "HSK 4",
+      "skill": "typing",
+      "tags": [
+        "400003-KLM",
+        "看图写句子"
+      ],
+      "question": {
+        "prompt": "页",
+        "keyword": "页"
+      }
+    },
+    {
+      "set": "400003-KLM",
+      "type": "picture_sentence",
+      "level": "HSK 4",
+      "skill": "typing",
+      "tags": [
+        "400003-KLM",
+        "看图写句子"
+      ],
+      "question": {
+        "prompt": "适合",
+        "keyword": "适合"
+      }
+    },
+    {
+      "set": "400003-KLM",
+      "type": "picture_sentence",
+      "level": "HSK 4",
+      "skill": "typing",
+      "tags": [
+        "400003-KLM",
+        "看图写句子"
+      ],
+      "question": {
+        "prompt": "干杯",
+        "keyword": "干杯"
+      }
+    },
+    {
+      "set": "400003-KLM",
+      "type": "picture_sentence",
+      "level": "HSK 4",
+      "skill": "typing",
+      "tags": [
+        "400003-KLM",
+        "看图写句子"
+      ],
+      "question": {
+        "prompt": "破",
+        "keyword": "破"
+      }
+    },
+    {
+      "set": "400003-KLM",
+      "type": "picture_sentence",
+      "level": "HSK 4",
+      "skill": "typing",
+      "tags": [
+        "400003-KLM",
+        "看图写句子"
+      ],
+      "question": {
+        "prompt": "修理",
+        "keyword": "修理"
+      }
+    },
+    {
+      "set": "400003-KLM",
+      "type": "picture_sentence",
+      "level": "HSK 4",
+      "skill": "typing",
+      "tags": [
+        "400003-KLM",
+        "看图写句子"
+      ],
+      "question": {
+        "prompt": "来得及",
+        "keyword": "来得及"
+      }
+    },
+    {
+      "set": "400003-KLM",
+      "type": "picture_sentence",
+      "level": "HSK 4",
+      "skill": "typing",
+      "tags": [
+        "400003-KLM",
+        "看图写句子"
+      ],
+      "question": {
+        "prompt": "困",
+        "keyword": "困"
+      }
+    },
+    {
+      "set": "400003-KLM",
+      "type": "picture_sentence",
+      "level": "HSK 4",
+      "skill": "typing",
+      "tags": [
+        "400003-KLM",
+        "看图写句子"
+      ],
+      "question": {
+        "prompt": "钥匙",
+        "keyword": "钥匙"
+      }
+    },
+    {
+      "set": "510001-CRT",
+      "type": "multiple_choice",
+      "level": "HSK 5",
+      "skill": "reading",
+      "tags": [
+        "510001-CRT",
+        "H51668",
+        "阅读"
+      ],
+      "question": {
+        "prompt": "心理学家曾做过一个有趣的实验：首先告诉学生学校邀请到一位非常有名的化学家来给他们上课，然后让那位化学家对学生说，他发现了一种新的化学物质，这种物质具有 46 的气味儿，但对人体无害，然后让学生们挨个闻了闻，并要求闻到气味儿的同学举一下手，结果不少同学闻了以后都举起了手。事实上，那只瓶子里 47 的只不过是水，而那位“化学家”其实是从外校请来的数学老师。像这种由于受到名人的暗示而产生过分信任和盲从的 48 就叫做“名人效应”。 （46）",
+        "options": [
+          "繁荣",
+          "单调",
+          "强烈",
+          "深刻"
+        ],
+        "correctIndex": 2
+      }
+    },
+    {
+      "set": "510001-CRT",
+      "type": "multiple_choice",
+      "level": "HSK 5",
+      "skill": "reading",
+      "tags": [
+        "510001-CRT",
+        "H51668",
+        "阅读"
+      ],
+      "question": {
+        "prompt": "心理学家曾做过一个有趣的实验：首先告诉学生学校邀请到一位非常有名的化学家来给他们上课，然后让那位化学家对学生说，他发现了一种新的化学物质，这种物质具有 46 的气味儿，但对人体无害，然后让学生们挨个闻了闻，并要求闻到气味儿的同学举一下手，结果不少同学闻了以后都举起了手。事实上，那只瓶子里 47 的只不过是水，而那位“化学家”其实是从外校请来的数学老师。像这种由于受到名人的暗示而产生过分信任和盲从的 48 就叫做“名人效应”。 （47）",
+        "options": [
+          "漏",
+          "装",
+          "插",
+          "冲"
+        ],
+        "correctIndex": 1
+      }
+    },
+    {
+      "set": "510001-CRT",
+      "type": "multiple_choice",
+      "level": "HSK 5",
+      "skill": "reading",
+      "tags": [
+        "510001-CRT",
+        "H51668",
+        "阅读"
+      ],
+      "question": {
+        "prompt": "心理学家曾做过一个有趣的实验：首先告诉学生学校邀请到一位非常有名的化学家来给他们上课，然后让那位化学家对学生说，他发现了一种新的化学物质，这种物质具有 46 的气味儿，但对人体无害，然后让学生们挨个闻了闻，并要求闻到气味儿的同学举一下手，结果不少同学闻了以后都举起了手。事实上，那只瓶子里 47 的只不过是水，而那位“化学家”其实是从外校请来的数学老师。像这种由于受到名人的暗示而产生过分信任和盲从的 48 就叫做“名人效应”。 （48）",
+        "options": [
+          "气氛",
+          "形势",
+          "制度",
+          "现象"
+        ],
+        "correctIndex": 3
+      }
+    },
+    {
+      "set": "510001-CRT",
+      "type": "multiple_choice",
+      "level": "HSK 5",
+      "skill": "reading",
+      "tags": [
+        "510001-CRT",
+        "H51668",
+        "阅读"
+      ],
+      "question": {
+        "prompt": "有种说法非常流行：“将电脑或手机的背景色设置成绿色，可以保护眼睛。”但是这种说法真的 49 吗？专家称，当我们看远处的花草树木时，之所以会觉得眼睛很舒服，主要是因为如果你长时间看着近处，眼睛内部的睫状肌会持续收缩，而向远处看则可以缓解它的紧张 50 ，这与看什么颜色和看什么物体无关。虽然心理学研究 51 ，绿色可以使人放松并感到平静，但它对眼睛本身并没有特别的作用。因此，如果想保护眼睛，比起更换电脑和手机的背景色， 52 ，多眨眨眼睛，或隔一段时间就看看远处。 （49）",
+        "options": [
+          "基本",
+          "科学",
+          "合法",
+          "显然"
+        ],
+        "correctIndex": 1
+      }
+    },
+    {
+      "set": "510001-CRT",
+      "type": "multiple_choice",
+      "level": "HSK 5",
+      "skill": "reading",
+      "tags": [
+        "510001-CRT",
+        "H51668",
+        "阅读"
+      ],
+      "question": {
+        "prompt": "有种说法非常流行：“将电脑或手机的背景色设置成绿色，可以保护眼睛。”但是这种说法真的 49 吗？专家称，当我们看远处的花草树木时，之所以会觉得眼睛很舒服，主要是因为如果你长时间看着近处，眼睛内部的睫状肌会持续收缩，而向远处看则可以缓解它的紧张 50 ，这与看什么颜色和看什么物体无关。虽然心理学研究 51 ，绿色可以使人放松并感到平静，但它对眼睛本身并没有特别的作用。因此，如果想保护眼睛，比起更换电脑和手机的背景色， 52 ，多眨眨眼睛，或隔一段时间就看看远处。 （50）",
+        "options": [
+          "状态",
+          "形状",
+          "形式",
+          "样式"
+        ],
+        "correctIndex": 0
+      }
+    },
+    {
+      "set": "510001-CRT",
+      "type": "multiple_choice",
+      "level": "HSK 5",
+      "skill": "reading",
+      "tags": [
+        "510001-CRT",
+        "H51668",
+        "阅读"
+      ],
+      "question": {
+        "prompt": "有种说法非常流行：“将电脑或手机的背景色设置成绿色，可以保护眼睛。”但是这种说法真的 49 吗？专家称，当我们看远处的花草树木时，之所以会觉得眼睛很舒服，主要是因为如果你长时间看着近处，眼睛内部的睫状肌会持续收缩，而向远处看则可以缓解它的紧张 50 ，这与看什么颜色和看什么物体无关。虽然心理学研究 51 ，绿色可以使人放松并感到平静，但它对眼睛本身并没有特别的作用。因此，如果想保护眼睛，比起更换电脑和手机的背景色， 52 ，多眨眨眼睛，或隔一段时间就看看远处。 （51）",
+        "options": [
+          "表明",
+          "启发",
+          "指挥",
+          "叙述"
+        ],
+        "correctIndex": 0
+      }
+    },
+    {
+      "set": "510001-CRT",
+      "type": "multiple_choice",
+      "level": "HSK 5",
+      "skill": "reading",
+      "tags": [
+        "510001-CRT",
+        "H51668",
+        "阅读"
+      ],
+      "question": {
+        "prompt": "有种说法非常流行：“将电脑或手机的背景色设置成绿色，可以保护眼睛。”但是这种说法真的 49 吗？专家称，当我们看远处的花草树木时，之所以会觉得眼睛很舒服，主要是因为如果你长时间看着近处，眼睛内部的睫状肌会持续收缩，而向远处看则可以缓解它的紧张 50 ，这与看什么颜色和看什么物体无关。虽然心理学研究 51 ，绿色可以使人放松并感到平静，但它对眼睛本身并没有特别的作用。因此，如果想保护眼睛，比起更换电脑和手机的背景色， 52 ，多眨眨眼睛，或隔一段时间就看看远处。 （52）",
+        "options": [
+          "电脑应反复杀毒",
+          "要多养一些花儿",
+          "更有效的方法是学会放松",
+          "看纸质书对眼睛没有伤害"
+        ],
+        "correctIndex": 2
+      }
+    },
+    {
+      "set": "520002-KK",
+      "type": "reading_cloze",
+      "level": "HSK 5",
+      "skill": "reading",
+      "tags": [
+        "520002-KK",
+        "词组"
+      ],
+      "question": {
+        "prompt": "新一代高铁列车给乘客带来了全新的（ ）。",
+        "options": [
+          "出行体验",
+          "分别贡献",
+          "分布不平均",
+          "截至去年底",
+          "鲜明的对比"
+        ],
+        "correctIndex": 0
+      }
+    },
+    {
+      "set": "520002-KK",
+      "type": "reading_cloze",
+      "level": "HSK 5",
+      "skill": "reading",
+      "tags": [
+        "520002-KK",
+        "词组"
+      ],
+      "question": {
+        "prompt": "篮球比赛中，马小军和李白为球队（ ）了12分和9分。",
+        "options": [
+          "出行体验",
+          "分别贡献",
+          "分布不平均",
+          "截至去年底",
+          "鲜明的对比"
+        ],
+        "correctIndex": 1
+      }
+    },
+    {
+      "set": "520002-KK",
+      "type": "reading_cloze",
+      "level": "HSK 5",
+      "skill": "reading",
+      "tags": [
+        "520002-KK",
+        "词组"
+      ],
+      "question": {
+        "prompt": "天气预报说，这次降水南多北少，（ ）。",
+        "options": [
+          "出行体验",
+          "分别贡献",
+          "分布不平均",
+          "截至去年底",
+          "鲜明的对比"
+        ],
+        "correctIndex": 2
+      }
+    },
+    {
+      "set": "520002-KK",
+      "type": "reading_cloze",
+      "level": "HSK 5",
+      "skill": "reading",
+      "tags": [
+        "520002-KK",
+        "词组"
+      ],
+      "question": {
+        "prompt": "（ ）,已有25支球队报名参加了这次比赛。",
+        "options": [
+          "出行体验",
+          "分别贡献",
+          "分布不平均",
+          "截至去年底",
+          "鲜明的对比"
+        ],
+        "correctIndex": 3
+      }
+    },
+    {
+      "set": "520002-KK",
+      "type": "reading_cloze",
+      "level": "HSK 5",
+      "skill": "reading",
+      "tags": [
+        "520002-KK",
+        "词组"
+      ],
+      "question": {
+        "prompt": "结婚后他一点儿家务也不干，和结婚前的他形成了（ ）。 第二组 ：",
+        "options": [
+          "出行体验",
+          "分别贡献",
+          "分布不平均",
+          "截至去年底",
+          "鲜明的对比"
+        ],
+        "correctIndex": 4
+      }
+    },
+    {
+      "set": "5400001-RDG",
+      "type": "multiple_choice",
+      "level": "HSK 5",
+      "skill": "reading",
+      "tags": [
+        "5400001-RDG",
+        "H51780",
+        "阅读"
+      ],
+      "question": {
+        "prompt": "人们常说人贵有自知之明，“明”既表现为如实看到自己的短处，也表现为 如实分析自己的长处。只看到自己的短处，似乎是谦虚，实际上是自卑心理 在作怪。“尺有所短，寸有所长”,每个人都有自己的优势和长处。我们需 要客观地评估自己，在认识缺点和短处的基础上，找出自己的长处和优势。",
+        "options": [
+          "要宽厚待人",
+          "不要骄傲自满",
+          "要勇于承认错误",
+          "不能只关注自己的缺点"
+        ],
+        "correctIndex": 3
+      }
+    },
+    {
+      "set": "5400001-RDG",
+      "type": "multiple_choice",
+      "level": "HSK 5",
+      "skill": "reading",
+      "tags": [
+        "5400001-RDG",
+        "H51780",
+        "阅读"
+      ],
+      "question": {
+        "prompt": "葡萄干是在日光下晒干或在阴凉处晾干的葡萄。在日光下晒干的葡萄干容易 发酸，阴干的葡萄干质量更好。做葡萄干的葡萄必须是成熟的，葡萄干的含 水量只有15-25%,其果糖的含量高达60%,因此它非常甜。葡萄干常被放 在糕点中，也可以直接食用。",
+        "options": [
+          "葡萄干的糖分很低",
+          "葡萄干比葡萄更营养",
+          "阴干的葡萄干质量更好",
+          "葡萄干更适合直接食用"
+        ],
+        "correctIndex": 2
+      }
+    },
+    {
+      "set": "5400001-RDG",
+      "type": "multiple_choice",
+      "level": "HSK 5",
+      "skill": "reading",
+      "tags": [
+        "5400001-RDG",
+        "H51780",
+        "阅读"
+      ],
+      "question": {
+        "prompt": "只有专心听孩子讲话的父母，才能更好地了解孩子。不论孩子的话题多么简 单，如果你表现出感兴趣的样子，孩子的兴趣就会自然而然地培养起来；如 果你总是面无表情、一言不发，孩子就会十分失望。慢慢地，他也会养成对 什么事都不关心的习惯。",
+        "options": [
+          "孩子兴趣多变",
+          "父母要耐心对待孩子",
+          "父母最了解自己的孩子",
+          "父母对孩子的兴趣缺乏了解"
+        ],
+        "correctIndex": 1
+      }
+    },
+    {
+      "set": "5400001-RDG",
+      "type": "multiple_choice",
+      "level": "HSK 5",
+      "skill": "reading",
+      "tags": [
+        "5400001-RDG",
+        "H51780",
+        "阅读"
+      ],
+      "question": {
+        "prompt": "近年来，一种新的广告形式——“植入式广告”进入了人们的视野。它是指 将产品及其服务中具有代表性的视听标志融入到电影或电视节目中，通过场 景的再现，让观众对该产品留下印象，进而达到营销的目的。",
+        "options": [
+          "植入式广告面临许多困难",
+          "植入式广告受到了观众的欢迎",
+          "植入式广告是一种新的营销方式",
+          "植入式广告多出现在娱乐节目中"
+        ],
+        "correctIndex": 2
+      }
+    }
+  ]
+}

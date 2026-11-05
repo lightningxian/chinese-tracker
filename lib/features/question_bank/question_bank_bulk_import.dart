@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:provider/provider.dart';
 
 import '../../core/constants/app_constants.dart';
@@ -120,6 +123,38 @@ Future<void> showQuestionBankPasteImport(
   }
 
   await _confirmAndInsert(context, ownerId: ownerId, items: items);
+}
+
+/// The centre's ten sample sheets (CONTOH LATIHAN SOAL), scanned and keyed,
+/// bundled with the app. Loads them into the bank, skipping questions that
+/// are already there.
+Future<void> runQuestionBankSampleSetImport(
+  BuildContext context, {
+  required String ownerId,
+  required List<QuestionBankItem> existingBank,
+}) async {
+  final raw = await rootBundle
+      .loadString('assets/question_sets/contoh_latihan_soal.json');
+  if (!context.mounted) return;
+  final set = Map<String, dynamic>.from(jsonDecode(raw) as Map);
+  final all = QuestionBankImportUtils.fromQuestionSet(set, ownerId: ownerId);
+  final deduped = QuestionBankImportUtils.dedupeAgainstBank(all, existingBank);
+  if (deduped.novel.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('All sample questions are already in the bank.'),
+      ),
+    );
+    return;
+  }
+  await _confirmAndInsert(
+    context,
+    ownerId: ownerId,
+    items: deduped.novel,
+    summary: '${set['name']}: ${all.length} questions from 10 sheets with '
+        'answer keys${deduped.skipped > 0 ? ', ${deduped.skipped} already in the bank' : ''}. '
+        'Pictures for the 看图写句子 keywords are added in the editor.',
+  );
 }
 
 /// Worksheet file bulk import into the question bank: scan, review what was

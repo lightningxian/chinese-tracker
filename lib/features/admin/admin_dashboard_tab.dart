@@ -88,7 +88,7 @@ class AdminDashboardTab extends StatelessWidget {
                       const SizedBox(height: 16),
                       AdminQuickActionsCard(
                         onNewExercise: () => onSwitchTab(2),
-                        onNewClass: () => onSwitchTab(3),
+                        onNewClass: () => onSwitchTab(4),
                         showNewExercise: canManageExercises,
                       ),
                       const SizedBox(height: 20),
@@ -97,8 +97,8 @@ class AdminDashboardTab extends StatelessWidget {
                     const SizedBox(height: 24),
                     _FinancialSummarySection(
                       terms: termsSnap.data ?? const [],
-                      onOpenPayments: () => onSwitchTab(5),
-                      onOpenVouchers: () => onSwitchTab(4),
+                      onOpenPayments: () => onSwitchTab(6),
+                      onOpenVouchers: () => onSwitchTab(5),
                     ),
                     const SizedBox(height: 24),
                     AdminCentreMetricsSection(
@@ -186,7 +186,7 @@ class AdminDashboardTab extends StatelessWidget {
         Expanded(
           child: AdminQuickActionsCard(
             onNewExercise: () => onSwitchTab(2),
-            onNewClass: () => onSwitchTab(3),
+            onNewClass: () => onSwitchTab(4),
             showNewExercise: canManageExercises,
           ),
         ),

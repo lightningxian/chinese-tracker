@@ -148,6 +148,12 @@ Commit author preference (via env vars, not global git config):
 
 Update this section when you push from Mac or PC.
 
+### 2026-11-05 (later) — Claude: bank in sidebar, scan-first exercises, sample set
+
+- Question bank sidebar entry; Scan worksheet opens the pre-filled exercise
+  form; the ten sample sheets ship as a question set the bank loads in one
+  click (96 keyed questions). Needs a hosting deploy.
+
 ### 2026-11-05 — owner deploys
 
 - Functions redeployed on Node 22 (all 10). Hosting deployed on the second

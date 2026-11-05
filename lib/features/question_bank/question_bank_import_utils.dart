@@ -122,6 +122,38 @@ abstract final class QuestionBankImportUtils {
     ];
   }
 
+  /// A bundled question set (`assets/question_sets/*.json`): the centre's
+  /// own sheets, already scanned and keyed. Each item carries its type,
+  /// level, skill, tags and an [ExerciseQuestion] map.
+  static List<QuestionBankItem> fromQuestionSet(
+    Map<String, dynamic> set, {
+    required String ownerId,
+  }) {
+    final items = (set['items'] as List? ?? const [])
+        .whereType<Map>()
+        .map((raw) => Map<String, dynamic>.from(raw));
+    return [
+      for (final it in items)
+        () {
+          final type = ExerciseType.fromValue(it['type'] as String?);
+          return QuestionBankItem(
+            id: '',
+            ownerId: ownerId,
+            type: type,
+            question: ExerciseQuestion.fromMap(
+              Map<String, dynamic>.from(it['question'] as Map? ?? const {}),
+              exerciseType: type,
+            ),
+            skillCategory:
+                ExerciseSkillCategory.fromValue(it['skill'] as String?),
+            level: it['level'] as String?,
+            tags: List<String>.from(it['tags'] as List? ?? const []),
+            difficulty: QuestionDifficulty.medium,
+          );
+        }(),
+    ];
+  }
+
   /// Returns only candidates whose prompt+type are not already in [existing].
   static ({List<QuestionBankItem> novel, int skipped}) dedupeAgainstBank(
     List<QuestionBankItem> candidates,

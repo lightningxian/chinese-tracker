@@ -101,6 +101,14 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
           icon: const Icon(Icons.more_vert),
           onSelected: (action) async {
             switch (action) {
+              case 'samples':
+                final all = await firestore.watchQuestionBank(ownerId).first;
+                if (!context.mounted) return;
+                await runQuestionBankSampleSetImport(
+                  context,
+                  ownerId: ownerId,
+                  existingBank: all,
+                );
               case 'paste':
                 await showQuestionBankPasteImport(context, ownerId: ownerId);
               case 'harvest':
@@ -114,6 +122,10 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
             }
           },
           itemBuilder: (_) => const [
+            PopupMenuItem(
+              value: 'samples',
+              child: Text("Load the centre's sample sheets (96 questions)"),
+            ),
             PopupMenuItem(value: 'paste', child: Text('Bulk import — paste')),
             PopupMenuItem(
               value: 'harvest',

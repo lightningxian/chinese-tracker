@@ -12,6 +12,9 @@ Admins upload **PDF, Word, or image** worksheets on the exercise form (**web onl
 
 ## Where the scanner is used
 
+- **Exercises → Scan worksheet** (top button / FAB): pick a file → review → the exercise form opens filled in.
+- **Question bank → ⋮ → Load the centre's sample sheets**: the ten CONTOH LATIHAN SOAL sheets, already scanned and keyed (`assets/question_sets/contoh_latihan_soal.json`), added to the bank without duplicates.
+
 - **Question bank → Scan worksheet** (main button): detected questions go through a *Check before adding* list (type + answer per question, untick to skip, set level/difficulty) and then into the bank.
 - **Quizzes → edit → Scan worksheet**: the multiple-choice questions become quiz questions.
 - **Exercise form → Import from worksheet**: fills the whole exercise (type, instructions, passage, questions).

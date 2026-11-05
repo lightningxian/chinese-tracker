@@ -28,6 +28,7 @@ import '../../features/materials/materials_screen.dart';
 import '../../features/parent/parent_shell.dart';
 import '../../features/question_bank/question_bank_screen.dart';
 import '../../features/teacher/exercise_levels_screen.dart';
+import '../../features/teacher/worksheet_import_review_screen.dart';
 import '../../features/teacher/exercise_level_editor_screen.dart';
 import '../../features/teacher/quiz_editor_screen.dart';
 import '../../features/teacher/teacher_dashboard_stat_detail_screen.dart';
@@ -209,11 +210,15 @@ class AppRouter {
                 ),
                 GoRoute(
                   path: 'exercise/new',
-                  builder: (context, _) {
+                  builder: (context, state) {
                     final user = auth.appUser!;
+                    final extra = state.extra;
                     return TeacherExerciseFormScreen(
                       teacherId: AppConstants.contentTeacherId(user),
                       embedded: true,
+                      initialImport: extra is WorksheetImportReviewResult
+                          ? extra
+                          : null,
                     );
                   },
                 ),

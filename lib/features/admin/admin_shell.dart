@@ -13,6 +13,7 @@ import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../teacher/teacher_attendance_tab.dart';
 import '../teacher/teacher_exercises_tab.dart';
+import '../teacher/worksheet_scan_flow.dart';
 import 'admin_profile_tab.dart';
 import 'admin_dashboard_tab.dart';
 import 'admin_invoices_tab.dart';
@@ -49,6 +50,11 @@ class _AdminShellState extends State<AdminShell> {
       selectedIcon: Icons.menu_book,
     ),
     AppShellDestination(
+      label: 'Question bank',
+      icon: Icons.inventory_2_outlined,
+      selectedIcon: Icons.inventory_2,
+    ),
+    AppShellDestination(
       label: 'Classes',
       icon: Icons.event_outlined,
       selectedIcon: Icons.event,
@@ -75,12 +81,31 @@ class _AdminShellState extends State<AdminShell> {
     ),
   ];
 
+  /// Sidebar position of the question bank; it opens as its own page.
+  static const _questionBankIndex = 3;
+
   void _switchTab(int index) {
+    if (index == _questionBankIndex) {
+      final path = GoRouterState.of(context).uri.path;
+      if (!path.endsWith('/question-bank')) {
+        context.push('/admin/question-bank');
+      }
+      return;
+    }
     final path = GoRouterState.of(context).uri.path;
     if (!ShellRouteUtils.isAdminRoot(path)) {
       context.go('/admin');
     }
     setState(() => _index = index);
+  }
+
+  /// Upload a worksheet; the scanner detects the type and answers, and the
+  /// form opens already filled in. A blank form is still reachable from
+  /// the Exercises tools row for bank-built exercises.
+  Future<void> _scanAndOpenForm(BuildContext context) async {
+    final result = await scanWorksheet(context);
+    if (result == null || !context.mounted) return;
+    context.push('/admin/exercise/new', extra: result);
   }
 
   Widget? _topBarAction(BuildContext context) {
@@ -94,15 +119,15 @@ class _AdminShellState extends State<AdminShell> {
 
     return switch (_index) {
       2 when canManageExercises => FilledButton.icon(
-          onPressed: () => context.push('/admin/exercise/new'),
+          onPressed: () => _scanAndOpenForm(context),
           style: FilledButton.styleFrom(
             backgroundColor: AppColors.navy,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           ),
-          icon: const Icon(Icons.add, size: 16),
-          label: const Text('New exercise'),
+          icon: const Icon(Icons.document_scanner_outlined, size: 16),
+          label: const Text('Scan worksheet'),
         ),
-      3 => FilledButton.icon(
+      4 => FilledButton.icon(
           onPressed: () => context.push('/admin/session/new'),
           style: FilledButton.styleFrom(
             backgroundColor: AppColors.navy,
@@ -111,7 +136,7 @@ class _AdminShellState extends State<AdminShell> {
           icon: const Icon(Icons.add, size: 16),
           label: const Text('New class'),
         ),
-      4 => FilledButton.icon(
+      5 => FilledButton.icon(
           onPressed: () => context.push('/admin/vouchers/new'),
           style: FilledButton.styleFrom(
             backgroundColor: AppColors.navy,
@@ -162,6 +187,8 @@ class _AdminShellState extends State<AdminShell> {
           AdminDashboardTab(onSwitchTab: _switchTab),
           const AdminUsersTab(),
           const TeacherExercisesTab(),
+          // Question bank opens as its own page (see _switchTab).
+          const SizedBox.shrink(),
           const TeacherAttendanceTab(),
           const AdminVouchersTab(),
           const AdminInvoicesTab(),
@@ -193,16 +220,16 @@ class _AdminShellState extends State<AdminShell> {
           fabLabel: nested
               ? null
               : switch (_index) {
-                  2 when canManageExercises => 'New exercise',
-                  3 => 'New class',
+                  2 when canManageExercises => 'Scan worksheet',
+                  4 => 'New class',
                   _ => null,
                 },
           onFabPressed: nested
               ? null
               : switch (_index) {
                   2 when canManageExercises =>
-                    () => context.push('/admin/exercise/new'),
-                  3 => () => context.push('/admin/session/new'),
+                    () => _scanAndOpenForm(context),
+                  4 => () => context.push('/admin/session/new'),
                   _ => null,
                 },
           onSignOut: () => context.read<AuthService>().signOut(),

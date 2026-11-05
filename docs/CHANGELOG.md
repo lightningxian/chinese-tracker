@@ -6,6 +6,34 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-05 — Claude: Question bank in the sidebar, Scan worksheet first, sample sheets bundled
+
+**What changed**
+- **Question bank** is an entry in the admin sidebar (between Exercises and
+  Classes); it opens the bank page. Admin tab indices after it moved by one
+  (`shell_route_utils.dart`, dashboard quick actions, notification tabs).
+- **Scan worksheet** is the primary action on the admin Exercises tab (top
+  bar button and mobile FAB): pick a file → review what the scanner found →
+  the exercise form opens already filled in (title, level, type, questions,
+  answers where the sheet had them). A **Blank exercise** link stays in the
+  tools row for exercises built from the bank.
+- **Sample question set bundled**: `assets/question_sets/contoh_latihan_soal.json`
+  holds the centre's ten sheets (96 questions) scanned with the real parser
+  and keyed by hand (compose sentences in the correct order, 对/错 keys,
+  hanzi answers, word choices, exam answers). Question bank → ⋮ → **Load the
+  centre's sample sheets** reviews and adds them, skipping duplicates.
+  Pictures for the 看图写句子 keywords are added in the editor.
+
+**Why**
+- Owner: "the upload is still quite manual", "put the previous upload into
+  the bank", "a separate place to access the question bank easily".
+
+**For review**
+- Hosting deploy only. The answer keys in the JSON are mine; the owner should
+  spot-check a few (ToF 3–6 are 错, HSK 5 exam 46–52 = C B D B A A C).
+
+---
+
 ## 2026-10-29 — Claude: scanner reads all ten of the centre's worksheet forms
 
 **What changed**

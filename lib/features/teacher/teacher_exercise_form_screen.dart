@@ -32,11 +32,16 @@ class TeacherExerciseFormScreen extends StatefulWidget {
     required this.teacherId,
     this.exercise,
     this.embedded = false,
+    this.initialImport,
   });
 
   final String teacherId;
   final Exercise? exercise;
   final bool embedded;
+
+  /// A worksheet already scanned and reviewed (Scan worksheet button): the
+  /// form opens filled in with it.
+  final WorksheetImportReviewResult? initialImport;
 
   bool get isEditing => exercise != null;
 
@@ -220,6 +225,12 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
   @override
   void initState() {
     super.initState();
+    final import = widget.initialImport?.parseResult;
+    if (import != null && widget.exercise == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _applyImportedWorksheet(import);
+      });
+    }
     final exercise = widget.exercise;
     if (exercise != null) {
       _titleController.text = exercise.title;

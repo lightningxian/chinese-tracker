@@ -16,11 +16,11 @@ abstract final class ShellRouteUtils {
     if (location.contains('/dashboard/')) return 0;
     if (location.contains('/users')) return 1;
     if (location.contains('/exercise')) return 2;
-    if (location.contains('/question-bank')) return 2;
+    if (location.contains('/question-bank')) return 3;
     if (location.contains('/levels')) return 2;
-    if (location.contains('/session')) return 3;
-    if (location.contains('/vouchers')) return 4;
-    if (location.contains('/price-list')) return 5;
+    if (location.contains('/session')) return 4;
+    if (location.contains('/vouchers')) return 5;
+    if (location.contains('/price-list')) return 6;
     return null;
   }
 

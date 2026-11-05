@@ -30,7 +30,7 @@ abstract final class NotificationRoutes {
     return switch ((role, notification.kind)) {
       (AppConstants.roleAdmin, NotificationKind.registration) => 1, // Users
       (AppConstants.roleAdmin, NotificationKind.grading) => 2, // Exercises
-      (AppConstants.roleAdmin, NotificationKind.session) => 3, // Classes
+      (AppConstants.roleAdmin, NotificationKind.session) => 4, // Classes
       (AppConstants.roleTeacher, NotificationKind.registration) => 1, // Students
       (AppConstants.roleTeacher, NotificationKind.grading) => 2, // Exercises
       (AppConstants.roleTeacher, NotificationKind.session) => 3, // Classes
