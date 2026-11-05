@@ -150,9 +150,9 @@ Update this section when you push from Mac or PC.
 
 ### 2026-11-05 — owner deploys
 
-- Functions redeployed on Node 22 (all 10). Hosting deploy of the scanner
-  build hit a network error on upload; retry with
-  `firebase deploy --only hosting --project chinese-tracker`.
+- Functions redeployed on Node 22 (all 10). Hosting deployed on the second
+  try (first upload hit a network error). Live bundle checked: scanner,
+  new exercise types, price list and mark-as-paid present. Release v0.1.6.
 
 ### 2026-10-29 — Claude: upload-only exercise form, easystudy.web.app, sample worksheets
 
