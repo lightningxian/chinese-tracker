@@ -59,6 +59,8 @@ edge cases, and any manual/deploy steps still required).
 **For review**
 - Hosting deploy only (`scripts/deploy_web.sh --web-only`). No rules or
   functions changes. First load after deploy downloads ~7 MB of font once.
+  **Deployed by the owner on 2026-11-09** (54 files; font and new bank code
+  checked on the live bundle).
 - Emulator-only quirk seen twice: the first sign-in after a page reload
   lands on /complete-profile; signing in again works. Not seen on live.
 

@@ -156,7 +156,8 @@ Update this section when you push from Mac or PC.
 - Chinese text in Kai style (LXGW WenKai, bundled subset); question text
   bigger everywhere; admin tables have column lines and darker row lines;
   difficulty removed from the bank.
-- Verified on the emulator (screenshots sent). Needs a hosting deploy.
+- Verified on the emulator (screenshots sent). Owner deployed hosting the
+  same day; live bundle checked.
 
 ### 2026-11-09 — Claude: import dialog fix, timer, answer keys for known sheets
 
