@@ -159,7 +159,8 @@ Update this section when you push from Mac or PC.
   their answers filled in automatically; the review says how many.
 - Verified on the emulator with the owner's two PDFs (310001-RDG → 7 MC
   with correct answers; 300001-KLM → 10 compose in correct order).
-  Needs a hosting deploy (`scripts/deploy_web.sh --web-only`).
+- Owner deployed hosting the same day (`scripts/deploy_web.sh --web-only`,
+  51 files, release complete). Release v0.1.7.
 
 ### 2026-11-05 (later) — Claude: bank in sidebar, scan-first exercises, sample set
 

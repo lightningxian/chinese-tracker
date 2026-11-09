@@ -56,7 +56,8 @@ edge cases, and any manual/deploy steps still required).
 
 **For review**
 - Hosting deploy only (`scripts/deploy_web.sh --web-only`). No rules or
-  functions changes.
+  functions changes. **Deployed by the owner on 2026-11-09** (release
+  v0.1.7).
 - `web/worksheet_ocr.js` changed: hard-refresh once after deploy if the old
   file is cached.
 
