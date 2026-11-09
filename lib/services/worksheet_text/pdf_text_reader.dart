@@ -12,13 +12,14 @@ abstract final class PdfTextReader {
 
   static Future<String> extract(
     Uint8List bytes, {
-    void Function(double progress)? onProgress,
+    ReadProgress? onProgress,
   }) async {
+    onProgress?.call(0.02, 'Opening the PDF…');
     final doc = await PdfDocument.openData(bytes);
     try {
-      onProgress?.call(0.1);
       final textBuffer = StringBuffer();
       final pageCount = doc.pages.length;
+      onProgress?.call(0.1, 'Reading page 1 of $pageCount');
 
       for (var i = 0; i < pageCount; i++) {
         final page = doc.pages[i];
@@ -27,7 +28,12 @@ abstract final class PdfTextReader {
         if (text.isNotEmpty) {
           textBuffer.writeln(text);
         }
-        onProgress?.call(0.1 + ((i + 1) / pageCount) * 0.35);
+        onProgress?.call(
+          0.1 + ((i + 1) / pageCount) * 0.35,
+          i + 1 < pageCount
+              ? 'Reading page ${i + 2} of $pageCount'
+              : 'Read $pageCount ${pageCount == 1 ? 'page' : 'pages'}',
+        );
       }
 
       final embedded = textBuffer.toString().trim();
@@ -40,10 +46,14 @@ abstract final class PdfTextReader {
         );
       }
 
+      // No text layer: this is a scan. OCR takes 20–40 s per page, so tell
+      // the user which page we are on and how far Tesseract has got.
       final ocrBuffer = StringBuffer();
       for (var i = 0; i < pageCount; i++) {
         final page = doc.pages[i];
-        final scale = 2.5;
+        final pageLabel = 'Scanned page ${i + 1} of $pageCount';
+        onProgress?.call(0.45 + (i / pageCount) * 0.5, '$pageLabel · rendering');
+        const scale = 2.5;
         final width = (page.width * scale).round().clamp(1, 4096);
         final height = (page.height * scale).round().clamp(1, 4096);
 
@@ -59,9 +69,9 @@ abstract final class PdfTextReader {
           final png = _encodePng(rendered);
           final pageText = await ocrImageBytes(
             png,
-            onProgress: (fraction) {
+            onProgress: (fraction, detail) {
               final overall = 0.45 + ((i + fraction) / pageCount) * 0.5;
-              onProgress?.call(overall);
+              onProgress?.call(overall, '$pageLabel · $detail');
             },
           );
           if (pageText.isNotEmpty) {

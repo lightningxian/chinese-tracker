@@ -26,9 +26,20 @@ All three share `lib/features/teacher/worksheet_scan_flow.dart` (pick file → r
 1. Sign in as **Admin**
 2. **Exercises → New exercise** (or edit an existing draft)
 3. Tap **Choose file to upload**
-4. Wait for progress: **Prepare file → Read file → Detect questions**
+4. Wait for progress: **Prepare file → Read file → Detect questions**.
+   The dialog shows the time elapsed, a rough time left and what is happening
+   (page *n* of *m*, OCR phase). Text PDFs and Word files take a few seconds;
+   scanned pages and photos 20–40 s each, and the first scan in a session
+   also downloads the Chinese OCR data (about 15 MB).
 5. In the review dialog:
    - Check the **detected type** and question preview
+   - Check the **answer key** line. The centre's own sheets carry no key; when
+     the sheet code (`310001-RDG`) is in the bundled sample set
+     (`assets/question_sets/contoh_latihan_soal.json`,
+     `lib/core/utils/worksheet_answer_keys.dart`) the answers are filled in
+     from it and the line says how many. Otherwise every choice defaults to
+     **A** and compose sentences keep the order on the sheet: fix them in the
+     question bank after importing.
    - Edit extracted text if OCR missed anything
    - Tap **Re-analyze** after edits
 6. **Import questions**, then publish and assign as usual

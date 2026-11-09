@@ -6,6 +6,62 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-09 — Claude: import progress never closed from the bank; elapsed time + estimate; answer keys applied to known sheets
+
+**What changed**
+- **Bug fix, the real "stuck" cause:** `scanWorksheet` (question bank, quiz
+  editor, Exercises → Scan worksheet) popped the progress dialog with
+  `Navigator.of(context).pop()`. From a screen inside the admin shell that
+  is the nested navigator, so the dialog on the root navigator stayed open
+  at 88 % "Detecting question type…" for ever, with the review screen hidden
+  behind it. It now pops and pushes on the root navigator
+  (`worksheet_scan_flow.dart`). The exercise-form path already did this.
+- **Progress dialog** (`worksheet_import_progress_dialog.dart`): shows
+  elapsed time (`Elapsed 0:14`), a rough time left ("about 20 s left",
+  "almost done") once there is enough progress to estimate from, a detail
+  line of what is happening right now, and a footnote on expected times.
+  `WorksheetImportStage` gained `detail`.
+- **Progress detail wiring:** PDF reader reports "Opening the PDF", "Reading
+  page 1 of 3", "Scanned page 2 of 3 · Recognising text 45 %". OCR
+  (`worksheet_ocr.js` + `ocr_reader_web.dart`) forwards Tesseract's own
+  phases (loading engine, downloading Chinese data ~15 MB, recognising) as
+  progress instead of jumping 10 % → 100 %. The Tesseract worker now stays
+  alive between pages and between scans (released after 5 idle minutes), so
+  a multi-page scan loads the language data once.
+- **Answer keys for the centre's sheets** (`worksheet_answer_keys.dart`):
+  the sheets carry no key, so a scan used to store "A" for every choice and
+  the scrambled order for every compose item. When the scanned sheet's code
+  (`310001-RDG`) is in the bundled sample set, the review screen fills in
+  the answers from it (choice by answer text, compose order, accepted hanzi,
+  and the word bank for the connect-the-words sheet) and says so: "Answer
+  key: 7 of 7 answers filled from the centre's sample set (310001-RDG)".
+  Sheets without a key show a warning that answers default to A / sheet
+  order and must be corrected in the bank. `WorksheetParseResult` gained
+  `sheetCode` and `copyWith`; the review's final result no longer drops the
+  title and skill.
+- Normaliser strips private-use glyphs (Wingdings ➢ bullets came out as □).
+- Question bank: compose items show their sentence instead of "(no
+  prompt)"; search and sort use that text; imports are tagged with the sheet
+  code; the dedupe key uses the content, so two compose imports no longer
+  collide on an empty prompt. Skill comes from the sheet code (KLM/WRT →
+  typing).
+- Tests: `worksheet_answer_keys_test.dart` (6), `question_bank_import_utils_test.dart` (2); 51 pass.
+
+**Why**
+- Owner (2026-11-09): "the importing worksheet needs a timer, at least a
+  prediction how long, it feels like it was stuck" and "upload some of these
+  to the question bank, I want to see the final result". Verified on the
+  emulator with the two PDFs the owner sent (310001-RDG, 300001-KLM): both
+  import with correct answers.
+
+**For review**
+- Hosting deploy only (`scripts/deploy_web.sh --web-only`). No rules or
+  functions changes.
+- `web/worksheet_ocr.js` changed: hard-refresh once after deploy if the old
+  file is cached.
+
+---
+
 ## 2026-11-05 — Claude: Question bank in the sidebar, Scan worksheet first, sample sheets bundled
 
 **What changed**

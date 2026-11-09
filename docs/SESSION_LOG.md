@@ -148,6 +148,19 @@ Commit author preference (via env vars, not global git config):
 
 Update this section when you push from Mac or PC.
 
+### 2026-11-09 — Claude: import dialog fix, timer, answer keys for known sheets
+
+- Owner: scan "feels stuck". Cause found: from the question bank (and quiz
+  editor) the progress dialog was never closed (nested vs root navigator),
+  so it sat at 88 % for ever with the review hidden behind it. Fixed.
+- Dialog shows elapsed time, a time-left estimate and what is happening
+  (page n of m, OCR phase). Tesseract worker reused across pages/scans.
+- Scans of the centre's own sheets (code in the bundled sample set) get
+  their answers filled in automatically; the review says how many.
+- Verified on the emulator with the owner's two PDFs (310001-RDG → 7 MC
+  with correct answers; 300001-KLM → 10 compose in correct order).
+  Needs a hosting deploy (`scripts/deploy_web.sh --web-only`).
+
 ### 2026-11-05 (later) — Claude: bank in sidebar, scan-first exercises, sample set
 
 - Question bank sidebar entry; Scan worksheet opens the pre-filled exercise

@@ -44,8 +44,18 @@ class QuestionBankItem {
 
   String get prompt => question.prompt;
 
-  /// Dedupe key: same prompt + type = already in bank.
-  String get dedupeKey => '${type.value}::${prompt.trim().toLowerCase()}';
+  /// What identifies the question when shown in a list: the prompt, or for a
+  /// compose item its sentence, or the keyword of a picture / hanzi item.
+  String get displayText {
+    if (prompt.trim().isNotEmpty) return prompt;
+    if (question.segments.isNotEmpty) return question.segments.join(' / ');
+    if (question.keyword.isNotEmpty) return question.keyword;
+    return '';
+  }
+
+  /// Dedupe key: same content + type = already in bank. Built from
+  /// [displayText], so compose items (which have no prompt) stay distinct.
+  String get dedupeKey => '${type.value}::${displayText.trim().toLowerCase()}';
 
   factory QuestionBankItem.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> doc,

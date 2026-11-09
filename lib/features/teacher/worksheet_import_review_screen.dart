@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/question_import_utils.dart';
+import '../../core/utils/worksheet_answer_keys.dart';
 import '../../core/widgets/app_card.dart';
 import '../../models/exercise_type.dart';
 
@@ -44,14 +45,63 @@ class _WorksheetImportReviewScreenState
   late WorksheetParseResult _parsed;
   late ExerciseType _selectedType;
 
+  /// Keys for the centre's own sheets; null until the bundled set is loaded.
+  WorksheetAnswerKeys? _keys;
+  int _keyedAnswers = 0;
+
   @override
   void initState() {
     super.initState();
-    _parsed = QuestionImportUtils.parseWorksheet(widget.extractedText);
+    _parsed = _parse(widget.extractedText);
     _selectedType = _parsed.suggestedType;
     _textController = TextEditingController(text: widget.extractedText);
     _instructionsController =
         TextEditingController(text: _parsed.instructions);
+    WorksheetAnswerKeys.loadBundled().then((keys) {
+      if (!mounted) return;
+      setState(() {
+        _keys = keys;
+        _parsed = _parse(_textController.text);
+      });
+    }).catchError((_) {
+      // Without the sample set the scan still works, just unkeyed.
+    });
+  }
+
+  /// Parse the text and, when the sheet is one of the centre's keyed sheets,
+  /// fill in its answers.
+  WorksheetParseResult _parse(String text) {
+    final parsed = QuestionImportUtils.parseWorksheet(text);
+    final keys = _keys;
+    if (keys == null) {
+      _keyedAnswers = 0;
+      return parsed;
+    }
+    final keyed = keys.apply(parsed);
+    _keyedAnswers = keyed.applied;
+    return keyed.result;
+  }
+
+  /// Whether the admin has to supply answers for this type of question.
+  bool get _needsAnswers => _selectedType != ExerciseType.pictureSentence;
+
+  String? get _answerKeyNote {
+    if (_previewCount == 0 || !_needsAnswers) return null;
+    if (_keyedAnswers > 0) {
+      final code = _parsed.sheetCode;
+      return 'Answer key: $_keyedAnswers of $_previewCount answers filled '
+          'from the centre\'s sample set${code == null ? '' : ' ($code)'}.';
+    }
+    return switch (_selectedType) {
+      ExerciseType.composeSentences =>
+        'No answer key on this sheet: the sentences keep the order shown on '
+            'the sheet. Put the words in the correct order in the question bank.',
+      ExerciseType.typeHanzi =>
+        'No answer key on this sheet: add the accepted hanzi for each item in '
+            'the question bank.',
+      _ => 'No answer key on this sheet: every answer is set to A (the first '
+          'option). Correct them in the question bank.',
+    };
   }
 
   @override
@@ -63,7 +113,7 @@ class _WorksheetImportReviewScreenState
 
   void _reanalyze() {
     setState(() {
-      _parsed = QuestionImportUtils.parseWorksheet(_textController.text);
+      _parsed = _parse(_textController.text);
       _selectedType = _parsed.suggestedType;
       if (_instructionsController.text.trim().isEmpty &&
           _parsed.instructions.isNotEmpty) {
@@ -82,20 +132,12 @@ class _WorksheetImportReviewScreenState
   bool get _canImport => _selectedType.isImplemented && _previewCount > 0;
 
   WorksheetParseResult _buildFinalParseResult() {
-    final result =
-        QuestionImportUtils.parseWorksheet(_textController.text.trim());
+    final result = _parse(_textController.text.trim());
     final instructions = _instructionsController.text.trim();
-    return WorksheetParseResult(
+    return result.copyWith(
       instructions:
           instructions.isNotEmpty ? instructions : result.instructions,
       suggestedType: _selectedType,
-      suggestedLevel: result.suggestedLevel,
-      detectionSummary: result.detectionSummary,
-      mcQuestions: result.mcQuestions,
-      composeQuestions: result.composeQuestions,
-      matchingOptions: result.matchingOptions,
-      matchingQuestions: result.matchingQuestions,
-      passage: result.passage,
     );
   }
 
@@ -189,6 +231,36 @@ class _WorksheetImportReviewScreenState
                             color: AppColors.textSecondary,
                             fontSize: 12,
                           ),
+                        ),
+                      ],
+                      if (_answerKeyNote != null) ...[
+                        const SizedBox(height: 8),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              _keyedAnswers > 0
+                                  ? Icons.check_circle_outline
+                                  : Icons.info_outline,
+                              size: 16,
+                              color: _keyedAnswers > 0
+                                  ? AppColors.success
+                                  : AppColors.brandYellow,
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                _answerKeyNote!,
+                                style: TextStyle(
+                                  color: _keyedAnswers > 0
+                                      ? AppColors.navy
+                                      : AppColors.textSecondary,
+                                  fontSize: 12,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ],

@@ -55,7 +55,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
     }
     if (_search.isNotEmpty) {
       final needle = _search.toLowerCase();
-      final hay = '${item.prompt} ${item.tags.join(' ')}'.toLowerCase();
+      final hay = '${item.displayText} ${item.tags.join(' ')}'.toLowerCase();
       if (!hay.contains(needle)) return false;
     }
     return true;
@@ -67,7 +67,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
     final sorted = [...items];
     sorted.sort((a, b) {
       final cmp = switch (col) {
-        'prompt' => a.prompt.toLowerCase().compareTo(b.prompt.toLowerCase()),
+        'prompt' => a.displayText.toLowerCase().compareTo(b.displayText.toLowerCase()),
         'type' => a.type.label.compareTo(b.type.label),
         'level' => (a.level ?? '').compareTo(b.level ?? ''),
         'difficulty' => a.difficulty.label.compareTo(b.difficulty.label),
@@ -218,7 +218,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
         flex: 3,
         sortable: true,
         cell: (item) => Text(
-          item.prompt.isEmpty ? '(no prompt)' : item.prompt,
+          item.displayText.isEmpty ? '(no prompt)' : item.displayText,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
@@ -407,7 +407,7 @@ class _BankItemCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item.prompt.isEmpty ? '(no prompt)' : item.prompt,
+                  item.displayText.isEmpty ? '(no prompt)' : item.displayText,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
@@ -924,7 +924,7 @@ class _QuestionBankPickerState extends State<_QuestionBankPicker> {
                 .toList();
             final items = all.where((i) {
               if (_filter.isEmpty) return true;
-              return i.prompt.toLowerCase().contains(_filter.toLowerCase());
+              return i.displayText.toLowerCase().contains(_filter.toLowerCase());
             }).toList();
 
             return Column(
@@ -995,7 +995,7 @@ class _QuestionBankPickerState extends State<_QuestionBankPicker> {
                             return CheckboxListTile(
                               value: _selected.contains(item.id),
                               title: Text(
-                                item.prompt.isEmpty ? '(no prompt)' : item.prompt,
+                                item.displayText.isEmpty ? '(no prompt)' : item.displayText,
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),

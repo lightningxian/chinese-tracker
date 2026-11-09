@@ -25,6 +25,9 @@ abstract final class WorksheetTextNormalizer {
       RegExp(r'([。．.!?？！:：)）])\s+(\d{1,2}\.\s*)');
   static final _lineStartsItem = RegExp(r'^(\d{1,2}[\.．、]|例如|★|☆)');
   static final _arrowBullet = RegExp(r'^[➢➤►▶→☞•]\s*');
+  // Symbol fonts (Wingdings arrows and bullets) come out of the PDF as
+  // private-use characters that render as boxes; they carry no text.
+  static final _privateUse = RegExp(r'[\uE000-\uF8FF]');
 
   static const _toneless = {
     'ā': 'a', 'á': 'a', 'ǎ': 'a', 'à': 'a',
@@ -75,7 +78,10 @@ abstract final class WorksheetTextNormalizer {
   }
 
   static String normalize(String raw) {
-    var text = raw.replaceAll('ɡ', 'g').replaceAll('ɑ', 'a');
+    var text = raw
+        .replaceAll('ɡ', 'g')
+        .replaceAll('ɑ', 'a')
+        .replaceAll(_privateUse, ' ');
     var lines = text
         .split(RegExp(r'\r?\n'))
         .map((l) => l.trim())

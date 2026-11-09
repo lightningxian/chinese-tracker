@@ -8,6 +8,9 @@ import 'worksheet_text/ocr_reader_stub.dart'
     if (dart.library.js_interop) 'worksheet_text/ocr_reader_web.dart';
 import 'worksheet_text/pdf_text_reader.dart';
 
+/// Progress of one reader: how far it is (0–1) and what it is doing now.
+typedef ReadProgress = void Function(double fraction, String detail);
+
 /// User-facing worksheet import failure.
 class WorksheetImportException implements Exception {
   WorksheetImportException(this.message);
@@ -71,11 +74,11 @@ class WorksheetImportService {
     Uint8List bytes,
     void Function(WorksheetImportStage stage)? onProgress,
   ) async {
-    onProgress?.call(WorksheetImportStage.reading(0.05));
+    onProgress?.call(WorksheetImportStage.reading(0.02, detail: 'Opening the PDF…'));
     final text = await PdfTextReader.extract(
       bytes,
-      onProgress: (fraction) {
-        onProgress?.call(WorksheetImportStage.reading(fraction));
+      onProgress: (fraction, detail) {
+        onProgress?.call(WorksheetImportStage.reading(fraction, detail: detail));
       },
     );
     return _ensureText(text);
@@ -85,9 +88,11 @@ class WorksheetImportService {
     Uint8List bytes,
     void Function(WorksheetImportStage stage)? onProgress,
   ) async {
-    onProgress?.call(WorksheetImportStage.reading(0.4));
+    onProgress?.call(
+      WorksheetImportStage.reading(0.4, detail: 'Reading the Word document…'),
+    );
     final text = DocxTextReader.extract(bytes);
-    onProgress?.call(WorksheetImportStage.reading(0.9));
+    onProgress?.call(WorksheetImportStage.reading(0.9, detail: 'Read the Word document'));
     return _ensureText(text);
   }
 
@@ -96,11 +101,13 @@ class WorksheetImportService {
     String extension,
     void Function(WorksheetImportStage stage)? onProgress,
   ) async {
-    onProgress?.call(WorksheetImportStage.reading(0.15));
+    onProgress?.call(WorksheetImportStage.reading(0.05, detail: 'Photo · starting OCR…'));
     final text = await ocrImageBytes(
       bytes,
-      onProgress: (fraction) {
-        onProgress?.call(WorksheetImportStage.reading(0.15 + fraction * 0.7));
+      onProgress: (fraction, detail) {
+        onProgress?.call(
+          WorksheetImportStage.reading(0.05 + fraction * 0.9, detail: 'Photo · $detail'),
+        );
       },
     );
     return _ensureText(text);

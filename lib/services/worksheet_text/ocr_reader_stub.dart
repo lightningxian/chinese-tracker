@@ -4,7 +4,7 @@ import '../worksheet_import_service.dart';
 
 Future<String> ocrImageBytes(
   Uint8List imageBytes, {
-  void Function(double progress)? onProgress,
+  ReadProgress? onProgress,
 }) async {
   throw WorksheetImportException(
     'Image OCR is only available in the web app. '

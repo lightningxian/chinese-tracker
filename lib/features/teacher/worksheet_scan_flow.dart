@@ -58,10 +58,13 @@ Future<WorksheetImportReviewResult?> scanWorksheet(BuildContext context) async {
             );
     progress.value = WorksheetImportStage.analyze();
     if (!context.mounted) return null;
-    Navigator.of(context).pop();
+    // The dialog lives on the root navigator (showDialog default); the
+    // calling screen may sit in the shell's nested navigator, so a plain
+    // Navigator.of(context).pop() would miss it and leave it open forever.
+    Navigator.of(context, rootNavigator: true).pop();
 
-    final result =
-        await Navigator.of(context).push<WorksheetImportReviewResult>(
+    final result = await Navigator.of(context, rootNavigator: true)
+        .push<WorksheetImportReviewResult>(
       MaterialPageRoute(
         fullscreenDialog: true,
         builder: (_) => WorksheetImportReviewScreen(

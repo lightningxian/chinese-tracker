@@ -18,7 +18,14 @@ abstract final class QuestionBankImportUtils {
   }) {
     final type = typeOverride ?? result.suggestedType;
     final level = levelOverride ?? result.suggestedLevel;
-    final skill = ExerciseSkillCategory.forExerciseType(type);
+    final skill =
+        result.suggestedSkill ?? ExerciseSkillCategory.forExerciseType(type);
+    // The sheet code (310001-RDG) as a tag, so the bank can be searched and
+    // filtered by worksheet.
+    final sheetCode = result.sheetCode;
+    final itemTags = sheetCode == null || tags.contains(sheetCode)
+        ? tags
+        : [sheetCode, ...tags];
 
     return switch (type) {
       ExerciseType.composeSentences => [
@@ -33,7 +40,7 @@ abstract final class QuestionBankImportUtils {
               ),
               skillCategory: skill,
               level: level,
-              tags: tags,
+              tags: itemTags,
               difficulty: difficulty,
             ),
         ],
@@ -52,7 +59,7 @@ abstract final class QuestionBankImportUtils {
               ),
               skillCategory: skill,
               level: level,
-              tags: tags,
+              tags: itemTags,
               difficulty: difficulty,
             ),
         ],
@@ -72,7 +79,7 @@ abstract final class QuestionBankImportUtils {
               ),
               skillCategory: skill,
               level: level,
-              tags: tags,
+              tags: itemTags,
               difficulty: difficulty,
             ),
         ],

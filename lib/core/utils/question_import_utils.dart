@@ -54,10 +54,14 @@ class WorksheetParseResult {
     this.passage = '',
     this.suggestedSkill,
     this.suggestedTitle,
+    this.sheetCode,
   });
 
   final String instructions;
   final String? suggestedLevel;
+
+  /// The centre's file code at the top of the sheet, e.g. `310001-RDG`.
+  final String? sheetCode;
 
   /// From the centre's file code (`320001-WRT` → typing) or the type.
   final ExerciseSkillCategory? suggestedSkill;
@@ -76,6 +80,30 @@ class WorksheetParseResult {
 
   /// Reading-comprehension text that precedes the questions (R3).
   final String passage;
+
+  WorksheetParseResult copyWith({
+    String? instructions,
+    ExerciseType? suggestedType,
+    List<ParsedMcQuestion>? mcQuestions,
+    List<ParsedComposeQuestion>? composeQuestions,
+    List<String>? matchingOptions,
+    List<ParsedMatchingQuestion>? matchingQuestions,
+  }) {
+    return WorksheetParseResult(
+      instructions: instructions ?? this.instructions,
+      suggestedLevel: suggestedLevel,
+      suggestedType: suggestedType ?? this.suggestedType,
+      detectionSummary: detectionSummary,
+      mcQuestions: mcQuestions ?? this.mcQuestions,
+      composeQuestions: composeQuestions ?? this.composeQuestions,
+      matchingOptions: matchingOptions ?? this.matchingOptions,
+      matchingQuestions: matchingQuestions ?? this.matchingQuestions,
+      passage: passage,
+      suggestedSkill: suggestedSkill,
+      suggestedTitle: suggestedTitle,
+      sheetCode: sheetCode,
+    );
+  }
 
   static int countFor(
     ExerciseType type, {
@@ -418,6 +446,7 @@ abstract final class QuestionImportUtils {
       passage: finalPassage,
       suggestedSkill: skill,
       suggestedTitle: title,
+      sheetCode: code?.code,
     );
     return WorksheetParseResult(
       instructions: result.instructions,
@@ -447,13 +476,14 @@ abstract final class QuestionImportUtils {
       passage: finalPassage,
       suggestedSkill: skill,
       suggestedTitle: title,
+      sheetCode: code?.code,
     );
   }
 
   /// The centre's file code at the top of each sheet: first digit = HSK
   /// level, suffix = section (RDG reading, CRT exam reading, KK vocabulary,
   /// KLM sentences, WRT writing).
-  static ({String level, ExerciseSkillCategory skill})? _readCode(
+  static ({String code, String level, ExerciseSkillCategory skill})? _readCode(
     List<String> lines,
   ) {
     for (final line in lines.take(6)) {
@@ -463,7 +493,7 @@ abstract final class QuestionImportUtils {
         'KLM' || 'WRT' => ExerciseSkillCategory.typing,
         _ => ExerciseSkillCategory.reading,
       };
-      return (level: 'HSK ${m.group(1)}', skill: skill);
+      return (code: m.group(0)!.trim(), level: 'HSK ${m.group(1)}', skill: skill);
     }
     return null;
   }
