@@ -6,6 +6,33 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-09 (evening) — Claude: guard against a live bundle on the local dev server
+
+**What changed**
+- `lib/app.dart`: a bundle without `USE_EMULATORS` that is served from
+  `localhost` / `127.0.0.1` shows a brown **LIVE DATA** ribbon (the emulator
+  bundle keeps its red **EMULATOR** ribbon).
+- `scripts/run_emulator_web.sh` (new): builds the emulator bundle into
+  `build/web-emulator` and serves it on :5181 with `npx serve -s`.
+  `CLAUDE.md` says to use it.
+
+**Why**
+- Incident: Claude's emulator dev server (`flutter run -d web-server`,
+  serving `build/web`) kept running while the owner ran
+  `scripts/deploy_web.sh`, which rebuilt `build/web` with the live config.
+  The next sign-ins on localhost:5181 (student1@ / student2@test
+  .chinesetracker, the shared test password) therefore hit the **live**
+  project. Nothing was written (a student login only reads), the session
+  was cleared and the server stopped, but it broke the "never sign in to
+  live" rule and cost an hour of confusion. Two guards now make the state
+  visible and keep the two bundles in separate folders.
+
+**For review**
+- Hosting deploy picks up the banner change whenever the next deploy
+  happens; nothing urgent.
+
+---
+
 ## 2026-11-09 (later) — Claude: bank grouped by worksheet, Kai font, table lines, difficulty removed
 
 **What changed**

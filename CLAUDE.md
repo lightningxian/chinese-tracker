@@ -56,6 +56,12 @@ npm --prefix rules-tests run test:emulator      # 18 pass, 1 skipped (emulator l
 
 # Full emulator suite (auth 9099, firestore 8080, functions 5001, storage 9199, UI 4000)
 firebase emulators:start --project demo-chinese-tracker
+# Web app against the emulators: ALWAYS this script (builds to build/web-emulator,
+# serves on :5181). Never serve build/web for emulator work: deploy_web.sh rebuilds
+# build/web with the LIVE config, and a dev server pointing there silently switches
+# to the live database (happened 2026-11-09). A local bundle on live shows a
+# "LIVE DATA" ribbon; the emulator bundle shows "EMULATOR".
+scripts/run_emulator_web.sh
 
 # Hosting deploy: ALWAYS via the script. It builds web with the live config,
 # copies the Android APK to /downloads/easy-study.apk (hosting deploys are

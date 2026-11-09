@@ -96,15 +96,30 @@ class _ChineseTrackerAppState extends State<ChineseTrackerApp> {
                 ),
                 child: child ?? const SizedBox.shrink(),
               );
-              if (!BuildFlags.useEmulators) return scaled;
-              // Loud reminder that this build talks to local emulators, so a
-              // stale production bundle is never mistaken for it.
-              return Banner(
-                message: 'EMULATOR',
-                location: BannerLocation.topStart,
-                color: const Color(0xFFB53A3A),
-                child: scaled,
-              );
+              if (BuildFlags.useEmulators) {
+                // Loud reminder that this build talks to local emulators, so
+                // a stale production bundle is never mistaken for it.
+                return Banner(
+                  message: 'EMULATOR',
+                  location: BannerLocation.topStart,
+                  color: const Color(0xFFB53A3A),
+                  child: scaled,
+                );
+              }
+              // The opposite mistake: a live bundle served from a local dev
+              // server (flutter run, or build/web rebuilt by the deploy
+              // script under a running web-server) talks to the LIVE
+              // database. Say so.
+              final host = Uri.base.host;
+              if (host == 'localhost' || host == '127.0.0.1') {
+                return Banner(
+                  message: 'LIVE DATA',
+                  location: BannerLocation.topStart,
+                  color: const Color(0xFF8A5A12),
+                  child: scaled,
+                );
+              }
+              return scaled;
             },
           );
         },
