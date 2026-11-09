@@ -6,6 +6,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/app_shell.dart';
 import '../../core/widgets/notification_sheet.dart';
+import '../../l10n/l10n.dart';
 import '../../models/app_notification.dart';
 import '../../models/app_user.dart';
 import '../../services/auth_service.dart';
@@ -26,24 +27,25 @@ class _ParentShellState extends State<ParentShell> {
   int _index = 0;
   String? _selectedChildId;
 
-  static const _destinations = [
+  // Built per frame so the labels follow the UI language.
+  List<AppShellDestination> _destinations(AppLocalizations l) => [
     AppShellDestination(
-      label: 'Overview',
+      label: l.parentNavOverview,
       icon: Icons.dashboard_outlined,
       selectedIcon: Icons.dashboard,
     ),
     AppShellDestination(
-      label: 'Calendar',
+      label: l.parentNavCalendar,
       icon: Icons.calendar_month_outlined,
       selectedIcon: Icons.calendar_month,
     ),
     AppShellDestination(
-      label: 'Payments',
+      label: l.navPayments,
       icon: Icons.receipt_long_outlined,
       selectedIcon: Icons.receipt_long,
     ),
     AppShellDestination(
-      label: 'Profile',
+      label: l.navProfile,
       icon: Icons.person_outline,
       selectedIcon: Icons.person,
     ),
@@ -88,12 +90,13 @@ class _ParentShellState extends State<ParentShell> {
             final unread = notifications.where((n) => !n.read).length;
 
             final body = _buildBody(parent, children, selectedChild);
+            final destinations = _destinations(context.l10n);
 
             return AppShellScaffold(
-              title: _destinations[_index].label,
+              title: destinations[_index].label,
               selectedIndex: _index,
               onSelectedIndexChanged: (i) => setState(() => _index = i),
-              destinations: _destinations,
+              destinations: destinations,
               userName: parent.name,
               roleLabel: 'Orang Tua',
               showNotificationBell: true,
@@ -123,20 +126,19 @@ class _ParentShellState extends State<ParentShell> {
       return ParentProfileTab(parent: parent);
     }
 
+    final l = context.l10n;
     if (child == null) {
-      return const EmptyState(
+      return EmptyState(
         icon: Icons.family_restroom_outlined,
-        title: 'No children linked',
-        subtitle:
-            'Ask your centre admin to link your account to your child, or '
-            'register again with your child access code.',
+        title: l.parentNoChildrenTitle,
+        subtitle: l.parentNoChildrenSubtitle,
       );
     }
 
     final content = switch (_index) {
       0 => ParentOverviewTab(child: child),
       1 => ClassCalendarScreen(
-          title: 'Calendar',
+          title: l.parentNavCalendar,
           showAppBar: false,
           sessions: context
               .read<FirestoreService>()
@@ -181,9 +183,9 @@ class _ChildSwitcher extends StatelessWidget {
       child: DropdownButtonFormField<String>(
         initialValue: selectedId,
         isExpanded: true,
-        decoration: const InputDecoration(
-          labelText: 'Child',
-          prefixIcon: Icon(Icons.person_outline),
+        decoration: InputDecoration(
+          labelText: context.l10n.parentChildLabel,
+          prefixIcon: const Icon(Icons.person_outline),
           isDense: true,
         ),
         items: [

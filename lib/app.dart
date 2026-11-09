@@ -5,6 +5,7 @@ import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/constants/app_constants.dart';
 import 'core/constants/build_flags.dart';
+import 'l10n/l10n.dart';
 import 'services/auth_service.dart';
 import 'services/firestore_service.dart';
 import 'services/worksheet_import_service.dart';
@@ -16,6 +17,7 @@ import 'services/notification_service.dart';
 import 'services/payment_service.dart';
 import 'services/materials_storage_service.dart';
 import 'services/question_bank_media_service.dart';
+import 'services/locale_controller.dart';
 
 class ChineseTrackerApp extends StatefulWidget {
   const ChineseTrackerApp({super.key});
@@ -36,6 +38,7 @@ class _ChineseTrackerAppState extends State<ChineseTrackerApp> {
   late final PaymentService _paymentService;
   late final MaterialsStorageService _materialsStorageService;
   late final QuestionBankMediaService _questionBankMediaService;
+  late final LocaleController _localeController;
 
   @override
   void initState() {
@@ -53,8 +56,10 @@ class _ChineseTrackerAppState extends State<ChineseTrackerApp> {
     _paymentService = PaymentService();
     _materialsStorageService = MaterialsStorageService();
     _questionBankMediaService = QuestionBankMediaService();
+    _localeController = LocaleController();
     _authService.init();
     _savedAccountsService.load();
+    _localeController.load();
   }
 
   @override
@@ -64,6 +69,9 @@ class _ChineseTrackerAppState extends State<ChineseTrackerApp> {
         ChangeNotifierProvider<AuthService>.value(value: _authService),
         ChangeNotifierProvider<SavedAccountsService>.value(
           value: _savedAccountsService,
+        ),
+        ChangeNotifierProvider<LocaleController>.value(
+          value: _localeController,
         ),
         Provider<FirestoreService>.value(value: _firestoreService),
         Provider<WorksheetImportService>.value(value: _worksheetImportService),
@@ -84,43 +92,53 @@ class _ChineseTrackerAppState extends State<ChineseTrackerApp> {
       child: Builder(
         builder: (context) {
           final router = AppRouter.create(context);
-          return MaterialApp.router(
-            title: AppConstants.appName,
-            theme: AppTheme.light(),
-            routerConfig: router,
-            debugShowCheckedModeBanner: false,
-            builder: (context, child) {
-              final scaled = MediaQuery(
-                data: MediaQuery.of(context).copyWith(
-                  textScaler: const TextScaler.linear(1.12),
-                ),
-                child: child ?? const SizedBox.shrink(),
-              );
-              if (BuildFlags.useEmulators) {
-                // Loud reminder that this build talks to local emulators, so
-                // a stale production bundle is never mistaken for it.
-                return Banner(
-                  message: 'EMULATOR',
-                  location: BannerLocation.topStart,
-                  color: const Color(0xFFB53A3A),
-                  child: scaled,
-                );
-              }
-              // The opposite mistake: a live bundle served from a local dev
-              // server (flutter run, or build/web rebuilt by the deploy
-              // script under a running web-server) talks to the LIVE
-              // database. Say so.
-              final host = Uri.base.host;
-              if (host == 'localhost' || host == '127.0.0.1') {
-                return Banner(
-                  message: 'LIVE DATA',
-                  location: BannerLocation.topStart,
-                  color: const Color(0xFF8A5A12),
-                  child: scaled,
-                );
-              }
-              return scaled;
-            },
+          // Only the app rebuilds on a language change; the router (and
+          // so the current page) is kept.
+          return Consumer<LocaleController>(
+            builder: (context, localeController, _) =>
+              MaterialApp.router(
+                title: AppConstants.appName,
+                theme: AppTheme.light(),
+                // UI language: ID | EN toggle (LocaleController). Student, parent
+                // and sign-in screens are translated; admin/teacher stay English.
+                locale: localeController.locale,
+                supportedLocales: LocaleController.supportedLocales,
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+                routerConfig: router,
+                debugShowCheckedModeBanner: false,
+                builder: (context, child) {
+                  final scaled = MediaQuery(
+                    data: MediaQuery.of(context).copyWith(
+                      textScaler: const TextScaler.linear(1.12),
+                    ),
+                    child: child ?? const SizedBox.shrink(),
+                  );
+                  if (BuildFlags.useEmulators) {
+                    // Loud reminder that this build talks to local emulators, so
+                    // a stale production bundle is never mistaken for it.
+                    return Banner(
+                      message: 'EMULATOR',
+                      location: BannerLocation.topStart,
+                      color: const Color(0xFFB53A3A),
+                      child: scaled,
+                    );
+                  }
+                  // The opposite mistake: a live bundle served from a local dev
+                  // server (flutter run, or build/web rebuilt by the deploy
+                  // script under a running web-server) talks to the LIVE
+                  // database. Say so.
+                  final host = Uri.base.host;
+                  if (host == 'localhost' || host == '127.0.0.1') {
+                    return Banner(
+                      message: 'LIVE DATA',
+                      location: BannerLocation.topStart,
+                      color: const Color(0xFF8A5A12),
+                      child: scaled,
+                    );
+                  }
+                  return scaled;
+                },
+              ),
           );
         },
       ),

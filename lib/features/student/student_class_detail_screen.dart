@@ -8,6 +8,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/leave_class_dialog.dart';
 import '../../core/widgets/status_pill.dart';
+import '../../l10n/l10n.dart';
 import '../../models/app_user.dart';
 import '../../models/attendance_record.dart';
 import '../../core/errors/session_errors.dart';
@@ -24,6 +25,7 @@ class StudentClassDetailScreen extends StatelessWidget {
   final AppUser student;
 
   Future<void> _confirmLeave(BuildContext context) async {
+    final l = context.l10n;
     final leave = await showLeaveClassDialog(context);
 
     if (leave != true || !context.mounted) return;
@@ -35,25 +37,25 @@ class StudentClassDetailScreen extends StatelessWidget {
           );
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('You left this class')),
+          SnackBar(content: Text(l.studentJoinLeftClass)),
         );
         context.pop();
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(_errorMessage(e))),
+          SnackBar(content: Text(_errorMessage(l, e))),
         );
       }
     }
   }
 
-  static String _errorMessage(Object e) {
+  static String _errorMessage(AppLocalizations l, Object e) {
     if (e is SessionFullException) {
       return e.toString();
     }
     if (e is FirebaseException) {
-      return e.message ?? 'Could not leave class (${e.code})';
+      return e.message ?? l.studentClassLeaveFailed(e.code);
     }
     return e.toString();
   }
@@ -61,6 +63,7 @@ class StudentClassDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final firestore = context.read<FirestoreService>();
+    final l = context.l10n;
 
     return FutureBuilder(
       future: firestore.getClassSession(sessionId),
@@ -75,13 +78,13 @@ class StudentClassDetailScreen extends StatelessWidget {
         if (session == null) {
           return Scaffold(
             appBar: AppBar(),
-            body: const Center(child: Text('Class not found')),
+            body: Center(child: Text(l.studentClassNotFound)),
           );
         }
 
         final date = DateTime.tryParse(session.sessionDate);
         final dateLabel = date != null
-            ? DateFormat('EEE, d MMM yyyy').format(date)
+            ? DateFormat('EEE, d MMM yyyy', l.localeName).format(date)
             : session.sessionDate;
 
         return Scaffold(
@@ -89,7 +92,8 @@ class StudentClassDetailScreen extends StatelessWidget {
           body: FutureBuilder<AppUser?>(
             future: firestore.getUser(session.teacherId),
             builder: (context, teacherSnap) {
-              final teacherName = teacherSnap.data?.name ?? 'Your teacher';
+              final teacherName =
+                  teacherSnap.data?.name ?? l.studentClassYourTeacher;
 
               return StreamBuilder<List<AttendanceRecord>>(
             stream: firestore.watchSessionAttendance(sessionId),
@@ -126,7 +130,10 @@ class StudentClassDetailScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          '${session.timeRangeLabel} · Teacher: $teacherName',
+                          l.studentClassTimeAndTeacher(
+                            session.timeRangeLabel,
+                            teacherName,
+                          ),
                           style: const TextStyle(color: AppColors.textSecondary),
                         ),
                         const SizedBox(height: 12),
@@ -145,8 +152,8 @@ class StudentClassDetailScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          '${roster.length}/${session.capacity} students joined'
-                          '${isFull ? ' · Full' : ' · $spotsLeft spot${spotsLeft == 1 ? '' : 's'} left'}',
+                          '${l.studentClassStudentsJoined(roster.length, session.capacity)}'
+                          ' · ${isFull ? l.commonFull : l.commonSpotsLeft(spotsLeft)}',
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
                             color: isFull ? AppColors.error : AppColors.teal,
@@ -161,7 +168,7 @@ class StudentClassDetailScreen extends StatelessWidget {
                     OutlinedButton.icon(
                       onPressed: () => _confirmLeave(context),
                       icon: const Icon(Icons.cancel_outlined),
-                      label: const Text('Leave class'),
+                      label: Text(l.studentClassLeaveClass),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.error,
                         side: const BorderSide(color: AppColors.error),
@@ -171,7 +178,7 @@ class StudentClassDetailScreen extends StatelessWidget {
                   ],
                   const SizedBox(height: 24),
                   SectionHeader(
-                    title: 'Who joined (${roster.length})',
+                    title: l.studentClassWhoJoined(roster.length),
                   ),
                   if (rosterSnap.hasError)
                     AppCard(
@@ -181,10 +188,10 @@ class StudentClassDetailScreen extends StatelessWidget {
                       ),
                     )
                   else if (roster.isEmpty)
-                    const AppCard(
+                    AppCard(
                       child: Text(
-                        'No students have joined yet.',
-                        style: TextStyle(color: AppColors.textSecondary),
+                        l.studentClassNoneJoined,
+                        style: const TextStyle(color: AppColors.textSecondary),
                       ),
                     )
                   else
@@ -192,7 +199,7 @@ class StudentClassDetailScreen extends StatelessWidget {
                       final isMe = record.studentId == student.uid;
                       final name = record.studentName?.isNotEmpty == true
                           ? record.studentName!
-                          : 'Student';
+                          : l.commonStudent;
 
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 8),
@@ -222,15 +229,15 @@ class StudentClassDetailScreen extends StatelessWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      isMe ? '$name (you)' : name,
+                                      isMe ? l.studentClassYou(name) : name,
                                       style: const TextStyle(
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
                                     Text(
                                       record.joinedByStudent
-                                          ? 'Joined from app'
-                                          : 'Added by teacher',
+                                          ? l.studentClassJoinedFromApp
+                                          : l.studentClassAddedByTeacher,
                                       style: const TextStyle(
                                         color: AppColors.textSecondary,
                                         fontSize: 12,

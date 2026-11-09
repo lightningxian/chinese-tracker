@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/widgets/app_card.dart';
+import '../../l10n/l10n.dart';
 import '../../models/app_user.dart';
 import '../../models/invoice.dart';
 import '../../services/firestore_service.dart';
@@ -25,10 +26,10 @@ class ParentPaymentsTab extends StatelessWidget {
         }
         final invoices = snap.data ?? [];
         if (invoices.isEmpty) {
-          return const EmptyState(
+          return EmptyState(
             icon: Icons.receipt_long_outlined,
-            title: 'No invoices',
-            subtitle: 'Invoices for your child will appear here.',
+            title: context.l10n.parentPaymentsEmptyTitle,
+            subtitle: context.l10n.parentPaymentsEmptySubtitle,
           );
         }
         return ListView.separated(

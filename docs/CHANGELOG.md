@@ -6,6 +6,60 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-09 (night) — Claude: exercises are bank packages with server scoring; ID/EN switch; delete account
+
+**What changed**
+- **Exercise = package from the question bank.** New exercises hold
+  `bankSheets` (worksheet codes) and `bankQuestionIds`; no questions of
+  their own (`Exercise.isPackage`). Admin form
+  `exercise_package_form_screen.dart` (title, level, skill, instructions,
+  published, contents picked from the bank, reorder, "Save and assign").
+  Editing a bank worksheet changes every exercise that uses it. Older
+  exercises keep their embedded questions and the old editor.
+- **Students see only assigned exercises** (`watchAvailableExercisesForStudent`
+  now reads `exercise_assignments`; level no longer opens anything).
+  Assign dialog `exercise_assign_dialog.dart` (search, level filter, due
+  date, untick to unassign) on every exercise card and after saving a
+  package. Worksheet page: **Rename** and **Assign this worksheet** (makes
+  or reuses a one-sheet package).
+- **Answer keys never reach the student for packages.** Cloud Functions
+  `startExercise` (questions stripped, compose parts shuffled),
+  `checkExerciseAnswer`, `finishExercise` (writes `exercise_results`,
+  `scoredBy: server`), with pure helpers in `functions/exercise_play.js`
+  (`node functions/test_exercise_play.js` checks them). Flutter side:
+  `ExercisePlayService` / `ExercisePlaySession` (server for packages, local
+  for legacy); `exercise_screen.dart` rewritten on top of it: question type
+  per question, so a package can mix types.
+- **Scan worksheet** (Exercises top bar) now imports into the bank and opens
+  a new package with that sheet.
+- **Delete account** (admin Users → trash icon): callable
+  `deleteUserAccount` removes the Auth login, profile, progress,
+  assignments (and link codes for teachers), writes an audit log. Admins
+  cannot delete themselves.
+- **Indonesian / English switch** (thesis Phase 1): `flutter_localizations`,
+  ARB files in `lib/l10n/` (189 keys), `LocaleController` (shared_preferences
+  `app_locale`, default from the browser language), toggle on login/register
+  and in the student and parent Profile tabs. Auth, student and parent
+  screens translated; admin/teacher stay English; `intl` bumped to 0.20.2.
+
+**Verified (emulator, with the functions emulator)**
+- Admin: load sample sheets → New exercise → add 210001-RDG + 300001-KLM →
+  Save and assign → Bryan (student2) assigned; cards show "Assigned to N".
+- Not yet verified by eye: the student playing a package (functions
+  `startExercise` path), the ID/EN toggle on screen. Analyzer 39 infos,
+  0 warnings, 0 errors; 53 tests pass; `node --check functions/index.js` ok.
+
+**For review / deploy**
+- Needs **functions** and **hosting**: `firebase deploy --only functions
+  --project chinese-tracker` then `scripts/deploy_web.sh --web-only`. No
+  rules change (students still cannot read `question_bank`; the function
+  reads it).
+- Known small issues to fix next: the Exercises tab recreates its streams
+  on rebuild (counts flicker for a second); the package form title can
+  overlap its label for one frame after picking the first sheet.
+
+---
+
 ## 2026-11-09 (evening) — Claude: guard against a live bundle on the local dev server
 
 **What changed**

@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/constants/exercise_authoring_platform.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
+import '../../models/exercise_skill_category.dart';
 import '../../models/question_bank_item.dart';
+import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
+import '../teacher/exercise_assign_dialog.dart';
 import 'question_bank_screen.dart' show QuestionBankEditorSheet;
 import 'question_bank_text.dart';
 
 /// One worksheet in the bank: its questions in sheet order with the stored
 /// answer. Tap a question to edit it; the trash icon removes it from the
-/// sheet; the app-bar action deletes the whole sheet.
+/// sheet. The app bar renames the sheet, deletes it, or assigns it: that
+/// creates an exercise holding just this worksheet and opens the student
+/// picker.
 class QuestionBankSheetScreen extends StatelessWidget {
   const QuestionBankSheetScreen({
     super.key,
@@ -41,13 +47,28 @@ class QuestionBankSheetScreen extends StatelessWidget {
             elevation: 0,
             title: Text(sheet?.title ?? sheetKey),
             actions: [
-              if (sheet != null)
-                TextButton.icon(
-                  onPressed: () => _deleteSheet(context, sheet),
-                  icon: const Icon(Icons.delete_outline, size: 18),
-                  label: const Text('Delete worksheet'),
-                  style: TextButton.styleFrom(foregroundColor: AppColors.error),
+              if (sheet != null) ...[
+                if (ExerciseAuthoringPlatform.canManageExercises(
+                  context.watch<AuthService>().appUser,
+                ))
+                  FilledButton.icon(
+                    onPressed: () => _assignSheet(context, sheet),
+                    icon: const Icon(Icons.assignment_ind_outlined, size: 18),
+                    label: const Text('Assign this worksheet'),
+                    style: FilledButton.styleFrom(backgroundColor: AppColors.navy),
+                  ),
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: () => _rename(context, sheet),
+                  icon: const Icon(Icons.drive_file_rename_outline),
+                  tooltip: 'Rename worksheet',
                 ),
+                IconButton(
+                  onPressed: () => _deleteSheet(context, sheet),
+                  icon: const Icon(Icons.delete_outline, color: AppColors.error),
+                  tooltip: 'Delete worksheet',
+                ),
+              ],
               const SizedBox(width: 8),
             ],
           ),
@@ -91,6 +112,78 @@ class QuestionBankSheetScreen extends StatelessWidget {
       ),
       builder: (_) => QuestionBankEditorSheet(ownerId: ownerId, existing: item),
     );
+  }
+
+  /// New title on every question of the sheet.
+  Future<void> _rename(BuildContext context, QuestionBankSheet sheet) async {
+    final controller = TextEditingController(text: sheet.title);
+    final title = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Rename worksheet'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          style: AppTextStyles.question,
+          decoration: InputDecoration(
+            labelText: 'Title',
+            helperText: 'Code ${sheet.code} stays the same.',
+          ),
+          onSubmitted: (v) => Navigator.pop(ctx, v),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, controller.text),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    final clean = title?.trim() ?? '';
+    if (clean.isEmpty || clean == sheet.title || !context.mounted) return;
+    await context
+        .read<FirestoreService>()
+        .renameQuestionBankSheet(sheet.items.map((i) => i.id), clean);
+  }
+
+  /// One exercise with just this worksheet, published, then the student
+  /// picker. Assigning the same sheet again reuses that exercise.
+  Future<void> _assignSheet(BuildContext context, QuestionBankSheet sheet) async {
+    final firestore = context.read<FirestoreService>();
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final all = await firestore.watchAllExercises().first;
+      var exercise = all
+          .where((e) =>
+              e.isPackage &&
+              e.bankSheets.length == 1 &&
+              e.bankQuestionIds.isEmpty &&
+              e.bankSheets.first == sheet.key)
+          .firstOrNull;
+      if (exercise == null) {
+        final id = await firestore.saveExercisePackage(
+          teacherId: ownerId,
+          title: sheet.title,
+          instructions: '',
+          level: sheet.level ?? '',
+          skillCategory: sheet.first.skillCategory ??
+              ExerciseSkillCategory.forExerciseType(sheet.type),
+          bankSheets: [sheet.key!],
+          bankQuestionIds: const [],
+          isPublished: true,
+        );
+        exercise = await firestore.getExercise(id);
+      }
+      if (exercise == null || !context.mounted) return;
+      await showExerciseAssignDialog(context, exercise: exercise);
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('Could not assign: $e')));
+    }
   }
 
   Future<void> _deleteQuestion(

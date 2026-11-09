@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 
 /// Shared identity fields used on registration and complete-profile.
@@ -31,6 +32,7 @@ class RegistrationIdentityFields extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return Column(
       children: [
         TextFormField(
@@ -38,12 +40,12 @@ class RegistrationIdentityFields extends StatelessWidget {
           enabled: enabled,
           textCapitalization: TextCapitalization.words,
           textInputAction: TextInputAction.next,
-          decoration: const InputDecoration(
-            labelText: 'Indonesian name',
-            prefixIcon: Icon(Icons.person_outline),
+          decoration: InputDecoration(
+            labelText: l.identityNameIndonesian,
+            prefixIcon: const Icon(Icons.person_outline),
           ),
           validator: (value) => value == null || value.trim().isEmpty
-              ? 'Indonesian name is required'
+              ? l.identityNameIndonesianRequired
               : null,
         ),
         const SizedBox(height: 16),
@@ -53,14 +55,14 @@ class RegistrationIdentityFields extends StatelessWidget {
           textInputAction: TextInputAction.next,
           decoration: InputDecoration(
             labelText: requireChineseName
-                ? 'Chinese name'
-                : 'Chinese name (optional)',
+                ? l.identityNameChinese
+                : l.identityNameChineseOptional,
             hintText: '中文名',
             prefixIcon: const Icon(Icons.translate_outlined),
           ),
           validator: requireChineseName
               ? (value) => value == null || value.trim().isEmpty
-                  ? 'Chinese name is required'
+                  ? l.identityNameChineseRequired
                   : null
               : null,
         ),
@@ -72,14 +74,14 @@ class RegistrationIdentityFields extends StatelessWidget {
           textInputAction: TextInputAction.next,
           decoration: InputDecoration(
             labelText: requireWhatsapp
-                ? 'WhatsApp number'
-                : 'WhatsApp number (optional)',
+                ? l.identityWhatsapp
+                : l.identityWhatsappOptional,
             hintText: '08xxxxxxxxxx',
             prefixIcon: const Icon(Icons.chat_outlined),
           ),
           validator: requireWhatsapp
               ? (value) => value == null || value.trim().isEmpty
-                  ? 'WhatsApp number is required'
+                  ? l.identityWhatsappRequired
                   : null
               : null,
         ),
@@ -90,7 +92,7 @@ class RegistrationIdentityFields extends StatelessWidget {
           Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              'Parent / guardian',
+              l.identityParentSection,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: AppColors.navy,
@@ -98,11 +100,11 @@ class RegistrationIdentityFields extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          const Align(
+          Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              'Contact details for the student family.',
-              style: TextStyle(
+              l.identityParentSectionHint,
+              style: const TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 13,
               ),
@@ -116,13 +118,13 @@ class RegistrationIdentityFields extends StatelessWidget {
             textInputAction: TextInputAction.next,
             decoration: InputDecoration(
               labelText: requireParentFields
-                  ? 'Parent name'
-                  : 'Parent name (optional)',
+                  ? l.identityParentName
+                  : l.identityParentNameOptional,
               prefixIcon: const Icon(Icons.family_restroom_outlined),
             ),
             validator: requireParentFields
                 ? (value) => value == null || value.trim().isEmpty
-                    ? 'Parent name is required'
+                    ? l.identityParentNameRequired
                     : null
                 : null,
           ),
@@ -133,14 +135,14 @@ class RegistrationIdentityFields extends StatelessWidget {
             keyboardType: TextInputType.phone,
             decoration: InputDecoration(
               labelText: requireParentFields
-                  ? 'Parent telephone'
-                  : 'Parent telephone (optional)',
+                  ? l.identityParentPhone
+                  : l.identityParentPhoneOptional,
               hintText: '08xxxxxxxxxx',
               prefixIcon: const Icon(Icons.phone_outlined),
             ),
             validator: requireParentFields
                 ? (value) => value == null || value.trim().isEmpty
-                    ? 'Parent telephone is required'
+                    ? l.identityParentPhoneRequired
                     : null
                 : null,
           ),

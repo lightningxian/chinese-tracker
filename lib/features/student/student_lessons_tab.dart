@@ -8,6 +8,7 @@ import '../../core/utils/progress_utils.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/exercise_widgets.dart';
 import '../../core/widgets/responsive_card_grid.dart';
+import '../../l10n/l10n.dart';
 import '../../models/app_user.dart';
 import '../../models/exercise.dart';
 import '../../models/exercise_result.dart';
@@ -28,6 +29,8 @@ class StudentLessonsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final firestore = context.read<FirestoreService>();
+    final l = context.l10n;
+    final levelLabel = student.level ?? l.commonYourLevel;
 
     return StreamBuilder<List<Exercise>>(
       stream: firestore.watchAvailableExercisesForStudent(student),
@@ -49,13 +52,12 @@ class StudentLessonsTab extends StatelessWidget {
             if (lessons.isEmpty && availableExercises.isEmpty) {
               return EmptyState(
                 icon: Icons.menu_book_outlined,
-                title: 'No content yet',
+                title: l.studentLessonsNoContentTitle,
                 subtitle: contentOwnerId.isEmpty
-                    ? 'No demo data yet — run scripts/seed_test_accounts.sh then '
-                        'python3 scripts/seed_report_demo_data.py'
+                    ? l.studentLessonsNoDemoData
                     : student.level == null
-                        ? 'Set your HSK level in Profile to unlock practice and lessons.'
-                        : 'Published ${student.level} exercises and lessons will appear here.',
+                        ? l.studentLessonsSetLevel
+                        : l.studentLessonsWillAppear(student.level!),
               );
             }
 
@@ -98,8 +100,10 @@ class StudentLessonsTab extends StatelessWidget {
                           children: [
                             if (sortedExercises.isNotEmpty) ...[
                               SectionHeader(
-                                title:
-                                    '${student.level ?? 'Your level'} exercises (${sortedExercises.length})',
+                                title: l.studentLessonsExercisesHeader(
+                                  levelLabel,
+                                  sortedExercises.length,
+                                ),
                               ),
                               HomeworkSummaryBar(
                                 pending: counts.pending,
@@ -124,17 +128,22 @@ class StudentLessonsTab extends StatelessWidget {
                             ] else ...[
                               EmptyState(
                                 icon: Icons.fitness_center_outlined,
-                                title: 'No exercises yet',
+                                title: l.studentLessonsNoExercisesTitle,
                                 subtitle: student.level == null
-                                    ? 'Set your HSK level in Profile to see practice exercises.'
-                                    : 'No published ${student.level} exercises yet.',
+                                    ? l.studentLessonsNoExercisesSetLevel
+                                    : l.studentLessonsNoPublishedExercises(
+                                        student.level!,
+                                      ),
                               ),
                               const SizedBox(height: 16),
                             ],
                             if (lessons.isNotEmpty) ...[
                               AppCard(
                                 child: Text(
-                                  '${student.level ?? 'Your level'} · ${student.lessonsPerTerm} lessons per term',
+                                  l.studentLessonsLevelTermInfo(
+                                    levelLabel,
+                                    student.lessonsPerTerm,
+                                  ),
                                   style: const TextStyle(
                                     color: AppColors.textSecondary,
                                   ),
@@ -143,8 +152,10 @@ class StudentLessonsTab extends StatelessWidget {
                               const SizedBox(height: 16),
                               for (final entry in byTerm.entries) ...[
                                 SectionHeader(
-                                  title:
-                                      'Term ${entry.key} (${entry.value.length} lessons)',
+                                  title: l.studentLessonsTermHeader(
+                                    '${entry.key}',
+                                    entry.value.length,
+                                  ),
                                 ),
                                 ResponsiveCardGrid(
                                   width: constraints.maxWidth,
@@ -195,6 +206,7 @@ class _LessonCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final done = record?.completed ?? false;
     final score = record?.score;
+    final l = context.l10n;
 
     return AppCard(
       onTap: onTap,
@@ -242,14 +254,14 @@ class _LessonCard extends StatelessWidget {
                 ),
                 if ([
                   if (lesson.level != null) lesson.level!,
-                  if (score != null) 'Quiz: $score%',
-                  if (done && score == null) 'Completed',
+                  if (score != null) l.studentLessonsQuizScore('$score'),
+                  if (done && score == null) l.commonCompleted,
                 ].isNotEmpty)
                   Text(
                     [
                       if (lesson.level != null) lesson.level!,
-                      if (score != null) 'Quiz: $score%',
-                      if (done && score == null) 'Completed',
+                      if (score != null) l.studentLessonsQuizScore('$score'),
+                      if (done && score == null) l.commonCompleted,
                     ].join(' · '),
                     style: const TextStyle(
                       color: AppColors.textSecondary,

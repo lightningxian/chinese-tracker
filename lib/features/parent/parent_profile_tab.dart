@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
+import '../../core/widgets/language_toggle.dart';
+import '../../l10n/l10n.dart';
 import '../../models/app_user.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
@@ -15,6 +17,7 @@ class ParentProfileTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final firestore = context.read<FirestoreService>();
+    final l = context.l10n;
 
     return ListView(
       padding: const EdgeInsets.all(20),
@@ -35,21 +38,23 @@ class ParentProfileTab extends StatelessWidget {
               Text(parent.email,
                   style: const TextStyle(color: AppColors.textSecondary)),
               const SizedBox(height: 4),
-              const Text('Orang Tua (Parent)',
-                  style: TextStyle(color: AppColors.textSecondary)),
+              Text(l.parentProfileRole,
+                  style: const TextStyle(color: AppColors.textSecondary)),
             ],
           ),
         ),
+        const SizedBox(height: 16),
+        const AppCard(child: LanguageSettingRow()),
         const SizedBox(height: 20),
-        const SectionHeader(title: 'Linked children'),
+        SectionHeader(title: l.parentProfileLinkedChildren),
         StreamBuilder<List<AppUser>>(
           stream: firestore.watchUsersByIds(parent.studentIds),
           builder: (context, snap) {
             final children = snap.data ?? [];
             if (children.isEmpty) {
-              return const Text(
-                'No children linked yet. Ask your admin to link your account.',
-                style: TextStyle(color: AppColors.textSecondary),
+              return Text(
+                l.parentProfileNoChildren,
+                style: const TextStyle(color: AppColors.textSecondary),
               );
             }
             return Column(
@@ -78,8 +83,8 @@ class ParentProfileTab extends StatelessWidget {
         OutlinedButton.icon(
           onPressed: () => context.read<AuthService>().signOut(),
           icon: const Icon(Icons.logout, color: AppColors.error),
-          label: const Text('Sign out',
-              style: TextStyle(color: AppColors.error)),
+          label: Text(l.commonSignOut,
+              style: const TextStyle(color: AppColors.error)),
         ),
       ],
     );

@@ -148,6 +148,16 @@ Commit author preference (via env vars, not global git config):
 
 Update this section when you push from Mac or PC.
 
+### 2026-11-09 (night) — Claude: packages from the bank, server scoring, ID/EN, delete account
+
+- Exercises are now packages of bank worksheets; students only see assigned
+  ones; packages are played through Cloud Functions so answer keys stay on
+  the server. Assign dialog, worksheet rename/assign, admin Delete account.
+- Indonesian/English switch for auth, student and parent screens.
+- Admin flow verified on the emulator; student play of a package and the
+  language toggle still to be checked by eye. **Not deployed yet**: needs
+  `firebase deploy --only functions` and the hosting script.
+
 ### 2026-11-09 (later) — Claude: bank by worksheet, Kai font, tables, no difficulty
 
 - Question bank shows one row per worksheet; open it for the questions.

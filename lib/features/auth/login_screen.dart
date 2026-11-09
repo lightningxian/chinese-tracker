@@ -7,7 +7,9 @@ import 'package:provider/provider.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/widgets/auth_scaffold.dart';
+import '../../core/widgets/language_toggle.dart';
 import '../../core/theme/app_theme.dart';
+import '../../l10n/l10n.dart';
 import '../../models/saved_login_account.dart';
 import '../../services/auth_service.dart';
 import '../../services/saved_accounts_service.dart';
@@ -61,17 +63,14 @@ class _LoginScreenState extends State<LoginScreen> {
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message ?? 'Sign in failed')),
+        SnackBar(content: Text(e.message ?? context.l10n.loginFailed)),
       );
     } on FirebaseException catch (e) {
       // Profile read failed (network, rules): say so instead of a silent stop.
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            'Signed in, but your profile could not be loaded '
-            '(${e.code}). Check your connection and try again.',
-          ),
+          content: Text(context.l10n.loginProfileLoadFailed(e.code)),
         ),
       );
     } finally {
@@ -135,9 +134,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: passwordController,
                     obscureText: true,
                     autofocus: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Password',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: context.l10n.commonPassword,
+                      border: const OutlineInputBorder(),
                     ),
                     onSubmitted: (_) => Navigator.pop(ctx, (
                       password: passwordController.text,
@@ -146,7 +145,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   CheckboxListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text('Remember on this device'),
+                    title: Text(context.l10n.commonRememberDevice),
                     value: remember,
                     onChanged: (v) =>
                         setDialogState(() => remember = v ?? true),
@@ -157,7 +156,7 @@ class _LoginScreenState extends State<LoginScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Cancel'),
+                  child: Text(context.l10n.commonCancel),
                 ),
                 FilledButton(
                   onPressed: () {
@@ -167,7 +166,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       remember: remember,
                     ));
                   },
-                  child: const Text('Sign in'),
+                  child: Text(context.l10n.commonSignIn),
                 ),
               ],
             );
@@ -181,18 +180,16 @@ class _LoginScreenState extends State<LoginScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Remove account?'),
-        content: Text(
-          'Remove ${account.displayName} from this device? You can sign in again later.',
-        ),
+        title: Text(ctx.l10n.loginRemoveAccountTitle),
+        content: Text(ctx.l10n.loginRemoveAccountBody(account.displayName)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(ctx.l10n.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Remove'),
+            child: Text(ctx.l10n.loginRemove),
           ),
         ],
       ),
@@ -223,23 +220,21 @@ class _LoginScreenState extends State<LoginScreen> {
     final email = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Reset your password'),
+        title: Text(ctx.l10n.loginResetTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "Enter your account email. We'll send a link to set a new password.",
-            ),
+            Text(ctx.l10n.loginResetBody),
             const SizedBox(height: 16),
             TextField(
               controller: emailController,
               autofocus: true,
               keyboardType: TextInputType.emailAddress,
               autofillHints: const [AutofillHints.email],
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: ctx.l10n.commonEmail,
+                border: const OutlineInputBorder(),
               ),
               onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
             ),
@@ -248,11 +243,11 @@ class _LoginScreenState extends State<LoginScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(ctx.l10n.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, emailController.text.trim()),
-            child: const Text('Send reset link'),
+            child: Text(ctx.l10n.loginSendResetLink),
           ),
         ],
       ),
@@ -261,23 +256,17 @@ class _LoginScreenState extends State<LoginScreen> {
     if (email == null || email.isEmpty || !mounted) return;
 
     final messenger = ScaffoldMessenger.of(context);
+    final l = context.l10n;
     try {
       await context.read<AuthService>().sendPasswordResetEmail(email);
       messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            'If $email has an account, a reset link is on its way. '
-            'Check your inbox and spam folder.',
-          ),
-        ),
+        SnackBar(content: Text(l.loginResetSent(email))),
       );
     } on FirebaseAuthException catch (e) {
       final message = switch (e.code) {
-        'invalid-email' =>
-          "That email address doesn't look right. Check it and try again.",
-        'too-many-requests' =>
-          'Too many attempts. Wait a few minutes and try again.',
-        _ => e.message ?? "Couldn't send the reset link. Try again.",
+        'invalid-email' => l.loginResetInvalidEmail,
+        'too-many-requests' => l.loginResetTooManyRequests,
+        _ => e.message ?? l.loginResetFailed,
       };
       messenger.showSnackBar(SnackBar(content: Text(message)));
     }
@@ -287,12 +276,14 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final savedService = context.watch<SavedAccountsService>();
     final entries = savedService.isLoaded ? savedService.buildLoginList() : null;
+    final l = context.l10n;
 
     return AuthScaffold(
       title: AppConstants.brandName,
-      subtitle: 'Tap an account to sign in',
+      subtitle: l.loginSubtitle,
       showBackButton: true,
       onBack: () => context.canPop() ? context.pop() : context.go('/'),
+      topAction: const LanguageToggle(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -331,12 +322,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     OutlinedButton.icon(
                       onPressed: () => setState(() => _showManualForm = true),
                       icon: const Icon(Icons.person_add_outlined),
-                      label: const Text('Sign in with another email'),
+                      label: Text(l.loginWithAnotherEmail),
                     )
                   else ...[
                     const SizedBox(height: 8),
                     Text(
-                      'Another account',
+                      l.loginAnotherAccount,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                             color: AppColors.navy,
                             fontWeight: FontWeight.w600,
@@ -347,9 +338,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _manualEmail,
                       keyboardType: TextInputType.emailAddress,
                       autofillHints: const [AutofillHints.email],
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: l.commonEmail,
+                        border: const OutlineInputBorder(),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -357,9 +348,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _manualPassword,
                       obscureText: true,
                       autofillHints: const [AutofillHints.password],
-                      decoration: const InputDecoration(
-                        labelText: 'Password',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: l.commonPassword,
+                        border: const OutlineInputBorder(),
                       ),
                       onSubmitted: (_) => _manualSignIn(),
                     ),
@@ -367,12 +358,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       alignment: Alignment.centerRight,
                       child: TextButton(
                         onPressed: _forgotPassword,
-                        child: const Text('Forgot password?'),
+                        child: Text(l.loginForgotPassword),
                       ),
                     ),
                     CheckboxListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text('Remember on this device'),
+                      title: Text(l.commonRememberDevice),
                       value: _manualRemember,
                       onChanged: (v) =>
                           setState(() => _manualRemember = v ?? true),
@@ -387,22 +378,22 @@ class _LoginScreenState extends State<LoginScreen> {
                               width: 22,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Text('Sign in'),
+                          : Text(l.commonSignIn),
                     ),
                     TextButton(
                       onPressed: () => setState(() => _showManualForm = false),
-                      child: const Text('Back to account list'),
+                      child: Text(l.loginBackToAccountList),
                     ),
                   ],
                   const SizedBox(height: 8),
                   TextButton(
                     onPressed: () => context.push('/register'),
-                    child: const Text('Create new account'),
+                    child: Text(l.commonCreateNewAccount),
                   ),
                   if (kDebugMode)
                     TextButton(
                       onPressed: () => context.go('/dev-login'),
-                      child: const Text('Back to test login'),
+                      child: Text(l.loginBackToTestLogin),
                     ),
                 ],
       ),
@@ -499,12 +490,12 @@ class _EmptyAccountsHint extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'No saved accounts yet',
+              context.l10n.loginNoSavedAccounts,
               style: Theme.of(context).textTheme.titleSmall,
             ),
             const SizedBox(height: 8),
             Text(
-              'Sign in once and your account will appear here for quick access next time.',
+              context.l10n.loginNoSavedAccountsHint,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColors.textSecondary,
@@ -513,7 +504,7 @@ class _EmptyAccountsHint extends StatelessWidget {
             const SizedBox(height: 16),
             FilledButton(
               onPressed: onAddAccount,
-              child: const Text('Sign in'),
+              child: Text(context.l10n.commonSignIn),
             ),
           ],
         ),

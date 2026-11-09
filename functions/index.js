@@ -1,11 +1,13 @@
 const crypto = require("crypto");
 const {initializeApp} = require("firebase-admin/app");
+const {getAuth} = require("firebase-admin/auth");
 const {getFirestore, FieldValue, Timestamp} = require("firebase-admin/firestore");
 const {onCall, onRequest, HttpsError} = require("firebase-functions/v2/https");
 const {onDocumentCreated} = require("firebase-functions/v2/firestore");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
 const {defineSecret} = require("firebase-functions/params");
 const logger = require("firebase-functions/logger");
+const play = require("./exercise_play");
 
 initializeApp();
 const db = getFirestore();
@@ -18,6 +20,9 @@ const EXERCISES = "exercises";
 const INVOICES = "invoices";
 const CLASS_TERMS = "student_class_terms";
 const AUDIT_LOGS = "audit_logs";
+const QUESTION_BANK = "question_bank";
+const EXERCISE_ASSIGNMENTS = "exercise_assignments";
+const STUDENT_PROGRESS = "student_progress";
 
 // Midtrans Server Key lives ONLY here (never in the Flutter app or git).
 // Set with: firebase functions:secrets:set MIDTRANS_SERVER_KEY
@@ -897,6 +902,180 @@ async function notifyInvoicePaid(invoice, packageSize) {
  */
 const {v1: firestoreAdminV1} = require("@google-cloud/firestore");
 const exportClient = new firestoreAdminV1.FirestoreAdminClient();
+
+// ---------------------------------------------------------------------------
+// Bank-based exercises ("packages"): the answer keys never reach the student.
+// A package names worksheets (`bankSheets`) and single questions
+// (`bankQuestionIds`) in `question_bank`; the student receives the questions
+// without answers from startExercise, each answer is checked by
+// checkExerciseAnswer, and finishExercise writes the result. Students cannot
+// read `question_bank` themselves (rules: staff only).
+// ---------------------------------------------------------------------------
+
+/** Loads the signed-in caller's profile or throws. */
+async function requireCaller(request) {
+  const auth = request.auth;
+  if (!auth) throw new HttpsError("unauthenticated", "Sign in first.");
+  const snap = await db.collection(USERS).doc(auth.uid).get();
+  const profile = snap.exists ? snap.data() || {} : null;
+  if (!profile || profile.active === false) {
+    throw new HttpsError("permission-denied", "This account is not active.");
+  }
+  return {uid: auth.uid, profile};
+}
+
+/** The published package exercise the student is assigned to, or throws. */
+async function loadAssignedPackage(exerciseId, studentId) {
+  if (!exerciseId) {
+    throw new HttpsError("invalid-argument", "exerciseId is required.");
+  }
+  const exSnap = await db.collection(EXERCISES).doc(exerciseId).get();
+  if (!exSnap.exists) throw new HttpsError("not-found", "Exercise not found.");
+  const exercise = exSnap.data() || {};
+  if (exercise.isPublished === false) {
+    throw new HttpsError("failed-precondition", "This exercise is not published.");
+  }
+  const assignment = await db.collection(EXERCISE_ASSIGNMENTS)
+      .doc(`${exerciseId}_${studentId}`).get();
+  if (!assignment.exists) {
+    throw new HttpsError(
+        "permission-denied", "This exercise is not assigned to you.",
+    );
+  }
+  return exercise;
+}
+
+/** Bank items of a package, ordered as the package lists them. */
+async function loadPackageItems(exercise) {
+  const sheets = Array.isArray(exercise.bankSheets) ?
+    exercise.bankSheets.map(String) : [];
+  const ids = Array.isArray(exercise.bankQuestionIds) ?
+    exercise.bankQuestionIds.map(String) : [];
+  const byId = new Map();
+  const add = (doc) => {
+    if (!doc.exists) return;
+    const data = doc.data() || {};
+    const created = data.createdAt && typeof data.createdAt.toMillis === "function" ?
+      data.createdAt.toMillis() : 0;
+    byId.set(doc.id, {id: doc.id, ...data, createdAtMillis: created});
+  };
+  const bank = db.collection(QUESTION_BANK);
+  for (let i = 0; i < sheets.length; i += 30) {
+    const chunk = sheets.slice(i, i + 30);
+    const [byCode, byTag] = await Promise.all([
+      bank.where("sheetCode", "in", chunk).get(),
+      // Questions imported before `sheetCode` existed carry the code as a tag.
+      bank.where("tags", "array-contains-any", chunk).get(),
+    ]);
+    byCode.docs.forEach(add);
+    byTag.docs.forEach(add);
+  }
+  if (ids.length) {
+    const snaps = await db.getAll(...ids.map((id) => bank.doc(id)));
+    snaps.forEach(add);
+  }
+  return play.orderPackageItems([...byId.values()], sheets, ids);
+}
+
+exports.startExercise = onCall(async (request) => {
+  const {uid} = await requireCaller(request);
+  const exerciseId = String((request.data || {}).exerciseId || "").trim();
+  const exercise = await loadAssignedPackage(exerciseId, uid);
+  const items = await loadPackageItems(exercise);
+  return {
+    exerciseId,
+    title: exercise.title || "",
+    instructions: exercise.instructions || "",
+    questions: items.map(play.stripQuestion),
+  };
+});
+
+exports.checkExerciseAnswer = onCall(async (request) => {
+  const {uid} = await requireCaller(request);
+  const data = request.data || {};
+  const exerciseId = String(data.exerciseId || "").trim();
+  const questionId = String(data.questionId || "").trim();
+  if (!questionId) {
+    throw new HttpsError("invalid-argument", "questionId is required.");
+  }
+  const exercise = await loadAssignedPackage(exerciseId, uid);
+  const items = await loadPackageItems(exercise);
+  const item = items.find((it) => it.id === questionId);
+  if (!item) {
+    throw new HttpsError("not-found", "This question is not in the exercise.");
+  }
+  return play.checkAnswer(item, data.answer || {});
+});
+
+exports.finishExercise = onCall(async (request) => {
+  const {uid} = await requireCaller(request);
+  const data = request.data || {};
+  const exerciseId = String(data.exerciseId || "").trim();
+  const exercise = await loadAssignedPackage(exerciseId, uid);
+  const items = await loadPackageItems(exercise);
+  const answers = data.answers && typeof data.answers === "object" ?
+    data.answers : {};
+  const result = play.scoreAttempt(items, answers);
+  await db.collection(EXERCISE_RESULTS).add({
+    studentId: uid,
+    exerciseId,
+    score: result.score,
+    correct: result.correct,
+    total: result.total,
+    scoredBy: "server",
+    submittedAt: FieldValue.serverTimestamp(),
+  });
+  return result;
+});
+
+/**
+ * Admin removes an account for good: the Auth login, the profile, the
+ * student's progress and assignments. Exercise results, invoices and
+ * attendance stay (they are the centre's records). Admins cannot delete
+ * themselves.
+ */
+exports.deleteUserAccount = onCall(async (request) => {
+  const {uid: callerUid, profile: caller} = await requireCaller(request);
+  if (caller.role !== "admin") {
+    throw new HttpsError("permission-denied", "Only admins can delete accounts.");
+  }
+  const targetUid = String((request.data || {}).uid || "").trim();
+  if (!targetUid) throw new HttpsError("invalid-argument", "uid is required.");
+  if (targetUid === callerUid) {
+    throw new HttpsError("failed-precondition", "You cannot delete your own account.");
+  }
+  const targetSnap = await db.collection(USERS).doc(targetUid).get();
+  const target = targetSnap.exists ? targetSnap.data() || {} : {};
+
+  try {
+    await getAuth().deleteUser(targetUid);
+  } catch (err) {
+    if (err && err.code !== "auth/user-not-found") throw err;
+  }
+
+  const batch = db.batch();
+  batch.delete(db.collection(USERS).doc(targetUid));
+  batch.delete(db.collection(STUDENT_PROGRESS).doc(targetUid));
+  const assignments = await db.collection(EXERCISE_ASSIGNMENTS)
+      .where("studentId", "==", targetUid).limit(400).get();
+  assignments.docs.forEach((d) => batch.delete(d.ref));
+  if (target.role === "teacher") {
+    const codes = await db.collection(LINK_CODES)
+        .where("teacherId", "==", targetUid).limit(50).get();
+    codes.docs.forEach((d) => batch.delete(d.ref));
+  }
+  batch.set(db.collection(AUDIT_LOGS).doc(), {
+    action: "user.delete",
+    actorId: callerUid,
+    targetId: targetUid,
+    targetEmail: target.email || null,
+    targetRole: target.role || null,
+    createdAt: FieldValue.serverTimestamp(),
+  });
+  await batch.commit();
+  logger.info("deleteUserAccount", {by: callerUid, target: targetUid});
+  return {deleted: true};
+});
 
 exports.scheduledFirestoreExport = onSchedule(
   {schedule: "every day 02:00", timeZone: "Asia/Jakarta"},

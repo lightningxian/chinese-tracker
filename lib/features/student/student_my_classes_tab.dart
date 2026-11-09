@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/responsive_card_grid.dart';
+import '../../l10n/l10n.dart';
 import '../../models/app_user.dart';
 import '../../services/firestore_service.dart';
 
@@ -41,11 +42,10 @@ class StudentMyClassesTab extends StatelessWidget {
         final records = snapshot.data ?? [];
 
         if (records.isEmpty) {
-          return const EmptyState(
+          return EmptyState(
             icon: Icons.event_available_outlined,
-            title: 'No classes joined yet',
-            subtitle:
-                'Go to Home and tap Join on an open class session.',
+            title: context.l10n.studentMyClassesEmptyTitle,
+            subtitle: context.l10n.studentMyClassesEmptySubtitle,
           );
         }
 
@@ -63,9 +63,11 @@ class StudentMyClassesTab extends StatelessWidget {
                     for (final record in records)
                       Builder(
                         builder: (context) {
+                          final l = context.l10n;
                           final parsed = DateTime.tryParse(record.sessionDate);
                           final dateLabel = parsed != null
-                              ? DateFormat('EEE, d MMM yyyy').format(parsed)
+                              ? DateFormat('EEE, d MMM yyyy', l.localeName)
+                                  .format(parsed)
                               : record.sessionDate;
 
                           return AppCard(
@@ -96,7 +98,7 @@ class StudentMyClassesTab extends StatelessWidget {
                                       Text(
                                         record.sessionTitle.isNotEmpty
                                             ? record.sessionTitle
-                                            : 'Class session',
+                                            : l.commonClassSession,
                                         style: const TextStyle(
                                           fontWeight: FontWeight.w600,
                                           fontSize: 16,
@@ -116,9 +118,9 @@ class StudentMyClassesTab extends StatelessWidget {
                                         ),
                                       ),
                                       const SizedBox(height: 4),
-                                      const Text(
-                                        'Tap to see who joined',
-                                        style: TextStyle(
+                                      Text(
+                                        l.studentMyClassesTapToSee,
+                                        style: const TextStyle(
                                           color: AppColors.teal,
                                           fontSize: 12,
                                           fontWeight: FontWeight.w500,

@@ -352,6 +352,68 @@ class FirestoreService {
     return doc.id;
   }
 
+  /// Creates or updates a package: an exercise whose questions are bank
+  /// worksheets and single bank questions. Returns the exercise id.
+  Future<String> saveExercisePackage({
+    String? exerciseId,
+    required String teacherId,
+    required String title,
+    required String instructions,
+    required String level,
+    required List<String> bankSheets,
+    required List<String> bankQuestionIds,
+    required bool isPublished,
+    ExerciseSkillCategory skillCategory = ExerciseSkillCategory.reading,
+  }) async {
+    ExerciseAuthoringPlatform.ensureWeb();
+    if (!await _currentUserIsAdmin()) {
+      throw ExerciseAuthoringPlatformException(
+        ExerciseAuthoringPlatform.adminOnlyMessage,
+      );
+    }
+    final data = <String, dynamic>{
+      'title': title.trim(),
+      'instructions': instructions.trim(),
+      'level': level.trim(),
+      'skillCategory': skillCategory.value,
+      'isPublished': isPublished,
+      'bankSheets': bankSheets,
+      'bankQuestionIds': bankQuestionIds,
+      // A package keeps no questions of its own.
+      'questions': const [],
+      'type': ExerciseType.multipleChoice.value,
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+    final col = _db.collection(AppConstants.exercisesCollection);
+    if (exerciseId == null) {
+      final doc = await col.add({
+        ...data,
+        'teacherId': teacherId,
+        'order': 0,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      return doc.id;
+    }
+    await col.doc(exerciseId).update(data);
+    return exerciseId;
+  }
+
+  /// Renames a worksheet in the bank: every question of the sheet gets the
+  /// new printed title.
+  Future<void> renameQuestionBankSheet(
+    Iterable<String> questionIds,
+    String title,
+  ) async {
+    final batch = _db.batch();
+    for (final id in questionIds) {
+      batch.update(
+        _db.collection(AppConstants.questionBankCollection).doc(id),
+        {'sheetTitle': title.trim(), 'updatedAt': FieldValue.serverTimestamp()},
+      );
+    }
+    await batch.commit();
+  }
+
   Future<void> updateExercise({
     required String exerciseId,
     required String title,
@@ -437,14 +499,12 @@ class FirestoreService {
         );
   }
 
+  /// The exercises a student may open: only the published ones assigned to
+  /// them (directly or through a level), sorted by title. Since 2026-11-09
+  /// nothing is open to a whole HSK level any more.
   Stream<List<Exercise>> watchAvailableExercisesForStudent(AppUser student) {
-    return watchAllExercises().map((exercises) {
-      final level = student.level;
-      final available = exercises.where((exercise) {
-        if (!exercise.isPublished) return false;
-        if (level == null || level.isEmpty) return false;
-        return exercise.level == level;
-      }).toList();
+    return watchAssignedExercisesForStudent(student.uid).map((assigned) {
+      final available = assigned.map((a) => a.exercise).toList();
       available.sort(_compareExercisesByTitle);
       return available;
     });
@@ -456,9 +516,10 @@ class FirestoreService {
   }) async {
     final exercise = await getExercise(exerciseId);
     if (exercise == null || !exercise.isPublished) return false;
-    final level = student.level;
-    if (level == null || level.isEmpty) return false;
-    return exercise.level == level;
+    // Query the student's own assignments (allowed by the rules) instead of
+    // reading one assignment doc: a missing doc would be a denied read.
+    final mine = await watchAssignmentsForStudent(student.uid).first;
+    return mine.any((a) => a.exerciseId == exerciseId);
   }
 
   Stream<List<StudentAssignedExercise>> watchAssignedExercisesForStudent(
@@ -526,6 +587,37 @@ class FirestoreService {
         .doc(ExerciseAssignment.docId(exerciseId, studentId))
         .get();
     return doc.exists;
+  }
+
+  /// Assigns one exercise to several students in one batch; existing
+  /// assignments are kept (and keep their level tag).
+  Future<void> assignExerciseToStudents({
+    required String exerciseId,
+    required Iterable<String> studentIds,
+    required String teacherId,
+    DateTime? dueDate,
+  }) async {
+    final batch = _db.batch();
+    for (final studentId in studentIds.toSet()) {
+      batch.set(
+        _db
+            .collection(AppConstants.exerciseAssignmentsCollection)
+            .doc(ExerciseAssignment.docId(exerciseId, studentId)),
+        {
+          'exerciseId': exerciseId,
+          'studentId': studentId,
+          'teacherId': teacherId,
+          'assignedAt': FieldValue.serverTimestamp(),
+          'dueDate': dueDate == null
+              ? FieldValue.delete()
+              : Timestamp.fromDate(
+                  DateTime(dueDate.year, dueDate.month, dueDate.day, 23, 59, 59),
+                ),
+        },
+        SetOptions(merge: true),
+      );
+    }
+    await batch.commit();
   }
 
   Future<void> assignExerciseToStudent({

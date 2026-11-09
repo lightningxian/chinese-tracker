@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/widgets/app_shell.dart';
 import '../../core/widgets/notification_sheet.dart';
+import '../../l10n/l10n.dart';
 import '../../models/app_notification.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
@@ -24,34 +25,35 @@ class StudentShell extends StatefulWidget {
 class _StudentShellState extends State<StudentShell> {
   int _index = 0;
 
-  static const _destinations = [
+  // Built per frame so the labels follow the UI language.
+  List<AppShellDestination> _destinations(AppLocalizations l) => [
     AppShellDestination(
-      label: 'Home',
+      label: l.studentNavHome,
       icon: Icons.home_outlined,
       selectedIcon: Icons.home,
     ),
     AppShellDestination(
-      label: 'My Classes',
+      label: l.studentNavMyClasses,
       icon: Icons.event_available_outlined,
       selectedIcon: Icons.event_available,
     ),
     AppShellDestination(
-      label: 'Lessons',
+      label: l.studentNavLessons,
       icon: Icons.menu_book_outlined,
       selectedIcon: Icons.menu_book,
     ),
     AppShellDestination(
-      label: 'Progress',
+      label: l.studentNavProgress,
       icon: Icons.trending_up_outlined,
       selectedIcon: Icons.trending_up,
     ),
     AppShellDestination(
-      label: 'Payments',
+      label: l.navPayments,
       icon: Icons.receipt_long_outlined,
       selectedIcon: Icons.receipt_long,
     ),
     AppShellDestination(
-      label: 'Profile',
+      label: l.navProfile,
       icon: Icons.person_outline,
       selectedIcon: Icons.person,
     ),
@@ -85,6 +87,7 @@ class _StudentShellState extends State<StudentShell> {
     }
     final contentOwnerId = AppConstants.contentOwnerFor(user);
     final firestore = context.read<FirestoreService>();
+    final destinations = _destinations(context.l10n);
 
     final tabs = [
       StudentHomeTab(student: user, contentOwnerId: contentOwnerId),
@@ -102,10 +105,10 @@ class _StudentShellState extends State<StudentShell> {
         final unread = notifications.where((n) => !n.read).length;
 
         return AppShellScaffold(
-          title: _destinations[_index].label,
+          title: destinations[_index].label,
           selectedIndex: _index,
           onSelectedIndexChanged: (i) => setState(() => _index = i),
-          destinations: _destinations,
+          destinations: destinations,
           userName: user.name,
           roleLabel: 'Murid',
           hskLevel: user.level,

@@ -1,5 +1,4 @@
-import 'dart:math';
-
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -10,8 +9,13 @@ import '../../core/widgets/score_summary.dart';
 import '../../models/exercise.dart';
 import '../../models/exercise_type.dart';
 import '../../services/auth_service.dart';
+import '../../services/exercise_play_service.dart';
 import '../../services/firestore_service.dart';
 
+/// Plays one exercise. Questions come from an [ExercisePlaySession]: for a
+/// package the server sends them without answer keys and checks each
+/// answer; for an older exercise the keys are still in the document and
+/// the session checks locally. The screen itself never looks at a key.
 class ExerciseScreen extends StatefulWidget {
   const ExerciseScreen({super.key, required this.exerciseId});
 
@@ -22,8 +26,11 @@ class ExerciseScreen extends StatefulWidget {
 }
 
 class _ExerciseScreenState extends State<ExerciseScreen> {
-  Exercise? _exercise;
+  ExercisePlaySession? _session;
   bool _notAssigned = false;
+  bool _loading = true;
+  String? _loadError;
+
   int _currentIndex = 0;
   int? _selectedIndex;
   List<String> _composeOrder = [];
@@ -32,76 +39,84 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   /// Typed answers: hanzi for a pinyin hint, or a sentence with a keyword.
   final _typedController = TextEditingController();
 
-  static bool _usesTyped(ExerciseType type) =>
-      type == ExerciseType.typeHanzi || type == ExerciseType.pictureSentence;
-  bool _answerSubmitted = false;
-  bool? _lastAnswerCorrect;
+  bool _checking = false;
+  AnswerCheck? _check;
   int _correct = 0;
-  bool _loading = true;
   bool _finished = false;
   bool _submitting = false;
+  PlayResult? _result;
+
+  Exercise? get _exercise => _session?.exercise;
+  List<PlayQuestion> get _questions => _session?.questions ?? const [];
+  PlayQuestion get _question => _questions[_currentIndex];
+  bool get _answerSubmitted => _check != null;
 
   @override
   void initState() {
     super.initState();
-    _loadExercise();
+    _load();
   }
 
-  Future<void> _loadExercise() async {
+  Future<void> _load() async {
     final firestore = context.read<FirestoreService>();
     final student = context.read<AuthService>().appUser;
     if (student == null) return;
 
-    final canAccess = await firestore.canStudentAccessExercise(
-      exerciseId: widget.exerciseId,
-      student: student,
-    );
-
-    if (!canAccess) {
-      if (mounted) {
-        setState(() {
-          _exercise = null;
-          _notAssigned = true;
-          _loading = false;
-        });
+    try {
+      final canAccess = await firestore.canStudentAccessExercise(
+        exerciseId: widget.exerciseId,
+        student: student,
+      );
+      if (!canAccess) {
+        if (mounted) {
+          setState(() {
+            _notAssigned = true;
+            _loading = false;
+          });
+        }
+        return;
       }
-      return;
-    }
 
-    final exercise = await firestore.getExercise(widget.exerciseId);
-    if (mounted) {
+      final exercise = await firestore.getExercise(widget.exerciseId);
+      final session = exercise == null
+          ? null
+          : await ExercisePlayService(firestore: firestore)
+              .start(exercise, student.uid);
+      if (!mounted) return;
       setState(() {
-        _exercise = exercise;
+        _session = session;
         _loading = false;
         _currentIndex = 0;
         _correct = 0;
         _resetQuestionState();
       });
+    } on FirebaseFunctionsException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _notAssigned = e.code == 'permission-denied';
+        _loadError = e.message;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _loadError = '$e';
+      });
     }
   }
 
   void _resetQuestionState() {
-    final exercise = _exercise;
-    if (exercise == null || exercise.questions.isEmpty) return;
-
-    if (exercise.type == ExerciseType.composeSentences) {
-      final segments = exercise.questions[_currentIndex].segments;
+    if (_questions.isEmpty) return;
+    final q = _question;
+    if (q.isCompose) {
       _composeOrder = [];
-      _composeBank = List<String>.from(segments)..shuffle(Random());
+      _composeBank = List<String>.from(q.segments);
     } else {
       _selectedIndex = null;
       _typedController.clear();
     }
-    _answerSubmitted = false;
-    _lastAnswerCorrect = null;
-  }
-
-  List<String> _currentOptions(Exercise exercise) {
-    if (exercise.type == ExerciseType.matching ||
-        exercise.type == ExerciseType.readingCloze) {
-      return exercise.matchingOptions;
-    }
-    return exercise.questions[_currentIndex].options;
+    _check = null;
   }
 
   void _selectAnswer(int index) {
@@ -109,20 +124,39 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     setState(() => _selectedIndex = index);
   }
 
-  void _checkComposeAnswer() {
-    final question = _exercise!.questions[_currentIndex];
-    final isCorrect = question.isCorrectComposeOrder(_composeOrder);
-    if (isCorrect) _correct++;
-    setState(() {
-      _answerSubmitted = true;
-      _lastAnswerCorrect = isCorrect;
-    });
+  PlayAnswer? _currentAnswer() {
+    final q = _question;
+    if (q.isCompose) {
+      return _composeOrder.isEmpty ? null : PlayAnswer.order(_composeOrder);
+    }
+    if (q.isTyped) {
+      final typed = _typedController.text.trim();
+      return typed.isEmpty ? null : PlayAnswer.text(typed);
+    }
+    return _selectedIndex == null ? null : PlayAnswer.index(_selectedIndex!);
+  }
+
+  Future<void> _checkAnswer() async {
+    final answer = _currentAnswer();
+    if (answer == null || _checking) return;
+    setState(() => _checking = true);
+    try {
+      final check = await _session!.check(_question, answer);
+      if (check.correct) _correct++;
+      if (mounted) setState(() => _check = check);
+    } on FirebaseFunctionsException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message ?? 'Could not check the answer.')),
+      );
+    } finally {
+      if (mounted) setState(() => _checking = false);
+    }
   }
 
   void _advanceQuestion() {
-    final exercise = _exercise!;
-    if (_currentIndex + 1 >= exercise.questions.length) {
-      _submitResults();
+    if (_currentIndex + 1 >= _questions.length) {
+      _finish();
     } else {
       setState(() {
         _currentIndex++;
@@ -132,46 +166,10 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   }
 
   void _onPrimaryAction() {
-    final exercise = _exercise!;
-    if (exercise.type == ExerciseType.composeSentences) {
-      if (!_answerSubmitted) {
-        _checkComposeAnswer();
-        return;
-      }
-      _advanceQuestion();
-      return;
-    }
-
-    if (_usesTyped(exercise.type)) {
-      if (!_answerSubmitted) {
-        final typed = _typedController.text;
-        if (typed.trim().isEmpty) return;
-        final isCorrect = exercise.questions[_currentIndex]
-            .isCorrectTypedAnswer(exercise.type, typed);
-        if (isCorrect) _correct++;
-        setState(() {
-          _answerSubmitted = true;
-          _lastAnswerCorrect = isCorrect;
-        });
-        return;
-      }
-      _advanceQuestion();
-      return;
-    }
-
-    if (_selectedIndex == null) return;
-
     if (!_answerSubmitted) {
-      final isCorrect =
-          _selectedIndex == exercise.questions[_currentIndex].correctIndex;
-      if (isCorrect) _correct++;
-      setState(() {
-        _answerSubmitted = true;
-        _lastAnswerCorrect = isCorrect;
-      });
+      _checkAnswer();
       return;
     }
-
     _advanceQuestion();
   }
 
@@ -191,28 +189,25 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     });
   }
 
-  Future<void> _submitResults() async {
-    final exercise = _exercise!;
-    final total = exercise.questions.length;
-    final score = total == 0 ? 0 : ((_correct / total) * 100).round();
-
+  Future<void> _finish() async {
     setState(() {
       _finished = true;
       _submitting = true;
     });
-
-    final student = context.read<AuthService>().appUser!;
-    final firestore = context.read<FirestoreService>();
-    await firestore.saveExerciseResult(
-          studentId: student.uid,
-          exerciseId: exercise.id,
-          score: score,
-        );
-    // Grading notifications (teacher + student) are created server-side by the
-    // onExerciseResultCreated Cloud Function — students can't write
-    // notifications, so this must not block or fail the submission.
-
-    if (mounted) setState(() => _submitting = false);
+    try {
+      // Grading notifications (teacher + student) are created server-side by
+      // the onExerciseResultCreated Cloud Function — students can't write
+      // notifications, so this must not block or fail the submission.
+      final result = await _session!.finish();
+      if (mounted) setState(() => _result = result);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not save the result: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
   }
 
   @override
@@ -223,7 +218,6 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final student = context.watch<AuthService>().appUser;
     return Scaffold(
       appBar: AppBar(
         title: Text(_exercise?.title ?? 'Exercise'),
@@ -235,47 +229,47 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _notAssigned
-              ? EmptyState(
+              ? const EmptyState(
                   icon: Icons.lock_outline,
                   title: 'Exercise not available',
-                  subtitle: student?.level == null
-                      ? 'Set your HSK level in Profile to access practice exercises.'
-                      : 'This exercise is not published for ${student!.level}.',
+                  subtitle:
+                      'This exercise has not been assigned to you. Ask your teacher.',
                 )
-              : _exercise == null
-                  ? const EmptyState(
-                      icon: Icons.fitness_center_outlined,
-                      title: 'Exercise not found',
-                      subtitle: 'This exercise may have been removed.',
+              : _loadError != null
+                  ? EmptyState(
+                      icon: Icons.cloud_off_outlined,
+                      title: 'Could not load the exercise',
+                      subtitle: _loadError!,
                     )
-                  : !_exercise!.type.isImplemented
-                  ? const EmptyState(
-                      icon: Icons.construction_outlined,
-                      title: 'Exercise type coming soon',
-                      subtitle:
-                          'This worksheet type is not available for students yet.',
-                    )
-                  : _exercise!.questions.isEmpty
+                  : _session == null
                       ? const EmptyState(
                           icon: Icons.fitness_center_outlined,
-                          title: 'No questions yet',
-                          subtitle:
-                              'Your teacher has not added questions to this exercise.',
+                          title: 'Exercise not found',
+                          subtitle: 'This exercise may have been removed.',
                         )
-                      : _finished
-                          ? _buildResult()
-                          : _buildQuestion(),
+                      : _questions.isEmpty
+                          ? const EmptyState(
+                              icon: Icons.fitness_center_outlined,
+                              title: 'No questions yet',
+                              subtitle:
+                                  'Your teacher has not added questions to this exercise.',
+                            )
+                          : _finished
+                              ? _buildResult()
+                              : _buildQuestion(),
     );
   }
 
   Widget _buildResult() {
-    final total = _exercise!.questions.length;
-    final score = total == 0 ? 0 : ((_correct / total) * 100).round();
+    final total = _questions.length;
+    final result = _result;
+    final correct = result?.correct ?? _correct;
+    final score = result?.score ?? (total == 0 ? 0 : ((correct / total) * 100).round());
 
     return ScoreSummary(
       scorePercent: score,
-      correctCount: _correct,
-      totalCount: total,
+      correctCount: correct,
+      totalCount: result?.total ?? total,
       primaryLabel: 'Done',
       loading: _submitting,
       subtitle: _exercise!.title,
@@ -285,15 +279,16 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
 
   Widget _buildQuestion() {
     final exercise = _exercise!;
-    final question = exercise.questions[_currentIndex];
-    final progress = (_currentIndex + 1) / exercise.questions.length;
-    final isCompose = exercise.type == ExerciseType.composeSentences;
-    final isCloze = exercise.type == ExerciseType.readingCloze;
-    final isTyped = _usesTyped(exercise.type);
+    final question = _question;
+    final progress = (_currentIndex + 1) / _questions.length;
+    final isCompose = question.isCompose;
+    final isCloze = question.type == ExerciseType.readingCloze;
+    final isTyped = question.isTyped;
     // Fill in the blank plays like matching: one shared bank, pick a letter.
-    final isMatching = exercise.type == ExerciseType.matching || isCloze;
-    final options = _currentOptions(exercise);
-    final isLast = _currentIndex + 1 >= exercise.questions.length;
+    final isMatching = question.usesWordBank;
+    final options = question.options;
+    final isLast = _currentIndex + 1 >= _questions.length;
+    final passage = _session!.passage;
 
     return ListView(
       padding: const EdgeInsets.all(20),
@@ -307,10 +302,10 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
           ),
           const SizedBox(height: 16),
         ],
-        if (exercise.passage.isNotEmpty) ...[
+        if (passage.isNotEmpty) ...[
           AppCard(
             child: SelectableText(
-              exercise.passage,
+              passage,
               style: AppTextStyles.question.copyWith(height: 1.8),
             ),
           ),
@@ -326,17 +321,17 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
         const SizedBox(height: 8),
         Text(
           isCompose
-              ? 'Sentence ${_currentIndex + 1} of ${exercise.questions.length}'
+              ? 'Sentence ${_currentIndex + 1} of ${_questions.length}'
               : isCloze
-                  ? 'Blank ${_currentIndex + 1} of ${exercise.questions.length}'
+                  ? 'Blank ${_currentIndex + 1} of ${_questions.length}'
                   : isMatching
-                      ? 'Match ${_currentIndex + 1} of ${exercise.questions.length}'
-                      : 'Question ${_currentIndex + 1} of ${exercise.questions.length}',
+                      ? 'Match ${_currentIndex + 1} of ${_questions.length}'
+                      : 'Question ${_currentIndex + 1} of ${_questions.length}',
           style: const TextStyle(color: AppColors.textSecondary),
         ),
         const SizedBox(height: 24),
         if (isMatching) ...[
-          _buildMatchingQuestion(exercise, question, options),
+          _buildMatchingQuestion(question, options),
         ] else if (isCompose) ...[
           Text(
             question.prompt.isNotEmpty
@@ -353,10 +348,22 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
             style: TextStyle(color: AppColors.textSecondary),
           ),
           const SizedBox(height: 16),
-          _buildComposeList(question),
+          _buildComposeList(),
         ] else if (isTyped) ...[
-          _buildTypedQuestion(exercise, question),
+          _buildTypedQuestion(question),
         ] else ...[
+          if (question.imageUrl.isNotEmpty) ...[
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.network(
+                question.imageUrl,
+                height: 220,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
           Text(
             question.prompt,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -366,27 +373,27 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
           ),
           const SizedBox(height: 20),
           ...List.generate(options.length, (i) {
-          final selected = _selectedIndex == i;
-          final isCorrect = i == question.correctIndex;
-          Color? borderColor;
-          Color? fillColor;
-          IconData? resultIcon;
-          Color? resultIconColor;
-          if (_answerSubmitted) {
-            if (isCorrect) {
-              // Always mark the correct answer strongly, whether or not the
-              // student picked it — a clear green fill + check.
-              borderColor = AppColors.success;
-              fillColor = AppColors.success.withValues(alpha: 0.14);
-              resultIcon = Icons.check_circle;
-              resultIconColor = AppColors.success;
-            } else if (selected) {
-              borderColor = AppColors.error;
-              fillColor = AppColors.error.withValues(alpha: 0.10);
-              resultIcon = Icons.cancel;
-              resultIconColor = AppColors.error;
+            final selected = _selectedIndex == i;
+            final isCorrect = _check?.correctIndex == i;
+            Color? borderColor;
+            Color? fillColor;
+            IconData? resultIcon;
+            Color? resultIconColor;
+            if (_answerSubmitted) {
+              if (isCorrect) {
+                // Always mark the correct answer strongly, whether or not the
+                // student picked it — a clear green fill + check.
+                borderColor = AppColors.success;
+                fillColor = AppColors.success.withValues(alpha: 0.14);
+                resultIcon = Icons.check_circle;
+                resultIconColor = AppColors.success;
+              } else if (selected) {
+                borderColor = AppColors.error;
+                fillColor = AppColors.error.withValues(alpha: 0.10);
+                resultIcon = Icons.cancel;
+                resultIconColor = AppColors.error;
+              }
             }
-          }
 
             return Padding(
               padding: const EdgeInsets.only(bottom: 10),
@@ -449,39 +456,30 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
         ],
         const SizedBox(height: 24),
         FilledButton(
-          onPressed: isCompose
-              ? (_answerSubmitted
-                  ? _onPrimaryAction
-                  : _composeOrder.isNotEmpty
-                      ? _onPrimaryAction
-                      : null)
-              : isTyped
-                  ? (_answerSubmitted ||
-                          _typedController.text.trim().isNotEmpty
-                      ? _onPrimaryAction
-                      : null)
-                  : _selectedIndex == null
-                      ? null
-                      : _onPrimaryAction,
+          onPressed: _checking || (!_answerSubmitted && _currentAnswer() == null)
+              ? null
+              : _onPrimaryAction,
           style: FilledButton.styleFrom(
             backgroundColor: AppColors.navy,
             padding: const EdgeInsets.symmetric(vertical: 16),
           ),
-          child: Text(
-            isCompose
-                ? (!_answerSubmitted
-                    ? 'Check answer'
-                    : isLast
-                        ? 'Finish exercise'
-                        : 'Next sentence')
-                : !_answerSubmitted
-                    ? 'Check answer'
-                    : isLast
-                        ? 'Finish exercise'
-                        : isMatching
-                            ? 'Next match'
-                            : 'Next question',
-          ),
+          child: _checking
+              ? const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                )
+              : Text(
+                  !_answerSubmitted
+                      ? 'Check answer'
+                      : isLast
+                          ? 'Finish exercise'
+                          : isCompose
+                              ? 'Next sentence'
+                              : isMatching
+                                  ? 'Next match'
+                                  : 'Next question',
+                ),
         ),
       ],
     );
@@ -489,8 +487,8 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
 
   /// Type the hanzi: the sentence with a gap and its pinyin hint. Picture
   /// sentence: the picture (if any) and the keyword to use.
-  Widget _buildTypedQuestion(Exercise exercise, ExerciseQuestion question) {
-    final isPicture = exercise.type == ExerciseType.pictureSentence;
+  Widget _buildTypedQuestion(PlayQuestion question) {
+    final isPicture = question.type == ExerciseType.pictureSentence;
     final hint = question.keyword;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -552,10 +550,10 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
             border: const OutlineInputBorder(),
           ),
         ),
-        if (_answerSubmitted && !isPicture) ...[
+        if (_answerSubmitted && !isPicture && _check!.accepted.isNotEmpty) ...[
           const SizedBox(height: 10),
           Text(
-            'Answer: ${question.acceptedAnswers.join(' / ')}',
+            'Answer: ${_check!.accepted.join(' / ')}',
             style: const TextStyle(
               color: AppColors.textSecondary,
               fontSize: 15,
@@ -567,7 +565,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   }
 
   Widget _resultBanner() {
-    final correct = _lastAnswerCorrect == true;
+    final correct = _check?.correct == true;
     final color = correct ? AppColors.success : AppColors.error;
     return Container(
       width: double.infinity,
@@ -598,11 +596,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     );
   }
 
-  Widget _buildMatchingQuestion(
-    Exercise exercise,
-    ExerciseQuestion question,
-    List<String> options,
-  ) {
+  Widget _buildMatchingQuestion(PlayQuestion question, List<String> options) {
     final isWide = MediaQuery.sizeOf(context).width >= 640;
 
     Widget promptCard() => AppCard(
@@ -610,7 +604,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                exercise.type == ExerciseType.readingCloze
+                question.type == ExerciseType.readingCloze
                     ? 'Choose the word for the blank'
                     : 'Prompt',
                 style: const TextStyle(
@@ -647,7 +641,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
               const SizedBox(height: 12),
               ...List.generate(options.length, (index) {
                 final selected = _selectedIndex == index;
-                final isCorrect = index == question.correctIndex;
+                final isCorrect = _check?.correctIndex == index;
                 Color? borderColor;
                 if (_answerSubmitted) {
                   if (selected && isCorrect) {
@@ -701,7 +695,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                           Expanded(
                             child: Text(
                               options[index],
-                              style: const TextStyle(height: 1.4),
+                              style: AppTextStyles.question,
                             ),
                           ),
                         ],
@@ -735,7 +729,8 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     );
   }
 
-  Widget _buildComposeList(ExerciseQuestion question) {
+  Widget _buildComposeList() {
+    final check = _check;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -748,9 +743,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: _answerSubmitted
-                  ? (_lastAnswerCorrect == true
-                      ? AppColors.success
-                      : AppColors.error)
+                  ? (check!.correct ? AppColors.success : AppColors.error)
                   : AppColors.border,
               width: _answerSubmitted ? 2 : 1.5,
             ),
@@ -804,7 +797,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
             );
           }).toList(),
         ),
-        if (_answerSubmitted && _lastAnswerCorrect == false) ...[
+        if (check != null && !check.correct && check.correctOrder.isNotEmpty) ...[
           const SizedBox(height: 16),
           AppCard(
             child: Column(
@@ -819,7 +812,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  question.segments.join(' '),
+                  check.correctOrder.join(' '),
                   style: AppTextStyles.question,
                 ),
               ],

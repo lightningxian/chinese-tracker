@@ -143,13 +143,15 @@ Future<void> runQuestionBankSampleSetImport(
 }
 
 /// Worksheet file bulk import into the question bank: scan, review what was
-/// detected (type + answer per question), then add.
-Future<void> runQuestionBankWorksheetImport(
+/// detected (type + answer per question), then add. Returns the sheet codes
+/// that went into the bank (one for a coded sheet), or null when nothing was
+/// added.
+Future<List<String>?> runQuestionBankWorksheetImport(
   BuildContext context, {
   required String ownerId,
 }) async {
   final result = await scanWorksheet(context);
-  if (result == null || !context.mounted) return;
+  if (result == null || !context.mounted) return null;
 
   final items = QuestionBankImportUtils.fromParseResult(
     result: result.parseResult!,
@@ -160,23 +162,29 @@ Future<void> runQuestionBankWorksheetImport(
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('No questions to import.')),
     );
-    return;
+    return null;
   }
   // The same sheet may already be in the bank (scanned before, or loaded
   // from the sample set): the review offers to replace it.
   final existing =
       await context.read<FirestoreService>().watchQuestionBank(ownerId).first;
-  if (!context.mounted) return;
-  await _confirmAndInsert(
+  if (!context.mounted) return null;
+  final added = await _confirmAndInsert(
     context,
     ownerId: ownerId,
     items: items,
     summary: result.parseResult!.detectionSummary,
     existingBank: existing,
   );
+  if (added == null) return null;
+  return {
+    for (final sheet in QuestionBankSheet.group(added))
+      if (sheet.isSheet) sheet.key!,
+  }.toList();
 }
 
-Future<void> _confirmAndInsert(
+/// Returns the questions that were written, or null when cancelled/failed.
+Future<List<QuestionBankItem>?> _confirmAndInsert(
   BuildContext context, {
   required String ownerId,
   required List<QuestionBankItem> items,
@@ -195,7 +203,9 @@ Future<void> _confirmAndInsert(
       ),
     ),
   );
-  if (decision == null || decision.items.isEmpty || !context.mounted) return;
+  if (decision == null || decision.items.isEmpty || !context.mounted) {
+    return null;
+  }
   final confirmed = decision.items;
 
   try {
@@ -204,7 +214,7 @@ Future<void> _confirmAndInsert(
       await firestore.deleteQuestionBankItems(decision.replaceIds);
     }
     await firestore.addQuestionBankItems(confirmed);
-    if (!context.mounted) return;
+    if (!context.mounted) return confirmed;
     final sheets = QuestionBankSheet.group(confirmed);
     final n = confirmed.length;
     final verb = decision.replaceIds.isNotEmpty ? 'Replaced' : 'Added';
@@ -214,10 +224,12 @@ Future<void> _confirmAndInsert(
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('$verb $what in the bank.')),
     );
+    return confirmed;
   } catch (e) {
-    if (!context.mounted) return;
+    if (!context.mounted) return null;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Could not import: $e')),
     );
+    return null;
   }
 }

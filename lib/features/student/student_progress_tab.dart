@@ -5,6 +5,7 @@ import '../../core/constants/app_constants.dart';
 import '../../core/utils/progress_utils.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/progress_widgets.dart';
+import '../../l10n/l10n.dart';
 import '../../models/lesson.dart';
 import '../../models/student_progress.dart';
 import '../../services/auth_service.dart';
@@ -20,6 +21,7 @@ class StudentProgressTab extends StatelessWidget {
     final firestore = context.read<FirestoreService>();
     final student = context.watch<AuthService>().appUser!;
     final contentOwnerId = AppConstants.contentOwnerFor(student);
+    final l = context.l10n;
 
     return StreamBuilder<List<StudentProgress>>(
       stream: firestore.watchStudentProgress(studentId),
@@ -32,10 +34,10 @@ class StudentProgressTab extends StatelessWidget {
         final completed = progress.where((item) => item.completed).toList();
 
         if (contentOwnerId.isEmpty) {
-          return const EmptyState(
+          return EmptyState(
             icon: Icons.trending_up,
-            title: 'No progress yet',
-            subtitle: 'Complete a lesson or quiz to see your history here.',
+            title: l.studentProgressNoProgressTitle,
+            subtitle: l.studentProgressNoProgressSubtitle,
           );
         }
 
@@ -59,9 +61,10 @@ class StudentProgressTab extends StatelessWidget {
             if (lessons.isEmpty) {
               return EmptyState(
                 icon: Icons.trending_up,
-                title: 'No lessons yet',
-                subtitle:
-                    'No lessons for ${student.level ?? 'your HSK level'} yet.',
+                title: l.studentProgressNoLessonsTitle,
+                subtitle: l.studentProgressNoLessonsSubtitle(
+                  student.level ?? l.studentProgressYourHskLevel,
+                ),
               );
             }
 
@@ -72,18 +75,18 @@ class StudentProgressTab extends StatelessWidget {
                   ProgressSummaryRow(
                     completed: 0,
                     avgScore: null,
-                    thirdLabel: 'Term size',
+                    thirdLabel: l.studentProgressTermSize,
                     thirdValue: '${student.lessonsPerTerm}',
                   ),
                   const SizedBox(height: 20),
                   if (currentTerm != null) ...[
                     TermProgressCard(
                       term: currentTerm,
-                      subtitle: 'Start your first lesson to track progress',
+                      subtitle: l.studentProgressStartFirst,
                     ),
                     const SizedBox(height: 20),
                   ],
-                  const SectionHeader(title: 'Your term plan'),
+                  SectionHeader(title: l.studentProgressTermPlan),
                   for (final term in terms) ...[
                     TermProgressCard(term: term),
                     const SizedBox(height: 12),
@@ -98,7 +101,7 @@ class StudentProgressTab extends StatelessWidget {
                 ProgressSummaryRow(
                   completed: completed.length,
                   avgScore: avgScore,
-                  thirdLabel: 'Current term',
+                  thirdLabel: l.studentProgressCurrentTerm,
                   thirdValue: currentTerm != null
                       ? '${currentTerm.completedCount}/${currentTerm.termSize}'
                       : '—',

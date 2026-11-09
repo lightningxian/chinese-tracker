@@ -13,7 +13,7 @@ import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../teacher/teacher_attendance_tab.dart';
 import '../teacher/teacher_exercises_tab.dart';
-import '../teacher/worksheet_scan_flow.dart';
+import '../question_bank/question_bank_bulk_import.dart';
 import 'admin_profile_tab.dart';
 import 'admin_dashboard_tab.dart';
 import 'admin_invoices_tab.dart';
@@ -99,13 +99,18 @@ class _AdminShellState extends State<AdminShell> {
     setState(() => _index = index);
   }
 
-  /// Upload a worksheet; the scanner detects the type and answers, and the
-  /// form opens already filled in. A blank form is still reachable from
-  /// the Exercises tools row for bank-built exercises.
+  /// Upload a worksheet: the scanner detects the type and answers, the
+  /// sheet goes into the question bank, and a new exercise opens with that
+  /// worksheet already in it. Exercises hold no questions of their own.
   Future<void> _scanAndOpenForm(BuildContext context) async {
-    final result = await scanWorksheet(context);
-    if (result == null || !context.mounted) return;
-    context.push('/admin/exercise/new', extra: result);
+    final user = context.read<AuthService>().appUser;
+    if (user == null) return;
+    final sheets = await runQuestionBankWorksheetImport(
+      context,
+      ownerId: AppConstants.contentTeacherId(user),
+    );
+    if (sheets == null || sheets.isEmpty || !context.mounted) return;
+    context.push('/admin/exercise/new', extra: sheets);
   }
 
   Widget? _topBarAction(BuildContext context) {

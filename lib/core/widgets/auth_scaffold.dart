@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/l10n.dart';
 import '../constants/app_constants.dart';
 import '../theme/app_theme.dart';
 import 'app_logo.dart';
@@ -13,6 +14,7 @@ class AuthScaffold extends StatelessWidget {
     this.subtitle,
     this.showBackButton = false,
     this.onBack,
+    this.topAction,
   });
 
   final Widget child;
@@ -20,6 +22,10 @@ class AuthScaffold extends StatelessWidget {
   final String? subtitle;
   final bool showBackButton;
   final VoidCallback? onBack;
+
+  /// Optional widget at the top-right of the form panel (e.g. the language
+  /// toggle), on the same line as the back button.
+  final Widget? topAction;
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +51,7 @@ class AuthScaffold extends StatelessWidget {
                           subtitle: subtitle,
                           showBackButton: showBackButton,
                           onBack: onBack,
+                          topAction: topAction,
                           child: child,
                         ),
                       ),
@@ -88,6 +95,7 @@ class AuthScaffold extends StatelessWidget {
                     subtitle: subtitle,
                     showBackButton: showBackButton,
                     onBack: onBack,
+                    topAction: topAction,
                     child: child,
                   ),
                 ],
@@ -117,9 +125,9 @@ class _BrandPanel extends StatelessWidget {
             child: AppLogo(variant: AppLogoVariant.withTagline, height: 64),
           ),
           const Spacer(),
-          const Text(
-            'Learn Chinese,\nthe easy way.',
-            style: TextStyle(
+          Text(
+            context.l10n.authBrandHeadline,
+            style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.w800,
               fontSize: 40,
@@ -156,6 +164,7 @@ class _FormPanel extends StatelessWidget {
     this.subtitle,
     this.showBackButton = false,
     this.onBack,
+    this.topAction,
   });
 
   final Widget child;
@@ -163,21 +172,31 @@ class _FormPanel extends StatelessWidget {
   final String? subtitle;
   final bool showBackButton;
   final VoidCallback? onBack;
+  final Widget? topAction;
 
   @override
   Widget build(BuildContext context) {
+    final backButton = IconButton(
+      onPressed: onBack,
+      icon: const Icon(Icons.arrow_back),
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(),
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (showBackButton)
+        if (topAction != null)
+          Row(
+            children: [
+              if (showBackButton) backButton,
+              const Spacer(),
+              topAction!,
+            ],
+          )
+        else if (showBackButton)
           Align(
             alignment: Alignment.centerLeft,
-            child: IconButton(
-              onPressed: onBack,
-              icon: const Icon(Icons.arrow_back),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-            ),
+            child: backButton,
           ),
         if (title != null) ...[
           Text(

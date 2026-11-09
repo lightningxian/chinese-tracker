@@ -8,6 +8,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/progress_utils.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/stat_card.dart';
+import '../../l10n/l10n.dart';
 import '../../models/app_user.dart';
 import '../../models/attendance_record.dart';
 import '../../models/exercise_result.dart';
@@ -26,6 +27,7 @@ class ParentOverviewTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final firestore = context.read<FirestoreService>();
     final ownerId = AppConstants.contentOwnerFor(child);
+    final l = context.l10n;
 
     return ListView(
       padding: const EdgeInsets.all(20),
@@ -50,7 +52,7 @@ class ParentOverviewTab extends StatelessWidget {
                 .totalRemainingClassSessions(termSnap.data ?? []);
             return _StatCard(
               icon: Icons.confirmation_number_outlined,
-              label: 'Sessions remaining',
+              label: l.parentOverviewSessionsRemaining,
               value: '$remaining',
             );
           },
@@ -74,7 +76,7 @@ class ParentOverviewTab extends StatelessWidget {
                     Expanded(
                       child: _StatCard(
                         icon: Icons.menu_book_outlined,
-                        label: 'Lessons done',
+                        label: l.parentOverviewLessonsDone,
                         value: '$completed/${lessons.length}',
                       ),
                     ),
@@ -82,7 +84,7 @@ class ParentOverviewTab extends StatelessWidget {
                     Expanded(
                       child: _StatCard(
                         icon: Icons.grade_outlined,
-                        label: 'Avg score',
+                        label: l.parentOverviewAvgScore,
                         value: avg == null ? '—' : '${avg.round()}%',
                       ),
                     ),
@@ -108,10 +110,10 @@ class ParentOverviewTab extends StatelessWidget {
                     color: AppColors.teal),
               ),
               const SizedBox(width: 12),
-              const Expanded(
-                child: Text('View class calendar',
-                    style:
-                        TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+              Expanded(
+                child: Text(l.commonViewClassCalendar,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w600, fontSize: 15)),
               ),
               const Icon(Icons.chevron_right, color: AppColors.textSecondary),
             ],
@@ -133,10 +135,10 @@ class ParentOverviewTab extends StatelessWidget {
                     const Icon(Icons.grading_outlined, color: AppColors.navy),
               ),
               const SizedBox(width: 12),
-              const Expanded(
-                child: Text('View grades & transcript',
-                    style:
-                        TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+              Expanded(
+                child: Text(l.commonViewGrades,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w600, fontSize: 15)),
               ),
               const Icon(Icons.chevron_right, color: AppColors.textSecondary),
             ],
@@ -158,17 +160,17 @@ class ParentOverviewTab extends StatelessWidget {
                     color: AppColors.brandYellow),
               ),
               const SizedBox(width: 12),
-              const Expanded(
-                child: Text('Learning materials',
-                    style:
-                        TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+              Expanded(
+                child: Text(l.commonLearningMaterials,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w600, fontSize: 15)),
               ),
               const Icon(Icons.chevron_right, color: AppColors.textSecondary),
             ],
           ),
         ),
         const SizedBox(height: 20),
-        const SectionHeader(title: 'Recent grades'),
+        SectionHeader(title: l.parentOverviewRecentGrades),
         StreamBuilder<List<ExerciseResult>>(
           stream: firestore.watchStudentExerciseResults(child.uid),
           builder: (context, snap) {
@@ -179,7 +181,7 @@ class ParentOverviewTab extends StatelessWidget {
                 return bAt.compareTo(aAt);
               });
             if (results.isEmpty) {
-              return const _EmptyLine(text: 'No graded practice yet.');
+              return _EmptyLine(text: l.parentOverviewNoGrades);
             }
             return Column(
               children: [
@@ -191,9 +193,9 @@ class ParentOverviewTab extends StatelessWidget {
                         Expanded(
                           child: Text(
                             r.submittedAt != null
-                                ? DateFormat('d MMM yyyy')
+                                ? DateFormat('d MMM yyyy', l.localeName)
                                     .format(r.submittedAt!)
-                                : 'Practice',
+                                : l.parentOverviewPractice,
                           ),
                         ),
                         Text(
@@ -211,13 +213,13 @@ class ParentOverviewTab extends StatelessWidget {
           },
         ),
         const SizedBox(height: 20),
-        const SectionHeader(title: 'Recent classes'),
+        SectionHeader(title: l.parentOverviewRecentClasses),
         StreamBuilder<List<AttendanceRecord>>(
           stream: firestore.watchStudentJoinedSessions(child.uid),
           builder: (context, snap) {
             final records = snap.data ?? [];
             if (records.isEmpty) {
-              return const _EmptyLine(text: 'No classes attended yet.');
+              return _EmptyLine(text: l.parentOverviewNoClasses);
             }
             return Column(
               children: [
@@ -233,7 +235,7 @@ class ParentOverviewTab extends StatelessWidget {
                           child: Text(
                             record.sessionTitle.isNotEmpty
                                 ? record.sessionTitle
-                                : 'Class session',
+                                : l.commonClassSession,
                           ),
                         ),
                         Text(

@@ -9,7 +9,9 @@ import 'package:flutter/services.dart';
 import '../../core/utils/progress_utils.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/class_term_widgets.dart';
+import '../../core/widgets/language_toggle.dart';
 import '../../core/widgets/profile_widgets.dart';
+import '../../l10n/l10n.dart';
 import '../../models/app_user.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
@@ -86,6 +88,7 @@ class _StudentProfileTabState extends State<StudentProfileTab> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    final l = context.l10n;
 
     setState(() {
       _saving = true;
@@ -111,7 +114,7 @@ class _StudentProfileTabState extends State<StudentProfileTab> {
       await auth.refreshProfile();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile updated')),
+          SnackBar(content: Text(l.studentProfileUpdated)),
         );
       }
     } catch (e) {
@@ -124,6 +127,7 @@ class _StudentProfileTabState extends State<StudentProfileTab> {
   @override
   Widget build(BuildContext context) {
     final user = widget.user;
+    final l = context.l10n;
 
     return Form(
       key: _formKey,
@@ -145,9 +149,8 @@ class _StudentProfileTabState extends State<StudentProfileTab> {
           ],
           const SizedBox(height: 16),
           ProfileSectionCard(
-            title: 'Personal information',
-            subtitle:
-                'Indonesian and Chinese names, WhatsApp, and parent contacts.',
+            title: l.studentProfilePersonalTitle,
+            subtitle: l.studentProfilePersonalSubtitle,
             children: [
               ProfilePersonalFields(
                 nameIndonesianController: _nameIndonesianController,
@@ -163,8 +166,8 @@ class _StudentProfileTabState extends State<StudentProfileTab> {
           ),
           const SizedBox(height: 16),
           ProfileSectionCard(
-            title: 'Learning',
-            subtitle: 'Your HSK level controls which practice exercises you see.',
+            title: l.studentProfileLearningTitle,
+            subtitle: l.studentProfileLearningSubtitle,
             children: [
               ProfileStudentLearningFields(
                 level: _level,
@@ -182,6 +185,8 @@ class _StudentProfileTabState extends State<StudentProfileTab> {
             studentId: user.uid,
             initialCode: user.parentCode,
           ),
+          const SizedBox(height: 16),
+          const AppCard(child: LanguageSettingRow()),
           const SizedBox(height: 16),
           ProfileAccountMeta(user: user),
           const SizedBox(height: 24),
@@ -221,6 +226,7 @@ class _ParentAccessCardState extends State<_ParentAccessCard> {
   }
 
   Future<void> _generate() async {
+    final l = context.l10n;
     setState(() => _loading = true);
     try {
       final code = await context
@@ -230,7 +236,7 @@ class _ParentAccessCardState extends State<_ParentAccessCard> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not generate code: $e')),
+          SnackBar(content: Text(l.studentProfileCodeFailed('$e'))),
         );
       }
     } finally {
@@ -240,23 +246,26 @@ class _ParentAccessCardState extends State<_ParentAccessCard> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Parent access',
-            style: TextStyle(
+          Text(
+            l.studentProfileParentAccessTitle,
+            style: const TextStyle(
               fontWeight: FontWeight.w700,
               fontSize: 16,
               color: AppColors.navy,
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            'Share this code with a parent so they can register and follow your '
-            'progress (read-only).',
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+          Text(
+            l.studentProfileParentAccessBody,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 13,
+            ),
           ),
           const SizedBox(height: 12),
           if (_code != null && _code!.isNotEmpty)
@@ -281,12 +290,12 @@ class _ParentAccessCardState extends State<_ParentAccessCard> {
                 ),
                 const SizedBox(width: 8),
                 IconButton(
-                  tooltip: 'Copy',
+                  tooltip: l.commonCopy,
                   icon: const Icon(Icons.copy, size: 20),
                   onPressed: () {
                     Clipboard.setData(ClipboardData(text: _code!));
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Code copied')),
+                      SnackBar(content: Text(l.studentProfileCodeCopied)),
                     );
                   },
                 ),
@@ -302,7 +311,7 @@ class _ParentAccessCardState extends State<_ParentAccessCard> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.vpn_key_outlined),
-              label: const Text('Show parent access code'),
+              label: Text(l.studentProfileShowParentCode),
             ),
         ],
       ),

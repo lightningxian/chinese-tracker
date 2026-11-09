@@ -1,3 +1,4 @@
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -32,7 +33,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
   static const _colHskWidth = 88.0;
   static const _colJoinedWidth = 128.0;
   static const _colStatusWidth = 84.0;
-  static const _colActionsWidth = 188.0;
+  static const _colActionsWidth = 232.0;
 
   static const _roleFilterOptions = <String?, String>{
     null: 'All roles',
@@ -233,10 +234,55 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                 active: user.active,
                 onEdit: () => context.push('/admin/users/${user.uid}/edit'),
                 onToggleActive: () => _toggleActive(user),
+                onDelete: () => _deleteAccount(user),
                 compact: true,
               ),
       ),
     ];
+  }
+
+  /// Removes the login and the profile for good (Cloud Function
+  /// `deleteUserAccount`); results, invoices and attendance stay as records.
+  Future<void> _deleteAccount(AppUser user) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Delete ${user.displayNameIndonesian}?'),
+        content: Text(
+          '${user.email} will no longer be able to sign in and the profile is '
+          'removed. This cannot be undone. Exercise results, invoices and '
+          'attendance stay as the centre\'s records.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+            child: const Text('Delete account'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await FirebaseFunctions.instance
+          .httpsCallable('deleteUserAccount')
+          .call({'uid': user.uid});
+      messenger.showSnackBar(
+        SnackBar(content: Text('Deleted ${user.email}.')),
+      );
+    } on FirebaseFunctionsException catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(e.message ?? 'Could not delete the account.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
   }
 
   Future<void> _toggleActive(AppUser user) async {
@@ -311,6 +357,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                   joinedLabel: _joinedLabel(user),
                   hskLabel: _hskLabel(user),
                   onToggleActive: () => _toggleActive(user),
+                  onDelete: () => _deleteAccount(user),
                   onEdit: () => context.push('/admin/users/${user.uid}/edit'),
                 ),
               ),
@@ -613,6 +660,7 @@ class _UserMobileCard extends StatelessWidget {
     required this.joinedLabel,
     required this.hskLabel,
     required this.onToggleActive,
+    required this.onDelete,
     required this.onEdit,
   });
 
@@ -622,6 +670,7 @@ class _UserMobileCard extends StatelessWidget {
   final String joinedLabel;
   final String hskLabel;
   final VoidCallback onToggleActive;
+  final VoidCallback onDelete;
   final VoidCallback onEdit;
 
   @override
@@ -707,6 +756,7 @@ class _UserMobileCard extends StatelessWidget {
                 active: user.active,
                 onEdit: onEdit,
                 onToggleActive: onToggleActive,
+                onDelete: onDelete,
               ),
             ),
           ],
@@ -749,12 +799,14 @@ class _UserActionsBar extends StatelessWidget {
     required this.active,
     required this.onEdit,
     required this.onToggleActive,
+    required this.onDelete,
     this.compact = false,
   });
 
   final bool active;
   final VoidCallback onEdit;
   final VoidCallback onToggleActive;
+  final VoidCallback onDelete;
   final bool compact;
 
   @override
@@ -766,6 +818,13 @@ class _UserActionsBar extends StatelessWidget {
         _UserEditButton(onPressed: onEdit, compact: compact),
         SizedBox(width: compact ? 10 : 12),
         _ActionButton(active: active, onPressed: onToggleActive),
+        SizedBox(width: compact ? 6 : 8),
+        IconButton(
+          onPressed: onDelete,
+          icon: const Icon(Icons.delete_forever_outlined, color: AppColors.error),
+          tooltip: 'Delete account',
+          visualDensity: VisualDensity.compact,
+        ),
       ],
     );
   }

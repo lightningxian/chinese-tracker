@@ -12,11 +12,13 @@ import '../../core/widgets/app_shell.dart';
 import '../../core/widgets/exercise_widgets.dart';
 import '../../models/app_user.dart';
 import '../../services/auth_service.dart';
+import '../../models/exercise_assignment.dart';
 import '../../models/exercise_result.dart';
 import '../../models/exercise.dart';
 import '../../models/exercise_skill_category.dart';
 import '../../models/exercise_type.dart';
 import '../../services/firestore_service.dart';
+import 'exercise_assign_dialog.dart';
 
 class TeacherExercisesTab extends StatefulWidget {
   const TeacherExercisesTab({super.key});
@@ -241,7 +243,7 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
             OutlinedButton.icon(
               onPressed: () => context.push('$base/exercise/new'),
               icon: const Icon(Icons.add, size: 18),
-              label: const Text('Blank exercise'),
+              label: const Text('New exercise'),
             ),
             const SizedBox(width: 8),
             Expanded(
@@ -279,18 +281,34 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
     return '$base/exercise/$exerciseId/edit';
   }
 
+  /// The students who can open the exercise: the ones it is assigned to.
   List<AppUser> _studentsForExercise(
     List<AppUser> students,
+    List<ExerciseAssignment> assignments,
     Exercise exercise,
   ) {
-    final level = exercise.level;
-    if (level == null) return const [];
-    return students
-        .where(
-          (student) =>
-              student.isStudent && student.active && student.level == level,
-        )
-        .toList();
+    final ids = {
+      for (final a in assignments)
+        if (a.exerciseId == exercise.id) a.studentId,
+    };
+    return students.where((s) => ids.contains(s.uid)).toList();
+  }
+
+  /// "3 worksheets · 1 question" for a package, "7 questions" otherwise.
+  String _contentsLabel(Exercise exercise) {
+    if (exercise.isPackage) {
+      final n = exercise.bankSheets.length;
+      final q = exercise.bankQuestionIds.length;
+      return [
+        if (n > 0) '$n worksheet${n == 1 ? '' : 's'}',
+        if (q > 0) '$q single question${q == 1 ? '' : 's'}',
+      ].join(' · ');
+    }
+    final n = exercise.questions.length;
+    final unit = exercise.type == ExerciseType.composeSentences
+        ? 'sentence'
+        : 'question';
+    return '${exercise.type.label} · $n $unit${n == 1 ? '' : 's'}';
   }
 
   Widget _buildExerciseCard({
@@ -298,10 +316,12 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
     required Exercise exercise,
     required List<ExerciseResult> allResults,
     required List<AppUser> students,
+    required List<ExerciseAssignment> assignments,
     required bool compact,
     required bool canManage,
   }) {
-    final eligibleStudents = _studentsForExercise(students, exercise);
+    final eligibleStudents =
+        _studentsForExercise(students, assignments, exercise);
     final eligibleCount = eligibleStudents.length;
     final scoresByStudent = ExerciseUtils.bestScoresByStudentForExercise(
       exercise.id,
@@ -310,11 +330,11 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
     final completedCount = eligibleStudents
         .where((student) => scoresByStudent.containsKey(student.uid))
         .length;
-    final accessLabel = exercise.level == null
-        ? 'Set HSK level to open access'
-        : exercise.isPublished
-            ? 'Open to ${exercise.level} murid'
-            : 'Draft — not visible to students';
+    final accessLabel = !exercise.isPublished
+        ? 'Draft — not visible to students'
+        : eligibleCount == 0
+            ? 'Not assigned yet'
+            : 'Assigned to $eligibleCount student${eligibleCount == 1 ? '' : 's'}';
 
     return AppCard(
       padding: EdgeInsets.all(compact ? 12 : 14),
@@ -352,8 +372,8 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
                     const SizedBox(height: 6),
                     Text(
                       [
-                        exercise.type.label,
-                        '${exercise.questions.length} ${exercise.type == ExerciseType.composeSentences ? 'sentence' : 'question'}${exercise.questions.length == 1 ? '' : 's'}',
+                        if (exercise.isPackage) 'From the question bank',
+                        _contentsLabel(exercise),
                         accessLabel,
                         if (exercise.isPublished && eligibleCount > 0)
                           '$completedCount/$eligibleCount completed',
@@ -412,6 +432,9 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
               onPressed: () => showExerciseHomeworkProgressDialog(
                 context: context,
                 exercise: exercise,
+                assignments: assignments
+                    .where((a) => a.exerciseId == exercise.id)
+                    .toList(),
                 results: allResults,
                 students: students,
               ),
@@ -428,6 +451,23 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
             ),
           ],
           SizedBox(height: compact ? 10 : 12),
+          if (exercise.isPublished)
+            Padding(
+              padding: EdgeInsets.only(bottom: compact ? 8 : 10),
+              child: FilledButton.icon(
+                onPressed: () =>
+                    showExerciseAssignDialog(context, exercise: exercise),
+                icon: Icon(Icons.assignment_ind_outlined,
+                    size: compact ? 16 : 18),
+                label:
+                    Text(eligibleCount == 0 ? 'Assign to students' : 'Assign'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.navy,
+                  minimumSize: Size.fromHeight(compact ? 36 : 42),
+                  textStyle: TextStyle(fontSize: compact ? 12 : 14),
+                ),
+              ),
+            ),
           if (canManage)
             Row(
               children: [
@@ -471,6 +511,7 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
     required List<Exercise> exercises,
     required List<ExerciseResult> allResults,
     required List<AppUser> students,
+    required List<ExerciseAssignment> assignments,
     required double maxWidth,
     required bool canManage,
   }) {
@@ -486,6 +527,7 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
             exercise: exercise,
             allResults: allResults,
             students: students,
+            assignments: assignments,
             compact: compact,
             canManage: canManage,
           ),
@@ -498,6 +540,7 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
     required List<Exercise> filtered,
     required List<ExerciseResult> allResults,
     required List<AppUser> students,
+    required List<ExerciseAssignment> assignments,
     required double maxWidth,
     required bool canManage,
   }) {
@@ -520,6 +563,7 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
           exercises: filtered,
           allResults: allResults,
           students: students,
+          assignments: assignments,
           maxWidth: maxWidth,
           canManage: canManage,
         ),
@@ -550,6 +594,7 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
           exercises: items,
           allResults: allResults,
           students: students,
+          assignments: assignments,
           maxWidth: maxWidth,
           canManage: canManage,
         ),
@@ -590,7 +635,8 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
                   icon: Icons.fitness_center_outlined,
                   title: 'No exercises yet',
                   subtitle:
-                      'Published exercises open to murid at the matching HSK level. '
+                      'An exercise bundles worksheets from the question bank; '
+                      'students see it once it is assigned to them. '
                       'Admins create exercises on web.',
                 ),
               ),
@@ -604,35 +650,45 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
             return StreamBuilder<List<AppUser>>(
               stream: context.read<FirestoreService>().watchAllStudents(),
               builder: (context, studentsSnap) {
-                final allResults = resultsSnap.data ?? [];
-                final students = studentsSnap.data ?? [];
-                final filtered = _filterExercises(exercises);
+                return StreamBuilder<List<ExerciseAssignment>>(
+                  stream: context
+                      .read<FirestoreService>()
+                      .watchAllExerciseAssignments(),
+                  builder: (context, assignSnap) {
+                    final allResults = resultsSnap.data ?? [];
+                    final students = studentsSnap.data ?? [];
+                    final assignments =
+                        assignSnap.data ?? const <ExerciseAssignment>[];
+                    final filtered = _filterExercises(exercises);
 
-                return ListView(
-                  padding: const EdgeInsets.only(bottom: 88),
-                  children: [
-                    _buildManageBanner(user),
-                    _buildQuestionBankButton(context, canManage),
-                    _buildCategoryFilters(),
-                    const SizedBox(height: 16),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          return Column(
-                            children: _buildGroupedExerciseList(
-                              context: context,
-                              filtered: filtered,
-                              allResults: allResults,
-                              students: students,
-                              maxWidth: constraints.maxWidth,
-                              canManage: canManage,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
+                    return ListView(
+                      padding: const EdgeInsets.only(bottom: 88),
+                      children: [
+                        _buildManageBanner(user),
+                        _buildQuestionBankButton(context, canManage),
+                        _buildCategoryFilters(),
+                        const SizedBox(height: 16),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              return Column(
+                                children: _buildGroupedExerciseList(
+                                  context: context,
+                                  filtered: filtered,
+                                  allResults: allResults,
+                                  students: students,
+                                  assignments: assignments,
+                                  maxWidth: constraints.maxWidth,
+                                  canManage: canManage,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 );
               },
             );

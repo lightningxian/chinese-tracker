@@ -180,13 +180,29 @@ class Exercise {
     this.isPublished = true,
     this.createdAt,
     this.audioUrl,
+    this.bankSheets = const [],
+    this.bankQuestionIds = const [],
   });
 
   final String id;
   final String title;
   final String instructions;
   final String teacherId;
+
+  /// Questions stored inside the exercise (legacy exercises built before
+  /// 2026-11-09). A package ([isPackage]) has none here: its questions live
+  /// in the question bank and are served by the `startExercise` function
+  /// without their answer keys.
   final List<ExerciseQuestion> questions;
+
+  /// Worksheet codes from the question bank (`310001-RDG`) that make up a
+  /// package, in play order.
+  final List<String> bankSheets;
+
+  /// Single bank questions added to a package, played after the sheets.
+  final List<String> bankQuestionIds;
+
+  bool get isPackage => bankSheets.isNotEmpty || bankQuestionIds.isNotEmpty;
   final int order;
   final ExerciseType type;
   /// Shared answer bank for matching exercises (A, B, C…).
@@ -227,6 +243,9 @@ class Exercise {
       isPublished: data['isPublished'] as bool? ?? true,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
       audioUrl: data['audioUrl'] as String?,
+      bankSheets: List<String>.from(data['bankSheets'] as List? ?? const []),
+      bankQuestionIds:
+          List<String>.from(data['bankQuestionIds'] as List? ?? const []),
       questions: rawQuestions
           .map(
             (q) => ExerciseQuestion.fromMap(
@@ -252,6 +271,8 @@ class Exercise {
         'isPublished': isPublished,
         if (audioUrl != null && audioUrl!.isNotEmpty) 'audioUrl': audioUrl,
         'questions': questions.map((q) => q.toMap(type)).toList(),
+        'bankSheets': bankSheets,
+        'bankQuestionIds': bankQuestionIds,
         'createdAt': createdAt != null
             ? Timestamp.fromDate(createdAt!)
             : FieldValue.serverTimestamp(),

@@ -11,6 +11,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/leave_class_dialog.dart';
 import '../../core/widgets/responsive_card_grid.dart';
+import '../../l10n/l10n.dart';
 import '../../models/student_class_term.dart';
 import '../../models/app_user.dart';
 import '../../models/attendance_record.dart';
@@ -43,7 +44,7 @@ class _StudentJoinSessionSectionState extends State<StudentJoinSessionSection> {
           return _JoinSectionFrame(
             child: AppCard(
               child: Text(
-                _errorMessage(sessionsSnap.error!),
+                _errorMessage(context.l10n, sessionsSnap.error!),
                 style: const TextStyle(color: AppColors.error),
               ),
             ),
@@ -85,11 +86,10 @@ class _StudentJoinSessionSectionState extends State<StudentJoinSessionSection> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (sessions.isEmpty)
-                    const EmptyState(
+                    EmptyState(
                       icon: Icons.event_busy_outlined,
-                      title: 'No open sessions',
-                      subtitle:
-                          'No class sessions are open right now. Check back later.',
+                      title: context.l10n.studentJoinNoSessionsTitle,
+                      subtitle: context.l10n.studentJoinNoSessionsSubtitle,
                     )
                   else
                     LayoutBuilder(
@@ -127,7 +127,7 @@ class _StudentJoinSessionSectionState extends State<StudentJoinSessionSection> {
     );
   }
 
-  static String _errorMessage(Object e) {
+  static String _errorMessage(AppLocalizations l, Object e) {
     if (e is ClassConcludeException) {
       return e.message;
     }
@@ -139,9 +139,9 @@ class _StudentJoinSessionSectionState extends State<StudentJoinSessionSection> {
     }
     if (e is FirebaseException) {
       if (e.code == 'permission-denied') {
-        return 'Could not join: permission denied.';
+        return l.studentJoinPermissionDenied;
       }
-      return e.message ?? 'Could not join (${e.code})';
+      return e.message ?? l.studentJoinFailed(e.code);
     }
     if (e is StateError) {
       return e.message;
@@ -171,17 +171,14 @@ class _OpenSessionJoinCard extends StatelessWidget {
     return showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Class is full'),
+        title: Text(ctx.l10n.studentJoinClassFullTitle),
         content: Text(
-          'This class has reached its capacity of ${session.capacity} '
-          'student${session.capacity == 1 ? '' : 's'} '
-          '($joinedCount/${session.capacity} joined). '
-          'Try another session or check back later.',
+          ctx.l10n.studentJoinClassFullBody(session.capacity, joinedCount),
         ),
         actions: [
           FilledButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('OK'),
+            child: Text(ctx.l10n.commonOk),
           ),
         ],
       ),
@@ -209,6 +206,7 @@ class _OpenSessionJoinCard extends StatelessWidget {
     }
 
     final firestore = context.read<FirestoreService>();
+    final l = context.l10n;
     try {
       await firestore.joinSession(
         session: session,
@@ -218,7 +216,7 @@ class _OpenSessionJoinCard extends StatelessWidget {
       onJoined();
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('You joined this session')),
+          SnackBar(content: Text(l.studentJoinJoined)),
         );
       }
     } on SessionFullException {
@@ -228,7 +226,9 @@ class _OpenSessionJoinCard extends StatelessWidget {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(_StudentJoinSessionSectionState._errorMessage(e))),
+          SnackBar(
+            content: Text(_StudentJoinSessionSectionState._errorMessage(l, e)),
+          ),
         );
       }
     }
@@ -237,9 +237,10 @@ class _OpenSessionJoinCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final firestore = context.read<FirestoreService>();
+    final l = context.l10n;
     final date = DateTime.tryParse(session.sessionDate);
     final dateLabel = date != null
-        ? DateFormat('EEE, d MMM yyyy').format(date)
+        ? DateFormat('EEE, d MMM yyyy', l.localeName).format(date)
         : session.sessionDate;
 
     return StreamBuilder<List<AttendanceRecord>>(
@@ -278,8 +279,8 @@ class _OpenSessionJoinCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '$joinedCount / ${session.capacity} joined'
-                        '${isFull ? ' · Full' : ' · $spotsLeft spot${spotsLeft == 1 ? '' : 's'} left'}',
+                        '${l.studentJoinCount(joinedCount, session.capacity)}'
+                        ' · ${isFull ? l.commonFull : l.commonSpotsLeft(spotsLeft)}',
                         style: TextStyle(
                           color: isFull ? AppColors.error : AppColors.teal,
                           fontSize: 13,
@@ -296,7 +297,7 @@ class _OpenSessionJoinCard extends StatelessWidget {
                       TextButton(
                         onPressed: () =>
                             context.push('/student/class/${session.id}'),
-                        child: const Text('View'),
+                        child: Text(l.studentJoinView),
                       ),
                       TextButton(
                         onPressed: () async {
@@ -310,8 +311,8 @@ class _OpenSessionJoinCard extends StatelessWidget {
                             onLeft();
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('You left this class'),
+                                SnackBar(
+                                  content: Text(l.studentJoinLeftClass),
                                 ),
                               );
                             }
@@ -321,7 +322,7 @@ class _OpenSessionJoinCard extends StatelessWidget {
                                 SnackBar(
                                   content: Text(
                                     _StudentJoinSessionSectionState
-                                        ._errorMessage(e),
+                                        ._errorMessage(l, e),
                                   ),
                                 ),
                               );
@@ -331,7 +332,7 @@ class _OpenSessionJoinCard extends StatelessWidget {
                         style: TextButton.styleFrom(
                           foregroundColor: AppColors.error,
                         ),
-                        child: const Text('Leave'),
+                        child: Text(l.studentJoinLeave),
                       ),
                     ],
                   )
@@ -342,7 +343,7 @@ class _OpenSessionJoinCard extends StatelessWidget {
                       foregroundColor: AppColors.error,
                       side: const BorderSide(color: AppColors.error),
                     ),
-                    child: const Text('Full'),
+                    child: Text(l.commonFull),
                   )
                 else
                   FilledButton(
@@ -354,7 +355,11 @@ class _OpenSessionJoinCard extends StatelessWidget {
                     style: FilledButton.styleFrom(
                       backgroundColor: AppColors.navy,
                     ),
-                    child: Text(sessionsLeft <= 0 ? 'No sessions' : 'Join'),
+                    child: Text(
+                      sessionsLeft <= 0
+                          ? l.studentJoinNoSessionsLeft
+                          : l.studentJoinJoin,
+                    ),
                   ),
               ],
             ),
@@ -376,11 +381,11 @@ class _JoinSectionFrame extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionHeader(title: 'Join class session'),
+        SectionHeader(title: context.l10n.studentJoinTitle),
         const SizedBox(height: 4),
-        const Text(
-          'Pick an open class below. You stay joined until the teacher concludes it.',
-          style: TextStyle(
+        Text(
+          context.l10n.studentJoinHint,
+          style: const TextStyle(
             color: AppColors.textSecondary,
             fontSize: 13,
             height: 1.4,

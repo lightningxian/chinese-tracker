@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/app_shell.dart';
+import '../../l10n/l10n.dart';
 import '../../services/firestore_service.dart';
 
 class LessonDetailScreen extends StatelessWidget {
@@ -28,9 +29,10 @@ class LessonDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Lesson'),
+        title: Text(l.lessonDetailTitle),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
@@ -45,10 +47,10 @@ class LessonDetailScreen extends StatelessWidget {
 
           final lesson = snapshot.data;
           if (lesson == null) {
-            return const EmptyState(
+            return EmptyState(
               icon: Icons.menu_book_outlined,
-              title: 'Lesson not found',
-              subtitle: 'This lesson may have been removed.',
+              title: l.lessonDetailNotFoundTitle,
+              subtitle: l.lessonDetailNotFoundSubtitle,
             );
           }
 
@@ -82,7 +84,7 @@ class LessonDetailScreen extends StatelessWidget {
                 style: const TextStyle(color: AppColors.textSecondary),
               ),
               const SizedBox(height: 24),
-              const SectionHeader(title: 'Vocabulary & notes'),
+              SectionHeader(title: l.lessonDetailVocabulary),
               const SizedBox(height: 8),
               ...vocabulary.map(
                 (block) => Padding(
@@ -122,7 +124,7 @@ class LessonDetailScreen extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
                 icon: const Icon(Icons.quiz_outlined),
-                label: const Text('Start quiz'),
+                label: Text(l.lessonDetailStartQuiz),
               ),
             ],
           );

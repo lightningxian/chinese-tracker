@@ -7,6 +7,7 @@ import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_logo.dart';
 import '../../core/widgets/registration_identity_fields.dart';
+import '../../l10n/l10n.dart';
 import '../../models/teacher_link_code.dart';
 import '../../services/auth_service.dart';
 
@@ -44,6 +45,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    final l = context.l10n;
     setState(() {
       _loading = true;
       _error = null;
@@ -65,7 +67,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
     } on TeacherLinkCodeException catch (e) {
       setState(() => _error = e.message);
     } on FirebaseAuthException catch (e) {
-      setState(() => _error = e.message ?? 'Could not complete profile');
+      setState(() => _error = e.message ?? l.completeProfileFailed);
     } catch (e) {
       setState(() => _error = e.toString());
     } finally {
@@ -76,11 +78,12 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final email = context.read<AuthService>().firebaseUser?.email ?? '';
+    final l = context.l10n;
 
     return Scaffold(
       backgroundColor: AppColors.surface,
       appBar: AppBar(
-        title: const Text('Complete your profile'),
+        title: Text(l.completeProfileTitle),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () async {
@@ -100,7 +103,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                 const Center(child: AppLogo(height: 64)),
                 const SizedBox(height: 20),
                 Text(
-                  'Complete your profile',
+                  l.completeProfileTitle,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w700,
@@ -108,10 +111,10 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                       ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'We found your login, but your profile data is missing.',
+                Text(
+                  l.completeProfileMissing,
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.textSecondary),
+                  style: const TextStyle(color: AppColors.textSecondary),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -159,23 +162,22 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                           controller: _linkCodeController,
                           textCapitalization: TextCapitalization.characters,
                           autocorrect: false,
-                          decoration: const InputDecoration(
-                            labelText: 'Teacher link code',
-                            hintText: '6-character code',
-                            prefixIcon: Icon(Icons.link_outlined),
-                            helperText:
-                                'Ask your teacher for the current code (refreshes every 15 min)',
+                          decoration: InputDecoration(
+                            labelText: l.teacherLinkCodeLabel,
+                            hintText: l.commonCodeHint,
+                            prefixIcon: const Icon(Icons.link_outlined),
+                            helperText: l.teacherLinkCodeHelper,
                           ),
                           validator: (v) => v == null || v.trim().length < 4
-                              ? 'Enter your teacher link code'
+                              ? l.teacherLinkCodeRequired
                               : null,
                         ),
                         const SizedBox(height: 16),
                         DropdownButtonFormField<String>(
                           initialValue: _level,
-                          decoration: const InputDecoration(
-                            labelText: 'HSK level',
-                            prefixIcon: Icon(Icons.school_outlined),
+                          decoration: InputDecoration(
+                            labelText: l.commonHskLevel,
+                            prefixIcon: const Icon(Icons.school_outlined),
                           ),
                           items: AppConstants.hskLevels
                               .map((l) => DropdownMenuItem(
@@ -188,14 +190,15 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                         const SizedBox(height: 16),
                         DropdownButtonFormField<int>(
                           initialValue: _termSize,
-                          decoration: const InputDecoration(
-                            labelText: 'Lessons per term',
-                            prefixIcon: Icon(Icons.calendar_view_week_outlined),
+                          decoration: InputDecoration(
+                            labelText: l.commonLessonsPerTerm,
+                            prefixIcon:
+                                const Icon(Icons.calendar_view_week_outlined),
                           ),
                           items: AppConstants.termSizes
                               .map((size) => DropdownMenuItem(
                                     value: size,
-                                    child: Text('$size lessons per term'),
+                                    child: Text(l.commonLessonsPerTermOption(size)),
                                   ))
                               .toList(),
                           onChanged: (v) =>
@@ -218,7 +221,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                           width: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Save profile'),
+                      : Text(l.completeProfileSave),
                 ),
               ],
             ),

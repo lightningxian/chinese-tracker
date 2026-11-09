@@ -28,12 +28,12 @@ import '../../features/materials/materials_screen.dart';
 import '../../features/parent/parent_shell.dart';
 import '../../features/question_bank/question_bank_screen.dart';
 import '../../features/teacher/exercise_levels_screen.dart';
-import '../../features/teacher/worksheet_import_review_screen.dart';
 import '../../features/teacher/exercise_level_editor_screen.dart';
 import '../../features/teacher/quiz_editor_screen.dart';
 import '../../features/teacher/teacher_dashboard_stat_detail_screen.dart';
 import '../../features/teacher/teacher_grades_tab.dart';
 import '../../features/teacher/teacher_shell.dart';
+import '../../features/teacher/exercise_package_form_screen.dart';
 import '../../features/teacher/teacher_exercise_form_screen.dart';
 import '../../features/teacher/student_detail_screen.dart';
 import '../../features/teacher/teacher_session_detail_screen.dart';
@@ -213,12 +213,13 @@ class AppRouter {
                   builder: (context, state) {
                     final user = auth.appUser!;
                     final extra = state.extra;
-                    return TeacherExerciseFormScreen(
+                    // New exercises are packages built from the bank. A
+                    // worksheet just scanned arrives as its sheet codes.
+                    return ExercisePackageFormScreen(
                       teacherId: AppConstants.contentTeacherId(user),
                       embedded: true,
-                      initialImport: extra is WorksheetImportReviewResult
-                          ? extra
-                          : null,
+                      initialSheets:
+                          extra is List<String> ? extra : const <String>[],
                     );
                   },
                 ),
@@ -226,9 +227,19 @@ class AppRouter {
                   path: 'exercise/:id/edit',
                   builder: (context, state) {
                     final user = auth.appUser!;
+                    final exercise = state.extra as Exercise?;
+                    if (exercise != null && exercise.isPackage) {
+                      return ExercisePackageFormScreen(
+                        teacherId: AppConstants.contentTeacherId(user),
+                        exercise: exercise,
+                        embedded: true,
+                      );
+                    }
+                    // Older exercises keep their questions inside the
+                    // document and the original editor.
                     return TeacherExerciseFormScreen(
                       teacherId: AppConstants.contentTeacherId(user),
-                      exercise: state.extra as Exercise?,
+                      exercise: exercise,
                       embedded: true,
                     );
                   },
@@ -354,18 +365,28 @@ class AppRouter {
                 ),
                 GoRoute(
                   path: 'exercise/new',
-                  builder: (context, _) => TeacherExerciseFormScreen(
+                  builder: (context, _) => ExercisePackageFormScreen(
                     teacherId: auth.appUser!.uid,
                     embedded: true,
                   ),
                 ),
                 GoRoute(
                   path: 'exercise/:id/edit',
-                  builder: (context, state) => TeacherExerciseFormScreen(
-                    teacherId: auth.appUser!.uid,
-                    exercise: state.extra as Exercise?,
-                    embedded: true,
-                  ),
+                  builder: (context, state) {
+                    final exercise = state.extra as Exercise?;
+                    if (exercise != null && exercise.isPackage) {
+                      return ExercisePackageFormScreen(
+                        teacherId: auth.appUser!.uid,
+                        exercise: exercise,
+                        embedded: true,
+                      );
+                    }
+                    return TeacherExerciseFormScreen(
+                      teacherId: auth.appUser!.uid,
+                      exercise: exercise,
+                      embedded: true,
+                    );
+                  },
                 ),
                 GoRoute(
                   path: 'session/new',

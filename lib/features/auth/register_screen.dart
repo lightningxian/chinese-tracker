@@ -6,7 +6,9 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/auth_scaffold.dart';
+import '../../core/widgets/language_toggle.dart';
 import '../../core/widgets/registration_identity_fields.dart';
+import '../../l10n/l10n.dart';
 import '../../services/auth_service.dart';
 import '../../services/child_link_service.dart';
 import '../../models/teacher_link_code.dart';
@@ -105,47 +107,51 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   String _authErrorMessage(FirebaseAuthException e) {
+    final l = context.l10n;
     switch (e.code) {
       case 'email-already-in-use':
-        return 'This email is already registered. Try Sign in instead.';
+        return l.registerErrorEmailInUse;
       case 'weak-password':
-        return 'Password is too weak. Use at least 6 characters.';
+        return l.registerErrorWeakPassword;
       case 'invalid-email':
-        return 'Invalid email address.';
+        return l.registerErrorInvalidEmail;
       case 'operation-not-allowed':
-        return 'Email/password sign-in is disabled in Firebase.';
+        return l.registerErrorOperationNotAllowed;
       default:
-        return e.message ?? 'Registration failed (${e.code})';
+        return e.message ?? l.registerErrorGeneric(e.code);
     }
   }
 
   String _firebaseErrorMessage(FirebaseException e) {
+    final l = context.l10n;
     if (e.code == 'permission-denied') {
-      return 'Firestore blocked this action. Publish firestore.rules from the project.';
+      return l.registerErrorPermissionDenied;
     }
-    return e.message ?? 'Firebase error (${e.code})';
+    return e.message ?? l.registerErrorFirebase(e.code);
   }
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return AuthScaffold(
-      title: 'Create account',
-      subtitle: 'Join Easy Study as a student or parent',
+      title: l.registerTitle,
+      subtitle: l.registerSubtitle,
       showBackButton: true,
       // Opened by a direct link there is nothing to pop; go home instead.
       onBack: () => context.canPop() ? context.pop() : context.go('/'),
+      topAction: const LanguageToggle(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SegmentedButton<String>(
-            segments: const [
+            segments: [
               ButtonSegment(
                 value: AppConstants.roleStudent,
-                label: Text('Student'),
+                label: Text(l.commonStudent),
               ),
               ButtonSegment(
                 value: AppConstants.roleParent,
-                label: Text('Parent'),
+                label: Text(l.commonParent),
               ),
             ],
             selected: {_role},
@@ -186,23 +192,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    prefixIcon: Icon(Icons.email_outlined),
+                  decoration: InputDecoration(
+                    labelText: l.commonEmail,
+                    prefixIcon: const Icon(Icons.email_outlined),
                   ),
                   validator: (v) =>
-                      v == null || !v.contains('@') ? 'Enter a valid email' : null,
+                      v == null || !v.contains('@') ? l.registerEmailInvalid : null,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _passwordController,
                   obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Password',
-                    prefixIcon: Icon(Icons.lock_outline),
+                  decoration: InputDecoration(
+                    labelText: l.commonPassword,
+                    prefixIcon: const Icon(Icons.lock_outline),
                   ),
                   validator: (v) =>
-                      v == null || v.length < 6 ? 'Minimum 6 characters' : null,
+                      v == null || v.length < 6 ? l.registerPasswordTooShort : null,
                 ),
                 if (_isParent) ...[
                   const SizedBox(height: 16),
@@ -210,15 +216,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     controller: _childCodeController,
                     textCapitalization: TextCapitalization.characters,
                     autocorrect: false,
-                    decoration: const InputDecoration(
-                      labelText: 'Child access code',
-                      hintText: '6-character code',
-                      prefixIcon: Icon(Icons.family_restroom_outlined),
-                      helperText:
-                          "Find this in your child's Profile under 'Parent access'.",
+                    decoration: InputDecoration(
+                      labelText: l.registerChildCodeLabel,
+                      hintText: l.commonCodeHint,
+                      prefixIcon: const Icon(Icons.family_restroom_outlined),
+                      helperText: l.registerChildCodeHelper,
                     ),
                     validator: (v) => v == null || v.trim().length < 4
-                        ? 'Enter your child access code'
+                        ? l.registerChildCodeRequired
                         : null,
                   ),
                 ],
@@ -228,23 +233,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     controller: _linkCodeController,
                     textCapitalization: TextCapitalization.characters,
                     autocorrect: false,
-                    decoration: const InputDecoration(
-                      labelText: 'Teacher link code',
-                      hintText: '6-character code',
-                      prefixIcon: Icon(Icons.link_outlined),
-                      helperText:
-                          'Ask your teacher for the current code (refreshes every 15 min)',
+                    decoration: InputDecoration(
+                      labelText: l.teacherLinkCodeLabel,
+                      hintText: l.commonCodeHint,
+                      prefixIcon: const Icon(Icons.link_outlined),
+                      helperText: l.teacherLinkCodeHelper,
                     ),
                     validator: (v) => v == null || v.trim().length < 4
-                        ? 'Enter your teacher link code'
+                        ? l.teacherLinkCodeRequired
                         : null,
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     initialValue: _level,
-                    decoration: const InputDecoration(
-                      labelText: 'HSK level',
-                      prefixIcon: Icon(Icons.school_outlined),
+                    decoration: InputDecoration(
+                      labelText: l.commonHskLevel,
+                      prefixIcon: const Icon(Icons.school_outlined),
                     ),
                     items: AppConstants.hskLevels
                         .map((l) => DropdownMenuItem(value: l, child: Text(l)))
@@ -254,15 +258,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 16),
                   DropdownButtonFormField<int>(
                     initialValue: _termSize,
-                    decoration: const InputDecoration(
-                      labelText: 'Lessons per term',
-                      prefixIcon: Icon(Icons.calendar_view_week_outlined),
+                    decoration: InputDecoration(
+                      labelText: l.commonLessonsPerTerm,
+                      prefixIcon: const Icon(Icons.calendar_view_week_outlined),
                     ),
                     items: AppConstants.termSizes
                         .map(
                           (size) => DropdownMenuItem(
                             value: size,
-                            child: Text('$size lessons per term'),
+                            child: Text(l.commonLessonsPerTermOption(size)),
                           ),
                         )
                         .toList(),
@@ -287,7 +291,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : Text(
-                    _isParent ? 'Register as parent' : 'Create account',
+                    _isParent ? l.registerSubmitParent : l.registerTitle,
                   ),
           ),
         ],

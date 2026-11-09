@@ -1,0 +1,295 @@
+{
+  "@@locale": "en",
+
+  "commonCancel": "Cancel",
+  "commonOk": "OK",
+  "commonEmail": "Email",
+  "commonPassword": "Password",
+  "commonSignIn": "Sign in",
+  "commonSignOut": "Sign out",
+  "commonCreateNewAccount": "Create new account",
+  "commonRememberDevice": "Remember on this device",
+  "commonClassSession": "Class session",
+  "commonViewClassCalendar": "View class calendar",
+  "commonViewGrades": "View grades & transcript",
+  "commonLearningMaterials": "Learning materials",
+  "commonYourLevel": "Your level",
+  "commonCodeHint": "6-character code",
+  "commonHskLevel": "HSK level",
+  "commonLessonsPerTerm": "Lessons per term",
+  "commonLessonsPerTermOption": "{count} lessons per term",
+  "@commonLessonsPerTermOption": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "commonCompleted": "Completed",
+  "commonFull": "Full",
+  "commonSpotsLeft": "{count, plural, =1{1 spot left} other{{count} spots left}}",
+  "@commonSpotsLeft": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "commonCopy": "Copy",
+  "commonStudent": "Student",
+  "commonParent": "Parent",
+
+  "languageRowLabel": "Bahasa / Language",
+  "languageToggleIndonesian": "Bahasa Indonesia",
+  "languageToggleEnglish": "English",
+
+  "authBrandHeadline": "Learn Chinese,\nthe easy way.",
+
+  "teacherLinkCodeLabel": "Teacher link code",
+  "teacherLinkCodeHelper": "Ask your teacher for the current code (refreshes every 15 min)",
+  "teacherLinkCodeRequired": "Enter your teacher link code",
+
+  "loginSubtitle": "Tap an account to sign in",
+  "loginFailed": "Sign in failed",
+  "loginProfileLoadFailed": "Signed in, but your profile could not be loaded ({code}). Check your connection and try again.",
+  "@loginProfileLoadFailed": {
+    "placeholders": {"code": {"type": "String"}}
+  },
+  "loginRemoveAccountTitle": "Remove account?",
+  "loginRemoveAccountBody": "Remove {name} from this device? You can sign in again later.",
+  "@loginRemoveAccountBody": {
+    "placeholders": {"name": {"type": "String"}}
+  },
+  "loginRemove": "Remove",
+  "loginResetTitle": "Reset your password",
+  "loginResetBody": "Enter your account email. We'll send a link to set a new password.",
+  "loginSendResetLink": "Send reset link",
+  "loginResetSent": "If {email} has an account, a reset link is on its way. Check your inbox and spam folder.",
+  "@loginResetSent": {
+    "placeholders": {"email": {"type": "String"}}
+  },
+  "loginResetInvalidEmail": "That email address doesn't look right. Check it and try again.",
+  "loginResetTooManyRequests": "Too many attempts. Wait a few minutes and try again.",
+  "loginResetFailed": "Couldn't send the reset link. Try again.",
+  "loginWithAnotherEmail": "Sign in with another email",
+  "loginAnotherAccount": "Another account",
+  "loginForgotPassword": "Forgot password?",
+  "loginBackToAccountList": "Back to account list",
+  "loginBackToTestLogin": "Back to test login",
+  "loginNoSavedAccounts": "No saved accounts yet",
+  "loginNoSavedAccountsHint": "Sign in once and your account will appear here for quick access next time.",
+
+  "registerTitle": "Create account",
+  "registerSubtitle": "Join Easy Study as a student or parent",
+  "registerErrorEmailInUse": "This email is already registered. Try Sign in instead.",
+  "registerErrorWeakPassword": "Password is too weak. Use at least 6 characters.",
+  "registerErrorInvalidEmail": "Invalid email address.",
+  "registerErrorOperationNotAllowed": "Email/password sign-in is disabled in Firebase.",
+  "registerErrorGeneric": "Registration failed ({code})",
+  "@registerErrorGeneric": {
+    "placeholders": {"code": {"type": "String"}}
+  },
+  "registerErrorPermissionDenied": "Firestore blocked this action. Publish firestore.rules from the project.",
+  "registerErrorFirebase": "Firebase error ({code})",
+  "@registerErrorFirebase": {
+    "placeholders": {"code": {"type": "String"}}
+  },
+  "registerEmailInvalid": "Enter a valid email",
+  "registerPasswordTooShort": "Minimum 6 characters",
+  "registerChildCodeLabel": "Child access code",
+  "registerChildCodeHelper": "Find this in your child's Profile under 'Parent access'.",
+  "registerChildCodeRequired": "Enter your child access code",
+  "registerSubmitParent": "Register as parent",
+
+  "identityNameIndonesian": "Indonesian name",
+  "identityNameIndonesianRequired": "Indonesian name is required",
+  "identityNameChinese": "Chinese name",
+  "identityNameChineseOptional": "Chinese name (optional)",
+  "identityNameChineseRequired": "Chinese name is required",
+  "identityWhatsapp": "WhatsApp number",
+  "identityWhatsappOptional": "WhatsApp number (optional)",
+  "identityWhatsappRequired": "WhatsApp number is required",
+  "identityParentSection": "Parent / guardian",
+  "identityParentSectionHint": "Contact details for the student family.",
+  "identityParentName": "Parent name",
+  "identityParentNameOptional": "Parent name (optional)",
+  "identityParentNameRequired": "Parent name is required",
+  "identityParentPhone": "Parent telephone",
+  "identityParentPhoneOptional": "Parent telephone (optional)",
+  "identityParentPhoneRequired": "Parent telephone is required",
+
+  "completeProfileTitle": "Complete your profile",
+  "completeProfileMissing": "We found your login, but your profile data is missing.",
+  "completeProfileFailed": "Could not complete profile",
+  "completeProfileSave": "Save profile",
+
+  "studentNavHome": "Home",
+  "studentNavMyClasses": "My Classes",
+  "studentNavLessons": "Lessons",
+  "studentNavProgress": "Progress",
+  "navPayments": "Payments",
+  "navProfile": "Profile",
+
+  "studentHomeGreeting": "Hello, {name}",
+  "@studentHomeGreeting": {
+    "placeholders": {"name": {"type": "String"}}
+  },
+  "studentHomeContinueLearning": "Continue learning",
+  "studentHomeNoPracticeTitle": "No practice yet",
+  "studentHomeNoPracticeSubtitle": "Set your HSK level in Profile to unlock exercises, or wait for new practice to be published.",
+  "studentHomeLevelPractice": "{level} practice",
+  "@studentHomeLevelPractice": {
+    "placeholders": {"level": {"type": "String"}}
+  },
+  "studentHomeNextLesson": "Next lesson",
+  "studentHomeLessonMeta": "{term} · Lesson {order}",
+  "@studentHomeLessonMeta": {
+    "placeholders": {"term": {"type": "String"}, "order": {"type": "int"}}
+  },
+  "studentHomeAllDoneTitle": "All lessons done",
+  "studentHomeAllDoneSubtitle": "Great work — you completed every available lesson.",
+  "studentHomeCompletedPractice": "Completed practice",
+
+  "studentJoinTitle": "Join class session",
+  "studentJoinHint": "Pick an open class below. You stay joined until the teacher concludes it.",
+  "studentJoinNoSessionsTitle": "No open sessions",
+  "studentJoinNoSessionsSubtitle": "No class sessions are open right now. Check back later.",
+  "studentJoinPermissionDenied": "Could not join: permission denied.",
+  "studentJoinFailed": "Could not join ({code})",
+  "@studentJoinFailed": {
+    "placeholders": {"code": {"type": "String"}}
+  },
+  "studentJoinClassFullTitle": "Class is full",
+  "studentJoinClassFullBody": "This class has reached its capacity of {capacity, plural, =1{1 student} other{{capacity} students}} ({joined}/{capacity} joined). Try another session or check back later.",
+  "@studentJoinClassFullBody": {
+    "placeholders": {"capacity": {"type": "int"}, "joined": {"type": "int"}}
+  },
+  "studentJoinJoined": "You joined this session",
+  "studentJoinLeftClass": "You left this class",
+  "studentJoinCount": "{joined} / {capacity} joined",
+  "@studentJoinCount": {
+    "placeholders": {"joined": {"type": "int"}, "capacity": {"type": "int"}}
+  },
+  "studentJoinView": "View",
+  "studentJoinLeave": "Leave",
+  "studentJoinNoSessionsLeft": "No sessions",
+  "studentJoinJoin": "Join",
+
+  "studentLessonsNoContentTitle": "No content yet",
+  "studentLessonsNoDemoData": "No demo data yet — run scripts/seed_test_accounts.sh then python3 scripts/seed_report_demo_data.py",
+  "studentLessonsSetLevel": "Set your HSK level in Profile to unlock practice and lessons.",
+  "studentLessonsWillAppear": "Published {level} exercises and lessons will appear here.",
+  "@studentLessonsWillAppear": {
+    "placeholders": {"level": {"type": "String"}}
+  },
+  "studentLessonsExercisesHeader": "{level} exercises ({count})",
+  "@studentLessonsExercisesHeader": {
+    "placeholders": {"level": {"type": "String"}, "count": {"type": "int"}}
+  },
+  "studentLessonsNoExercisesTitle": "No exercises yet",
+  "studentLessonsNoExercisesSetLevel": "Set your HSK level in Profile to see practice exercises.",
+  "studentLessonsNoPublishedExercises": "No published {level} exercises yet.",
+  "@studentLessonsNoPublishedExercises": {
+    "placeholders": {"level": {"type": "String"}}
+  },
+  "studentLessonsLevelTermInfo": "{level} · {count} lessons per term",
+  "@studentLessonsLevelTermInfo": {
+    "placeholders": {"level": {"type": "String"}, "count": {"type": "int"}}
+  },
+  "studentLessonsTermHeader": "Term {term} ({count, plural, =1{1 lesson} other{{count} lessons}})",
+  "@studentLessonsTermHeader": {
+    "placeholders": {"term": {"type": "String"}, "count": {"type": "int"}}
+  },
+  "studentLessonsQuizScore": "Quiz: {score}%",
+  "@studentLessonsQuizScore": {
+    "placeholders": {"score": {"type": "String"}}
+  },
+
+  "studentMyClassesEmptyTitle": "No classes joined yet",
+  "studentMyClassesEmptySubtitle": "Go to Home and tap Join on an open class session.",
+  "studentMyClassesTapToSee": "Tap to see who joined",
+
+  "studentPaymentsDisabledTitle": "Payments are disabled",
+  "studentPaymentsDisabledSubtitle": "Your centre is not collecting payments through the app right now. Contact your teacher about session packages.",
+  "studentPaymentsInvoices": "Invoices",
+  "studentPaymentsNoInvoices": "No invoices yet. Your teacher will bill you for session packages here.",
+  "studentPaymentsSessionsRemaining": "{count, plural, =1{1 session remaining} other{{count} sessions remaining}}",
+  "@studentPaymentsSessionsRemaining": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "studentPaymentsQuotaHint": "Sessions are added automatically when a payment is confirmed.",
+
+  "studentProgressNoProgressTitle": "No progress yet",
+  "studentProgressNoProgressSubtitle": "Complete a lesson or quiz to see your history here.",
+  "studentProgressNoLessonsTitle": "No lessons yet",
+  "studentProgressNoLessonsSubtitle": "No lessons for {level} yet.",
+  "@studentProgressNoLessonsSubtitle": {
+    "placeholders": {"level": {"type": "String"}}
+  },
+  "studentProgressYourHskLevel": "your HSK level",
+  "studentProgressTermSize": "Term size",
+  "studentProgressStartFirst": "Start your first lesson to track progress",
+  "studentProgressTermPlan": "Your term plan",
+  "studentProgressCurrentTerm": "Current term",
+
+  "studentProfileUpdated": "Profile updated",
+  "studentProfilePersonalTitle": "Personal information",
+  "studentProfilePersonalSubtitle": "Indonesian and Chinese names, WhatsApp, and parent contacts.",
+  "studentProfileLearningTitle": "Learning",
+  "studentProfileLearningSubtitle": "Your HSK level controls which practice exercises you see.",
+  "studentProfileCodeFailed": "Could not generate code: {error}",
+  "@studentProfileCodeFailed": {
+    "placeholders": {"error": {"type": "String"}}
+  },
+  "studentProfileParentAccessTitle": "Parent access",
+  "studentProfileParentAccessBody": "Share this code with a parent so they can register and follow your progress (read-only).",
+  "studentProfileCodeCopied": "Code copied",
+  "studentProfileShowParentCode": "Show parent access code",
+
+  "studentClassLeaveFailed": "Could not leave class ({code})",
+  "@studentClassLeaveFailed": {
+    "placeholders": {"code": {"type": "String"}}
+  },
+  "studentClassNotFound": "Class not found",
+  "studentClassYourTeacher": "Your teacher",
+  "studentClassTimeAndTeacher": "{time} · Teacher: {teacher}",
+  "@studentClassTimeAndTeacher": {
+    "placeholders": {"time": {"type": "String"}, "teacher": {"type": "String"}}
+  },
+  "studentClassStudentsJoined": "{joined}/{capacity} students joined",
+  "@studentClassStudentsJoined": {
+    "placeholders": {"joined": {"type": "int"}, "capacity": {"type": "int"}}
+  },
+  "studentClassLeaveClass": "Leave class",
+  "studentClassWhoJoined": "Who joined ({count})",
+  "@studentClassWhoJoined": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "studentClassNoneJoined": "No students have joined yet.",
+  "studentClassYou": "{name} (you)",
+  "@studentClassYou": {
+    "placeholders": {"name": {"type": "String"}}
+  },
+  "studentClassJoinedFromApp": "Joined from app",
+  "studentClassAddedByTeacher": "Added by teacher",
+
+  "lessonDetailTitle": "Lesson",
+  "lessonDetailNotFoundTitle": "Lesson not found",
+  "lessonDetailNotFoundSubtitle": "This lesson may have been removed.",
+  "lessonDetailVocabulary": "Vocabulary & notes",
+  "lessonDetailStartQuiz": "Start quiz",
+
+  "parentNavOverview": "Overview",
+  "parentNavCalendar": "Calendar",
+  "parentNoChildrenTitle": "No children linked",
+  "parentNoChildrenSubtitle": "Ask your centre admin to link your account to your child, or register again with your child access code.",
+  "parentChildLabel": "Child",
+
+  "parentOverviewSessionsRemaining": "Sessions remaining",
+  "parentOverviewLessonsDone": "Lessons done",
+  "parentOverviewAvgScore": "Avg score",
+  "parentOverviewRecentGrades": "Recent grades",
+  "parentOverviewNoGrades": "No graded practice yet.",
+  "parentOverviewPractice": "Practice",
+  "parentOverviewRecentClasses": "Recent classes",
+  "parentOverviewNoClasses": "No classes attended yet.",
+
+  "parentPaymentsEmptyTitle": "No invoices",
+  "parentPaymentsEmptySubtitle": "Invoices for your child will appear here.",
+
+  "parentProfileRole": "Orang Tua (Parent)",
+  "parentProfileLinkedChildren": "Linked children",
+  "parentProfileNoChildren": "No children linked yet. Ask your admin to link your account."
+}

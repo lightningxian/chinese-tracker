@@ -9,6 +9,7 @@ import '../../core/widgets/app_card.dart';
 import '../../core/widgets/class_term_widgets.dart';
 import '../../core/widgets/exercise_widgets.dart';
 import '../../core/widgets/responsive_card_grid.dart';
+import '../../l10n/l10n.dart';
 import '../../models/app_user.dart';
 import '../../models/exercise.dart';
 import '../../models/exercise_result.dart';
@@ -30,12 +31,13 @@ class StudentHomeTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final firestore = context.read<FirestoreService>();
+    final l = context.l10n;
 
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
         Text(
-          'Hello, ${student.name.split(' ').first}',
+          l.studentHomeGreeting(student.name.split(' ').first),
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w700,
                 color: AppColors.navy,
@@ -66,10 +68,13 @@ class StudentHomeTab extends StatelessWidget {
                     color: AppColors.teal),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'View class calendar',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                  l.commonViewClassCalendar,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
                 ),
               ),
               const Icon(Icons.chevron_right, color: AppColors.textSecondary),
@@ -92,10 +97,13 @@ class StudentHomeTab extends StatelessWidget {
                     color: AppColors.navy),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'View grades & transcript',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                  l.commonViewGrades,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
                 ),
               ),
               const Icon(Icons.chevron_right, color: AppColors.textSecondary),
@@ -118,10 +126,13 @@ class StudentHomeTab extends StatelessWidget {
                     color: AppColors.brandYellow),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Learning materials',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                  l.commonLearningMaterials,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
                 ),
               ),
               const Icon(Icons.chevron_right, color: AppColors.textSecondary),
@@ -129,7 +140,7 @@ class StudentHomeTab extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 24),
-        const SectionHeader(title: 'Continue learning'),
+        SectionHeader(title: l.studentHomeContinueLearning),
         StreamBuilder<List<Exercise>>(
           stream: firestore.watchAvailableExercisesForStudent(student),
           builder: (context, exercisesSnap) {
@@ -210,12 +221,10 @@ class StudentHomeTab extends StatelessWidget {
                         );
 
                         if (availableExercises.isEmpty && nextLesson == null) {
-                          return const EmptyState(
+                          return EmptyState(
                             icon: Icons.fitness_center_outlined,
-                            title: 'No practice yet',
-                            subtitle:
-                                'Set your HSK level in Profile to unlock exercises, '
-                                'or wait for new practice to be published.',
+                            title: l.studentHomeNoPracticeTitle,
+                            subtitle: l.studentHomeNoPracticeSubtitle,
                           );
                         }
 
@@ -239,7 +248,9 @@ class StudentHomeTab extends StatelessWidget {
                                 ],
                                 if (pendingExercises.isNotEmpty) ...[
                                   Text(
-                                    '${student.level ?? 'Your level'} practice',
+                                    l.studentHomeLevelPractice(
+                                      student.level ?? l.commonYourLevel,
+                                    ),
                                     style: Theme.of(context)
                                         .textTheme
                                         .titleSmall
@@ -267,7 +278,7 @@ class StudentHomeTab extends StatelessWidget {
                                 ],
                                 if (nextLesson != null) ...[
                                   Text(
-                                    'Next lesson',
+                                    l.studentHomeNextLesson,
                                     style: Theme.of(context)
                                         .textTheme
                                         .titleSmall
@@ -309,7 +320,10 @@ class StudentHomeTab extends StatelessWidget {
                                                 CrossAxisAlignment.start,
                                             children: [
                                               Text(
-                                                '${nextLesson.termLabel} · Lesson ${nextLesson.order}',
+                                                l.studentHomeLessonMeta(
+                                                  nextLesson.termLabel,
+                                                  nextLesson.order,
+                                                ),
                                                 style: const TextStyle(
                                                   color: AppColors.teal,
                                                   fontWeight: FontWeight.w600,
@@ -335,16 +349,16 @@ class StudentHomeTab extends StatelessWidget {
                                     ),
                                   ),
                                 ] else if (lessons.isNotEmpty) ...[
-                                  const EmptyState(
+                                  EmptyState(
                                     icon: Icons.celebration_outlined,
-                                    title: 'All lessons done',
-                                    subtitle: 'Great work — you completed every available lesson.',
+                                    title: l.studentHomeAllDoneTitle,
+                                    subtitle: l.studentHomeAllDoneSubtitle,
                                   ),
                                 ],
                                 if (completedExercises.isNotEmpty) ...[
                                   const SizedBox(height: 16),
                                   Text(
-                                    'Completed practice',
+                                    l.studentHomeCompletedPractice,
                                     style: Theme.of(context)
                                         .textTheme
                                         .titleSmall

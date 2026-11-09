@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
+import '../../l10n/l10n.dart';
 import '../../models/app_user.dart';
 import '../../models/invoice.dart';
 import '../../models/org_settings.dart';
@@ -27,12 +28,10 @@ class StudentPaymentsTab extends StatelessWidget {
         final paymentsOn =
             (settingsSnap.data ?? OrgSettings.defaults).enablePayments;
         if (!paymentsOn) {
-          return const EmptyState(
+          return EmptyState(
             icon: Icons.money_off_outlined,
-            title: 'Payments are disabled',
-            subtitle:
-                'Your centre is not collecting payments through the app right '
-                'now. Contact your teacher about session packages.',
+            title: context.l10n.studentPaymentsDisabledTitle,
+            subtitle: context.l10n.studentPaymentsDisabledSubtitle,
           );
         }
         return _buildContent(context, firestore);
@@ -61,15 +60,14 @@ class StudentPaymentsTab extends StatelessWidget {
               children: [
                 _QuotaCard(remaining: remaining),
                 const SizedBox(height: 20),
-                const SectionHeader(title: 'Invoices'),
+                SectionHeader(title: context.l10n.studentPaymentsInvoices),
                 if (invoices.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
                     child: Text(
-                      'No invoices yet. Your teacher will bill you for session '
-                      'packages here.',
+                      context.l10n.studentPaymentsNoInvoices,
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: AppColors.textSecondary),
+                      style: const TextStyle(color: AppColors.textSecondary),
                     ),
                   )
                 else
@@ -128,16 +126,16 @@ class _QuotaCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '$remaining sessions remaining',
+                  context.l10n.studentPaymentsSessionsRemaining(remaining),
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 16,
                   ),
                 ),
                 const SizedBox(height: 2),
-                const Text(
-                  'Sessions are added automatically when a payment is confirmed.',
-                  style: TextStyle(
+                Text(
+                  context.l10n.studentPaymentsQuotaHint,
+                  style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,
                   ),
