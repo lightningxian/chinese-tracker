@@ -203,6 +203,20 @@ class Exercise {
   final List<String> bankQuestionIds;
 
   bool get isPackage => bankSheets.isNotEmpty || bankQuestionIds.isNotEmpty;
+
+  /// "2 worksheets" for a package (the question count is only known once
+  /// the bank is read), "7 questions" otherwise.
+  String get contentsLabel {
+    if (isPackage) {
+      final n = bankSheets.length;
+      final q = bankQuestionIds.length;
+      return [
+        if (n > 0) '$n worksheet${n == 1 ? '' : 's'}',
+        if (q > 0) '$q question${q == 1 ? '' : 's'}',
+      ].join(' · ');
+    }
+    return '${questions.length} question${questions.length == 1 ? '' : 's'}';
+  }
   final int order;
   final ExerciseType type;
   /// Shared answer bank for matching exercises (A, B, C…).

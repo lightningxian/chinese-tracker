@@ -45,18 +45,23 @@ edge cases, and any manual/deploy steps still required).
 **Verified (emulator, with the functions emulator)**
 - Admin: load sample sheets → New exercise → add 210001-RDG + 300001-KLM →
   Save and assign → Bryan (student2) assigned; cards show "Assigned to N".
-- Not yet verified by eye: the student playing a package (functions
-  `startExercise` path), the ID/EN toggle on screen. Analyzer 39 infos,
-  0 warnings, 0 errors; 53 tests pass; `node --check functions/index.js` ok.
+- Student (Bryan) opens the package: 20 questions served by
+  `startExercise` without keys (checked the response body: no
+  `correctIndex`, compose parts shuffled); "Check answer" → "Correct!"
+  from `checkExerciseAnswer`. ID/EN toggle on the login page switches the
+  copy. Analyzer 39 infos, 0 warnings, 0 errors; 53 tests pass.
+- Follow-up fixes in the same session: student exercise card shows
+  "2 worksheets" instead of "0 questions" for a package
+  (`Exercise.contentsLabel`); Exercises tab creates its streams once (no
+  flicker); package form fills the title after the frame, not during build.
 
 **For review / deploy**
 - Needs **functions** and **hosting**: `firebase deploy --only functions
   --project chinese-tracker` then `scripts/deploy_web.sh --web-only`. No
   rules change (students still cannot read `question_bank`; the function
   reads it).
-- Known small issues to fix next: the Exercises tab recreates its streams
-  on rebuild (counts flicker for a second); the package form title can
-  overlap its label for one frame after picking the first sheet.
+- Functions deployed by the owner on 2026-11-09 (4 created, 10 updated).
+  Hosting deploy still to run.
 
 ---
 

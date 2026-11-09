@@ -31,6 +31,17 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
   String? _selectedHsk;
   ExerciseSkillCategory? _selectedSkill;
 
+  // Created once: a new stream per build would reset every StreamBuilder
+  // to "waiting" and make the counts flicker after each change.
+  late final Stream<List<Exercise>> _exercises =
+      context.read<FirestoreService>().watchAllExercises();
+  late final Stream<List<ExerciseResult>> _results =
+      context.read<FirestoreService>().watchAllExerciseResults();
+  late final Stream<List<AppUser>> _students =
+      context.read<FirestoreService>().watchAllStudents();
+  late final Stream<List<ExerciseAssignment>> _assignments =
+      context.read<FirestoreService>().watchAllExerciseAssignments();
+
   List<Exercise> _filterExercises(List<Exercise> exercises) {
     return exercises.where((exercise) {
       final hskMatch = _selectedHsk == null || exercise.level == _selectedHsk;
@@ -610,7 +621,7 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
     final canManage = ExerciseAuthoringPlatform.canManageExercises(user);
 
     return StreamBuilder<List<Exercise>>(
-      stream: context.read<FirestoreService>().watchAllExercises(),
+      stream: _exercises,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -645,15 +656,13 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
         }
 
         return StreamBuilder<List<ExerciseResult>>(
-          stream: context.read<FirestoreService>().watchAllExerciseResults(),
+          stream: _results,
           builder: (context, resultsSnap) {
             return StreamBuilder<List<AppUser>>(
-              stream: context.read<FirestoreService>().watchAllStudents(),
+              stream: _students,
               builder: (context, studentsSnap) {
                 return StreamBuilder<List<ExerciseAssignment>>(
-                  stream: context
-                      .read<FirestoreService>()
-                      .watchAllExerciseAssignments(),
+                  stream: _assignments,
                   builder: (context, assignSnap) {
                     final allResults = resultsSnap.data ?? [];
                     final students = studentsSnap.data ?? [];

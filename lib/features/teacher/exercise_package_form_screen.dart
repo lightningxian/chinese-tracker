@@ -58,6 +58,7 @@ class _ExercisePackageFormScreenState extends State<ExercisePackageFormScreen> {
   late final List<String> _questionIds = [...?widget.exercise?.bankQuestionIds];
   bool _saving = false;
   bool _titleTouched = false;
+  bool _seededFromBank = false;
 
   bool get _isEditing => widget.exercise != null;
 
@@ -84,7 +85,8 @@ class _ExercisePackageFormScreenState extends State<ExercisePackageFormScreen> {
     if (!_formKey.currentState!.validate()) return;
     if (_sheets.isEmpty && _questionIds.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Add at least one worksheet or question.')),
+        const SnackBar(
+            content: Text('Add at least one worksheet or question.')),
       );
       return;
     }
@@ -105,7 +107,9 @@ class _ExercisePackageFormScreenState extends State<ExercisePackageFormScreen> {
       );
       if (!mounted) return;
       messenger.showSnackBar(
-        SnackBar(content: Text(_isEditing ? 'Exercise saved.' : 'Exercise created.')),
+        SnackBar(
+            content:
+                Text(_isEditing ? 'Exercise saved.' : 'Exercise created.')),
       );
       if (thenAssign) {
         final saved = await firestore.getExercise(id);
@@ -157,14 +161,25 @@ class _ExercisePackageFormScreenState extends State<ExercisePackageFormScreen> {
         stream: firestore.watchQuestionBank(widget.teacherId),
         builder: (context, snap) {
           final bank = QuestionBankSheet.group(snap.data ?? const []);
-          if (snap.hasData) _followFirstSheet(bank);
-          final byKey = {for (final s in bank) if (s.isSheet) s.key!: s};
+          if (snap.hasData && !_seededFromBank) {
+            // Fill title/level from the first sheet after this frame, not
+            // during build (the text field would paint one stale frame).
+            _seededFromBank = true;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) setState(() => _followFirstSheet(bank));
+            });
+          }
+          final byKey = {
+            for (final s in bank)
+              if (s.isSheet) s.key!: s
+          };
           final byQuestion = {
             for (final s in bank)
               for (final q in s.items) q.id: q,
           };
-          final total = _sheets.fold<int>(0, (n, k) => n + (byKey[k]?.count ?? 0)) +
-              _questionIds.length;
+          final total =
+              _sheets.fold<int>(0, (n, k) => n + (byKey[k]?.count ?? 0)) +
+                  _questionIds.length;
 
           return Form(
             key: _formKey,
@@ -180,8 +195,9 @@ class _ExercisePackageFormScreenState extends State<ExercisePackageFormScreen> {
                         controller: _title,
                         onChanged: (_) => _titleTouched = true,
                         decoration: const InputDecoration(labelText: 'Title'),
-                        validator: (v) =>
-                            (v == null || v.trim().isEmpty) ? 'Enter a title' : null,
+                        validator: (v) => (v == null || v.trim().isEmpty)
+                            ? 'Enter a title'
+                            : null,
                       ),
                       const SizedBox(height: 12),
                       Row(
@@ -191,7 +207,8 @@ class _ExercisePackageFormScreenState extends State<ExercisePackageFormScreen> {
                               key: ValueKey('level-$_level'),
                               initialValue: _level,
                               isExpanded: true,
-                              decoration: const InputDecoration(labelText: 'HSK level'),
+                              decoration:
+                                  const InputDecoration(labelText: 'HSK level'),
                               items: [
                                 for (final l in AppConstants.hskLevels)
                                   DropdownMenuItem(value: l, child: Text(l)),
@@ -204,17 +221,20 @@ class _ExercisePackageFormScreenState extends State<ExercisePackageFormScreen> {
                           ),
                           const SizedBox(width: 12),
                           Expanded(
-                            child: DropdownButtonFormField<ExerciseSkillCategory>(
+                            child:
+                                DropdownButtonFormField<ExerciseSkillCategory>(
                               key: ValueKey('skill-${_skill.value}'),
                               initialValue: _skill,
                               isExpanded: true,
-                              decoration:
-                                  const InputDecoration(labelText: 'Skill section'),
+                              decoration: const InputDecoration(
+                                  labelText: 'Skill section'),
                               items: [
                                 for (final c in ExerciseSkillCategory.values)
-                                  DropdownMenuItem(value: c, child: Text(c.label)),
+                                  DropdownMenuItem(
+                                      value: c, child: Text(c.label)),
                               ],
-                              onChanged: (v) => setState(() => _skill = v ?? _skill),
+                              onChanged: (v) =>
+                                  setState(() => _skill = v ?? _skill),
                             ),
                           ),
                         ],
@@ -255,8 +275,10 @@ class _ExercisePackageFormScreenState extends State<ExercisePackageFormScreen> {
                       ),
                     ),
                     FilledButton.icon(
-                      onPressed: snap.hasData ? () => _pickFromBank(bank) : null,
-                      style: FilledButton.styleFrom(backgroundColor: AppColors.navy),
+                      onPressed:
+                          snap.hasData ? () => _pickFromBank(bank) : null,
+                      style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.navy),
                       icon: const Icon(Icons.inventory_2_outlined, size: 18),
                       label: const Text('Add from bank'),
                     ),
@@ -269,7 +291,8 @@ class _ExercisePackageFormScreenState extends State<ExercisePackageFormScreen> {
                       'Nothing yet. Add worksheets from the question bank; the '
                       'students get them in this order. Edit a worksheet in the '
                       'bank later and this exercise follows.',
-                      style: TextStyle(color: AppColors.textSecondary, height: 1.5),
+                      style: TextStyle(
+                          color: AppColors.textSecondary, height: 1.5),
                     ),
                   ),
                 for (final (i, key) in _sheets.indexed)
@@ -314,18 +337,21 @@ class _ExercisePackageFormScreenState extends State<ExercisePackageFormScreen> {
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
-                        child: Text(_isEditing ? 'Save' : 'Save as draft or publish'),
+                        child: Text(
+                            _isEditing ? 'Save' : 'Save as draft or publish'),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: FilledButton.icon(
-                        onPressed: _saving ? null : () => _save(thenAssign: true),
+                        onPressed:
+                            _saving ? null : () => _save(thenAssign: true),
                         style: FilledButton.styleFrom(
                           backgroundColor: AppColors.navy,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
-                        icon: const Icon(Icons.assignment_ind_outlined, size: 18),
+                        icon:
+                            const Icon(Icons.assignment_ind_outlined, size: 18),
                         label: const Text('Save and assign'),
                       ),
                     ),
@@ -496,7 +522,8 @@ class _BankPickerState extends State<_BankPicker> {
                         context,
                         _BankPick(sheets: _sheets, questionIds: _questionIds),
                       ),
-                      style: FilledButton.styleFrom(backgroundColor: AppColors.navy),
+                      style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.navy),
                       child: Text('Done ($count)'),
                     ),
                   ],
@@ -556,7 +583,9 @@ class _BankPickerState extends State<_BankPicker> {
                         ),
                         onChanged: (v) => setState(() {
                           if (row.isSheet) {
-                            v == true ? _sheets.add(row.key!) : _sheets.remove(row.key);
+                            v == true
+                                ? _sheets.add(row.key!)
+                                : _sheets.remove(row.key);
                           } else {
                             v == true
                                 ? _questionIds.add(row.first.id)

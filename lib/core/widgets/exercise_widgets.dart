@@ -197,8 +197,8 @@ class AssignedExerciseCard extends StatelessWidget {
   String _subtitle({required bool overdue}) {
     if (bestScore == null) {
       return overdue
-          ? '${exercise.questions.length} questions · Not started · overdue'
-          : '${exercise.questions.length} questions · Not started';
+          ? '${exercise.contentsLabel} · Not started · overdue'
+          : '${exercise.contentsLabel} · Not started';
     }
 
     final parts = <String>['Best $bestScore%'];
@@ -517,7 +517,7 @@ String assignedExerciseSubtitle({
 }) {
   final parts = <String>[];
   if (bestScore == null) {
-    parts.add('${exercise.questions.length} questions · Not started');
+    parts.add('${exercise.contentsLabel} · Not started');
   } else {
     parts.add('Best score: $bestScore% · Tap to retry');
   }
