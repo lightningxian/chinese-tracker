@@ -96,7 +96,8 @@ firebase deploy --only hosting
 
 ### Product / features
 - Full LMS UI for all four roles (shells, dashboards, students, sessions, exercises, grades, materials, calendar, parent linking, payments UI)
-- **Question bank upgrade (4 phases):** difficulty metadata, usage counts, sort/filter table, bulk import (worksheet + paste), harvest from exercises with dedupe, image/audio media, quiz list/editor (`/admin/quizzes`, `/teacher/quizzes`)
+- **Question bank upgrade (4 phases):** usage counts, sort/filter table, bulk import (worksheet + paste), harvest from exercises with dedupe, image/audio media, quiz list/editor (`/admin/quizzes`, `/teacher/quizzes`). Difficulty was removed 2026-11-09 (owner request). Since 2026-11-09 the bank is grouped by worksheet (`sheetCode`/`sheetTitle`/`sheetIndex` on each item; older items fall back to the code tag).
+- **Chinese font:** LXGW WenKai (Kai style, OFL) bundled in `assets/fonts/`, subset to GB2312 + Latin/pinyin (~3.5 MB per weight); `AppTextStyles.chineseFamily`/`question` in `lib/core/theme/app_theme.dart`. Report PDFs still use Noto Sans SC.
 - **Landing page restyle** matching `docs/landing_mockup.html` (Unsplash + YouTube embed, Orang Tua card)
 - Worksheet import on **web only** (PDF / Word / image OCR path)
 - Teacher rotating link codes; parent child-link via callables

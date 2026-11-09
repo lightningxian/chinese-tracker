@@ -3,6 +3,7 @@
   "items": [
     {
       "set": "210001-RDG",
+      "title": "Soal Latihan HSK 2 (A) · 填写",
       "type": "multiple_choice",
       "level": "HSK 2",
       "skill": "reading",
@@ -25,6 +26,7 @@
     },
     {
       "set": "210001-RDG",
+      "title": "Soal Latihan HSK 2 (A) · 填写",
       "type": "multiple_choice",
       "level": "HSK 2",
       "skill": "reading",
@@ -47,6 +49,7 @@
     },
     {
       "set": "210001-RDG",
+      "title": "Soal Latihan HSK 2 (A) · 填写",
       "type": "multiple_choice",
       "level": "HSK 2",
       "skill": "reading",
@@ -69,6 +72,7 @@
     },
     {
       "set": "210001-RDG",
+      "title": "Soal Latihan HSK 2 (A) · 填写",
       "type": "multiple_choice",
       "level": "HSK 2",
       "skill": "reading",
@@ -91,6 +95,7 @@
     },
     {
       "set": "210001-RDG",
+      "title": "Soal Latihan HSK 2 (A) · 填写",
       "type": "multiple_choice",
       "level": "HSK 2",
       "skill": "reading",
@@ -113,6 +118,7 @@
     },
     {
       "set": "210001-RDG",
+      "title": "Soal Latihan HSK 2 (A) · 填写",
       "type": "multiple_choice",
       "level": "HSK 2",
       "skill": "reading",
@@ -135,6 +141,7 @@
     },
     {
       "set": "210001-RDG",
+      "title": "Soal Latihan HSK 2 (A) · 填写",
       "type": "multiple_choice",
       "level": "HSK 2",
       "skill": "reading",
@@ -157,6 +164,7 @@
     },
     {
       "set": "210001-RDG",
+      "title": "Soal Latihan HSK 2 (A) · 填写",
       "type": "multiple_choice",
       "level": "HSK 2",
       "skill": "reading",
@@ -179,6 +187,7 @@
     },
     {
       "set": "210001-RDG",
+      "title": "Soal Latihan HSK 2 (A) · 填写",
       "type": "multiple_choice",
       "level": "HSK 2",
       "skill": "reading",
@@ -201,6 +210,7 @@
     },
     {
       "set": "210001-RDG",
+      "title": "Soal Latihan HSK 2 (A) · 填写",
       "type": "multiple_choice",
       "level": "HSK 2",
       "skill": "reading",
@@ -223,6 +233,7 @@
     },
     {
       "set": "210002-RDG",
+      "title": "Soal Latihan HSK 2 (A1) · True or false",
       "type": "multiple_choice",
       "level": "HSK 2",
       "skill": "reading",
@@ -241,6 +252,7 @@
     },
     {
       "set": "210002-RDG",
+      "title": "Soal Latihan HSK 2 (A1) · True or false",
       "type": "multiple_choice",
       "level": "HSK 2",
       "skill": "reading",
@@ -259,6 +271,7 @@
     },
     {
       "set": "210002-RDG",
+      "title": "Soal Latihan HSK 2 (A1) · True or false",
       "type": "multiple_choice",
       "level": "HSK 2",
       "skill": "reading",
@@ -277,6 +290,7 @@
     },
     {
       "set": "210002-RDG",
+      "title": "Soal Latihan HSK 2 (A1) · True or false",
       "type": "multiple_choice",
       "level": "HSK 2",
       "skill": "reading",
@@ -295,6 +309,7 @@
     },
     {
       "set": "210002-RDG",
+      "title": "Soal Latihan HSK 2 (A1) · True or false",
       "type": "multiple_choice",
       "level": "HSK 2",
       "skill": "reading",
@@ -313,6 +328,7 @@
     },
     {
       "set": "210002-RDG",
+      "title": "Soal Latihan HSK 2 (A1) · True or false",
       "type": "multiple_choice",
       "level": "HSK 2",
       "skill": "reading",
@@ -331,6 +347,7 @@
     },
     {
       "set": "210002-RDG",
+      "title": "Soal Latihan HSK 2 (A1) · True or false",
       "type": "multiple_choice",
       "level": "HSK 2",
       "skill": "reading",
@@ -349,6 +366,7 @@
     },
     {
       "set": "210002-RDG",
+      "title": "Soal Latihan HSK 2 (A1) · True or false",
       "type": "multiple_choice",
       "level": "HSK 2",
       "skill": "reading",
@@ -367,6 +385,7 @@
     },
     {
       "set": "210002-RDG",
+      "title": "Soal Latihan HSK 2 (A1) · True or false",
       "type": "multiple_choice",
       "level": "HSK 2",
       "skill": "reading",
@@ -385,6 +404,7 @@
     },
     {
       "set": "210002-RDG",
+      "title": "Soal Latihan HSK 2 (A1) · True or false",
       "type": "multiple_choice",
       "level": "HSK 2",
       "skill": "reading",
@@ -403,6 +423,7 @@
     },
     {
       "set": "300001-KLM",
+      "title": "HSK 3 组词成句 · Menyusun kalimat (A1)",
       "type": "compose_sentences",
       "level": "HSK 3",
       "skill": "typing",
@@ -421,6 +442,7 @@
     },
     {
       "set": "300001-KLM",
+      "title": "HSK 3 组词成句 · Menyusun kalimat (A1)",
       "type": "compose_sentences",
       "level": "HSK 3",
       "skill": "typing",
@@ -439,6 +461,7 @@
     },
     {
       "set": "300001-KLM",
+      "title": "HSK 3 组词成句 · Menyusun kalimat (A1)",
       "type": "compose_sentences",
       "level": "HSK 3",
       "skill": "typing",
@@ -457,6 +480,7 @@
     },
     {
       "set": "300001-KLM",
+      "title": "HSK 3 组词成句 · Menyusun kalimat (A1)",
       "type": "compose_sentences",
       "level": "HSK 3",
       "skill": "typing",
@@ -476,6 +500,7 @@
     },
     {
       "set": "300001-KLM",
+      "title": "HSK 3 组词成句 · Menyusun kalimat (A1)",
       "type": "compose_sentences",
       "level": "HSK 3",
       "skill": "typing",
@@ -495,6 +520,7 @@
     },
     {
       "set": "300001-KLM",
+      "title": "HSK 3 组词成句 · Menyusun kalimat (A1)",
       "type": "compose_sentences",
       "level": "HSK 3",
       "skill": "typing",
@@ -514,6 +540,7 @@
     },
     {
       "set": "300001-KLM",
+      "title": "HSK 3 组词成句 · Menyusun kalimat (A1)",
       "type": "compose_sentences",
       "level": "HSK 3",
       "skill": "typing",
@@ -533,6 +560,7 @@
     },
     {
       "set": "300001-KLM",
+      "title": "HSK 3 组词成句 · Menyusun kalimat (A1)",
       "type": "compose_sentences",
       "level": "HSK 3",
       "skill": "typing",
@@ -552,6 +580,7 @@
     },
     {
       "set": "300001-KLM",
+      "title": "HSK 3 组词成句 · Menyusun kalimat (A1)",
       "type": "compose_sentences",
       "level": "HSK 3",
       "skill": "typing",
@@ -571,6 +600,7 @@
     },
     {
       "set": "300001-KLM",
+      "title": "HSK 3 组词成句 · Menyusun kalimat (A1)",
       "type": "compose_sentences",
       "level": "HSK 3",
       "skill": "typing",
@@ -589,6 +619,7 @@
     },
     {
       "set": "310001-RDG",
+      "title": "Soal Latihan HSK 3 (A)",
       "type": "multiple_choice",
       "level": "HSK 3",
       "skill": "reading",
@@ -608,6 +639,7 @@
     },
     {
       "set": "310001-RDG",
+      "title": "Soal Latihan HSK 3 (A)",
       "type": "multiple_choice",
       "level": "HSK 3",
       "skill": "reading",
@@ -627,6 +659,7 @@
     },
     {
       "set": "310001-RDG",
+      "title": "Soal Latihan HSK 3 (A)",
       "type": "multiple_choice",
       "level": "HSK 3",
       "skill": "reading",
@@ -646,6 +679,7 @@
     },
     {
       "set": "310001-RDG",
+      "title": "Soal Latihan HSK 3 (A)",
       "type": "multiple_choice",
       "level": "HSK 3",
       "skill": "reading",
@@ -665,6 +699,7 @@
     },
     {
       "set": "310001-RDG",
+      "title": "Soal Latihan HSK 3 (A)",
       "type": "multiple_choice",
       "level": "HSK 3",
       "skill": "reading",
@@ -684,6 +719,7 @@
     },
     {
       "set": "310001-RDG",
+      "title": "Soal Latihan HSK 3 (A)",
       "type": "multiple_choice",
       "level": "HSK 3",
       "skill": "reading",
@@ -703,6 +739,7 @@
     },
     {
       "set": "310001-RDG",
+      "title": "Soal Latihan HSK 3 (A)",
       "type": "multiple_choice",
       "level": "HSK 3",
       "skill": "reading",
@@ -722,6 +759,7 @@
     },
     {
       "set": "320001-WRT",
+      "title": "HSK 3 (A) · Isilah hanzi sesuai pinyin",
       "type": "type_hanzi",
       "level": "HSK 3",
       "skill": "typing",
@@ -739,6 +777,7 @@
     },
     {
       "set": "320001-WRT",
+      "title": "HSK 3 (A) · Isilah hanzi sesuai pinyin",
       "type": "type_hanzi",
       "level": "HSK 3",
       "skill": "typing",
@@ -756,6 +795,7 @@
     },
     {
       "set": "320001-WRT",
+      "title": "HSK 3 (A) · Isilah hanzi sesuai pinyin",
       "type": "type_hanzi",
       "level": "HSK 3",
       "skill": "typing",
@@ -773,6 +813,7 @@
     },
     {
       "set": "320001-WRT",
+      "title": "HSK 3 (A) · Isilah hanzi sesuai pinyin",
       "type": "type_hanzi",
       "level": "HSK 3",
       "skill": "typing",
@@ -790,6 +831,7 @@
     },
     {
       "set": "320001-WRT",
+      "title": "HSK 3 (A) · Isilah hanzi sesuai pinyin",
       "type": "type_hanzi",
       "level": "HSK 3",
       "skill": "typing",
@@ -807,6 +849,7 @@
     },
     {
       "set": "320001-WRT",
+      "title": "HSK 3 (A) · Isilah hanzi sesuai pinyin",
       "type": "type_hanzi",
       "level": "HSK 3",
       "skill": "typing",
@@ -824,6 +867,7 @@
     },
     {
       "set": "320001-WRT",
+      "title": "HSK 3 (A) · Isilah hanzi sesuai pinyin",
       "type": "type_hanzi",
       "level": "HSK 3",
       "skill": "typing",
@@ -841,6 +885,7 @@
     },
     {
       "set": "320001-WRT",
+      "title": "HSK 3 (A) · Isilah hanzi sesuai pinyin",
       "type": "type_hanzi",
       "level": "HSK 3",
       "skill": "typing",
@@ -858,6 +903,7 @@
     },
     {
       "set": "320001-WRT",
+      "title": "HSK 3 (A) · Isilah hanzi sesuai pinyin",
       "type": "type_hanzi",
       "level": "HSK 3",
       "skill": "typing",
@@ -875,6 +921,7 @@
     },
     {
       "set": "320001-WRT",
+      "title": "HSK 3 (A) · Isilah hanzi sesuai pinyin",
       "type": "type_hanzi",
       "level": "HSK 3",
       "skill": "typing",
@@ -892,6 +939,7 @@
     },
     {
       "set": "320001-WRT",
+      "title": "HSK 3 (A) · Isilah hanzi sesuai pinyin",
       "type": "type_hanzi",
       "level": "HSK 3",
       "skill": "typing",
@@ -909,6 +957,7 @@
     },
     {
       "set": "320001-WRT",
+      "title": "HSK 3 (A) · Isilah hanzi sesuai pinyin",
       "type": "type_hanzi",
       "level": "HSK 3",
       "skill": "typing",
@@ -926,6 +975,7 @@
     },
     {
       "set": "320001-WRT",
+      "title": "HSK 3 (A) · Isilah hanzi sesuai pinyin",
       "type": "type_hanzi",
       "level": "HSK 3",
       "skill": "typing",
@@ -943,6 +993,7 @@
     },
     {
       "set": "320001-WRT",
+      "title": "HSK 3 (A) · Isilah hanzi sesuai pinyin",
       "type": "type_hanzi",
       "level": "HSK 3",
       "skill": "typing",
@@ -960,6 +1011,7 @@
     },
     {
       "set": "320001-WRT",
+      "title": "HSK 3 (A) · Isilah hanzi sesuai pinyin",
       "type": "type_hanzi",
       "level": "HSK 3",
       "skill": "typing",
@@ -977,6 +1029,7 @@
     },
     {
       "set": "320002-WRT",
+      "title": "HSK 3 填写 (A)",
       "type": "multiple_choice",
       "level": "HSK 3",
       "skill": "reading",
@@ -998,6 +1051,7 @@
     },
     {
       "set": "320002-WRT",
+      "title": "HSK 3 填写 (A)",
       "type": "multiple_choice",
       "level": "HSK 3",
       "skill": "reading",
@@ -1019,6 +1073,7 @@
     },
     {
       "set": "320002-WRT",
+      "title": "HSK 3 填写 (A)",
       "type": "multiple_choice",
       "level": "HSK 3",
       "skill": "reading",
@@ -1040,6 +1095,7 @@
     },
     {
       "set": "320002-WRT",
+      "title": "HSK 3 填写 (A)",
       "type": "multiple_choice",
       "level": "HSK 3",
       "skill": "reading",
@@ -1061,6 +1117,7 @@
     },
     {
       "set": "320002-WRT",
+      "title": "HSK 3 填写 (A)",
       "type": "multiple_choice",
       "level": "HSK 3",
       "skill": "reading",
@@ -1082,6 +1139,7 @@
     },
     {
       "set": "320002-WRT",
+      "title": "HSK 3 填写 (A)",
       "type": "multiple_choice",
       "level": "HSK 3",
       "skill": "reading",
@@ -1103,6 +1161,7 @@
     },
     {
       "set": "320002-WRT",
+      "title": "HSK 3 填写 (A)",
       "type": "multiple_choice",
       "level": "HSK 3",
       "skill": "reading",
@@ -1124,6 +1183,7 @@
     },
     {
       "set": "320002-WRT",
+      "title": "HSK 3 填写 (A)",
       "type": "multiple_choice",
       "level": "HSK 3",
       "skill": "reading",
@@ -1145,6 +1205,7 @@
     },
     {
       "set": "320002-WRT",
+      "title": "HSK 3 填写 (A)",
       "type": "multiple_choice",
       "level": "HSK 3",
       "skill": "reading",
@@ -1166,6 +1227,7 @@
     },
     {
       "set": "320002-WRT",
+      "title": "HSK 3 填写 (A)",
       "type": "multiple_choice",
       "level": "HSK 3",
       "skill": "reading",
@@ -1187,6 +1249,7 @@
     },
     {
       "set": "320002-WRT",
+      "title": "HSK 3 填写 (A)",
       "type": "multiple_choice",
       "level": "HSK 3",
       "skill": "reading",
@@ -1208,6 +1271,7 @@
     },
     {
       "set": "320002-WRT",
+      "title": "HSK 3 填写 (A)",
       "type": "multiple_choice",
       "level": "HSK 3",
       "skill": "reading",
@@ -1229,6 +1293,7 @@
     },
     {
       "set": "320002-WRT",
+      "title": "HSK 3 填写 (A)",
       "type": "multiple_choice",
       "level": "HSK 3",
       "skill": "reading",
@@ -1250,6 +1315,7 @@
     },
     {
       "set": "320002-WRT",
+      "title": "HSK 3 填写 (A)",
       "type": "multiple_choice",
       "level": "HSK 3",
       "skill": "reading",
@@ -1271,6 +1337,7 @@
     },
     {
       "set": "320002-WRT",
+      "title": "HSK 3 填写 (A)",
       "type": "multiple_choice",
       "level": "HSK 3",
       "skill": "reading",
@@ -1292,6 +1359,7 @@
     },
     {
       "set": "320002-WRT",
+      "title": "HSK 3 填写 (A)",
       "type": "multiple_choice",
       "level": "HSK 3",
       "skill": "reading",
@@ -1313,6 +1381,7 @@
     },
     {
       "set": "320002-WRT",
+      "title": "HSK 3 填写 (A)",
       "type": "multiple_choice",
       "level": "HSK 3",
       "skill": "reading",
@@ -1334,6 +1403,7 @@
     },
     {
       "set": "320002-WRT",
+      "title": "HSK 3 填写 (A)",
       "type": "multiple_choice",
       "level": "HSK 3",
       "skill": "reading",
@@ -1355,6 +1425,7 @@
     },
     {
       "set": "320002-WRT",
+      "title": "HSK 3 填写 (A)",
       "type": "multiple_choice",
       "level": "HSK 3",
       "skill": "reading",
@@ -1376,6 +1447,7 @@
     },
     {
       "set": "320002-WRT",
+      "title": "HSK 3 填写 (A)",
       "type": "multiple_choice",
       "level": "HSK 3",
       "skill": "reading",
@@ -1397,6 +1469,7 @@
     },
     {
       "set": "400003-KLM",
+      "title": "HSK 4 看图写句子",
       "type": "picture_sentence",
       "level": "HSK 4",
       "skill": "typing",
@@ -1411,6 +1484,7 @@
     },
     {
       "set": "400003-KLM",
+      "title": "HSK 4 看图写句子",
       "type": "picture_sentence",
       "level": "HSK 4",
       "skill": "typing",
@@ -1425,6 +1499,7 @@
     },
     {
       "set": "400003-KLM",
+      "title": "HSK 4 看图写句子",
       "type": "picture_sentence",
       "level": "HSK 4",
       "skill": "typing",
@@ -1439,6 +1514,7 @@
     },
     {
       "set": "400003-KLM",
+      "title": "HSK 4 看图写句子",
       "type": "picture_sentence",
       "level": "HSK 4",
       "skill": "typing",
@@ -1453,6 +1529,7 @@
     },
     {
       "set": "400003-KLM",
+      "title": "HSK 4 看图写句子",
       "type": "picture_sentence",
       "level": "HSK 4",
       "skill": "typing",
@@ -1467,6 +1544,7 @@
     },
     {
       "set": "400003-KLM",
+      "title": "HSK 4 看图写句子",
       "type": "picture_sentence",
       "level": "HSK 4",
       "skill": "typing",
@@ -1481,6 +1559,7 @@
     },
     {
       "set": "400003-KLM",
+      "title": "HSK 4 看图写句子",
       "type": "picture_sentence",
       "level": "HSK 4",
       "skill": "typing",
@@ -1495,6 +1574,7 @@
     },
     {
       "set": "400003-KLM",
+      "title": "HSK 4 看图写句子",
       "type": "picture_sentence",
       "level": "HSK 4",
       "skill": "typing",
@@ -1509,6 +1589,7 @@
     },
     {
       "set": "510001-CRT",
+      "title": "HSK 5 第 46-60 题 · 选词填空",
       "type": "multiple_choice",
       "level": "HSK 5",
       "skill": "reading",
@@ -1530,6 +1611,7 @@
     },
     {
       "set": "510001-CRT",
+      "title": "HSK 5 第 46-60 题 · 选词填空",
       "type": "multiple_choice",
       "level": "HSK 5",
       "skill": "reading",
@@ -1551,6 +1633,7 @@
     },
     {
       "set": "510001-CRT",
+      "title": "HSK 5 第 46-60 题 · 选词填空",
       "type": "multiple_choice",
       "level": "HSK 5",
       "skill": "reading",
@@ -1572,6 +1655,7 @@
     },
     {
       "set": "510001-CRT",
+      "title": "HSK 5 第 46-60 题 · 选词填空",
       "type": "multiple_choice",
       "level": "HSK 5",
       "skill": "reading",
@@ -1593,6 +1677,7 @@
     },
     {
       "set": "510001-CRT",
+      "title": "HSK 5 第 46-60 题 · 选词填空",
       "type": "multiple_choice",
       "level": "HSK 5",
       "skill": "reading",
@@ -1614,6 +1699,7 @@
     },
     {
       "set": "510001-CRT",
+      "title": "HSK 5 第 46-60 题 · 选词填空",
       "type": "multiple_choice",
       "level": "HSK 5",
       "skill": "reading",
@@ -1635,6 +1721,7 @@
     },
     {
       "set": "510001-CRT",
+      "title": "HSK 5 第 46-60 题 · 选词填空",
       "type": "multiple_choice",
       "level": "HSK 5",
       "skill": "reading",
@@ -1656,6 +1743,7 @@
     },
     {
       "set": "520002-KK",
+      "title": "Latihan menjodohkan kosa kata (B)",
       "type": "reading_cloze",
       "level": "HSK 5",
       "skill": "reading",
@@ -1677,6 +1765,7 @@
     },
     {
       "set": "520002-KK",
+      "title": "Latihan menjodohkan kosa kata (B)",
       "type": "reading_cloze",
       "level": "HSK 5",
       "skill": "reading",
@@ -1698,6 +1787,7 @@
     },
     {
       "set": "520002-KK",
+      "title": "Latihan menjodohkan kosa kata (B)",
       "type": "reading_cloze",
       "level": "HSK 5",
       "skill": "reading",
@@ -1719,6 +1809,7 @@
     },
     {
       "set": "520002-KK",
+      "title": "Latihan menjodohkan kosa kata (B)",
       "type": "reading_cloze",
       "level": "HSK 5",
       "skill": "reading",
@@ -1740,6 +1831,7 @@
     },
     {
       "set": "520002-KK",
+      "title": "Latihan menjodohkan kosa kata (B)",
       "type": "reading_cloze",
       "level": "HSK 5",
       "skill": "reading",
@@ -1761,6 +1853,7 @@
     },
     {
       "set": "5400001-RDG",
+      "title": "HSK 5 第 61-70 题 · 阅读判断",
       "type": "multiple_choice",
       "level": "HSK 5",
       "skill": "reading",
@@ -1782,6 +1875,7 @@
     },
     {
       "set": "5400001-RDG",
+      "title": "HSK 5 第 61-70 题 · 阅读判断",
       "type": "multiple_choice",
       "level": "HSK 5",
       "skill": "reading",
@@ -1803,6 +1897,7 @@
     },
     {
       "set": "5400001-RDG",
+      "title": "HSK 5 第 61-70 题 · 阅读判断",
       "type": "multiple_choice",
       "level": "HSK 5",
       "skill": "reading",
@@ -1824,6 +1919,7 @@
     },
     {
       "set": "5400001-RDG",
+      "title": "HSK 5 第 61-70 题 · 阅读判断",
       "type": "multiple_choice",
       "level": "HSK 5",
       "skill": "reading",

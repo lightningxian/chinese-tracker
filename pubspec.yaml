@@ -44,3 +44,13 @@ flutter:
     - assets/brand/
     - assets/fonts/
     - assets/question_sets/
+  # Chinese text renders in Kai style (the handwriting model the centre
+  # teaches). LXGW WenKai, OFL 1.1 (assets/fonts/LICENSE-LXGWWenKai-OFL.txt),
+  # cut down to GB2312 + Latin/pinyin/punctuation (~3.5 MB each). The font has
+  # no Bold: Medium stands in for weight 700.
+  fonts:
+    - family: LXGW WenKai
+      fonts:
+        - asset: assets/fonts/LXGWWenKai-Regular.ttf
+        - asset: assets/fonts/LXGWWenKai-Medium.ttf
+          weight: 700

@@ -256,7 +256,7 @@ class _QuizScreenState extends State<QuizScreen> {
                     Expanded(
                       child: Text(
                         question.options[i],
-                        style: const TextStyle(fontSize: 18, height: 1.4),
+                        style: AppTextStyles.question.copyWith(fontSize: 20),
                       ),
                     ),
                     if (resultIcon != null) ...[

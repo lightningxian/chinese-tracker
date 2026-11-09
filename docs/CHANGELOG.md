@@ -6,6 +6,64 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-09 (later) — Claude: bank grouped by worksheet, Kai font, table lines, difficulty removed
+
+**What changed**
+- **Question bank lists worksheets, not loose questions.** A scanned sheet
+  is one row (printed title, code, type, level, question count, tags, used);
+  opening it shows its questions in sheet order with the stored answer, each
+  editable or removable, plus *Delete worksheet*. Questions typed or pasted
+  on their own stay single rows. New fields on `question_bank` items:
+  `sheetCode`, `sheetTitle`, `sheetIndex`; older items are grouped by their
+  code tag (`QuestionBankItem.sheetKey`), so nothing needs migrating.
+  `QuestionBankSheet.group` does the grouping (`question_bank_item.dart`);
+  `QuestionBankSheetScreen` is the detail page.
+- **Check before adding** names the worksheet, adds it with one button
+  ("Add worksheet (7 questions)") and, when the same code is already in the
+  bank, offers *Replace it* (default, deletes the old copy first) or *Keep
+  both*. The level picker is hidden when a batch mixes levels (loading the
+  sample set used to stamp all 10 sheets with one level: fixed).
+- **Exercise form → From bank** groups the picker by worksheet; ticking the
+  worksheet header selects all its questions.
+- **Chinese font = Kai style** across the app: LXGW WenKai (OFL 1.1,
+  `assets/fonts/LICENSE-LXGWWenKai-OFL.txt`), Regular + Medium (as bold),
+  subset to GB2312 + Latin/pinyin/punctuation (~3.5 MB each) and declared in
+  `pubspec.yaml`. The theme's CJK fallback moved from Noto Sans SC (runtime
+  download) to this family; report PDFs keep Noto Sans SC.
+- **Bigger question text:** `AppTextStyles.question` (18 px, 1.5 line
+  height, Kai fallback) and `questionDetail` (15 px) used by the bank list
+  and worksheet page, Check before adding, the scan review preview and
+  extracted text, the exercise form's prompt/option/segment fields, and the
+  student exercise/quiz options, compose chips and passage (18–22 px).
+- **Tables:** `AppDataTable` draws column separators and darker row lines
+  (`AppColors.tableLine`), taller rows (14 px) and 14 px cell padding; fixed
+  column widths now mean content width (padding added on top), so icon
+  columns keep their room. Affects Users, Reports, Payments, Vouchers, bank.
+- **Difficulty removed** from the bank (model field, filter, column, editor,
+  paste import, review, picker); `question_difficulty.dart` deleted. Old
+  documents keep a stray `difficulty` field that is ignored.
+- Sample set JSON: every item has a `title` (the printed sheet title).
+- Snackbar after a scan: "Added worksheet 310001-RDG (7 questions)".
+- Tests: `question_bank_import_utils_test.dart` now 4 tests (sheet fields,
+  sample-set titles and order, grouping with tag fallback); 53 pass.
+
+**Why**
+- Owner (2026-11-09): "I want it to become a complete file, not 7 different
+  questions", bigger text in KaiTi, clearer table lines, remove difficulty,
+  more spacing. KaiTi itself is a Microsoft font and cannot be shipped, so
+  the owner chose LXGW WenKai (same Kai style, free).
+- Verified on the emulator: sample set → 10 titled worksheets; scan of
+  310001-RDG with the sheet already in the bank → Replace → 7 questions in
+  order; picker adds a worksheet in one tick; Users table lines.
+
+**For review**
+- Hosting deploy only (`scripts/deploy_web.sh --web-only`). No rules or
+  functions changes. First load after deploy downloads ~7 MB of font once.
+- Emulator-only quirk seen twice: the first sign-in after a page reload
+  lands on /complete-profile; signing in again works. Not seen on live.
+
+---
+
 ## 2026-11-09 — Claude: import progress never closed from the bank; elapsed time + estimate; answer keys applied to known sheets
 
 **What changed**

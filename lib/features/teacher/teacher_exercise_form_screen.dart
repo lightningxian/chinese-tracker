@@ -1303,6 +1303,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
             const SizedBox(height: 8),
             TextField(
               controller: draft.promptController,
+              style: AppTextStyles.question,
               decoration: const InputDecoration(
                 hintText: 'Question prompt',
                 border: OutlineInputBorder(),
@@ -1336,6 +1337,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
                     Expanded(
                       child: TextField(
                         controller: draft.optionControllers[optionIndex],
+                        style: AppTextStyles.question,
                         decoration: InputDecoration(
                           hintText:
                               'Option ${String.fromCharCode(65 + optionIndex)}',
@@ -1434,6 +1436,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
             ] else ...[
               TextField(
                 controller: draft.promptController,
+                style: AppTextStyles.question,
                 decoration: const InputDecoration(
                   labelText: 'Sentence with （ ） where the hanzi goes',
                   border: OutlineInputBorder(),
@@ -1584,6 +1587,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
                     Expanded(
                       child: TextField(
                         controller: draft.segmentControllers[segmentIndex],
+                        style: AppTextStyles.question,
                         decoration: InputDecoration(
                           labelText: 'Part ${segmentIndex + 1}',
                           hintText: segmentIndex == 0 ? '我' : '喜欢',

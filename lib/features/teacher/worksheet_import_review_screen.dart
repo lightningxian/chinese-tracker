@@ -400,6 +400,7 @@ class _WorksheetImportReviewScreenState
           controller: _textController,
           minLines: 8,
           maxLines: 14,
+          style: AppTextStyles.question.copyWith(fontSize: 16),
           decoration: const InputDecoration(
             labelText: 'Extracted text',
             hintText: 'Edit if OCR misread anything…',
@@ -461,10 +462,10 @@ class _WorksheetImportReviewScreenState
     if (_selectedType == ExerciseType.composeSentences) {
       final question = _parsed.composeQuestions[index];
       return Padding(
-        padding: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.only(bottom: 12),
         child: Text(
           '${index + 1}. ${question.segments.join(' / ')}',
-          style: const TextStyle(fontSize: 13, height: 1.35),
+          style: AppTextStyles.question,
         ),
       );
     }
@@ -473,10 +474,10 @@ class _WorksheetImportReviewScreenState
       final question = _parsed.matchingQuestions[index];
       final letter = String.fromCharCode(65 + question.correctIndex);
       return Padding(
-        padding: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.only(bottom: 12),
         child: Text(
           '${index + 1}. ${question.prompt} → $letter',
-          style: const TextStyle(fontSize: 13, height: 1.35),
+          style: AppTextStyles.question,
         ),
       );
     }
@@ -491,9 +492,17 @@ class _WorksheetImportReviewScreenState
     };
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        '${index + 1}. ${question.prompt}\n   $optionPreview',
-        style: const TextStyle(fontSize: 13, height: 1.35),
+      child: Text.rich(
+        TextSpan(
+          text: '${index + 1}. ${question.prompt}\n',
+          children: [
+            TextSpan(
+              text: '   $optionPreview',
+              style: AppTextStyles.questionDetail,
+            ),
+          ],
+        ),
+        style: AppTextStyles.question,
       ),
     );
   }

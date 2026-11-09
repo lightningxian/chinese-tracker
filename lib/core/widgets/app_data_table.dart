@@ -60,7 +60,7 @@ class AppDataTable<T> extends StatelessWidget {
   double get _minTableWidth {
     var total = 0.0;
     for (final column in columns) {
-      total += column.width ?? _flexColumnMinWidth;
+      total += (column.width ?? _flexColumnMinWidth) + _cellPadding.horizontal;
     }
     return total;
   }
@@ -113,13 +113,22 @@ class AppDataTable<T> extends StatelessWidget {
     );
   }
 
+  /// Side padding inside every cell; the column line sits between cells.
+  static const _cellPadding = EdgeInsets.symmetric(horizontal: 14);
+
   Widget _headerRow() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      color: AppColors.navy.withValues(alpha: 0.05),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.navy.withValues(alpha: 0.05),
+        border: const Border(
+          bottom: BorderSide(color: AppColors.tableLine, width: 1.5),
+        ),
+      ),
       child: Row(
         children: [
-          for (final column in columns) _wrapCell(column, _headerCell(column)),
+          for (var i = 0; i < columns.length; i++)
+            _wrapCell(columns[i], _headerCell(columns[i]), first: i == 0),
         ],
       ),
     );
@@ -182,24 +191,27 @@ class AppDataTable<T> extends StatelessWidget {
 
   Widget _dataRow(T row, {required bool striped}) {
     final content = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 14),
       decoration: BoxDecoration(
         color: striped
             ? AppColors.surface.withValues(alpha: 0.55)
             : AppColors.card,
-        border: const Border(bottom: BorderSide(color: AppColors.border)),
+        border: const Border(bottom: BorderSide(color: AppColors.tableLine)),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          for (final column in columns)
-            _wrapCell(
-              column,
-              // Avoid wrapping every cell in [Align] — that loosens width
-              // constraints and breaks cells that use [Expanded] (e.g. Name).
-              _aligned(column.alignment, column.cell(row)),
-            ),
-        ],
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            for (var i = 0; i < columns.length; i++)
+              _wrapCell(
+                columns[i],
+                // Avoid wrapping every cell in [Align] — that loosens width
+                // constraints and breaks cells that use [Expanded] (e.g. Name).
+                _aligned(columns[i].alignment, columns[i].cell(row)),
+                first: i == 0,
+              ),
+          ],
+        ),
       ),
     );
 
@@ -214,10 +226,25 @@ class AppDataTable<T> extends StatelessWidget {
     return Align(alignment: alignment, child: child);
   }
 
-  Widget _wrapCell(AppTableColumn<T> column, Widget child) {
+  /// Pads the cell and draws the column line on its left (not on the first
+  /// column). The line spans the row height thanks to [IntrinsicHeight].
+  Widget _wrapCell(AppTableColumn<T> column, Widget child,
+      {required bool first}) {
+    final cell = Container(
+      padding: _cellPadding,
+      decoration: first
+          ? null
+          : const BoxDecoration(
+              border: Border(left: BorderSide(color: AppColors.tableLine)),
+            ),
+      child: child,
+    );
     if (column.width != null) {
-      return SizedBox(width: column.width, child: child);
+      // `width` is the content width; the padding comes on top so icon
+      // buttons and short labels keep the room they were given.
+      return SizedBox(
+          width: column.width! + _cellPadding.horizontal, child: cell);
     }
-    return Expanded(flex: column.flex, child: child);
+    return Expanded(flex: column.flex, child: cell);
   }
 }

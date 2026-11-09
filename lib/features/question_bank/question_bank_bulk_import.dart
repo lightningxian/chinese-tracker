@@ -7,7 +7,6 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_constants.dart';
 import '../../models/exercise_type.dart';
 import '../../models/question_bank_item.dart';
-import '../../models/question_difficulty.dart';
 import '../../services/firestore_service.dart';
 import '../teacher/worksheet_scan_flow.dart';
 import 'question_bank_import_review.dart';
@@ -21,7 +20,6 @@ Future<void> showQuestionBankPasteImport(
   final controller = TextEditingController();
   ExerciseType type = ExerciseType.multipleChoice;
   String level = AppConstants.hskLevels.first;
-  QuestionDifficulty difficulty = QuestionDifficulty.medium;
 
   final confirmed = await showDialog<bool>(
     context: context,
@@ -70,18 +68,6 @@ Future<void> showQuestionBankPasteImport(
                     () => level = v ?? AppConstants.hskLevels.first,
                   ),
                 ),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<QuestionDifficulty>(
-                  initialValue: difficulty,
-                  decoration: const InputDecoration(labelText: 'Difficulty'),
-                  items: [
-                    for (final d in QuestionDifficulty.values)
-                      DropdownMenuItem(value: d, child: Text(d.label)),
-                  ],
-                  onChanged: (v) => setLocal(
-                    () => difficulty = v ?? QuestionDifficulty.medium,
-                  ),
-                ),
               ],
             ),
           ),
@@ -110,7 +96,6 @@ Future<void> showQuestionBankPasteImport(
     ownerId: ownerId,
     type: type,
     level: level,
-    difficulty: difficulty,
   );
   controller.dispose();
 
@@ -177,11 +162,17 @@ Future<void> runQuestionBankWorksheetImport(
     );
     return;
   }
+  // The same sheet may already be in the bank (scanned before, or loaded
+  // from the sample set): the review offers to replace it.
+  final existing =
+      await context.read<FirestoreService>().watchQuestionBank(ownerId).first;
+  if (!context.mounted) return;
   await _confirmAndInsert(
     context,
     ownerId: ownerId,
     items: items,
     summary: result.parseResult!.detectionSummary,
+    existingBank: existing,
   );
 }
 
@@ -190,8 +181,9 @@ Future<void> _confirmAndInsert(
   required String ownerId,
   required List<QuestionBankItem> items,
   String? summary,
+  List<QuestionBankItem> existingBank = const [],
 }) async {
-  final confirmed = await Navigator.of(context).push<List<QuestionBankItem>>(
+  final decision = await Navigator.of(context).push<QuestionBankImportDecision>(
     MaterialPageRoute(
       fullscreenDialog: true,
       builder: (_) => QuestionBankImportReviewScreen(
@@ -199,18 +191,28 @@ Future<void> _confirmAndInsert(
         summary: summary ??
             '${items.length} question${items.length == 1 ? '' : 's'} parsed '
                 'from the pasted text.',
+        existingBank: existingBank,
       ),
     ),
   );
-  if (confirmed == null || confirmed.isEmpty || !context.mounted) return;
+  if (decision == null || decision.items.isEmpty || !context.mounted) return;
+  final confirmed = decision.items;
 
   try {
-    await context.read<FirestoreService>().addQuestionBankItems(confirmed);
+    final firestore = context.read<FirestoreService>();
+    if (decision.replaceIds.isNotEmpty) {
+      await firestore.deleteQuestionBankItems(decision.replaceIds);
+    }
+    await firestore.addQuestionBankItems(confirmed);
     if (!context.mounted) return;
+    final sheets = QuestionBankSheet.group(confirmed);
+    final n = confirmed.length;
+    final verb = decision.replaceIds.isNotEmpty ? 'Replaced' : 'Added';
+    final what = sheets.length == 1 && sheets.first.isSheet
+        ? 'worksheet ${sheets.first.code} ($n question${n == 1 ? '' : 's'})'
+        : '$n question${n == 1 ? '' : 's'}';
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Added ${confirmed.length} question(s) to the bank.'),
-      ),
+      SnackBar(content: Text('$verb $what in the bank.')),
     );
   } catch (e) {
     if (!context.mounted) return;

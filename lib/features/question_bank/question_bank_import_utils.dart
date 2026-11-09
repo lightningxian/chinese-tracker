@@ -4,7 +4,6 @@ import '../../models/exercise.dart';
 import '../../models/exercise_skill_category.dart';
 import '../../models/exercise_type.dart';
 import '../../models/question_bank_item.dart';
-import '../../models/question_difficulty.dart';
 
 /// Converts parsed worksheet / paste text into bank items.
 abstract final class QuestionBankImportUtils {
@@ -13,7 +12,6 @@ abstract final class QuestionBankImportUtils {
     required String ownerId,
     ExerciseType? typeOverride,
     String? levelOverride,
-    QuestionDifficulty difficulty = QuestionDifficulty.medium,
     List<String> tags = const [],
   }) {
     final type = typeOverride ?? result.suggestedType;
@@ -26,61 +24,52 @@ abstract final class QuestionBankImportUtils {
     final itemTags = sheetCode == null || tags.contains(sheetCode)
         ? tags
         : [sheetCode, ...tags];
+    final sheetTitle = result.suggestedTitle?.trim();
+
+    QuestionBankItem item(int index, ExerciseQuestion question) =>
+        QuestionBankItem(
+          id: '',
+          ownerId: ownerId,
+          type: type,
+          question: question,
+          skillCategory: skill,
+          level: level,
+          tags: itemTags,
+          sheetCode: sheetCode,
+          sheetTitle: sheetCode == null ? null : sheetTitle,
+          sheetIndex: sheetCode == null ? null : index,
+        );
 
     return switch (type) {
       ExerciseType.composeSentences => [
-          for (final q in result.composeQuestions)
-            QuestionBankItem(
-              id: '',
-              ownerId: ownerId,
-              type: type,
-              question: ExerciseQuestion(
-                prompt: q.prompt,
-                segments: q.segments,
-              ),
-              skillCategory: skill,
-              level: level,
-              tags: itemTags,
-              difficulty: difficulty,
-            ),
+          for (final (i, q) in result.composeQuestions.indexed)
+            item(i, ExerciseQuestion(prompt: q.prompt, segments: q.segments)),
         ],
       // Matching and fill in the blank share one answer bank; each bank
       // item keeps a copy of it so the question stays usable on its own.
       ExerciseType.matching || ExerciseType.readingCloze => [
-          for (final q in result.matchingQuestions)
-            QuestionBankItem(
-              id: '',
-              ownerId: ownerId,
-              type: type,
-              question: ExerciseQuestion(
+          for (final (i, q) in result.matchingQuestions.indexed)
+            item(
+              i,
+              ExerciseQuestion(
                 prompt: q.prompt,
                 options: result.matchingOptions,
                 correctIndex: q.correctIndex,
               ),
-              skillCategory: skill,
-              level: level,
-              tags: itemTags,
-              difficulty: difficulty,
             ),
         ],
       // Multiple choice, listening, type-the-hanzi (options = accepted
       // answers, keyword = pinyin) and picture sentences (keyword).
       _ => [
-          for (final q in result.mcQuestions)
-            QuestionBankItem(
-              id: '',
-              ownerId: ownerId,
-              type: type,
-              question: ExerciseQuestion(
+          for (final (i, q) in result.mcQuestions.indexed)
+            item(
+              i,
+              ExerciseQuestion(
                 prompt: q.prompt,
                 options: q.options,
                 correctIndex: q.correctIndex,
                 keyword: q.keyword,
               ),
-              skillCategory: skill,
-              level: level,
-              tags: itemTags,
-              difficulty: difficulty,
             ),
         ],
     };
@@ -91,7 +80,6 @@ abstract final class QuestionBankImportUtils {
     required String ownerId,
     ExerciseType type = ExerciseType.multipleChoice,
     String? level,
-    QuestionDifficulty difficulty = QuestionDifficulty.medium,
     List<String> tags = const [],
   }) {
     final result = QuestionImportUtils.parseWorksheet(text);
@@ -99,8 +87,8 @@ abstract final class QuestionBankImportUtils {
       result: result,
       ownerId: ownerId,
       typeOverride: type,
-      levelOverride: level ?? result.suggestedLevel ?? AppConstants.hskLevels.first,
-      difficulty: difficulty,
+      levelOverride:
+          level ?? result.suggestedLevel ?? AppConstants.hskLevels.first,
       tags: tags,
     );
   }
@@ -130,8 +118,9 @@ abstract final class QuestionBankImportUtils {
   }
 
   /// A bundled question set (`assets/question_sets/*.json`): the centre's
-  /// own sheets, already scanned and keyed. Each item carries its type,
-  /// level, skill, tags and an [ExerciseQuestion] map.
+  /// own sheets, already scanned and keyed. Each item carries its sheet code
+  /// (`set`), type, level, skill, tags and an [ExerciseQuestion] map; the
+  /// position inside its sheet becomes [QuestionBankItem.sheetIndex].
   static List<QuestionBankItem> fromQuestionSet(
     Map<String, dynamic> set, {
     required String ownerId,
@@ -139,10 +128,15 @@ abstract final class QuestionBankImportUtils {
     final items = (set['items'] as List? ?? const [])
         .whereType<Map>()
         .map((raw) => Map<String, dynamic>.from(raw));
+    final indexInSheet = <String, int>{};
     return [
       for (final it in items)
         () {
           final type = ExerciseType.fromValue(it['type'] as String?);
+          final code = (it['set'] as String?)?.trim();
+          final index = code == null
+              ? null
+              : indexInSheet.update(code, (n) => n + 1, ifAbsent: () => 0);
           return QuestionBankItem(
             id: '',
             ownerId: ownerId,
@@ -155,7 +149,9 @@ abstract final class QuestionBankImportUtils {
                 ExerciseSkillCategory.fromValue(it['skill'] as String?),
             level: it['level'] as String?,
             tags: List<String>.from(it['tags'] as List? ?? const []),
-            difficulty: QuestionDifficulty.medium,
+            sheetCode: code,
+            sheetTitle: (it['title'] as String?)?.trim(),
+            sheetIndex: index,
           );
         }(),
     ];

@@ -38,7 +38,7 @@ Future<void> showQuestionBankHarvestFromExercises(
 
   final candidates = <QuestionBankItem>[];
   for (final ex in exercises) {
-  candidates.addAll(
+    candidates.addAll(
       QuestionBankImportUtils.fromExerciseQuestions(
         ownerId: ownerId,
         exerciseId: ex.id,
@@ -96,7 +96,8 @@ Future<void> showQuestionBankHarvestFromExercises(
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Imported ${deduped.novel.length} question(s) from exercises.'),
+        content: Text(
+            'Imported ${deduped.novel.length} question(s) from exercises.'),
       ),
     );
   } catch (e) {

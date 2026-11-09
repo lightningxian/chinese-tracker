@@ -311,7 +311,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
           AppCard(
             child: SelectableText(
               exercise.passage,
-              style: const TextStyle(height: 1.7, fontSize: 16),
+              style: AppTextStyles.question.copyWith(height: 1.8),
             ),
           ),
           const SizedBox(height: 16),
@@ -429,7 +429,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                       Expanded(
                         child: Text(
                           options[i],
-                          style: const TextStyle(fontSize: 18, height: 1.4),
+                          style: AppTextStyles.question.copyWith(fontSize: 20),
                         ),
                       ),
                       if (resultIcon != null) ...[
@@ -544,7 +544,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
           enabled: !_answerSubmitted,
           autofocus: true,
           maxLines: isPicture ? 3 : 1,
-          style: const TextStyle(fontSize: 20),
+          style: AppTextStyles.question.copyWith(fontSize: 22),
           onChanged: (_) => setState(() {}),
           onSubmitted: (_) => _onPrimaryAction(),
           decoration: InputDecoration(
@@ -766,6 +766,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                   children: List.generate(_composeOrder.length, (index) {
                     return InputChip(
                       label: Text(_composeOrder[index]),
+                      labelStyle: AppTextStyles.question,
                       onPressed: _answerSubmitted
                           ? null
                           : () => _removeComposeSegment(index),
@@ -795,6 +796,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
           children: _composeBank.map((segment) {
             return ActionChip(
               label: Text(segment),
+              labelStyle: AppTextStyles.question,
               onPressed:
                   _answerSubmitted ? null : () => _addComposeSegment(segment),
               backgroundColor: AppColors.surface,
@@ -818,7 +820,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                 const SizedBox(height: 6),
                 Text(
                   question.segments.join(' '),
-                  style: const TextStyle(fontSize: 16, height: 1.5),
+                  style: AppTextStyles.question,
                 ),
               ],
             ),

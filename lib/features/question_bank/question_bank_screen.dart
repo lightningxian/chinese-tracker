@@ -10,15 +10,17 @@ import '../../models/exercise.dart';
 import '../../models/exercise_skill_category.dart';
 import '../../models/exercise_type.dart';
 import '../../models/question_bank_item.dart';
-import '../../models/question_difficulty.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/question_bank_media_service.dart';
 import 'question_bank_bulk_import.dart';
 import 'question_bank_harvest.dart';
+import 'question_bank_sheet_screen.dart';
+import 'question_bank_text.dart';
 
-/// Admin/teacher screen to author reusable questions once and reuse them across
-/// exercises/quizzes. Backed by the `question_bank` collection.
+/// Admin/teacher screen for the shared question bank (`question_bank`
+/// collection). A scanned worksheet is one row (open it to see and edit its
+/// questions); a question typed or pasted on its own is a row by itself.
 class QuestionBankScreen extends StatefulWidget {
   const QuestionBankScreen({super.key, this.embedded = false});
 
@@ -31,7 +33,6 @@ class QuestionBankScreen extends StatefulWidget {
 class _QuestionBankScreenState extends State<QuestionBankScreen> {
   ExerciseType? _typeFilter;
   String? _levelFilter;
-  QuestionDifficulty? _difficultyFilter;
   String _search = '';
   String? _sortColumnId;
   bool _sortAscending = true;
@@ -47,30 +48,34 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
     });
   }
 
-  bool _matchesFilters(QuestionBankItem item) {
-    if (_typeFilter != null && item.type != _typeFilter) return false;
-    if (_levelFilter != null && item.level != _levelFilter) return false;
-    if (_difficultyFilter != null && item.difficulty != _difficultyFilter) {
-      return false;
-    }
+  /// A worksheet matches when its type and level match and the search text
+  /// is in its code, title, tags or any of its questions.
+  bool _matchesFilters(QuestionBankSheet sheet) {
+    if (_typeFilter != null && sheet.type != _typeFilter) return false;
+    if (_levelFilter != null && sheet.level != _levelFilter) return false;
     if (_search.isNotEmpty) {
       final needle = _search.toLowerCase();
-      final hay = '${item.displayText} ${item.tags.join(' ')}'.toLowerCase();
+      final hay = [
+        sheet.code,
+        sheet.title,
+        ...sheet.tags,
+        for (final item in sheet.items) item.displayText,
+      ].join(' ').toLowerCase();
       if (!hay.contains(needle)) return false;
     }
     return true;
   }
 
-  List<QuestionBankItem> _sorted(List<QuestionBankItem> items) {
+  List<QuestionBankSheet> _sorted(List<QuestionBankSheet> sheets) {
     final col = _sortColumnId;
-    if (col == null) return items;
-    final sorted = [...items];
+    if (col == null) return sheets;
+    final sorted = [...sheets];
     sorted.sort((a, b) {
       final cmp = switch (col) {
-        'prompt' => a.displayText.toLowerCase().compareTo(b.displayText.toLowerCase()),
+        'title' => a.title.toLowerCase().compareTo(b.title.toLowerCase()),
         'type' => a.type.label.compareTo(b.type.label),
         'level' => (a.level ?? '').compareTo(b.level ?? ''),
-        'difficulty' => a.difficulty.label.compareTo(b.difficulty.label),
+        'count' => a.count.compareTo(b.count),
         'used' => a.usageCount.compareTo(b.usageCount),
         _ => 0,
       };
@@ -124,7 +129,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
           itemBuilder: (_) => const [
             PopupMenuItem(
               value: 'samples',
-              child: Text("Load the centre's sample sheets (96 questions)"),
+              child: Text("Load the centre's sample sheets (10 worksheets)"),
             ),
             PopupMenuItem(value: 'paste', child: Text('Bulk import — paste')),
             PopupMenuItem(
@@ -148,56 +153,54 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
       child: StreamBuilder<List<QuestionBankItem>>(
         stream: firestore.watchQuestionBank(ownerId),
         builder: (context, snap) {
-          if (snap.connectionState == ConnectionState.waiting && !snap.hasData) {
+          if (snap.connectionState == ConnectionState.waiting &&
+              !snap.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
           final all = snap.data ?? const <QuestionBankItem>[];
-          final items = _sorted(all.where(_matchesFilters).toList());
+          final sheets = QuestionBankSheet.group(all);
+          final rows = _sorted(sheets.where(_matchesFilters).toList());
 
           return Column(
             children: [
               _Filters(
                 typeFilter: _typeFilter,
                 levelFilter: _levelFilter,
-                difficultyFilter: _difficultyFilter,
                 onType: (t) => setState(() => _typeFilter = t),
                 onLevel: (l) => setState(() => _levelFilter = l),
-                onDifficulty: (d) => setState(() => _difficultyFilter = d),
                 onSearch: (s) => setState(() => _search = s),
               ),
               Expanded(
                 child: all.isEmpty
                     ? const EmptyState(
                         icon: Icons.inventory_2_outlined,
-                        title: 'No bank questions yet',
+                        title: 'No worksheets yet',
                         subtitle:
-                            'Add reusable questions here, then pull them into '
-                            'exercises from the authoring screen.',
+                            'Scan a worksheet to add it whole, or type a single '
+                            'question. Exercises pull from here.',
                       )
-                    : items.isEmpty
+                    : rows.isEmpty
                         ? const EmptyState(
                             icon: Icons.filter_alt_off_outlined,
                             title: 'No matches',
                             subtitle: 'Adjust the filters.',
                           )
-                        : AppDataTable<QuestionBankItem>(
-                            rows: items,
-                            sortColumnId: _sortColumnId,
-                            sortAscending: _sortAscending,
-                            onSort: _onSort,
-                            onRowTap: (item) => _openEditor(
-                              ownerId: ownerId,
-                              existing: item,
-                            ),
-                            columns: _buildColumns(firestore),
-                            mobileCardBuilder: (item) => _BankItemCard(
-                              item: item,
-                              onTap: () => _openEditor(
-                                ownerId: ownerId,
-                                existing: item,
+                        : Padding(
+                            padding: const EdgeInsets.fromLTRB(20, 8, 20, 80),
+                            child: SingleChildScrollView(
+                              child: AppDataTable<QuestionBankSheet>(
+                                rows: rows,
+                                sortColumnId: _sortColumnId,
+                                sortAscending: _sortAscending,
+                                onSort: _onSort,
+                                onRowTap: (sheet) => _open(ownerId, sheet),
+                                columns: _buildColumns(firestore),
+                                mobileCardBuilder: (sheet) => _SheetCard(
+                                  sheet: sheet,
+                                  onTap: () => _open(ownerId, sheet),
+                                  onDelete: () => _delete(firestore, sheet),
+                                ),
                               ),
-                              onDelete: () =>
-                                  firestore.deleteQuestionBankItem(item.id),
                             ),
                           ),
               ),
@@ -208,72 +211,116 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
     );
   }
 
-  List<AppTableColumn<QuestionBankItem>> _buildColumns(
+  List<AppTableColumn<QuestionBankSheet>> _buildColumns(
     FirestoreService firestore,
   ) {
     return [
       AppTableColumn(
-        id: 'prompt',
-        label: 'Prompt',
+        id: 'title',
+        label: 'Worksheet / question',
         flex: 3,
         sortable: true,
-        cell: (item) => Text(
-          item.displayText.isEmpty ? '(no prompt)' : item.displayText,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
+        cell: (sheet) => _TitleCell(sheet: sheet),
       ),
       AppTableColumn(
         id: 'type',
         label: 'Type',
-        width: 120,
+        width: 130,
         sortable: true,
-        cell: (item) => Text(item.type.label),
+        cell: (sheet) => Text(sheet.type.label),
       ),
       AppTableColumn(
         id: 'level',
         label: 'Level',
-        width: 80,
+        width: 70,
         sortable: true,
-        cell: (item) => Text(item.level ?? '—'),
+        cell: (sheet) => Text(sheet.level ?? '—'),
       ),
       AppTableColumn(
-        id: 'difficulty',
-        label: 'Difficulty',
-        width: 90,
+        id: 'count',
+        label: 'Questions',
+        width: 96,
         sortable: true,
-        cell: (item) => Text(item.difficulty.label),
+        alignment: Alignment.centerRight,
+        cell: (sheet) => Text('${sheet.count}'),
       ),
       AppTableColumn(
         id: 'tags',
         label: 'Tags',
         flex: 2,
-        cell: (item) => Text(
-          item.tags.map((t) => '#$t').join(' '),
+        cell: (sheet) => Text(
+          sheet.tags.map((t) => '#$t').join(' '),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 12),
+          style: const TextStyle(fontSize: 13),
         ),
       ),
       AppTableColumn(
         id: 'used',
         label: 'Used',
-        width: 64,
+        width: 56,
         sortable: true,
         alignment: Alignment.centerRight,
-        cell: (item) => Text('${item.usageCount}'),
+        cell: (sheet) => Text('${sheet.usageCount}'),
       ),
       AppTableColumn(
         id: 'actions',
         label: '',
         width: 48,
-        cell: (item) => IconButton(
+        cell: (sheet) => IconButton(
           icon: const Icon(Icons.delete_outline, color: AppColors.error),
-          onPressed: () => firestore.deleteQuestionBankItem(item.id),
-          tooltip: 'Delete',
+          onPressed: () => _delete(firestore, sheet),
+          tooltip: sheet.isSheet ? 'Delete worksheet' : 'Delete',
         ),
       ),
     ];
+  }
+
+  void _open(String ownerId, QuestionBankSheet sheet) {
+    if (sheet.isSheet) {
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => QuestionBankSheetScreen(
+            ownerId: ownerId,
+            sheetKey: sheet.key!,
+          ),
+        ),
+      );
+    } else {
+      _openEditor(ownerId: ownerId, existing: sheet.first);
+    }
+  }
+
+  Future<void> _delete(
+      FirestoreService firestore, QuestionBankSheet sheet) async {
+    if (!sheet.isSheet) {
+      await firestore.deleteQuestionBankItem(sheet.first.id);
+      return;
+    }
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Delete worksheet ${sheet.code}?'),
+        content: Text(
+          'All ${QuestionBankText.questionCount(sheet.count)} leave the bank. '
+          'Exercises that already use them keep their copies.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) {
+      await firestore.deleteQuestionBankItems(sheet.items.map((i) => i.id));
+    }
   }
 
   Future<void> _openEditor({
@@ -295,87 +342,118 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
   }
 }
 
+/// First column: the sheet title with its code underneath, or the single
+/// question's text in the question face.
+class _TitleCell extends StatelessWidget {
+  const _TitleCell({required this.sheet});
+  final QuestionBankSheet sheet;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!sheet.isSheet) {
+      return Text(
+        sheet.title,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: AppTextStyles.question.copyWith(fontSize: 17),
+      );
+    }
+    return Row(
+      children: [
+        const Icon(Icons.description_outlined, size: 20, color: AppColors.navy),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                sheet.title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.question.copyWith(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.navy,
+                ),
+              ),
+              if (sheet.title != sheet.code)
+                Text(
+                  sheet.code,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _Filters extends StatelessWidget {
   const _Filters({
     required this.typeFilter,
     required this.levelFilter,
-    required this.difficultyFilter,
     required this.onType,
     required this.onLevel,
-    required this.onDifficulty,
     required this.onSearch,
   });
 
   final ExerciseType? typeFilter;
   final String? levelFilter;
-  final QuestionDifficulty? difficultyFilter;
   final ValueChanged<ExerciseType?> onType;
   final ValueChanged<String?> onLevel;
-  final ValueChanged<QuestionDifficulty?> onDifficulty;
   final ValueChanged<String> onSearch;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
-      child: Column(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+      child: Row(
         children: [
-          TextField(
-            decoration: const InputDecoration(
-              prefixIcon: Icon(Icons.search),
-              hintText: 'Search prompt or tag',
-              isDense: true,
+          Expanded(
+            flex: 2,
+            child: TextField(
+              decoration: const InputDecoration(
+                prefixIcon: Icon(Icons.search),
+                hintText: 'Search worksheet, question or tag',
+                isDense: true,
+              ),
+              onChanged: onSearch,
             ),
-            onChanged: onSearch,
           ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: DropdownButtonFormField<ExerciseType?>(
-                  initialValue: typeFilter,
-                  isExpanded: true,
-                  decoration: const InputDecoration(labelText: 'Type', isDense: true),
-                  items: [
-                    const DropdownMenuItem(value: null, child: Text('All')),
-                    for (final t in ExerciseType.values)
-                      DropdownMenuItem(value: t, child: Text(t.label)),
-                  ],
-                  onChanged: onType,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: DropdownButtonFormField<String?>(
-                  initialValue: levelFilter,
-                  isExpanded: true,
-                  decoration: const InputDecoration(labelText: 'Level', isDense: true),
-                  items: [
-                    const DropdownMenuItem(value: null, child: Text('All')),
-                    for (final l in AppConstants.hskLevels)
-                      DropdownMenuItem(value: l, child: Text(l)),
-                  ],
-                  onChanged: onLevel,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: DropdownButtonFormField<QuestionDifficulty?>(
-                  initialValue: difficultyFilter,
-                  isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Difficulty',
-                    isDense: true,
-                  ),
-                  items: [
-                    const DropdownMenuItem(value: null, child: Text('All')),
-                    for (final d in QuestionDifficulty.values)
-                      DropdownMenuItem(value: d, child: Text(d.label)),
-                  ],
-                  onChanged: onDifficulty,
-                ),
-              ),
-            ],
+          const SizedBox(width: 12),
+          Expanded(
+            child: DropdownButtonFormField<ExerciseType?>(
+              initialValue: typeFilter,
+              isExpanded: true,
+              decoration:
+                  const InputDecoration(labelText: 'Type', isDense: true),
+              items: [
+                const DropdownMenuItem(value: null, child: Text('All')),
+                for (final t in ExerciseType.values)
+                  DropdownMenuItem(value: t, child: Text(t.label)),
+              ],
+              onChanged: onType,
+            ),
+          ),
+          const SizedBox(width: 12),
+          SizedBox(
+            width: 120,
+            child: DropdownButtonFormField<String?>(
+              initialValue: levelFilter,
+              isExpanded: true,
+              decoration:
+                  const InputDecoration(labelText: 'Level', isDense: true),
+              items: [
+                const DropdownMenuItem(value: null, child: Text('All')),
+                for (final l in AppConstants.hskLevels)
+                  DropdownMenuItem(value: l, child: Text(l)),
+              ],
+              onChanged: onLevel,
+            ),
           ),
         ],
       ),
@@ -383,14 +461,14 @@ class _Filters extends StatelessWidget {
   }
 }
 
-class _BankItemCard extends StatelessWidget {
-  const _BankItemCard({
-    required this.item,
+class _SheetCard extends StatelessWidget {
+  const _SheetCard({
+    required this.sheet,
     required this.onTap,
     required this.onDelete,
   });
 
-  final QuestionBankItem item;
+  final QuestionBankSheet sheet;
   final VoidCallback onTap;
   final VoidCallback onDelete;
 
@@ -398,7 +476,7 @@ class _BankItemCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppCard(
       onTap: onTap,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -407,21 +485,28 @@ class _BankItemCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item.displayText.isEmpty ? '(no prompt)' : item.displayText,
+                  sheet.title,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                  style: AppTextStyles.question.copyWith(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.navy,
+                  ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
                 Wrap(
                   spacing: 6,
                   runSpacing: 6,
                   children: [
-                    _Chip(label: item.type.label),
-                    _Chip(label: item.difficulty.label),
-                    if (item.level != null && item.level!.isNotEmpty)
-                      _Chip(label: item.level!),
-                    if (item.usageCount > 0) _Chip(label: 'Used ${item.usageCount}'),
+                    if (sheet.isSheet) _Chip(label: sheet.code),
+                    _Chip(label: sheet.type.label),
+                    if (sheet.level != null && sheet.level!.isNotEmpty)
+                      _Chip(label: sheet.level!),
+                    if (sheet.isSheet)
+                      _Chip(label: QuestionBankText.questionCount(sheet.count)),
+                    if (sheet.usageCount > 0)
+                      _Chip(label: 'Used ${sheet.usageCount}'),
                   ],
                 ),
               ],
@@ -448,7 +533,8 @@ class _Chip extends StatelessWidget {
         color: AppColors.navy.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(label, style: const TextStyle(fontSize: 11, color: AppColors.navy)),
+      child: Text(label,
+          style: const TextStyle(fontSize: 11, color: AppColors.navy)),
     );
   }
 }
@@ -480,7 +566,6 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
   ExerciseType _type = ExerciseType.multipleChoice;
   ExerciseSkillCategory _skill = ExerciseSkillCategory.reading;
   String _level = AppConstants.hskLevels.first;
-  QuestionDifficulty _difficulty = QuestionDifficulty.medium;
   int _correctIndex = 0;
   String _imageUrl = '';
   String _audioUrl = '';
@@ -499,7 +584,6 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
       _type = e.type;
       _skill = e.skillCategory ?? ExerciseSkillCategory.forExerciseType(e.type);
       _level = e.level ?? AppConstants.hskLevels.first;
-      _difficulty = e.difficulty;
       _tagsController.text = e.tags.join(', ');
       _promptController.text = e.question.prompt;
       _correctIndex = e.question.correctIndex;
@@ -614,7 +698,9 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
       skillCategory: _skill,
       level: _level,
       tags: tags,
-      difficulty: _difficulty,
+      sheetCode: widget.existing?.sheetCode,
+      sheetTitle: widget.existing?.sheetTitle,
+      sheetIndex: widget.existing?.sheetIndex,
       usageCount: widget.existing?.usageCount ?? 0,
       lastUsedAt: widget.existing?.lastUsedAt,
       sourceExerciseId: widget.existing?.sourceExerciseId,
@@ -640,7 +726,8 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     return Padding(
-      padding: EdgeInsets.only(left: 20, right: 20, top: 20, bottom: 20 + bottomInset),
+      padding: EdgeInsets.only(
+          left: 20, right: 20, top: 20, bottom: 20 + bottomInset),
       child: SingleChildScrollView(
         child: Form(
           key: _formKey,
@@ -672,6 +759,7 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _promptController,
+                style: AppTextStyles.question,
                 decoration: const InputDecoration(labelText: 'Prompt'),
                 validator: (v) =>
                     (v == null || v.trim().isEmpty) ? 'Enter a prompt' : null,
@@ -681,6 +769,7 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
               if (_type == ExerciseType.composeSentences)
                 TextFormField(
                   controller: _segmentsController,
+                  style: AppTextStyles.question,
                   minLines: 2,
                   maxLines: 6,
                   decoration: const InputDecoration(
@@ -709,38 +798,25 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
                         for (final l in AppConstants.hskLevels)
                           DropdownMenuItem(value: l, child: Text(l)),
                       ],
-                      onChanged: (l) =>
-                          setState(() => _level = l ?? AppConstants.hskLevels.first),
+                      onChanged: (l) => setState(
+                          () => _level = l ?? AppConstants.hskLevels.first),
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: DropdownButtonFormField<QuestionDifficulty>(
-                      initialValue: _difficulty,
+                    child: DropdownButtonFormField<ExerciseSkillCategory>(
+                      initialValue: _skill,
                       isExpanded: true,
-                      decoration: const InputDecoration(labelText: 'Difficulty'),
+                      decoration: const InputDecoration(labelText: 'Skill'),
                       items: [
-                        for (final d in QuestionDifficulty.values)
-                          DropdownMenuItem(value: d, child: Text(d.label)),
+                        for (final c in ExerciseSkillCategory.values)
+                          DropdownMenuItem(value: c, child: Text(c.label)),
                       ],
-                      onChanged: (d) => setState(
-                        () => _difficulty = d ?? QuestionDifficulty.medium,
-                      ),
+                      onChanged: (c) => setState(
+                          () => _skill = c ?? ExerciseSkillCategory.reading),
                     ),
                   ),
                 ],
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<ExerciseSkillCategory>(
-                initialValue: _skill,
-                isExpanded: true,
-                decoration: const InputDecoration(labelText: 'Skill'),
-                items: [
-                  for (final c in ExerciseSkillCategory.values)
-                    DropdownMenuItem(value: c, child: Text(c.label)),
-                ],
-                onChanged: (c) =>
-                    setState(() => _skill = c ?? ExerciseSkillCategory.reading),
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -792,6 +868,7 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
               Expanded(
                 child: TextFormField(
                   controller: _optionControllers[i],
+                  style: AppTextStyles.question,
                   decoration: InputDecoration(
                     labelText: 'Option ${String.fromCharCode(65 + i)}',
                     isDense: true,
@@ -829,7 +906,8 @@ class _MediaRow extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Media (optional)', style: TextStyle(fontWeight: FontWeight.w600)),
+        const Text('Media (optional)',
+            style: TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
@@ -908,6 +986,12 @@ class _QuestionBankPickerState extends State<_QuestionBankPicker> {
     Navigator.of(context).pop(picked);
   }
 
+  void _toggle(Iterable<QuestionBankItem> items, bool on) => setState(() {
+        for (final item in items) {
+          on ? _selected.add(item.id) : _selected.remove(item.id);
+        }
+      });
+
   @override
   Widget build(BuildContext context) {
     final firestore = context.read<FirestoreService>();
@@ -922,10 +1006,20 @@ class _QuestionBankPickerState extends State<_QuestionBankPicker> {
             final all = (snap.data ?? const <QuestionBankItem>[])
                 .where((i) => i.type == widget.type)
                 .toList();
-            final items = all.where((i) {
-              if (_filter.isEmpty) return true;
-              return i.displayText.toLowerCase().contains(_filter.toLowerCase());
-            }).toList();
+            final needle = _filter.toLowerCase();
+            // One block per worksheet (tick the header to take the whole
+            // sheet), stand-alone questions after them.
+            final sheets = QuestionBankSheet.group(all).where((sheet) {
+              if (needle.isEmpty) return true;
+              return [
+                sheet.code,
+                sheet.title,
+                for (final i in sheet.items) i.displayText,
+              ].join(' ').toLowerCase().contains(needle);
+            }).toList()
+              ..sort(
+                  (a, b) => a.isSheet == b.isSheet ? 0 : (a.isSheet ? -1 : 1));
+            final items = [for (final s in sheets) ...s.items];
 
             return Column(
               children: [
@@ -959,7 +1053,7 @@ class _QuestionBankPickerState extends State<_QuestionBankPicker> {
                       const SizedBox(height: 8),
                       TextField(
                         decoration: const InputDecoration(
-                          hintText: 'Filter…',
+                          hintText: 'Filter worksheets and questions…',
                           isDense: true,
                           prefixIcon: Icon(Icons.search, size: 20),
                         ),
@@ -968,11 +1062,8 @@ class _QuestionBankPickerState extends State<_QuestionBankPicker> {
                       Align(
                         alignment: Alignment.centerLeft,
                         child: TextButton(
-                          onPressed: items.isEmpty
-                              ? null
-                              : () => setState(() {
-                                    _selected.addAll(items.map((i) => i.id));
-                                  }),
+                          onPressed:
+                              items.isEmpty ? null : () => _toggle(items, true),
                           child: Text('Select all (${items.length} filtered)'),
                         ),
                       ),
@@ -984,36 +1075,19 @@ class _QuestionBankPickerState extends State<_QuestionBankPicker> {
                       ? const EmptyState(
                           icon: Icons.inventory_2_outlined,
                           title: 'No matching bank questions',
-                          subtitle: 'Add questions of this type to the bank first.',
+                          subtitle:
+                              'Add questions of this type to the bank first.',
                         )
-                      : ListView.builder(
+                      : ListView(
                           controller: scrollController,
                           padding: const EdgeInsets.fromLTRB(12, 0, 12, 20),
-                          itemCount: items.length,
-                          itemBuilder: (context, i) {
-                            final item = items[i];
-                            return CheckboxListTile(
-                              value: _selected.contains(item.id),
-                              title: Text(
-                                item.displayText.isEmpty ? '(no prompt)' : item.displayText,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              subtitle: Text(
-                                '${item.difficulty.label}'
-                                '${item.level != null ? ' · ${item.level}' : ''}'
-                                '${item.question.imageUrl.isNotEmpty ? ' · 🖼' : ''}'
-                                '${item.question.audioUrl.isNotEmpty ? ' · 🔊' : ''}',
-                              ),
-                              onChanged: (v) => setState(() {
-                                if (v == true) {
-                                  _selected.add(item.id);
-                                } else {
-                                  _selected.remove(item.id);
-                                }
-                              }),
-                            );
-                          },
+                          children: [
+                            for (final sheet in sheets) ...[
+                              if (sheet.isSheet) _sheetHeader(sheet),
+                              for (final item in sheet.items)
+                                _questionTile(item, indented: sheet.isSheet),
+                            ],
+                          ],
                         ),
                 ),
               ],
@@ -1021,6 +1095,56 @@ class _QuestionBankPickerState extends State<_QuestionBankPicker> {
           },
         );
       },
+    );
+  }
+
+  /// Ticking the worksheet ticks every question on it.
+  Widget _sheetHeader(QuestionBankSheet sheet) {
+    final picked = sheet.items.where((i) => _selected.contains(i.id)).length;
+    final all = picked == sheet.count;
+    return CheckboxListTile(
+      value: all ? true : (picked == 0 ? false : null),
+      tristate: true,
+      controlAffinity: ListTileControlAffinity.leading,
+      tileColor: AppColors.navy.withValues(alpha: 0.05),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      secondary: const Icon(Icons.description_outlined, color: AppColors.navy),
+      title: Text(
+        sheet.title,
+        style:
+            const TextStyle(fontWeight: FontWeight.w700, color: AppColors.navy),
+      ),
+      subtitle: Text(
+        '${sheet.code} · ${QuestionBankText.questionCount(sheet.count)}'
+        '${sheet.level != null ? ' · ${sheet.level}' : ''}',
+      ),
+      onChanged: (_) => _toggle(sheet.items, !all),
+    );
+  }
+
+  Widget _questionTile(QuestionBankItem item, {required bool indented}) {
+    return CheckboxListTile(
+      value: _selected.contains(item.id),
+      controlAffinity: ListTileControlAffinity.leading,
+      contentPadding: EdgeInsets.only(left: indented ? 36 : 16, right: 16),
+      title: Text(
+        item.displayText.isEmpty ? '(no prompt)' : item.displayText,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: AppTextStyles.question.copyWith(fontSize: 17),
+      ),
+      subtitle: Text(
+        [
+          if (!indented && item.level != null) item.level!,
+          if (item.question.imageUrl.isNotEmpty) '🖼',
+          if (item.question.audioUrl.isNotEmpty) '🔊',
+          QuestionBankText.answerLine(item),
+        ].join(' · '),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: AppTextStyles.questionDetail.copyWith(fontSize: 13),
+      ),
+      onChanged: (v) => _toggle([item], v == true),
     );
   }
 }

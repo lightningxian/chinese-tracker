@@ -33,6 +33,9 @@ abstract final class AppColors {
   static const pageBg = surface;
   static const card = Colors.white;
   static const border = Color(0xFFE4E2DA);
+  /// Row and column lines inside data tables: darker than [border] so the
+  /// grid reads at a glance.
+  static const tableLine = Color(0xFFCBC7BB);
   static const textPrimary = ink;
   static const textSecondary = Color(0xFF5B665F);
   static const success = secondary;
@@ -51,6 +54,30 @@ abstract final class AppColors {
   static const chipPurpleFg = Color(0xFF6B4FBF);
   static const chipAmberBg = accentSoft;
   static const chipAmberFg = Color(0xFF8A5A12);
+}
+
+/// Text styles shared by the screens that show question content.
+abstract final class AppTextStyles {
+  /// Chinese text falls back to this family (Lexend has no CJK glyphs).
+  /// Kai style, as on the centre's worksheets and in handwriting class.
+  static const chineseFamily = 'LXGW WenKai';
+
+  /// A question, sentence or option as the admin or student reads it: larger
+  /// than body text and with room between the lines for the Kai strokes.
+  static const question = TextStyle(
+    fontSize: 18,
+    height: 1.5,
+    color: AppColors.textPrimary,
+    fontFamilyFallback: [chineseFamily],
+  );
+
+  /// Secondary line under a question (answer key, pinyin, order).
+  static const questionDetail = TextStyle(
+    fontSize: 15,
+    height: 1.5,
+    color: AppColors.textSecondary,
+    fontFamilyFallback: [chineseFamily],
+  );
 }
 
 abstract final class AppTheme {
@@ -207,10 +234,10 @@ abstract final class AppTheme {
       bodyColor: AppColors.textPrimary,
       displayColor: AppColors.textPrimary,
     );
-    final chineseFallback = GoogleFonts.notoSansSc().fontFamily!;
-
+    // Chinese glyphs come from the bundled Kai face (pubspec `fonts:`); the
+    // report PDFs keep Noto Sans SC (`report_pdf_fonts.dart`).
     TextStyle? withChinese(TextStyle? style, {FontWeight? weight}) => style?.copyWith(
-          fontFamilyFallback: [chineseFallback],
+          fontFamilyFallback: const [AppTextStyles.chineseFamily],
           fontWeight: weight ?? style.fontWeight,
         );
 

@@ -1900,6 +1900,19 @@ class FirestoreService {
         .delete();
   }
 
+  /// Delete a whole worksheet (or any set of bank questions) in batches.
+  Future<void> deleteQuestionBankItems(Iterable<String> ids) async {
+    final list = ids.where((id) => id.isNotEmpty).toSet().toList();
+    const chunkSize = 400;
+    for (var i = 0; i < list.length; i += chunkSize) {
+      final batch = _db.batch();
+      for (final id in list.skip(i).take(chunkSize)) {
+        batch.delete(_db.collection(AppConstants.questionBankCollection).doc(id));
+      }
+      await batch.commit();
+    }
+  }
+
   /// Batch-insert bank questions (max 500 per Firestore batch).
   Future<void> addQuestionBankItems(List<QuestionBankItem> items) async {
     if (items.isEmpty) return;
