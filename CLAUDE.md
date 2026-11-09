@@ -16,13 +16,15 @@ decisions. This app is also the owner's thesis project (see the thesis docs belo
 ## Decisions already made by the owner (don't re-ask)
 - Design: landing page = direction "A · Pensil" (shipped 2026-10-18, `lib/features/landing/`); signed-in app = the same brand, calmer (white surfaces, less decoration). Brand tokens: `lib/features/landing/landing_brand.dart`, logo assets in `assets/brand/`.
 - Keep the parent role, materials library and class modes even though the thesis leaves them out.
-- UI language: Indonesian + English switch, to be built in thesis Phase 1 (app is English today).
+- UI language: Indonesian + English switch (built 2026-11-09 for auth/student/parent; admin/teacher still English).
 - Teacher self-registration is closed; admins create teachers.
 - Keep the Grades and Evaluations tabs (outside the thesis).
 - Thesis test codes are random strings typed by the admin, with HSK level and release year as separate fields. No access to the old `easy-study-hsk` project: no import of old results.
 - Voucher packages: Chinese name, validity (e.g. 2 months), 8 or 16 sessions, the student's class day. Prices live in the admin **Price list** (`settings/pricing.items`, flyer defaults).
 - **Payments ↔ vouchers (2026-10-27):** every voucher links to an invoice (`sourceInvoiceId`). Admin records cash/transfer payments (`markInvoicePaid` callable); teachers may still add a term on a student page, which creates a pending invoice for the admin; old vouchers without a payment are shown on the admin dashboard as "Vouchers without payment".
 - Order of work: quick security fixes (done) → emulator (done) → design system → thesis phases in order, rebuilding each screen in the new design as its phase touches it, with ViewModels.
+- **Exercises = packages from the question bank (2026-11-09):** an exercise lists bank worksheets (`bankSheets`) and single questions (`bankQuestionIds`); students see only exercises assigned to them; packages are played through the `startExercise` / `checkExerciseAnswer` / `finishExercise` functions so answer keys never reach the client. Levels stay (they assign several exercises at once). Authoring stays admin-only for now; teachers building packages is a later phase.
+- **UI language:** Indonesian/English switch exists for auth, student and parent screens (`lib/l10n/`); admin and teacher screens are English until their redesign.
 
 ## Never
 - Create a new GitHub repo or Firebase project, or re-run `flutterfire configure`.
@@ -35,7 +37,7 @@ decisions. This app is also the owner's thesis project (see the thesis docs belo
 ## Conventions
 - **Commit author:** `GIT_AUTHOR_NAME="Wilsin Kuonadi" GIT_AUTHOR_EMAIL=wilsinkarimunwkk@gmail.com`
   (and matching `GIT_COMMITTER_*`) per commit. Don't change global git config.
-- **Push notes:** each commit body has a 2–6 bullet plain-language summary. For milestones and deploys, also `gh release create vX.Y.Z` with the same summary (latest: v0.1.7).
+- **Push notes:** each commit body has a 2–6 bullet plain-language summary. For milestones and deploys, also `gh release create vX.Y.Z` with the same summary (latest: v0.1.8).
 - **Change log:** after any code, rules, functions or config change, add an entry at the **top** of `docs/CHANGELOG.md` (What changed / Why / For review).
 - **Session log:** when a session ships something, add a dated entry at the top of `docs/SESSION_LOG.md`. Update `docs/THESIS_FEATURE_AUDIT.md` status when a spec item is finished.
 - **Scoped invariants:** `.claude/rules/*.md` (auth and link codes, exercise authoring admin/web-only, worksheet import web-only). Read the matching file before editing those areas.

@@ -155,8 +155,8 @@ Update this section when you push from Mac or PC.
   the server. Assign dialog, worksheet rename/assign, admin Delete account.
 - Indonesian/English switch for auth, student and parent screens.
 - Admin flow verified on the emulator; student play of a package and the
-  language toggle still to be checked by eye. **Not deployed yet**: needs
-  `firebase deploy --only functions` and the hosting script.
+  language toggle then checked on the emulator. Owner deployed functions
+  and hosting the same evening. Release v0.1.8.
 
 ### 2026-11-09 (later) — Claude: bank by worksheet, Kai font, tables, no difficulty
 

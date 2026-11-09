@@ -60,8 +60,8 @@ edge cases, and any manual/deploy steps still required).
   --project chinese-tracker` then `scripts/deploy_web.sh --web-only`. No
   rules change (students still cannot read `question_bank`; the function
   reads it).
-- Functions deployed by the owner on 2026-11-09 (4 created, 10 updated).
-  Hosting deploy still to run.
+- Functions deployed by the owner on 2026-11-09 (4 created, 10 updated);
+  hosting deployed the same evening (live bundle checked). Release v0.1.8.
 
 ---
 
