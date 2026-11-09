@@ -193,8 +193,9 @@ class QuestionBankSheet {
 
   /// What the row shows: the printed title when known, else the code.
   String get title {
-    if (!isSheet)
+    if (!isSheet) {
       return first.displayText.isEmpty ? '(no prompt)' : first.displayText;
+    }
     for (final item in items) {
       final t = item.sheetTitle;
       if (t != null && t.trim().isNotEmpty) return t.trim();
