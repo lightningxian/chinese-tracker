@@ -96,6 +96,22 @@ class AppLocalizationsId extends AppLocalizations {
   String get languageToggleEnglish => 'English';
 
   @override
+  String get themeRowLabel => 'Tampilan';
+
+  @override
+  String get themeLight => 'Terang';
+
+  @override
+  String get themeDark => 'Gelap';
+
+  @override
+  String get themeSystem => 'Perangkat';
+
+  @override
+  String get themeSystemHint =>
+      'Perangkat: mengikuti pengaturan HP atau komputer Anda.';
+
+  @override
   String get authBrandHeadline => 'Belajar Mandarin,\ndengan mudah.';
 
   @override

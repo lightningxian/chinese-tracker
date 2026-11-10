@@ -51,7 +51,8 @@ class MatchingExerciseEditor extends StatelessWidget {
     });
   }
 
-  static void disposeOptionControllers(List<TextEditingController> controllers) {
+  static void disposeOptionControllers(
+      List<TextEditingController> controllers) {
     for (final controller in controllers) {
       controller.dispose();
     }
@@ -73,7 +74,7 @@ class MatchingExerciseEditor extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Answer bank (A–F)',
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
@@ -81,7 +82,7 @@ class MatchingExerciseEditor extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 4),
-              const Text(
+              Text(
                 'Shared options that students match to each prompt.',
                 style: TextStyle(
                   color: AppColors.textSecondary,
@@ -109,7 +110,7 @@ class MatchingExerciseEditor extends StatelessWidget {
         const SizedBox(height: 16),
         Row(
           children: [
-            const Expanded(
+            Expanded(
               child: Text(
                 'Prompts',
                 style: TextStyle(
@@ -145,7 +146,7 @@ class MatchingExerciseEditor extends StatelessWidget {
                       const Spacer(),
                       if (questions.length > 1)
                         IconButton(
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.delete_outline,
                             color: AppColors.error,
                           ),
@@ -173,9 +174,11 @@ class MatchingExerciseEditor extends StatelessWidget {
                       border: OutlineInputBorder(),
                       isDense: true,
                     ),
-                    items: List.generate(optionControllers.length, (optionIndex) {
+                    items:
+                        List.generate(optionControllers.length, (optionIndex) {
                       final label = String.fromCharCode(65 + optionIndex);
-                      final preview = optionControllers[optionIndex].text.trim();
+                      final preview =
+                          optionControllers[optionIndex].text.trim();
                       return DropdownMenuItem(
                         value: optionIndex,
                         child: Text(

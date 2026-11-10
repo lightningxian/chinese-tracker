@@ -162,7 +162,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
   }
 
   List<AppTableColumn<AppUser>> _buildColumns(BuildContext context) {
-    const metaStyle = TextStyle(
+    final metaStyle = TextStyle(
       fontSize: 12,
       color: AppColors.textSecondary,
     );
@@ -319,7 +319,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
               padding: const EdgeInsets.all(24),
               child: Text(
                 'Could not load users: ${snapshot.error}',
-                style: const TextStyle(color: AppColors.error),
+                style: TextStyle(color: AppColors.error),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -340,7 +340,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                       ? 'No users found. Run scripts/seed_test_accounts.sh '
                           'or check that your admin account has role: admin in Firestore.'
                       : 'No users match your search.',
-                  style: const TextStyle(color: AppColors.textSecondary),
+                  style: TextStyle(color: AppColors.textSecondary),
                 ),
               )
             else
@@ -478,11 +478,11 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
             const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: AppColors.border),
         ),
       ),
     );
@@ -524,11 +524,11 @@ class _SortDropdown extends StatelessWidget {
             const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: AppColors.border),
         ),
       ),
       items: [
@@ -584,11 +584,11 @@ class _FilterDropdown<T> extends StatelessWidget {
             const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: AppColors.border),
         ),
       ),
       items: items.entries
@@ -629,7 +629,7 @@ class _UserNameCell extends StatelessWidget {
                 user.name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
                   color: AppColors.textPrimary,
@@ -639,7 +639,7 @@ class _UserNameCell extends StatelessWidget {
                 user.email,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   color: AppColors.textSecondary,
                 ),
@@ -702,7 +702,7 @@ class _UserMobileCard extends StatelessWidget {
                     ),
                     Text(
                       user.email,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         color: AppColors.textSecondary,
                       ),
@@ -718,19 +718,19 @@ class _UserMobileCard extends StatelessWidget {
             children: [
               Text(
                 joinedLabel,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   color: AppColors.textSecondary,
                 ),
               ),
               if (user.isStudent) ...[
-                const Text(
+                Text(
                   ' · ',
                   style: TextStyle(color: AppColors.textSecondary),
                 ),
                 Text(
                   hskLabel,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     color: AppColors.textSecondary,
                   ),
@@ -821,7 +821,7 @@ class _UserActionsBar extends StatelessWidget {
         SizedBox(width: compact ? 6 : 8),
         IconButton(
           onPressed: onDelete,
-          icon: const Icon(Icons.delete_forever_outlined, color: AppColors.error),
+          icon: Icon(Icons.delete_forever_outlined, color: AppColors.error),
           tooltip: 'Delete account',
           visualDensity: VisualDensity.compact,
         ),
@@ -855,7 +855,7 @@ class _UserEditButton extends StatelessWidget {
           child: InkWell(
             onTap: onPressed,
             borderRadius: BorderRadius.circular(8),
-            child: const SizedBox(
+            child: SizedBox(
               width: 36,
               height: 36,
               child: Icon(

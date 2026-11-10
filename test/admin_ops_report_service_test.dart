@@ -129,18 +129,43 @@ void main() {
     ],
     invoices: [
       invoice('1', 2450000, paidAt: DateTime(2026, 10, 3)),
-      invoice('2', 250000, item: 'book', packageSize: 0, paidAt: DateTime(2026, 10, 15)),
-      invoice('3', 3950000, packageSize: 16, status: InvoiceStatus.pending, dueDate: '2026-10-20'),
+      invoice('2', 250000,
+          item: 'book', packageSize: 0, paidAt: DateTime(2026, 10, 15)),
+      invoice('3', 3950000,
+          packageSize: 16,
+          status: InvoiceStatus.pending,
+          dueDate: '2026-10-20'),
       invoice('4', 2450000, status: InvoiceStatus.pending),
     ],
     assignments: [
-      ExerciseAssignment(id: 'a1', exerciseId: 'ex_1', studentId: 's1', teacherId: 't1', dueDate: DateTime(2026, 10, 20)),
-      ExerciseAssignment(id: 'a2', exerciseId: 'ex_2', studentId: 's1', teacherId: 't1', dueDate: DateTime(2026, 10, 20)),
-      const ExerciseAssignment(id: 'a3', exerciseId: 'ex_1', studentId: 's2', teacherId: 't1'),
+      ExerciseAssignment(
+          id: 'a1',
+          exerciseId: 'ex_1',
+          studentId: 's1',
+          teacherId: 't1',
+          dueDate: DateTime(2026, 10, 20)),
+      ExerciseAssignment(
+          id: 'a2',
+          exerciseId: 'ex_2',
+          studentId: 's1',
+          teacherId: 't1',
+          dueDate: DateTime(2026, 10, 20)),
+      const ExerciseAssignment(
+          id: 'a3', exerciseId: 'ex_1', studentId: 's2', teacherId: 't1'),
     ],
     results: [
-      ExerciseResult(id: 'x1', studentId: 's1', exerciseId: 'ex_2', score: 60, submittedAt: DateTime(2026, 10, 18)),
-      ExerciseResult(id: 'x2', studentId: 's1', exerciseId: 'ex_2', score: 80, submittedAt: DateTime(2026, 10, 21)),
+      ExerciseResult(
+          id: 'x1',
+          studentId: 's1',
+          exerciseId: 'ex_2',
+          score: 60,
+          submittedAt: DateTime(2026, 10, 18)),
+      ExerciseResult(
+          id: 'x2',
+          studentId: 's1',
+          exerciseId: 'ex_2',
+          score: 80,
+          submittedAt: DateTime(2026, 10, 21)),
     ],
   );
 

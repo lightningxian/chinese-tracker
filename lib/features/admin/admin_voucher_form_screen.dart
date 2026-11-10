@@ -161,8 +161,8 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
       _packageSize = term.packageSize;
       _sessionsRemaining = term.sessionsRemaining;
       _startDate = DateTime.tryParse(term.startDate) ?? DateTime.now();
-      _deadlineDate =
-          DateTime.tryParse(term.deadlineDate) ?? _startDate.add(const Duration(days: 90));
+      _deadlineDate = DateTime.tryParse(term.deadlineDate) ??
+          _startDate.add(const Duration(days: 90));
       _loading = false;
     });
   }
@@ -261,7 +261,7 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
               ? Center(
                   child: Text(
                     _error ?? 'Voucher not found',
-                    style: const TextStyle(color: AppColors.error),
+                    style: TextStyle(color: AppColors.error),
                   ),
                 )
               : ListView(
@@ -272,7 +272,7 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Voucher code',
                               style: TextStyle(
                                 fontSize: 12,
@@ -282,7 +282,7 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
                             const SizedBox(height: 6),
                             SelectableText(
                               _term!.voucherCode!,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontFamily: 'monospace',
                                 fontSize: 22,
                                 fontWeight: FontWeight.w700,
@@ -296,8 +296,8 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
                       const SizedBox(height: 16),
                     ],
                     if (!widget.isEditing)
-                      const Padding(
-                        padding: EdgeInsets.only(bottom: 12),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
                         child: Text(
                           'Every voucher belongs to a payment. Pick the '
                           'student, then the invoice that pays for it (or '
@@ -311,7 +311,7 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
                         ),
                       ),
                     if (_error != null) ...[
-                      Text(_error!, style: const TextStyle(color: AppColors.error)),
+                      Text(_error!, style: TextStyle(color: AppColors.error)),
                       const SizedBox(height: 12),
                     ],
                     AppCard(
@@ -400,8 +400,7 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
                                 onChanged: _saving
                                     ? null
                                     : (value) => setState(() {
-                                          _packageSize =
-                                              value ?? _packageSize;
+                                          _packageSize = value ?? _packageSize;
                                           _sessionsRemaining = _packageSize;
                                         }),
                               ),
@@ -413,7 +412,8 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
                                 keyboardType: TextInputType.number,
                                 decoration: InputDecoration(
                                   labelText: 'Sessions remaining',
-                                  prefixIcon: const Icon(Icons.event_available_outlined),
+                                  prefixIcon: const Icon(
+                                      Icons.event_available_outlined),
                                   helperText:
                                       'Of $_packageSize total in this package',
                                 ),
@@ -435,7 +435,8 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
                             OutlinedButton.icon(
                               onPressed:
                                   _saving ? null : () => _pickDate(start: true),
-                              icon: const Icon(Icons.calendar_today_outlined, size: 18),
+                              icon: const Icon(Icons.calendar_today_outlined,
+                                  size: 18),
                               label: Text('Start: ${_formatDate(_startDate)}'),
                               style: OutlinedButton.styleFrom(
                                 alignment: Alignment.centerLeft,
@@ -448,8 +449,8 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
                                   ? null
                                   : () => _pickDate(start: false),
                               icon: const Icon(Icons.event_outlined, size: 18),
-                              label:
-                                  Text('Deadline: ${_formatDate(_deadlineDate)}'),
+                              label: Text(
+                                  'Deadline: ${_formatDate(_deadlineDate)}'),
                               style: OutlinedButton.styleFrom(
                                 alignment: Alignment.centerLeft,
                                 minimumSize: const Size.fromHeight(44),
@@ -493,7 +494,9 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
                                 color: Colors.white,
                               ),
                             )
-                          : Text(widget.isEditing ? 'Save changes' : 'Create voucher'),
+                          : Text(widget.isEditing
+                              ? 'Save changes'
+                              : 'Create voucher'),
                     ),
                   ],
                 ),
@@ -590,9 +593,8 @@ class _PaymentPicker extends StatelessWidget {
                           }
                           onChanged!(match);
                         },
-                  validator: (v) => v == null
-                      ? 'Choose a payment or record a new one'
-                      : null,
+                  validator: (v) =>
+                      v == null ? 'Choose a payment or record a new one' : null,
                 ),
                 const SizedBox(height: 8),
                 Align(

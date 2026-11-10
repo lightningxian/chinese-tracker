@@ -57,8 +57,7 @@ class _AdminEditUserScreenState extends State<AdminEditUserScreen> {
   }
 
   Future<void> _loadUser() async {
-    final user =
-        await context.read<FirestoreService>().getUser(widget.userId);
+    final user = await context.read<FirestoreService>().getUser(widget.userId);
     if (!mounted) return;
 
     if (user == null) {
@@ -130,7 +129,7 @@ class _AdminEditUserScreenState extends State<AdminEditUserScreen> {
               ? Center(
                   child: Text(
                     _error ?? 'User not found',
-                    style: const TextStyle(color: AppColors.error),
+                    style: TextStyle(color: AppColors.error),
                   ),
                 )
               : ListView(
@@ -164,7 +163,7 @@ class _AdminEditUserScreenState extends State<AdminEditUserScreen> {
                     ),
                     if (_error != null) ...[
                       const SizedBox(height: 16),
-                      Text(_error!, style: const TextStyle(color: AppColors.error)),
+                      Text(_error!, style: TextStyle(color: AppColors.error)),
                     ],
                     const SizedBox(height: 16),
                     AppCard(
@@ -185,7 +184,7 @@ class _AdminEditUserScreenState extends State<AdminEditUserScreen> {
                             ),
                             if (user.isStudent) ...[
                               const SizedBox(height: 4),
-                              const Text(
+                              Text(
                                 'Change HSK level to control which practice '
                                 'exercises this murid can access.',
                                 style: TextStyle(

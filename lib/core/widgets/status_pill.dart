@@ -35,22 +35,22 @@ class StatusPill extends StatelessWidget {
 }
 
 class StatusPills {
-  static StatusPill open() => const StatusPill(
+  static StatusPill open() => StatusPill(
         label: 'Open',
         color: AppColors.success,
       );
 
-  static StatusPill closed() => const StatusPill(
+  static StatusPill closed() => StatusPill(
         label: 'Closed',
         color: AppColors.textSecondary,
       );
 
-  static StatusPill full() => const StatusPill(
+  static StatusPill full() => StatusPill(
         label: 'Full',
         color: AppColors.error,
       );
 
-  static StatusPill concluded() => const StatusPill(
+  static StatusPill concluded() => StatusPill(
         label: 'Concluded',
         color: AppColors.navy,
       );

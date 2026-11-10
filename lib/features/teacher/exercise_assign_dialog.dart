@@ -57,7 +57,8 @@ class _ExerciseAssignDialogState extends State<_ExerciseAssignDialog> {
           .toLowerCase()
           .contains(needle);
     }).toList()
-      ..sort((a, b) => a.displayNameIndonesian.compareTo(b.displayNameIndonesian));
+      ..sort(
+          (a, b) => a.displayNameIndonesian.compareTo(b.displayNameIndonesian));
   }
 
   Future<void> _save() async {
@@ -130,14 +131,14 @@ class _ExerciseAssignDialogState extends State<_ExerciseAssignDialog> {
                         children: [
                           Text(
                             'Assign "${widget.exercise.title}"',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
                               color: AppColors.navy,
                             ),
                           ),
                           const SizedBox(height: 4),
-                          const Text(
+                          Text(
                             'Only the students you tick can open this exercise.',
                             style: TextStyle(color: AppColors.textSecondary),
                           ),
@@ -170,7 +171,8 @@ class _ExerciseAssignDialogState extends State<_ExerciseAssignDialog> {
                                       child: Text('All'),
                                     ),
                                     for (final l in AppConstants.hskLevels)
-                                      DropdownMenuItem(value: l, child: Text(l)),
+                                      DropdownMenuItem(
+                                          value: l, child: Text(l)),
                                   ],
                                   onChanged: (v) =>
                                       setState(() => _levelFilter = v),
@@ -185,7 +187,8 @@ class _ExerciseAssignDialogState extends State<_ExerciseAssignDialog> {
                                     ? null
                                     : () => setState(() => _selected
                                         .addAll(students.map((s) => s.uid))),
-                                child: Text('Select all shown (${students.length})'),
+                                child: Text(
+                                    'Select all shown (${students.length})'),
                               ),
                               TextButton(
                                 onPressed: _selected.isEmpty
@@ -199,16 +202,18 @@ class _ExerciseAssignDialogState extends State<_ExerciseAssignDialog> {
                                   final picked = await showDatePicker(
                                     context: context,
                                     initialDate: _dueDate ??
-                                        DateTime.now().add(const Duration(days: 7)),
+                                        DateTime.now()
+                                            .add(const Duration(days: 7)),
                                     firstDate: DateTime.now(),
-                                    lastDate:
-                                        DateTime.now().add(const Duration(days: 365)),
+                                    lastDate: DateTime.now()
+                                        .add(const Duration(days: 365)),
                                   );
                                   if (picked != null) {
                                     setState(() => _dueDate = picked);
                                   }
                                 },
-                                icon: const Icon(Icons.event_outlined, size: 18),
+                                icon:
+                                    const Icon(Icons.event_outlined, size: 18),
                                 label: Text(
                                   _dueDate == null
                                       ? 'No due date'
@@ -262,7 +267,8 @@ class _ExerciseAssignDialogState extends State<_ExerciseAssignDialog> {
                       child: Row(
                         children: [
                           TextButton(
-                            onPressed: _saving ? null : () => Navigator.pop(context),
+                            onPressed:
+                                _saving ? null : () => Navigator.pop(context),
                             child: const Text('Cancel'),
                           ),
                           const Spacer(),
@@ -271,7 +277,9 @@ class _ExerciseAssignDialogState extends State<_ExerciseAssignDialog> {
                             style: FilledButton.styleFrom(
                               backgroundColor: AppColors.navy,
                             ),
-                            icon: const Icon(Icons.assignment_turned_in_outlined, size: 18),
+                            icon: const Icon(
+                                Icons.assignment_turned_in_outlined,
+                                size: 18),
                             label: Text(
                               _saving
                                   ? 'Saving…'

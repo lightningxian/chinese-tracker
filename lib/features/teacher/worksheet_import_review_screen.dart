@@ -55,8 +55,7 @@ class _WorksheetImportReviewScreenState
     _parsed = _parse(widget.extractedText);
     _selectedType = _parsed.suggestedType;
     _textController = TextEditingController(text: widget.extractedText);
-    _instructionsController =
-        TextEditingController(text: _parsed.instructions);
+    _instructionsController = TextEditingController(text: _parsed.instructions);
     WorksheetAnswerKeys.loadBundled().then((keys) {
       if (!mounted) return;
       setState(() {
@@ -177,7 +176,7 @@ class _WorksheetImportReviewScreenState
                 if (widget.fileName != null) ...[
                   Text(
                     widget.fileName!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 13,
                     ),
@@ -198,13 +197,13 @@ class _WorksheetImportReviewScreenState
                     children: [
                       Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.auto_awesome,
                             size: 18,
                             color: AppColors.teal,
                           ),
                           const SizedBox(width: 8),
-                          const Text(
+                          Text(
                             'Detected format',
                             style: TextStyle(
                               fontWeight: FontWeight.w700,
@@ -217,7 +216,7 @@ class _WorksheetImportReviewScreenState
                       const SizedBox(height: 8),
                       Text(
                         _parsed.detectionSummary,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.navy,
                           fontSize: 13,
                           height: 1.45,
@@ -227,7 +226,7 @@ class _WorksheetImportReviewScreenState
                         const SizedBox(height: 6),
                         Text(
                           'Suggested level: ${_parsed.suggestedLevel}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 12,
                           ),
@@ -278,12 +277,12 @@ class _WorksheetImportReviewScreenState
                         color: AppColors.error.withValues(alpha: 0.25),
                       ),
                     ),
-                    child: const Row(
+                    child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Icon(Icons.warning_amber_rounded,
                             color: AppColors.error, size: 20),
-                        SizedBox(width: 10),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: Text(
                             'This exercise type is not fully supported yet. '
@@ -317,7 +316,7 @@ class _WorksheetImportReviewScreenState
           ),
           Container(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: AppColors.card,
               border: Border(top: BorderSide(color: AppColors.border)),
             ),
@@ -332,14 +331,15 @@ class _WorksheetImportReviewScreenState
                   ),
                   const Spacer(),
                   TextButton(
-                    onPressed: () =>
-                        _pop(WorksheetImportReviewAction.cancel),
+                    onPressed: () => _pop(WorksheetImportReviewAction.cancel),
                     child: const Text('Cancel'),
                   ),
                   const SizedBox(width: 8),
                   FilledButton(
-                    onPressed:
-                        _canImport ? () => _pop(WorksheetImportReviewAction.importQuestions) : null,
+                    onPressed: _canImport
+                        ? () =>
+                            _pop(WorksheetImportReviewAction.importQuestions)
+                        : null,
                     style: FilledButton.styleFrom(
                       backgroundColor: AppColors.navy,
                       padding: const EdgeInsets.symmetric(
@@ -429,14 +429,14 @@ class _WorksheetImportReviewScreenState
             _selectedType == ExerciseType.composeSentences
                 ? 'Sentence preview'
                 : 'Question preview',
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w700,
               color: AppColors.navy,
             ),
           ),
           const SizedBox(height: 12),
           if (_previewCount == 0)
-            const Text(
+            Text(
               'No questions detected yet. Edit the text and tap Re-analyze.',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
             )
@@ -447,7 +447,7 @@ class _WorksheetImportReviewScreenState
               padding: const EdgeInsets.only(top: 4),
               child: Text(
                 '…and ${_previewCount - 5} more',
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 12,
                 ),

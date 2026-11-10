@@ -35,8 +35,9 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   Future<void> _loadQuiz() async {
-    final quiz =
-        await context.read<FirestoreService>().getQuizForLesson(widget.lessonId);
+    final quiz = await context
+        .read<FirestoreService>()
+        .getQuizForLesson(widget.lessonId);
     setState(() {
       _quiz = quiz;
       _loading = false;
@@ -182,7 +183,7 @@ class _QuizScreenState extends State<QuizScreen> {
         const SizedBox(height: 8),
         Text(
           'Question ${_currentIndex + 1} of ${_quiz!.questions.length}',
-          style: const TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(color: AppColors.textSecondary),
         ),
         const SizedBox(height: 24),
         Text(
@@ -226,7 +227,8 @@ class _QuizScreenState extends State<QuizScreen> {
                       ? Border.all(color: borderColor, width: 2)
                       : null,
                 ),
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                 child: Row(
                   children: [
                     Container(
@@ -246,8 +248,9 @@ class _QuizScreenState extends State<QuizScreen> {
                         String.fromCharCode(65 + i),
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
-                          color:
-                              selected ? AppColors.teal : AppColors.textSecondary,
+                          color: selected
+                              ? AppColors.teal
+                              : AppColors.textSecondary,
                           fontSize: 15,
                         ),
                       ),

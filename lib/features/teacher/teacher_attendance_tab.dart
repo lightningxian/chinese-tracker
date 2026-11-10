@@ -74,7 +74,7 @@ class _TeacherAttendanceTabState extends State<TeacherAttendanceTab> {
               padding: const EdgeInsets.all(24),
               child: Text(
                 snapshot.error.toString(),
-                style: const TextStyle(color: AppColors.error),
+                style: TextStyle(color: AppColors.error),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -122,11 +122,11 @@ class _TeacherAttendanceTabState extends State<TeacherAttendanceTab> {
                         shape: BoxShape.circle,
                         border: Border.all(color: AppColors.accent),
                       ),
-                      todayTextStyle: const TextStyle(
+                      todayTextStyle: TextStyle(
                         color: AppColors.ink,
                         fontWeight: FontWeight.w700,
                       ),
-                      selectedDecoration: const BoxDecoration(
+                      selectedDecoration: BoxDecoration(
                         color: AppColors.primary,
                         shape: BoxShape.circle,
                       ),
@@ -168,7 +168,7 @@ class _TeacherAttendanceTabState extends State<TeacherAttendanceTab> {
                                 ? 'No classes'
                                 : '${selected.length} class${selected.length == 1 ? '' : 'es'}'
                                     '${openCount < selected.length ? ' · ${selected.length - openCount} concluded' : ''}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 13,
                             ),
@@ -185,8 +185,8 @@ class _TeacherAttendanceTabState extends State<TeacherAttendanceTab> {
                 ),
                 const SizedBox(height: 12),
                 if (selected.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
                     child: Text(
                       'Pick another day, or create a class on this date. '
                       'Dots on the calendar mark days with classes: teal = open, grey = concluded.',
@@ -409,7 +409,7 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
                     student.name.isNotEmpty
                         ? student.name[0].toUpperCase()
                         : '?',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.teal,
                       fontWeight: FontWeight.w700,
                     ),
@@ -575,7 +575,7 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
                               color: AppColors.teal.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.event_outlined,
                               size: 18,
                               color: AppColors.teal,
@@ -596,7 +596,7 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
                                 const SizedBox(height: 2),
                                 Text(
                                   '$dateLabel · ${session.timeRangeLabel}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: AppColors.textSecondary,
                                     fontSize: 12,
                                   ),
@@ -619,7 +619,7 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
                                     padding: const EdgeInsets.only(top: 2),
                                     child: Text(
                                       'Concluded ${DateFormat('d MMM yyyy, HH:mm').format(session.concludedAt!)}',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         color: AppColors.textSecondary,
                                         fontSize: 11,
                                       ),
@@ -678,7 +678,7 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
                             label: const Text('Delete'),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: AppColors.error,
-                              side: const BorderSide(color: AppColors.error),
+                              side: BorderSide(color: AppColors.error),
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 12,
                                 vertical: 8,
@@ -721,7 +721,7 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
                       ),
                       if (!concluded && isFull) ...[
                         const SizedBox(height: 6),
-                        const Text(
+                        Text(
                           'Class is at capacity.',
                           style: TextStyle(
                             color: AppColors.textSecondary,
@@ -734,7 +734,7 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
                       const SizedBox(height: 8),
                       Text(
                         'Students ($joined)',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w600,
                           color: AppColors.navy,
                           fontSize: 13,
@@ -744,10 +744,10 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
                       if (attendanceSnap.hasError)
                         Text(
                           attendanceSnap.error.toString(),
-                          style: const TextStyle(color: AppColors.error),
+                          style: TextStyle(color: AppColors.error),
                         )
                       else if (records.isEmpty)
-                        const Text(
+                        Text(
                           'No students joined yet.',
                           style: TextStyle(
                             color: AppColors.textSecondary,

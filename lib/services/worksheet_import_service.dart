@@ -52,7 +52,8 @@ class WorksheetImportService {
       );
     }
     if (bytes.length > maxBytes) {
-      throw WorksheetImportException('File is too large. Maximum size is 15 MB.');
+      throw WorksheetImportException(
+          'File is too large. Maximum size is 15 MB.');
     }
     if (bytes.isEmpty) {
       throw WorksheetImportException('The selected file is empty.');
@@ -74,11 +75,13 @@ class WorksheetImportService {
     Uint8List bytes,
     void Function(WorksheetImportStage stage)? onProgress,
   ) async {
-    onProgress?.call(WorksheetImportStage.reading(0.02, detail: 'Opening the PDF…'));
+    onProgress
+        ?.call(WorksheetImportStage.reading(0.02, detail: 'Opening the PDF…'));
     final text = await PdfTextReader.extract(
       bytes,
       onProgress: (fraction, detail) {
-        onProgress?.call(WorksheetImportStage.reading(fraction, detail: detail));
+        onProgress
+            ?.call(WorksheetImportStage.reading(fraction, detail: detail));
       },
     );
     return _ensureText(text);
@@ -92,7 +95,8 @@ class WorksheetImportService {
       WorksheetImportStage.reading(0.4, detail: 'Reading the Word document…'),
     );
     final text = DocxTextReader.extract(bytes);
-    onProgress?.call(WorksheetImportStage.reading(0.9, detail: 'Read the Word document'));
+    onProgress?.call(
+        WorksheetImportStage.reading(0.9, detail: 'Read the Word document'));
     return _ensureText(text);
   }
 
@@ -101,12 +105,14 @@ class WorksheetImportService {
     String extension,
     void Function(WorksheetImportStage stage)? onProgress,
   ) async {
-    onProgress?.call(WorksheetImportStage.reading(0.05, detail: 'Photo · starting OCR…'));
+    onProgress?.call(
+        WorksheetImportStage.reading(0.05, detail: 'Photo · starting OCR…'));
     final text = await ocrImageBytes(
       bytes,
       onProgress: (fraction, detail) {
         onProgress?.call(
-          WorksheetImportStage.reading(0.05 + fraction * 0.9, detail: 'Photo · $detail'),
+          WorksheetImportStage.reading(0.05 + fraction * 0.9,
+              detail: 'Photo · $detail'),
         );
       },
     );

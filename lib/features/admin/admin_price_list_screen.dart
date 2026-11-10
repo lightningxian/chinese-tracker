@@ -154,7 +154,7 @@ class _PriceListBodyState extends State<_PriceListBody> {
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        const Text(
+        Text(
           'Everything a payment can be for. Create invoice picks a row from '
           'this list and the server charges exactly this price. Rows that give '
           'class sessions become vouchers when paid.',
@@ -167,7 +167,7 @@ class _PriceListBodyState extends State<_PriceListBody> {
         const SizedBox(height: 16),
         Row(
           children: [
-            const Expanded(
+            Expanded(
               child: Text(
                 'Items',
                 style: TextStyle(
@@ -222,7 +222,7 @@ class _PriceListBodyState extends State<_PriceListBody> {
                       ),
                       Text(
                         'Gives ${item.givesLabel}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 12.5,
                         ),
@@ -232,7 +232,7 @@ class _PriceListBodyState extends State<_PriceListBody> {
                 ),
                 Text(
                   formatRupiah(item.price),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 15,
                     color: AppColors.navy,
@@ -259,8 +259,7 @@ class _PriceListBodyState extends State<_PriceListBody> {
           onTap: _busy ? null : _editValidity,
           child: Row(
             children: [
-              const Icon(Icons.event_available_outlined,
-                  color: AppColors.primary),
+              Icon(Icons.event_available_outlined, color: AppColors.primary),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -273,7 +272,7 @@ class _PriceListBodyState extends State<_PriceListBody> {
                     Text(
                       '${p.termValidDays} days from payment '
                       '(${(p.termValidDays / 30).toStringAsFixed(p.termValidDays % 30 == 0 ? 0 : 1)} months)',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12.5,
                       ),
@@ -281,7 +280,7 @@ class _PriceListBodyState extends State<_PriceListBody> {
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+              Icon(Icons.chevron_right, color: AppColors.textSecondary),
             ],
           ),
         ),
@@ -289,7 +288,7 @@ class _PriceListBodyState extends State<_PriceListBody> {
           const SizedBox(height: 12),
           Text(
             'Last saved ${p.updatedAt!.day}/${p.updatedAt!.month}/${p.updatedAt!.year}',
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 12,
             ),
@@ -355,9 +354,8 @@ class _PriceItemDialogState extends State<_PriceItemDialog> {
         name: _name.text.trim(),
         price: int.parse(_price.text.trim()),
         kind: _kind,
-        sessions: _kind == PriceKind.sessions
-            ? int.parse(_sessions.text.trim())
-            : 0,
+        sessions:
+            _kind == PriceKind.sessions ? int.parse(_sessions.text.trim()) : 0,
       ),
     );
   }

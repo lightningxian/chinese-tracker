@@ -44,15 +44,15 @@ abstract final class TeacherAttentionUtils {
           .where((assignment) => assignment.studentId == student.uid)
           .toList();
       final studentProgress = progress
-          .where((record) => record.studentId == student.uid && record.completed)
+          .where(
+              (record) => record.studentId == student.uid && record.completed)
           .toList();
       final studentResults = exerciseResults
           .where((result) => result.studentId == student.uid)
           .toList();
       final studentBest = ExerciseUtils.bestScores(studentResults);
-      final studentTerms = classTerms
-          .where((term) => term.studentId == student.uid)
-          .toList();
+      final studentTerms =
+          classTerms.where((term) => term.studentId == student.uid).toList();
 
       for (final assignment in studentAssignments) {
         if (studentBest.containsKey(assignment.exerciseId)) continue;
@@ -129,7 +129,9 @@ abstract final class TeacherAttentionUtils {
     items.sort((a, b) {
       final byReason = a.reason.index.compareTo(b.reason.index);
       if (byReason != 0) return byReason;
-      return a.student.name.toLowerCase().compareTo(b.student.name.toLowerCase());
+      return a.student.name
+          .toLowerCase()
+          .compareTo(b.student.name.toLowerCase());
     });
 
     return items;

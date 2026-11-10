@@ -27,8 +27,7 @@ enum AdminDashboardStatKind {
       };
 
   String get description => switch (this) {
-        totalUsers =>
-          'Every account on the platform — admin, guru, and murid.',
+        totalUsers => 'Every account on the platform — admin, guru, and murid.',
         activeMurid => 'Murid accounts that are currently active.',
         exercises =>
           'Practice worksheets that are published and visible to murid.',

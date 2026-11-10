@@ -97,7 +97,7 @@ class LanguageSettingRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const Icon(Icons.translate_outlined, color: AppColors.textSecondary),
+        Icon(Icons.translate_outlined, color: AppColors.textSecondary),
         const SizedBox(width: 12),
         Expanded(
           child: Text(

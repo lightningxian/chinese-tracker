@@ -46,7 +46,7 @@ class StudentHomeTab extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           ProgressUtils.formatStudentLevel(student),
-          style: const TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(color: AppColors.textSecondary),
         ),
         const SizedBox(height: 20),
         StudentHomeTermBalance(studentId: student.uid),
@@ -64,8 +64,8 @@ class StudentHomeTab extends StatelessWidget {
                   color: AppColors.teal.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.calendar_month_outlined,
-                    color: AppColors.teal),
+                child:
+                    Icon(Icons.calendar_month_outlined, color: AppColors.teal),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -77,7 +77,7 @@ class StudentHomeTab extends StatelessWidget {
                   ),
                 ),
               ),
-              const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+              Icon(Icons.chevron_right, color: AppColors.textSecondary),
             ],
           ),
         ),
@@ -93,8 +93,7 @@ class StudentHomeTab extends StatelessWidget {
                   color: AppColors.navy.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.grading_outlined,
-                    color: AppColors.navy),
+                child: Icon(Icons.grading_outlined, color: AppColors.navy),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -106,7 +105,7 @@ class StudentHomeTab extends StatelessWidget {
                   ),
                 ),
               ),
-              const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+              Icon(Icons.chevron_right, color: AppColors.textSecondary),
             ],
           ),
         ),
@@ -122,7 +121,7 @@ class StudentHomeTab extends StatelessWidget {
                   color: AppColors.brandYellow.withValues(alpha: 0.16),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.folder_open_outlined,
+                child: Icon(Icons.folder_open_outlined,
                     color: AppColors.brandYellow),
               ),
               const SizedBox(width: 12),
@@ -135,7 +134,7 @@ class StudentHomeTab extends StatelessWidget {
                   ),
                 ),
               ),
-              const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+              Icon(Icons.chevron_right, color: AppColors.textSecondary),
             ],
           ),
         ),
@@ -156,7 +155,7 @@ class StudentHomeTab extends StatelessWidget {
                   return AppCard(
                     child: Text(
                       exercisesSnap.error.toString(),
-                      style: const TextStyle(color: AppColors.error),
+                      style: TextStyle(color: AppColors.error),
                     ),
                   );
                 }
@@ -171,7 +170,8 @@ class StudentHomeTab extends StatelessWidget {
                   stream: firestore.watchStudentProgress(student.uid),
                   builder: (context, progressSnap) {
                     return StreamBuilder<List<ExerciseResult>>(
-                      stream: firestore.watchStudentExerciseResults(student.uid),
+                      stream:
+                          firestore.watchStudentExerciseResults(student.uid),
                       builder: (context, resultsSnap) {
                         final progressByLesson =
                             ProgressUtils.progressByLessonId(
@@ -307,7 +307,7 @@ class StudentHomeTab extends StatelessWidget {
                                           ),
                                           child: Text(
                                             '${nextLesson.order}',
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontWeight: FontWeight.w700,
                                               color: AppColors.navy,
                                             ),
@@ -324,7 +324,7 @@ class StudentHomeTab extends StatelessWidget {
                                                   nextLesson.termLabel,
                                                   nextLesson.order,
                                                 ),
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   color: AppColors.teal,
                                                   fontWeight: FontWeight.w600,
                                                   fontSize: 12,
@@ -341,7 +341,7 @@ class StudentHomeTab extends StatelessWidget {
                                             ],
                                           ),
                                         ),
-                                        const Icon(
+                                        Icon(
                                           Icons.chevron_right,
                                           color: AppColors.textSecondary,
                                         ),

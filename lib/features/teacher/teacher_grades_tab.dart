@@ -106,8 +106,8 @@ class _TeacherGradesTabState extends State<TeacherGradesTab> {
               ],
               const SectionHeader(title: 'Recorded'),
               if (graded.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                   child: Text(
                     'No recorded grades yet.',
                     style: TextStyle(color: AppColors.textSecondary),
@@ -147,8 +147,8 @@ class _TeacherGradesTabState extends State<TeacherGradesTab> {
     BuildContext context,
     FirestoreService firestore,
   ) {
-    const cellStyle = TextStyle(fontSize: 13, color: AppColors.textPrimary);
-    const metaStyle = TextStyle(fontSize: 12, color: AppColors.textSecondary);
+    final cellStyle = TextStyle(fontSize: 13, color: AppColors.textPrimary);
+    final metaStyle = TextStyle(fontSize: 12, color: AppColors.textSecondary);
     final dateFormat = DateFormat('d MMM yyyy');
 
     return [
@@ -170,7 +170,7 @@ class _TeacherGradesTabState extends State<TeacherGradesTab> {
           grade.title.isEmpty ? grade.category.label : grade.title,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
@@ -198,7 +198,7 @@ class _TeacherGradesTabState extends State<TeacherGradesTab> {
           grade.score != null ? '${grade.score!.round()}' : '—',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w700,
             color: AppColors.navy,
@@ -213,7 +213,7 @@ class _TeacherGradesTabState extends State<TeacherGradesTab> {
           grade.displayLetter ?? '—',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w700,
             color: AppColors.teal,
@@ -287,7 +287,7 @@ class _TeacherGradesTabState extends State<TeacherGradesTab> {
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text(
+            child: Text(
               'Delete',
               style: TextStyle(color: AppColors.error),
             ),
@@ -339,12 +339,12 @@ class _TeacherGradesTabState extends State<TeacherGradesTab> {
 }
 
 class _GradeIconAction extends StatelessWidget {
-  const _GradeIconAction({
+  _GradeIconAction({
     required this.icon,
     required this.tooltip,
     required this.onPressed,
-    this.color = AppColors.navy,
-  });
+    Color? color,
+  }) : color = color ?? AppColors.navy;
 
   final IconData icon;
   final String tooltip;
@@ -419,7 +419,7 @@ class _GradeCard extends StatelessWidget {
                 _StudentLine(studentId: grade.studentId, firestore: firestore),
                 Text(
                   grade.category.label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,
                   ),
@@ -433,7 +433,7 @@ class _GradeCard extends StatelessWidget {
               children: [
                 Text(
                   '${grade.score!.round()}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 18,
                     color: AppColors.navy,
@@ -441,7 +441,7 @@ class _GradeCard extends StatelessWidget {
                 ),
                 Text(
                   grade.displayLetter ?? '',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.teal,
                     fontWeight: FontWeight.w700,
                     fontSize: 12,
@@ -450,7 +450,7 @@ class _GradeCard extends StatelessWidget {
               ],
             )
           else
-            const Text(
+            Text(
               'Add score',
               style: TextStyle(
                 color: AppColors.brandYellow,
@@ -607,7 +607,8 @@ class _GradeFormSheetState extends State<_GradeFormSheet> {
                   stream: firestore.watchAllStudents(),
                   builder: (context, snap) {
                     final authUser = context.read<AuthService>().appUser;
-                    final students = (snap.data ?? const <AppUser>[]).where((s) {
+                    final students =
+                        (snap.data ?? const <AppUser>[]).where((s) {
                       // Admins see every active murid; teachers only their linked ones.
                       if (authUser?.isAdmin == true) return true;
                       return widget.teacherId.isEmpty ||
@@ -677,7 +678,7 @@ class _GradeFormSheetState extends State<_GradeFormSheet> {
                 const SizedBox(height: 12),
                 Text(
                   _error!,
-                  style: const TextStyle(color: AppColors.error, fontSize: 13),
+                  style: TextStyle(color: AppColors.error, fontSize: 13),
                 ),
               ],
               const SizedBox(height: 20),
@@ -707,9 +708,8 @@ class _GradeFormSheetState extends State<_GradeFormSheet> {
                   width: double.infinity,
                   child: TextButton.icon(
                     onPressed: _saving ? null : _confirmDelete,
-                    icon: const Icon(Icons.delete_outline,
-                        color: AppColors.error),
-                    label: const Text('Delete grade',
+                    icon: Icon(Icons.delete_outline, color: AppColors.error),
+                    label: Text('Delete grade',
                         style: TextStyle(color: AppColors.error)),
                   ),
                 ),
@@ -744,8 +744,7 @@ class _GradeFormSheetState extends State<_GradeFormSheet> {
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child:
-                const Text('Delete', style: TextStyle(color: AppColors.error)),
+            child: Text('Delete', style: TextStyle(color: AppColors.error)),
           ),
         ],
       ),

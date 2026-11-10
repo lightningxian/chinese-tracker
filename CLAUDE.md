@@ -25,6 +25,7 @@ decisions. This app is also the owner's thesis project (see the thesis docs belo
 - Order of work: quick security fixes (done) → emulator (done) → design system → thesis phases in order, rebuilding each screen in the new design as its phase touches it, with ViewModels.
 - **Exercises = packages from the question bank (2026-11-09):** an exercise lists bank worksheets (`bankSheets`) and single questions (`bankQuestionIds`); students see only exercises assigned to them; packages are played through the `startExercise` / `checkExerciseAnswer` / `finishExercise` functions so answer keys never reach the client. Levels stay (they assign several exercises at once). Authoring stays admin-only for now; teachers building packages is a later phase.
 - **UI language:** Indonesian/English switch exists for auth, student and parent screens (`lib/l10n/`); admin and teacher screens are English until their redesign.
+- **Dark mode (2026-11-10):** `AppColors.*` are getters over the palette that is on (`AppPalette.light` / `.dark` in `lib/core/theme/app_theme.dart`, switched by `ThemeController`). Never write `const` in front of a widget or style that uses an `AppColors` value (the analyzer will refuse). A new colour goes into **both** palettes. The landing page keeps its own light `LandingBrand` tokens.
 
 ## Never
 - Create a new GitHub repo or Firebase project, or re-run `flutterfire configure`.
@@ -48,8 +49,8 @@ decisions. This app is also the owner's thesis project (see the thesis docs belo
 ```bash
 flutter pub get
 flutter run -d chrome                 # no CONTENT_OWNER_ID needed locally; talks to LIVE Firebase
-flutter analyze                       # baseline: 0 errors, 0 warnings, ~35 infos
-flutter test                          # 7/7 pass
+flutter analyze                       # baseline: 0 errors, 0 warnings, ~18 infos
+flutter test                          # 56 pass
 node --check functions/index.js
 
 # Firestore rules tests (needs Java 21: brew install openjdk@21)

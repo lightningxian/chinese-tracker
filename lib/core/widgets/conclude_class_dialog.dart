@@ -80,7 +80,7 @@ class _ConcludeClassDialogState extends State<ConcludeClassDialog> {
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 6),
-                const Text(
+                Text(
                   'Mark who came. Hadir and Alpa charge 1 session from the '
                   "student's term; Izin (excused before class) is not charged.",
                   style: TextStyle(
@@ -90,7 +90,7 @@ class _ConcludeClassDialogState extends State<ConcludeClassDialog> {
                 ),
                 const SizedBox(height: 12),
                 if (pending.isEmpty)
-                  const Text(
+                  Text(
                     'No students to charge. Concluding only closes the class.',
                     style: TextStyle(color: AppColors.textSecondary),
                   )

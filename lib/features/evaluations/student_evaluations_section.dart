@@ -52,8 +52,8 @@ class StudentEvaluationsSection extends StatelessWidget {
                   ),
                 ),
                 if (!formsOpen)
-                  const Padding(
-                    padding: EdgeInsets.only(bottom: 8),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
                     child: Text(
                       'Evaluation forms are closed. An admin can open them in '
                       'Settings.',
@@ -64,7 +64,7 @@ class StudentEvaluationsSection extends StatelessWidget {
                     ),
                   ),
                 if (evaluations.isEmpty)
-                  const AppCard(
+                  AppCard(
                     child: Text(
                       'No evaluations yet.',
                       style: TextStyle(color: AppColors.textSecondary),
@@ -145,10 +145,10 @@ class _EvaluationRow extends StatelessWidget {
                 ),
               ),
               if (e.rating != null) ...[
-                const Icon(Icons.star, size: 15, color: AppColors.teal),
+                Icon(Icons.star, size: 15, color: AppColors.teal),
                 const SizedBox(width: 2),
                 Text('${e.rating}/5',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w700,
                       color: AppColors.teal,
                     )),
@@ -178,7 +178,7 @@ class _EvaluationRow extends StatelessWidget {
               e.comment,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 13,
               ),
@@ -303,7 +303,7 @@ class _EvaluationEditorSheetState extends State<_EvaluationEditorSheet> {
             children: [
               Text(
                 _isEditing ? 'Edit evaluation' : 'New evaluation',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
                   color: AppColors.navy,
@@ -317,8 +317,8 @@ class _EvaluationEditorSheetState extends State<_EvaluationEditorSheet> {
                     color: AppColors.error.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text(_error!,
-                      style: const TextStyle(color: AppColors.error)),
+                  child:
+                      Text(_error!, style: TextStyle(color: AppColors.error)),
                 ),
                 const SizedBox(height: 12),
               ],
@@ -378,7 +378,7 @@ class _EvaluationEditorSheetState extends State<_EvaluationEditorSheet> {
                       onPressed: _saving ? null : () => _save(publish: false),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.navy,
-                        side: const BorderSide(color: AppColors.border),
+                        side: BorderSide(color: AppColors.border),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
                       child: const Text('Save draft'),
@@ -396,8 +396,7 @@ class _EvaluationEditorSheetState extends State<_EvaluationEditorSheet> {
                           ? const SizedBox(
                               height: 18,
                               width: 18,
-                              child:
-                                  CircularProgressIndicator(strokeWidth: 2),
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Text('Publish'),
                     ),
@@ -408,10 +407,9 @@ class _EvaluationEditorSheetState extends State<_EvaluationEditorSheet> {
                 const SizedBox(height: 8),
                 TextButton.icon(
                   onPressed: _saving ? null : _delete,
-                  icon:
-                      const Icon(Icons.delete_outline, color: AppColors.error),
-                  label: const Text('Delete',
-                      style: TextStyle(color: AppColors.error)),
+                  icon: Icon(Icons.delete_outline, color: AppColors.error),
+                  label:
+                      Text('Delete', style: TextStyle(color: AppColors.error)),
                 ),
               ],
             ],

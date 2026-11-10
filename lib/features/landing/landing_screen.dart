@@ -927,17 +927,17 @@ class _FeaturesSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _Section(
+    return const _Section(
       color: LandingBrand.yellowSoft,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _SectionTitle(
+          _SectionTitle(
             'Everything your class needs',
             sub: 'One place for lessons, homework, attendance and bills.',
           ),
-          const SizedBox(height: 30),
-          const _ResponsiveGrid(
+          SizedBox(height: 30),
+          _ResponsiveGrid(
             children: [
               _FeatureCard(
                 icon: Icons.storefront_outlined,
@@ -1018,13 +1018,13 @@ class _RolesSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _Section(
+    return const _Section(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _SectionTitle('One app for the whole family'),
-          const SizedBox(height: 30),
-          const _ResponsiveGrid(
+          _SectionTitle('One app for the whole family'),
+          SizedBox(height: 30),
+          _ResponsiveGrid(
             children: [
               _RoleCard('Murid', 'Students',
                   'Classes, homework and your HSK progress.'),

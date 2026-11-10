@@ -91,8 +91,7 @@ class AssignedExerciseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final overdue =
-        assignment?.isOverdue == true && bestScore == null;
+    final overdue = assignment?.isOverdue == true && bestScore == null;
     final status = homeworkStatus(
       bestScore: bestScore,
       isOverdue: assignment?.isOverdue ?? false,
@@ -107,9 +106,8 @@ class AssignedExerciseCard extends StatelessWidget {
       HomeworkStatus.done => Icons.check_circle_outline,
       HomeworkStatus.pending => Icons.fitness_center_outlined,
     };
-    final trailingIcon = bestScore == null
-        ? Icons.play_arrow_rounded
-        : Icons.chevron_right;
+    final trailingIcon =
+        bestScore == null ? Icons.play_arrow_rounded : Icons.chevron_right;
 
     return AppCard(
       onTap: onTap,
@@ -176,7 +174,8 @@ class AssignedExerciseCard extends StatelessWidget {
             const SizedBox(width: 8),
             Icon(
               trailingIcon,
-              color: bestScore == null ? AppColors.navy : AppColors.textSecondary,
+              color:
+                  bestScore == null ? AppColors.navy : AppColors.textSecondary,
             ),
           ],
         ],
@@ -296,7 +295,7 @@ Future<void> showExerciseHomeworkProgressDialog({
     builder: (ctx) => AlertDialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: AppColors.border),
+        side: BorderSide(color: AppColors.border),
       ),
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -305,7 +304,7 @@ Future<void> showExerciseHomeworkProgressDialog({
           const SizedBox(height: 4),
           Text(
             exercise.title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: AppColors.textSecondary,
@@ -323,7 +322,7 @@ Future<void> showExerciseHomeworkProgressDialog({
                 children: [
                   Text(
                     '$completed/${rows.length} completed · open to $levelLabel',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w600,
                       color: AppColors.teal,
                     ),
@@ -362,7 +361,7 @@ Future<void> showExerciseHomeworkProgressDialog({
                           trailing: row.bestScore != null
                               ? Text(
                                   '${row.bestScore}%',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.w700,
                                     color: AppColors.success,
                                   ),

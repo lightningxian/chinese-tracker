@@ -30,7 +30,7 @@ class ExportReportCard extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w700,
               fontSize: 16,
               color: AppColors.navy,
@@ -39,7 +39,7 @@ class ExportReportCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             description,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 13,
               height: 1.45,
@@ -52,7 +52,7 @@ class ExportReportCard extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Text(
                   '· $line',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     color: AppColors.textPrimary,
                   ),

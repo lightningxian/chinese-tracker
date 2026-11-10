@@ -25,10 +25,8 @@ abstract final class DocxTextReader {
     final buffer = StringBuffer();
 
     for (final paragraph in document.findAllElements('w:p')) {
-      final line = paragraph
-          .findAllElements('w:t')
-          .map((node) => node.innerText)
-          .join();
+      final line =
+          paragraph.findAllElements('w:t').map((node) => node.innerText).join();
       if (line.trim().isNotEmpty) {
         buffer.writeln(line);
       }

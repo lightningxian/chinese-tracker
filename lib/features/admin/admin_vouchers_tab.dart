@@ -156,8 +156,8 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
     BuildContext context,
     Map<String, String> usersById,
   ) {
-    const cellStyle = TextStyle(fontSize: 13, color: AppColors.textPrimary);
-    const metaStyle = TextStyle(fontSize: 12, color: AppColors.textSecondary);
+    final cellStyle = TextStyle(fontSize: 13, color: AppColors.textPrimary);
+    final metaStyle = TextStyle(fontSize: 12, color: AppColors.textSecondary);
 
     return [
       AppTableColumn<StudentClassTerm>(
@@ -169,7 +169,7 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
           term.voucherCode ?? '—',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'monospace',
             fontSize: 13,
             fontWeight: FontWeight.w700,
@@ -291,7 +291,7 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
         ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
-          side: const BorderSide(color: AppColors.border),
+          side: BorderSide(color: AppColors.border),
         ),
         actions: [
           TextButton(
@@ -363,125 +363,122 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
   ) {
     {
       {
+        final usersById = <String, String>{
+          for (final u in usersSnap.data ?? []) u.uid: u.name,
+        };
+        final terms = _filter(termsSnap.data ?? [], usersById);
 
-            final usersById = <String, String>{
-              for (final u in usersSnap.data ?? []) u.uid: u.name,
-            };
-            final terms = _filter(termsSnap.data ?? [], usersById);
-
-            return ListView(
-              padding: const EdgeInsets.all(_horizontalPadding),
+        return ListView(
+          padding: const EdgeInsets.all(_horizontalPadding),
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(
+                "A voucher is a student's paid term: 8 or 16 class sessions "
+                'with a start date and a deadline, always linked to a '
+                'payment (Payments tab). "Pending payment" means the '
+                'invoice is not settled yet; "No payment" is an older '
+                'voucher created before payments were linked. One session '
+                'is deducted each time a class is concluded.',
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 13,
+                  height: 1.4,
+                ),
+              ),
+            ),
+            TextField(
+              controller: _searchController,
+              onChanged: (value) => setState(() => _query = value),
+              decoration: InputDecoration(
+                hintText: 'Search by code or student…',
+                prefixIcon: const Icon(Icons.search, size: 20),
+                filled: true,
+                fillColor: AppColors.card,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: AppColors.border),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: AppColors.border),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
               children: [
-                const Padding(
-                  padding: EdgeInsets.only(bottom: 12),
-                  child: Text(
-                    "A voucher is a student's paid term: 8 or 16 class sessions "
-                    'with a start date and a deadline, always linked to a '
-                    'payment (Payments tab). "Pending payment" means the '
-                    'invoice is not settled yet; "No payment" is an older '
-                    'voucher created before payments were linked. One session '
-                    'is deducted each time a class is concluded.',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 13,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-                TextField(
-                  controller: _searchController,
-                  onChanged: (value) => setState(() => _query = value),
-                  decoration: InputDecoration(
-                    hintText: 'Search by code or student…',
-                    prefixIcon: const Icon(Icons.search, size: 20),
-                    filled: true,
-                    fillColor: AppColors.card,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: AppColors.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: AppColors.border),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 6,
-                  children: [
-                    for (final (label, value) in <(String, _PaymentState?)>[
-                      ('All', null),
-                      ('Pending payment', _PaymentState.pending),
-                      ('No payment', _PaymentState.none),
-                      ('Paid', _PaymentState.paid),
-                    ])
-                      ChoiceChip(
-                        label: Text(label),
-                        selected: _paymentFilter == value,
-                        onSelected: (_) =>
-                            setState(() => _paymentFilter = value),
-                        selectedColor: AppColors.teal.withValues(alpha: 0.15),
-                        checkmarkColor: AppColors.teal,
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                if (terms.isEmpty)
-                  AppCard(
-                    child: Column(
-                      children: [
-                        const Icon(
-                          Icons.confirmation_number_outlined,
-                          size: 40,
-                          color: AppColors.textSecondary,
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          (termsSnap.data ?? []).isEmpty
-                              ? 'No vouchers yet'
-                              : 'No vouchers match your search',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 16,
-                            color: AppColors.navy,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        const Text(
-                          'Create a voucher to issue session packages with '
-                          'trackable codes like 2026_07_001.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 13,
-                            height: 1.4,
-                          ),
-                        ),
-                        if ((termsSnap.data ?? []).isEmpty) ...[
-                          const SizedBox(height: 16),
-                          FilledButton.icon(
-                            onPressed: () =>
-                                context.push('/admin/vouchers/new'),
-                            style: FilledButton.styleFrom(
-                              backgroundColor: AppColors.navy,
-                            ),
-                            icon: const Icon(Icons.add, size: 18),
-                            label: const Text('New voucher'),
-                          ),
-                        ],
-                      ],
-                    ),
-                  )
-                else
-                  _buildVoucherTable(
-                    context: context,
-                    terms: terms,
-                    usersById: usersById,
+                for (final (label, value) in <(String, _PaymentState?)>[
+                  ('All', null),
+                  ('Pending payment', _PaymentState.pending),
+                  ('No payment', _PaymentState.none),
+                  ('Paid', _PaymentState.paid),
+                ])
+                  ChoiceChip(
+                    label: Text(label),
+                    selected: _paymentFilter == value,
+                    onSelected: (_) => setState(() => _paymentFilter = value),
+                    selectedColor: AppColors.teal.withValues(alpha: 0.15),
+                    checkmarkColor: AppColors.teal,
                   ),
               ],
-            );
+            ),
+            const SizedBox(height: 16),
+            if (terms.isEmpty)
+              AppCard(
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.confirmation_number_outlined,
+                      size: 40,
+                      color: AppColors.textSecondary,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      (termsSnap.data ?? []).isEmpty
+                          ? 'No vouchers yet'
+                          : 'No vouchers match your search',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        color: AppColors.navy,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Create a voucher to issue session packages with '
+                      'trackable codes like 2026_07_001.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                        height: 1.4,
+                      ),
+                    ),
+                    if ((termsSnap.data ?? []).isEmpty) ...[
+                      const SizedBox(height: 16),
+                      FilledButton.icon(
+                        onPressed: () => context.push('/admin/vouchers/new'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.navy,
+                        ),
+                        icon: const Icon(Icons.add, size: 18),
+                        label: const Text('New voucher'),
+                      ),
+                    ],
+                  ],
+                ),
+              )
+            else
+              _buildVoucherTable(
+                context: context,
+                terms: terms,
+                usersById: usersById,
+              ),
+          ],
+        );
       }
     }
   }
@@ -524,7 +521,7 @@ class _VoucherCard extends StatelessWidget {
                   children: [
                     SelectableText(
                       code,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'monospace',
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
@@ -544,7 +541,7 @@ class _VoucherCard extends StatelessWidget {
                     Text(
                       '${term.packageSize} sessions · '
                       '${term.sessionsRemaining} remaining',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 13,
                       ),
@@ -553,7 +550,7 @@ class _VoucherCard extends StatelessWidget {
                     Text(
                       '${displayDate(term.startDate)} → '
                       '${displayDate(term.deadlineDate)}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         color: AppColors.textSecondary,
                       ),
@@ -562,7 +559,7 @@ class _VoucherCard extends StatelessWidget {
                       const SizedBox(height: 6),
                       Text(
                         term.notes!,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           color: AppColors.textSecondary,
                           fontStyle: FontStyle.italic,
@@ -610,12 +607,12 @@ class _VoucherCard extends StatelessWidget {
 }
 
 class _VoucherIconAction extends StatelessWidget {
-  const _VoucherIconAction({
+  _VoucherIconAction({
     required this.icon,
     required this.tooltip,
     required this.onPressed,
-    this.color = AppColors.navy,
-  });
+    Color? color,
+  }) : color = color ?? AppColors.navy;
 
   final IconData icon;
   final String tooltip;

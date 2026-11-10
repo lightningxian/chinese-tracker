@@ -58,8 +58,7 @@ class ResponsiveCardGrid extends StatelessWidget {
       spacing: gap,
       runSpacing: gap,
       children: [
-        for (final child in children)
-          SizedBox(width: itemWidth, child: child),
+        for (final child in children) SizedBox(width: itemWidth, child: child),
       ],
     );
   }

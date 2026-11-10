@@ -46,7 +46,8 @@ class FirestoreService {
   final FirebaseFirestore _db;
 
   Future<AppUser?> getUser(String uid) async {
-    final doc = await _db.collection(AppConstants.usersCollection).doc(uid).get();
+    final doc =
+        await _db.collection(AppConstants.usersCollection).doc(uid).get();
     if (!doc.exists) return null;
     return AppUser.fromFirestore(doc);
   }
@@ -54,7 +55,8 @@ class FirestoreService {
   Future<bool> _currentUserIsAdmin() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return false;
-    final doc = await _db.collection(AppConstants.usersCollection).doc(uid).get();
+    final doc =
+        await _db.collection(AppConstants.usersCollection).doc(uid).get();
     return doc.data()?['role'] == AppConstants.roleAdmin;
   }
 
@@ -83,15 +85,15 @@ class FirestoreService {
         .where('role', isEqualTo: role)
         .snapshots()
         .map((snap) {
-          var users = snap.docs.map(AppUser.fromFirestore).toList();
-          if (activeOnly) {
-            users = users.where((u) => u.active).toList();
-          }
-          users.sort(
-            (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
-          );
-          return users;
-        });
+      var users = snap.docs.map(AppUser.fromFirestore).toList();
+      if (activeOnly) {
+        users = users.where((u) => u.active).toList();
+      }
+      users.sort(
+        (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+      );
+      return users;
+    });
   }
 
   Stream<List<AppUser>> _mergeUserRoleStreams(List<String> roles) {
@@ -174,8 +176,7 @@ class FirestoreService {
     }
     if (nameChinese != null) {
       final trimmed = nameChinese.trim();
-      updates['nameChinese'] =
-          trimmed.isEmpty ? FieldValue.delete() : trimmed;
+      updates['nameChinese'] = trimmed.isEmpty ? FieldValue.delete() : trimmed;
     }
     if (whatsapp != null) {
       final trimmed = whatsapp.trim();
@@ -187,13 +188,11 @@ class FirestoreService {
     }
     if (parentName != null) {
       final trimmed = parentName.trim();
-      updates['parentName'] =
-          trimmed.isEmpty ? FieldValue.delete() : trimmed;
+      updates['parentName'] = trimmed.isEmpty ? FieldValue.delete() : trimmed;
     }
     if (parentPhone != null) {
       final trimmed = parentPhone.trim();
-      updates['parentPhone'] =
-          trimmed.isEmpty ? FieldValue.delete() : trimmed;
+      updates['parentPhone'] = trimmed.isEmpty ? FieldValue.delete() : trimmed;
     }
     if (level != null) {
       updates['level'] = LevelUtils.normalizeHskLevel(level) ?? level;
@@ -204,7 +203,10 @@ class FirestoreService {
       updates['phone'] = trimmed.isEmpty ? FieldValue.delete() : trimmed;
     }
     if (updates.isEmpty) return;
-    await _db.collection(AppConstants.usersCollection).doc(userId).update(updates);
+    await _db
+        .collection(AppConstants.usersCollection)
+        .doc(userId)
+        .update(updates);
   }
 
   Stream<List<StudentProgress>> watchAllStudentProgress() {
@@ -272,8 +274,10 @@ class FirestoreService {
   }
 
   Future<Lesson?> getLesson(String lessonId) async {
-    final doc =
-        await _db.collection(AppConstants.lessonsCollection).doc(lessonId).get();
+    final doc = await _db
+        .collection(AppConstants.lessonsCollection)
+        .doc(lessonId)
+        .get();
     if (!doc.exists) return null;
     return Lesson.fromFirestore(doc);
   }
@@ -283,10 +287,10 @@ class FirestoreService {
         .collection(AppConstants.exercisesCollection)
         .snapshots()
         .map((snap) {
-          final exercises = snap.docs.map(Exercise.fromFirestore).toList();
-          exercises.sort(_compareExercisesByTitle);
-          return exercises;
-        });
+      final exercises = snap.docs.map(Exercise.fromFirestore).toList();
+      exercises.sort(_compareExercisesByTitle);
+      return exercises;
+    });
   }
 
   Stream<List<Exercise>> watchExercises(String contentOwnerId) {
@@ -298,10 +302,10 @@ class FirestoreService {
         .where('teacherId', isEqualTo: contentOwnerId)
         .snapshots()
         .map((snap) {
-          final exercises = snap.docs.map(Exercise.fromFirestore).toList();
-          exercises.sort(_compareExercisesByTitle);
-          return exercises;
-        });
+      final exercises = snap.docs.map(Exercise.fromFirestore).toList();
+      exercises.sort(_compareExercisesByTitle);
+      return exercises;
+    });
   }
 
   static int _compareExercisesByTitle(Exercise a, Exercise b) {
@@ -511,8 +515,7 @@ class FirestoreService {
         .where('exerciseId', isEqualTo: exerciseId)
         .snapshots()
         .map(
-          (snap) =>
-              snap.docs.map(ExerciseAssignment.fromFirestore).toList(),
+          (snap) => snap.docs.map(ExerciseAssignment.fromFirestore).toList(),
         );
   }
 
@@ -524,8 +527,7 @@ class FirestoreService {
         .where('studentId', isEqualTo: studentId)
         .snapshots()
         .map(
-          (snap) =>
-              snap.docs.map(ExerciseAssignment.fromFirestore).toList(),
+          (snap) => snap.docs.map(ExerciseAssignment.fromFirestore).toList(),
         );
   }
 
@@ -579,8 +581,7 @@ class FirestoreService {
         .collection(AppConstants.exerciseAssignmentsCollection)
         .snapshots()
         .map(
-          (snap) =>
-              snap.docs.map(ExerciseAssignment.fromFirestore).toList(),
+          (snap) => snap.docs.map(ExerciseAssignment.fromFirestore).toList(),
         );
   }
 
@@ -598,14 +599,14 @@ class FirestoreService {
         .collection(AppConstants.studentClassTermsCollection)
         .snapshots()
         .map((snap) {
-          final terms = snap.docs.map(StudentClassTerm.fromFirestore).toList();
-          terms.sort((a, b) {
-            final aTime = a.createdAt ?? a.purchasedAt ?? DateTime(1970);
-            final bTime = b.createdAt ?? b.purchasedAt ?? DateTime(1970);
-            return bTime.compareTo(aTime);
-          });
-          return terms;
-        });
+      final terms = snap.docs.map(StudentClassTerm.fromFirestore).toList();
+      terms.sort((a, b) {
+        final aTime = a.createdAt ?? a.purchasedAt ?? DateTime(1970);
+        final bTime = b.createdAt ?? b.purchasedAt ?? DateTime(1970);
+        return bTime.compareTo(aTime);
+      });
+      return terms;
+    });
   }
 
   Future<bool> isExerciseAssignedToStudent({
@@ -641,7 +642,8 @@ class FirestoreService {
           'dueDate': dueDate == null
               ? FieldValue.delete()
               : Timestamp.fromDate(
-                  DateTime(dueDate.year, dueDate.month, dueDate.day, 23, 59, 59),
+                  DateTime(
+                      dueDate.year, dueDate.month, dueDate.day, 23, 59, 59),
                 ),
         },
         SetOptions(merge: true),
@@ -742,8 +744,10 @@ class FirestoreService {
     required List<String> studentIds,
     required String teacherId,
   }) async {
-    final assignments = _db.collection(AppConstants.exerciseAssignmentsCollection);
-    final existing = await assignments.where('levelId', isEqualTo: levelId).get();
+    final assignments =
+        _db.collection(AppConstants.exerciseAssignmentsCollection);
+    final existing =
+        await assignments.where('levelId', isEqualTo: levelId).get();
     final existingIds = {for (final d in existing.docs) d.id};
     final desired = <String, Map<String, dynamic>>{
       for (final e in exerciseIds)
@@ -905,15 +909,14 @@ class FirestoreService {
         .collection(AppConstants.classSessionsCollection)
         .snapshots()
         .map((snap) {
-          final sessions =
-              snap.docs.map(ClassSession.fromFirestore).toList();
-          sessions.sort((a, b) {
-            final byDate = b.sessionDate.compareTo(a.sessionDate);
-            if (byDate != 0) return byDate;
-            return a.startMinutes.compareTo(b.startMinutes);
-          });
-          return sessions;
-        });
+      final sessions = snap.docs.map(ClassSession.fromFirestore).toList();
+      sessions.sort((a, b) {
+        final byDate = b.sessionDate.compareTo(a.sessionDate);
+        if (byDate != 0) return byDate;
+        return a.startMinutes.compareTo(b.startMinutes);
+      });
+      return sessions;
+    });
   }
 
   /// Sessions for one teacher — uses the composite index on
@@ -935,12 +938,15 @@ class FirestoreService {
   Stream<List<ClassSession>> watchSessionsByTeacherIds(
     Iterable<String> teacherIds,
   ) {
-    final ids = teacherIds.where((id) => id.isNotEmpty).toSet().toList()..sort();
+    final ids = teacherIds.where((id) => id.isNotEmpty).toSet().toList()
+      ..sort();
     if (ids.isEmpty) return Stream.value(const []);
     if (ids.length == 1) return watchTeacherSessions(ids.first);
 
     late StreamController<List<ClassSession>> controller;
-    final cache = <String, List<ClassSession>>{for (final id in ids) id: const []};
+    final cache = <String, List<ClassSession>>{
+      for (final id in ids) id: const []
+    };
     final subs = <StreamSubscription<List<ClassSession>>>[];
 
     void emit() {
@@ -989,9 +995,7 @@ class FirestoreService {
         ? watchAllClassSessions()
         : watchTeacherSessions(teacherId);
     return stream.map(
-      (sessions) => sessions
-          .where((s) => s.isOpen && !s.isConcluded)
-          .toList(),
+      (sessions) => sessions.where((s) => s.isOpen && !s.isConcluded).toList(),
     );
   }
 
@@ -1054,7 +1058,10 @@ class FirestoreService {
         ? formatTimeRangeMinutes(startMinutes, endMinutes)
         : sessionTitle.trim();
 
-    await _db.collection(AppConstants.classSessionsCollection).doc(sessionId).update({
+    await _db
+        .collection(AppConstants.classSessionsCollection)
+        .doc(sessionId)
+        .update({
       'sessionDate': sessionDateKey(date),
       'sessionTitle': title,
       'startMinutes': startMinutes,
@@ -1065,8 +1072,7 @@ class FirestoreService {
       'room': (room != null && room.trim().isNotEmpty)
           ? room.trim()
           : FieldValue.delete(),
-      'registrationState':
-          registrationState?.value ?? FieldValue.delete(),
+      'registrationState': registrationState?.value ?? FieldValue.delete(),
     });
   }
 
@@ -1151,13 +1157,13 @@ class FirestoreService {
         .where('studentId', isEqualTo: studentId)
         .snapshots()
         .map((snap) {
-          final records = snap.docs
-              .map(AttendanceRecord.fromFirestore)
-              .where((r) => r.attended || r.joinedByStudent)
-              .toList();
-          records.sort((a, b) => b.sessionDate.compareTo(a.sessionDate));
-          return records;
-        });
+      final records = snap.docs
+          .map(AttendanceRecord.fromFirestore)
+          .where((r) => r.attended || r.joinedByStudent)
+          .toList();
+      records.sort((a, b) => b.sessionDate.compareTo(a.sessionDate));
+      return records;
+    });
   }
 
   Stream<List<StudentClassTerm>> watchStudentClassTerms(String studentId) {
@@ -1166,14 +1172,14 @@ class FirestoreService {
         .where('studentId', isEqualTo: studentId)
         .snapshots()
         .map((snap) {
-          final terms = snap.docs.map(StudentClassTerm.fromFirestore).toList();
-          terms.sort((a, b) {
-            final aTime = a.createdAt ?? a.purchasedAt ?? DateTime(1970);
-            final bTime = b.createdAt ?? b.purchasedAt ?? DateTime(1970);
-            return bTime.compareTo(aTime);
-          });
-          return terms;
-        });
+      final terms = snap.docs.map(StudentClassTerm.fromFirestore).toList();
+      terms.sort((a, b) {
+        final aTime = a.createdAt ?? a.purchasedAt ?? DateTime(1970);
+        final bTime = b.createdAt ?? b.purchasedAt ?? DateTime(1970);
+        return bTime.compareTo(aTime);
+      });
+      return terms;
+    });
   }
 
   int totalRemainingClassSessions(List<StudentClassTerm> terms) {
@@ -1188,17 +1194,17 @@ class FirestoreService {
         .where('studentId', isEqualTo: studentId)
         .snapshots()
         .map((snap) {
-          final records = snap.docs
-              .map(AttendanceRecord.fromFirestore)
-              .where((r) => r.sessionCredited)
-              .toList();
-          records.sort((a, b) {
-            final byDate = b.sessionDate.compareTo(a.sessionDate);
-            if (byDate != 0) return byDate;
-            return b.startMinutes.compareTo(a.startMinutes);
-          });
-          return records;
-        });
+      final records = snap.docs
+          .map(AttendanceRecord.fromFirestore)
+          .where((r) => r.sessionCredited)
+          .toList();
+      records.sort((a, b) {
+        final byDate = b.sessionDate.compareTo(a.sessionDate);
+        if (byDate != 0) return byDate;
+        return b.startMinutes.compareTo(a.startMinutes);
+      });
+      return records;
+    });
   }
 
   /// Groups concluded visits by the term package they were charged to.
@@ -1239,9 +1245,8 @@ class FirestoreService {
 
     final voucherCode = await _generateVoucherCode();
 
-    final doc = await _db
-        .collection(AppConstants.studentClassTermsCollection)
-        .add({
+    final doc =
+        await _db.collection(AppConstants.studentClassTermsCollection).add({
       'studentId': studentId,
       'packageSize': packageSize,
       'sessionsRemaining': packageSize,
@@ -1435,7 +1440,10 @@ class FirestoreService {
       }
     }
 
-    await _db.collection(AppConstants.classSessionsCollection).doc(sessionId).update({
+    await _db
+        .collection(AppConstants.classSessionsCollection)
+        .doc(sessionId)
+        .update({
       'isConcluded': true,
       'isOpen': false,
       'concludedAt': FieldValue.serverTimestamp(),
@@ -1499,8 +1507,9 @@ class FirestoreService {
   }
 
   Future<void> _refundClassSession(String classTermId) async {
-    final ref =
-        _db.collection(AppConstants.studentClassTermsCollection).doc(classTermId);
+    final ref = _db
+        .collection(AppConstants.studentClassTermsCollection)
+        .doc(classTermId);
     await _db.runTransaction((tx) async {
       final snap = await tx.get(ref);
       if (!snap.exists) return;
@@ -1549,8 +1558,7 @@ class FirestoreService {
     }
 
     final docId = '${session.id}_$studentId';
-    final docRef =
-        _db.collection(AppConstants.attendanceCollection).doc(docId);
+    final docRef = _db.collection(AppConstants.attendanceCollection).doc(docId);
     final existing = await docRef.get();
     if (existing.exists) {
       final data = existing.data();
@@ -1614,8 +1622,7 @@ class FirestoreService {
     }
 
     final docId = '${sessionId}_$studentId';
-    final docRef =
-        _db.collection(AppConstants.attendanceCollection).doc(docId);
+    final docRef = _db.collection(AppConstants.attendanceCollection).doc(docId);
     final existing = await docRef.get();
     if (existing.exists) {
       final record = AttendanceRecord.fromFirestore(existing);
@@ -1841,7 +1848,8 @@ class FirestoreService {
     required List<String> studentIds,
     List<String>? teacherIds,
   }) async {
-    final resolvedTeacherIds = teacherIds ?? await _teacherIdsForStudents(studentIds);
+    final resolvedTeacherIds =
+        teacherIds ?? await _teacherIdsForStudents(studentIds);
     await _db.collection(AppConstants.usersCollection).doc(parentId).update({
       'studentIds': studentIds,
       'teacherIds': resolvedTeacherIds,
@@ -1863,8 +1871,7 @@ class FirestoreService {
   /// Ensures the student has a stable [parentCode] that a parent can enter to
   /// link to this child, returning it. Safe to call repeatedly.
   Future<String> ensureParentCode(String studentId) async {
-    final ref =
-        _db.collection(AppConstants.usersCollection).doc(studentId);
+    final ref = _db.collection(AppConstants.usersCollection).doc(studentId);
     final snap = await ref.get();
     final existing = snap.data()?['parentCode'] as String?;
     if (existing != null && existing.isNotEmpty) return existing;
@@ -1946,8 +1953,7 @@ class FirestoreService {
         'gradedAt': FieldValue.serverTimestamp(),
       },
     };
-    final doc =
-        await _db.collection(AppConstants.gradesCollection).add(data);
+    final doc = await _db.collection(AppConstants.gradesCollection).add(data);
     return doc.id;
   }
 
@@ -2009,17 +2015,17 @@ class FirestoreService {
   }
 
   Future<void> updateQuestionBankItem(QuestionBankItem item) async {
-    await _db.collection(AppConstants.questionBankCollection).doc(item.id).update({
+    await _db
+        .collection(AppConstants.questionBankCollection)
+        .doc(item.id)
+        .update({
       ...item.toMap(),
       'updatedAt': FieldValue.serverTimestamp(),
     });
   }
 
   Future<void> deleteQuestionBankItem(String id) async {
-    await _db
-        .collection(AppConstants.questionBankCollection)
-        .doc(id)
-        .delete();
+    await _db.collection(AppConstants.questionBankCollection).doc(id).delete();
   }
 
   /// Delete a whole worksheet (or any set of bank questions) in batches.
@@ -2029,7 +2035,8 @@ class FirestoreService {
     for (var i = 0; i < list.length; i += chunkSize) {
       final batch = _db.batch();
       for (final id in list.skip(i).take(chunkSize)) {
-        batch.delete(_db.collection(AppConstants.questionBankCollection).doc(id));
+        batch.delete(
+            _db.collection(AppConstants.questionBankCollection).doc(id));
       }
       await batch.commit();
     }
@@ -2064,8 +2071,7 @@ class FirestoreService {
     for (var i = 0; i < ids.length; i += chunkSize) {
       final batch = _db.batch();
       for (final id in ids.skip(i).take(chunkSize)) {
-        final ref =
-            _db.collection(AppConstants.questionBankCollection).doc(id);
+        final ref = _db.collection(AppConstants.questionBankCollection).doc(id);
         batch.update(ref, {
           'usageCount': FieldValue.increment(1),
           'lastUsedAt': FieldValue.serverTimestamp(),
@@ -2167,7 +2173,8 @@ class FirestoreService {
 
   Stream<OrgSettings> watchOrgSettings() {
     return _orgSettingsRef.snapshots().map(
-          (doc) => doc.exists ? OrgSettings.fromSnapshot(doc) : OrgSettings.defaults,
+          (doc) =>
+              doc.exists ? OrgSettings.fromSnapshot(doc) : OrgSettings.defaults,
         );
   }
 

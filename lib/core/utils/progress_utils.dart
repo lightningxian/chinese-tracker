@@ -151,8 +151,7 @@ abstract final class ProgressUtils {
         );
       }).toList();
 
-      final completedCount =
-          items.where((item) => item.completed).length;
+      final completedCount = items.where((item) => item.completed).length;
 
       return TermProgress(
         termNumber: entry.key,
@@ -187,8 +186,10 @@ abstract final class ProgressUtils {
       progress.where((item) => item.completed).length;
 
   static int? averageScore(List<StudentProgress> progress) {
-    final scores =
-        progress.where((item) => item.score != null).map((item) => item.score!).toList();
+    final scores = progress
+        .where((item) => item.score != null)
+        .map((item) => item.score!)
+        .toList();
     if (scores.isEmpty) return null;
     return (scores.reduce((a, b) => a + b) / scores.length).round();
   }

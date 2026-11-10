@@ -191,7 +191,7 @@ class _TeacherSessionFormScreenState extends State<TeacherSessionFormScreen> {
                   ),
                   child: Text(
                     _error!,
-                    style: const TextStyle(color: AppColors.error),
+                    style: TextStyle(color: AppColors.error),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -211,14 +211,13 @@ class _TeacherSessionFormScreenState extends State<TeacherSessionFormScreen> {
                 onTap: _pickDate,
                 child: Row(
                   children: [
-                    const Icon(Icons.calendar_today_outlined,
-                        color: AppColors.teal),
+                    Icon(Icons.calendar_today_outlined, color: AppColors.teal),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'Date',
                             style: TextStyle(
                               fontSize: 12,
@@ -227,7 +226,7 @@ class _TeacherSessionFormScreenState extends State<TeacherSessionFormScreen> {
                           ),
                           Text(
                             dateLabel,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.w600,
                               color: AppColors.navy,
                             ),
@@ -235,8 +234,7 @@ class _TeacherSessionFormScreenState extends State<TeacherSessionFormScreen> {
                         ],
                       ),
                     ),
-                    const Icon(Icons.chevron_right,
-                        color: AppColors.textSecondary),
+                    Icon(Icons.chevron_right, color: AppColors.textSecondary),
                   ],
                 ),
               ),
@@ -249,7 +247,7 @@ class _TeacherSessionFormScreenState extends State<TeacherSessionFormScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'Start',
                             style: TextStyle(
                               fontSize: 12,
@@ -258,7 +256,7 @@ class _TeacherSessionFormScreenState extends State<TeacherSessionFormScreen> {
                           ),
                           Text(
                             _startTime.format(context),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.w600,
                               color: AppColors.navy,
                             ),
@@ -274,7 +272,7 @@ class _TeacherSessionFormScreenState extends State<TeacherSessionFormScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'End',
                             style: TextStyle(
                               fontSize: 12,
@@ -283,7 +281,7 @@ class _TeacherSessionFormScreenState extends State<TeacherSessionFormScreen> {
                           ),
                           Text(
                             _endTime.format(context),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.w600,
                               color: AppColors.navy,
                             ),
@@ -295,7 +293,7 @@ class _TeacherSessionFormScreenState extends State<TeacherSessionFormScreen> {
                 ],
               ),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 'Duration',
                 style: TextStyle(
                   fontWeight: FontWeight.w600,

@@ -25,8 +25,22 @@ class MaterialsStorageService {
   static const _maxBytes = 25 * 1024 * 1024;
 
   static const _allowedExtensions = [
-    'pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx',
-    'txt', 'csv', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'mp3', 'mp4',
+    'pdf',
+    'doc',
+    'docx',
+    'ppt',
+    'pptx',
+    'xls',
+    'xlsx',
+    'txt',
+    'csv',
+    'jpg',
+    'jpeg',
+    'png',
+    'gif',
+    'webp',
+    'mp3',
+    'mp4',
   ];
 
   Future<MaterialUpload> pickAndUpload(String ownerId) async {

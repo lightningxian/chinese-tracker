@@ -42,14 +42,15 @@ class WeeklyActivityChart extends StatelessWidget {
           const SizedBox(height: 4),
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Lesson completions and practice submissions',
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                  style:
+                      TextStyle(color: AppColors.textSecondary, fontSize: 13),
                 ),
               ),
               if (onTap != null)
-                const Icon(
+                Icon(
                   Icons.chevron_right,
                   color: AppColors.textSecondary,
                 ),
@@ -71,7 +72,7 @@ class WeeklyActivityChart extends StatelessWidget {
                         if (day.count > 0)
                           Text(
                             '${day.count}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
                               color: AppColors.teal,
@@ -84,14 +85,14 @@ class WeeklyActivityChart extends StatelessWidget {
                           child: Align(
                             alignment: Alignment.bottomCenter,
                             child: FractionallySizedBox(
-                              heightFactor: day.count == 0 ? 0.08 : heightFactor,
+                              heightFactor:
+                                  day.count == 0 ? 0.08 : heightFactor,
                               child: Container(
                                 width: double.infinity,
                                 decoration: BoxDecoration(
                                   color: day.count == 0
                                       ? AppColors.border
-                                      : AppColors.teal
-                                          .withValues(alpha: 0.85),
+                                      : AppColors.teal.withValues(alpha: 0.85),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                               ),
@@ -101,7 +102,7 @@ class WeeklyActivityChart extends StatelessWidget {
                         const SizedBox(height: 6),
                         Text(
                           DateFormat('E').format(day.day),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
                             color: AppColors.textSecondary,
                           ),
@@ -159,7 +160,7 @@ class HomeworkOverviewCard extends StatelessWidget {
                       child: const Text('Quick view'),
                     ),
                     if (onTap != null)
-                      const Icon(
+                      Icon(
                         Icons.chevron_right,
                         color: AppColors.textSecondary,
                       ),
@@ -169,7 +170,7 @@ class HomeworkOverviewCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           if (overview.totalAssigned == 0)
-            const Text(
+            Text(
               'No homework assigned yet. Assign practice from the Exercises tab.',
               style: TextStyle(color: AppColors.textSecondary, height: 1.4),
             )
@@ -196,7 +197,7 @@ class HomeworkOverviewCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               '${overview.completed}/${overview.totalAssigned} assignments completed',
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 13,
               ),
@@ -214,7 +215,7 @@ class HomeworkOverviewCard extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(vertical: 4),
                           child: Row(
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.warning_amber_rounded,
                                 color: AppColors.error,
                                 size: 18,
@@ -229,7 +230,7 @@ class HomeworkOverviewCard extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                              const Icon(
+                              Icon(
                                 Icons.chevron_right,
                                 size: 18,
                                 color: AppColors.textSecondary,
@@ -257,7 +258,7 @@ Future<void> showClassHomeworkOverviewDialog({
     builder: (ctx) => AlertDialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: AppColors.border),
+        side: BorderSide(color: AppColors.border),
       ),
       title: const Text('Homework overview'),
       content: SizedBox(
@@ -270,7 +271,7 @@ Future<void> showClassHomeworkOverviewDialog({
                 children: [
                   Text(
                     '${overview.completed}/${overview.totalAssigned} completed',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w600,
                       color: AppColors.teal,
                     ),
@@ -313,7 +314,7 @@ Future<void> showClassHomeworkOverviewDialog({
                           trailing: row.bestScore != null
                               ? Text(
                                   '${row.bestScore}%',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.w700,
                                     color: AppColors.success,
                                   ),
@@ -397,8 +398,7 @@ class _TeacherActivityFeedState extends State<TeacherActivityFeed> {
                   checkmarkColor: AppColors.teal,
                   labelStyle: TextStyle(
                     color: selected ? AppColors.teal : AppColors.textSecondary,
-                    fontWeight:
-                        selected ? FontWeight.w600 : FontWeight.w500,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                   ),
                 ),
               );
@@ -407,7 +407,7 @@ class _TeacherActivityFeedState extends State<TeacherActivityFeed> {
         ),
         const SizedBox(height: 8),
         if (filtered.isEmpty)
-          const AppCard(
+          AppCard(
             child: Text(
               'No recent activity for this filter.',
               style: TextStyle(color: AppColors.textSecondary),
@@ -431,7 +431,8 @@ class _TeacherActivityFeedState extends State<TeacherActivityFeed> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: _colorForType(event.type).withValues(alpha: 0.12),
+                        color:
+                            _colorForType(event.type).withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
@@ -456,7 +457,7 @@ class _TeacherActivityFeedState extends State<TeacherActivityFeed> {
                             const SizedBox(height: 2),
                             Text(
                               event.subtitle!,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.textSecondary,
                                 fontSize: 13,
                               ),
@@ -465,7 +466,7 @@ class _TeacherActivityFeedState extends State<TeacherActivityFeed> {
                           const SizedBox(height: 4),
                           Text(
                             _formatWhen(event.occurredAt),
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 12,
                             ),
@@ -474,7 +475,7 @@ class _TeacherActivityFeedState extends State<TeacherActivityFeed> {
                       ),
                     ),
                     if (event.studentRoute != null)
-                      const Icon(
+                      Icon(
                         Icons.chevron_right,
                         color: AppColors.textSecondary,
                       ),

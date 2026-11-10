@@ -52,8 +52,9 @@ class TeacherDashboardStatDetailScreen extends StatelessWidget {
         ? firestore.watchTeacherSessions(AppConstants.contentOwnerFor(user))
         : firestore.watchAllClassSessions();
     // Per-teacher model: teachers use contentOwnerFor; admins aggregate below.
-    final teacherOwnerId =
-        user != null && user.isTeacher ? AppConstants.contentOwnerFor(user) : '';
+    final teacherOwnerId = user != null && user.isTeacher
+        ? AppConstants.contentOwnerFor(user)
+        : '';
 
     return ShellNestedPage(
       embedded: embedded,
@@ -68,7 +69,7 @@ class TeacherDashboardStatDetailScreen extends StatelessWidget {
             return Center(
               child: Text(
                 studentsSnap.error.toString(),
-                style: const TextStyle(color: AppColors.error),
+                style: TextStyle(color: AppColors.error),
               ),
             );
           }
@@ -77,8 +78,7 @@ class TeacherDashboardStatDetailScreen extends StatelessWidget {
           final ownerIds = teacherOwnerId.isNotEmpty
               ? <String>{teacherOwnerId}
               : {
-                  for (final s in students)
-                    AppConstants.contentOwnerFor(s),
+                  for (final s in students) AppConstants.contentOwnerFor(s),
                 }.where((id) => id.isNotEmpty).toSet();
 
           return StreamBuilder<List<StudentProgress>>(
@@ -118,9 +118,9 @@ class TeacherDashboardStatDetailScreen extends StatelessWidget {
                                               termsSnap.data ?? [];
                                           final exercises =
                                               exercisesSnap.data ?? [];
-                                          final lessonsByOwnerId =
-                                              lessonsSnap.data ??
-                                                  const <String, List<Lesson>>{};
+                                          final lessonsByOwnerId = lessonsSnap
+                                                  .data ??
+                                              const <String, List<Lesson>>{};
                                           final lessons = lessonsByOwnerId
                                               .values
                                               .expand((e) => e)
@@ -150,9 +150,8 @@ class TeacherDashboardStatDetailScreen extends StatelessWidget {
                                             exerciseResults: results,
                                             classTerms: classTerms,
                                           );
-                                          final rosters =
-                                              TeacherStatsUtils
-                                                  .buildStudentRosters(
+                                          final rosters = TeacherStatsUtils
+                                              .buildStudentRosters(
                                             students: students,
                                             progress: progress,
                                             assignments: assignments,
@@ -253,7 +252,7 @@ class _StatDetailBody extends StatelessWidget {
         AppCard(
           child: Text(
             kind.description,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               height: 1.45,
             ),
@@ -267,8 +266,7 @@ class _StatDetailBody extends StatelessWidget {
 
   List<Widget> _buildContent(BuildContext context) {
     return switch (kind) {
-      TeacherDashboardStatKind.students =>
-        [_rosterList(rosters)],
+      TeacherDashboardStatKind.students => [_rosterList(rosters)],
       TeacherDashboardStatKind.activeThisWeek => [
           _rosterList(_activeRosters()),
         ],
@@ -458,7 +456,7 @@ class _StatDetailBody extends StatelessWidget {
                         const SizedBox(height: 2),
                         Text(
                           row.exerciseTitle,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 13,
                           ),
@@ -484,7 +482,7 @@ class _StatDetailBody extends StatelessWidget {
                   if (row.bestScore != null)
                     Text(
                       '${row.bestScore}%',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w700,
                         color: AppColors.success,
                       ),
@@ -497,7 +495,7 @@ class _StatDetailBody extends StatelessWidget {
                           : AppColors.textSecondary,
                     ),
                   const SizedBox(width: 8),
-                  const Icon(
+                  Icon(
                     Icons.chevron_right,
                     color: AppColors.textSecondary,
                   ),
@@ -544,7 +542,7 @@ class _StatDetailBody extends StatelessWidget {
                         const SizedBox(height: 2),
                         Text(
                           row.subtitle,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 13,
                           ),
@@ -554,14 +552,14 @@ class _StatDetailBody extends StatelessWidget {
                   ),
                   Text(
                     '${row.score}%',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 18,
                       color: AppColors.navy,
                     ),
                   ),
                   const SizedBox(width: 8),
-                  const Icon(
+                  Icon(
                     Icons.chevron_right,
                     color: AppColors.textSecondary,
                   ),
@@ -606,7 +604,7 @@ class _StatDetailBody extends StatelessWidget {
                         ),
                         Text(
                           student.levelLabel,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 13,
                           ),
@@ -622,7 +620,7 @@ class _StatDetailBody extends StatelessWidget {
                         : AppColors.error,
                   ),
                   const SizedBox(width: 8),
-                  const Icon(
+                  Icon(
                     Icons.chevron_right,
                     color: AppColors.textSecondary,
                   ),
@@ -683,7 +681,7 @@ class _StatDetailBody extends StatelessWidget {
                             session.timeRangeLabel,
                             if (session.isConcluded) 'Concluded',
                           ].join(' · '),
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 13,
                           ),
@@ -691,7 +689,7 @@ class _StatDetailBody extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const Icon(
+                  Icon(
                     Icons.chevron_right,
                     color: AppColors.textSecondary,
                   ),
@@ -738,7 +736,7 @@ class _StatDetailBody extends StatelessWidget {
                         style: const TextStyle(fontWeight: FontWeight.w500),
                       ),
                     ),
-                    const Icon(
+                    Icon(
                       Icons.chevron_right,
                       color: AppColors.textSecondary,
                     ),
@@ -776,8 +774,7 @@ class _StatDetailBody extends StatelessWidget {
                   : event.studentRoute != null
                       ? () => context.push(event.studentRoute!)
                       : null,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               child: Row(
                 children: [
                   Expanded(
@@ -792,7 +789,7 @@ class _StatDetailBody extends StatelessWidget {
                           const SizedBox(height: 2),
                           Text(
                             event.subtitle!,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 13,
                             ),
@@ -802,7 +799,7 @@ class _StatDetailBody extends StatelessWidget {
                         Text(
                           DateFormat('EEE d MMM · HH:mm')
                               .format(event.occurredAt),
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 12,
                           ),
@@ -811,7 +808,7 @@ class _StatDetailBody extends StatelessWidget {
                     ),
                   ),
                   if (event.studentRoute != null)
-                    const Icon(
+                    Icon(
                       Icons.chevron_right,
                       color: AppColors.textSecondary,
                     ),

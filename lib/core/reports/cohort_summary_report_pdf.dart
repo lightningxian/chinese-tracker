@@ -16,7 +16,7 @@ abstract final class CohortSummaryReportPdf {
         build: (context) => [
           pw.Text(
             '${AppConstants.brandName} — Centre Summary',
-            style: pw.TextStyle(
+            style: const pw.TextStyle(
               fontSize: 20,
               fontWeight: pw.FontWeight.bold,
             ),
@@ -24,7 +24,7 @@ abstract final class CohortSummaryReportPdf {
           pw.SizedBox(height: 4),
           pw.Text(
             'Generated ${data.generatedAtLabel}',
-            style: pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
+            style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
           ),
           pw.SizedBox(height: 16),
           _sectionTitle('Centre statistics'),
@@ -113,7 +113,7 @@ abstract final class CohortSummaryReportPdf {
   static pw.Widget _sectionTitle(String text) {
     return pw.Text(
       text,
-      style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold),
+      style: const pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold),
     );
   }
 
@@ -129,11 +129,12 @@ abstract final class CohortSummaryReportPdf {
           children: [
             pw.TextSpan(
               text: '$label: ',
-              style: pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
+              style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
             ),
             pw.TextSpan(
               text: value,
-              style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+              style: const pw.TextStyle(
+                  fontSize: 10, fontWeight: pw.FontWeight.bold),
             ),
           ],
         ),

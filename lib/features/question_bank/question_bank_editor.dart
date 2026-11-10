@@ -578,11 +578,11 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
               if (isCloze) ...[
                 const SizedBox(width: 10),
                 SizedBox(
-                  width: 120,
+                  width: 110,
                   child: TextFormField(
                     controller: _blankController,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'Blank no.'),
+                    decoration: const InputDecoration(labelText: 'Blank #'),
                   ),
                 ),
               ],

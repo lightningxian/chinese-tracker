@@ -86,7 +86,8 @@ class PaymentService {
   Future<void> openPayment(String? redirectUrl) async {
     final url = redirectUrl?.trim();
     if (url == null || url.isEmpty) {
-      throw const PaymentException('No payment link available for this invoice.');
+      throw const PaymentException(
+          'No payment link available for this invoice.');
     }
     final uri = Uri.tryParse(url);
     if (uri == null) {

@@ -92,7 +92,7 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
           child: Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Invoices',
                   style: TextStyle(
@@ -173,8 +173,8 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
       symbol: 'Rp ',
       decimalDigits: 0,
     );
-    const cellStyle = TextStyle(fontSize: 13, color: AppColors.textPrimary);
-    const metaStyle = TextStyle(fontSize: 12, color: AppColors.textSecondary);
+    final cellStyle = TextStyle(fontSize: 13, color: AppColors.textPrimary);
+    final metaStyle = TextStyle(fontSize: 12, color: AppColors.textSecondary);
 
     return [
       AppTableColumn<Invoice>(
@@ -186,7 +186,7 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
           invoice.invoiceNumber,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
             color: AppColors.navy,
@@ -423,14 +423,14 @@ class InvoiceCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             '${invoice.itemLabel} · ${currency.format(invoice.amount)}',
-            style: const TextStyle(color: AppColors.textSecondary),
+            style: TextStyle(color: AppColors.textSecondary),
           ),
           const SizedBox(height: 2),
           Text(
             'Invoice ${invoice.invoiceNumber}'
             '${invoice.dueDate.isNotEmpty ? ' · due ${invoice.dueDate}' : ''}'
             ' · ${invoice.methodLabel}',
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 12,
             ),
@@ -448,7 +448,7 @@ class InvoiceCard extends StatelessWidget {
             ),
           ] else if (onPay != null && invoice.isPayable) ...[
             const SizedBox(height: 10),
-            const Text(
+            Text(
               'Pay at the centre by cash or bank transfer. The admin marks it '
               'paid and your sessions are added.',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
@@ -517,12 +517,12 @@ class _InfoBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.info_outline, size: 18, color: AppColors.navy),
+          Icon(Icons.info_outline, size: 18, color: AppColors.navy),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(fontSize: 12, color: AppColors.navy),
+              style: TextStyle(fontSize: 12, color: AppColors.navy),
             ),
           ),
         ],
@@ -559,7 +559,9 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
       setState(() {
         _pricing = p;
         _item = p.itemById(_item?.id) ??
-            (p.items.isNotEmpty ? p.sessionItems.firstOrNull ?? p.items.first : null);
+            (p.items.isNotEmpty
+                ? p.sessionItems.firstOrNull ?? p.items.first
+                : null);
       });
     });
   }
@@ -591,7 +593,7 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
+            Text(
               'Create invoice',
               style: TextStyle(
                 fontSize: 18,
@@ -607,8 +609,7 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
                   color: AppColors.error.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(_error!,
-                    style: const TextStyle(color: AppColors.error)),
+                child: Text(_error!, style: TextStyle(color: AppColors.error)),
               ),
               const SizedBox(height: 12),
             ],
@@ -656,7 +657,7 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
               Text(
                 'Gives ${_item!.givesLabel}. '
                 '${_item!.creditsSessions ? 'A voucher is opened when this is paid.' : ''}',
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 12.5,
                 ),
@@ -686,7 +687,7 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
                       'are added automatically when they pay.'
                   : 'Recorded as pending. When the money arrives, open the '
                       'invoice menu and choose Mark as paid.',
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 12.5,
               ),
@@ -861,7 +862,7 @@ class _RecordPaymentDialogState extends State<_RecordPaymentDialog> {
                       ? 'The linked voucher is marked paid.'
                       : 'A ${inv.sessions}-session voucher is opened for the student.')
                   : 'No sessions are added for this item.',
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 12.5,
               ),

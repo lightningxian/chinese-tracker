@@ -67,7 +67,7 @@ class StudentPaymentsTab extends StatelessWidget {
                     child: Text(
                       context.l10n.studentPaymentsNoInvoices,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: AppColors.textSecondary),
+                      style: TextStyle(color: AppColors.textSecondary),
                     ),
                   )
                 else
@@ -117,8 +117,8 @@ class _QuotaCard extends StatelessWidget {
               color: AppColors.teal.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.confirmation_number_outlined,
-                color: AppColors.teal),
+            child:
+                Icon(Icons.confirmation_number_outlined, color: AppColors.teal),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -135,7 +135,7 @@ class _QuotaCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   context.l10n.studentPaymentsQuotaHint,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,
                   ),

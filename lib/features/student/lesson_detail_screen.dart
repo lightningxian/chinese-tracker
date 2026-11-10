@@ -65,7 +65,7 @@ class LessonDetailScreen extends StatelessWidget {
               ],
               Text(
                 lesson.unit,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.teal,
                   fontWeight: FontWeight.w600,
                 ),
@@ -81,7 +81,7 @@ class LessonDetailScreen extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 lesson.termLabel,
-                style: const TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(color: AppColors.textSecondary),
               ),
               const SizedBox(height: 24),
               SectionHeader(title: l.lessonDetailVocabulary),
@@ -104,12 +104,12 @@ class LessonDetailScreen extends StatelessWidget {
                 AppCard(
                   child: Row(
                     children: [
-                      const Icon(Icons.volume_up_outlined, color: AppColors.teal),
+                      Icon(Icons.volume_up_outlined, color: AppColors.teal),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           lesson.audioUrl!,
-                          style: const TextStyle(color: AppColors.textSecondary),
+                          style: TextStyle(color: AppColors.textSecondary),
                         ),
                       ),
                     ],

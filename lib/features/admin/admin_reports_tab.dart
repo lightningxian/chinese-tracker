@@ -92,7 +92,7 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
           padding: const EdgeInsets.all(24),
           child: Text(
             'Could not load report data: $_error',
-            style: const TextStyle(color: AppColors.error),
+            style: TextStyle(color: AppColors.error),
           ),
         ),
       );
@@ -154,7 +154,7 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
             const SizedBox(height: 6),
             Text(
               'Live numbers for $month. Each PDF covers the last 6 months.',
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 14,
               ),
@@ -185,8 +185,7 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
       _ReportTile(
         number: 1,
         title: 'Attendance per student',
-        description:
-            'Hadir / Izin / Alpa for every student, month by month.',
+        description: 'Hadir / Izin / Alpa for every student, month by month.',
         stats: [
           ('Students', '${attendance.rows.length}'),
           ('Present', '${attendance.presentPercent}%'),
@@ -197,11 +196,13 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
       _ReportTile(
         number: 4,
         title: 'New students & retention',
-        description:
-            'Sign-ups per month and how many are still active today.',
+        description: 'Sign-ups per month and how many are still active today.',
         stats: [
           ('New this month', '${retention.newThisMonth}'),
-          ('Active', '${retention.activeStudents} / ${retention.totalStudents}'),
+          (
+            'Active',
+            '${retention.activeStudents} / ${retention.totalStudents}'
+          ),
           ('Retention', '${retention.retentionPercent}%'),
         ],
         onExport: () => export.exportPdf(AdminExportReport.studentRetention),
@@ -213,7 +214,10 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
             'Exercises assigned and done, average best score, no activity.',
         stats: [
           ('Students', '$students'),
-          ('Done', assigned == 0 ? '—' : '${(completed * 100 / assigned).round()}%'),
+          (
+            'Done',
+            assigned == 0 ? '—' : '${(completed * 100 / assigned).round()}%'
+          ),
           ('No activity', '${levels.fold(0, (s, l) => s + l.inactive)}'),
         ],
         onExport: () => export.exportPdf(AdminExportReport.progressByLevel),
@@ -221,8 +225,7 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
       _ReportTile(
         number: 8,
         title: 'Overdue homework',
-        description:
-            'Past-due assignments without a submission, per teacher.',
+        description: 'Past-due assignments without a submission, per teacher.',
         stats: [
           ('Overdue', '${overdue.total}'),
           ('Open', '${overdue.open}'),
@@ -312,8 +315,7 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
     final thisMonthStudents = report.newStudentsByMonth.isEmpty
         ? 0
         : report.newStudentsByMonth.last.count;
-    final sixMonths =
-        report.newStudentsByMonth.fold(0, (s, m) => s + m.count);
+    final sixMonths = report.newStudentsByMonth.fold(0, (s, m) => s + m.count);
     return [
       _ReportTile(
         number: 9,
@@ -400,7 +402,7 @@ class _ReportTile extends StatelessWidget {
                 ),
                 child: Text(
                   '$number',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 13,
                     color: AppColors.navy,
@@ -414,7 +416,7 @@ class _ReportTile extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 15,
                         color: AppColors.navy,
@@ -425,7 +427,7 @@ class _ReportTile extends StatelessWidget {
                       description,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12.5,
                         height: 1.35,
@@ -438,7 +440,8 @@ class _ReportTile extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: onExport,
                 style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   visualDensity: VisualDensity.compact,
                 ),
                 icon: const Icon(Icons.picture_as_pdf_outlined, size: 16),
@@ -471,7 +474,7 @@ class _ReportTile extends StatelessWidget {
                           stats[i].$2,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.w700,
                             fontSize: 16,
                             color: AppColors.navy,
@@ -481,7 +484,7 @@ class _ReportTile extends StatelessWidget {
                           stats[i].$1,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 11.5,
                           ),

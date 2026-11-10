@@ -67,7 +67,8 @@ class MaterialsScreen extends StatelessWidget {
               readOnly: readOnly,
               onEdit: readOnly
                   ? null
-                  : () => _openEditor(context, ownerId: ownerId, item: items[i]),
+                  : () =>
+                      _openEditor(context, ownerId: ownerId, item: items[i]),
             ),
           );
         },
@@ -146,7 +147,7 @@ class _MaterialCard extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               meta,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 12,
               ),
@@ -156,13 +157,13 @@ class _MaterialCard extends StatelessWidget {
             const SizedBox(height: 6),
             Row(
               children: [
-                const Icon(Icons.attach_file,
+                Icon(Icons.attach_file,
                     size: 14, color: AppColors.textSecondary),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
                     item.fileName!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.teal,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -387,7 +388,7 @@ class _MaterialEditorSheetState extends State<_MaterialEditorSheet> {
             children: [
               Text(
                 _isEditing ? 'Edit material' : 'Add material',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
                   color: AppColors.navy,
@@ -401,8 +402,8 @@ class _MaterialEditorSheetState extends State<_MaterialEditorSheet> {
                     color: AppColors.error.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text(_error!,
-                      style: const TextStyle(color: AppColors.error)),
+                  child:
+                      Text(_error!, style: TextStyle(color: AppColors.error)),
                 ),
                 const SizedBox(height: 12),
               ],
@@ -464,7 +465,7 @@ class _MaterialEditorSheetState extends State<_MaterialEditorSheet> {
                   padding: const EdgeInsets.only(top: 6),
                   child: Text(
                     _fileName!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 12,
                     ),
@@ -500,9 +501,9 @@ class _MaterialEditorSheetState extends State<_MaterialEditorSheet> {
                 const SizedBox(height: 8),
                 TextButton.icon(
                   onPressed: _saving ? null : _delete,
-                  icon: const Icon(Icons.delete_outline, color: AppColors.error),
-                  label: const Text('Delete',
-                      style: TextStyle(color: AppColors.error)),
+                  icon: Icon(Icons.delete_outline, color: AppColors.error),
+                  label:
+                      Text('Delete', style: TextStyle(color: AppColors.error)),
                 ),
               ],
             ],

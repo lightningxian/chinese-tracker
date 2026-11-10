@@ -46,7 +46,7 @@ class AdminDashboardStatDetailScreen extends StatelessWidget {
             return Center(
               child: Text(
                 usersSnap.error.toString(),
-                style: const TextStyle(color: AppColors.error),
+                style: TextStyle(color: AppColors.error),
               ),
             );
           }
@@ -114,7 +114,7 @@ class _AdminStatDetailBody extends StatelessWidget {
         AppCard(
           child: Text(
             kind.description,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               height: 1.45,
             ),
@@ -242,7 +242,7 @@ class _AdminStatDetailBody extends StatelessWidget {
                         ),
                         Text(
                           user.email,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 13,
                           ),
@@ -256,14 +256,14 @@ class _AdminStatDetailBody extends StatelessWidget {
                   ),
                   if (!user.active) ...[
                     const SizedBox(width: 6),
-                    const StatusPill(
+                    StatusPill(
                       label: 'Inactive',
                       color: AppColors.textSecondary,
                     ),
                   ],
                   if (routes.userEdit != null) ...[
                     const SizedBox(width: 8),
-                    const Icon(
+                    Icon(
                       Icons.chevron_right,
                       color: AppColors.textSecondary,
                     ),
@@ -317,7 +317,7 @@ class _AdminStatDetailBody extends StatelessWidget {
                             exercise.skillCategory.label,
                             '${exercise.questions.length} questions',
                           ].join(' · '),
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 13,
                           ),
@@ -325,13 +325,13 @@ class _AdminStatDetailBody extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const StatusPill(
+                  StatusPill(
                     label: 'Published',
                     color: AppColors.success,
                   ),
                   if (routes.exerciseEdit != null) ...[
                     const SizedBox(width: 8),
-                    const Icon(
+                    Icon(
                       Icons.chevron_right,
                       color: AppColors.textSecondary,
                     ),
@@ -385,7 +385,7 @@ class _AdminStatDetailBody extends StatelessWidget {
                         ),
                         Text(
                           student.level ?? 'Murid',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 13,
                           ),
@@ -397,14 +397,14 @@ class _AdminStatDetailBody extends StatelessWidget {
                     student.createdAt == null
                         ? '—'
                         : DateFormat('d MMM yyyy').format(student.createdAt!),
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 13,
                     ),
                   ),
                   if (routes.userEdit != null) ...[
                     const SizedBox(width: 8),
-                    const Icon(
+                    Icon(
                       Icons.chevron_right,
                       color: AppColors.textSecondary,
                     ),

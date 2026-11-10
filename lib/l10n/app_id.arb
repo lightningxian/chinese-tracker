@@ -28,6 +28,11 @@
   "languageRowLabel": "Bahasa / Language",
   "languageToggleIndonesian": "Bahasa Indonesia",
   "languageToggleEnglish": "English",
+  "themeRowLabel": "Tampilan",
+  "themeLight": "Terang",
+  "themeDark": "Gelap",
+  "themeSystem": "Perangkat",
+  "themeSystemHint": "Perangkat: mengikuti pengaturan HP atau komputer Anda.",
 
   "authBrandHeadline": "Belajar Mandarin,\ndengan mudah.",
 

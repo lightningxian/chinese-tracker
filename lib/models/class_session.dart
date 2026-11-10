@@ -67,6 +67,7 @@ class ClassSession {
   final int endMinutes;
   final int capacity;
   final bool isOpen;
+
   /// When true, class has ended and joined students were charged a session.
   final bool isConcluded;
 
@@ -83,7 +84,8 @@ class ClassSession {
   /// True when students should be able to see/join this class for registration.
   bool get isOpenForRegistration => registrationState == RegistrationState.open;
 
-  factory ClassSession.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory ClassSession.fromFirestore(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? {};
     return ClassSession(
       id: doc.id,
@@ -117,7 +119,8 @@ class ClassSession {
         if (room != null && room!.isNotEmpty) 'room': room,
         if (registrationState != null)
           'registrationState': registrationState!.value,
-        if (concludedAt != null) 'concludedAt': Timestamp.fromDate(concludedAt!),
+        if (concludedAt != null)
+          'concludedAt': Timestamp.fromDate(concludedAt!),
         'createdAt': createdAt != null
             ? Timestamp.fromDate(createdAt!)
             : FieldValue.serverTimestamp(),

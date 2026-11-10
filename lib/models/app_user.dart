@@ -27,9 +27,11 @@ class AppUser {
 
   final String uid;
   final String email;
+
   /// Primary display name (usually Indonesian name).
   final String name;
   final String role;
+
   /// Links this student to lesson/session content in Firestore.
   final String? teacherId;
   final String? level;
@@ -40,10 +42,13 @@ class AppUser {
   final String? photoUrl;
   final String? parentName;
   final String? parentPhone;
+
   /// Legacy phone field — prefer [whatsapp].
   final String? phone;
+
   /// Children linked to a [AppConstants.roleParent] account.
   final List<String> studentIds;
+
   /// Stable 6-char code a parent enters to link to this student.
   final String? parentCode;
   final DateTime? createdAt;

@@ -70,7 +70,7 @@ class _WorksheetImportProgressDialogState
           children: [
             Row(
               children: [
-                const Icon(Icons.insert_drive_file_outlined, color: AppColors.teal),
+                Icon(Icons.insert_drive_file_outlined, color: AppColors.teal),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -97,7 +97,7 @@ class _WorksheetImportProgressDialogState
                 Expanded(
                   child: Text(
                     timing,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 12,
                     ),
@@ -105,7 +105,7 @@ class _WorksheetImportProgressDialogState
                 ),
                 Text(
                   '${(fraction * 100).round()}%',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,
                   ),
@@ -115,7 +115,7 @@ class _WorksheetImportProgressDialogState
             const SizedBox(height: 12),
             Text(
               stage.label,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.navy,
                 fontWeight: FontWeight.w600,
               ),
@@ -124,7 +124,7 @@ class _WorksheetImportProgressDialogState
               const SizedBox(height: 4),
               Text(
                 stage.detail!,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 13,
                 ),
@@ -156,7 +156,8 @@ class _WorksheetImportProgressDialogState
                         WorksheetImportStage.steps[index],
                         style: TextStyle(
                           color: color,
-                          fontWeight: active ? FontWeight.w600 : FontWeight.normal,
+                          fontWeight:
+                              active ? FontWeight.w600 : FontWeight.normal,
                           fontSize: 13,
                         ),
                       ),
@@ -166,7 +167,7 @@ class _WorksheetImportProgressDialogState
               );
             }),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Text PDFs and Word files take a few seconds. Scanned pages and '
               'photos take 20–40 seconds each; the first scan also downloads '
               'the Chinese OCR data (about 15 MB).',

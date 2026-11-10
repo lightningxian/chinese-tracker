@@ -123,8 +123,8 @@ class _StudentRosterListState extends State<StudentRosterList> {
           ),
           const SizedBox(height: 14),
           if (rows.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 32),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 32),
               child: Center(
                 child: Text(
                   'No students match this search.',
@@ -207,8 +207,8 @@ class _StudentRosterListState extends State<StudentRosterList> {
                   sortable: true,
                   cell: (s) => Text(
                     s.lastActivityLabel,
-                    style: const TextStyle(
-                        fontSize: 13, color: AppColors.textSecondary),
+                    style:
+                        TextStyle(fontSize: 13, color: AppColors.textSecondary),
                   ),
                 ),
                 AppTableColumn(
@@ -216,7 +216,7 @@ class _StudentRosterListState extends State<StudentRosterList> {
                   label: '',
                   width: 32,
                   alignment: Alignment.centerRight,
-                  cell: (_) => const Icon(Icons.chevron_right,
+                  cell: (_) => Icon(Icons.chevron_right,
                       size: 18, color: AppColors.textSecondary),
                 ),
               ],
@@ -322,7 +322,7 @@ class _StudentIdentity extends StatelessWidget {
           backgroundColor: AppColors.accentSoft,
           child: Text(
             initial,
-            style: const TextStyle(
+            style: TextStyle(
                 color: AppColors.primary,
                 fontWeight: FontWeight.w700,
                 fontSize: 14),
@@ -344,8 +344,7 @@ class _StudentIdentity extends StatelessWidget {
                 student.levelLabel,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                    fontSize: 12, color: AppColors.textSecondary),
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
               ),
             ],
           ),
@@ -396,8 +395,7 @@ class _StudentRosterCard extends StatelessWidget {
           const SizedBox(width: 10),
           _SessionsPill(remaining: student.sessionsRemaining),
           const SizedBox(width: 4),
-          const Icon(Icons.chevron_right,
-              color: AppColors.textSecondary, size: 18),
+          Icon(Icons.chevron_right, color: AppColors.textSecondary, size: 18),
         ],
       ),
       // Secondary line is folded into the identity's level label on phones to
@@ -580,7 +578,7 @@ class _StatTile extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               color: AppColors.textSecondary,
             ),
@@ -698,7 +696,7 @@ class CohortExportActions extends StatelessWidget {
                           ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
+                    Text(
                       'Export centre summaries and worksheet inventory for your records.',
                       style: TextStyle(
                         color: AppColors.textSecondary,

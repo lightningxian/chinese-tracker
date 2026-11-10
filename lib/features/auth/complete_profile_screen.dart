@@ -114,13 +114,13 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                 Text(
                   l.completeProfileMissing,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.textSecondary),
+                  style: TextStyle(color: AppColors.textSecondary),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   email,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 13,
                   ),
@@ -135,7 +135,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                     ),
                     child: Text(
                       _error!,
-                      style: const TextStyle(color: AppColors.error),
+                      style: TextStyle(color: AppColors.error),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -185,7 +185,8 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                                     child: Text(l),
                                   ))
                               .toList(),
-                          onChanged: (v) => setState(() => _level = v ?? _level),
+                          onChanged: (v) =>
+                              setState(() => _level = v ?? _level),
                         ),
                         const SizedBox(height: 16),
                         DropdownButtonFormField<int>(
@@ -198,7 +199,8 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                           items: AppConstants.termSizes
                               .map((size) => DropdownMenuItem(
                                     value: size,
-                                    child: Text(l.commonLessonsPerTermOption(size)),
+                                    child: Text(
+                                        l.commonLessonsPerTermOption(size)),
                                   ))
                               .toList(),
                           onChanged: (v) =>

@@ -216,7 +216,8 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _forgotPassword() async {
-    final emailController = TextEditingController(text: _manualEmail.text.trim());
+    final emailController =
+        TextEditingController(text: _manualEmail.text.trim());
     final email = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -275,7 +276,8 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final savedService = context.watch<SavedAccountsService>();
-    final entries = savedService.isLoaded ? savedService.buildLoginList() : null;
+    final entries =
+        savedService.isLoaded ? savedService.buildLoginList() : null;
     final l = context.l10n;
 
     return AuthScaffold(
@@ -288,114 +290,111 @@ class _LoginScreenState extends State<LoginScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (entries == null)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 48),
-                      child: Center(child: CircularProgressIndicator()),
-                    )
-                  else if (entries.isEmpty)
-                    _EmptyAccountsHint(
-                      onAddAccount: () =>
-                          setState(() => _showManualForm = true),
-                    )
-                  else
-                    Card(
-                      clipBehavior: Clip.antiAlias,
-                      child: Column(
-                        children: [
-                          for (var i = 0; i < entries.length; i++) ...[
-                            if (i > 0) const Divider(height: 1),
-                            _AccountTile(
-                              entry: entries[i],
-                              loading: _signingInEmail ==
-                                  entries[i].account.email,
-                              onTap: () => _onAccountTap(entries[i]),
-                              onRemove: entries[i].demo == null
-                                  ? () => _onRemoveAccount(entries[i].account)
-                                  : null,
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  const SizedBox(height: 16),
-                  if (!_showManualForm)
-                    OutlinedButton.icon(
-                      onPressed: () => setState(() => _showManualForm = true),
-                      icon: const Icon(Icons.person_add_outlined),
-                      label: Text(l.loginWithAnotherEmail),
-                    )
-                  else ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      l.loginAnotherAccount,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            color: AppColors.navy,
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _manualEmail,
-                      keyboardType: TextInputType.emailAddress,
-                      autofillHints: const [AutofillHints.email],
-                      decoration: InputDecoration(
-                        labelText: l.commonEmail,
-                        border: const OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _manualPassword,
-                      obscureText: true,
-                      autofillHints: const [AutofillHints.password],
-                      decoration: InputDecoration(
-                        labelText: l.commonPassword,
-                        border: const OutlineInputBorder(),
-                      ),
-                      onSubmitted: (_) => _manualSignIn(),
-                    ),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: _forgotPassword,
-                        child: Text(l.loginForgotPassword),
-                      ),
-                    ),
-                    CheckboxListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(l.commonRememberDevice),
-                      value: _manualRemember,
-                      onChanged: (v) =>
-                          setState(() => _manualRemember = v ?? true),
-                      controlAffinity: ListTileControlAffinity.leading,
-                    ),
-                    const SizedBox(height: 8),
-                    FilledButton(
-                      onPressed: _manualLoading ? null : _manualSignIn,
-                      child: _manualLoading
-                          ? const SizedBox(
-                              height: 22,
-                              width: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : Text(l.commonSignIn),
-                    ),
-                    TextButton(
-                      onPressed: () => setState(() => _showManualForm = false),
-                      child: Text(l.loginBackToAccountList),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 48),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (entries.isEmpty)
+            _EmptyAccountsHint(
+              onAddAccount: () => setState(() => _showManualForm = true),
+            )
+          else
+            Card(
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                children: [
+                  for (var i = 0; i < entries.length; i++) ...[
+                    if (i > 0) const Divider(height: 1),
+                    _AccountTile(
+                      entry: entries[i],
+                      loading: _signingInEmail == entries[i].account.email,
+                      onTap: () => _onAccountTap(entries[i]),
+                      onRemove: entries[i].demo == null
+                          ? () => _onRemoveAccount(entries[i].account)
+                          : null,
                     ),
                   ],
-                  const SizedBox(height: 8),
-                  TextButton(
-                    onPressed: () => context.push('/register'),
-                    child: Text(l.commonCreateNewAccount),
-                  ),
-                  if (kDebugMode)
-                    TextButton(
-                      onPressed: () => context.go('/dev-login'),
-                      child: Text(l.loginBackToTestLogin),
-                    ),
                 ],
+              ),
+            ),
+          const SizedBox(height: 16),
+          if (!_showManualForm)
+            OutlinedButton.icon(
+              onPressed: () => setState(() => _showManualForm = true),
+              icon: const Icon(Icons.person_add_outlined),
+              label: Text(l.loginWithAnotherEmail),
+            )
+          else ...[
+            const SizedBox(height: 8),
+            Text(
+              l.loginAnotherAccount,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: AppColors.navy,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _manualEmail,
+              keyboardType: TextInputType.emailAddress,
+              autofillHints: const [AutofillHints.email],
+              decoration: InputDecoration(
+                labelText: l.commonEmail,
+                border: const OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _manualPassword,
+              obscureText: true,
+              autofillHints: const [AutofillHints.password],
+              decoration: InputDecoration(
+                labelText: l.commonPassword,
+                border: const OutlineInputBorder(),
+              ),
+              onSubmitted: (_) => _manualSignIn(),
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: _forgotPassword,
+                child: Text(l.loginForgotPassword),
+              ),
+            ),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(l.commonRememberDevice),
+              value: _manualRemember,
+              onChanged: (v) => setState(() => _manualRemember = v ?? true),
+              controlAffinity: ListTileControlAffinity.leading,
+            ),
+            const SizedBox(height: 8),
+            FilledButton(
+              onPressed: _manualLoading ? null : _manualSignIn,
+              child: _manualLoading
+                  ? const SizedBox(
+                      height: 22,
+                      width: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Text(l.commonSignIn),
+            ),
+            TextButton(
+              onPressed: () => setState(() => _showManualForm = false),
+              child: Text(l.loginBackToAccountList),
+            ),
+          ],
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: () => context.push('/register'),
+            child: Text(l.commonCreateNewAccount),
+          ),
+          if (kDebugMode)
+            TextButton(
+              onPressed: () => context.go('/dev-login'),
+              child: Text(l.loginBackToTestLogin),
+            ),
+        ],
       ),
     );
   }

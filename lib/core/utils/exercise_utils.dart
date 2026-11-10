@@ -24,7 +24,8 @@ abstract final class ExerciseUtils {
     return counts;
   }
 
-  static Map<String, ExerciseResult> latestResults(List<ExerciseResult> results) {
+  static Map<String, ExerciseResult> latestResults(
+      List<ExerciseResult> results) {
     final latest = <String, ExerciseResult>{};
     for (final result in results) {
       final existing = latest[result.exerciseId];
@@ -57,8 +58,7 @@ abstract final class ExerciseUtils {
     String exerciseId,
     List<ExerciseResult> results,
   ) {
-    final filtered =
-        results.where((r) => r.exerciseId == exerciseId).toList();
+    final filtered = results.where((r) => r.exerciseId == exerciseId).toList();
     return bestScores(filtered);
   }
 

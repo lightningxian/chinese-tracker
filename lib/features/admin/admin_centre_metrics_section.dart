@@ -57,8 +57,7 @@ class AdminCentreMetricsSection extends StatelessWidget {
                               stream: firestore.watchAllClassSessions(),
                               builder: (context, sessionsSnap) {
                                 final progress = progressSnap.data ?? [];
-                                final assignments =
-                                    assignmentsSnap.data ?? [];
+                                final assignments = assignmentsSnap.data ?? [];
                                 final results = resultsSnap.data ?? [];
                                 final classTerms = termsSnap.data ?? [];
                                 final exercises = exercisesSnap.data ?? [];
@@ -68,8 +67,8 @@ class AdminCentreMetricsSection extends StatelessWidget {
                                   for (final e in exercises) e.id: e,
                                 };
 
-                                final homeworkOverview = TeacherActivityUtils
-                                    .buildHomeworkOverview(
+                                final homeworkOverview =
+                                    TeacherActivityUtils.buildHomeworkOverview(
                                   students: students,
                                   assignments: assignments,
                                   results: results,
@@ -110,8 +109,7 @@ class AdminCentreMetricsSection extends StatelessWidget {
                                     WeeklyActivityChart(
                                       days: weeklyActivity,
                                       onTap: () => onCentreStatTap(
-                                        TeacherDashboardStatKind
-                                            .weeklyActivity,
+                                        TeacherDashboardStatKind.weeklyActivity,
                                       ),
                                     ),
                                     const SizedBox(height: 20),

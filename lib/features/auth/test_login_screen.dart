@@ -181,7 +181,7 @@ class _TestLoginScreenState extends State<TestLoginScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
+        Text(
           'Dev mode — choose a role to preview the app.',
           style: TextStyle(
             color: AppColors.textSecondary,
@@ -257,7 +257,7 @@ class _TestLoginScreenState extends State<TestLoginScreen> {
                   children: [
                     Text(
                       label,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 16,
                         color: AppColors.textPrimary,
@@ -266,7 +266,7 @@ class _TestLoginScreenState extends State<TestLoginScreen> {
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         color: AppColors.textSecondary,
                         height: 1.3,
@@ -300,7 +300,7 @@ class _TestLoginScreenState extends State<TestLoginScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
+        Text(
           'Sign in with your email and password.',
           style: TextStyle(
             color: AppColors.textSecondary,
@@ -318,7 +318,7 @@ class _TestLoginScreenState extends State<TestLoginScreen> {
             ),
             child: Text(
               _signInError!,
-              style: const TextStyle(color: AppColors.error, fontSize: 13),
+              style: TextStyle(color: AppColors.error, fontSize: 13),
             ),
           ),
           const SizedBox(height: 16),

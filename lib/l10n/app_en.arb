@@ -34,6 +34,11 @@
   "languageRowLabel": "Bahasa / Language",
   "languageToggleIndonesian": "Bahasa Indonesia",
   "languageToggleEnglish": "English",
+  "themeRowLabel": "Appearance",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+  "themeSystem": "Device",
+  "themeSystemHint": "Device: follows your phone or computer setting.",
 
   "authBrandHeadline": "Learn Chinese,\nthe easy way.",
 

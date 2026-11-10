@@ -54,8 +54,8 @@ B 但是周末会休息
     final r = QuestionImportUtils.parseWorksheet(text);
     expect(r.suggestedType, ExerciseType.composeSentences);
     expect(r.composeQuestions, hasLength(2));
-    expect(r.composeQuestions[0].segments,
-        ['今天天气不好', '而且商店也关门了', '所以我们决定明天再去']);
+    expect(
+        r.composeQuestions[0].segments, ['今天天气不好', '而且商店也关门了', '所以我们决定明天再去']);
     expect(r.composeQuestions[1].prompt, contains('order not detected'));
     expect(r.detectionSummary, contains('R4'));
   });

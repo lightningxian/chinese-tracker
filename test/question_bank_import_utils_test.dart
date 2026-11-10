@@ -10,8 +10,7 @@ import 'package:chinese_tracker/models/question_bank_item.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  WorksheetParseResult parse(String name) =>
-      QuestionImportUtils.parseWorksheet(
+  WorksheetParseResult parse(String name) => QuestionImportUtils.parseWorksheet(
         File('test/fixtures/worksheets/$name.txt').readAsStringSync(),
       );
 
@@ -24,7 +23,8 @@ void main() {
     expect(items.first.tags, contains('300001-KLM'));
     expect(items.first.sheetCode, '300001-KLM');
     expect(items.first.sheetTitle, isNotEmpty);
-    expect(items.map((i) => i.sheetIndex).toList(), List.generate(10, (i) => i));
+    expect(
+        items.map((i) => i.sheetIndex).toList(), List.generate(10, (i) => i));
     expect(items.first.skillCategory, ExerciseSkillCategory.typing);
     // No prompt on a compose item: the list shows the sentence instead.
     expect(items.first.displayText, '南方的 / 夏天 / 热极了');
@@ -51,18 +51,21 @@ void main() {
     final set = jsonDecode(
       File('assets/question_sets/contoh_latihan_soal.json').readAsStringSync(),
     ) as Map<String, dynamic>;
-    final items = QuestionBankImportUtils.fromQuestionSet(set, ownerId: 'admin');
+    final items =
+        QuestionBankImportUtils.fromQuestionSet(set, ownerId: 'admin');
     final sheets = QuestionBankSheet.group(items);
     expect(sheets, hasLength(10));
     expect(sheets.every((s) => s.isSheet), isTrue);
     expect(sheets.every((s) => s.title != s.code), isTrue, reason: 'titled');
     final reading = sheets.singleWhere((s) => s.key == '310001-RDG');
     expect(reading.count, 7);
-    expect(reading.items.map((i) => i.sheetIndex).toList(), [0, 1, 2, 3, 4, 5, 6]);
+    expect(
+        reading.items.map((i) => i.sheetIndex).toList(), [0, 1, 2, 3, 4, 5, 6]);
   });
 
   test('a bank groups into sheets and stand-alone questions', () {
-    QuestionBankItem item(String id, {String? code, int? index, List<String> tags = const []}) =>
+    QuestionBankItem item(String id,
+            {String? code, int? index, List<String> tags = const []}) =>
         QuestionBankItem(
           id: id,
           ownerId: 'admin',
@@ -83,7 +86,8 @@ void main() {
       item('1', tags: ['300001-KLM', 'latihan']),
     ]);
 
-    expect(sheets.map((s) => s.key).toList(), ['310001-RDG', null, '300001-KLM']);
+    expect(
+        sheets.map((s) => s.key).toList(), ['310001-RDG', null, '300001-KLM']);
     expect(sheets.first.items.map((i) => i.id).toList(), ['2', '3']);
     expect(sheets.first.title, '310001-RDG');
     expect(sheets[1].isSheet, isFalse);

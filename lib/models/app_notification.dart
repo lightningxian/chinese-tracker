@@ -34,6 +34,7 @@ class AppNotification {
   final NotificationKind kind;
   final String title;
   final String body;
+
   /// `admin`, `teacher`, `student`, or `all`
   final String forRole;
   final String? userId;

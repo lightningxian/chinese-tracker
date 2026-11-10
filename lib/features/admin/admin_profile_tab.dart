@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
+import '../../core/widgets/theme_toggle.dart';
 import '../../core/widgets/profile_widgets.dart';
 import '../../models/app_user.dart';
 import '../../services/auth_service.dart';
@@ -114,10 +115,10 @@ class _AdminProfileTabState extends State<AdminProfileTab> {
           ),
           if (_error != null) ...[
             const SizedBox(height: 16),
-            Text(_error!, style: const TextStyle(color: AppColors.error)),
+            Text(_error!, style: TextStyle(color: AppColors.error)),
           ],
           const SizedBox(height: 16),
-          const AppCard(
+          AppCard(
             child: Text(
               'Manage users, vouchers, reports, and notifications from the '
               'admin tabs. Teaching workflows use the Guru role.',
@@ -131,17 +132,17 @@ class _AdminProfileTabState extends State<AdminProfileTab> {
           const SizedBox(height: 16),
           AppCard(
             onTap: () => context.push('/admin/settings'),
-            child: const Row(
+            child: Row(
               children: [
                 Icon(Icons.settings_outlined, color: AppColors.navy),
-                SizedBox(width: 14),
+                const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Centre settings',
+                      const Text('Centre settings',
                           style: TextStyle(fontWeight: FontWeight.w600)),
-                      SizedBox(height: 2),
+                      const SizedBox(height: 2),
                       Text(
                         'Payments, evaluations, materials, audit logs.',
                         style: TextStyle(
@@ -170,6 +171,8 @@ class _AdminProfileTabState extends State<AdminProfileTab> {
               ),
             ],
           ),
+          const SizedBox(height: 16),
+          const AppCard(child: ThemeSettingRow()),
           const SizedBox(height: 16),
           ProfileAccountMeta(user: user),
           const SizedBox(height: 24),

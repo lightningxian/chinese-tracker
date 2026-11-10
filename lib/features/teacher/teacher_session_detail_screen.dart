@@ -48,7 +48,7 @@ class _TeacherSessionDetailScreenState
         ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
-          side: const BorderSide(color: AppColors.border),
+          side: BorderSide(color: AppColors.border),
         ),
         actions: [
           TextButton(
@@ -226,7 +226,7 @@ class _TeacherSessionDetailScreenState
                                     children: [
                                       Text(
                                         dateLabel,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontWeight: FontWeight.w700,
                                           fontSize: 18,
                                           color: AppColors.navy,
@@ -235,7 +235,7 @@ class _TeacherSessionDetailScreenState
                                       const SizedBox(height: 6),
                                       Text(
                                         '${session.timeRangeLabel} · $durationMinutes min',
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           color: AppColors.textSecondary,
                                         ),
                                       ),
@@ -251,7 +251,7 @@ class _TeacherSessionDetailScreenState
                                                 session.room!.isNotEmpty)
                                               session.room!,
                                           ].join(' · '),
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             color: AppColors.textSecondary,
                                           ),
                                         ),
@@ -282,7 +282,7 @@ class _TeacherSessionDetailScreenState
                                             ),
                                             child: Text(
                                               '$joined / ${session.capacity} joined',
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 color: AppColors.teal,
                                                 fontSize: 12,
                                                 fontWeight: FontWeight.w600,
@@ -305,7 +305,7 @@ class _TeacherSessionDetailScreenState
                                               child: Text(
                                                 session
                                                     .registrationState!.label,
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   color: AppColors.navy,
                                                   fontSize: 12,
                                                   fontWeight: FontWeight.w600,
@@ -319,7 +319,7 @@ class _TeacherSessionDetailScreenState
                                         const SizedBox(height: 10),
                                         Text(
                                           'Concluded ${DateFormat('d MMM yyyy, HH:mm').format(session.concludedAt!)}',
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             color: AppColors.textSecondary,
                                             fontSize: 13,
                                           ),
@@ -332,7 +332,7 @@ class _TeacherSessionDetailScreenState
                                 const SectionHeader(
                                     title: 'Students who joined'),
                                 if (records.isEmpty)
-                                  const AppCard(
+                                  AppCard(
                                     child: Text(
                                       'No students have joined yet.',
                                       style: TextStyle(
@@ -378,7 +378,7 @@ class _TeacherSessionDetailScreenState
                                                     record.joinedByStudent
                                                         ? 'Self join'
                                                         : 'Added by teacher',
-                                                    style: const TextStyle(
+                                                    style: TextStyle(
                                                       color: AppColors
                                                           .textSecondary,
                                                       fontSize: 12,
@@ -416,7 +416,7 @@ class _TeacherSessionDetailScreenState
                       label: const Text('Delete class'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.error,
-                        side: const BorderSide(color: AppColors.error),
+                        side: BorderSide(color: AppColors.error),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
                     ),
@@ -436,7 +436,7 @@ class _TeacherSessionDetailScreenState
                             label: const Text('Delete'),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: AppColors.error,
-                              side: const BorderSide(color: AppColors.error),
+                              side: BorderSide(color: AppColors.error),
                               padding: const EdgeInsets.symmetric(vertical: 14),
                             ),
                           ),

@@ -211,7 +211,7 @@ class _FormPanel extends StatelessWidget {
         if (subtitle != null)
           Text(
             subtitle!,
-            style: const TextStyle(color: AppColors.textSecondary),
+            style: TextStyle(color: AppColors.textSecondary),
           ),
         if (title != null || subtitle != null) const SizedBox(height: 24),
         child,

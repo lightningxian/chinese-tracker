@@ -110,29 +110,29 @@ class AppShellScaffold extends StatelessWidget {
               onBack: onBack,
             )
           : AppBar(
-        automaticallyImplyLeading: false,
-        title: Row(
-          children: [
-            const AppLogo(variant: AppLogoVariant.mascot, height: 28),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              automaticallyImplyLeading: false,
+              title: Row(
+                children: [
+                  const AppLogo(variant: AppLogoVariant.mascot, height: 28),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
+              actions: [
+                if (showNotificationBell)
+                  _NotificationBellButton(
+                    count: notificationCount,
+                    onPressed: onNotificationTap,
+                    iconColor: AppColors.navy,
+                  ),
+              ],
             ),
-          ],
-        ),
-        actions: [
-          if (showNotificationBell)
-            _NotificationBellButton(
-              count: notificationCount,
-              onPressed: onNotificationTap,
-              iconColor: AppColors.navy,
-            ),
-        ],
-      ),
       body: body,
       bottomNavigationBar: NavigationBar(
         selectedIndex: selectedIndex,
@@ -181,7 +181,7 @@ class _AppSidebar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 240,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.sidebarBg,
         border: Border(right: BorderSide(color: AppColors.border)),
       ),
@@ -219,7 +219,7 @@ class _AppSidebar extends StatelessWidget {
                             userName,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.textPrimary,
                               fontWeight: FontWeight.w600,
                               fontSize: 12,
@@ -231,8 +231,7 @@ class _AppSidebar extends StatelessWidget {
                             runSpacing: 4,
                             children: [
                               _SidebarRoleChip(label: roleLabel),
-                              if (hskLevel != null)
-                                HskBadge(label: hskLevel!),
+                              if (hskLevel != null) HskBadge(label: hskLevel!),
                             ],
                           ),
                         ],
@@ -243,7 +242,7 @@ class _AppSidebar extends StatelessWidget {
               ],
             ),
           ),
-          const Divider(height: 1, color: AppColors.border),
+          Divider(height: 1, color: AppColors.border),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -263,8 +262,8 @@ class _AppSidebar extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
               child: TextButton.icon(
                 onPressed: onSignOut,
-                icon: const Icon(Icons.logout, size: 16, color: AppColors.error),
-                label: const Text(
+                icon: Icon(Icons.logout, size: 16, color: AppColors.error),
+                label: Text(
                   'Sign out',
                   style: TextStyle(
                     color: AppColors.error,
@@ -274,7 +273,8 @@ class _AppSidebar extends StatelessWidget {
                 ),
                 style: TextButton.styleFrom(
                   alignment: Alignment.centerLeft,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 ),
               ),
             ),
@@ -351,7 +351,7 @@ class _SidebarRoleChip extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           color: AppColors.textSecondary,
           fontSize: 10,
           fontWeight: FontWeight.w600,
@@ -387,7 +387,7 @@ class _AppTopBar extends StatelessWidget {
     return Container(
       height: 56,
       padding: const EdgeInsets.symmetric(horizontal: 32),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.card,
         border: Border(bottom: BorderSide(color: AppColors.border)),
       ),
@@ -406,7 +406,7 @@ class _AppTopBar extends StatelessWidget {
           ],
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.navy,
               fontWeight: FontWeight.w700,
               fontSize: 16,
@@ -423,7 +423,7 @@ class _AppTopBar extends StatelessWidget {
             ),
             child: Text(
               roleLabel,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
@@ -450,7 +450,7 @@ class _AppTopBar extends StatelessWidget {
             children: [
               Text(
                 userName,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textPrimary,
                   fontWeight: FontWeight.w600,
                   fontSize: 12,
@@ -458,7 +458,7 @@ class _AppTopBar extends StatelessWidget {
               ),
               Text(
                 roleLabel,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 11,
                 ),
@@ -472,13 +472,13 @@ class _AppTopBar extends StatelessWidget {
 }
 
 class AppUserAvatar extends StatelessWidget {
-  const AppUserAvatar({
+  AppUserAvatar({
     super.key,
     required this.initials,
     this.size = 36,
-    this.backgroundColor = AppColors.navy,
+    Color? backgroundColor,
     this.photoUrl,
-  });
+  }) : backgroundColor = backgroundColor ?? AppColors.navy;
 
   final String initials;
   final double size;
@@ -578,7 +578,8 @@ String userInitials(String name) {
       .toUpperCase();
 }
 
-class _FigmaMobileAppBar extends StatelessWidget implements PreferredSizeWidget {
+class _FigmaMobileAppBar extends StatelessWidget
+    implements PreferredSizeWidget {
   const _FigmaMobileAppBar({
     required this.title,
     required this.notificationCount,
@@ -600,7 +601,7 @@ class _FigmaMobileAppBar extends StatelessWidget implements PreferredSizeWidget 
       automaticallyImplyLeading: false,
       toolbarHeight: 64,
       backgroundColor: AppColors.card,
-      shape: const Border(bottom: BorderSide(color: AppColors.border)),
+      shape: Border(bottom: BorderSide(color: AppColors.border)),
       titleSpacing: 16,
       title: SizedBox(
         height: 48,
@@ -611,20 +612,20 @@ class _FigmaMobileAppBar extends StatelessWidget implements PreferredSizeWidget 
               alignment: Alignment.centerLeft,
               child: onBack != null
                   ? IconButton(
-                      icon: const Icon(Icons.arrow_back,
-                          color: AppColors.navy),
+                      icon: Icon(Icons.arrow_back, color: AppColors.navy),
                       tooltip: 'Back',
                       onPressed: onBack,
                     )
                   : Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const AppLogo(variant: AppLogoVariant.mascot, height: 30),
+                        const AppLogo(
+                            variant: AppLogoVariant.mascot, height: 30),
                         const SizedBox(width: 8),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
+                          children: [
                             Text(
                               AppConstants.brandName,
                               style: TextStyle(
@@ -649,7 +650,7 @@ class _FigmaMobileAppBar extends StatelessWidget implements PreferredSizeWidget 
             ),
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.navy,
                 fontWeight: FontWeight.w700,
                 fontSize: 16,
@@ -674,12 +675,14 @@ class _NotificationBellButton extends StatelessWidget {
   const _NotificationBellButton({
     required this.count,
     this.onPressed,
-    this.iconColor = AppColors.textSecondary,
+    this.iconColor,
   });
 
   final int count;
   final VoidCallback? onPressed;
-  final Color iconColor;
+
+  /// Defaults to the secondary text colour.
+  final Color? iconColor;
 
   @override
   Widget build(BuildContext context) {
@@ -688,7 +691,8 @@ class _NotificationBellButton extends StatelessWidget {
       children: [
         IconButton(
           onPressed: onPressed,
-          icon: Icon(Icons.notifications_none, color: iconColor),
+          icon: Icon(Icons.notifications_none,
+              color: iconColor ?? AppColors.textSecondary),
         ),
         if (count > 0)
           Positioned(

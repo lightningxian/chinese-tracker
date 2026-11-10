@@ -168,7 +168,8 @@ abstract final class QuestionImportUtils {
       RegExp(r'(?<=[\u4e00-\u9fff，,])\s+(?=[\u4e00-\u9fff。，])');
   static final _exampleLine = RegExp(r'^\s*(例如|e\.g\.)', caseSensitive: false);
   static final _underscoresOnly = RegExp(r'^[_＿\s]+$');
-  static final _correctMarker = RegExp(r'[\*✓√]\s*$|\(correct\)', caseSensitive: false);
+  static final _correctMarker =
+      RegExp(r'[\*✓√]\s*$|\(correct\)', caseSensitive: false);
   static final _instructionHeader = RegExp(
     r'^(?:instructions?|directions?)\s*[:：]\s*(.*)$',
     caseSensitive: false,
@@ -280,7 +281,8 @@ abstract final class QuestionImportUtils {
       _attachRangePassages(
         _explodeInlineOptions(
           splitContent
-              .where((line) => !_isNoiseLine(line) && !_exampleLine.hasMatch(line))
+              .where(
+                  (line) => !_isNoiseLine(line) && !_exampleLine.hasMatch(line))
               .toList(),
         ),
       ),
@@ -321,7 +323,8 @@ abstract final class QuestionImportUtils {
         filteredLines.any((line) => _matchOption(line) != null);
     final isTrueFalse = trueFalse.isNotEmpty &&
         (_trueFalseKeywords.hasMatch(keywordText) ||
-            (!hasLetteredOptions && trueFalse.where((q) => q.marked).length >= 2));
+            (!hasLetteredOptions &&
+                trueFalse.where((q) => q.marked).length >= 2));
     final isListening = _listeningKeywords.hasMatch(keywordText);
     final isCloze = !isTyping &&
         cloze.prompts.isNotEmpty &&
@@ -329,8 +332,8 @@ abstract final class QuestionImportUtils {
     // Several word lists (one per group of blanks), or one list too long
     // for a shared A–H bank: each blank becomes a choice question with its
     // own group's words.
-    final clozeAsChoices = isCloze &&
-        (cloze.banks.length >= 2 || cloze.options.length > 8);
+    final clozeAsChoices =
+        isCloze && (cloze.banks.length >= 2 || cloze.options.length > 8);
     // Without an ordering keyword, only bare "1." groups of 3+ sentences
     // count, so multiple-choice items with long options are not mistaken.
     final orderingKeyword = _orderKeywords.hasMatch(keywordText);
@@ -466,8 +469,8 @@ abstract final class QuestionImportUtils {
         unorderedGroups: isOrdering
             ? ordering.where((q) => q.prompt.contains('(order not')).length
             : 0,
-        sections: RegExp(r'part\s*2|第二部分', caseSensitive: false)
-            .hasMatch(normalized),
+        sections:
+            RegExp(r'part\s*2|第二部分', caseSensitive: false).hasMatch(normalized),
       ),
       mcQuestions: finalMc,
       composeQuestions: finalCompose,
@@ -493,7 +496,11 @@ abstract final class QuestionImportUtils {
         'KLM' || 'WRT' => ExerciseSkillCategory.typing,
         _ => ExerciseSkillCategory.reading,
       };
-      return (code: m.group(0)!.trim(), level: 'HSK ${m.group(1)}', skill: skill);
+      return (
+        code: m.group(0)!.trim(),
+        level: 'HSK ${m.group(1)}',
+        skill: skill
+      );
     }
     return null;
   }
@@ -571,7 +578,9 @@ abstract final class QuestionImportUtils {
       while (j < lines.length && _rangeHeader.firstMatch(lines[j]) == null) {
         final line = lines[j];
         final q = _numberedLine.firstMatch(line);
-        final n = q == null ? null : int.tryParse(RegExp(r'\d+').firstMatch(line)!.group(0)!);
+        final n = q == null
+            ? null
+            : int.tryParse(RegExp(r'\d+').firstMatch(line)!.group(0)!);
         if (q != null && n != null && n >= from && n <= to) {
           final rest = (q.group(1) ?? '').trim();
           out.add('$n. $text （$n）${rest.isEmpty ? '' : ' $rest'}');
@@ -590,7 +599,8 @@ abstract final class QuestionImportUtils {
     final out = <String>[];
     var lastWasQuestion = false;
     for (final line in lines) {
-      final isQuestion = _looksLikeQuestionStart(line) && !_numberedOnly.hasMatch(line);
+      final isQuestion =
+          _looksLikeQuestionStart(line) && !_numberedOnly.hasMatch(line);
       final standalone = _numberedOnly.hasMatch(line) ||
           _matchOption(line) != null ||
           _starLine.hasMatch(line) ||
@@ -701,9 +711,8 @@ abstract final class QuestionImportUtils {
   ) {
     final banks = cloze.banks.isEmpty ? [cloze.options] : cloze.banks;
     final n = cloze.prompts.length;
-    final perBank = banks.length > 1 && n % banks.length == 0
-        ? n ~/ banks.length
-        : n;
+    final perBank =
+        banks.length > 1 && n % banks.length == 0 ? n ~/ banks.length : n;
     return [
       for (var i = 0; i < n; i++)
         ParsedMcQuestion(
@@ -792,7 +801,8 @@ abstract final class QuestionImportUtils {
       } else if (word != null) {
         correctIndex = options.indexOf(word.group(0)!);
       } else {
-        final trailing = RegExp(r'[（(]\s*([A-Fa-f])\s*[)）]\s*$').firstMatch(stripped);
+        final trailing =
+            RegExp(r'[（(]\s*([A-Fa-f])\s*[)）]\s*$').firstMatch(stripped);
         if (trailing != null) {
           correctIndex = trailing.group(1)!.toUpperCase().codeUnitAt(0) - 65;
         }
@@ -908,7 +918,8 @@ abstract final class QuestionImportUtils {
       var j = i + 1;
       while (j < lines.length) {
         final next = lines[j];
-        if (_looksLikeQuestionStart(next) || _numberedOnly.hasMatch(next)) break;
+        if (_looksLikeQuestionStart(next) || _numberedOnly.hasMatch(next))
+          break;
         final lettered = _letteredSentence.firstMatch(next);
         final circled = _circledSentence.firstMatch(next);
         if (lettered != null && _isMostlyCjk(lettered.group(2)!)) {
@@ -1005,7 +1016,8 @@ abstract final class QuestionImportUtils {
         '$c ${c == 1 ? one : (many ?? '${one}s')}';
     final notes = <String>[];
     if (sections) {
-      notes.add('Several parts found: split into separate exercises if needed.');
+      notes
+          .add('Several parts found: split into separate exercises if needed.');
     }
     switch (r.suggestedType) {
       case ExerciseType.readingCloze:
@@ -1018,7 +1030,8 @@ abstract final class QuestionImportUtils {
           notes.add('No word bank found: type the words into the answer bank.');
         }
         if (unmarkedBlanks > 0) {
-          notes.add('${n(unmarkedBlanks, 'blank')} without an answer letter: set the correct word in the editor.');
+          notes.add(
+              '${n(unmarkedBlanks, 'blank')} without an answer letter: set the correct word in the editor.');
         }
       case ExerciseType.matching:
         notes.insert(
@@ -1035,12 +1048,14 @@ abstract final class QuestionImportUtils {
             '${n(r.composeQuestions.length, 'item')} to reorder.',
           );
           if (unorderedGroups > 0) {
-            notes.add('${n(unorderedGroups, 'item')} without an answer key: drag the sentences into the right order before saving.');
+            notes.add(
+                '${n(unorderedGroups, 'item')} without an answer key: drag the sentences into the right order before saving.');
           }
         }
       case ExerciseType.multipleChoice:
       case ExerciseType.listening:
-        final withOptions = r.mcQuestions.where((q) => q.options.length >= 2).length;
+        final withOptions =
+            r.mcQuestions.where((q) => q.options.length >= 2).length;
         if (r.mcQuestions.isEmpty) {
           notes.insert(0, 'no questions were found.');
         } else {
@@ -1050,13 +1065,17 @@ abstract final class QuestionImportUtils {
           );
         }
         if (r.passage.isNotEmpty) {
-          notes.add('Passage of ${r.passage.length} characters goes above the questions.');
+          notes.add(
+              'Passage of ${r.passage.length} characters goes above the questions.');
         }
-        if (unmarkedBlanks > 0 && r.suggestedType == ExerciseType.multipleChoice) {
-          notes.add('Answers are not on the sheet: pick the right word for each blank in the editor.');
+        if (unmarkedBlanks > 0 &&
+            r.suggestedType == ExerciseType.multipleChoice) {
+          notes.add(
+              'Answers are not on the sheet: pick the right word for each blank in the editor.');
         }
         if (unmarkedTrueFalse > 0) {
-          notes.add('${n(unmarkedTrueFalse, 'statement')} without √/×: set 对 or 错 in the editor.');
+          notes.add(
+              '${n(unmarkedTrueFalse, 'statement')} without √/×: set 对 or 错 in the editor.');
         }
         if (r.suggestedType == ExerciseType.listening) {
           notes.add('Attach the audio in the exercise form.');
@@ -1152,7 +1171,8 @@ abstract final class QuestionImportUtils {
           ParsedMcQuestion(
             prompt: currentPrompt!.trim(),
             options: List<String>.from(currentOptions),
-            correctIndex: (correctIndex ?? 0).clamp(0, currentOptions.length - 1),
+            correctIndex:
+                (correctIndex ?? 0).clamp(0, currentOptions.length - 1),
           ),
         );
       }
@@ -1212,7 +1232,8 @@ abstract final class QuestionImportUtils {
     return questions;
   }
 
-  static List<ParsedComposeQuestion> _parseComposeQuestions(List<String> lines) {
+  static List<ParsedComposeQuestion> _parseComposeQuestions(
+      List<String> lines) {
     final questions = <ParsedComposeQuestion>[];
     var index = 0;
 
@@ -1311,9 +1332,8 @@ abstract final class QuestionImportUtils {
       final promptMatch = _numberedLine.firstMatch(line);
       if (promptMatch != null) {
         var promptText = promptMatch.group(1)?.trim() ?? '';
-        promptText = promptText
-            .replaceAll(RegExp(r'[\(（]\s*[\)）]\s*$'), '')
-            .trim();
+        promptText =
+            promptText.replaceAll(RegExp(r'[\(（]\s*[\)）]\s*$'), '').trim();
         if (promptText.isEmpty) continue;
 
         var correctIndex = 0;
@@ -1453,8 +1473,8 @@ abstract final class QuestionImportUtils {
     var text = match.group(4)?.trim() ?? '';
     if (text.isEmpty) return null;
 
-    final isCorrect = _correctMarker.hasMatch(trimmed) ||
-        _correctMarker.hasMatch(text);
+    final isCorrect =
+        _correctMarker.hasMatch(trimmed) || _correctMarker.hasMatch(text);
     text = text.replaceAll(_correctMarker, '').trim();
     return (text: text, isCorrect: isCorrect);
   }

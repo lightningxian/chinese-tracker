@@ -104,7 +104,7 @@ class RegistrationIdentityFields extends StatelessWidget {
             alignment: Alignment.centerLeft,
             child: Text(
               l.identityParentSectionHint,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 13,
               ),

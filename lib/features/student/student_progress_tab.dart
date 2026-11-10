@@ -45,7 +45,8 @@ class StudentProgressTab extends StatelessWidget {
           stream: firestore.watchLessons(contentOwnerId),
           builder: (context, lessonsSnap) {
             final allLessons = lessonsSnap.data ?? [];
-            final lessons = ProgressUtils.lessonsForStudent(allLessons, student);
+            final lessons =
+                ProgressUtils.lessonsForStudent(allLessons, student);
             final terms = ProgressUtils.buildTermProgress(
               lessons: lessons,
               progress: progress,
@@ -109,7 +110,8 @@ class StudentProgressTab extends StatelessWidget {
                 const SizedBox(height: 20),
                 for (final term in terms) ...[
                   SectionHeader(
-                    title: '${term.label} (${term.completedCount}/${term.termSize})',
+                    title:
+                        '${term.label} (${term.completedCount}/${term.termSize})',
                   ),
                   ...term.items.map(
                     (item) => Padding(

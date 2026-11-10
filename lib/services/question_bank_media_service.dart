@@ -55,7 +55,8 @@ class QuestionBankMediaService {
         'question_bank_media/$ownerId/${DateTime.now().millisecondsSinceEpoch}_${kind}_$safeName';
     final ref = _storage.ref(path);
 
-    await ref.putData(bytes, SettableMetadata(contentType: _contentType(extension)));
+    await ref.putData(
+        bytes, SettableMetadata(contentType: _contentType(extension)));
 
     return ref.getDownloadURL();
   }

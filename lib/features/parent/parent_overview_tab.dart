@@ -42,14 +42,14 @@ class ParentOverviewTab extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           ProgressUtils.formatStudentLevel(child),
-          style: const TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(color: AppColors.textSecondary),
         ),
         const SizedBox(height: 20),
         StreamBuilder<List<StudentClassTerm>>(
           stream: firestore.watchStudentClassTerms(child.uid),
           builder: (context, termSnap) {
-            final remaining = firestore
-                .totalRemainingClassSessions(termSnap.data ?? []);
+            final remaining =
+                firestore.totalRemainingClassSessions(termSnap.data ?? []);
             return _StatCard(
               icon: Icons.confirmation_number_outlined,
               label: l.parentOverviewSessionsRemaining,
@@ -106,8 +106,8 @@ class ParentOverviewTab extends StatelessWidget {
                   color: AppColors.teal.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.calendar_month_outlined,
-                    color: AppColors.teal),
+                child:
+                    Icon(Icons.calendar_month_outlined, color: AppColors.teal),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -115,7 +115,7 @@ class ParentOverviewTab extends StatelessWidget {
                     style: const TextStyle(
                         fontWeight: FontWeight.w600, fontSize: 15)),
               ),
-              const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+              Icon(Icons.chevron_right, color: AppColors.textSecondary),
             ],
           ),
         ),
@@ -131,8 +131,7 @@ class ParentOverviewTab extends StatelessWidget {
                   color: AppColors.navy.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child:
-                    const Icon(Icons.grading_outlined, color: AppColors.navy),
+                child: Icon(Icons.grading_outlined, color: AppColors.navy),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -140,7 +139,7 @@ class ParentOverviewTab extends StatelessWidget {
                     style: const TextStyle(
                         fontWeight: FontWeight.w600, fontSize: 15)),
               ),
-              const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+              Icon(Icons.chevron_right, color: AppColors.textSecondary),
             ],
           ),
         ),
@@ -156,7 +155,7 @@ class ParentOverviewTab extends StatelessWidget {
                   color: AppColors.brandYellow.withValues(alpha: 0.16),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.folder_open_outlined,
+                child: Icon(Icons.folder_open_outlined,
                     color: AppColors.brandYellow),
               ),
               const SizedBox(width: 12),
@@ -165,7 +164,7 @@ class ParentOverviewTab extends StatelessWidget {
                     style: const TextStyle(
                         fontWeight: FontWeight.w600, fontSize: 15)),
               ),
-              const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+              Icon(Icons.chevron_right, color: AppColors.textSecondary),
             ],
           ),
         ),
@@ -200,7 +199,7 @@ class ParentOverviewTab extends StatelessWidget {
                         ),
                         Text(
                           '${r.score}%',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.w700,
                             color: AppColors.navy,
                           ),
@@ -228,7 +227,7 @@ class ParentOverviewTab extends StatelessWidget {
                     padding: const EdgeInsets.all(12),
                     child: Row(
                       children: [
-                        const Icon(Icons.event_available_outlined,
+                        Icon(Icons.event_available_outlined,
                             color: AppColors.teal, size: 20),
                         const SizedBox(width: 10),
                         Expanded(
@@ -240,7 +239,7 @@ class ParentOverviewTab extends StatelessWidget {
                         ),
                         Text(
                           record.sessionDate,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 12,
                           ),
@@ -286,8 +285,7 @@ class _EmptyLine extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Text(text,
-          style: const TextStyle(color: AppColors.textSecondary)),
+      child: Text(text, style: TextStyle(color: AppColors.textSecondary)),
     );
   }
 }

@@ -18,6 +18,7 @@ import 'services/payment_service.dart';
 import 'services/materials_storage_service.dart';
 import 'services/question_bank_media_service.dart';
 import 'services/locale_controller.dart';
+import 'services/theme_controller.dart';
 
 class ChineseTrackerApp extends StatefulWidget {
   const ChineseTrackerApp({super.key});
@@ -39,6 +40,7 @@ class _ChineseTrackerAppState extends State<ChineseTrackerApp> {
   late final MaterialsStorageService _materialsStorageService;
   late final QuestionBankMediaService _questionBankMediaService;
   late final LocaleController _localeController;
+  late final ThemeController _themeController;
 
   @override
   void initState() {
@@ -51,15 +53,16 @@ class _ChineseTrackerAppState extends State<ChineseTrackerApp> {
     _cohortReportService = CohortReportService(firestore: _firestoreService);
     _adminReportExportService =
         AdminReportExportService(firestore: _firestoreService);
-    _notificationService =
-        NotificationService(firestore: _firestoreService);
+    _notificationService = NotificationService(firestore: _firestoreService);
     _paymentService = PaymentService();
     _materialsStorageService = MaterialsStorageService();
     _questionBankMediaService = QuestionBankMediaService();
     _localeController = LocaleController();
+    _themeController = ThemeController();
     _authService.init();
     _savedAccountsService.load();
     _localeController.load();
+    _themeController.load();
   }
 
   @override
@@ -72,6 +75,9 @@ class _ChineseTrackerAppState extends State<ChineseTrackerApp> {
         ),
         ChangeNotifierProvider<LocaleController>.value(
           value: _localeController,
+        ),
+        ChangeNotifierProvider<ThemeController>.value(
+          value: _themeController,
         ),
         Provider<FirestoreService>.value(value: _firestoreService),
         Provider<WorksheetImportService>.value(value: _worksheetImportService),
@@ -92,53 +98,64 @@ class _ChineseTrackerAppState extends State<ChineseTrackerApp> {
       child: Builder(
         builder: (context) {
           final router = AppRouter.create(context);
-          // Only the app rebuilds on a language change; the router (and
-          // so the current page) is kept.
-          return Consumer<LocaleController>(
-            builder: (context, localeController, _) =>
-              MaterialApp.router(
-                title: AppConstants.appName,
-                theme: AppTheme.light(),
-                // UI language: ID | EN toggle (LocaleController). Student, parent
-                // and sign-in screens are translated; admin/teacher stay English.
-                locale: localeController.locale,
-                supportedLocales: LocaleController.supportedLocales,
-                localizationsDelegates: AppLocalizations.localizationsDelegates,
-                routerConfig: router,
-                debugShowCheckedModeBanner: false,
-                builder: (context, child) {
-                  final scaled = MediaQuery(
-                    data: MediaQuery.of(context).copyWith(
-                      textScaler: const TextScaler.linear(1.12),
-                    ),
+          // Only the app rebuilds on a language or theme change; the router
+          // (and so the current page) is kept.
+          return Consumer2<LocaleController, ThemeController>(
+            builder: (context, localeController, themeController, _) =>
+                MaterialApp.router(
+              title: AppConstants.appName,
+              // Light / Dark / Device (ThemeController). The palette behind
+              // `AppColors` is swapped by the controller before this rebuild.
+              theme: AppTheme.light(),
+              darkTheme: AppTheme.dark(),
+              themeMode: themeController.mode,
+              // UI language: ID | EN toggle (LocaleController). Student, parent
+              // and sign-in screens are translated; admin/teacher stay English.
+              locale: localeController.locale,
+              supportedLocales: LocaleController.supportedLocales,
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              routerConfig: router,
+              debugShowCheckedModeBanner: false,
+              builder: (context, child) {
+                final scaled = MediaQuery(
+                  data: MediaQuery.of(context).copyWith(
+                    textScaler: const TextScaler.linear(1.12),
+                  ),
+                  // Screens read their colours through `AppColors`, not
+                  // through Theme.of, so a mode change does not reach them
+                  // by itself. A new key remounts the page tree in the new
+                  // colours; the router keeps the current route.
+                  child: KeyedSubtree(
+                    key: ValueKey('theme-${themeController.brightness.name}'),
                     child: child ?? const SizedBox.shrink(),
+                  ),
+                );
+                if (BuildFlags.useEmulators) {
+                  // Loud reminder that this build talks to local emulators, so
+                  // a stale production bundle is never mistaken for it.
+                  return Banner(
+                    message: 'EMULATOR',
+                    location: BannerLocation.topStart,
+                    color: const Color(0xFFB53A3A),
+                    child: scaled,
                   );
-                  if (BuildFlags.useEmulators) {
-                    // Loud reminder that this build talks to local emulators, so
-                    // a stale production bundle is never mistaken for it.
-                    return Banner(
-                      message: 'EMULATOR',
-                      location: BannerLocation.topStart,
-                      color: const Color(0xFFB53A3A),
-                      child: scaled,
-                    );
-                  }
-                  // The opposite mistake: a live bundle served from a local dev
-                  // server (flutter run, or build/web rebuilt by the deploy
-                  // script under a running web-server) talks to the LIVE
-                  // database. Say so.
-                  final host = Uri.base.host;
-                  if (host == 'localhost' || host == '127.0.0.1') {
-                    return Banner(
-                      message: 'LIVE DATA',
-                      location: BannerLocation.topStart,
-                      color: const Color(0xFF8A5A12),
-                      child: scaled,
-                    );
-                  }
-                  return scaled;
-                },
-              ),
+                }
+                // The opposite mistake: a live bundle served from a local dev
+                // server (flutter run, or build/web rebuilt by the deploy
+                // script under a running web-server) talks to the LIVE
+                // database. Say so.
+                final host = Uri.base.host;
+                if (host == 'localhost' || host == '127.0.0.1') {
+                  return Banner(
+                    message: 'LIVE DATA',
+                    location: BannerLocation.topStart,
+                    color: const Color(0xFF8A5A12),
+                    child: scaled,
+                  );
+                }
+                return scaled;
+              },
+            ),
           );
         },
       ),

@@ -19,8 +19,18 @@ class ReportMonth implements Comparable<ReportMonth> {
   final int month;
 
   static const _names = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
 
   String get label => '${_names[month - 1]} $year';
@@ -31,8 +41,7 @@ class ReportMonth implements Comparable<ReportMonth> {
           ReportMonth.of(DateTime(now.year, now.month - i, 1)),
       ];
 
-  bool contains(DateTime? d) =>
-      d != null && d.year == year && d.month == month;
+  bool contains(DateTime? d) => d != null && d.year == year && d.month == month;
 
   @override
   int compareTo(ReportMonth other) =>
@@ -347,10 +356,8 @@ class LevelProgressRow {
   int get inactive => students.where((s) => s.lastActivity == null).length;
 
   int? get averageScore {
-    final scores = students
-        .map((s) => s.averageScore)
-        .whereType<int>()
-        .toList();
+    final scores =
+        students.map((s) => s.averageScore).whereType<int>().toList();
     if (scores.isEmpty) return null;
     return (scores.reduce((a, b) => a + b) / scores.length).round();
   }
@@ -533,7 +540,8 @@ abstract final class AdminOpsReportService {
     required Map<String, AppUser> usersById,
     required DateTime now,
   }) {
-    final concluded = sessions.where((s) => s.isConcluded).map((s) => s.id).toSet();
+    final concluded =
+        sessions.where((s) => s.isConcluded).map((s) => s.id).toSet();
     final known = sessions.map((s) => s.id).toSet();
     final months = ReportMonth.last(monthsShown, now);
     final out = <AttendanceMonth>[];
@@ -558,7 +566,8 @@ abstract final class AdminOpsReportService {
           .map(
             (e) => AttendanceStudentRow(
               studentId: e.key,
-              name: _name(usersById, e.key, fallback: _recordName(attendance, e.key)),
+              name: _name(usersById, e.key,
+                  fallback: _recordName(attendance, e.key)),
               level: _level(usersById[e.key]),
               hadir: e.value[0],
               izin: e.value[1],
@@ -593,7 +602,8 @@ abstract final class AdminOpsReportService {
     final rows = <TermAlertRow>[];
     var active = 0;
     for (final t in classTerms) {
-      if (t.status != StudentClassTerm.statusActive || t.sessionsRemaining <= 0) {
+      if (t.status != StudentClassTerm.statusActive ||
+          t.sessionsRemaining <= 0) {
         continue;
       }
       active++;
@@ -708,11 +718,13 @@ abstract final class AdminOpsReportService {
       }
     }
     bool isActive(AppUser s) =>
-        s.active && (withTerm.contains(s.uid) || recentlyAttended.contains(s.uid));
+        s.active &&
+        (withTerm.contains(s.uid) || recentlyAttended.contains(s.uid));
 
     final cohorts = <CohortRow>[];
     for (final month in ReportMonth.last(monthsShown, now)) {
-      final joined = students.where((s) => month.contains(s.createdAt)).toList();
+      final joined =
+          students.where((s) => month.contains(s.createdAt)).toList();
       cohorts.add(
         CohortRow(
           month: month,
@@ -778,7 +790,8 @@ abstract final class AdminOpsReportService {
     int months = 3,
   }) {
     final usersById = {for (final u in users) u.uid: u};
-    final concludedIds = sessions.where((s) => s.isConcluded).map((s) => s.id).toSet();
+    final concludedIds =
+        sessions.where((s) => s.isConcluded).map((s) => s.id).toSet();
     final knownIds = sessions.map((s) => s.id).toSet();
     final recordsBySession = <String, List<AttendanceRecord>>{};
     for (final r in attendance) {
@@ -845,7 +858,8 @@ abstract final class AdminOpsReportService {
       final at = r.submittedAt;
       if (at != null) {
         final prevAt = lastByStudent[r.studentId];
-        if (prevAt == null || at.isAfter(prevAt)) lastByStudent[r.studentId] = at;
+        if (prevAt == null || at.isAfter(prevAt))
+          lastByStudent[r.studentId] = at;
       }
     }
 
@@ -857,9 +871,13 @@ abstract final class AdminOpsReportService {
       final assigned = assignedByStudent[s.uid] ?? const <String>{};
       final best = bestByStudent[s.uid] ?? const <String, int>{};
       final completed = assigned.where(best.containsKey).length;
-      final scores = [for (final id in assigned) if (best[id] != null) best[id]!];
+      final scores = [
+        for (final id in assigned)
+          if (best[id] != null) best[id]!
+      ];
       final level = LevelUtils.normalizeHskLevel(s.level);
-      final key = level != null && buckets.containsKey(level) ? level : 'Unassigned';
+      final key =
+          level != null && buckets.containsKey(level) ? level : 'Unassigned';
       buckets[key]!.add(
         StudentProgressRow(
           studentId: s.uid,
@@ -924,7 +942,8 @@ abstract final class AdminOpsReportService {
           (e) => TeacherOverdueGroup(
             teacherId: e.key,
             teacherName: _name(usersById, e.key, fallback: 'Centre (admin)'),
-            rows: e.value..sort((a, b) => b.daysOverdue.compareTo(a.daysOverdue)),
+            rows: e.value
+              ..sort((a, b) => b.daysOverdue.compareTo(a.daysOverdue)),
           ),
         )
         .toList()

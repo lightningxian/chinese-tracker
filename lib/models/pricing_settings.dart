@@ -168,8 +168,7 @@ class PricingSettings {
   int get package8 => itemForSessions(8)?.price ?? 2450000;
   int get package16 => itemForSessions(16)?.price ?? 3950000;
   int get book => _firstOfKind(PriceKind.book)?.price ?? 250000;
-  int get registration =>
-      _firstOfKind(PriceKind.registration)?.price ?? 100000;
+  int get registration => _firstOfKind(PriceKind.registration)?.price ?? 100000;
 
   int priceForPackage(int packageSize) =>
       itemForSessions(packageSize)?.price ?? 0;

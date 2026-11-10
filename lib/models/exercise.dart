@@ -18,8 +18,10 @@ class ExerciseQuestion {
   final String prompt;
   final List<String> options;
   final int correctIndex;
+
   /// Ordered parts of the sentence (compose sentences type).
   final List<String> segments;
+
   /// Required word for picture sentence exercises; the pinyin hint for
   /// "type the hanzi" questions.
   final String keyword;
@@ -27,8 +29,10 @@ class ExerciseQuestion {
   /// Typed-answer questions: every accepted answer (trimmed, exact match).
   List<String> get acceptedAnswers => options;
   final String imageUrl;
+
   /// Optional per-question audio (listening items in bank/quiz).
   final String audioUrl;
+
   /// Blank index inside a reading cloze passage.
   final int? blankNumber;
 
@@ -146,14 +150,15 @@ class ExerciseQuestion {
   /// full-width punctuation (type the hanzi); for picture sentences the
   /// sentence must contain the keyword and be more than the keyword alone.
   bool isCorrectTypedAnswer(ExerciseType type, String typed) {
-    String clean(String s) => s
-        .replaceAll(RegExp(r'[\s。．.，,！!？?、：:；;「」『』“”"()（）]'), '')
-        .trim();
+    String clean(String s) =>
+        s.replaceAll(RegExp(r'[\s。．.，,！!？?、：:；;「」『』“”"()（）]'), '').trim();
     final answer = clean(typed);
     if (answer.isEmpty) return false;
     if (type == ExerciseType.pictureSentence) {
       final k = clean(keyword);
-      return k.isEmpty ? answer.length >= 2 : answer.contains(k) && answer.length > k.length;
+      return k.isEmpty
+          ? answer.length >= 2
+          : answer.contains(k) && answer.length > k.length;
     }
     return acceptedAnswers.any((a) => clean(a) == answer);
   }
@@ -221,10 +226,13 @@ class Exercise {
     }
     return '${questions.length} question${questions.length == 1 ? '' : 's'}';
   }
+
   final int order;
   final ExerciseType type;
+
   /// Shared answer bank for matching exercises (A, B, C…).
   final List<String> matchingOptions;
+
   /// Reading passage for cloze exercises.
   final String passage;
   final String? level;
@@ -232,16 +240,15 @@ class Exercise {
   final int? termNumber;
   final bool isPublished;
   final DateTime? createdAt;
+
   /// Audio file URL for listening exercises.
   final String? audioUrl;
 
-  String get termLabel =>
-      termNumber != null ? 'Term $termNumber' : 'General';
+  String get termLabel => termNumber != null ? 'Term $termNumber' : 'General';
 
   factory Exercise.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? {};
-    final exerciseType =
-        ExerciseType.fromValue(data['type'] as String?);
+    final exerciseType = ExerciseType.fromValue(data['type'] as String?);
     final rawQuestions = data['questions'] as List? ?? [];
     return Exercise(
       id: doc.id,

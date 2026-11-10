@@ -267,7 +267,7 @@ class _ExercisePackageFormScreenState extends State<ExercisePackageFormScreen> {
                     Expanded(
                       child: Text(
                         'Contents · ${QuestionBankText.questionCount(total)}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 16,
                           color: AppColors.navy,
@@ -286,7 +286,7 @@ class _ExercisePackageFormScreenState extends State<ExercisePackageFormScreen> {
                 ),
                 const SizedBox(height: 10),
                 if (_sheets.isEmpty && _questionIds.isEmpty)
-                  const AppCard(
+                  AppCard(
                     child: Text(
                       'Nothing yet. Add worksheets from the question bank; the '
                       'students get them in this order. Edit a worksheet in the '
@@ -397,7 +397,7 @@ class _ContentRow extends StatelessWidget {
           children: [
             Text(
               '${index + 1}.',
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w700,
                 color: AppColors.textSecondary,
               ),
@@ -423,7 +423,7 @@ class _ContentRow extends StatelessWidget {
                     subtitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       color: AppColors.textSecondary,
                     ),
@@ -442,7 +442,7 @@ class _ContentRow extends StatelessWidget {
               tooltip: 'Move down',
             ),
             IconButton(
-              icon: const Icon(Icons.close, size: 18, color: AppColors.error),
+              icon: Icon(Icons.close, size: 18, color: AppColors.error),
               onPressed: onRemove,
               tooltip: 'Remove',
             ),
@@ -507,7 +507,7 @@ class _BankPickerState extends State<_BankPicker> {
               children: [
                 Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Text(
                         'Add from the question bank',
                         style: TextStyle(

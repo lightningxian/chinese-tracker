@@ -38,7 +38,7 @@ class TermProgressCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         subtitle!,
-                        style: const TextStyle(color: AppColors.textSecondary),
+                        style: TextStyle(color: AppColors.textSecondary),
                       ),
                     ],
                   ],
@@ -66,7 +66,7 @@ class TermProgressCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             '${term.totalInTerm} lessons published in this term',
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 13,
             ),
@@ -85,9 +85,8 @@ class ProgressHistoryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final date = item.completedAt;
-    final dateLabel = date != null
-        ? DateFormat('d MMM yyyy').format(date)
-        : null;
+    final dateLabel =
+        date != null ? DateFormat('d MMM yyyy').format(date) : null;
 
     return AppCard(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -118,7 +117,7 @@ class ProgressHistoryTile extends StatelessWidget {
                       'Lesson ${item.lesson!.order}',
                     if (dateLabel != null) dateLabel,
                   ].join(' · '),
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 13,
                   ),
@@ -192,7 +191,7 @@ class _SummaryTile extends StatelessWidget {
                   color: AppColors.navy,
                 ),
           ),
-          Text(label, style: const TextStyle(color: AppColors.textSecondary)),
+          Text(label, style: TextStyle(color: AppColors.textSecondary)),
         ],
       ),
     );

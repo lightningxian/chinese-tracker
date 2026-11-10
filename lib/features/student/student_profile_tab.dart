@@ -10,6 +10,7 @@ import '../../core/utils/progress_utils.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/class_term_widgets.dart';
 import '../../core/widgets/language_toggle.dart';
+import '../../core/widgets/theme_toggle.dart';
 import '../../core/widgets/profile_widgets.dart';
 import '../../l10n/l10n.dart';
 import '../../models/app_user.dart';
@@ -145,7 +146,7 @@ class _StudentProfileTabState extends State<StudentProfileTab> {
           ),
           if (_error != null) ...[
             const SizedBox(height: 16),
-            Text(_error!, style: const TextStyle(color: AppColors.error)),
+            Text(_error!, style: TextStyle(color: AppColors.error)),
           ],
           const SizedBox(height: 16),
           ProfileSectionCard(
@@ -187,6 +188,8 @@ class _StudentProfileTabState extends State<StudentProfileTab> {
           ),
           const SizedBox(height: 16),
           const AppCard(child: LanguageSettingRow()),
+          const SizedBox(height: 16),
+          const AppCard(child: ThemeSettingRow()),
           const SizedBox(height: 16),
           ProfileAccountMeta(user: user),
           const SizedBox(height: 24),
@@ -253,7 +256,7 @@ class _ParentAccessCardState extends State<_ParentAccessCard> {
         children: [
           Text(
             l.studentProfileParentAccessTitle,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w700,
               fontSize: 16,
               color: AppColors.navy,
@@ -262,7 +265,7 @@ class _ParentAccessCardState extends State<_ParentAccessCard> {
           const SizedBox(height: 4),
           Text(
             l.studentProfileParentAccessBody,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 13,
             ),
@@ -280,7 +283,7 @@ class _ParentAccessCardState extends State<_ParentAccessCard> {
                   ),
                   child: Text(
                     _code!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 20,
                       letterSpacing: 3,

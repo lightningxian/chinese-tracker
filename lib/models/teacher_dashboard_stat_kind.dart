@@ -37,16 +37,19 @@ enum TeacherDashboardStatKind {
       };
 
   String get description => switch (this) {
-        students => 'Every registered murid with progress, homework, and session balance.',
+        students =>
+          'Every registered murid with progress, homework, and session balance.',
         activeThisWeek =>
           'Murid who completed a lesson or submitted practice in the last 7 days.',
         homeworkDone => 'Assigned practice that murid have finished.',
         overdue => 'Assigned practice past the due date and not yet completed.',
         avgQuiz => 'Average quiz score per murid across completed lessons.',
-        avgPractice => 'Best practice score per murid across assigned exercises.',
+        avgPractice =>
+          'Best practice score per murid across assigned exercises.',
         sessionsLeft =>
           'Remaining live-class sessions on active voucher packages.',
-        classesThisWeek => 'Scheduled class sessions in the current calendar week.',
+        classesThisWeek =>
+          'Scheduled class sessions in the current calendar week.',
         needAttention =>
           'Overdue homework, stale assignments, inactive murid, and low session balance.',
         weeklyActivity =>

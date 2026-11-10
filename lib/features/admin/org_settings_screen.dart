@@ -136,7 +136,7 @@ class OrgSettingsScreen extends StatelessWidget {
                 const SizedBox(height: 16),
                 Text(
                   'Last updated ${settings.updatedAt}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,
                   ),
@@ -182,7 +182,7 @@ class _ToggleCard extends StatelessWidget {
           ),
           subtitle: Text(
             subtitle,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 12,
             ),
@@ -218,7 +218,7 @@ class _NavRow extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 subtitle,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 12,
                 ),
@@ -226,7 +226,7 @@ class _NavRow extends StatelessWidget {
             ],
           ),
         ),
-        const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+        Icon(Icons.chevron_right, color: AppColors.textSecondary),
       ],
     );
   }

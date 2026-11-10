@@ -264,7 +264,8 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     final total = _questions.length;
     final result = _result;
     final correct = result?.correct ?? _correct;
-    final score = result?.score ?? (total == 0 ? 0 : ((correct / total) * 100).round());
+    final score =
+        result?.score ?? (total == 0 ? 0 : ((correct / total) * 100).round());
 
     return ScoreSummary(
       scorePercent: score,
@@ -327,7 +328,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                   : isMatching
                       ? 'Match ${_currentIndex + 1} of ${_questions.length}'
                       : 'Question ${_currentIndex + 1} of ${_questions.length}',
-          style: const TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(color: AppColors.textSecondary),
         ),
         const SizedBox(height: 24),
         if (isMatching) ...[
@@ -343,7 +344,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                 ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Tap words below to build your sentence',
             style: TextStyle(color: AppColors.textSecondary),
           ),
@@ -407,7 +408,8 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                         ? Border.all(color: borderColor, width: 2)
                         : null,
                   ),
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                   child: Row(
                     children: [
                       Container(
@@ -427,7 +429,9 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                           String.fromCharCode(65 + i),
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
-                            color: selected ? AppColors.teal : AppColors.textSecondary,
+                            color: selected
+                                ? AppColors.teal
+                                : AppColors.textSecondary,
                             fontSize: 15,
                           ),
                         ),
@@ -456,9 +460,10 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
         ],
         const SizedBox(height: 24),
         FilledButton(
-          onPressed: _checking || (!_answerSubmitted && _currentAnswer() == null)
-              ? null
-              : _onPrimaryAction,
+          onPressed:
+              _checking || (!_answerSubmitted && _currentAnswer() == null)
+                  ? null
+                  : _onPrimaryAction,
           style: FilledButton.styleFrom(
             backgroundColor: AppColors.navy,
             padding: const EdgeInsets.symmetric(vertical: 16),
@@ -467,7 +472,8 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
               ? const SizedBox(
                   height: 20,
                   width: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: Colors.white),
                 )
               : Text(
                   !_answerSubmitted
@@ -506,9 +512,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
           const SizedBox(height: 16),
         ],
         Text(
-          isPicture
-              ? 'Write a sentence that uses this word:'
-              : question.prompt,
+          isPicture ? 'Write a sentence that uses this word:' : question.prompt,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w700,
                 color: AppColors.navy,
@@ -527,7 +531,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
               ),
               child: Text(
                 hint,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
                   color: AppColors.teal,
@@ -554,7 +558,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
           const SizedBox(height: 10),
           Text(
             'Answer: ${_check!.accepted.join(' / ')}',
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 15,
             ),
@@ -607,7 +611,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                 question.type == ExerciseType.readingCloze
                     ? 'Choose the word for the blank'
                     : 'Prompt',
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w600,
                   color: AppColors.textSecondary,
                   fontSize: 12,
@@ -630,7 +634,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Choose the best response',
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
@@ -749,7 +753,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
             ),
           ),
           child: _composeOrder.isEmpty
-              ? const Text(
+              ? Text(
                   'Your sentence appears here…',
                   style: TextStyle(color: AppColors.textSecondary),
                 )
@@ -768,13 +772,13 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                           : () => _removeComposeSegment(index),
                       deleteIconColor: AppColors.teal,
                       backgroundColor: AppColors.teal.withValues(alpha: 0.08),
-                      side: const BorderSide(color: AppColors.border),
+                      side: BorderSide(color: AppColors.border),
                     );
                   }),
                 ),
         ),
         const SizedBox(height: 16),
-        const Text(
+        Text(
           'Word bank',
           style: TextStyle(
             fontWeight: FontWeight.w600,
@@ -793,17 +797,19 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
               onPressed:
                   _answerSubmitted ? null : () => _addComposeSegment(segment),
               backgroundColor: AppColors.surface,
-              side: const BorderSide(color: AppColors.border),
+              side: BorderSide(color: AppColors.border),
             );
           }).toList(),
         ),
-        if (check != null && !check.correct && check.correctOrder.isNotEmpty) ...[
+        if (check != null &&
+            !check.correct &&
+            check.correctOrder.isNotEmpty) ...[
           const SizedBox(height: 16),
           AppCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Correct sentence',
                   style: TextStyle(
                     fontWeight: FontWeight.w600,

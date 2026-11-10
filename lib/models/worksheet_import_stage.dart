@@ -8,9 +8,11 @@ class WorksheetImportStage {
   });
 
   final String label;
+
   /// Overall progress from 0.0 to 1.0.
   final double progress;
   final int stepIndex;
+
   /// What is happening right now, e.g. "Page 2 of 3 · recognising text 45%".
   final String? detail;
 
@@ -20,8 +22,8 @@ class WorksheetImportStage {
     'Detect questions',
   ];
 
-  factory WorksheetImportStage.prepare() =>
-      const WorksheetImportStage(label: 'Preparing file…', progress: 0.05, stepIndex: 0);
+  factory WorksheetImportStage.prepare() => const WorksheetImportStage(
+      label: 'Preparing file…', progress: 0.05, stepIndex: 0);
 
   factory WorksheetImportStage.reading(double fraction, {String? detail}) =>
       WorksheetImportStage(
@@ -31,8 +33,8 @@ class WorksheetImportStage {
         detail: detail,
       );
 
-  factory WorksheetImportStage.analyze() =>
-      const WorksheetImportStage(label: 'Detecting question type…', progress: 0.88, stepIndex: 2);
+  factory WorksheetImportStage.analyze() => const WorksheetImportStage(
+      label: 'Detecting question type…', progress: 0.88, stepIndex: 2);
 
   factory WorksheetImportStage.done() =>
       const WorksheetImportStage(label: 'Done', progress: 1.0, stepIndex: 3);

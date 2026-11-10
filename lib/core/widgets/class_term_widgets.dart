@@ -12,8 +12,7 @@ import '../../services/firestore_service.dart';
 import '../utils/money_format.dart';
 import 'app_card.dart';
 
-String _formatDateKey(DateTime date) =>
-    DateFormat('yyyy-MM-dd').format(date);
+String _formatDateKey(DateTime date) => DateFormat('yyyy-MM-dd').format(date);
 
 String _displayDate(String dateKey) {
   final parsed = DateTime.tryParse(dateKey);
@@ -85,7 +84,8 @@ Future<({DateTime start, DateTime deadline})?> _pickTermDates(
               child: const Text('Cancel'),
             ),
             FilledButton(
-              onPressed: () => Navigator.pop(ctx, (start: start, deadline: deadline)),
+              onPressed: () =>
+                  Navigator.pop(ctx, (start: start, deadline: deadline)),
               child: const Text('Save'),
             ),
           ],
@@ -167,7 +167,7 @@ class ClassTermBalanceCard extends StatelessWidget {
                       remaining == 1
                           ? 'Class meeting left this term'
                           : 'Class meetings left this term',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 16,
                         color: AppColors.navy,
@@ -176,7 +176,7 @@ class ClassTermBalanceCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     if (isEmpty)
-                      const Text(
+                      Text(
                         'No paid sessions left. Ask your teacher to add a new term.',
                         style: TextStyle(
                           color: AppColors.error,
@@ -188,7 +188,7 @@ class ClassTermBalanceCard extends StatelessWidget {
                       Text(
                         '${primary.sessionsUsed} used · '
                         '${primary.sessionsRemaining} remaining of ${primary.packageSize}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 13,
                         ),
@@ -207,13 +207,13 @@ class ClassTermBalanceCard extends StatelessWidget {
                         activePackages == 0
                             ? 'No active term in the current date range.'
                             : '$activePackages active package${activePackages == 1 ? '' : 's'}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 13,
                         ),
                       ),
                     const SizedBox(height: 6),
-                    const Text(
+                    Text(
                       'One session is charged when your teacher concludes each class.',
                       style: TextStyle(
                         color: AppColors.textSecondary,
@@ -242,7 +242,7 @@ class ClassTermBalanceCard extends StatelessWidget {
                   color: AppColors.navy.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.card_membership, color: AppColors.navy),
+                child: Icon(Icons.card_membership, color: AppColors.navy),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -260,13 +260,13 @@ class ClassTermBalanceCard extends StatelessWidget {
                       activePackages == 0
                           ? 'No active term in date range'
                           : '$activePackages active package${activePackages == 1 ? '' : 's'}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 13,
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
+                    Text(
                       'Sessions deduct when the teacher concludes a class.',
                       style: TextStyle(
                         color: AppColors.textSecondary,
@@ -337,18 +337,24 @@ class ClassTermPackagesList extends StatelessWidget {
       return ('No payment recorded', AppColors.textSecondary);
     }
     if (inv.isPaid) {
-      final when = inv.paidAt == null ? '' : ' · ${_displayDate(inv.paidAt!.toIso8601String())}';
-      return ('Paid ${formatRupiah(inv.amount)} (${inv.methodLabel.toLowerCase()})$when', AppColors.success);
+      final when = inv.paidAt == null
+          ? ''
+          : ' · ${_displayDate(inv.paidAt!.toIso8601String())}';
+      return (
+        'Paid ${formatRupiah(inv.amount)} (${inv.methodLabel.toLowerCase()})$when',
+        AppColors.success
+      );
     }
     return ('Pending payment · ${formatRupiah(inv.amount)}', AppColors.error);
   }
 
   Future<void> _editTerm(BuildContext context, StudentClassTerm term) async {
-    final result = await showDialog<({
-      DateTime start,
-      DateTime deadline,
-      int sessionsRemaining,
-    })>(
+    final result = await showDialog<
+        ({
+          DateTime start,
+          DateTime deadline,
+          int sessionsRemaining,
+        })>(
       context: context,
       builder: (ctx) => _EditClassTermDialog(term: term),
     );
@@ -427,7 +433,7 @@ class ClassTermPackagesList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (terms.isEmpty) {
-      return const AppCard(
+      return AppCard(
         child: Text(
           'No paid term packages yet. Add an 8 or 16 session term when the student pays.',
           style: TextStyle(color: AppColors.textSecondary, height: 1.4),
@@ -475,14 +481,12 @@ class ClassTermPackagesList extends StatelessWidget {
                   'Start: ${_displayDate(term.startDate)} · '
                   'Deadline: ${_displayDate(term.deadlineDate)}',
                   style: TextStyle(
-                    color: inRange
-                        ? AppColors.textSecondary
-                        : AppColors.error,
+                    color: inRange ? AppColors.textSecondary : AppColors.error,
                     fontSize: 12,
                   ),
                 ),
                 if (!inRange)
-                  const Text(
+                  Text(
                     'Outside term dates today',
                     style: TextStyle(
                       color: AppColors.error,
@@ -552,7 +556,7 @@ class _TermVisitHistory extends StatelessWidget {
       children: [
         Text(
           'Classes attended ($usedCount)',
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.w600,
             color: AppColors.navy,
             fontSize: 13,
@@ -560,7 +564,7 @@ class _TermVisitHistory extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         if (visits.isEmpty)
-          const Text(
+          Text(
             'No classes charged to this term yet.',
             style: TextStyle(
               color: AppColors.textSecondary,
@@ -579,8 +583,8 @@ class _TermVisitHistory extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.only(top: 2),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
                     child: Icon(
                       Icons.check_circle_outline,
                       color: AppColors.success,
@@ -605,7 +609,7 @@ class _TermVisitHistory extends StatelessWidget {
                               record.sessionTitle,
                             record.timeRangeLabel,
                           ].join(' · '),
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 12,
                           ),
@@ -613,7 +617,7 @@ class _TermVisitHistory extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const Text(
+                  Text(
                     '−1',
                     style: TextStyle(
                       color: AppColors.teal,
@@ -638,7 +642,7 @@ class ClassAttendanceHistoryList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (records.isEmpty) {
-      return const AppCard(
+      return AppCard(
         child: Text(
           'No concluded class visits yet.',
           style: TextStyle(color: AppColors.textSecondary),
@@ -659,7 +663,7 @@ class ClassAttendanceHistoryList extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.check_circle_outline,
                   color: AppColors.success,
                   size: 20,
@@ -677,7 +681,7 @@ class ClassAttendanceHistoryList extends StatelessWidget {
                       ),
                       Text(
                         '$dateLabel · ${record.timeRangeLabel}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 12,
                         ),
@@ -685,7 +689,7 @@ class ClassAttendanceHistoryList extends StatelessWidget {
                     ],
                   ),
                 ),
-                const Text(
+                Text(
                   '−1 session',
                   style: TextStyle(
                     color: AppColors.teal,
@@ -791,8 +795,7 @@ class _EditClassTermDialogState extends State<_EditClassTermDialog> {
               onTap: () async {
                 final picked = await showDatePicker(
                   context: context,
-                  initialDate:
-                      _deadline.isBefore(_start) ? _start : _deadline,
+                  initialDate: _deadline.isBefore(_start) ? _start : _deadline,
                   firstDate: _start,
                   lastDate: DateTime(2035),
                 );
@@ -805,8 +808,7 @@ class _EditClassTermDialogState extends State<_EditClassTermDialog> {
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
                 labelText: 'Sessions remaining',
-                helperText:
-                    'Out of ${widget.term.packageSize} in this package',
+                helperText: 'Out of ${widget.term.packageSize} in this package',
                 border: const OutlineInputBorder(),
               ),
             ),
@@ -989,7 +991,7 @@ class StudentHomeTermBalance extends StatelessWidget {
           return AppCard(
             child: Text(
               snap.error.toString(),
-              style: const TextStyle(color: AppColors.error),
+              style: TextStyle(color: AppColors.error),
             ),
           );
         }
@@ -1083,7 +1085,7 @@ class StudentClassTermSection extends StatelessWidget {
                 else ...[
                   ClassTermBalanceCard(terms: terms),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     'Term packages',
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
@@ -1100,7 +1102,8 @@ class StudentClassTermSection extends StatelessWidget {
                   if (unlinkedVisits.isNotEmpty) ...[
                     const SizedBox(height: 20),
                     SectionHeader(
-                      title: 'Other concluded visits (${unlinkedVisits.length})',
+                      title:
+                          'Other concluded visits (${unlinkedVisits.length})',
                     ),
                     ClassAttendanceHistoryList(records: unlinkedVisits),
                   ],

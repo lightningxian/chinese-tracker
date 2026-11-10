@@ -28,7 +28,7 @@ class SavedAccountsService extends ChangeNotifier {
       return const [];
     }
     return [
-      DemoLoginAccount(
+      const DemoLoginAccount(
         email: studentEmail,
         password: studentPassword,
         displayName: 'Demo account',
@@ -113,7 +113,8 @@ class SavedAccountsService extends ChangeNotifier {
     await _persist();
 
     if (rememberPassword && password != null && password.isNotEmpty) {
-      await _secureStorage.write(key: _passwordKey(user.email), value: password);
+      await _secureStorage.write(
+          key: _passwordKey(user.email), value: password);
     } else if (!rememberPassword) {
       await _secureStorage.delete(key: _passwordKey(user.email));
     }

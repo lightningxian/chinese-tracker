@@ -57,7 +57,7 @@ abstract final class ChildLinkService {
       if (e.code == 'internal' ||
           e.code == 'unavailable' ||
           e.code == 'deadline-exceeded') {
-        throw ChildLinkException(
+        throw const ChildLinkException(
           "We couldn't check the child access code right now. Please try "
           'again in a few minutes, or contact the centre on WhatsApp.',
         );
@@ -82,8 +82,8 @@ abstract final class ChildLinkService {
       );
     }
     try {
-      final callable = (functions ?? FirebaseFunctions.instance)
-          .httpsCallable('linkChild');
+      final callable =
+          (functions ?? FirebaseFunctions.instance).httpsCallable('linkChild');
       final result = await callable.call({'code': code});
       final data = (result.data as Map).cast<String, dynamic>();
       final studentId = data['studentId'] as String?;
@@ -100,7 +100,7 @@ abstract final class ChildLinkService {
       if (e.code == 'internal' ||
           e.code == 'unavailable' ||
           e.code == 'deadline-exceeded') {
-        throw ChildLinkException(
+        throw const ChildLinkException(
           "We couldn't check the child access code right now. Please try "
           'again in a few minutes, or contact the centre on WhatsApp.',
         );

@@ -45,7 +45,7 @@ class _StudentJoinSessionSectionState extends State<StudentJoinSessionSection> {
             child: AppCard(
               child: Text(
                 _errorMessage(context.l10n, sessionsSnap.error!),
-                style: const TextStyle(color: AppColors.error),
+                style: TextStyle(color: AppColors.error),
               ),
             ),
           );
@@ -68,8 +68,7 @@ class _StudentJoinSessionSectionState extends State<StudentJoinSessionSection> {
           stream: firestore.watchStudentClassTerms(widget.student.uid),
           builder: (context, termsSnap) {
             final terms = termsSnap.data ?? [];
-            final sessionsLeft =
-                firestore.totalRemainingClassSessions(terms);
+            final sessionsLeft = firestore.totalRemainingClassSessions(terms);
 
             return StreamBuilder<List<AttendanceRecord>>(
               stream: firestore.watchStudentJoinedSessions(widget.student.uid),
@@ -83,40 +82,41 @@ class _StudentJoinSessionSectionState extends State<StudentJoinSessionSection> {
 
                 return _JoinSectionFrame(
                   child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (sessions.isEmpty)
-                    EmptyState(
-                      icon: Icons.event_busy_outlined,
-                      title: context.l10n.studentJoinNoSessionsTitle,
-                      subtitle: context.l10n.studentJoinNoSessionsSubtitle,
-                    )
-                  else
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        return ResponsiveCardGrid(
-                          width: constraints.maxWidth,
-                          children: [
-                            for (final session in sessions)
-                              _OpenSessionJoinCard(
-                                session: session,
-                                student: widget.student,
-                                sessionsLeft: sessionsLeft,
-                                joined: joinedSessionIds
-                                    .contains(session.id),
-                                onJoined: () => setState(
-                                  () => _justJoinedSessionIds.add(session.id),
-                                ),
-                                onLeft: () => setState(
-                                  () => _justJoinedSessionIds
-                                      .remove(session.id),
-                                ),
-                              ),
-                          ],
-                        );
-                      },
-                    ),
-                ],
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (sessions.isEmpty)
+                        EmptyState(
+                          icon: Icons.event_busy_outlined,
+                          title: context.l10n.studentJoinNoSessionsTitle,
+                          subtitle: context.l10n.studentJoinNoSessionsSubtitle,
+                        )
+                      else
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            return ResponsiveCardGrid(
+                              width: constraints.maxWidth,
+                              children: [
+                                for (final session in sessions)
+                                  _OpenSessionJoinCard(
+                                    session: session,
+                                    student: widget.student,
+                                    sessionsLeft: sessionsLeft,
+                                    joined:
+                                        joinedSessionIds.contains(session.id),
+                                    onJoined: () => setState(
+                                      () =>
+                                          _justJoinedSessionIds.add(session.id),
+                                    ),
+                                    onLeft: () => setState(
+                                      () => _justJoinedSessionIds
+                                          .remove(session.id),
+                                    ),
+                                  ),
+                              ],
+                            );
+                          },
+                        ),
+                    ],
                   ),
                 );
               },
@@ -244,127 +244,126 @@ class _OpenSessionJoinCard extends StatelessWidget {
         : session.sessionDate;
 
     return StreamBuilder<List<AttendanceRecord>>(
-        stream: firestore.watchSessionAttendance(session.id),
-        builder: (context, rosterSnap) {
-          final joinedCount = (rosterSnap.data ?? [])
-              .where((r) => r.attended)
-              .length;
-          final isFull = firestore.isSessionFull(session, joinedCount);
-          final spotsLeft =
-              (session.capacity - joinedCount).clamp(0, session.capacity);
+      stream: firestore.watchSessionAttendance(session.id),
+      builder: (context, rosterSnap) {
+        final joinedCount =
+            (rosterSnap.data ?? []).where((r) => r.attended).length;
+        final isFull = firestore.isSessionFull(session, joinedCount);
+        final spotsLeft =
+            (session.capacity - joinedCount).clamp(0, session.capacity);
 
-          return AppCard(
-            padding: const EdgeInsets.all(14),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        session.sessionTitle,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                        ),
+        return AppCard(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      session.sessionTitle,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '$dateLabel · ${session.timeRangeLabel}',
-                        style: const TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 13,
-                        ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '$dateLabel · ${session.timeRangeLabel}',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${l.studentJoinCount(joinedCount, session.capacity)}'
-                        ' · ${isFull ? l.commonFull : l.commonSpotsLeft(spotsLeft)}',
-                        style: TextStyle(
-                          color: isFull ? AppColors.error : AppColors.teal,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${l.studentJoinCount(joinedCount, session.capacity)}'
+                      ' · ${isFull ? l.commonFull : l.commonSpotsLeft(spotsLeft)}',
+                      style: TextStyle(
+                        color: isFull ? AppColors.error : AppColors.teal,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
                       ),
-                    ],
+                    ),
+                  ],
+                ),
+              ),
+              if (joined)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () =>
+                          context.push('/student/class/${session.id}'),
+                      child: Text(l.studentJoinView),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        final confirm = await showLeaveClassDialog(context);
+                        if (confirm != true || !context.mounted) return;
+                        try {
+                          await firestore.leaveSession(
+                            sessionId: session.id,
+                            studentId: student.uid,
+                          );
+                          onLeft();
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(l.studentJoinLeftClass),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  _StudentJoinSessionSectionState._errorMessage(
+                                      l, e),
+                                ),
+                              ),
+                            );
+                          }
+                        }
+                      },
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.error,
+                      ),
+                      child: Text(l.studentJoinLeave),
+                    ),
+                  ],
+                )
+              else if (isFull)
+                OutlinedButton(
+                  onPressed: () => _showClassFullDialog(context, joinedCount),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.error,
+                    side: BorderSide(color: AppColors.error),
+                  ),
+                  child: Text(l.commonFull),
+                )
+              else
+                FilledButton(
+                  onPressed:
+                      rosterSnap.connectionState == ConnectionState.waiting ||
+                              sessionsLeft <= 0
+                          ? null
+                          : () => _join(context, joinedCount, isFull),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.navy,
+                  ),
+                  child: Text(
+                    sessionsLeft <= 0
+                        ? l.studentJoinNoSessionsLeft
+                        : l.studentJoinJoin,
                   ),
                 ),
-                if (joined)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      TextButton(
-                        onPressed: () =>
-                            context.push('/student/class/${session.id}'),
-                        child: Text(l.studentJoinView),
-                      ),
-                      TextButton(
-                        onPressed: () async {
-                          final confirm = await showLeaveClassDialog(context);
-                          if (confirm != true || !context.mounted) return;
-                          try {
-                            await firestore.leaveSession(
-                              sessionId: session.id,
-                              studentId: student.uid,
-                            );
-                            onLeft();
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(l.studentJoinLeftClass),
-                                ),
-                              );
-                            }
-                          } catch (e) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    _StudentJoinSessionSectionState
-                                        ._errorMessage(l, e),
-                                  ),
-                                ),
-                              );
-                            }
-                          }
-                        },
-                        style: TextButton.styleFrom(
-                          foregroundColor: AppColors.error,
-                        ),
-                        child: Text(l.studentJoinLeave),
-                      ),
-                    ],
-                  )
-                else if (isFull)
-                  OutlinedButton(
-                    onPressed: () => _showClassFullDialog(context, joinedCount),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.error,
-                      side: const BorderSide(color: AppColors.error),
-                    ),
-                    child: Text(l.commonFull),
-                  )
-                else
-                  FilledButton(
-                    onPressed: rosterSnap.connectionState ==
-                                ConnectionState.waiting ||
-                            sessionsLeft <= 0
-                        ? null
-                        : () => _join(context, joinedCount, isFull),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.navy,
-                    ),
-                    child: Text(
-                      sessionsLeft <= 0
-                          ? l.studentJoinNoSessionsLeft
-                          : l.studentJoinJoin,
-                    ),
-                  ),
-              ],
-            ),
-          );
-        },
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -385,7 +384,7 @@ class _JoinSectionFrame extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           context.l10n.studentJoinHint,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.textSecondary,
             fontSize: 13,
             height: 1.4,

@@ -232,8 +232,7 @@ class _AdminShellState extends State<AdminShell> {
           onFabPressed: nested
               ? null
               : switch (_index) {
-                  2 when canManageExercises =>
-                    () => _scanAndOpenForm(context),
+                  2 when canManageExercises => () => _scanAndOpenForm(context),
                   4 => () => context.push('/admin/session/new'),
                   _ => null,
                 },

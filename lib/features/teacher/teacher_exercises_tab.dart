@@ -70,7 +70,7 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'HSK level',
             style: TextStyle(
               fontWeight: FontWeight.w600,
@@ -100,7 +100,7 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
             ],
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Skill section',
             style: TextStyle(
               fontWeight: FontWeight.w600,
@@ -170,7 +170,7 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w700,
                       color: AppColors.navy,
                       fontSize: 14,
@@ -179,7 +179,7 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
                   const SizedBox(height: 4),
                   Text(
                     message,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 13,
                       height: 1.45,
@@ -204,7 +204,7 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
         ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
-          side: const BorderSide(color: AppColors.border),
+          side: BorderSide(color: AppColors.border),
         ),
         actions: [
           TextButton(
@@ -391,7 +391,7 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
                       ].join(' · '),
                       maxLines: compact ? 3 : 4,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,
                       ),
@@ -431,7 +431,7 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
               exercise.instructions,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 13,
               ),
@@ -504,7 +504,7 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
                     label: const Text('Delete'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.error,
-                      side: const BorderSide(color: AppColors.error),
+                      side: BorderSide(color: AppColors.error),
                       minimumSize: Size.fromHeight(compact ? 36 : 42),
                       textStyle: TextStyle(fontSize: compact ? 12 : 14),
                     ),
@@ -591,7 +591,7 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
           padding: const EdgeInsets.only(top: 8, bottom: 10),
           child: Text(
             category.label,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w700,
               fontSize: 15,
               color: AppColors.navy,
@@ -631,7 +631,7 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
           return Center(
             child: Text(
               snapshot.error.toString(),
-              style: const TextStyle(color: AppColors.error),
+              style: TextStyle(color: AppColors.error),
             ),
           );
         }
@@ -736,7 +736,7 @@ class _SkillSectionBadge extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           color: AppColors.navy,
           fontSize: 11,
           fontWeight: FontWeight.w600,

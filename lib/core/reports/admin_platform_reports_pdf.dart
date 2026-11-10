@@ -16,17 +16,17 @@ abstract final class AdminPlatformReportsPdf {
 
   static pw.Widget _title(String text) => pw.Text(
         text,
-        style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
+        style: const pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
       );
 
   static pw.Widget _subtitle(String text) => pw.Text(
         text,
-        style: pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
+        style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
       );
 
   static pw.Widget _section(String text) => pw.Text(
         text,
-        style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
+        style: const pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
       );
 
   static pw.Widget _cell(String text, {bool bold = false}) => pw.Padding(
@@ -56,7 +56,8 @@ abstract final class AdminPlatformReportsPdf {
         build: (context) => [
           _title('${AppConstants.brandName} — User roster'),
           pw.SizedBox(height: 4),
-          _subtitle('Generated ${DateFormat('d MMM yyyy, HH:mm').format(generatedAt)}'),
+          _subtitle(
+              'Generated ${DateFormat('d MMM yyyy, HH:mm').format(generatedAt)}'),
           pw.SizedBox(height: 12),
           _subtitle('Total users: ${users.length}'),
           pw.SizedBox(height: 16),
@@ -120,13 +121,15 @@ abstract final class AdminPlatformReportsPdf {
         build: (context) => [
           _title('${AppConstants.brandName} — Monthly registration & growth'),
           pw.SizedBox(height: 4),
-          _subtitle('Generated ${DateFormat('d MMM yyyy, HH:mm').format(generatedAt)}'),
+          _subtitle(
+              'Generated ${DateFormat('d MMM yyyy, HH:mm').format(generatedAt)}'),
           pw.SizedBox(height: 16),
           _section('Summary'),
           pw.SizedBox(height: 8),
           pw.Text('Total murid (all): ${report.totalMurid}'),
           pw.Text('Active murid: ${report.activeStudents}'),
-          pw.Text('Guru: ${report.totalTeachers} · Admin: ${report.totalAdmins}'),
+          pw.Text(
+              'Guru: ${report.totalTeachers} · Admin: ${report.totalAdmins}'),
           pw.SizedBox(height: 20),
           _section('New murid registrations / month'),
           pw.SizedBox(height: 10),
@@ -138,7 +141,8 @@ abstract final class AdminPlatformReportsPdf {
                 children: [
                   pw.SizedBox(
                     width: 36,
-                    child: pw.Text(month.label, style: const pw.TextStyle(fontSize: 10)),
+                    child: pw.Text(month.label,
+                        style: const pw.TextStyle(fontSize: 10)),
                   ),
                   pw.Expanded(
                     child: pw.Container(
@@ -152,7 +156,8 @@ abstract final class AdminPlatformReportsPdf {
                     ),
                   ),
                   pw.SizedBox(width: 8),
-                  pw.Text('${month.count}', style: const pw.TextStyle(fontSize: 10)),
+                  pw.Text('${month.count}',
+                      style: const pw.TextStyle(fontSize: 10)),
                 ],
               ),
             );
@@ -169,7 +174,7 @@ abstract final class AdminPlatformReportsPdf {
                   pw.Text(band.label, style: const pw.TextStyle(fontSize: 10)),
                   pw.Text(
                     '${band.count}',
-                    style: pw.TextStyle(
+                    style: const pw.TextStyle(
                       fontSize: 10,
                       fontWeight: pw.FontWeight.bold,
                     ),
@@ -206,7 +211,8 @@ abstract final class AdminPlatformReportsPdf {
         build: (context) => [
           _title('${AppConstants.brandName} — Vouchers & monthly packages'),
           pw.SizedBox(height: 4),
-          _subtitle('Generated ${DateFormat('d MMM yyyy, HH:mm').format(generatedAt)}'),
+          _subtitle(
+              'Generated ${DateFormat('d MMM yyyy, HH:mm').format(generatedAt)}'),
           pw.SizedBox(height: 12),
           _subtitle('Packages tracked: ${terms.length}'),
           pw.SizedBox(height: 16),
@@ -237,7 +243,8 @@ abstract final class AdminPlatformReportsPdf {
                     ),
                   ),
                   pw.SizedBox(width: 8),
-                  pw.Text('${month.count}', style: const pw.TextStyle(fontSize: 10)),
+                  pw.Text('${month.count}',
+                      style: const pw.TextStyle(fontSize: 10)),
                 ],
               ),
             );
@@ -300,9 +307,8 @@ abstract final class AdminPlatformReportsPdf {
     required DateTime generatedAt,
   }) async {
     final doc = pw.Document();
-    final skillHeaders = ExerciseSkillCategory.values
-        .map((category) => category.label)
-        .toList();
+    final skillHeaders =
+        ExerciseSkillCategory.values.map((category) => category.label).toList();
 
     doc.addPage(
       pw.MultiPage(
@@ -340,7 +346,8 @@ abstract final class AdminPlatformReportsPdf {
                   children: [
                     _cell('HSK level', bold: true),
                     _cell('Total', bold: true),
-                    for (final header in skillHeaders) _cell(header, bold: true),
+                    for (final header in skillHeaders)
+                      _cell(header, bold: true),
                     _cell('Published', bold: true),
                     _cell('Draft', bold: true),
                   ],

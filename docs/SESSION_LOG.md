@@ -148,6 +148,17 @@ Commit author preference (via env vars, not global git config):
 
 Update this section when you push from Mac or PC.
 
+### 2026-11-10 — Claude: dark mode, worksheet editor, empty-tab button
+
+- Dark mode: two palettes behind the same `AppColors` names, Light / Dark /
+  Device toggle on every profile page, default follows the device.
+- Question bank worksheet page: Edit worksheet (title, type, level, skill),
+  Add question, move up/down, per-type question editor; matching questions
+  keep their word bank.
+- Exercises tab shows New exercise when the list is empty.
+- Verified on the emulator (admin + student, light and dark). Owner to
+  deploy hosting: `scripts/deploy_web.sh --web-only`.
+
 ### 2026-11-09 (night) — Claude: packages from the bank, server scoring, ID/EN, delete account
 
 - Exercises are now packages of bank worksheets; students only see assigned

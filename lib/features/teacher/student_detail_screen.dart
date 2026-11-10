@@ -97,7 +97,8 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
             stream: firestore.watchLessons(contentOwnerId),
             builder: (context, lessonsSnap) {
               final allLessons = lessonsSnap.data ?? [];
-              final lessons = ProgressUtils.lessonsForStudent(allLessons, student);
+              final lessons =
+                  ProgressUtils.lessonsForStudent(allLessons, student);
 
               return StreamBuilder(
                 stream: firestore.watchStudentProgress(widget.studentId),
@@ -143,7 +144,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
                                     const SizedBox(height: 2),
                                     Text(
                                       student.displayNameChinese!,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         color: AppColors.textSecondary,
                                         fontSize: 15,
                                         fontWeight: FontWeight.w500,
@@ -153,7 +154,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
                                   const SizedBox(height: 4),
                                   Text(
                                     student.email,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       color: AppColors.textSecondary,
                                       fontSize: 13,
                                     ),
@@ -180,7 +181,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
                                         ),
                                         child: Text(
                                           '${student.lessonsPerTerm} lessons/term',
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontSize: 11,
                                             fontWeight: FontWeight.w600,
                                             color: AppColors.textSecondary,
@@ -245,7 +246,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
                           label: const Text('Export progress report (PDF)'),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AppColors.navy,
-                            side: const BorderSide(color: AppColors.border),
+                            side: BorderSide(color: AppColors.border),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
                         ),
@@ -259,9 +260,8 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
                       const SizedBox(height: 24),
                       StudentEvaluationsSection(
                         studentId: widget.studentId,
-                        teacherId:
-                            context.read<AuthService>().appUser?.uid ??
-                                contentOwnerId,
+                        teacherId: context.read<AuthService>().appUser?.uid ??
+                            contentOwnerId,
                       ),
                       const SizedBox(height: 24),
                       const SectionHeader(title: 'Practice results'),
@@ -272,7 +272,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
                       const SizedBox(height: 24),
                       const SectionHeader(title: 'Lesson progress by term'),
                       if (terms.isEmpty)
-                        const AppCard(
+                        AppCard(
                           child: Text(
                             'No lesson progress yet.',
                             style: TextStyle(color: AppColors.textSecondary),

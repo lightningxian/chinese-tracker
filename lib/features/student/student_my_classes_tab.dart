@@ -32,7 +32,7 @@ class StudentMyClassesTab extends StatelessWidget {
               padding: const EdgeInsets.all(24),
               child: Text(
                 snapshot.error.toString(),
-                style: const TextStyle(color: AppColors.error),
+                style: TextStyle(color: AppColors.error),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -80,11 +80,11 @@ class StudentMyClassesTab extends StatelessWidget {
                                 Container(
                                   padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
-                                    color: AppColors.teal
-                                        .withValues(alpha: 0.12),
+                                    color:
+                                        AppColors.teal.withValues(alpha: 0.12),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
-                                  child: const Icon(
+                                  child: Icon(
                                     Icons.event_available_outlined,
                                     color: AppColors.teal,
                                   ),
@@ -112,7 +112,7 @@ class StudentMyClassesTab extends StatelessWidget {
                                               record.endMinutes != 0)
                                             record.timeRangeLabel,
                                         ].join(' · '),
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           color: AppColors.textSecondary,
                                           fontSize: 13,
                                         ),
@@ -120,7 +120,7 @@ class StudentMyClassesTab extends StatelessWidget {
                                       const SizedBox(height: 4),
                                       Text(
                                         l.studentMyClassesTapToSee,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           color: AppColors.teal,
                                           fontSize: 12,
                                           fontWeight: FontWeight.w500,
@@ -129,7 +129,7 @@ class StudentMyClassesTab extends StatelessWidget {
                                     ],
                                   ),
                                 ),
-                                const Icon(
+                                Icon(
                                   Icons.chevron_right,
                                   color: AppColors.textSecondary,
                                 ),

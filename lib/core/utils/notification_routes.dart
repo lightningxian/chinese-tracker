@@ -9,9 +9,8 @@ abstract final class NotificationRoutes {
     if (explicit != null && explicit.isNotEmpty) return explicit;
 
     return switch (notification.kind) {
-      NotificationKind.registration => role == AppConstants.roleAdmin
-          ? '/admin'
-          : '/teacher',
+      NotificationKind.registration =>
+        role == AppConstants.roleAdmin ? '/admin' : '/teacher',
       NotificationKind.grading => role == AppConstants.roleStudent
           ? '/student'
           : role == AppConstants.roleAdmin
@@ -31,7 +30,8 @@ abstract final class NotificationRoutes {
       (AppConstants.roleAdmin, NotificationKind.registration) => 1, // Users
       (AppConstants.roleAdmin, NotificationKind.grading) => 2, // Exercises
       (AppConstants.roleAdmin, NotificationKind.session) => 4, // Classes
-      (AppConstants.roleTeacher, NotificationKind.registration) => 1, // Students
+      (AppConstants.roleTeacher, NotificationKind.registration) =>
+        1, // Students
       (AppConstants.roleTeacher, NotificationKind.grading) => 2, // Exercises
       (AppConstants.roleTeacher, NotificationKind.session) => 3, // Classes
       (AppConstants.roleStudent, NotificationKind.grading) => 3, // Progress

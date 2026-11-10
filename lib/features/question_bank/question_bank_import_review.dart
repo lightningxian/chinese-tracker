@@ -107,14 +107,14 @@ class _QuestionBankImportReviewScreenState
                   if (sheet != null) ...[
                     Row(
                       children: [
-                        const Icon(Icons.description_outlined,
+                        Icon(Icons.description_outlined,
                             color: AppColors.navy, size: 20),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             'Worksheet ${sheet.code}'
                             '${sheet.title != sheet.code ? ' · ${sheet.title}' : ''}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.w700,
                               fontSize: 16,
                               color: AppColors.navy,
@@ -124,7 +124,7 @@ class _QuestionBankImportReviewScreenState
                       ],
                     ),
                     const SizedBox(height: 6),
-                    const Text(
+                    Text(
                       'Added to the bank as one worksheet. Untick a question '
                       'to leave it out.',
                       style: TextStyle(
@@ -142,7 +142,7 @@ class _QuestionBankImportReviewScreenState
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.info_outline,
+                            Icon(Icons.info_outline,
                                 size: 20, color: AppColors.chipAmberFg),
                             const SizedBox(width: 10),
                             Expanded(
@@ -221,7 +221,7 @@ class _QuestionBankImportReviewScreenState
                                 children: [
                                   Text(
                                     '${i + 1}.',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       color: AppColors.textSecondary,
                                       fontWeight: FontWeight.w700,
                                     ),
@@ -236,7 +236,7 @@ class _QuestionBankImportReviewScreenState
                                     ),
                                     child: Text(
                                       item.type.label,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w600,
                                         color: AppColors.navy,

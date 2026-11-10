@@ -22,8 +22,20 @@ void main() {
   test('items are the source of truth and legacy fields are derived', () {
     final p = PricingSettings.fromMap({
       'items': [
-        {'id': 'trial', 'name': 'Trial class', 'price': 150000, 'kind': 'sessions', 'sessions': 1},
-        {'id': 'package8', 'name': '8 sessions', 'price': 2450000, 'kind': 'sessions', 'sessions': 8},
+        {
+          'id': 'trial',
+          'name': 'Trial class',
+          'price': 150000,
+          'kind': 'sessions',
+          'sessions': 1
+        },
+        {
+          'id': 'package8',
+          'name': '8 sessions',
+          'price': 2450000,
+          'kind': 'sessions',
+          'sessions': 8
+        },
         {'id': 'book', 'name': 'Book', 'price': 250000, 'kind': 'book'},
       ],
       'package8': 1, // ignored when items exist

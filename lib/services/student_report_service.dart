@@ -47,8 +47,7 @@ class StudentReportService {
         await _firestore.watchAvailableExercisesForStudent(student).first;
     final results =
         await _firestore.watchStudentExerciseResults(studentId).first;
-    final classTerms =
-        await _firestore.watchStudentClassTerms(studentId).first;
+    final classTerms = await _firestore.watchStudentClassTerms(studentId).first;
 
     final bestScores = ExerciseUtils.bestScores(results);
     final attemptCounts = ExerciseUtils.attemptCounts(results);
@@ -120,8 +119,7 @@ class StudentReportService {
         )
         .length;
 
-    final completedLessons =
-        progress.where((item) => item.completed).length;
+    final completedLessons = progress.where((item) => item.completed).length;
 
     final sessionsRemaining =
         _firestore.totalRemainingClassSessions(classTerms);

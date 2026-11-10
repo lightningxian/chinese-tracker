@@ -34,8 +34,8 @@ Future<void> showNotificationsSheet({
             ),
             const SizedBox(height: 12),
             if (notifications.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 24),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
                 child: Text(
                   'No notifications yet.',
                   textAlign: TextAlign.center,
@@ -68,7 +68,7 @@ Future<void> showNotificationsSheet({
                                 Container(
                                   width: 8,
                                   height: 8,
-                                  decoration: const BoxDecoration(
+                                  decoration: BoxDecoration(
                                     color: AppColors.error,
                                     shape: BoxShape.circle,
                                   ),
@@ -90,8 +90,7 @@ Future<void> showNotificationsSheet({
                           return;
                         }
 
-                        final path =
-                            NotificationRoutes.pathFor(n, role: role);
+                        final path = NotificationRoutes.pathFor(n, role: role);
                         if (path != null && context.mounted) {
                           context.go(path);
                         }

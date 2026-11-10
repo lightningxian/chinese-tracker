@@ -59,8 +59,7 @@ class AdminDashboardTab extends StatelessWidget {
                   classTerms: termsSnap.data ?? [],
                 );
 
-                final voucherAlerts =
-                    AdminAttentionUtils.buildVoucherAlerts(
+                final voucherAlerts = AdminAttentionUtils.buildVoucherAlerts(
                   students: allMurid,
                   classTerms: termsSnap.data ?? [],
                 );
@@ -212,7 +211,7 @@ class AdminDashboardTab extends StatelessWidget {
                   ),
         ),
         if (alerts.isEmpty)
-          const AppCard(
+          AppCard(
             child: Text(
               'All caught up — no voucher alerts right now.',
               style: TextStyle(color: AppColors.textSecondary),
@@ -337,7 +336,7 @@ class _FinancialSummarySection extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Pending payments to chase',
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
@@ -359,7 +358,9 @@ class _FinancialSummarySection extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              inv.isOverdue ? 'overdue · ' : 'due ${inv.dueDate} · ',
+                              inv.isOverdue
+                                  ? 'overdue · '
+                                  : 'due ${inv.dueDate} · ',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: inv.isOverdue
@@ -383,7 +384,7 @@ class _FinancialSummarySection extends StatelessWidget {
               const SizedBox(height: 12),
             ],
             if (recentPaid.isEmpty)
-              const AppCard(
+              AppCard(
                 child: Text(
                   'No payments recorded yet.',
                   style: TextStyle(color: AppColors.textSecondary),
@@ -394,7 +395,7 @@ class _FinancialSummarySection extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Recent payments',
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
@@ -417,7 +418,7 @@ class _FinancialSummarySection extends StatelessWidget {
                             ),
                             Text(
                               currency.format(inv.amount),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.success,
                                 fontSize: 13,

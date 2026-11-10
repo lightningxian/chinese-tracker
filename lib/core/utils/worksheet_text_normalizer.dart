@@ -30,12 +30,30 @@ abstract final class WorksheetTextNormalizer {
   static final _privateUse = RegExp(r'[\uE000-\uF8FF]');
 
   static const _toneless = {
-    'ā': 'a', 'á': 'a', 'ǎ': 'a', 'à': 'a',
-    'ē': 'e', 'é': 'e', 'ě': 'e', 'è': 'e',
-    'ī': 'i', 'í': 'i', 'ǐ': 'i', 'ì': 'i',
-    'ō': 'o', 'ó': 'o', 'ǒ': 'o', 'ò': 'o',
-    'ū': 'u', 'ú': 'u', 'ǔ': 'u', 'ù': 'u',
-    'ǖ': 'ü', 'ǘ': 'ü', 'ǚ': 'ü', 'ǜ': 'ü',
+    'ā': 'a',
+    'á': 'a',
+    'ǎ': 'a',
+    'à': 'a',
+    'ē': 'e',
+    'é': 'e',
+    'ě': 'e',
+    'è': 'e',
+    'ī': 'i',
+    'í': 'i',
+    'ǐ': 'i',
+    'ì': 'i',
+    'ō': 'o',
+    'ó': 'o',
+    'ǒ': 'o',
+    'ò': 'o',
+    'ū': 'u',
+    'ú': 'u',
+    'ǔ': 'u',
+    'ù': 'u',
+    'ǖ': 'ü',
+    'ǘ': 'ü',
+    'ǚ': 'ü',
+    'ǜ': 'ü',
   };
 
   static String stripTones(String s) {
@@ -94,7 +112,11 @@ abstract final class WorksheetTextNormalizer {
     final annotated = looksAnnotated(lines);
     lines = [
       for (final line in lines)
-        _stripPinyin(_arrowBullet.hasMatch(line) ? line.replaceFirst(_arrowBullet, '') : line, annotated),
+        _stripPinyin(
+            _arrowBullet.hasMatch(line)
+                ? line.replaceFirst(_arrowBullet, '')
+                : line,
+            annotated),
     ].where((l) => l.isNotEmpty).toList();
 
     if (annotated) lines = _splitGluedMarkers(_joinFragments(lines));
@@ -162,7 +184,8 @@ abstract final class WorksheetTextNormalizer {
         _numberAfterSentence,
         (m) => '${m[1]}\n${m[2]}',
       );
-      out.addAll(split.split('\n').map((l) => l.trim()).where((l) => l.isNotEmpty));
+      out.addAll(
+          split.split('\n').map((l) => l.trim()).where((l) => l.isNotEmpty));
     }
     return out;
   }
@@ -192,7 +215,8 @@ abstract final class WorksheetTextNormalizer {
         continue;
       }
       final glued = _gluedPrefix.firstMatch(token);
-      if (glued != null && isPinyinToken(glued.group(1)!) &&
+      if (glued != null &&
+          isPinyinToken(glued.group(1)!) &&
           (annotated || _toneMarked.hasMatch(glued.group(1)!))) {
         kept.add(glued.group(2)!);
         continue;

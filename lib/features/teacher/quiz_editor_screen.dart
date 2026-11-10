@@ -82,9 +82,8 @@ class _QuizEditorScreenState extends State<QuizEditorScreen> {
     final result = await scanWorksheet(context);
     if (result == null || !mounted) return;
     final parsed = result.parseResult!;
-    final usable = parsed.mcQuestions
-        .where((q) => q.options.length >= 2)
-        .toList();
+    final usable =
+        parsed.mcQuestions.where((q) => q.options.length >= 2).toList();
     if (usable.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -199,7 +198,7 @@ class _QuizEditorScreenState extends State<QuizEditorScreen> {
                   children: [
                     Text(
                       'Questions (${_questions.length})',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w700,
                         color: AppColors.navy,
                       ),
@@ -301,7 +300,8 @@ class QuizListScreen extends StatelessWidget {
       child: StreamBuilder<List<Quiz>>(
         stream: firestore.watchQuizzesForTeacher(teacherId),
         builder: (context, snap) {
-          if (snap.connectionState == ConnectionState.waiting && !snap.hasData) {
+          if (snap.connectionState == ConnectionState.waiting &&
+              !snap.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
           final quizzes = snap.data ?? const <Quiz>[];
@@ -340,7 +340,8 @@ class QuizListScreen extends StatelessWidget {
                     },
                     itemBuilder: (_) => [
                       const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                      const PopupMenuItem(value: 'delete', child: Text('Delete')),
+                      const PopupMenuItem(
+                          value: 'delete', child: Text('Delete')),
                     ],
                   ),
                 ),

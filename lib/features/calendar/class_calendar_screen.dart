@@ -75,7 +75,7 @@ class _ClassCalendarScreenState extends State<ClassCalendarScreen> {
                 startingDayOfWeek: StartingDayOfWeek.monday,
                 selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
                 eventLoader: (day) => events[_dayKey(day)] ?? const [],
-                calendarStyle: const CalendarStyle(
+                calendarStyle: CalendarStyle(
                   markerDecoration: BoxDecoration(
                     color: AppColors.teal,
                     shape: BoxShape.circle,
@@ -159,7 +159,9 @@ class _SessionTile extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: (session.isConcluded ? AppColors.textSecondary : AppColors.teal)
+              color: (session.isConcluded
+                      ? AppColors.textSecondary
+                      : AppColors.teal)
                   .withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(8),
             ),
@@ -190,7 +192,7 @@ class _SessionTile extends StatelessWidget {
                 Text(
                   session.timeRangeLabel +
                       (session.isConcluded ? ' · concluded' : ''),
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 13,
                   ),
@@ -199,7 +201,7 @@ class _SessionTile extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     _metaLine(session),
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 12,
                     ),
@@ -216,7 +218,7 @@ class _SessionTile extends StatelessWidget {
                       color: AppColors.success.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Open for registration',
                       style: TextStyle(
                         color: AppColors.success,
@@ -230,7 +232,7 @@ class _SessionTile extends StatelessWidget {
             ),
           ),
           if (onTap != null)
-            const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+            Icon(Icons.chevron_right, color: AppColors.textSecondary),
         ],
       ),
     );

@@ -69,8 +69,7 @@ class QuestionBankSheetScreen extends StatelessWidget {
                 ),
                 IconButton(
                   onPressed: () => _deleteSheet(context, sheet),
-                  icon:
-                      const Icon(Icons.delete_outline, color: AppColors.error),
+                  icon: Icon(Icons.delete_outline, color: AppColors.error),
                   tooltip: 'Delete worksheet',
                 ),
               ],
@@ -281,8 +280,7 @@ class _SheetHeader extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.description_outlined,
-              color: AppColors.navy, size: 28),
+          Icon(Icons.description_outlined, color: AppColors.navy, size: 28),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -290,7 +288,7 @@ class _SheetHeader extends StatelessWidget {
               children: [
                 Text(
                   sheet.title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
                     color: AppColors.navy,
@@ -300,7 +298,7 @@ class _SheetHeader extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   facts.join(' · '),
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 14,
                     height: 1.4,
@@ -310,7 +308,7 @@ class _SheetHeader extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     sheet.tags.map((t) => '#$t').join('  '),
-                    style: const TextStyle(fontSize: 13, color: AppColors.navy),
+                    style: TextStyle(fontSize: 13, color: AppColors.navy),
                   ),
                 ],
               ],
@@ -351,7 +349,7 @@ class _QuestionRow extends StatelessWidget {
             width: 32,
             child: Text(
               '${index + 1}.',
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textSecondary,
                 fontWeight: FontWeight.w700,
                 fontSize: 16,
@@ -414,7 +412,7 @@ class _QuestionRow extends StatelessWidget {
             onPressed: onTap,
           ),
           IconButton(
-            icon: const Icon(Icons.delete_outline, color: AppColors.error),
+            icon: Icon(Icons.delete_outline, color: AppColors.error),
             tooltip: 'Remove from worksheet',
             onPressed: onDelete,
           ),

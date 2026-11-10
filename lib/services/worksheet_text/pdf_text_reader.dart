@@ -52,7 +52,8 @@ abstract final class PdfTextReader {
       for (var i = 0; i < pageCount; i++) {
         final page = doc.pages[i];
         final pageLabel = 'Scanned page ${i + 1} of $pageCount';
-        onProgress?.call(0.45 + (i / pageCount) * 0.5, '$pageLabel · rendering');
+        onProgress?.call(
+            0.45 + (i / pageCount) * 0.5, '$pageLabel · rendering');
         const scale = 2.5;
         final width = (page.width * scale).round().clamp(1, 4096);
         final height = (page.height * scale).round().clamp(1, 4096);

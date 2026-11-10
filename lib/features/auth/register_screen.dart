@@ -167,7 +167,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               child: Text(
                 _error!,
-                style: const TextStyle(color: AppColors.error),
+                style: TextStyle(color: AppColors.error),
               ),
             ),
             const SizedBox(height: 16),
@@ -196,8 +196,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     labelText: l.commonEmail,
                     prefixIcon: const Icon(Icons.email_outlined),
                   ),
-                  validator: (v) =>
-                      v == null || !v.contains('@') ? l.registerEmailInvalid : null,
+                  validator: (v) => v == null || !v.contains('@')
+                      ? l.registerEmailInvalid
+                      : null,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -207,8 +208,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     labelText: l.commonPassword,
                     prefixIcon: const Icon(Icons.lock_outline),
                   ),
-                  validator: (v) =>
-                      v == null || v.length < 6 ? l.registerPasswordTooShort : null,
+                  validator: (v) => v == null || v.length < 6
+                      ? l.registerPasswordTooShort
+                      : null,
                 ),
                 if (_isParent) ...[
                   const SizedBox(height: 16),

@@ -37,7 +37,8 @@ class ScoreSummary extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               AppCard(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
                 child: Column(
                   children: [
                     Container(
@@ -49,7 +50,9 @@ class ScoreSummary extends StatelessWidget {
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
-                        passed ? Icons.emoji_events_outlined : Icons.school_outlined,
+                        passed
+                            ? Icons.emoji_events_outlined
+                            : Icons.school_outlined,
                         color: passed ? AppColors.success : AppColors.teal,
                         size: 32,
                       ),
@@ -65,7 +68,7 @@ class ScoreSummary extends StatelessWidget {
                     const SizedBox(height: 8),
                     Text(
                       '$correctCount of $totalCount correct',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 15,
                       ),
@@ -75,7 +78,7 @@ class ScoreSummary extends StatelessWidget {
                       Text(
                         subtitle!,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 13,
                         ),
@@ -83,7 +86,9 @@ class ScoreSummary extends StatelessWidget {
                     ],
                     const SizedBox(height: 8),
                     Text(
-                      passed ? 'Great work!' : 'Keep practicing — you\'re improving.',
+                      passed
+                          ? 'Great work!'
+                          : 'Keep practicing — you\'re improving.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontWeight: FontWeight.w600,

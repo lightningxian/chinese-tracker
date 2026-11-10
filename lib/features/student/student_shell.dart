@@ -27,37 +27,37 @@ class _StudentShellState extends State<StudentShell> {
 
   // Built per frame so the labels follow the UI language.
   List<AppShellDestination> _destinations(AppLocalizations l) => [
-    AppShellDestination(
-      label: l.studentNavHome,
-      icon: Icons.home_outlined,
-      selectedIcon: Icons.home,
-    ),
-    AppShellDestination(
-      label: l.studentNavMyClasses,
-      icon: Icons.event_available_outlined,
-      selectedIcon: Icons.event_available,
-    ),
-    AppShellDestination(
-      label: l.studentNavLessons,
-      icon: Icons.menu_book_outlined,
-      selectedIcon: Icons.menu_book,
-    ),
-    AppShellDestination(
-      label: l.studentNavProgress,
-      icon: Icons.trending_up_outlined,
-      selectedIcon: Icons.trending_up,
-    ),
-    AppShellDestination(
-      label: l.navPayments,
-      icon: Icons.receipt_long_outlined,
-      selectedIcon: Icons.receipt_long,
-    ),
-    AppShellDestination(
-      label: l.navProfile,
-      icon: Icons.person_outline,
-      selectedIcon: Icons.person,
-    ),
-  ];
+        AppShellDestination(
+          label: l.studentNavHome,
+          icon: Icons.home_outlined,
+          selectedIcon: Icons.home,
+        ),
+        AppShellDestination(
+          label: l.studentNavMyClasses,
+          icon: Icons.event_available_outlined,
+          selectedIcon: Icons.event_available,
+        ),
+        AppShellDestination(
+          label: l.studentNavLessons,
+          icon: Icons.menu_book_outlined,
+          selectedIcon: Icons.menu_book,
+        ),
+        AppShellDestination(
+          label: l.studentNavProgress,
+          icon: Icons.trending_up_outlined,
+          selectedIcon: Icons.trending_up,
+        ),
+        AppShellDestination(
+          label: l.navPayments,
+          icon: Icons.receipt_long_outlined,
+          selectedIcon: Icons.receipt_long,
+        ),
+        AppShellDestination(
+          label: l.navProfile,
+          icon: Icons.person_outline,
+          selectedIcon: Icons.person,
+        ),
+      ];
 
   @override
   void initState() {

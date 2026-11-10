@@ -14,8 +14,7 @@ void main() {
     ) as Map<String, dynamic>,
   );
 
-  WorksheetParseResult parse(String name) =>
-      QuestionImportUtils.parseWorksheet(
+  WorksheetParseResult parse(String name) => QuestionImportUtils.parseWorksheet(
         File('test/fixtures/worksheets/$name.txt').readAsStringSync(),
       );
 
@@ -50,7 +49,8 @@ void main() {
     expect(keyed.result.mcQuestions[0].keyword, 'gāng');
   });
 
-  test('boxed word lists 320002-WRT: answers resolved by word, not position', () {
+  test('boxed word lists 320002-WRT: answers resolved by word, not position',
+      () {
     final keyed = keys.apply(parse('hsk3_cloze_boxed_banks'));
     expect(keyed.applied, 20);
     final first = keyed.result.mcQuestions[0];

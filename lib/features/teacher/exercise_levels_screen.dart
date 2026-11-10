@@ -72,7 +72,7 @@ class ExerciseLevelsScreen extends StatelessWidget {
           return ListView(
             padding: const EdgeInsets.all(20),
             children: [
-              const Text(
+              Text(
                 'A level is a bundle of exercises for a group of students. Add '
                 'students to a level once; every exercise in the level is '
                 'assigned to them, and anything you add or remove later applies '
@@ -103,7 +103,7 @@ class ExerciseLevelsScreen extends StatelessWidget {
                             color: AppColors.accentSoft,
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(Icons.layers_outlined,
+                          child: Icon(Icons.layers_outlined,
                               color: AppColors.primary),
                         ),
                         const SizedBox(width: 14),
@@ -139,7 +139,7 @@ class ExerciseLevelsScreen extends StatelessWidget {
                                 '${level.studentIds.length} student'
                                 '${level.studentIds.length == 1 ? '' : 's'}'
                                 '${level.description?.isNotEmpty == true ? ' · ${level.description}' : ''}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: AppColors.textSecondary,
                                   fontSize: 13,
                                 ),
@@ -155,7 +155,7 @@ class ExerciseLevelsScreen extends StatelessWidget {
                           color: AppColors.error,
                           onPressed: () => _delete(context, level),
                         ),
-                        const Icon(Icons.chevron_right,
+                        Icon(Icons.chevron_right,
                             color: AppColors.textSecondary),
                       ],
                     ),

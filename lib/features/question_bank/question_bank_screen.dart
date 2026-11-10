@@ -266,7 +266,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
         label: '',
         width: 48,
         cell: (sheet) => IconButton(
-          icon: const Icon(Icons.delete_outline, color: AppColors.error),
+          icon: Icon(Icons.delete_outline, color: AppColors.error),
           onPressed: () => _delete(firestore, sheet),
           tooltip: sheet.isSheet ? 'Delete worksheet' : 'Delete',
         ),
@@ -351,7 +351,7 @@ class _TitleCell extends StatelessWidget {
     }
     return Row(
       children: [
-        const Icon(Icons.description_outlined, size: 20, color: AppColors.navy),
+        Icon(Icons.description_outlined, size: 20, color: AppColors.navy),
         const SizedBox(width: 10),
         Expanded(
           child: Column(
@@ -370,7 +370,7 @@ class _TitleCell extends StatelessWidget {
               if (sheet.title != sheet.code)
                 Text(
                   sheet.code,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     color: AppColors.textSecondary,
                   ),
@@ -504,7 +504,7 @@ class _SheetCard extends StatelessWidget {
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.delete_outline, color: AppColors.error),
+            icon: Icon(Icons.delete_outline, color: AppColors.error),
             onPressed: onDelete,
           ),
         ],
@@ -524,8 +524,7 @@ class _Chip extends StatelessWidget {
         color: AppColors.navy.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(label,
-          style: const TextStyle(fontSize: 11, color: AppColors.navy)),
+      child: Text(label, style: TextStyle(fontSize: 11, color: AppColors.navy)),
     );
   }
 }
@@ -618,7 +617,7 @@ class _QuestionBankPickerState extends State<_QuestionBankPicker> {
                           Expanded(
                             child: Text(
                               'Add from bank — ${widget.type.label}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 16,
                                 color: AppColors.navy,
@@ -694,11 +693,10 @@ class _QuestionBankPickerState extends State<_QuestionBankPicker> {
       controlAffinity: ListTileControlAffinity.leading,
       tileColor: AppColors.navy.withValues(alpha: 0.05),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      secondary: const Icon(Icons.description_outlined, color: AppColors.navy),
+      secondary: Icon(Icons.description_outlined, color: AppColors.navy),
       title: Text(
         sheet.title,
-        style:
-            const TextStyle(fontWeight: FontWeight.w700, color: AppColors.navy),
+        style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.navy),
       ),
       subtitle: Text(
         '${sheet.code} · ${QuestionBankText.questionCount(sheet.count)}'

@@ -58,9 +58,8 @@ class _AuditCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final when = log.createdAt;
-    final whenLabel = when != null
-        ? DateFormat('d MMM yyyy, HH:mm').format(when)
-        : '—';
+    final whenLabel =
+        when != null ? DateFormat('d MMM yyyy, HH:mm').format(when) : '—';
     return AppCard(
       padding: const EdgeInsets.all(14),
       child: Row(
@@ -91,7 +90,7 @@ class _AuditCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     log.detail,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 13,
                     ),
@@ -100,7 +99,7 @@ class _AuditCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   '${log.actorName} · $whenLabel',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,
                   ),
@@ -124,7 +123,8 @@ class _AuditCard extends StatelessWidget {
 
   IconData _actionIcon(String action) {
     if (action.startsWith('invoice')) return Icons.receipt_long_outlined;
-    if (action.contains('permission')) return Icons.admin_panel_settings_outlined;
+    if (action.contains('permission'))
+      return Icons.admin_panel_settings_outlined;
     if (action.contains('attendance')) return Icons.event_busy_outlined;
     return Icons.bolt_outlined;
   }

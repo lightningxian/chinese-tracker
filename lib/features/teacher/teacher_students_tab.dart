@@ -41,7 +41,7 @@ class TeacherStudentsTab extends StatelessWidget {
               padding: const EdgeInsets.all(24),
               child: Text(
                 'Could not load students: ${studentsSnap.error}',
-                style: const TextStyle(color: AppColors.error),
+                style: TextStyle(color: AppColors.error),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -90,8 +90,7 @@ class TeacherStudentsTab extends StatelessWidget {
                                     TeacherStatsUtils.buildStudentRosters(
                                   students: students,
                                   progress: progressSnap.data ?? const [],
-                                  assignments:
-                                      assignmentsSnap.data ?? const [],
+                                  assignments: assignmentsSnap.data ?? const [],
                                   results: resultsSnap.data ?? const [],
                                   classTerms: termsSnap.data ?? const [],
                                   attendance: attendanceSnap.data ?? const [],

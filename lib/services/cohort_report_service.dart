@@ -131,8 +131,7 @@ class CohortReportService {
 
     final lessonsByOwnerId = <String, List<Lesson>>{};
     for (final ownerId in ownerIds) {
-      lessonsByOwnerId[ownerId] =
-          await _firestore.watchLessons(ownerId).first;
+      lessonsByOwnerId[ownerId] = await _firestore.watchLessons(ownerId).first;
     }
     return lessonsByOwnerId;
   }

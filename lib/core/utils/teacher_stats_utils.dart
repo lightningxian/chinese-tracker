@@ -62,9 +62,7 @@ abstract final class TeacherStatsUtils {
   }) {
     final progressByStudent = <String, List<StudentProgress>>{};
     for (final record in progress) {
-      progressByStudent
-          .putIfAbsent(record.studentId, () => [])
-          .add(record);
+      progressByStudent.putIfAbsent(record.studentId, () => []).add(record);
     }
 
     final assignmentsByStudent = <String, List<ExerciseAssignment>>{};
@@ -87,9 +85,7 @@ abstract final class TeacherStatsUtils {
     final attendanceByStudent = <String, List<AttendanceRecord>>{};
     for (final record in attendance) {
       if (!record.attended) continue;
-      attendanceByStudent
-          .putIfAbsent(record.studentId, () => [])
-          .add(record);
+      attendanceByStudent.putIfAbsent(record.studentId, () => []).add(record);
     }
 
     final bestByAssignment = ExerciseUtils.bestScoresByStudentExercise(results);

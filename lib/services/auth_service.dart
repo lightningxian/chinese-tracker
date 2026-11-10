@@ -229,7 +229,7 @@ class AuthService extends ChangeNotifier {
       final uid = credential.user!.uid;
       await secondaryAuth.signOut();
 
-      final ownerId = AppConstants.contentOwnerId;
+      const ownerId = AppConstants.contentOwnerId;
       final isStudent = role == AppConstants.roleStudent;
       final indonesian = nameIndonesian.trim();
       final profile = AppUser(
@@ -304,7 +304,8 @@ class AuthService extends ChangeNotifier {
       notifyListeners();
       throw FirebaseAuthException(
         code: 'user-disabled',
-        message: 'This account has been deactivated. Please contact the centre.',
+        message:
+            'This account has been deactivated. Please contact the centre.',
       );
     }
     notifyListeners();

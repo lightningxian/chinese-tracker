@@ -129,10 +129,10 @@ abstract final class AdminReportService {
 
     for (final exercise in exercises) {
       final normalized = LevelUtils.normalizeHskLevel(exercise.level);
-      final level = normalized != null &&
-              AppConstants.hskLevels.contains(normalized)
-          ? normalized
-          : 'Unassigned';
+      final level =
+          normalized != null && AppConstants.hskLevels.contains(normalized)
+              ? normalized
+              : 'Unassigned';
       buckets[level]!.add(exercise);
     }
 
@@ -210,8 +210,18 @@ abstract final class AdminReportService {
 
   static String _monthLabel(DateTime month) {
     const names = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${names[month.month - 1]} ${month.year}';
   }

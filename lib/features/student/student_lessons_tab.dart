@@ -69,12 +69,11 @@ class StudentLessonsTab extends StatelessWidget {
                 return StreamBuilder<List<ExerciseResult>>(
                   stream: firestore.watchStudentExerciseResults(student.uid),
                   builder: (context, resultsSnap) {
-                    final progressByLesson =
-                        ProgressUtils.progressByLessonId(progressSnap.data ?? []);
+                    final progressByLesson = ProgressUtils.progressByLessonId(
+                        progressSnap.data ?? []);
                     final bestScores =
                         ExerciseUtils.bestScores(resultsSnap.data ?? []);
-                    final sortedExercises = [...availableExercises]
-                      ..sort(
+                    final sortedExercises = [...availableExercises]..sort(
                         (a, b) => ExerciseUtils.compareExercises(
                           a,
                           b,
@@ -144,7 +143,7 @@ class StudentLessonsTab extends StatelessWidget {
                                     levelLabel,
                                     student.lessonsPerTerm,
                                   ),
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: AppColors.textSecondary,
                                   ),
                                 ),
@@ -234,7 +233,7 @@ class _LessonCard extends StatelessWidget {
                   )
                 : Text(
                     '${lesson.order}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w700,
                       color: AppColors.navy,
                     ),
@@ -263,7 +262,7 @@ class _LessonCard extends StatelessWidget {
                       if (score != null) l.studentLessonsQuizScore('$score'),
                       if (done && score == null) l.commonCompleted,
                     ].join(' · '),
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 13,
                     ),
@@ -271,7 +270,7 @@ class _LessonCard extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(
+          Icon(
             Icons.chevron_right,
             color: AppColors.textSecondary,
           ),

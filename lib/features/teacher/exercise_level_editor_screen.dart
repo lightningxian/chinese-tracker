@@ -247,8 +247,7 @@ class _ExerciseLevelEditorScreenState extends State<ExerciseLevelEditorScreen> {
                   ),
                   if (_error != null) ...[
                     const SizedBox(height: 12),
-                    Text(_error!,
-                        style: const TextStyle(color: AppColors.error)),
+                    Text(_error!, style: TextStyle(color: AppColors.error)),
                   ],
                   const SizedBox(height: 20),
                   FilledButton(
@@ -328,7 +327,7 @@ class _PickerCard<T> extends StatelessWidget {
                     ),
                     Text(
                       subtitle,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,
                       ),
@@ -363,8 +362,8 @@ class _PickerCard<T> extends StatelessWidget {
           ConstrainedBox(
             constraints: const BoxConstraints(maxHeight: 280),
             child: shown.isEmpty
-                ? const Padding(
-                    padding: EdgeInsets.all(16),
+                ? Padding(
+                    padding: const EdgeInsets.all(16),
                     child: Text(
                       'Nothing matches.',
                       style: TextStyle(color: AppColors.textSecondary),

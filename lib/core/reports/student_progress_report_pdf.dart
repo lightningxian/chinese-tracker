@@ -18,7 +18,7 @@ abstract final class StudentProgressReportPdf {
         build: (context) => [
           pw.Text(
             'Student Progress Report',
-            style: pw.TextStyle(
+            style: const pw.TextStyle(
               fontSize: 22,
               fontWeight: pw.FontWeight.bold,
             ),
@@ -34,11 +34,12 @@ abstract final class StudentProgressReportPdf {
           pw.SizedBox(height: 4),
           pw.Text(
             'Generated ${data.generatedAtLabel}',
-            style: pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
+            style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
           ),
           pw.SizedBox(height: 20),
           _sectionTitle('Summary'),
-          _bullet('Lessons completed: ${data.lessonsCompleted} / ${data.lessonsTotal}'),
+          _bullet(
+              'Lessons completed: ${data.lessonsCompleted} / ${data.lessonsTotal}'),
           if (data.averageQuizScore != null)
             _bullet('Average quiz score: ${data.averageQuizScore}%'),
           _bullet(
@@ -111,7 +112,7 @@ abstract final class StudentProgressReportPdf {
           pw.SizedBox(height: 24),
           pw.Text(
             AppConstants.brandName,
-            style: pw.TextStyle(fontSize: 9, color: PdfColors.grey600),
+            style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey600),
           ),
         ],
       ),
@@ -132,7 +133,7 @@ abstract final class StudentProgressReportPdf {
   static pw.Widget _sectionTitle(String text) {
     return pw.Text(
       text,
-      style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+      style: const pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
     );
   }
 

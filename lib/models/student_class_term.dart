@@ -24,8 +24,10 @@ class StudentClassTerm {
   final int sessionsRemaining;
   final int sessionsUsed;
   final String status;
+
   /// `yyyy-MM-dd` — term valid from this date (inclusive).
   final String startDate;
+
   /// `yyyy-MM-dd` — term valid through this date (inclusive).
   final String deadlineDate;
   final String? createdBy;

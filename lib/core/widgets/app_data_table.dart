@@ -121,7 +121,7 @@ class AppDataTable<T> extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
       decoration: BoxDecoration(
         color: AppColors.navy.withValues(alpha: 0.05),
-        border: const Border(
+        border: Border(
           bottom: BorderSide(color: AppColors.tableLine, width: 1.5),
         ),
       ),
@@ -142,7 +142,7 @@ class AppDataTable<T> extends StatelessWidget {
           column.label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,
             color: AppColors.textSecondary,
@@ -196,7 +196,7 @@ class AppDataTable<T> extends StatelessWidget {
         color: striped
             ? AppColors.surface.withValues(alpha: 0.55)
             : AppColors.card,
-        border: const Border(bottom: BorderSide(color: AppColors.tableLine)),
+        border: Border(bottom: BorderSide(color: AppColors.tableLine)),
       ),
       child: IntrinsicHeight(
         child: Row(
@@ -234,7 +234,7 @@ class AppDataTable<T> extends StatelessWidget {
       padding: _cellPadding,
       decoration: first
           ? null
-          : const BoxDecoration(
+          : BoxDecoration(
               border: Border(left: BorderSide(color: AppColors.tableLine)),
             ),
       child: child,

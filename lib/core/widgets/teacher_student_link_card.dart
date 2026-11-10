@@ -82,8 +82,10 @@ class _TeacherStudentLinkCardState extends State<TeacherStudentLinkCard> {
   }
 
   String _formatRemaining(Duration remaining) {
-    final minutes = remaining.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final seconds = remaining.inSeconds.remainder(60).toString().padLeft(2, '0');
+    final minutes =
+        remaining.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds =
+        remaining.inSeconds.remainder(60).toString().padLeft(2, '0');
     return '$minutes:$seconds';
   }
 
@@ -101,7 +103,7 @@ class _TeacherStudentLinkCardState extends State<TeacherStudentLinkCard> {
                 ),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Share this code when a murid registers. It refreshes every 15 minutes.',
             style: TextStyle(
               color: AppColors.textSecondary,
@@ -118,7 +120,7 @@ class _TeacherStudentLinkCardState extends State<TeacherStudentLinkCard> {
               ),
             )
           else if (_error != null)
-            Text(_error!, style: const TextStyle(color: AppColors.error))
+            Text(_error!, style: TextStyle(color: AppColors.error))
           else if (_linkCode != null) ...[
             Container(
               width: double.infinity,
@@ -133,7 +135,7 @@ class _TeacherStudentLinkCardState extends State<TeacherStudentLinkCard> {
                   Expanded(
                     child: Text(
                       _linkCode!.code,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 4,
@@ -145,7 +147,7 @@ class _TeacherStudentLinkCardState extends State<TeacherStudentLinkCard> {
                   IconButton(
                     tooltip: 'Copy code',
                     onPressed: _copyCode,
-                    icon: const Icon(Icons.copy_outlined, color: AppColors.navy),
+                    icon: Icon(Icons.copy_outlined, color: AppColors.navy),
                   ),
                 ],
               ),
@@ -217,7 +219,7 @@ class _CountdownLabelState extends State<_CountdownLabel> {
   Widget build(BuildContext context) {
     return Text(
       'Refreshes in ${widget.formatRemaining(_remaining)}',
-      style: const TextStyle(
+      style: TextStyle(
         color: AppColors.textSecondary,
         fontSize: 12,
       ),

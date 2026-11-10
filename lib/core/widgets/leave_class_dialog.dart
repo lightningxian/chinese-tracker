@@ -14,7 +14,7 @@ Future<bool?> showLeaveClassDialog(BuildContext context) {
       ),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: AppColors.border),
+        side: BorderSide(color: AppColors.border),
       ),
       actions: [
         TextButton(

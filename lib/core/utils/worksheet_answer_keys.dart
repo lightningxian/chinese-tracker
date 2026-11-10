@@ -20,9 +20,9 @@ class WorksheetAnswerKeys {
   static Future<WorksheetAnswerKeys>? _bundled;
 
   /// The sample set shipped with the app, decoded once per session.
-  static Future<WorksheetAnswerKeys> loadBundled() => _bundled ??= rootBundle
-      .loadString(assetPath)
-      .then((raw) => WorksheetAnswerKeys(jsonDecode(raw) as Map<String, dynamic>));
+  static Future<WorksheetAnswerKeys> loadBundled() =>
+      _bundled ??= rootBundle.loadString(assetPath).then((raw) =>
+          WorksheetAnswerKeys(jsonDecode(raw) as Map<String, dynamic>));
 
   /// Sheet code → that sheet's questions, in sheet order.
   final Map<String, List<Map<String, dynamic>>> _bySet;
@@ -93,7 +93,8 @@ class WorksheetAnswerKeys {
     final out = <ParsedMcQuestion>[];
     for (var i = 0; i < questions.length; i++) {
       final q = questions[i];
-      final k = _find(key, i, questions.length, prompt: q.prompt, keyword: q.keyword);
+      final k =
+          _find(key, i, questions.length, prompt: q.prompt, keyword: q.keyword);
       if (k == null) {
         out.add(q);
         continue;
@@ -111,7 +112,9 @@ class WorksheetAnswerKeys {
           prompt: q.prompt,
           options: keyOptions,
           correctIndex: 0,
-          keyword: q.keyword.isNotEmpty ? q.keyword : (k['keyword'] as String? ?? ''),
+          keyword: q.keyword.isNotEmpty
+              ? q.keyword
+              : (k['keyword'] as String? ?? ''),
         ));
         applied++;
         continue;
@@ -121,7 +124,8 @@ class WorksheetAnswerKeys {
       // gets the right choice; fall back to the raw index.
       var index = -1;
       if (keyIndex >= 0 && keyIndex < keyOptions.length) {
-        index = q.options.indexWhere((o) => _norm(o) == _norm(keyOptions[keyIndex]));
+        index = q.options
+            .indexWhere((o) => _norm(o) == _norm(keyOptions[keyIndex]));
       }
       if (index < 0 && keyIndex >= 0 && keyIndex < q.options.length) {
         index = keyIndex;
@@ -269,7 +273,8 @@ class WorksheetAnswerKeys {
       (segments.map(_norm).toList()..sort()).join('|');
 
   static final _ignored = RegExp(
-    r'[\s　（）()「」『』“”"‘’' "'"
+    r'[\s　（）()「」『』“”"‘’'
+    "'"
     r'，,。．.、：:；;！!？?★☆□■…—\-_～~·•]+',
   );
 

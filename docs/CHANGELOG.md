@@ -6,6 +6,65 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-10 — Claude: dark mode; worksheet editor in the bank; New exercise on the empty tab
+
+**What changed**
+- **Dark mode** (owner: "my eyes hurt"). `lib/core/theme/app_theme.dart`
+  now holds two `AppPalette`s (light, dark). `AppColors` keeps every name
+  the screens use but reads them from the palette that is on, so the ~1,100
+  call sites did not change except for dropping `const` where the compiler
+  demanded it. `ThemeController` (`lib/services/theme_controller.dart`,
+  saved under `app_theme` as `light` / `dark` / `system`, default follows the
+  device) swaps the palette and `app.dart` remounts the page tree under a
+  key so every screen repaints; `theme` / `darkTheme` / `themeMode` are set
+  on `MaterialApp`. Toggle **Appearance: Light · Dark · Device**
+  (`lib/core/widgets/theme_toggle.dart`, Indonesian strings included) on the
+  admin Account, teacher Profile, student Profile and parent Profile pages.
+  The public landing page stays light.
+- **Worksheet editor in the question bank** (owner: edit "not just the
+  name, also the type, level, and question"). Worksheet page: **Edit
+  worksheet** dialog (title, type, level, skill; applies to every question,
+  the code stays), **Add question** (prefilled from the sheet, goes last),
+  move up / down, an edit pencil per row. New `question_bank_editor.dart`
+  replaces the old editor: fields follow the type (choices with add/remove,
+  shared word bank with a correct-answer picker and blank number, sentence
+  parts, pinyin hint with accepted answers, picture keyword); saving a word
+  bank copies it to the sheet's other questions.
+  `FirestoreService.updateQuestionBankSheet` (replaces
+  `renameQuestionBankSheet`) and `reorderQuestionBankSheet`.
+- **Matching questions keep their word bank.** `ExerciseQuestion.toMap` /
+  `fromMap` dropped `options` for the matching type, so a matching worksheet
+  in the bank played with no choices. Fixed in `lib/models/exercise.dart`.
+- **Exercises tab, empty state:** the button row and a **New exercise**
+  button now show when there are no exercises yet (`EmptyState.action`).
+
+**Why**
+- Owner test round on v0.1.8: Activate, assignment and the language switch
+  worked; New exercise was missing on the empty tab; the bank needed a real
+  editor; the light screen hurt the owner's eyes.
+
+**For review**
+- `flutter analyze`: 0 errors, 0 warnings, 18 infos (down from 39:
+  `dart fix` re-added `const` where it is still valid). `flutter test`:
+  56 pass (3 new for the theme controller).
+- Checked on the emulator: dark mode on the admin dashboard, Users table,
+  question bank, worksheet page, editor, Account; live switch Light ↔ Dark
+  from Account; student Home, Lessons, package play (server check) and
+  Profile in dark; "Tampilan · Terang / Gelap / Perangkat" in Indonesian.
+  Worksheet: moved a question and back, changed the sheet level (all
+  questions follow), added a fill-in-the-blank question with answer B,
+  removed it again.
+- Not re-checked by hand: teacher screens, Classes/Vouchers/Payments/
+  Reports tabs, parent screens in dark. They use the same `AppColors`
+  names, so they follow the palette; a spot may still look off (white
+  text on a light tint, say). Report it and it is a one-line palette fix.
+- Hard-coded `Colors.white` stays only as text on primary-coloured buttons
+  and in the auth brand panel; the snackbar uses a dark grey in dark mode.
+- Deploy: hosting only (`scripts/deploy_web.sh --web-only`); no functions
+  or rules changed.
+
+---
+
 ## 2026-11-09 (night) — Claude: exercises are bank packages with server scoring; ID/EN switch; delete account
 
 **What changed**

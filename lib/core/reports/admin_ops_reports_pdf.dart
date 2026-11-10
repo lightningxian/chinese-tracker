@@ -26,8 +26,7 @@ abstract final class AdminOpsReportsPdf {
     final doc = pw.Document(theme: await ReportPdfFonts.loadTheme());
     doc.addPage(
       pw.MultiPage(
-        pageFormat:
-            landscape ? PdfPageFormat.a4.landscape : PdfPageFormat.a4,
+        pageFormat: landscape ? PdfPageFormat.a4.landscape : PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(36),
         footer: (ctx) => pw.Align(
           alignment: pw.Alignment.centerRight,
@@ -39,7 +38,8 @@ abstract final class AdminOpsReportsPdf {
         build: (_) => [
           pw.Text(
             '${AppConstants.brandName} — $title',
-            style: const pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
+            style: const pw.TextStyle(
+                fontSize: 18, fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 4),
           pw.Text(
@@ -58,7 +58,8 @@ abstract final class AdminOpsReportsPdf {
         padding: const pw.EdgeInsets.only(top: 10, bottom: 6),
         child: pw.Text(
           text,
-          style: const pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
+          style:
+              const pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
         ),
       );
 
@@ -92,14 +93,16 @@ abstract final class AdminOpsReportsPdf {
       border: pw.TableBorder.all(color: PdfColors.grey400, width: 0.5),
       columnWidths: {
         for (var i = 0; i < headers.length; i++)
-          i: pw.FlexColumnWidth(widths != null && i < widths.length ? widths[i] : 1),
+          i: pw.FlexColumnWidth(
+              widths != null && i < widths.length ? widths[i] : 1),
       },
       children: [
         pw.TableRow(
           decoration: const pw.BoxDecoration(color: PdfColors.grey200),
           children: [for (final h in headers) _cell(h, bold: true)],
         ),
-        for (final r in rows) pw.TableRow(children: [for (final c in r) _cell(c)]),
+        for (final r in rows)
+          pw.TableRow(children: [for (final c in r) _cell(c)]),
         if (total != null)
           pw.TableRow(
             decoration: const pw.BoxDecoration(color: PdfColors.grey100),
@@ -123,12 +126,26 @@ abstract final class AdminOpsReportsPdf {
               const ['Student', 'Level', 'Hadir', 'Izin', 'Alpa', 'Present %'],
               [
                 for (final r in m.rows)
-                  [r.name, r.level, '${r.hadir}', '${r.izin}', '${r.alpa}', '${r.presentPercent}%'],
+                  [
+                    r.name,
+                    r.level,
+                    '${r.hadir}',
+                    '${r.izin}',
+                    '${r.alpa}',
+                    '${r.presentPercent}%'
+                  ],
               ],
               widths: const [2.4, 0.9, 0.7, 0.7, 0.7, 0.9],
               total: m.rows.isEmpty
                   ? null
-                  : ['All', '', '${m.hadir}', '${m.izin}', '${m.alpa}', '${m.presentPercent}%'],
+                  : [
+                      'All',
+                      '',
+                      '${m.hadir}',
+                      '${m.izin}',
+                      '${m.alpa}',
+                      '${m.presentPercent}%'
+                    ],
             ),
           ],
         ],
@@ -183,13 +200,37 @@ abstract final class AdminOpsReportsPdf {
       [
         _h('Paid invoices, last 6 months (by payment date)'),
         _table(
-          const ['Month', '8 sessions', '16 sessions', 'Book', 'Other', 'Total', 'Invoices'],
+          const [
+            'Month',
+            '8 sessions',
+            '16 sessions',
+            'Book',
+            'Other',
+            'Total',
+            'Invoices'
+          ],
           [
             for (final m in r.months)
-              [m.month.label, rp(m.package8), rp(m.package16), rp(m.book), rp(m.other), rp(m.total), '${m.invoices}'],
+              [
+                m.month.label,
+                rp(m.package8),
+                rp(m.package16),
+                rp(m.book),
+                rp(m.other),
+                rp(m.total),
+                '${m.invoices}'
+              ],
           ],
           widths: const [1, 1.2, 1.2, 1.1, 1, 1.3, 0.8],
-          total: ['6 months', rp(total.package8), rp(total.package16), rp(total.book), rp(total.other), rp(total.total), '${total.invoices}'],
+          total: [
+            '6 months',
+            rp(total.package8),
+            rp(total.package16),
+            rp(total.book),
+            rp(total.other),
+            rp(total.total),
+            '${total.invoices}'
+          ],
         ),
         _h('Outstanding · ${r.outstanding.length} unpaid = ${rp(r.outstandingAmount)} '
             '· overdue ${r.overdue.length} = ${rp(r.overdueAmount)}'),
@@ -219,7 +260,8 @@ abstract final class AdminOpsReportsPdf {
       'New students & retention',
       d.generatedAt,
       [
-        _note('Active = account active and (a class term with sessions left, or a '
+        _note(
+            'Active = account active and (a class term with sessions left, or a '
             'class attended in the last 30 days). Retention = active students '
             'among those who joined more than 60 days ago.'),
         _h('Today: ${r.totalStudents} students · ${r.activeStudents} active · '
@@ -228,7 +270,12 @@ abstract final class AdminOpsReportsPdf {
           const ['Join month', 'New students', 'Still active', 'Retention'],
           [
             for (final c in r.cohorts)
-              [c.month.label, '${c.joined}', '${c.stillActive}', '${c.retentionPercent}%'],
+              [
+                c.month.label,
+                '${c.joined}',
+                '${c.stillActive}',
+                '${c.retentionPercent}%'
+              ],
           ],
           widths: const [1.2, 1, 1, 1],
         ),
@@ -245,10 +292,26 @@ abstract final class AdminOpsReportsPdf {
       [
         _h('Per month (joined seats / capacity)'),
         _table(
-          const ['Month', 'Classes', 'Capacity', 'Joined', 'Fill', 'Empty', 'Full'],
+          const [
+            'Month',
+            'Classes',
+            'Capacity',
+            'Joined',
+            'Fill',
+            'Empty',
+            'Full'
+          ],
           [
             for (final m in d.fillRate)
-              [m.month.label, '${m.classes}', '${m.capacity}', '${m.joined}', '${m.fillPercent}%', '${m.empty}', '${m.full}'],
+              [
+                m.month.label,
+                '${m.classes}',
+                '${m.capacity}',
+                '${m.joined}',
+                '${m.fillPercent}%',
+                '${m.empty}',
+                '${m.full}'
+              ],
           ],
         ),
         _h('${thisMonth.month.label} · every class'),
@@ -282,7 +345,14 @@ abstract final class AdminOpsReportsPdf {
           for (final m in d.teacherRecap.reversed) ...[
             _h(m.month.label),
             _table(
-              const ['Teacher', 'Scheduled', 'Concluded', 'Hours', 'Students taught', 'Attendance'],
+              const [
+                'Teacher',
+                'Scheduled',
+                'Concluded',
+                'Hours',
+                'Students taught',
+                'Attendance'
+              ],
               [
                 for (final r in m.rows)
                   [
@@ -309,7 +379,15 @@ abstract final class AdminOpsReportsPdf {
               'one submission; score = average of each student\'s best scores.'),
           _h('Summary'),
           _table(
-            const ['Level', 'Students', 'Assigned', 'Done', 'Completion', 'Avg score', 'No activity'],
+            const [
+              'Level',
+              'Students',
+              'Assigned',
+              'Done',
+              'Completion',
+              'Avg score',
+              'No activity'
+            ],
             [
               for (final l in d.progressByLevel)
                 [
@@ -326,7 +404,14 @@ abstract final class AdminOpsReportsPdf {
           for (final l in d.progressByLevel) ...[
             _h('${l.level} · ${l.studentCount} students'),
             _table(
-              const ['Student', 'Assigned', 'Done', 'Completion', 'Avg score', 'Last activity'],
+              const [
+                'Student',
+                'Assigned',
+                'Done',
+                'Completion',
+                'Avg score',
+                'Last activity'
+              ],
               [
                 for (final s in l.students)
                   [
@@ -351,7 +436,8 @@ abstract final class AdminOpsReportsPdf {
       'Overdue homework per teacher',
       d.generatedAt,
       [
-        _note('${o.total} overdue of ${o.open} open assignments. Grouped by the '
+        _note(
+            '${o.total} overdue of ${o.open} open assignments. Grouped by the '
             'student\'s teacher; most overdue first.'),
         for (final g in o.groups) ...[
           _h('${g.teacherName} · ${g.count} overdue · ${g.students} students'),
@@ -359,7 +445,12 @@ abstract final class AdminOpsReportsPdf {
             const ['Student', 'Exercise', 'Due', 'Overdue'],
             [
               for (final r in g.rows)
-                [r.studentName, r.exerciseTitle, _date(r.dueDate), '${r.daysOverdue} days'],
+                [
+                  r.studentName,
+                  r.exerciseTitle,
+                  _date(r.dueDate),
+                  '${r.daysOverdue} days'
+                ],
             ],
             widths: const [2, 3, 1.2, 0.9],
           ),

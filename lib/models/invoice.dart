@@ -69,6 +69,7 @@ class Invoice {
   final String studentId;
   final String teacherId;
   final int packageSize;
+
   /// `package` (default) or `book` (HSK materials and textbook, no sessions).
   final String item;
   final int amount;
@@ -138,7 +139,8 @@ class Invoice {
   /// (older or hand-written docs) instead of failing the whole list.
   static String _dateString(Object? raw) {
     if (raw is String) return raw;
-    if (raw is Timestamp) return raw.toDate().toIso8601String().substring(0, 10);
+    if (raw is Timestamp)
+      return raw.toDate().toIso8601String().substring(0, 10);
     return '';
   }
 

@@ -130,7 +130,7 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(
+                  Text(
                     'Create a Murid or Guru account',
                     style: TextStyle(
                       fontSize: 18,
@@ -139,7 +139,7 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  const Text(
+                  Text(
                     'The new user can sign in with the email and password you set. '
                     'You stay signed in as admin.',
                     style: TextStyle(
@@ -179,7 +179,7 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
                       ),
                       child: Text(
                         _error!,
-                        style: const TextStyle(color: AppColors.error),
+                        style: TextStyle(color: AppColors.error),
                       ),
                     ),
                   ],
@@ -350,7 +350,7 @@ class _ChildPicker extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 4),
-        const Text(
+        Text(
           'Choose which students this parent can follow (read-only).',
           style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
         ),

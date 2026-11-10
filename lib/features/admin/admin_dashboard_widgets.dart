@@ -78,7 +78,7 @@ class MonthlyStudentsChart extends StatelessWidget {
                 ),
               ),
               if (onTap != null)
-                const Icon(
+                Icon(
                   Icons.chevron_right,
                   color: AppColors.textSecondary,
                 ),
@@ -108,8 +108,7 @@ class MonthlyStudentsChart extends StatelessWidget {
                                 decoration: BoxDecoration(
                                   color: month.count == 0
                                       ? AppColors.border
-                                      : AppColors.teal
-                                          .withValues(alpha: 0.9),
+                                      : AppColors.teal.withValues(alpha: 0.9),
                                   borderRadius: const BorderRadius.vertical(
                                     top: Radius.circular(4),
                                   ),
@@ -121,7 +120,7 @@ class MonthlyStudentsChart extends StatelessWidget {
                         const SizedBox(height: 8),
                         Text(
                           month.label,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
                             color: AppColors.textSecondary,
                           ),
@@ -286,7 +285,7 @@ class AdminAttentionCard extends StatelessWidget {
                 children: [
                   Text(
                     alert.title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
                       color: AppColors.textPrimary,
@@ -295,7 +294,7 @@ class AdminAttentionCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     alert.subtitle,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       color: AppColors.textSecondary,
                     ),
@@ -358,7 +357,7 @@ class AdminSectionHeader extends StatelessWidget {
         ],
         if (onTap != null) ...[
           const Spacer(),
-          const Icon(
+          Icon(
             Icons.chevron_right,
             color: AppColors.textSecondary,
           ),

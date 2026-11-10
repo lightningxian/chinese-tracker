@@ -29,27 +29,27 @@ class _ParentShellState extends State<ParentShell> {
 
   // Built per frame so the labels follow the UI language.
   List<AppShellDestination> _destinations(AppLocalizations l) => [
-    AppShellDestination(
-      label: l.parentNavOverview,
-      icon: Icons.dashboard_outlined,
-      selectedIcon: Icons.dashboard,
-    ),
-    AppShellDestination(
-      label: l.parentNavCalendar,
-      icon: Icons.calendar_month_outlined,
-      selectedIcon: Icons.calendar_month,
-    ),
-    AppShellDestination(
-      label: l.navPayments,
-      icon: Icons.receipt_long_outlined,
-      selectedIcon: Icons.receipt_long,
-    ),
-    AppShellDestination(
-      label: l.navProfile,
-      icon: Icons.person_outline,
-      selectedIcon: Icons.person,
-    ),
-  ];
+        AppShellDestination(
+          label: l.parentNavOverview,
+          icon: Icons.dashboard_outlined,
+          selectedIcon: Icons.dashboard,
+        ),
+        AppShellDestination(
+          label: l.parentNavCalendar,
+          icon: Icons.calendar_month_outlined,
+          selectedIcon: Icons.calendar_month,
+        ),
+        AppShellDestination(
+          label: l.navPayments,
+          icon: Icons.receipt_long_outlined,
+          selectedIcon: Icons.receipt_long,
+        ),
+        AppShellDestination(
+          label: l.navProfile,
+          icon: Icons.person_outline,
+          selectedIcon: Icons.person,
+        ),
+      ];
 
   @override
   void initState() {

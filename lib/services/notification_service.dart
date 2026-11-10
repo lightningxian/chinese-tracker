@@ -3,7 +3,8 @@ import '../models/app_notification.dart';
 import 'firestore_service.dart';
 
 class NotificationService {
-  NotificationService({required FirestoreService firestore}) : _firestore = firestore;
+  NotificationService({required FirestoreService firestore})
+      : _firestore = firestore;
 
   final FirestoreService _firestore;
 

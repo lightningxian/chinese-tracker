@@ -33,9 +33,9 @@ class TranscriptView extends StatelessWidget {
             return StreamBuilder<List<QuizResult>>(
               stream: firestore.watchStudentQuizResults(studentId),
               builder: (context, quizSnap) {
-                final waiting = gradeSnap.connectionState ==
-                        ConnectionState.waiting &&
-                    !gradeSnap.hasData;
+                final waiting =
+                    gradeSnap.connectionState == ConnectionState.waiting &&
+                        !gradeSnap.hasData;
                 if (waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
@@ -49,8 +49,7 @@ class TranscriptView extends StatelessWidget {
                     _TranscriptEntry.fromQuiz(q),
                 ]..sort((a, b) => b.date.compareTo(a.date));
 
-                final pending =
-                    grades.where((g) => g.isPending).toList();
+                final pending = grades.where((g) => g.isPending).toList();
 
                 return StreamBuilder<List<Evaluation>>(
                   stream: firestore.watchStudentEvaluations(
@@ -58,15 +57,13 @@ class TranscriptView extends StatelessWidget {
                     publishedOnly: true,
                   ),
                   builder: (context, evalSnap) {
-                    final evaluations =
-                        evalSnap.data ?? const <Evaluation>[];
+                    final evaluations = evalSnap.data ?? const <Evaluation>[];
 
                     if (entries.isEmpty && evaluations.isEmpty) {
                       return const EmptyState(
                         icon: Icons.grading_outlined,
                         title: 'No grades yet',
-                        subtitle:
-                            'Assessment results and practice scores will '
+                        subtitle: 'Assessment results and practice scores will '
                             'appear here as they are recorded.',
                       );
                     }
@@ -91,8 +88,7 @@ class TranscriptView extends StatelessWidget {
                           const SizedBox(height: 12),
                         ],
                         const SectionHeader(title: 'Transcript'),
-                        for (final e
-                            in entries.where((e) => !e.isPending)) ...[
+                        for (final e in entries.where((e) => !e.isPending)) ...[
                           _EntryCard(entry: e),
                           const SizedBox(height: 10),
                         ],
@@ -178,7 +174,7 @@ class _EntryCard extends StatelessWidget {
                   entry.date.year > 1970
                       ? '${entry.category} · ${DateFormat('d MMM yyyy').format(entry.date)}'
                       : entry.category,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,
                   ),
@@ -206,7 +202,7 @@ class _ScoreBadge extends StatelessWidget {
       children: [
         Text(
           '${score.round()}',
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.w700,
             fontSize: 18,
             color: AppColors.navy,
@@ -214,7 +210,7 @@ class _ScoreBadge extends StatelessWidget {
         ),
         Text(
           letter,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.teal,
             fontWeight: FontWeight.w700,
             fontSize: 12,
@@ -243,7 +239,7 @@ class _EvaluationCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   e.term.isEmpty ? 'Evaluation' : e.term,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 15,
                     color: AppColors.navy,
@@ -253,11 +249,11 @@ class _EvaluationCard extends StatelessWidget {
               if (e.rating != null)
                 Row(
                   children: [
-                    const Icon(Icons.star, size: 16, color: AppColors.teal),
+                    Icon(Icons.star, size: 16, color: AppColors.teal),
                     const SizedBox(width: 2),
                     Text(
                       '${e.rating}/5',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w700,
                         color: AppColors.teal,
                       ),
@@ -270,7 +266,8 @@ class _EvaluationCard extends StatelessWidget {
             _EvalLine(label: 'Strengths', text: e.strengths),
           if (e.improvements.isNotEmpty)
             _EvalLine(label: 'To improve', text: e.improvements),
-          if (e.comment.isNotEmpty) _EvalLine(label: 'Comment', text: e.comment),
+          if (e.comment.isNotEmpty)
+            _EvalLine(label: 'Comment', text: e.comment),
         ],
       ),
     );
@@ -292,7 +289,7 @@ class _EvalLine extends StatelessWidget {
         children: [
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 11,
               fontWeight: FontWeight.w700,
@@ -324,8 +321,7 @@ class _PendingCard extends StatelessWidget {
               color: AppColors.brandYellow.withValues(alpha: 0.18),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(Icons.schedule,
-                color: AppColors.brandYellow, size: 20),
+            child: Icon(Icons.schedule, color: AppColors.brandYellow, size: 20),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -341,7 +337,7 @@ class _PendingCard extends StatelessWidget {
                 ),
                 Text(
                   '${grade.category.label} · awaiting score',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,
                   ),

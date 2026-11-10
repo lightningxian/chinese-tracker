@@ -33,7 +33,8 @@ abstract final class LevelUtils {
     final mapped = _legacyToHsk[trimmed.toLowerCase()];
     if (mapped != null) return mapped;
 
-    final hskMatch = RegExp(r'^hsk\s*(\d)$', caseSensitive: false).firstMatch(trimmed);
+    final hskMatch =
+        RegExp(r'^hsk\s*(\d)$', caseSensitive: false).firstMatch(trimmed);
     if (hskMatch != null) {
       final candidate = 'HSK ${hskMatch.group(1)}';
       if (AppConstants.hskLevels.contains(candidate)) return candidate;

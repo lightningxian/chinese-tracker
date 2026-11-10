@@ -21,7 +21,7 @@ class AttendanceHistoryList extends StatelessWidget {
       return AppCard(
         child: Text(
           emptyMessage,
-          style: const TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(color: AppColors.textSecondary),
         ),
       );
     }
@@ -59,11 +59,12 @@ class AttendanceHistoryList extends StatelessWidget {
                       Text(
                         [
                           dateLabel,
-                          if (record.startMinutes != 0 || record.endMinutes != 0)
+                          if (record.startMinutes != 0 ||
+                              record.endMinutes != 0)
                             record.timeRangeLabel,
                           if (record.joinedByStudent) 'Self join',
                         ].join(' · '),
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 13,
                         ),
@@ -96,7 +97,7 @@ class AttendanceSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (records.isEmpty) {
-      return const AppCard(
+      return AppCard(
         child: Text(
           'No class attendance recorded yet.',
           style: TextStyle(color: AppColors.textSecondary),
@@ -138,7 +139,7 @@ class _Tile extends StatelessWidget {
                 color: AppColors.navy,
               ),
         ),
-        Text(label, style: const TextStyle(color: AppColors.textSecondary)),
+        Text(label, style: TextStyle(color: AppColors.textSecondary)),
       ],
     );
   }

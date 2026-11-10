@@ -61,7 +61,7 @@ class ProfileHeaderCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     chinese,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
@@ -78,7 +78,7 @@ class ProfileHeaderCard extends StatelessWidget {
                     if (subtitle != null)
                       Text(
                         subtitle!,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 13,
                         ),
@@ -95,14 +95,14 @@ class ProfileHeaderCard extends StatelessWidget {
 }
 
 class ProfilePhotoAvatar extends StatefulWidget {
-  const ProfilePhotoAvatar({
+  ProfilePhotoAvatar({
     super.key,
     required this.user,
     this.size = 56,
-    this.backgroundColor = AppColors.navy,
+    Color? backgroundColor,
     this.canEdit = false,
     this.onPhotoChanged,
-  });
+  }) : backgroundColor = backgroundColor ?? AppColors.navy;
 
   final AppUser user;
   final double size;
@@ -257,7 +257,7 @@ class ProfileSectionCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               subtitle!,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 13,
                 height: 1.4,
@@ -301,7 +301,7 @@ class ProfileInfoRow extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     color: AppColors.textSecondary,
                   ),
@@ -407,7 +407,7 @@ class ProfilePersonalFields extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          const Align(
+          Align(
             alignment: Alignment.centerLeft,
             child: Text(
               'Used by staff to contact family when needed.',
@@ -578,7 +578,7 @@ class ProfileSignOutButton extends StatelessWidget {
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
         foregroundColor: AppColors.error,
-        side: const BorderSide(color: AppColors.error),
+        side: BorderSide(color: AppColors.error),
         padding: const EdgeInsets.symmetric(vertical: 14),
       ),
       child: const Text('Sign out'),

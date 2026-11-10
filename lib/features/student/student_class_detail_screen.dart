@@ -96,171 +96,179 @@ class StudentClassDetailScreen extends StatelessWidget {
                   teacherSnap.data?.name ?? l.studentClassYourTeacher;
 
               return StreamBuilder<List<AttendanceRecord>>(
-            stream: firestore.watchSessionAttendance(sessionId),
-            builder: (context, rosterSnap) {
-              final roster = (rosterSnap.data ?? [])
-                  .where((r) => r.attended)
-                  .toList();
-              roster.sort((a, b) {
-                final nameA = a.studentName ?? a.studentId;
-                final nameB = b.studentName ?? b.studentId;
-                return nameA.toLowerCase().compareTo(nameB.toLowerCase());
-              });
+                stream: firestore.watchSessionAttendance(sessionId),
+                builder: (context, rosterSnap) {
+                  final roster =
+                      (rosterSnap.data ?? []).where((r) => r.attended).toList();
+                  roster.sort((a, b) {
+                    final nameA = a.studentName ?? a.studentId;
+                    final nameB = b.studentName ?? b.studentId;
+                    return nameA.toLowerCase().compareTo(nameB.toLowerCase());
+                  });
 
-              final iAmJoined =
-                  roster.any((r) => r.studentId == student.uid);
-              final isFull = firestore.isSessionFull(session, roster.length);
-              final spotsLeft =
-                  (session.capacity - roster.length).clamp(0, session.capacity);
+                  final iAmJoined =
+                      roster.any((r) => r.studentId == student.uid);
+                  final isFull =
+                      firestore.isSessionFull(session, roster.length);
+                  final spotsLeft = (session.capacity - roster.length)
+                      .clamp(0, session.capacity);
 
-              return ListView(
-                padding: const EdgeInsets.all(20),
-                children: [
-                  AppCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          dateLabel,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 18,
-                            color: AppColors.navy,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          l.studentClassTimeAndTeacher(
-                            session.timeRangeLabel,
-                            teacherName,
-                          ),
-                          style: const TextStyle(color: AppColors.textSecondary),
-                        ),
-                        const SizedBox(height: 12),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
+                  return ListView(
+                    padding: const EdgeInsets.all(20),
+                    children: [
+                      AppCard(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            if (session.isConcluded)
-                              StatusPills.concluded()
-                            else if (session.isOpen)
-                              StatusPills.open()
-                            else
-                              StatusPills.closed(),
-                            if (isFull && !session.isConcluded) StatusPills.full(),
+                            Text(
+                              dateLabel,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 18,
+                                color: AppColors.navy,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              l.studentClassTimeAndTeacher(
+                                session.timeRangeLabel,
+                                teacherName,
+                              ),
+                              style: TextStyle(color: AppColors.textSecondary),
+                            ),
+                            const SizedBox(height: 12),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                if (session.isConcluded)
+                                  StatusPills.concluded()
+                                else if (session.isOpen)
+                                  StatusPills.open()
+                                else
+                                  StatusPills.closed(),
+                                if (isFull && !session.isConcluded)
+                                  StatusPills.full(),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '${l.studentClassStudentsJoined(roster.length, session.capacity)}'
+                              ' · ${isFull ? l.commonFull : l.commonSpotsLeft(spotsLeft)}',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color:
+                                    isFull ? AppColors.error : AppColors.teal,
+                                fontSize: 13,
+                              ),
+                            ),
                           ],
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          '${l.studentClassStudentsJoined(roster.length, session.capacity)}'
-                          ' · ${isFull ? l.commonFull : l.commonSpotsLeft(spotsLeft)}',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: isFull ? AppColors.error : AppColors.teal,
-                            fontSize: 13,
+                      ),
+                      if (iAmJoined) ...[
+                        const SizedBox(height: 16),
+                        OutlinedButton.icon(
+                          onPressed: () => _confirmLeave(context),
+                          icon: const Icon(Icons.cancel_outlined),
+                          label: Text(l.studentClassLeaveClass),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.error,
+                            side: BorderSide(color: AppColors.error),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
                         ),
                       ],
-                    ),
-                  ),
-                  if (iAmJoined) ...[
-                    const SizedBox(height: 16),
-                    OutlinedButton.icon(
-                      onPressed: () => _confirmLeave(context),
-                      icon: const Icon(Icons.cancel_outlined),
-                      label: Text(l.studentClassLeaveClass),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.error,
-                        side: const BorderSide(color: AppColors.error),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      const SizedBox(height: 24),
+                      SectionHeader(
+                        title: l.studentClassWhoJoined(roster.length),
                       ),
-                    ),
-                  ],
-                  const SizedBox(height: 24),
-                  SectionHeader(
-                    title: l.studentClassWhoJoined(roster.length),
-                  ),
-                  if (rosterSnap.hasError)
-                    AppCard(
-                      child: Text(
-                        rosterSnap.error.toString(),
-                        style: const TextStyle(color: AppColors.error),
-                      ),
-                    )
-                  else if (roster.isEmpty)
-                    AppCard(
-                      child: Text(
-                        l.studentClassNoneJoined,
-                        style: const TextStyle(color: AppColors.textSecondary),
-                      ),
-                    )
-                  else
-                    ...roster.map((record) {
-                      final isMe = record.studentId == student.uid;
-                      final name = record.studentName?.isNotEmpty == true
-                          ? record.studentName!
-                          : l.commonStudent;
+                      if (rosterSnap.hasError)
+                        AppCard(
+                          child: Text(
+                            rosterSnap.error.toString(),
+                            style: TextStyle(color: AppColors.error),
+                          ),
+                        )
+                      else if (roster.isEmpty)
+                        AppCard(
+                          child: Text(
+                            l.studentClassNoneJoined,
+                            style: TextStyle(color: AppColors.textSecondary),
+                          ),
+                        )
+                      else
+                        ...roster.map((record) {
+                          final isMe = record.studentId == student.uid;
+                          final name = record.studentName?.isNotEmpty == true
+                              ? record.studentName!
+                              : l.commonStudent;
 
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: AppCard(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 12,
-                          ),
-                          child: Row(
-                            children: [
-                              CircleAvatar(
-                                radius: 20,
-                                backgroundColor: isMe
-                                    ? AppColors.navy.withValues(alpha: 0.12)
-                                    : AppColors.teal.withValues(alpha: 0.12),
-                                child: Text(
-                                  name.isNotEmpty ? name[0].toUpperCase() : '?',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    color: isMe ? AppColors.navy : AppColors.teal,
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: AppCard(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 12,
+                              ),
+                              child: Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 20,
+                                    backgroundColor: isMe
+                                        ? AppColors.navy.withValues(alpha: 0.12)
+                                        : AppColors.teal
+                                            .withValues(alpha: 0.12),
+                                    child: Text(
+                                      name.isNotEmpty
+                                          ? name[0].toUpperCase()
+                                          : '?',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        color: isMe
+                                            ? AppColors.navy
+                                            : AppColors.teal,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      isMe ? l.studentClassYou(name) : name,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                      ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          isMe ? l.studentClassYou(name) : name,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        Text(
+                                          record.joinedByStudent
+                                              ? l.studentClassJoinedFromApp
+                                              : l.studentClassAddedByTeacher,
+                                          style: TextStyle(
+                                            color: AppColors.textSecondary,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    Text(
-                                      record.joinedByStudent
-                                          ? l.studentClassJoinedFromApp
-                                          : l.studentClassAddedByTeacher,
-                                      style: const TextStyle(
-                                        color: AppColors.textSecondary,
-                                        fontSize: 12,
-                                      ),
+                                  ),
+                                  if (isMe)
+                                    Icon(
+                                      Icons.check_circle,
+                                      color: AppColors.success,
+                                      size: 20,
                                     ),
-                                  ],
-                                ),
+                                ],
                               ),
-                              if (isMe)
-                                const Icon(
-                                  Icons.check_circle,
-                                  color: AppColors.success,
-                                  size: 20,
-                                ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }),
-                ],
+                            ),
+                          );
+                        }),
+                    ],
+                  );
+                },
               );
-            },
-          );
             },
           ),
         );

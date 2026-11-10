@@ -5,15 +5,25 @@ import 'app_card.dart';
 
 /// Pastel tints for the stat-tile icon chip (from the LinguaHub reference).
 enum StatChipTint {
-  green(AppColors.chipGreenBg, AppColors.chipGreenFg),
-  blue(AppColors.chipBlueBg, AppColors.chipBlueFg),
-  purple(AppColors.chipPurpleBg, AppColors.chipPurpleFg),
-  amber(AppColors.chipAmberBg, AppColors.chipAmberFg);
+  green,
+  blue,
+  purple,
+  amber;
 
-  const StatChipTint(this.background, this.foreground);
+  // Read from the palette that is on, so the tints follow light / dark.
+  Color get background => switch (this) {
+        StatChipTint.green => AppColors.chipGreenBg,
+        StatChipTint.blue => AppColors.chipBlueBg,
+        StatChipTint.purple => AppColors.chipPurpleBg,
+        StatChipTint.amber => AppColors.chipAmberBg,
+      };
 
-  final Color background;
-  final Color foreground;
+  Color get foreground => switch (this) {
+        StatChipTint.green => AppColors.chipGreenFg,
+        StatChipTint.blue => AppColors.chipBlueFg,
+        StatChipTint.purple => AppColors.chipPurpleFg,
+        StatChipTint.amber => AppColors.chipAmberFg,
+      };
 
   /// Maps the accent colors used by the old ad-hoc stat cards to a tint so
   /// call sites can keep passing a [Color].
@@ -66,7 +76,7 @@ class StatCard extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
@@ -77,7 +87,7 @@ class StatCard extends StatelessWidget {
                   value,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: 28,
                     fontWeight: FontWeight.w800,
@@ -90,7 +100,7 @@ class StatCard extends StatelessWidget {
                     subtitle!,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.success,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,

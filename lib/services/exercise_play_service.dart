@@ -100,7 +100,8 @@ class AnswerCheck {
   final String keyword;
 
   factory AnswerCheck.fromServer(Map<String, dynamic> m) {
-    final key = Map<String, dynamic>.from(m['correctAnswer'] as Map? ?? const {});
+    final key =
+        Map<String, dynamic>.from(m['correctAnswer'] as Map? ?? const {});
     return AnswerCheck(
       correct: m['correct'] == true,
       correctIndex: (key['index'] as num?)?.toInt(),
@@ -112,7 +113,8 @@ class AnswerCheck {
 }
 
 class PlayResult {
-  const PlayResult({required this.score, required this.correct, required this.total});
+  const PlayResult(
+      {required this.score, required this.correct, required this.total});
   final int score;
   final int correct;
   final int total;
@@ -142,14 +144,16 @@ class ExercisePlayService {
   final FirebaseFunctions _functions;
 
   /// Null when the exercise does not exist or is not assigned to the student.
-  Future<ExercisePlaySession?> start(Exercise exercise, String studentId) async {
+  Future<ExercisePlaySession?> start(
+      Exercise exercise, String studentId) async {
     if (exercise.isPackage) {
       final result = await _functions
           .httpsCallable('startExercise')
           .call({'exerciseId': exercise.id});
       final data = Map<String, dynamic>.from(result.data as Map);
       final questions = (data['questions'] as List? ?? const [])
-          .map((q) => PlayQuestion.fromServer(Map<String, dynamic>.from(q as Map)))
+          .map((q) =>
+              PlayQuestion.fromServer(Map<String, dynamic>.from(q as Map)))
           .toList();
       return _ServerSession(
         exercise: exercise,
@@ -191,7 +195,8 @@ class _ServerSession implements ExercisePlaySession {
       'questionId': question.id,
       'answer': answer.toJson(),
     });
-    return AnswerCheck.fromServer(Map<String, dynamic>.from(result.data as Map));
+    return AnswerCheck.fromServer(
+        Map<String, dynamic>.from(result.data as Map));
   }
 
   @override

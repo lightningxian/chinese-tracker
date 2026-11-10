@@ -280,10 +280,13 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
         }
       }
       if (_usesBank(exercise.type)) {
-        MatchingExerciseEditor.disposeOptionControllers(_matchingOptionControllers);
+        MatchingExerciseEditor.disposeOptionControllers(
+            _matchingOptionControllers);
         final options = exercise.matchingOptions;
-        _matchingOptionControllers = MatchingExerciseEditor.createOptionControllers(
-          List.generate(6, (index) => index < options.length ? options[index] : ''),
+        _matchingOptionControllers =
+            MatchingExerciseEditor.createOptionControllers(
+          List.generate(
+              6, (index) => index < options.length ? options[index] : ''),
         );
       }
     }
@@ -312,7 +315,8 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
     _matchingQuestions.clear();
     _typedQuestions.clear();
     MatchingExerciseEditor.disposeOptionControllers(_matchingOptionControllers);
-    _matchingOptionControllers = MatchingExerciseEditor.createOptionControllers();
+    _matchingOptionControllers =
+        MatchingExerciseEditor.createOptionControllers();
   }
 
   @override
@@ -391,8 +395,8 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
           );
         } else if (_usesBank(_type)) {
           // An empty exercise takes the word bank stored with the question.
-          final bankEmpty = _matchingOptionControllers
-              .every((c) => c.text.trim().isEmpty);
+          final bankEmpty =
+              _matchingOptionControllers.every((c) => c.text.trim().isEmpty);
           if (bankEmpty && q.options.isNotEmpty) {
             MatchingExerciseEditor.disposeOptionControllers(
                 _matchingOptionControllers);
@@ -469,7 +473,8 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
     final user = context.read<AuthService>().appUser;
     if (!WorksheetImportPlatform.isSupportedFor(user)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(WorksheetImportPlatform.unsupportedMessage)),
+        const SnackBar(
+            content: Text(WorksheetImportPlatform.unsupportedMessage)),
       );
       return;
     }
@@ -507,11 +512,12 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
     );
 
     try {
-      final text = await context.read<WorksheetImportService>().extractTextFromWorksheet(
-            bytes: bytes,
-            fileName: fileName,
-            onProgress: (stage) => progress.value = stage,
-          );
+      final text =
+          await context.read<WorksheetImportService>().extractTextFromWorksheet(
+                bytes: bytes,
+                fileName: fileName,
+                onProgress: (stage) => progress.value = stage,
+              );
       if (!mounted) return;
 
       progress.value = WorksheetImportStage.analyze();
@@ -535,7 +541,8 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
   Future<void> _showImportReviewScreen(String text) async {
     if (!mounted) return;
 
-    final result = await Navigator.of(context).push<WorksheetImportReviewResult>(
+    final result =
+        await Navigator.of(context).push<WorksheetImportReviewResult>(
       MaterialPageRoute(
         fullscreenDialog: true,
         builder: (_) => WorksheetImportReviewScreen(extractedText: text),
@@ -604,8 +611,8 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
     final importCount = result.questionCount;
     if (importCount == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No questions found to import.'),
+        SnackBar(
+          content: const Text('No questions found to import.'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -647,10 +654,13 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
           );
         }
       } else if (_usesBank(_type)) {
-        MatchingExerciseEditor.disposeOptionControllers(_matchingOptionControllers);
+        MatchingExerciseEditor.disposeOptionControllers(
+            _matchingOptionControllers);
         final options = result.matchingOptions;
-        _matchingOptionControllers = MatchingExerciseEditor.createOptionControllers(
-          List.generate(6, (index) => index < options.length ? options[index] : ''),
+        _matchingOptionControllers =
+            MatchingExerciseEditor.createOptionControllers(
+          List.generate(
+              6, (index) => index < options.length ? options[index] : ''),
         );
         for (final question in result.matchingQuestions) {
           _matchingQuestions.add(
@@ -699,6 +709,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
       ),
     );
   }
+
   Future<void> _save({required bool publish}) async {
     if (!_formKey.currentState!.validate()) return;
     if (!_type.isImplemented) {
@@ -717,7 +728,8 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
           .map((controller) => controller.text.trim())
           .toList();
       while (matchingOptions.isNotEmpty && matchingOptions.last.isEmpty) {
-        matchingOptions = matchingOptions.sublist(0, matchingOptions.length - 1);
+        matchingOptions =
+            matchingOptions.sublist(0, matchingOptions.length - 1);
       }
       if (matchingOptions.length < 2) {
         setState(() => _error = _type == ExerciseType.readingCloze
@@ -726,8 +738,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
         return;
       }
     } else if (_usesTyped(_type)) {
-      builtQuestions =
-          _typedQuestions.map((q) => q.toQuestion(_type)).toList();
+      builtQuestions = _typedQuestions.map((q) => q.toQuestion(_type)).toList();
     } else {
       builtQuestions = _mcQuestions.map((q) => q.toQuestion()).toList();
     }
@@ -744,13 +755,11 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
           ExerciseType.typeHanzi =>
             'Each sentence needs at least one accepted hanzi answer.',
           ExerciseType.pictureSentence => 'Each item needs a keyword.',
-          _ =>
-            'Each question needs a prompt and at least 2 answer options.',
+          _ => 'Each question needs a prompt and at least 2 answer options.',
         };
       });
       return;
     }
-
 
     setState(() {
       _saving = true;
@@ -804,8 +813,10 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
           'Students pick one answer from A–D options',
         ExerciseType.composeSentences =>
           'Students drag word parts into the correct sentence order',
-        ExerciseType.matching => 'Students match each prompt to an answer letter',
-        ExerciseType.listening => 'Students listen and choose the correct answer',
+        ExerciseType.matching =>
+          'Students match each prompt to an answer letter',
+        ExerciseType.listening =>
+          'Students listen and choose the correct answer',
         ExerciseType.readingCloze =>
           'Students pick the word for each blank from a shared word bank (A–F)',
         ExerciseType.pictureSentence =>
@@ -830,7 +841,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
             child: Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 14,
                 height: 1.5,
@@ -856,53 +867,54 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
     final formBody = Form(
       key: _formKey,
       child: ListView(
-        padding: EdgeInsets.fromLTRB(isWide ? 32 : 20, 20, isWide ? 32 : 20, 32),
+        padding:
+            EdgeInsets.fromLTRB(isWide ? 32 : 20, 20, isWide ? 32 : 20, 32),
         children: [
-            if (_error != null) ...[
-              Container(
-                padding: const EdgeInsets.all(12),
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: AppColors.error.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  _error!,
-                  style: const TextStyle(color: AppColors.error),
-                ),
+          if (_error != null) ...[
+            Container(
+              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: AppColors.error.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(8),
               ),
-            ],
-            if (isWide)
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    flex: 3,
-                    child: Column(
-                      children: [
-                        _buildDetailsCard(),
-                        const SizedBox(height: 16),
-                        _buildQuestionsCard(questionCount),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 20),
-                  SizedBox(
-                    width: 300,
-                    child: _buildSidebar(),
-                  ),
-                ],
-              )
-            else ...[
-              _buildDetailsCard(),
-              const SizedBox(height: 16),
-              _buildQuestionsCard(questionCount),
-              const SizedBox(height: 16),
-              _buildSidebar(),
-            ],
+              child: Text(
+                _error!,
+                style: TextStyle(color: AppColors.error),
+              ),
+            ),
           ],
-        ),
-      );
+          if (isWide)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: Column(
+                    children: [
+                      _buildDetailsCard(),
+                      const SizedBox(height: 16),
+                      _buildQuestionsCard(questionCount),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 20),
+                SizedBox(
+                  width: 300,
+                  child: _buildSidebar(),
+                ),
+              ],
+            )
+          else ...[
+            _buildDetailsCard(),
+            const SizedBox(height: 16),
+            _buildQuestionsCard(questionCount),
+            const SizedBox(height: 16),
+            _buildSidebar(),
+          ],
+        ],
+      ),
+    );
 
     return ShellNestedPage(
       embedded: widget.embedded,
@@ -956,7 +968,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
           const SizedBox(height: 6),
           Text(
             _typeHint,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 12,
             ),
@@ -1051,7 +1063,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
         children: [
           Row(
             children: [
-              const Text(
+              Text(
                 'Questions',
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
@@ -1070,7 +1082,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
                 ),
                 child: Text(
                   '$questionCount',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w700,
                     color: AppColors.navy,
                     fontSize: 13,
@@ -1087,8 +1099,8 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
           ),
           const SizedBox(height: 12),
           if (questionCount == 0 && !_usesBank(_type))
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
               child: Text(
                 'No questions yet. Upload a worksheet (Import from worksheet) '
                 'and the scanner fills this list; you can then correct any '
@@ -1150,13 +1162,13 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
                   color: AppColors.navy.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.laptop_mac_outlined,
                   color: AppColors.navy,
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Import from worksheet',
                   style: TextStyle(
@@ -1169,7 +1181,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
             ],
           ),
           const SizedBox(height: 10),
-          const Text(
+          Text(
             WorksheetImportPlatform.unsupportedMessage,
             style: TextStyle(
               color: AppColors.textSecondary,
@@ -1196,10 +1208,11 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
                   color: AppColors.teal.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.document_scanner_outlined, color: AppColors.teal),
+                child: Icon(Icons.document_scanner_outlined,
+                    color: AppColors.teal),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Import from worksheet',
                   style: TextStyle(
@@ -1212,7 +1225,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
             ],
           ),
           const SizedBox(height: 10),
-          const Text(
+          Text(
             'Upload a PDF, Word doc, or image. OCR reads scanned pages on your '
             'device, then auto-detects question type and answers.',
             style: TextStyle(
@@ -1228,7 +1241,8 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
             children: ['PDF', 'DOCX', 'JPG', 'PNG']
                 .map(
                   (format) => Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: AppColors.surface,
                       borderRadius: BorderRadius.circular(6),
@@ -1236,7 +1250,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
                     ),
                     child: Text(
                       format,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textSecondary,
@@ -1283,7 +1297,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
               children: [
                 Text(
                   'Q${index + 1}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w700,
                     color: AppColors.navy,
                   ),
@@ -1291,7 +1305,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
                 const Spacer(),
                 if (_mcQuestions.length > 1)
                   IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.delete_outline,
                       color: AppColors.error,
                       size: 20,
@@ -1320,7 +1334,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
                       width: 28,
                       child: Text(
                         String.fromCharCode(65 + optionIndex),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w700,
                           color: AppColors.navy,
                         ),
@@ -1375,14 +1389,14 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
               children: [
                 Text(
                   'Q${index + 1}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w700,
                     color: AppColors.navy,
                   ),
                 ),
                 const Spacer(),
                 IconButton(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.delete_outline,
                     color: AppColors.error,
                     size: 20,
@@ -1517,7 +1531,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
                 const Spacer(),
                 if (_composeQuestions.length > 1)
                   IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.delete_outline,
                       color: AppColors.error,
                     ),
@@ -1535,7 +1549,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'Sentence parts in correct order (top to bottom)',
               style: TextStyle(
                 fontWeight: FontWeight.w600,
@@ -1543,7 +1557,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
               ),
             ),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               'Students will see these parts jumbled and must rearrange them.',
               style: TextStyle(
                 color: AppColors.textSecondary,
@@ -1561,7 +1575,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
                       alignment: Alignment.center,
                       child: Text(
                         '${segmentIndex + 1}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w700,
                           color: AppColors.teal,
                         ),
@@ -1577,12 +1591,12 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
                     ),
                     IconButton(
                       icon: const Icon(Icons.arrow_downward, size: 20),
-                      onPressed: segmentIndex >=
-                              draft.segmentControllers.length - 1
-                          ? null
-                          : () => setState(
-                                () => draft.moveSegment(segmentIndex, 1),
-                              ),
+                      onPressed:
+                          segmentIndex >= draft.segmentControllers.length - 1
+                              ? null
+                              : () => setState(
+                                    () => draft.moveSegment(segmentIndex, 1),
+                                  ),
                     ),
                     Expanded(
                       child: TextField(
@@ -1598,7 +1612,7 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
                     ),
                     if (draft.segmentControllers.length > 2)
                       IconButton(
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.remove_circle_outline,
                           color: AppColors.error,
                           size: 20,
