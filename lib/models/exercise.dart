@@ -45,8 +45,11 @@ class ExerciseQuestion {
           audioUrl: map['audioUrl'] as String? ?? '',
         );
       case ExerciseType.matching:
+        // Inside an exercise the word bank lives in `matchingOptions`; a bank
+        // question keeps its own copy in `options` so it plays on its own.
         return ExerciseQuestion(
           prompt: map['prompt'] as String? ?? '',
+          options: List<String>.from(map['options'] as List? ?? []),
           correctIndex: map['correctIndex'] as int? ?? 0,
           imageUrl: map['imageUrl'] as String? ?? '',
           audioUrl: map['audioUrl'] as String? ?? '',
@@ -103,6 +106,7 @@ class ExerciseQuestion {
       case ExerciseType.matching:
         return {
           'prompt': prompt,
+          if (options.isNotEmpty) 'options': options,
           'correctIndex': correctIndex,
           ...mediaFields(),
         };

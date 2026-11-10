@@ -638,17 +638,30 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
 
         final exercises = snapshot.data ?? [];
         if (exercises.isEmpty) {
+          final base = GoRouterState.of(context).uri.path.startsWith('/admin')
+              ? '/admin'
+              : '/teacher';
           return Column(
             children: [
               _buildManageBanner(user),
-              const Expanded(
+              _buildQuestionBankButton(context, canManage),
+              Expanded(
                 child: EmptyState(
                   icon: Icons.fitness_center_outlined,
                   title: 'No exercises yet',
-                  subtitle:
-                      'An exercise bundles worksheets from the question bank; '
-                      'students see it once it is assigned to them. '
-                      'Admins create exercises on web.',
+                  subtitle: canManage
+                      ? 'An exercise bundles worksheets from the question bank; '
+                          'students see it once it is assigned to them.'
+                      : 'An exercise bundles worksheets from the question bank; '
+                          'students see it once it is assigned to them. '
+                          'Admins create exercises on web.',
+                  action: canManage
+                      ? FilledButton.icon(
+                          onPressed: () => context.push('$base/exercise/new'),
+                          icon: const Icon(Icons.add, size: 18),
+                          label: const Text('New exercise'),
+                        )
+                      : null,
                 ),
               ),
             ],

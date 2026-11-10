@@ -81,11 +81,16 @@ class EmptyState extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.subtitle,
+    this.action,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
+
+  /// Optional primary action shown under the text (for example a
+  /// "New exercise" button on an empty list).
+  final Widget? action;
 
   @override
   Widget build(BuildContext context) {
@@ -112,6 +117,10 @@ class EmptyState extends StatelessWidget {
                     color: AppColors.textSecondary,
                   ),
             ),
+            if (action != null) ...[
+              const SizedBox(height: 20),
+              action!,
+            ],
           ],
         ),
       ),

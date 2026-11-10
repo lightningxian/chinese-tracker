@@ -4,19 +4,22 @@ import 'package:provider/provider.dart';
 import '../../core/constants/exercise_authoring_platform.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
+import '../../core/constants/app_constants.dart';
 import '../../models/exercise_skill_category.dart';
+import '../../models/exercise_type.dart';
 import '../../models/question_bank_item.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../teacher/exercise_assign_dialog.dart';
-import 'question_bank_screen.dart' show QuestionBankEditorSheet;
+import 'question_bank_editor.dart';
 import 'question_bank_text.dart';
 
 /// One worksheet in the bank: its questions in sheet order with the stored
-/// answer. Tap a question to edit it; the trash icon removes it from the
-/// sheet. The app bar renames the sheet, deletes it, or assigns it: that
-/// creates an exercise holding just this worksheet and opens the student
-/// picker.
+/// answer. Tap a question to edit it, the arrows move it, the trash icon
+/// removes it from the sheet; "Add question" appends one. The app bar edits
+/// the sheet as a whole (title, type, level, skill), deletes it, or assigns
+/// it: that creates an exercise holding just this worksheet and opens the
+/// student picker.
 class QuestionBankSheetScreen extends StatelessWidget {
   const QuestionBankSheetScreen({
     super.key,
@@ -55,17 +58,19 @@ class QuestionBankSheetScreen extends StatelessWidget {
                     onPressed: () => _assignSheet(context, sheet),
                     icon: const Icon(Icons.assignment_ind_outlined, size: 18),
                     label: const Text('Assign this worksheet'),
-                    style: FilledButton.styleFrom(backgroundColor: AppColors.navy),
+                    style:
+                        FilledButton.styleFrom(backgroundColor: AppColors.navy),
                   ),
                 const SizedBox(width: 8),
                 IconButton(
-                  onPressed: () => _rename(context, sheet),
-                  icon: const Icon(Icons.drive_file_rename_outline),
-                  tooltip: 'Rename worksheet',
+                  onPressed: () => _editSheet(context, sheet),
+                  icon: const Icon(Icons.tune),
+                  tooltip: 'Edit worksheet (title, type, level)',
                 ),
                 IconButton(
                   onPressed: () => _deleteSheet(context, sheet),
-                  icon: const Icon(Icons.delete_outline, color: AppColors.error),
+                  icon:
+                      const Icon(Icons.delete_outline, color: AppColors.error),
                   tooltip: 'Delete worksheet',
                 ),
               ],
@@ -91,10 +96,25 @@ class QuestionBankSheetScreen extends StatelessWidget {
                         child: _QuestionRow(
                           index: i,
                           item: item,
-                          onTap: () => _edit(context, item),
+                          onTap: () => _edit(context, item, sheet),
+                          onMoveUp: i == 0
+                              ? null
+                              : () => _move(context, sheet, i, i - 1),
+                          onMoveDown: i == sheet.items.length - 1
+                              ? null
+                              : () => _move(context, sheet, i, i + 1),
                           onDelete: () => _deleteQuestion(context, item),
                         ),
                       ),
+                    const SizedBox(height: 6),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: OutlinedButton.icon(
+                        onPressed: () => _addQuestion(context, sheet),
+                        icon: const Icon(Icons.add, size: 18),
+                        label: const Text('Add question'),
+                      ),
+                    ),
                   ],
                 ),
         );
@@ -102,58 +122,58 @@ class QuestionBankSheetScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _edit(BuildContext context, QuestionBankItem item) {
-    return showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AppColors.card,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => QuestionBankEditorSheet(ownerId: ownerId, existing: item),
+  Future<void> _edit(
+    BuildContext context,
+    QuestionBankItem item,
+    QuestionBankSheet sheet,
+  ) {
+    return showQuestionBankEditor(
+      context,
+      ownerId: ownerId,
+      existing: item,
+      sheet: sheet,
     );
   }
 
-  /// New title on every question of the sheet.
-  Future<void> _rename(BuildContext context, QuestionBankSheet sheet) async {
-    final controller = TextEditingController(text: sheet.title);
-    final title = await showDialog<String>(
+  Future<void> _addQuestion(BuildContext context, QuestionBankSheet sheet) {
+    return showQuestionBankEditor(context, ownerId: ownerId, sheet: sheet);
+  }
+
+  /// Swaps two questions and stores the new order on the whole sheet.
+  Future<void> _move(
+    BuildContext context,
+    QuestionBankSheet sheet,
+    int from,
+    int to,
+  ) {
+    final ids = sheet.items.map((i) => i.id).toList();
+    final id = ids.removeAt(from);
+    ids.insert(to, id);
+    return context.read<FirestoreService>().reorderQuestionBankSheet(ids);
+  }
+
+  /// Title, type, level and skill of the whole worksheet. Applies to every
+  /// question; the code stays.
+  Future<void> _editSheet(BuildContext context, QuestionBankSheet sheet) async {
+    final result = await showDialog<_SheetEdit>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Rename worksheet'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          style: AppTextStyles.question,
-          decoration: InputDecoration(
-            labelText: 'Title',
-            helperText: 'Code ${sheet.code} stays the same.',
-          ),
-          onSubmitted: (v) => Navigator.pop(ctx, v),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, controller.text),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
+      builder: (_) => _SheetEditDialog(sheet: sheet),
     );
-    controller.dispose();
-    final clean = title?.trim() ?? '';
-    if (clean.isEmpty || clean == sheet.title || !context.mounted) return;
-    await context
-        .read<FirestoreService>()
-        .renameQuestionBankSheet(sheet.items.map((i) => i.id), clean);
+    if (result == null || !context.mounted) return;
+    await context.read<FirestoreService>().updateQuestionBankSheet(
+          sheet.items.map((i) => i.id),
+          title: result.title == sheet.title ? null : result.title,
+          level: result.level == sheet.level ? null : result.level,
+          skillCategory:
+              result.skill == sheet.first.skillCategory ? null : result.skill,
+          type: result.type == sheet.type ? null : result.type,
+        );
   }
 
   /// One exercise with just this worksheet, published, then the student
   /// picker. Assigning the same sheet again reuses that exercise.
-  Future<void> _assignSheet(BuildContext context, QuestionBankSheet sheet) async {
+  Future<void> _assignSheet(
+      BuildContext context, QuestionBankSheet sheet) async {
     final firestore = context.read<FirestoreService>();
     final messenger = ScaffoldMessenger.of(context);
     try {
@@ -307,12 +327,16 @@ class _QuestionRow extends StatelessWidget {
     required this.index,
     required this.item,
     required this.onTap,
+    required this.onMoveUp,
+    required this.onMoveDown,
     required this.onDelete,
   });
 
   final int index;
   final QuestionBankItem item;
   final VoidCallback onTap;
+  final VoidCallback? onMoveUp;
+  final VoidCallback? onMoveDown;
   final VoidCallback onDelete;
 
   @override
@@ -367,6 +391,28 @@ class _QuestionRow extends StatelessWidget {
               ],
             ),
           ),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.keyboard_arrow_up),
+                tooltip: 'Move up',
+                visualDensity: VisualDensity.compact,
+                onPressed: onMoveUp,
+              ),
+              IconButton(
+                icon: const Icon(Icons.keyboard_arrow_down),
+                tooltip: 'Move down',
+                visualDensity: VisualDensity.compact,
+                onPressed: onMoveDown,
+              ),
+            ],
+          ),
+          IconButton(
+            icon: const Icon(Icons.edit_outlined),
+            tooltip: 'Edit question',
+            onPressed: onTap,
+          ),
           IconButton(
             icon: const Icon(Icons.delete_outline, color: AppColors.error),
             tooltip: 'Remove from worksheet',
@@ -374,6 +420,156 @@ class _QuestionRow extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _SheetEdit {
+  const _SheetEdit({
+    required this.title,
+    required this.type,
+    required this.level,
+    required this.skill,
+  });
+  final String title;
+  final ExerciseType type;
+  final String? level;
+  final ExerciseSkillCategory skill;
+}
+
+class _SheetEditDialog extends StatefulWidget {
+  const _SheetEditDialog({required this.sheet});
+  final QuestionBankSheet sheet;
+
+  @override
+  State<_SheetEditDialog> createState() => _SheetEditDialogState();
+}
+
+class _SheetEditDialogState extends State<_SheetEditDialog> {
+  late final TextEditingController _title =
+      TextEditingController(text: widget.sheet.title);
+  late ExerciseType _type = widget.sheet.type;
+  late String? _level = AppConstants.hskLevels.contains(widget.sheet.level)
+      ? widget.sheet.level
+      : null;
+  late ExerciseSkillCategory _skill = widget.sheet.first.skillCategory ??
+      ExerciseSkillCategory.forExerciseType(widget.sheet.type);
+
+  /// Choice-style types keep the same answers; the others store answers in
+  /// another shape, so switching between the groups needs a re-check.
+  static const _choiceTypes = {
+    ExerciseType.multipleChoice,
+    ExerciseType.listening,
+    ExerciseType.matching,
+    ExerciseType.readingCloze,
+  };
+
+  bool get _typeChangesShape =>
+      _type != widget.sheet.type &&
+      !(_choiceTypes.contains(_type) &&
+          _choiceTypes.contains(widget.sheet.type));
+
+  @override
+  void dispose() {
+    _title.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Edit worksheet'),
+      content: SizedBox(
+        width: 440,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _title,
+              autofocus: true,
+              style: AppTextStyles.question,
+              decoration: InputDecoration(
+                labelText: 'Title',
+                helperText: 'Code ${widget.sheet.code} stays the same.',
+              ),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<ExerciseType>(
+              initialValue: _type,
+              isExpanded: true,
+              decoration: InputDecoration(
+                labelText: 'Type',
+                helperText: _typeChangesShape
+                    ? 'This type stores answers differently: open each '
+                        'question afterwards and check its answer.'
+                    : 'Applies to every question on the sheet.',
+                helperMaxLines: 3,
+              ),
+              items: [
+                for (final t in ExerciseType.values)
+                  DropdownMenuItem(value: t, child: Text(t.label)),
+              ],
+              onChanged: (t) => setState(() {
+                _type = t ?? _type;
+                _skill = ExerciseSkillCategory.forExerciseType(_type);
+              }),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<String?>(
+                    initialValue: _level,
+                    isExpanded: true,
+                    decoration: const InputDecoration(labelText: 'Level'),
+                    items: [
+                      const DropdownMenuItem(value: null, child: Text('—')),
+                      for (final l in AppConstants.hskLevels)
+                        DropdownMenuItem(value: l, child: Text(l)),
+                    ],
+                    onChanged: (l) => setState(() => _level = l),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: DropdownButtonFormField<ExerciseSkillCategory>(
+                    initialValue: _skill,
+                    isExpanded: true,
+                    decoration: const InputDecoration(labelText: 'Skill'),
+                    items: [
+                      for (final c in ExerciseSkillCategory.values)
+                        DropdownMenuItem(value: c, child: Text(c.label)),
+                    ],
+                    onChanged: (c) => setState(() => _skill = c ?? _skill),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () {
+            final title = _title.text.trim();
+            if (title.isEmpty) return;
+            Navigator.pop(
+              context,
+              _SheetEdit(
+                title: title,
+                type: _type,
+                level: _level,
+                skill: _skill,
+              ),
+            );
+          },
+          child: const Text('Save'),
+        ),
+      ],
     );
   }
 }

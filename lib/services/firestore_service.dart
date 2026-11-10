@@ -398,17 +398,47 @@ class FirestoreService {
     return exerciseId;
   }
 
-  /// Renames a worksheet in the bank: every question of the sheet gets the
-  /// new printed title.
-  Future<void> renameQuestionBankSheet(
-    Iterable<String> questionIds,
-    String title,
-  ) async {
+  /// Changes a worksheet as a whole: every question of the sheet gets the
+  /// fields that are passed (printed title, level, skill, type, or the word
+  /// bank shared by matching / fill-in-the-blank questions).
+  Future<void> updateQuestionBankSheet(
+    Iterable<String> questionIds, {
+    String? title,
+    String? level,
+    ExerciseSkillCategory? skillCategory,
+    ExerciseType? type,
+    List<String>? wordBank,
+  }) async {
+    final data = <String, dynamic>{
+      if (title != null) 'sheetTitle': title.trim(),
+      if (level != null) 'level': level,
+      if (skillCategory != null) 'skillCategory': skillCategory.value,
+      if (type != null) 'type': type.value,
+      if (wordBank != null) 'question.options': wordBank,
+    };
+    if (data.isEmpty) return;
+    data['updatedAt'] = FieldValue.serverTimestamp();
+    final ids = questionIds.toList();
+    const chunkSize = 400;
+    for (var i = 0; i < ids.length; i += chunkSize) {
+      final batch = _db.batch();
+      for (final id in ids.skip(i).take(chunkSize)) {
+        batch.update(
+          _db.collection(AppConstants.questionBankCollection).doc(id),
+          data,
+        );
+      }
+      await batch.commit();
+    }
+  }
+
+  /// New order of a worksheet's questions: `sheetIndex` = position in [ids].
+  Future<void> reorderQuestionBankSheet(List<String> ids) async {
     final batch = _db.batch();
-    for (final id in questionIds) {
+    for (final (i, id) in ids.indexed) {
       batch.update(
         _db.collection(AppConstants.questionBankCollection).doc(id),
-        {'sheetTitle': title.trim(), 'updatedAt': FieldValue.serverTimestamp()},
+        {'sheetIndex': i, 'updatedAt': FieldValue.serverTimestamp()},
       );
     }
     await batch.commit();
