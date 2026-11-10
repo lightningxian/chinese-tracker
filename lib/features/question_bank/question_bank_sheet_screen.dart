@@ -5,6 +5,7 @@ import '../../core/constants/exercise_authoring_platform.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/constants/app_constants.dart';
+import '../../models/exercise_category.dart';
 import '../../models/exercise_skill_category.dart';
 import '../../models/exercise_type.dart';
 import '../../models/question_bank_item.dart';
@@ -166,6 +167,8 @@ class QuestionBankSheetScreen extends StatelessWidget {
           skillCategory:
               result.skill == sheet.first.skillCategory ? null : result.skill,
           type: result.type == sheet.type ? null : result.type,
+          category:
+              result.category == sheet.category ? null : result.category,
         );
   }
 
@@ -270,6 +273,7 @@ class _SheetHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final facts = [
       sheet.code,
+      sheet.category.label,
       sheet.type.label,
       if (sheet.level != null && sheet.level!.isNotEmpty) sheet.level!,
       QuestionBankText.questionCount(sheet.count),
@@ -428,11 +432,13 @@ class _SheetEdit {
     required this.type,
     required this.level,
     required this.skill,
+    required this.category,
   });
   final String title;
   final ExerciseType type;
   final String? level;
   final ExerciseSkillCategory skill;
+  final ExerciseCategory category;
 }
 
 class _SheetEditDialog extends StatefulWidget {
@@ -452,6 +458,7 @@ class _SheetEditDialogState extends State<_SheetEditDialog> {
       : null;
   late ExerciseSkillCategory _skill = widget.sheet.first.skillCategory ??
       ExerciseSkillCategory.forExerciseType(widget.sheet.type);
+  late ExerciseCategory _category = widget.sheet.category;
 
   /// Choice-style types keep the same answers; the others store answers in
   /// another shape, so switching between the groups needs a re-check.
@@ -492,11 +499,25 @@ class _SheetEditDialogState extends State<_SheetEditDialog> {
               ),
             ),
             const SizedBox(height: 12),
+            DropdownButtonFormField<ExerciseCategory>(
+              initialValue: _category,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                labelText: 'Type of exercise',
+                helperText: 'Exercise, quiz, exam or HSK simulation.',
+              ),
+              items: [
+                for (final c in ExerciseCategory.values)
+                  DropdownMenuItem(value: c, child: Text(c.label)),
+              ],
+              onChanged: (c) => setState(() => _category = c ?? _category),
+            ),
+            const SizedBox(height: 12),
             DropdownButtonFormField<ExerciseType>(
               initialValue: _type,
               isExpanded: true,
               decoration: InputDecoration(
-                labelText: 'Type',
+                labelText: 'Question type',
                 helperText: _typeChangesShape
                     ? 'This type stores answers differently: open each '
                         'question afterwards and check its answer.'
@@ -562,6 +583,7 @@ class _SheetEditDialogState extends State<_SheetEditDialog> {
                 type: _type,
                 level: _level,
                 skill: _skill,
+                category: _category,
               ),
             );
           },

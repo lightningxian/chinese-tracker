@@ -174,6 +174,8 @@ class _AdminProfileTabState extends State<AdminProfileTab> {
           const SizedBox(height: 16),
           const AppCard(child: ThemeSettingRow()),
           const SizedBox(height: 16),
+          const AppCard(child: TextSizeSettingRow()),
+          const SizedBox(height: 16),
           ProfileAccountMeta(user: user),
           const SizedBox(height: 24),
           ProfileSaveButton(saving: _saving, onPressed: _save),

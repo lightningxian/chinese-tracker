@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'exercise.dart';
+import 'exercise_category.dart';
 import 'exercise_skill_category.dart';
 import 'exercise_type.dart';
 
@@ -20,6 +21,7 @@ class QuestionBankItem {
     required this.question,
     this.skillCategory,
     this.level,
+    this.category = ExerciseCategory.exercise,
     this.tags = const [],
     this.sheetCode,
     this.sheetTitle,
@@ -38,6 +40,10 @@ class QuestionBankItem {
   final ExerciseQuestion question;
   final ExerciseSkillCategory? skillCategory;
   final String? level;
+
+  /// Exercise, quiz, exam or HSK simulation: the same on every question of
+  /// a worksheet.
+  final ExerciseCategory category;
   final List<String> tags;
 
   /// Worksheet code printed on the sheet, e.g. `310001-RDG`.
@@ -103,6 +109,7 @@ class QuestionBankItem {
           ? null
           : ExerciseSkillCategory.fromValue(data['skillCategory'] as String?),
       level: data['level'] as String?,
+      category: ExerciseCategory.fromValue(data['category'] as String?),
       tags: List<String>.from(data['tags'] as List? ?? const []),
       sheetCode: data['sheetCode'] as String?,
       sheetTitle: data['sheetTitle'] as String?,
@@ -123,6 +130,7 @@ class QuestionBankItem {
         'question': question.toMap(type),
         if (skillCategory != null) 'skillCategory': skillCategory!.value,
         if (level != null && level!.isNotEmpty) 'level': level,
+        'category': category.value,
         'tags': tags,
         if (sheetCode != null && sheetCode!.isNotEmpty) 'sheetCode': sheetCode,
         if (sheetTitle != null && sheetTitle!.isNotEmpty)
@@ -140,6 +148,7 @@ class QuestionBankItem {
     ExerciseQuestion? question,
     ExerciseSkillCategory? skillCategory,
     String? level,
+    ExerciseCategory? category,
     List<String>? tags,
     String? sheetCode,
     String? sheetTitle,
@@ -158,6 +167,7 @@ class QuestionBankItem {
       question: question ?? this.question,
       skillCategory: skillCategory ?? this.skillCategory,
       level: level ?? this.level,
+      category: category ?? this.category,
       tags: tags ?? this.tags,
       sheetCode: sheetCode ?? this.sheetCode,
       sheetTitle: sheetTitle ?? this.sheetTitle,
@@ -205,6 +215,7 @@ class QuestionBankSheet {
 
   ExerciseType get type => first.type;
   String? get level => first.level;
+  ExerciseCategory get category => first.category;
 
   /// Tags shared by the sheet, without the code itself.
   List<String> get tags => {

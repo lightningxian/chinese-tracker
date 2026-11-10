@@ -148,6 +148,13 @@ Commit author preference (via env vars, not global git config):
 
 Update this section when you push from Mac or PC.
 
+### 2026-11-10 (later) — Claude: Appearance menu, text size, Type of exercise, exercises table
+
+- Appearance (theme + text size slider) in the top bar next to the bell.
+- Bank: Type of exercise column/filter (Exercise, Quiz, Exam, HSK
+  Simulation), Edit/Delete buttons per row, Tags column removed.
+- Exercises tab is a table; Quizzes and Levels buttons removed.
+
 ### 2026-11-10 — Claude: dark mode, worksheet editor, empty-tab button
 
 - Dark mode: two palettes behind the same `AppColors` names, Light / Dark /

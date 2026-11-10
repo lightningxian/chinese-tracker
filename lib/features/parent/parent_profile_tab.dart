@@ -48,6 +48,8 @@ class ParentProfileTab extends StatelessWidget {
         const AppCard(child: LanguageSettingRow()),
         const SizedBox(height: 16),
         const AppCard(child: ThemeSettingRow()),
+        const SizedBox(height: 16),
+        const AppCard(child: TextSizeSettingRow()),
         const SizedBox(height: 20),
         SectionHeader(title: l.parentProfileLinkedChildren),
         StreamBuilder<List<AppUser>>(

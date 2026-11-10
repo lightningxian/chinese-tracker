@@ -19,6 +19,7 @@ import '../models/attendance_record.dart';
 import '../models/class_session.dart';
 import '../models/student_class_term.dart';
 import '../models/exercise.dart';
+import '../models/exercise_category.dart';
 import '../models/exercise_skill_category.dart';
 import '../models/exercise_type.dart';
 import '../models/exercise_assignment.dart';
@@ -411,6 +412,7 @@ class FirestoreService {
     String? level,
     ExerciseSkillCategory? skillCategory,
     ExerciseType? type,
+    ExerciseCategory? category,
     List<String>? wordBank,
   }) async {
     final data = <String, dynamic>{
@@ -418,6 +420,7 @@ class FirestoreService {
       if (level != null) 'level': level,
       if (skillCategory != null) 'skillCategory': skillCategory.value,
       if (type != null) 'type': type.value,
+      if (category != null) 'category': category.value,
       if (wordBank != null) 'question.options': wordBank,
     };
     if (data.isEmpty) return;

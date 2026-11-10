@@ -39,6 +39,11 @@
   "themeDark": "Dark",
   "themeSystem": "Device",
   "themeSystemHint": "Device: follows your phone or computer setting.",
+  "textSizeRowLabel": "Text size",
+  "textSizeNormal": "Normal",
+  "textSizeBig": "Big",
+  "textSizeBigger": "Bigger",
+  "appearanceMenuTooltip": "Appearance: dark mode and text size",
 
   "authBrandHeadline": "Learn Chinese,\nthe easy way.",
 

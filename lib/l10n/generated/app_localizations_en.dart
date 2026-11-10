@@ -113,6 +113,21 @@ class AppLocalizationsEn extends AppLocalizations {
       'Device: follows your phone or computer setting.';
 
   @override
+  String get textSizeRowLabel => 'Text size';
+
+  @override
+  String get textSizeNormal => 'Normal';
+
+  @override
+  String get textSizeBig => 'Big';
+
+  @override
+  String get textSizeBigger => 'Bigger';
+
+  @override
+  String get appearanceMenuTooltip => 'Appearance: dark mode and text size';
+
+  @override
   String get authBrandHeadline => 'Learn Chinese,\nthe easy way.';
 
   @override

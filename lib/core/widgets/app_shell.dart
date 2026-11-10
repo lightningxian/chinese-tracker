@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../constants/app_constants.dart';
 import '../theme/app_theme.dart';
+import 'theme_toggle.dart';
 import 'app_logo.dart';
 
 /// Breakpoint for Figma Make desktop layout (sidebar + white top bar).
@@ -125,6 +126,7 @@ class AppShellScaffold extends StatelessWidget {
                 ],
               ),
               actions: [
+                AppearanceMenuButton(iconColor: AppColors.navy),
                 if (showNotificationBell)
                   _NotificationBellButton(
                     count: notificationCount,
@@ -435,6 +437,8 @@ class _AppTopBar extends StatelessWidget {
             action!,
             const SizedBox(width: 12),
           ],
+          const AppearanceMenuButton(),
+          const SizedBox(width: 4),
           if (showNotificationBell) ...[
             _NotificationBellButton(
               count: notificationCount,
@@ -658,10 +662,16 @@ class _FigmaMobileAppBar extends StatelessWidget
             ),
             Align(
               alignment: Alignment.centerRight,
-              child: _NotificationBellButton(
-                count: notificationCount,
-                onPressed: onNotificationTap,
-                iconColor: AppColors.navy,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AppearanceMenuButton(iconColor: AppColors.navy),
+                  _NotificationBellButton(
+                    count: notificationCount,
+                    onPressed: onNotificationTap,
+                    iconColor: AppColors.navy,
+                  ),
+                ],
               ),
             ),
           ],

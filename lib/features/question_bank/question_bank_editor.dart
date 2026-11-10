@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/exercise.dart';
+import '../../models/exercise_category.dart';
 import '../../models/exercise_skill_category.dart';
 import '../../models/exercise_type.dart';
 import '../../models/question_bank_item.dart';
@@ -77,6 +78,7 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
 
   ExerciseType _type = ExerciseType.multipleChoice;
   ExerciseSkillCategory _skill = ExerciseSkillCategory.reading;
+  ExerciseCategory _category = ExerciseCategory.exercise;
   String _level = AppConstants.hskLevels.first;
   int _correctIndex = 0;
   String _imageUrl = '';
@@ -100,6 +102,7 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
       _skill = sheetFirst.skillCategory ??
           ExerciseSkillCategory.forExerciseType(_type);
       _level = sheetFirst.level ?? AppConstants.hskLevels.first;
+      _category = sheetFirst.category;
       _tagsController.text = widget.sheet!.tags.join(', ');
       // Matching and fill in the blank share one word bank per sheet.
       if (_usesWordBank) {
@@ -113,6 +116,7 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
     _type = e.type;
     _skill = e.skillCategory ?? ExerciseSkillCategory.forExerciseType(e.type);
     _level = e.level ?? AppConstants.hskLevels.first;
+    _category = e.category;
     _tagsController.text = e.tags.join(', ');
     _promptController.text = e.question.prompt;
     _correctIndex = e.question.correctIndex;
@@ -318,6 +322,7 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
       question: question,
       skillCategory: _skill,
       level: _level,
+      category: _category,
       tags: tags,
       sheetCode: existing?.sheetCode ?? sheet?.key,
       sheetTitle: existing?.sheetTitle ?? sheet?.title,
@@ -443,11 +448,17 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
                 ],
               ),
               const SizedBox(height: 12),
-              TextFormField(
-                controller: _tagsController,
+              DropdownButtonFormField<ExerciseCategory>(
+                initialValue: _category,
+                isExpanded: true,
                 decoration: const InputDecoration(
-                  labelText: 'Tags (comma separated)',
+                  labelText: 'Type of exercise',
                 ),
+                items: [
+                  for (final c in ExerciseCategory.values)
+                    DropdownMenuItem(value: c, child: Text(c.label)),
+                ],
+                onChanged: (c) => setState(() => _category = c ?? _category),
               ),
               const SizedBox(height: 20),
               SizedBox(

@@ -112,6 +112,21 @@ class AppLocalizationsId extends AppLocalizations {
       'Perangkat: mengikuti pengaturan HP atau komputer Anda.';
 
   @override
+  String get textSizeRowLabel => 'Ukuran teks';
+
+  @override
+  String get textSizeNormal => 'Normal';
+
+  @override
+  String get textSizeBig => 'Besar';
+
+  @override
+  String get textSizeBigger => 'Lebih besar';
+
+  @override
+  String get appearanceMenuTooltip => 'Tampilan: mode gelap dan ukuran teks';
+
+  @override
   String get authBrandHeadline => 'Belajar Mandarin,\ndengan mudah.';
 
   @override

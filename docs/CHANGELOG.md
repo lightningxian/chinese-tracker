@@ -6,6 +6,48 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-10 (later) — Claude: Appearance menu in the header, text size, Type of exercise, exercises table
+
+**What changed**
+- **Appearance menu in the top bar** (sun / moon icon left of the bell, on
+  every shell: desktop header, tablet row, mobile app bar). Panel with the
+  Light · Dark · Device switch and a **Text size** slider (Normal · Big ·
+  Bigger = 1.12 / 1.28 / 1.45 text scale; saved under `app_text_size`).
+  `AppTextSize` in `theme_controller.dart`; `app.dart` feeds the scale to the
+  `TextScaler`. The Profile / Account pages also show a Text size row.
+- **Type of exercise on bank worksheets:** `ExerciseCategory` (Exercise ·
+  Quiz · Exam · HSK Simulation, `lib/models/exercise_category.dart`) stored
+  as `category` on every bank question (missing = Exercise). Set in the
+  import review (default Exercise), the Edit worksheet dialog and the
+  question editor; shown as a tinted chip column in the bank, with a filter.
+  The **Tags** column and the tags input are gone (tag data stays; the
+  sheet-code-in-tags fallback still works).
+- **Question bank rows:** labelled **Edit** and **Delete** buttons in an
+  Actions column (Edit opens the worksheet page, or the editor for a single
+  question); the mobile card has the same two buttons.
+- **Exercises tab is a table** (`AppDataTable`): Exercise (title + contents),
+  Level, Skill, Students (assigned), Done (x/y, click opens the progress
+  dialog), Status, Actions (Assign · Edit · Delete). Toolbar: search, Level
+  and Skill dropdowns, Question bank, New exercise. The **Quizzes** and
+  **Levels** buttons are gone from this tab (their routes still exist).
+  Cards remain below the mobile breakpoint.
+
+**Why**
+- Owner feedback on the dark-mode build: the toggle was hard to find; the
+  exercise cards looked unprofessional; the bank needed Edit in the row and
+  bigger buttons; Quizzes/Levels are not wanted; text should be adjustable.
+
+**For review**
+- `flutter analyze` 0 errors / 0 warnings; `flutter test` 56 pass.
+- Checked on the emulator (admin, dark): Appearance menu opens, slider to
+  Bigger scales the whole page live and back; Exercises table at 1500 px;
+  bank table with the new columns; Edit worksheet → Type of exercise = Exam
+  shows as a chip in the list.
+- At 1.45 the header gets tight on narrow windows; tables scroll sideways.
+- Deploy: hosting only (`scripts/deploy_web.sh --web-only`).
+
+---
+
 ## 2026-11-10 — Claude: dark mode; worksheet editor in the bank; New exercise on the empty tab
 
 **What changed**

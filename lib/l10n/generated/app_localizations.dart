@@ -284,6 +284,36 @@ abstract class AppLocalizations {
   /// **'Device: follows your phone or computer setting.'**
   String get themeSystemHint;
 
+  /// No description provided for @textSizeRowLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Text size'**
+  String get textSizeRowLabel;
+
+  /// No description provided for @textSizeNormal.
+  ///
+  /// In en, this message translates to:
+  /// **'Normal'**
+  String get textSizeNormal;
+
+  /// No description provided for @textSizeBig.
+  ///
+  /// In en, this message translates to:
+  /// **'Big'**
+  String get textSizeBig;
+
+  /// No description provided for @textSizeBigger.
+  ///
+  /// In en, this message translates to:
+  /// **'Bigger'**
+  String get textSizeBigger;
+
+  /// No description provided for @appearanceMenuTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance: dark mode and text size'**
+  String get appearanceMenuTooltip;
+
   /// No description provided for @authBrandHeadline.
   ///
   /// In en, this message translates to:

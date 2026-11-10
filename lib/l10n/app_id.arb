@@ -33,6 +33,11 @@
   "themeDark": "Gelap",
   "themeSystem": "Perangkat",
   "themeSystemHint": "Perangkat: mengikuti pengaturan HP atau komputer Anda.",
+  "textSizeRowLabel": "Ukuran teks",
+  "textSizeNormal": "Normal",
+  "textSizeBig": "Besar",
+  "textSizeBigger": "Lebih besar",
+  "appearanceMenuTooltip": "Tampilan: mode gelap dan ukuran teks",
 
   "authBrandHeadline": "Belajar Mandarin,\ndengan mudah.",
 

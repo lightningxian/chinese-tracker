@@ -6,6 +6,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/app_data_table.dart';
 import '../../core/widgets/shell_nested_page.dart';
+import '../../models/exercise_category.dart';
 import '../../models/exercise_type.dart';
 import '../../models/question_bank_item.dart';
 import '../../services/auth_service.dart';
@@ -30,6 +31,7 @@ class QuestionBankScreen extends StatefulWidget {
 
 class _QuestionBankScreenState extends State<QuestionBankScreen> {
   ExerciseType? _typeFilter;
+  ExerciseCategory? _categoryFilter;
   String? _levelFilter;
   String _search = '';
   String? _sortColumnId;
@@ -46,17 +48,19 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
     });
   }
 
-  /// A worksheet matches when its type and level match and the search text
-  /// is in its code, title, tags or any of its questions.
+  /// A worksheet matches when its type, type of exercise and level match and
+  /// the search text is in its code, title or any of its questions.
   bool _matchesFilters(QuestionBankSheet sheet) {
     if (_typeFilter != null && sheet.type != _typeFilter) return false;
+    if (_categoryFilter != null && sheet.category != _categoryFilter) {
+      return false;
+    }
     if (_levelFilter != null && sheet.level != _levelFilter) return false;
     if (_search.isNotEmpty) {
       final needle = _search.toLowerCase();
       final hay = [
         sheet.code,
         sheet.title,
-        ...sheet.tags,
         for (final item in sheet.items) item.displayText,
       ].join(' ').toLowerCase();
       if (!hay.contains(needle)) return false;
@@ -72,6 +76,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
       final cmp = switch (col) {
         'title' => a.title.toLowerCase().compareTo(b.title.toLowerCase()),
         'type' => a.type.label.compareTo(b.type.label),
+        'category' => a.category.index.compareTo(b.category.index),
         'level' => (a.level ?? '').compareTo(b.level ?? ''),
         'count' => a.count.compareTo(b.count),
         'used' => a.usageCount.compareTo(b.usageCount),
@@ -163,8 +168,10 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
             children: [
               _Filters(
                 typeFilter: _typeFilter,
+                categoryFilter: _categoryFilter,
                 levelFilter: _levelFilter,
                 onType: (t) => setState(() => _typeFilter = t),
+                onCategory: (c) => setState(() => _categoryFilter = c),
                 onLevel: (l) => setState(() => _levelFilter = l),
                 onSearch: (s) => setState(() => _search = s),
               ),
@@ -196,6 +203,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
                                 mobileCardBuilder: (sheet) => _SheetCard(
                                   sheet: sheet,
                                   onTap: () => _open(ownerId, sheet),
+                                  onEdit: () => _open(ownerId, sheet),
                                   onDelete: () => _delete(firestore, sheet),
                                 ),
                               ),
@@ -212,6 +220,8 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
   List<AppTableColumn<QuestionBankSheet>> _buildColumns(
     FirestoreService firestore,
   ) {
+    final ownerId =
+        AppConstants.contentTeacherId(context.read<AuthService>().appUser!);
     return [
       AppTableColumn(
         id: 'title',
@@ -221,9 +231,16 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
         cell: (sheet) => _TitleCell(sheet: sheet),
       ),
       AppTableColumn(
+        id: 'category',
+        label: 'Type of exercise',
+        width: 140,
+        sortable: true,
+        cell: (sheet) => _CategoryChip(category: sheet.category),
+      ),
+      AppTableColumn(
         id: 'type',
-        label: 'Type',
-        width: 130,
+        label: 'Question type',
+        width: 150,
         sortable: true,
         cell: (sheet) => Text(sheet.type.label),
       ),
@@ -243,17 +260,6 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
         cell: (sheet) => Text('${sheet.count}'),
       ),
       AppTableColumn(
-        id: 'tags',
-        label: 'Tags',
-        flex: 2,
-        cell: (sheet) => Text(
-          sheet.tags.map((t) => '#$t').join(' '),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 13),
-        ),
-      ),
-      AppTableColumn(
         id: 'used',
         label: 'Used',
         width: 56,
@@ -263,12 +269,11 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
       ),
       AppTableColumn(
         id: 'actions',
-        label: '',
-        width: 48,
-        cell: (sheet) => IconButton(
-          icon: Icon(Icons.delete_outline, color: AppColors.error),
-          onPressed: () => _delete(firestore, sheet),
-          tooltip: sheet.isSheet ? 'Delete worksheet' : 'Delete',
+        label: 'Actions',
+        width: 200,
+        cell: (sheet) => _RowActions(
+          onEdit: () => _open(ownerId, sheet),
+          onDelete: () => _delete(firestore, sheet),
         ),
       ),
     ];
@@ -386,15 +391,19 @@ class _TitleCell extends StatelessWidget {
 class _Filters extends StatelessWidget {
   const _Filters({
     required this.typeFilter,
+    required this.categoryFilter,
     required this.levelFilter,
     required this.onType,
+    required this.onCategory,
     required this.onLevel,
     required this.onSearch,
   });
 
   final ExerciseType? typeFilter;
+  final ExerciseCategory? categoryFilter;
   final String? levelFilter;
   final ValueChanged<ExerciseType?> onType;
+  final ValueChanged<ExerciseCategory?> onCategory;
   final ValueChanged<String?> onLevel;
   final ValueChanged<String> onSearch;
 
@@ -409,7 +418,7 @@ class _Filters extends StatelessWidget {
             child: TextField(
               decoration: const InputDecoration(
                 prefixIcon: Icon(Icons.search),
-                hintText: 'Search worksheet, question or tag',
+                hintText: 'Search worksheet or question',
                 isDense: true,
               ),
               onChanged: onSearch,
@@ -417,11 +426,30 @@ class _Filters extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Expanded(
+            child: DropdownButtonFormField<ExerciseCategory?>(
+              initialValue: categoryFilter,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                labelText: 'Type of exercise',
+                isDense: true,
+              ),
+              items: [
+                const DropdownMenuItem(value: null, child: Text('All')),
+                for (final c in ExerciseCategory.values)
+                  DropdownMenuItem(value: c, child: Text(c.label)),
+              ],
+              onChanged: onCategory,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
             child: DropdownButtonFormField<ExerciseType?>(
               initialValue: typeFilter,
               isExpanded: true,
-              decoration:
-                  const InputDecoration(labelText: 'Type', isDense: true),
+              decoration: const InputDecoration(
+                labelText: 'Question type',
+                isDense: true,
+              ),
               items: [
                 const DropdownMenuItem(value: null, child: Text('All')),
                 for (final t in ExerciseType.values)
@@ -456,11 +484,13 @@ class _SheetCard extends StatelessWidget {
   const _SheetCard({
     required this.sheet,
     required this.onTap,
+    required this.onEdit,
     required this.onDelete,
   });
 
   final QuestionBankSheet sheet;
   final VoidCallback onTap;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   @override
@@ -491,6 +521,7 @@ class _SheetCard extends StatelessWidget {
                   runSpacing: 6,
                   children: [
                     if (sheet.isSheet) _Chip(label: sheet.code),
+                    _Chip(label: sheet.category.label),
                     _Chip(label: sheet.type.label),
                     if (sheet.level != null && sheet.level!.isNotEmpty)
                       _Chip(label: sheet.level!),
@@ -503,11 +534,90 @@ class _SheetCard extends StatelessWidget {
               ],
             ),
           ),
-          IconButton(
-            icon: Icon(Icons.delete_outline, color: AppColors.error),
-            onPressed: onDelete,
-          ),
+          const SizedBox(width: 8),
+          _RowActions(onEdit: onEdit, onDelete: onDelete, compact: true),
         ],
+      ),
+    );
+  }
+}
+
+/// Edit and Delete as labelled buttons: big enough to hit, and Edit is
+/// visible without opening the worksheet first.
+class _RowActions extends StatelessWidget {
+  const _RowActions({
+    required this.onEdit,
+    required this.onDelete,
+    this.compact = false,
+  });
+
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = OutlinedButton.styleFrom(
+      padding: EdgeInsets.symmetric(horizontal: compact ? 10 : 12, vertical: 8),
+      minimumSize: const Size(0, 36),
+      visualDensity: VisualDensity.compact,
+    );
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        OutlinedButton.icon(
+          onPressed: onEdit,
+          style: style,
+          icon: const Icon(Icons.edit_outlined, size: 18),
+          label: const Text('Edit'),
+        ),
+        const SizedBox(width: 8),
+        OutlinedButton.icon(
+          onPressed: onDelete,
+          style: style.copyWith(
+            foregroundColor: WidgetStatePropertyAll(AppColors.error),
+            side: WidgetStatePropertyAll(BorderSide(color: AppColors.error)),
+          ),
+          icon: const Icon(Icons.delete_outline, size: 18),
+          label: const Text('Delete'),
+        ),
+      ],
+    );
+  }
+}
+
+/// Tinted label for the type of exercise (exercise / quiz / exam / HSK).
+class _CategoryChip extends StatelessWidget {
+  const _CategoryChip({required this.category});
+  final ExerciseCategory category;
+
+  @override
+  Widget build(BuildContext context) {
+    final (bg, fg) = switch (category) {
+      ExerciseCategory.exercise => (AppColors.chipBlueBg, AppColors.chipBlueFg),
+      ExerciseCategory.quiz => (AppColors.chipGreenBg, AppColors.chipGreenFg),
+      ExerciseCategory.exam => (AppColors.chipAmberBg, AppColors.chipAmberFg),
+      ExerciseCategory.hskSimulation => (
+          AppColors.chipPurpleBg,
+          AppColors.chipPurpleFg
+        ),
+    };
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Text(
+          category.label,
+          style: TextStyle(
+            color: fg,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
     );
   }

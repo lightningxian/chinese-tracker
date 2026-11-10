@@ -119,7 +119,8 @@ class _ChineseTrackerAppState extends State<ChineseTrackerApp> {
               builder: (context, child) {
                 final scaled = MediaQuery(
                   data: MediaQuery.of(context).copyWith(
-                    textScaler: const TextScaler.linear(1.12),
+                    textScaler:
+                        TextScaler.linear(themeController.textSize.scale),
                   ),
                   // Screens read their colours through `AppColors`, not
                   // through Theme.of, so a mode change does not reach them

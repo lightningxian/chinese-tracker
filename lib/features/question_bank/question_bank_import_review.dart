@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
+import '../../models/exercise_category.dart';
 import '../../models/question_bank_item.dart';
 import 'question_bank_text.dart';
 
@@ -71,14 +72,16 @@ class _QuestionBankImportReviewScreenState
   };
 
   bool _replaceExisting = true;
+  ExerciseCategory _category = ExerciseCategory.exercise;
 
   QuestionBankImportDecision _result() => QuestionBankImportDecision(
         items: [
           for (var i = 0; i < widget.items.length; i++)
             if (_keep[i])
-              _mixedLevels
-                  ? widget.items[i]
-                  : widget.items[i].copyWith(level: _level),
+              (_mixedLevels
+                      ? widget.items[i]
+                      : widget.items[i].copyWith(level: _level))
+                  .copyWith(category: _category),
         ],
         replaceIds:
             _replaceExisting ? [for (final i in _existingSame) i.id] : const [],
@@ -173,24 +176,46 @@ class _QuestionBankImportReviewScreenState
                     widget.summary,
                     style: const TextStyle(height: 1.4),
                   ),
-                  if (!_mixedLevels) ...[
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: 220,
-                      child: DropdownButtonFormField<String>(
-                        initialValue: _level,
-                        decoration: const InputDecoration(
-                          labelText: 'HSK level',
-                          isDense: true,
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: [
+                      if (!_mixedLevels)
+                        SizedBox(
+                          width: 220,
+                          child: DropdownButtonFormField<String>(
+                            initialValue: _level,
+                            decoration: const InputDecoration(
+                              labelText: 'HSK level',
+                              isDense: true,
+                            ),
+                            items: [
+                              for (final l in AppConstants.hskLevels)
+                                DropdownMenuItem(value: l, child: Text(l)),
+                            ],
+                            onChanged: (v) =>
+                                setState(() => _level = v ?? _level),
+                          ),
                         ),
-                        items: [
-                          for (final l in AppConstants.hskLevels)
-                            DropdownMenuItem(value: l, child: Text(l)),
-                        ],
-                        onChanged: (v) => setState(() => _level = v ?? _level),
+                      SizedBox(
+                        width: 220,
+                        child: DropdownButtonFormField<ExerciseCategory>(
+                          initialValue: _category,
+                          decoration: const InputDecoration(
+                            labelText: 'Type of exercise',
+                            isDense: true,
+                          ),
+                          items: [
+                            for (final c in ExerciseCategory.values)
+                              DropdownMenuItem(value: c, child: Text(c.label)),
+                          ],
+                          onChanged: (v) =>
+                              setState(() => _category = v ?? _category),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ],
               ),
             ),
