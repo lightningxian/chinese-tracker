@@ -148,6 +148,11 @@ Commit author preference (via env vars, not global git config):
 
 Update this section when you push from Mac or PC.
 
+### 2026-11-10 (evening) — Claude: asset caching fix, bank picker filters
+
+- `/assets/**` no longer cached for an hour (stale icon font after deploy).
+- Bank picker in the exercise form: filters, edit pencil, Scan worksheet.
+
 ### 2026-11-10 (later) — Claude: Appearance menu, text size, Type of exercise, exercises table
 
 - Appearance (theme + text size slider) in the top bar next to the bell.

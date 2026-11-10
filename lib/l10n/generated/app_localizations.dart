@@ -275,13 +275,13 @@ abstract class AppLocalizations {
   /// No description provided for @themeSystem.
   ///
   /// In en, this message translates to:
-  /// **'Device'**
+  /// **'System'**
   String get themeSystem;
 
   /// No description provided for @themeSystemHint.
   ///
   /// In en, this message translates to:
-  /// **'Device: follows your phone or computer setting.'**
+  /// **'System: follows your phone or computer setting.'**
   String get themeSystemHint;
 
   /// No description provided for @textSizeRowLabel.

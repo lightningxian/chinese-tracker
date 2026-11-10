@@ -106,11 +106,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeDark => 'Dark';
 
   @override
-  String get themeSystem => 'Device';
+  String get themeSystem => 'System';
 
   @override
   String get themeSystemHint =>
-      'Device: follows your phone or computer setting.';
+      'System: follows your phone or computer setting.';
 
   @override
   String get textSizeRowLabel => 'Text size';

@@ -6,6 +6,35 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-10 (evening) — Claude: assets no longer cached after a deploy; bank picker with filters, edit and scan
+
+**What changed**
+- **Stale icon font after deploy.** Firebase Hosting served `assets/**`
+  with `max-age=3600`, so right after a deploy the browser kept the old
+  `MaterialIcons-Regular.otf` (without the new sun/moon/devices glyphs)
+  next to the new app: the Appearance icons were blank. `firebase.json`
+  now sends `Cache-Control: no-cache` for `/assets/**` (revalidated with
+  the ETag, so unchanged files still cost a 304, not a download).
+- **Add from the question bank** (exercise form): the same filter bar as
+  the bank (search + Type of exercise + Question type + Level, shared
+  `QuestionBankFilterBar` / `QuestionBankFilter` in
+  `question_bank_filters.dart`), a pencil per row that opens the worksheet
+  page (or the question editor) and returns to the picker, a **Scan
+  worksheet** button that imports a sheet into the bank and ticks it, and
+  the picker now watches the bank so edits show at once. Rows show the type
+  of exercise.
+- Theme switch label "Device / Perangkat" → "System / Sistem" (the long
+  word wrapped inside the menu).
+
+**For review**
+- `flutter analyze` 0 errors / 0 warnings; `flutter test` 56 pass.
+- Checked on the emulator: picker filters to Exam, pencil opens the sheet,
+  back returns to the picker with the filter kept.
+- The header fix needs one more hosting deploy to take effect; the icons
+  also appear by themselves once the hour-old cache expires.
+
+---
+
 ## 2026-11-10 (later) — Claude: Appearance menu in the header, text size, Type of exercise, exercises table
 
 **What changed**

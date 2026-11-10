@@ -13,6 +13,7 @@ import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import 'question_bank_bulk_import.dart';
 import 'question_bank_editor.dart';
+import 'question_bank_filters.dart';
 import 'question_bank_harvest.dart';
 import 'question_bank_sheet_screen.dart';
 import 'question_bank_text.dart';
@@ -30,10 +31,7 @@ class QuestionBankScreen extends StatefulWidget {
 }
 
 class _QuestionBankScreenState extends State<QuestionBankScreen> {
-  ExerciseType? _typeFilter;
-  ExerciseCategory? _categoryFilter;
-  String? _levelFilter;
-  String _search = '';
+  QuestionBankFilter _filter = const QuestionBankFilter();
   String? _sortColumnId;
   bool _sortAscending = true;
 
@@ -46,26 +44,6 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
         _sortAscending = true;
       }
     });
-  }
-
-  /// A worksheet matches when its type, type of exercise and level match and
-  /// the search text is in its code, title or any of its questions.
-  bool _matchesFilters(QuestionBankSheet sheet) {
-    if (_typeFilter != null && sheet.type != _typeFilter) return false;
-    if (_categoryFilter != null && sheet.category != _categoryFilter) {
-      return false;
-    }
-    if (_levelFilter != null && sheet.level != _levelFilter) return false;
-    if (_search.isNotEmpty) {
-      final needle = _search.toLowerCase();
-      final hay = [
-        sheet.code,
-        sheet.title,
-        for (final item in sheet.items) item.displayText,
-      ].join(' ').toLowerCase();
-      if (!hay.contains(needle)) return false;
-    }
-    return true;
   }
 
   List<QuestionBankSheet> _sorted(List<QuestionBankSheet> sheets) {
@@ -162,18 +140,16 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
           }
           final all = snap.data ?? const <QuestionBankItem>[];
           final sheets = QuestionBankSheet.group(all);
-          final rows = _sorted(sheets.where(_matchesFilters).toList());
+          final rows = _sorted(sheets.where(_filter.matches).toList());
 
           return Column(
             children: [
-              _Filters(
-                typeFilter: _typeFilter,
-                categoryFilter: _categoryFilter,
-                levelFilter: _levelFilter,
-                onType: (t) => setState(() => _typeFilter = t),
-                onCategory: (c) => setState(() => _categoryFilter = c),
-                onLevel: (l) => setState(() => _levelFilter = l),
-                onSearch: (s) => setState(() => _search = s),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                child: QuestionBankFilterBar(
+                  filter: _filter,
+                  onChanged: (f) => setState(() => _filter = f),
+                ),
               ),
               Expanded(
                 child: all.isEmpty
@@ -384,98 +360,6 @@ class _TitleCell extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _Filters extends StatelessWidget {
-  const _Filters({
-    required this.typeFilter,
-    required this.categoryFilter,
-    required this.levelFilter,
-    required this.onType,
-    required this.onCategory,
-    required this.onLevel,
-    required this.onSearch,
-  });
-
-  final ExerciseType? typeFilter;
-  final ExerciseCategory? categoryFilter;
-  final String? levelFilter;
-  final ValueChanged<ExerciseType?> onType;
-  final ValueChanged<ExerciseCategory?> onCategory;
-  final ValueChanged<String?> onLevel;
-  final ValueChanged<String> onSearch;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: TextField(
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.search),
-                hintText: 'Search worksheet or question',
-                isDense: true,
-              ),
-              onChanged: onSearch,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: DropdownButtonFormField<ExerciseCategory?>(
-              initialValue: categoryFilter,
-              isExpanded: true,
-              decoration: const InputDecoration(
-                labelText: 'Type of exercise',
-                isDense: true,
-              ),
-              items: [
-                const DropdownMenuItem(value: null, child: Text('All')),
-                for (final c in ExerciseCategory.values)
-                  DropdownMenuItem(value: c, child: Text(c.label)),
-              ],
-              onChanged: onCategory,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: DropdownButtonFormField<ExerciseType?>(
-              initialValue: typeFilter,
-              isExpanded: true,
-              decoration: const InputDecoration(
-                labelText: 'Question type',
-                isDense: true,
-              ),
-              items: [
-                const DropdownMenuItem(value: null, child: Text('All')),
-                for (final t in ExerciseType.values)
-                  DropdownMenuItem(value: t, child: Text(t.label)),
-              ],
-              onChanged: onType,
-            ),
-          ),
-          const SizedBox(width: 12),
-          SizedBox(
-            width: 120,
-            child: DropdownButtonFormField<String?>(
-              initialValue: levelFilter,
-              isExpanded: true,
-              decoration:
-                  const InputDecoration(labelText: 'Level', isDense: true),
-              items: [
-                const DropdownMenuItem(value: null, child: Text('All')),
-                for (final l in AppConstants.hskLevels)
-                  DropdownMenuItem(value: l, child: Text(l)),
-              ],
-              onChanged: onLevel,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

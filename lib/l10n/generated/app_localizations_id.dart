@@ -105,11 +105,11 @@ class AppLocalizationsId extends AppLocalizations {
   String get themeDark => 'Gelap';
 
   @override
-  String get themeSystem => 'Perangkat';
+  String get themeSystem => 'Sistem';
 
   @override
   String get themeSystemHint =>
-      'Perangkat: mengikuti pengaturan HP atau komputer Anda.';
+      'Sistem: mengikuti pengaturan HP atau komputer Anda.';
 
   @override
   String get textSizeRowLabel => 'Ukuran teks';

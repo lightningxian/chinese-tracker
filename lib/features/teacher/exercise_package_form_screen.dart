@@ -10,6 +10,10 @@ import '../../models/exercise.dart';
 import '../../models/exercise_skill_category.dart';
 import '../../models/question_bank_item.dart';
 import '../../services/firestore_service.dart';
+import '../question_bank/question_bank_bulk_import.dart';
+import '../question_bank/question_bank_editor.dart';
+import '../question_bank/question_bank_filters.dart';
+import '../question_bank/question_bank_sheet_screen.dart';
 import '../question_bank/question_bank_text.dart';
 import 'exercise_assign_dialog.dart';
 
@@ -134,7 +138,8 @@ class _ExercisePackageFormScreenState extends State<ExercisePackageFormScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (_) => _BankPicker(
-        bank: bank,
+        ownerId: widget.teacherId,
+        initialBank: bank,
         sheets: _sheets.toSet(),
         questionIds: _questionIds.toSet(),
       ),
@@ -459,15 +464,22 @@ class _BankPick {
   final Set<String> questionIds;
 }
 
-/// Every row of the bank (worksheets and single questions) with a tick box.
+/// Every row of the bank (worksheets and single questions) with a tick box,
+/// the same filters as the bank page, a pencil to open and edit a worksheet
+/// without leaving the form, and **Scan worksheet** to add a new sheet to the
+/// bank and tick it straight away. Watches the bank so edits show at once.
 class _BankPicker extends StatefulWidget {
   const _BankPicker({
-    required this.bank,
+    required this.ownerId,
+    required this.initialBank,
     required this.sheets,
     required this.questionIds,
   });
 
-  final List<QuestionBankSheet> bank;
+  final String ownerId;
+
+  /// Shown until the picker's own stream delivers.
+  final List<QuestionBankSheet> initialBank;
   final Set<String> sheets;
   final Set<String> questionIds;
 
@@ -478,125 +490,168 @@ class _BankPicker extends StatefulWidget {
 class _BankPickerState extends State<_BankPicker> {
   late final Set<String> _sheets = {...widget.sheets};
   late final Set<String> _questionIds = {...widget.questionIds};
-  String _filter = '';
+  QuestionBankFilter _filter = const QuestionBankFilter();
+  late final Stream<List<QuestionBankItem>> _bank =
+      context.read<FirestoreService>().watchQuestionBank(widget.ownerId);
+
+  Future<void> _scan() async {
+    final codes = await runQuestionBankWorksheetImport(
+      context,
+      ownerId: widget.ownerId,
+    );
+    if (codes == null || !mounted) return;
+    setState(() => _sheets.addAll(codes));
+  }
+
+  void _edit(QuestionBankSheet row) {
+    if (row.isSheet) {
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => QuestionBankSheetScreen(
+            ownerId: widget.ownerId,
+            sheetKey: row.key!,
+          ),
+        ),
+      );
+    } else {
+      showQuestionBankEditor(
+        context,
+        ownerId: widget.ownerId,
+        existing: row.first,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final needle = _filter.trim().toLowerCase();
-    final rows = widget.bank.where((s) {
-      if (needle.isEmpty) return true;
-      return [
-        s.code,
-        s.title,
-        s.type.label,
-        s.level ?? '',
-        for (final i in s.items) i.displayText,
-      ].join(' ').toLowerCase().contains(needle);
-    }).toList();
     final count = _sheets.length + _questionIds.length;
 
     return DraggableScrollableSheet(
       expand: false,
-      initialChildSize: 0.75,
-      maxChildSize: 0.92,
-      builder: (context, scrollController) => Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-            child: Column(
-              children: [
-                Row(
+      initialChildSize: 0.85,
+      maxChildSize: 0.95,
+      builder: (context, scrollController) =>
+          StreamBuilder<List<QuestionBankItem>>(
+        stream: _bank,
+        builder: (context, snap) {
+          final bank = snap.hasData
+              ? QuestionBankSheet.group(snap.data!)
+              : widget.initialBank;
+          final rows = bank.where(_filter.matches).toList();
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                child: Column(
                   children: [
-                    Expanded(
-                      child: Text(
-                        'Add from the question bank',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 16,
-                          color: AppColors.navy,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Add from the question bank',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                              color: AppColors.navy,
+                            ),
+                          ),
                         ),
-                      ),
+                        OutlinedButton.icon(
+                          onPressed: _scan,
+                          icon: const Icon(Icons.document_scanner_outlined,
+                              size: 18),
+                          label: const Text('Scan worksheet'),
+                        ),
+                        const SizedBox(width: 8),
+                        FilledButton(
+                          onPressed: () => Navigator.pop(
+                            context,
+                            _BankPick(
+                                sheets: _sheets, questionIds: _questionIds),
+                          ),
+                          style: FilledButton.styleFrom(
+                              backgroundColor: AppColors.navy),
+                          child: Text('Done ($count)'),
+                        ),
+                      ],
                     ),
-                    FilledButton(
-                      onPressed: () => Navigator.pop(
-                        context,
-                        _BankPick(sheets: _sheets, questionIds: _questionIds),
-                      ),
-                      style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.navy),
-                      child: Text('Done ($count)'),
+                    const SizedBox(height: 10),
+                    QuestionBankFilterBar(
+                      filter: _filter,
+                      onChanged: (f) => setState(() => _filter = f),
+                      searchHint: 'Search worksheets and questions…',
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                TextField(
-                  decoration: const InputDecoration(
-                    hintText: 'Search worksheets and questions…',
-                    isDense: true,
-                    prefixIcon: Icon(Icons.search, size: 20),
-                  ),
-                  onChanged: (v) => setState(() => _filter = v),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: rows.isEmpty
-                ? const EmptyState(
-                    icon: Icons.inventory_2_outlined,
-                    title: 'Nothing in the bank matches',
-                    subtitle: 'Scan a worksheet first.',
-                  )
-                : ListView.builder(
-                    controller: scrollController,
-                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 20),
-                    itemCount: rows.length,
-                    itemBuilder: (context, i) {
-                      final row = rows[i];
-                      final ticked = row.isSheet
-                          ? _sheets.contains(row.key)
-                          : _questionIds.contains(row.first.id);
-                      return CheckboxListTile(
-                        value: ticked,
-                        controlAffinity: ListTileControlAffinity.leading,
-                        secondary: Icon(
-                          row.isSheet
-                              ? Icons.description_outlined
-                              : Icons.help_outline,
-                          color: AppColors.navy,
-                        ),
-                        title: Text(
-                          row.title,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTextStyles.question.copyWith(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        subtitle: Text(
-                          row.isSheet
-                              ? '${row.code} · ${row.type.label} · '
-                                  '${row.level ?? ''} · '
-                                  '${QuestionBankText.questionCount(row.count)}'
-                              : '${row.type.label} · ${row.level ?? ''}',
-                        ),
-                        onChanged: (v) => setState(() {
-                          if (row.isSheet) {
-                            v == true
-                                ? _sheets.add(row.key!)
-                                : _sheets.remove(row.key);
-                          } else {
-                            v == true
-                                ? _questionIds.add(row.first.id)
-                                : _questionIds.remove(row.first.id);
-                          }
-                        }),
-                      );
-                    },
-                  ),
-          ),
-        ],
+              ),
+              Expanded(
+                child: rows.isEmpty
+                    ? EmptyState(
+                        icon: Icons.inventory_2_outlined,
+                        title: bank.isEmpty
+                            ? 'The bank is empty'
+                            : 'Nothing in the bank matches',
+                        subtitle: bank.isEmpty
+                            ? 'Scan a worksheet to add the first one.'
+                            : 'Change the search or the filters.',
+                      )
+                    : ListView.builder(
+                        controller: scrollController,
+                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 20),
+                        itemCount: rows.length,
+                        itemBuilder: (context, i) {
+                          final row = rows[i];
+                          final ticked = row.isSheet
+                              ? _sheets.contains(row.key)
+                              : _questionIds.contains(row.first.id);
+                          return CheckboxListTile(
+                            value: ticked,
+                            controlAffinity: ListTileControlAffinity.leading,
+                            secondary: IconButton(
+                              icon: const Icon(Icons.edit_outlined),
+                              tooltip: row.isSheet
+                                  ? 'Open and edit this worksheet'
+                                  : 'Edit this question',
+                              onPressed: () => _edit(row),
+                            ),
+                            title: Text(
+                              row.title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTextStyles.question.copyWith(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            subtitle: Text(
+                              [
+                                if (row.isSheet) row.code,
+                                row.category.label,
+                                row.type.label,
+                                if (row.level != null && row.level!.isNotEmpty)
+                                  row.level!,
+                                if (row.isSheet)
+                                  QuestionBankText.questionCount(row.count),
+                              ].join(' · '),
+                            ),
+                            onChanged: (v) => setState(() {
+                              if (row.isSheet) {
+                                v == true
+                                    ? _sheets.add(row.key!)
+                                    : _sheets.remove(row.key);
+                              } else {
+                                v == true
+                                    ? _questionIds.add(row.first.id)
+                                    : _questionIds.remove(row.first.id);
+                              }
+                            }),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
