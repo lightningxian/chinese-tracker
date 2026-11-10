@@ -44,7 +44,9 @@ edge cases, and any manual/deploy steps still required).
   bank table with the new columns; Edit worksheet → Type of exercise = Exam
   shows as a chip in the list.
 - At 1.45 the header gets tight on narrow windows; tables scroll sideways.
-- Deploy: hosting only (`scripts/deploy_web.sh --web-only`).
+- Deployed by the owner the same day (hosting only, 54 files); live bundle
+  checked for the new strings. Release v0.1.9 covers the dark mode, the
+  worksheet editor and this entry.
 
 ---
 

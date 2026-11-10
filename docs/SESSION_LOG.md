@@ -154,6 +154,7 @@ Update this section when you push from Mac or PC.
 - Bank: Type of exercise column/filter (Exercise, Quiz, Exam, HSK
   Simulation), Edit/Delete buttons per row, Tags column removed.
 - Exercises tab is a table; Quizzes and Levels buttons removed.
+- Owner deployed hosting the same day. Release v0.1.9.
 
 ### 2026-11-10 — Claude: dark mode, worksheet editor, empty-tab button
 
