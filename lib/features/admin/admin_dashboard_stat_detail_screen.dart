@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/invoice_utils.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/responsive_card_grid.dart';
 import '../../core/widgets/shell_nested_page.dart';
@@ -12,6 +13,7 @@ import '../../models/admin_dashboard_stat_kind.dart';
 import '../../models/app_user.dart';
 import '../../models/dashboard_stat_routes.dart';
 import '../../models/exercise.dart';
+import '../../models/invoice.dart';
 import '../../models/student_class_term.dart';
 import '../../services/admin_report_service.dart';
 import '../../services/firestore_service.dart';
@@ -144,13 +146,8 @@ class _AdminStatDetailBody extends StatelessWidget {
       AdminDashboardStatKind.exercises => [
           _exerciseList(context),
         ],
-      AdminDashboardStatKind.incomeMonthly => const [
-          EmptyState(
-            icon: Icons.payments_outlined,
-            title: 'Income tracking coming soon',
-            subtitle:
-                'Connect billing or enter revenue manually to see monthly income here.',
-          ),
+      AdminDashboardStatKind.incomeMonthly => [
+          _IncomeByMonth(firestore: context.read<FirestoreService>()),
         ],
       AdminDashboardStatKind.newStudentsMonthly => [
           MonthlyStudentsChart(months: report.newStudentsByMonth),
@@ -453,5 +450,96 @@ class _AdminStatDetailBody extends StatelessWidget {
     if (user.isAdmin) return adminPurple;
     if (user.isTeacher) return AppColors.navy;
     return AppColors.teal;
+  }
+}
+
+/// Twelve rows, newest month first: payments received and their total.
+class _IncomeByMonth extends StatelessWidget {
+  const _IncomeByMonth({required this.firestore});
+  final FirestoreService firestore;
+
+  @override
+  Widget build(BuildContext context) {
+    final currency = NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    );
+    return StreamBuilder<List<Invoice>>(
+      stream: firestore.watchAllInvoices(),
+      builder: (context, snap) {
+        if (snap.connectionState == ConnectionState.waiting && !snap.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final months = InvoiceUtils.paidByMonth(snap.data ?? const []);
+        final yearTotal = months.fold(0, (sum, m) => sum + m.total);
+        if (yearTotal == 0) {
+          return const EmptyState(
+            icon: Icons.payments_outlined,
+            title: 'No payments in the last twelve months',
+            subtitle:
+                'Payments show here once an invoice is marked paid in Payments.',
+          );
+        }
+        return AppCard(
+          padding: EdgeInsets.zero,
+          child: Column(
+            children: [
+              for (final (i, m) in months.indexed)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    border: i == months.length - 1
+                        ? null
+                        : Border(
+                            bottom: BorderSide(color: AppColors.tableLine),
+                          ),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          DateFormat('MMMM yyyy').format(m.month),
+                          style: TextStyle(
+                            fontWeight:
+                                i == 0 ? FontWeight.w700 : FontWeight.w500,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        m.count == 0
+                            ? '—'
+                            : '${m.count} payment${m.count == 1 ? '' : 's'}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      SizedBox(
+                        width: 130,
+                        child: Text(
+                          currency.format(m.total),
+                          textAlign: TextAlign.right,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: m.total > 0
+                                ? AppColors.success
+                                : AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }

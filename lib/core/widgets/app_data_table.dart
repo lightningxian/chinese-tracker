@@ -32,6 +32,11 @@ class AppTableColumn<T> {
 /// zero-padding [AppCard]. Below [mobileBreakpoint] (based on **available**
 /// width, not the full window — important with the sidebar) it renders
 /// [mobileCardBuilder] cards in a [ResponsiveCardGrid] instead.
+///
+/// Give [rowKey], [selectedKeys] and [onSelectionChanged] to add a checkbox
+/// column: the header box ticks or clears every row shown, a row box toggles
+/// that row. The parent owns the set, so bulk actions can read it. Cards on
+/// narrow screens carry no checkbox.
 class AppDataTable<T> extends StatelessWidget {
   const AppDataTable({
     super.key,
@@ -43,7 +48,13 @@ class AppDataTable<T> extends StatelessWidget {
     this.onSort,
     this.onRowTap,
     this.mobileBreakpoint = 720,
-  });
+    this.rowKey,
+    this.selectedKeys = const {},
+    this.onSelectionChanged,
+  }) : assert(
+          onSelectionChanged == null || rowKey != null,
+          'rowKey is needed to track which rows are selected',
+        );
 
   final List<T> rows;
   final List<AppTableColumn<T>> columns;
@@ -54,15 +65,76 @@ class AppDataTable<T> extends StatelessWidget {
   final Widget Function(T row) mobileCardBuilder;
   final double mobileBreakpoint;
 
+  /// Stable id of a row, used for [selectedKeys].
+  final String Function(T row)? rowKey;
+  final Set<String> selectedKeys;
+  final ValueChanged<Set<String>>? onSelectionChanged;
+
+  bool get _selectable => onSelectionChanged != null;
+
   /// Minimum width reserved for flex columns when computing horizontal scroll.
   static const _flexColumnMinWidth = 160.0;
+  static const _checkboxColumnWidth = 44.0;
 
   double get _minTableWidth {
-    var total = 0.0;
+    var total = _selectable ? _checkboxColumnWidth : 0.0;
     for (final column in columns) {
       total += (column.width ?? _flexColumnMinWidth) + _cellPadding.horizontal;
     }
     return total;
+  }
+
+  bool _isSelected(T row) => selectedKeys.contains(rowKey!(row));
+
+  void _toggleRow(T row) {
+    final key = rowKey!(row);
+    final next = {...selectedKeys};
+    if (!next.remove(key)) next.add(key);
+    onSelectionChanged!(next);
+  }
+
+  /// Header box: ticks every visible row, or clears them all when every
+  /// visible row is already ticked.
+  void _toggleAll() {
+    final visible = {for (final row in rows) rowKey!(row)};
+    final allTicked =
+        visible.isNotEmpty && visible.every(selectedKeys.contains);
+    final next = {...selectedKeys};
+    if (allTicked) {
+      next.removeAll(visible);
+    } else {
+      next.addAll(visible);
+    }
+    onSelectionChanged!(next);
+  }
+
+  Widget _headerCheckbox() {
+    final visible = [for (final row in rows) rowKey!(row)];
+    final ticked = visible.where(selectedKeys.contains).length;
+    return SizedBox(
+      width: _checkboxColumnWidth,
+      child: Checkbox(
+        value: visible.isEmpty || ticked == 0
+            ? false
+            : ticked == visible.length
+                ? true
+                : null,
+        tristate: true,
+        onChanged: visible.isEmpty ? null : (_) => _toggleAll(),
+        visualDensity: VisualDensity.compact,
+      ),
+    );
+  }
+
+  Widget _rowCheckbox(T row) {
+    return SizedBox(
+      width: _checkboxColumnWidth,
+      child: Checkbox(
+        value: _isSelected(row),
+        onChanged: (_) => _toggleRow(row),
+        visualDensity: VisualDensity.compact,
+      ),
+    );
   }
 
   @override
@@ -127,6 +199,7 @@ class AppDataTable<T> extends StatelessWidget {
       ),
       child: Row(
         children: [
+          if (_selectable) _headerCheckbox(),
           for (var i = 0; i < columns.length; i++)
             _wrapCell(columns[i], _headerCell(columns[i]), first: i == 0),
         ],
@@ -190,18 +263,22 @@ class AppDataTable<T> extends StatelessWidget {
   }
 
   Widget _dataRow(T row, {required bool striped}) {
+    final selected = _selectable && _isSelected(row);
     final content = Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 14),
       decoration: BoxDecoration(
-        color: striped
-            ? AppColors.surface.withValues(alpha: 0.55)
-            : AppColors.card,
+        color: selected
+            ? AppColors.navy.withValues(alpha: 0.08)
+            : striped
+                ? AppColors.surface.withValues(alpha: 0.55)
+                : AppColors.card,
         border: Border(bottom: BorderSide(color: AppColors.tableLine)),
       ),
       child: IntrinsicHeight(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            if (_selectable) _rowCheckbox(row),
             for (var i = 0; i < columns.length; i++)
               _wrapCell(
                 columns[i],

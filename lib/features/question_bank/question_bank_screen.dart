@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../core/constants/exercise_authoring_platform.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/app_data_table.dart';
 import '../../core/widgets/shell_nested_page.dart';
+import '../../core/widgets/table_tools.dart';
+import '../../models/app_user.dart';
 import '../../models/exercise_category.dart';
 import '../../models/exercise_type.dart';
 import '../../models/question_bank_item.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
+import 'exercise_category_chip.dart';
 import 'question_bank_bulk_import.dart';
 import 'question_bank_editor.dart';
 import 'question_bank_filters.dart';
@@ -21,6 +26,9 @@ import 'question_bank_text.dart';
 /// Admin/teacher screen for the shared question bank (`question_bank`
 /// collection). A scanned worksheet is one row (open it to see and edit its
 /// questions); a question typed or pasted on its own is a row by itself.
+/// Rows can be ticked for bulk actions (new exercise from the ticked
+/// worksheets, set type of exercise or level, delete) and the list exports
+/// to CSV from the header.
 class QuestionBankScreen extends StatefulWidget {
   const QuestionBankScreen({super.key, this.embedded = false});
 
@@ -34,6 +42,235 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
   QuestionBankFilter _filter = const QuestionBankFilter();
   String? _sortColumnId;
   bool _sortAscending = true;
+
+  /// Row keys ([_rowKey]) ticked in the table.
+  Set<String> _selected = {};
+  bool _busy = false;
+
+  /// Rows the table shows now, for the CSV export in the header.
+  List<QuestionBankSheet> _visible = const [];
+
+  static String _rowKey(QuestionBankSheet sheet) =>
+      sheet.isSheet ? 'sheet:${sheet.key}' : 'question:${sheet.first.id}';
+
+  static const _csvHeader = [
+    'Worksheet / question',
+    'Code',
+    'Type of exercise',
+    'Question type',
+    'Level',
+    'Questions',
+    'Used',
+  ];
+
+  static List<Object?> _csvRow(QuestionBankSheet sheet) => [
+        sheet.title,
+        sheet.isSheet ? sheet.code : '',
+        sheet.category.label,
+        sheet.type.label,
+        sheet.level ?? '',
+        sheet.count,
+        sheet.usageCount,
+      ];
+
+  List<QuestionBankSheet> _selectedRows(List<QuestionBankSheet> rows) => [
+        for (final r in rows)
+          if (_selected.contains(_rowKey(r))) r
+      ];
+
+  Future<void> _runBulk(
+    Future<void> Function() action,
+    String done,
+  ) async {
+    setState(() => _busy = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await action();
+      messenger.showSnackBar(SnackBar(content: Text(done)));
+      if (mounted) setState(() => _selected = {});
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(e.toString()), backgroundColor: AppColors.error),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  /// Opens the exercise form with the ticked worksheets already inside.
+  void _newExerciseFrom(List<QuestionBankSheet> picked, AppUser user) {
+    final codes = [
+      for (final s in picked)
+        if (s.isSheet) s.key!,
+    ];
+    final base = user.isAdmin ? '/admin' : '/teacher';
+    context.push('$base/exercise/new', extra: codes);
+  }
+
+  Future<void> _bulkSetCategory(
+    FirestoreService firestore,
+    List<QuestionBankSheet> picked,
+  ) async {
+    final category = await _pickOption<ExerciseCategory>(
+      title: 'Type of exercise for ${_countLabel(picked)}',
+      options: [for (final c in ExerciseCategory.values) (c, c.label)],
+      initial: picked.first.category,
+    );
+    if (category == null || !mounted) return;
+    await _runBulk(
+      () => firestore.updateQuestionBankSheet(
+        [for (final s in picked) ...s.items.map((i) => i.id)],
+        category: category,
+      ),
+      '${_countLabel(picked)} set to ${category.label}.',
+    );
+  }
+
+  Future<void> _bulkSetLevel(
+    FirestoreService firestore,
+    List<QuestionBankSheet> picked,
+  ) async {
+    final level = await _pickOption<String>(
+      title: 'Level for ${_countLabel(picked)}',
+      options: [for (final l in AppConstants.hskLevels) (l, l)],
+      initial: picked.first.level,
+    );
+    if (level == null || !mounted) return;
+    await _runBulk(
+      () => firestore.updateQuestionBankSheet(
+        [for (final s in picked) ...s.items.map((i) => i.id)],
+        level: level,
+      ),
+      '${_countLabel(picked)} set to $level.',
+    );
+  }
+
+  Future<void> _bulkDelete(
+    FirestoreService firestore,
+    List<QuestionBankSheet> picked,
+  ) async {
+    final questions = picked.fold(0, (n, s) => n + s.count);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Delete ${_countLabel(picked)}?'),
+        content: Text(
+          'All ${QuestionBankText.questionCount(questions)} leave the bank. '
+          'Exercises that already use them keep their copies. '
+          'This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    await _runBulk(
+      () => firestore.deleteQuestionBankItems(
+        [for (final s in picked) ...s.items.map((i) => i.id)],
+      ),
+      '${_countLabel(picked)} deleted.',
+    );
+  }
+
+  static String _countLabel(List<QuestionBankSheet> picked) {
+    final sheets = picked.where((s) => s.isSheet).length;
+    final singles = picked.length - sheets;
+    return [
+      if (sheets > 0) '$sheets worksheet${sheets == 1 ? '' : 's'}',
+      if (singles > 0) '$singles question${singles == 1 ? '' : 's'}',
+    ].join(' and ');
+  }
+
+  Future<T?> _pickOption<T>({
+    required String title,
+    required List<(T, String)> options,
+    T? initial,
+  }) {
+    var value = initial ?? options.first.$1;
+    return showDialog<T>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: Text(title),
+          content: DropdownButtonFormField<T>(
+            initialValue: value,
+            isExpanded: true,
+            items: [
+              for (final (v, label) in options)
+                DropdownMenuItem(value: v, child: Text(label)),
+            ],
+            onChanged: (v) {
+              if (v != null) setDialogState(() => value = v);
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, value),
+              child: const Text('Apply'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _selectionBar(
+    FirestoreService firestore,
+    AppUser user,
+    List<QuestionBankSheet> rows,
+  ) {
+    final picked = _selectedRows(rows);
+    final sheetsPicked = picked.where((s) => s.isSheet).length;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+      child: TableSelectionBar(
+        count: picked.length,
+        onClear: () => setState(() => _selected = {}),
+        actions: [
+          if (ExerciseAuthoringPlatform.canManageExercises(user))
+            SelectionActionButton(
+              label: sheetsPicked == 0
+                  ? 'New exercise'
+                  : 'New exercise ($sheetsPicked worksheet'
+                      '${sheetsPicked == 1 ? '' : 's'})',
+              icon: Icons.add,
+              onPressed: _busy || sheetsPicked == 0
+                  ? null
+                  : () => _newExerciseFrom(picked, user),
+            ),
+          SelectionActionButton(
+            label: 'Set type of exercise',
+            icon: Icons.category_outlined,
+            onPressed: _busy ? null : () => _bulkSetCategory(firestore, picked),
+          ),
+          SelectionActionButton(
+            label: 'Set level',
+            icon: Icons.signal_cellular_alt_outlined,
+            onPressed: _busy ? null : () => _bulkSetLevel(firestore, picked),
+          ),
+          SelectionActionButton(
+            label: 'Delete',
+            icon: Icons.delete_outline,
+            destructive: true,
+            onPressed: _busy ? null : () => _bulkDelete(firestore, picked),
+          ),
+        ],
+      ),
+    );
+  }
 
   void _onSort(String columnId) {
     setState(() {
@@ -78,6 +315,12 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
       embedded: widget.embedded,
       title: 'Question bank',
       actions: [
+        ExportCsvButton(
+          fileStem: 'question_bank',
+          header: _csvHeader,
+          rows: () => _visible.map(_csvRow).toList(),
+        ),
+        const SizedBox(width: 8),
         TextButton.icon(
           onPressed: () => _openEditor(ownerId: ownerId),
           icon: const Icon(Icons.edit_outlined, size: 18),
@@ -141,6 +384,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
           final all = snap.data ?? const <QuestionBankItem>[];
           final sheets = QuestionBankSheet.group(all);
           final rows = _sorted(sheets.where(_filter.matches).toList());
+          _visible = rows;
 
           return Column(
             children: [
@@ -151,6 +395,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
                   onChanged: (f) => setState(() => _filter = f),
                 ),
               ),
+              _selectionBar(firestore, user, rows),
               Expanded(
                 child: all.isEmpty
                     ? const EmptyState(
@@ -174,6 +419,10 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
                                 sortColumnId: _sortColumnId,
                                 sortAscending: _sortAscending,
                                 onSort: _onSort,
+                                rowKey: _rowKey,
+                                selectedKeys: _selected,
+                                onSelectionChanged: (keys) =>
+                                    setState(() => _selected = keys),
                                 onRowTap: (sheet) => _open(ownerId, sheet),
                                 columns: _buildColumns(firestore),
                                 mobileCardBuilder: (sheet) => _SheetCard(
@@ -211,7 +460,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
         label: 'Type of exercise',
         width: 140,
         sortable: true,
-        cell: (sheet) => _CategoryChip(category: sheet.category),
+        cell: (sheet) => ExerciseCategoryChip(category: sheet.category),
       ),
       AppTableColumn(
         id: 'type',
@@ -466,43 +715,6 @@ class _RowActions extends StatelessWidget {
           label: const Text('Delete'),
         ),
       ],
-    );
-  }
-}
-
-/// Tinted label for the type of exercise (exercise / quiz / exam / HSK).
-class _CategoryChip extends StatelessWidget {
-  const _CategoryChip({required this.category});
-  final ExerciseCategory category;
-
-  @override
-  Widget build(BuildContext context) {
-    final (bg, fg) = switch (category) {
-      ExerciseCategory.exercise => (AppColors.chipBlueBg, AppColors.chipBlueFg),
-      ExerciseCategory.quiz => (AppColors.chipGreenBg, AppColors.chipGreenFg),
-      ExerciseCategory.exam => (AppColors.chipAmberBg, AppColors.chipAmberFg),
-      ExerciseCategory.hskSimulation => (
-          AppColors.chipPurpleBg,
-          AppColors.chipPurpleFg
-        ),
-    };
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Text(
-          category.label,
-          style: TextStyle(
-            color: fg,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
     );
   }
 }

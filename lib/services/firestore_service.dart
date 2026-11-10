@@ -152,6 +152,32 @@ class FirestoreService {
     });
   }
 
+  /// Same field for several users at once (Users tab bulk action).
+  Future<void> setUsersActive(Iterable<String> userIds, bool active) =>
+      _updateUsers(userIds, {'active': active});
+
+  /// HSK level for several students at once (Users tab bulk action).
+  Future<void> setUsersLevel(Iterable<String> userIds, String level) =>
+      _updateUsers(
+        userIds,
+        {'level': LevelUtils.normalizeHskLevel(level) ?? level},
+      );
+
+  Future<void> _updateUsers(
+    Iterable<String> userIds,
+    Map<String, dynamic> data,
+  ) async {
+    final ids = userIds.toSet().toList();
+    const chunkSize = 400;
+    for (var i = 0; i < ids.length; i += chunkSize) {
+      final batch = _db.batch();
+      for (final id in ids.skip(i).take(chunkSize)) {
+        batch.update(_db.collection(AppConstants.usersCollection).doc(id), data);
+      }
+      await batch.commit();
+    }
+  }
+
   Future<void> updateUserProfile({
     required String userId,
     String? name,
@@ -486,6 +512,32 @@ class FirestoreService {
         .collection(AppConstants.exercisesCollection)
         .doc(exerciseId)
         .update(data);
+  }
+
+  /// Publishes or unpublishes several exercises at once (Exercises table
+  /// bulk action). Unpublished exercises disappear from students' lists.
+  Future<void> setExercisesPublished(
+    Iterable<String> exerciseIds,
+    bool published,
+  ) async {
+    ExerciseAuthoringPlatform.ensureWeb();
+    if (!await _currentUserIsAdmin()) {
+      throw ExerciseAuthoringPlatformException(
+        ExerciseAuthoringPlatform.adminOnlyMessage,
+      );
+    }
+    final ids = exerciseIds.toSet().toList();
+    const chunkSize = 400;
+    for (var i = 0; i < ids.length; i += chunkSize) {
+      final batch = _db.batch();
+      for (final id in ids.skip(i).take(chunkSize)) {
+        batch.update(
+          _db.collection(AppConstants.exercisesCollection).doc(id),
+          {'isPublished': published},
+        );
+      }
+      await batch.commit();
+    }
   }
 
   Future<void> deleteExercise(String exerciseId) async {

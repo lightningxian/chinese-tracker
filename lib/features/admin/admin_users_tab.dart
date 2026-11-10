@@ -9,10 +9,14 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/app_data_table.dart';
 import '../../core/widgets/app_shell.dart';
+import '../../core/widgets/table_tools.dart';
 import '../../models/app_user.dart';
 import '../../services/firestore_service.dart';
 import 'admin_dashboard_widgets.dart';
 
+/// Users table. Click a student's row to open their page (`/admin/users/:id`);
+/// other roles open the edit form. Rows can be ticked to activate, deactivate
+/// or set the HSK level in one go, and the list exports to CSV.
 class AdminUsersTab extends StatefulWidget {
   const AdminUsersTab({super.key});
 
@@ -27,6 +31,38 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
   String? _statusFilter;
   _UserSortColumn _sortColumn = _UserSortColumn.name;
   bool _sortAscending = true;
+
+  /// Uids ticked in the table.
+  Set<String> _selected = {};
+  bool _busy = false;
+
+  static const _csvHeader = [
+    'Name',
+    'Chinese name',
+    'Email',
+    'Role',
+    'HSK',
+    'WhatsApp',
+    'Parent name',
+    'Parent phone',
+    'Joined',
+    'Status',
+  ];
+
+  List<Object?> _csvRow(AppUser user) => [
+        user.displayNameIndonesian,
+        user.displayNameChinese ?? '',
+        user.email,
+        _roleLabel(user),
+        user.isStudent ? (user.level ?? '') : '',
+        user.displayWhatsapp ?? '',
+        user.parentName ?? '',
+        user.parentPhone ?? '',
+        user.createdAt == null
+            ? ''
+            : DateFormat('yyyy-MM-dd').format(user.createdAt!),
+        user.active ? 'Active' : 'Inactive',
+      ];
 
   static const _toolbarFieldHeight = 48.0;
   static const _colRoleWidth = 104.0;
@@ -159,6 +195,121 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
       orElse: () => _sortColumn,
     );
     _toggleSort(column);
+  }
+
+  /// Student rows open the student page; staff and parents open the form.
+  void _openUser(AppUser user) {
+    if (user.isStudent) {
+      context.push('/admin/users/${user.uid}');
+    } else if (!user.isAdmin) {
+      context.push('/admin/users/${user.uid}/edit');
+    }
+  }
+
+  /// Ticked users still in the list; admin accounts never take bulk actions.
+  List<AppUser> _selectedUsers(List<AppUser> users) => [
+        for (final u in users)
+          if (_selected.contains(u.uid) && !u.isAdmin) u,
+      ];
+
+  Future<void> _runBulk(Future<void> Function() action, String done) async {
+    setState(() => _busy = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await action();
+      messenger.showSnackBar(SnackBar(content: Text(done)));
+      if (mounted) setState(() => _selected = {});
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(e.toString()), backgroundColor: AppColors.error),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _bulkSetActive(List<AppUser> picked, bool active) {
+    final firestore = context.read<FirestoreService>();
+    final n = picked.length;
+    return _runBulk(
+      () => firestore.setUsersActive([for (final u in picked) u.uid], active),
+      '$n account${n == 1 ? '' : 's'} ${active ? 'activated' : 'deactivated'}.',
+    );
+  }
+
+  Future<void> _bulkSetLevel(List<AppUser> students) async {
+    var level = students.first.level ?? AppConstants.hskLevels.first;
+    final chosen = await showDialog<String>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: Text(
+            'HSK level for ${students.length} '
+            'student${students.length == 1 ? '' : 's'}',
+          ),
+          content: DropdownButtonFormField<String>(
+            initialValue: level,
+            isExpanded: true,
+            items: [
+              for (final l in AppConstants.hskLevels)
+                DropdownMenuItem(value: l, child: Text(l)),
+            ],
+            onChanged: (v) {
+              if (v != null) setDialogState(() => level = v);
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, level),
+              child: const Text('Apply'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (chosen == null || !mounted) return;
+    final firestore = context.read<FirestoreService>();
+    await _runBulk(
+      () => firestore.setUsersLevel(
+        [for (final u in students) u.uid],
+        chosen,
+      ),
+      '${students.length} student${students.length == 1 ? '' : 's'} '
+      'set to $chosen.',
+    );
+  }
+
+  Widget _selectionBar(List<AppUser> users) {
+    final picked = _selectedUsers(users);
+    final students = picked.where((u) => u.isStudent).toList();
+    return TableSelectionBar(
+      count: picked.length,
+      onClear: () => setState(() => _selected = {}),
+      actions: [
+        SelectionActionButton(
+          label: 'Activate',
+          icon: Icons.check_circle_outline,
+          onPressed: _busy ? null : () => _bulkSetActive(picked, true),
+        ),
+        SelectionActionButton(
+          label: 'Deactivate',
+          icon: Icons.block_outlined,
+          onPressed: _busy ? null : () => _bulkSetActive(picked, false),
+        ),
+        SelectionActionButton(
+          label: students.isEmpty
+              ? 'Set HSK level'
+              : 'Set HSK level (${students.length})',
+          icon: Icons.signal_cellular_alt_outlined,
+          onPressed:
+              _busy || students.isEmpty ? null : () => _bulkSetLevel(students),
+        ),
+      ],
+    );
   }
 
   List<AppTableColumn<AppUser>> _buildColumns(BuildContext context) {
@@ -331,8 +482,9 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
         return ListView(
           padding: EdgeInsets.all(isWide ? 32 : 20),
           children: [
-            _toolbar(context, isWide),
+            _toolbar(context, isWide, users),
             const SizedBox(height: 16),
+            _selectionBar(users),
             if (users.isEmpty)
               AppCard(
                 child: Text(
@@ -350,8 +502,13 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                 sortColumnId: _sortColumn.name,
                 sortAscending: _sortAscending,
                 onSort: _onSortById,
+                onRowTap: _openUser,
+                rowKey: (user) => user.uid,
+                selectedKeys: _selected,
+                onSelectionChanged: (keys) => setState(() => _selected = keys),
                 mobileCardBuilder: (user) => _UserMobileCard(
                   user: user,
+                  onOpen: user.isStudent ? () => _openUser(user) : null,
                   roleLabel: _roleLabel(user),
                   roleColor: _roleColor(user),
                   joinedLabel: _joinedLabel(user),
@@ -367,7 +524,16 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
     );
   }
 
-  Widget _toolbar(BuildContext context, bool isWide) {
+  Widget _toolbar(BuildContext context, bool isWide, List<AppUser> users) {
+    final exportButton = SizedBox(
+      height: _toolbarFieldHeight,
+      child: ExportCsvButton(
+        fileStem: 'users',
+        header: _csvHeader,
+        rows: () => users.map(_csvRow).toList(),
+      ),
+    );
+
     final roleFilter = SizedBox(
       width: isWide ? 148 : null,
       height: _toolbarFieldHeight,
@@ -419,6 +585,8 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
           const SizedBox(width: 12),
           statusFilter,
           const SizedBox(width: 12),
+          exportButton,
+          const SizedBox(width: 12),
           newUserButton,
         ],
       );
@@ -449,16 +617,24 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
           ],
         ),
         const SizedBox(height: 12),
-        SizedBox(
-          height: _toolbarFieldHeight,
-          child: _SortDropdown(
-            sortColumn: _sortColumn,
-            sortAscending: _sortAscending,
-            onChanged: (column, ascending) => setState(() {
-              _sortColumn = column;
-              _sortAscending = ascending;
-            }),
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: SizedBox(
+                height: _toolbarFieldHeight,
+                child: _SortDropdown(
+                  sortColumn: _sortColumn,
+                  sortAscending: _sortAscending,
+                  onChanged: (column, ascending) => setState(() {
+                    _sortColumn = column;
+                    _sortAscending = ascending;
+                  }),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            exportButton,
+          ],
         ),
       ],
     );
@@ -655,6 +831,7 @@ class _UserNameCell extends StatelessWidget {
 class _UserMobileCard extends StatelessWidget {
   const _UserMobileCard({
     required this.user,
+    this.onOpen,
     required this.roleLabel,
     required this.roleColor,
     required this.joinedLabel,
@@ -665,6 +842,9 @@ class _UserMobileCard extends StatelessWidget {
   });
 
   final AppUser user;
+
+  /// Opens the student page; null for staff and parents.
+  final VoidCallback? onOpen;
   final String roleLabel;
   final Color roleColor;
   final String joinedLabel;
@@ -677,6 +857,7 @@ class _UserMobileCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppCard(
       padding: const EdgeInsets.all(14),
+      onTap: onOpen,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -6,6 +6,66 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-10 (night) — Claude: precise admin tables — type and due columns, student page, bulk actions, CSV, monthly income
+
+**What changed**
+- **Exercises table** (`teacher_exercises_tab.dart`): a **Type** column
+  and filter (type of exercise read from the first worksheet of the package
+  in the question bank; older in-document exercises count as "Exercise"),
+  a **Due** column (earliest due date among students who have not finished,
+  red with "n overdue" when students are late), Students and Done merged
+  into one "Done" column (`3/6`, click for names), Edit/Delete as icon
+  buttons so the row fits a laptop screen without horizontal scrolling.
+- **Student page for admins**: `/admin/users/:id` opens the existing
+  `StudentDetailScreen` (profile, contact, vouchers, evaluations, practice
+  results, lesson progress). It gained a **Payments** card (the student's
+  invoices with paid / pending totals) and an **Attendance** card (present
+  / excused / absent counts and the last classes). Clicking a student row in
+  Users opens it; teacher and parent rows open the edit form. Admins get an
+  edit pencil in the page header.
+- **Tick rows for bulk actions**: `AppDataTable` has an optional checkbox
+  column (`rowKey`, `selectedKeys`, `onSelectionChanged`; header box ticks
+  every row shown). New shared `TableSelectionBar` and
+  `SelectionActionButton` in `core/widgets/table_tools.dart`.
+  - Users: Activate, Deactivate, Set HSK level (students in the selection);
+    admin accounts are never touched. `FirestoreService.setUsersActive`,
+    `setUsersLevel` (batched).
+  - Exercises: Publish, Set to draft, Delete (admins on web).
+    `FirestoreService.setExercisesPublished`; delete loops `deleteExercise`
+    so each exercise's assignments are removed too.
+  - Question bank: **New exercise (n worksheets)** opens the exercise form
+    with the ticked sheets inside, Set type of exercise, Set level, Delete
+    (existing `updateQuestionBankSheet` / `deleteQuestionBankItems`).
+- **Export CSV** on Users, Exercises, Question bank, Payments and Vouchers
+  (`ExportCsvButton`, `core/utils/csv_export.dart`): exports what the table
+  shows after filters and sort, UTF-8 with BOM so Excel shows Chinese,
+  file `<table>_<date>.csv`. Off web the CSV is copied to the clipboard.
+- **Dashboard "Income / mo"** shows this month's paid invoices (Rp 0 when
+  none, with the payment count) instead of "—"; its detail page lists the
+  last twelve months (payments and totals). `core/utils/invoice_utils.dart`
+  holds the month maths; the Financial summary section reuses the same
+  invoices stream instead of opening its own.
+- Shared `ExerciseCategoryChip` (moved out of the bank screen).
+
+**Why**
+- Owner asked for a precise admin page; these were the six recommendations
+  they approved on 2026-11-10.
+
+**For review**
+- `flutter analyze` 0 errors / 0 warnings (18 infos, unchanged);
+  `flutter test` 60 pass (4 new: CSV quoting, income by month).
+- Checked on the emulator as admin: Income card and detail, Users bulk
+  "Set HSK level" on two students, student page with Payments and
+  Attendance, Exercises table with Type / Due and Publish ↔ Set to draft,
+  bank bulk bar and "New exercise (2 worksheets)" opening the form, CSV
+  download anchors firing for users and question bank (the in-app browser
+  swallows downloads, so the files themselves were not opened).
+- Bulk delete removes exercises / worksheets for good after a confirm
+  dialog; past results stay.
+- Needs a hosting deploy (`scripts/deploy_web.sh --web-only`).
+
+---
+
 ## 2026-11-10 (evening) — Claude: assets no longer cached after a deploy; bank picker with filters, edit and scan
 
 **What changed**

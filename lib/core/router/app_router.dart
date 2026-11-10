@@ -196,6 +196,15 @@ class AppRouter {
                     embedded: true,
                   ),
                 ),
+                // One page per student: profile, vouchers, payments,
+                // attendance, evaluations, practice results, progress.
+                GoRoute(
+                  path: 'users/:id',
+                  builder: (_, state) => StudentDetailScreen(
+                    studentId: state.pathParameters['id']!,
+                    embedded: true,
+                  ),
+                ),
                 GoRoute(
                   path: 'vouchers/new',
                   builder: (_, __) =>

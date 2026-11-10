@@ -48,6 +48,7 @@ abstract final class ShellRouteUtils {
     if (location.contains('/users/') && location.endsWith('/edit')) {
       return 'Edit user';
     }
+    if (location.contains('/users/')) return 'Student';
     if (location.endsWith('/vouchers/new')) return 'New voucher';
     if (location.contains('/vouchers/') && location.endsWith('/edit')) {
       return 'Edit voucher';

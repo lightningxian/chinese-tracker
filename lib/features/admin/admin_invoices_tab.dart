@@ -9,6 +9,7 @@ import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/app_data_table.dart';
+import '../../core/widgets/table_tools.dart';
 import '../../core/widgets/status_pill.dart';
 import '../../models/app_user.dart';
 import '../../models/invoice.dart';
@@ -63,6 +64,35 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
     return sorted;
   }
 
+  /// Rows the table shows now, for the CSV export in the header.
+  List<Invoice> _visible = const [];
+
+  static const _csvHeader = [
+    'Invoice',
+    'Student',
+    'Item',
+    'Amount',
+    'Status',
+    'Method',
+    'Due',
+    'Paid on',
+    'Created',
+  ];
+
+  static List<Object?> _csvRow(Invoice inv) => [
+        inv.invoiceNumber,
+        inv.studentName ?? inv.studentId,
+        inv.itemLabel,
+        inv.amount,
+        inv.status.label,
+        inv.methodLabel,
+        inv.dueDate,
+        inv.paidAt == null ? '' : DateFormat('yyyy-MM-dd').format(inv.paidAt!),
+        inv.createdAt == null
+            ? ''
+            : DateFormat('yyyy-MM-dd').format(inv.createdAt!),
+      ];
+
   @override
   Widget build(BuildContext context) {
     final firestore = context.read<FirestoreService>();
@@ -102,6 +132,12 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
                   ),
                 ),
               ),
+              ExportCsvButton(
+                fileStem: 'invoices',
+                header: _csvHeader,
+                rows: () => _visible.map(_csvRow).toList(),
+              ),
+              const SizedBox(width: 8),
               OutlinedButton.icon(
                 onPressed: () => context.push('/admin/price-list'),
                 icon: const Icon(Icons.sell_outlined, size: 18),
@@ -142,11 +178,12 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
                       'Tap "Create invoice" to bill a student for a session package or the HSK book.',
                 );
               }
+              _visible = _sorted(invoices);
               return ListView(
                 padding: const EdgeInsets.all(20),
                 children: [
                   AppDataTable<Invoice>(
-                    rows: _sorted(invoices),
+                    rows: _visible,
                     columns: _buildColumns(),
                     sortColumnId: _sortColumnId,
                     sortAscending: _sortAscending,

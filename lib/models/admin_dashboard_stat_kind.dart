@@ -32,7 +32,7 @@ enum AdminDashboardStatKind {
         exercises =>
           'Practice worksheets that are published and visible to murid.',
         incomeMonthly =>
-          'Revenue tracking is not connected yet. This view will show monthly income when billing is enabled.',
+          'Payments received each month (invoices marked paid, by the date they were paid), for the last twelve months.',
         newStudentsMonthly =>
           'Murid who registered in each of the last six months.',
         voucherAlerts =>

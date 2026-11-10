@@ -148,6 +148,15 @@ Commit author preference (via env vars, not global git config):
 
 Update this section when you push from Mac or PC.
 
+### 2026-11-10 (night) — Claude: precise admin tables
+
+- Exercises table: Type (from the bank) and Due (overdue count) columns.
+- Admin student page at `/admin/users/:id` with Payments and Attendance.
+- Tick rows for bulk actions on Users, Exercises and Question bank.
+- Export CSV on every admin table; dashboard Income / mo shows real money
+  with a twelve-month detail page.
+- Not yet deployed: owner to run `scripts/deploy_web.sh --web-only`.
+
 ### 2026-11-10 (evening) — Claude: asset caching fix, bank picker filters
 
 - `/assets/**` no longer cached for an hour (stale icon font after deploy).

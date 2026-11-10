@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/app_data_table.dart';
+import '../../core/widgets/table_tools.dart';
 import '../../core/widgets/status_pill.dart';
 import '../../models/app_user.dart';
 import '../../models/invoice.dart';
@@ -124,6 +125,37 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
   }
 
   static const _horizontalPadding = 20.0;
+
+  static const _csvHeader = [
+    'Voucher',
+    'Student',
+    'Sessions',
+    'Used',
+    'Remaining',
+    'Start',
+    'Deadline',
+    'Status',
+    'Payment',
+  ];
+
+  List<Object?> _csvRow(StudentClassTerm t, Map<String, String> usersById) {
+    final invoice = _invoicesById[t.sourceInvoiceId];
+    return [
+      t.voucherCode ?? '',
+      usersById[t.studentId] ?? t.studentId,
+      t.packageSize,
+      t.sessionsUsed,
+      t.sessionsRemaining,
+      t.startDate,
+      t.deadlineDate,
+      t.voucherStatusLabel,
+      !t.hasPayment
+          ? 'No payment'
+          : invoice == null
+              ? 'Invoice missing'
+              : invoice.status.label,
+    ];
+  }
 
   Widget _buildVoucherTable({
     required BuildContext context,
@@ -409,6 +441,7 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
             Wrap(
               spacing: 8,
               runSpacing: 6,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 for (final (label, value) in <(String, _PaymentState?)>[
                   ('All', null),
@@ -423,6 +456,14 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
                     selectedColor: AppColors.teal.withValues(alpha: 0.15),
                     checkmarkColor: AppColors.teal,
                   ),
+                ExportCsvButton(
+                  fileStem: 'vouchers',
+                  header: _csvHeader,
+                  rows: () => [
+                    for (final t in _sorted(terms, usersById))
+                      _csvRow(t, usersById),
+                  ],
+                ),
               ],
             ),
             const SizedBox(height: 16),

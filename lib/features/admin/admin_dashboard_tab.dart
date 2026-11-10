@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/constants/exercise_authoring_platform.dart';
+import '../../core/utils/invoice_utils.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/responsive_card_grid.dart';
 import '../../models/admin_dashboard_stat_kind.dart';
@@ -50,60 +51,69 @@ class AdminDashboardTab extends StatelessWidget {
             return StreamBuilder(
               stream: firestore.watchAllClassTerms(),
               builder: (context, termsSnap) {
-                final users = usersSnap.data ?? [];
-                final allMurid = users.where((u) => u.isStudent).toList();
+                return StreamBuilder<List<Invoice>>(
+                  stream: firestore.watchAllInvoices(),
+                  builder: (context, invoicesSnap) {
+                    final users = usersSnap.data ?? [];
+                    final allMurid = users.where((u) => u.isStudent).toList();
+                    final invoices = invoicesSnap.data ?? const <Invoice>[];
 
-                final report = AdminReportService.build(
-                  users: users,
-                  exercises: exercisesSnap.data ?? [],
-                  classTerms: termsSnap.data ?? [],
-                );
+                    final report = AdminReportService.build(
+                      users: users,
+                      exercises: exercisesSnap.data ?? [],
+                      classTerms: termsSnap.data ?? [],
+                    );
 
-                final voucherAlerts = AdminAttentionUtils.buildVoucherAlerts(
-                  students: allMurid,
-                  classTerms: termsSnap.data ?? [],
-                );
+                    final voucherAlerts =
+                        AdminAttentionUtils.buildVoucherAlerts(
+                      students: allMurid,
+                      classTerms: termsSnap.data ?? [],
+                    );
 
-                return ListView(
-                  padding: EdgeInsets.all(isWide ? 32 : 20),
-                  children: [
-                    _statsRow(context, report),
-                    const SizedBox(height: 20),
-                    if (isWide)
-                      _wideChartAndActions(
-                        context,
-                        report: report,
-                        voucherAlerts: voucherAlerts,
-                        canManageExercises: canManageExercises,
-                      )
-                    else ...[
-                      MonthlyStudentsChart(
-                        months: report.newStudentsByMonth,
-                        onTap: () => _openPlatformStat(
-                          context,
-                          AdminDashboardStatKind.newStudentsMonthly,
+                    return ListView(
+                      padding: EdgeInsets.all(isWide ? 32 : 20),
+                      children: [
+                        _statsRow(context, report, invoices),
+                        const SizedBox(height: 20),
+                        if (isWide)
+                          _wideChartAndActions(
+                            context,
+                            report: report,
+                            voucherAlerts: voucherAlerts,
+                            canManageExercises: canManageExercises,
+                          )
+                        else ...[
+                          MonthlyStudentsChart(
+                            months: report.newStudentsByMonth,
+                            onTap: () => _openPlatformStat(
+                              context,
+                              AdminDashboardStatKind.newStudentsMonthly,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          AdminQuickActionsCard(
+                            onNewExercise: () => onSwitchTab(2),
+                            onNewClass: () => onSwitchTab(4),
+                            showNewExercise: canManageExercises,
+                          ),
+                          const SizedBox(height: 20),
+                          _needsAttention(context, voucherAlerts),
+                        ],
+                        const SizedBox(height: 24),
+                        _FinancialSummarySection(
+                          invoices: invoices,
+                          terms: termsSnap.data ?? const [],
+                          onOpenPayments: () => onSwitchTab(6),
+                          onOpenVouchers: () => onSwitchTab(5),
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      AdminQuickActionsCard(
-                        onNewExercise: () => onSwitchTab(2),
-                        onNewClass: () => onSwitchTab(4),
-                        showNewExercise: canManageExercises,
-                      ),
-                      const SizedBox(height: 20),
-                      _needsAttention(context, voucherAlerts),
-                    ],
-                    const SizedBox(height: 24),
-                    _FinancialSummarySection(
-                      terms: termsSnap.data ?? const [],
-                      onOpenPayments: () => onSwitchTab(6),
-                      onOpenVouchers: () => onSwitchTab(5),
-                    ),
-                    const SizedBox(height: 24),
-                    AdminCentreMetricsSection(
-                      onCentreStatTap: (kind) => _openCentreStat(context, kind),
-                    ),
-                  ],
+                        const SizedBox(height: 24),
+                        AdminCentreMetricsSection(
+                          onCentreStatTap: (kind) =>
+                              _openCentreStat(context, kind),
+                        ),
+                      ],
+                    );
+                  },
                 );
               },
             );
@@ -113,7 +123,25 @@ class AdminDashboardTab extends StatelessWidget {
     );
   }
 
-  Widget _statsRow(BuildContext context, AdminReportData report) {
+  Widget _statsRow(
+    BuildContext context,
+    AdminReportData report,
+    List<Invoice> invoices,
+  ) {
+    final now = DateTime.now();
+    final income = InvoiceUtils.paidTotalInMonth(invoices, now);
+    final paidCount = invoices
+        .where((i) =>
+            i.isPaid &&
+            i.paidAt != null &&
+            i.paidAt!.year == now.year &&
+            i.paidAt!.month == now.month)
+        .length;
+    final currency = NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    );
     return ResponsiveCardGrid(
       minCardWidth: 220,
       maxColumns: 4,
@@ -145,9 +173,13 @@ class AdminDashboardTab extends StatelessWidget {
         ),
         AdminStatCard(
           label: 'Income / mo',
-          value: '—',
+          value: currency.format(income),
           icon: Icons.attach_money,
           color: AppColors.success,
+          subtitle: paidCount == 0
+              ? 'No payments in ${DateFormat('MMMM').format(now)}'
+              : '$paidCount payment${paidCount == 1 ? '' : 's'} in '
+                  '${DateFormat('MMMM').format(now)}',
           onTap: () =>
               _openPlatformStat(context, AdminDashboardStatKind.incomeMonthly),
         ),
@@ -241,198 +273,186 @@ class AdminDashboardTab extends StatelessWidget {
 /// payment record, and the most recent payments.
 class _FinancialSummarySection extends StatelessWidget {
   const _FinancialSummarySection({
+    required this.invoices,
     required this.terms,
     required this.onOpenPayments,
     required this.onOpenVouchers,
   });
 
+  final List<Invoice> invoices;
   final List<StudentClassTerm> terms;
   final VoidCallback onOpenPayments;
   final VoidCallback onOpenVouchers;
 
   @override
   Widget build(BuildContext context) {
-    final firestore = context.read<FirestoreService>();
     final currency = NumberFormat.currency(
       locale: 'id_ID',
       symbol: 'Rp ',
       decimalDigits: 0,
     );
 
-    return StreamBuilder<List<Invoice>>(
-      stream: firestore.watchAllInvoices(),
-      builder: (context, snap) {
-        final invoices = snap.data ?? const <Invoice>[];
-        final now = DateTime.now();
+    final now = DateTime.now();
+    final revenueThisMonth = InvoiceUtils.paidTotalInMonth(invoices, now);
 
-        var revenueThisMonth = 0;
-        var outstanding = 0;
-        final pending = <Invoice>[];
-        for (final inv in invoices) {
-          if (inv.isPaid) {
-            final paidAt = inv.paidAt;
-            if (paidAt != null &&
-                paidAt.year == now.year &&
-                paidAt.month == now.month) {
-              revenueThisMonth += inv.amount;
-            }
-          } else if (inv.isPending) {
-            outstanding += inv.amount;
-            pending.add(inv);
-          }
-        }
-        pending.sort((a, b) => a.dueDate.compareTo(b.dueDate));
-        final invoiceIds = {for (final i in invoices) i.id};
-        final vouchersWithoutPayment = terms
-            .where((t) =>
-                t.isActive &&
-                (!t.hasPayment || !invoiceIds.contains(t.sourceInvoiceId)))
-            .length;
+    var outstanding = 0;
+    final pending = <Invoice>[];
+    for (final inv in invoices) {
+      if (inv.isPending) {
+        outstanding += inv.amount;
+        pending.add(inv);
+      }
+    }
+    pending.sort((a, b) => a.dueDate.compareTo(b.dueDate));
+    final invoiceIds = {for (final i in invoices) i.id};
+    final vouchersWithoutPayment = terms
+        .where((t) =>
+            t.isActive &&
+            (!t.hasPayment || !invoiceIds.contains(t.sourceInvoiceId)))
+        .length;
 
-        final recentPaid = invoices.where((i) => i.isPaid).toList()
-          ..sort((a, b) {
-            final aAt = a.paidAt ?? a.createdAt ?? DateTime(1970);
-            final bAt = b.paidAt ?? b.createdAt ?? DateTime(1970);
-            return bAt.compareTo(aAt);
-          });
+    final recentPaid = invoices.where((i) => i.isPaid).toList()
+      ..sort((a, b) {
+        final aAt = a.paidAt ?? a.createdAt ?? DateTime(1970);
+        final bAt = b.paidAt ?? b.createdAt ?? DateTime(1970);
+        return bAt.compareTo(aAt);
+      });
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const AdminSectionHeader(title: 'Financial summary'),
+        ResponsiveCardGrid(
+          minCardWidth: 220,
+          maxColumns: 3,
           children: [
-            const AdminSectionHeader(title: 'Financial summary'),
-            ResponsiveCardGrid(
-              minCardWidth: 220,
-              maxColumns: 3,
+            AdminStatCard(
+              label: 'Revenue this month',
+              value: currency.format(revenueThisMonth),
+              icon: Icons.trending_up,
+              color: AppColors.success,
+              onTap: onOpenPayments,
+            ),
+            AdminStatCard(
+              label: 'Pending payments',
+              value: '${pending.length}',
+              subtitle: currency.format(outstanding),
+              icon: Icons.pending_actions_outlined,
+              color: AppColors.brandYellow,
+              onTap: onOpenPayments,
+            ),
+            AdminStatCard(
+              label: 'Vouchers without payment',
+              value: '$vouchersWithoutPayment',
+              subtitle: 'Active vouchers with no invoice',
+              icon: Icons.confirmation_number_outlined,
+              color: AppColors.error,
+              onTap: onOpenVouchers,
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (pending.isNotEmpty) ...[
+          AppCard(
+            onTap: onOpenPayments,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                AdminStatCard(
-                  label: 'Revenue this month',
-                  value: currency.format(revenueThisMonth),
-                  icon: Icons.trending_up,
-                  color: AppColors.success,
-                  onTap: onOpenPayments,
+                Text(
+                  'Pending payments to chase',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.navy,
+                  ),
                 ),
-                AdminStatCard(
-                  label: 'Pending payments',
-                  value: '${pending.length}',
-                  subtitle: currency.format(outstanding),
-                  icon: Icons.pending_actions_outlined,
-                  color: AppColors.brandYellow,
-                  onTap: onOpenPayments,
-                ),
-                AdminStatCard(
-                  label: 'Vouchers without payment',
-                  value: '$vouchersWithoutPayment',
-                  subtitle: 'Active vouchers with no invoice',
-                  icon: Icons.confirmation_number_outlined,
-                  color: AppColors.error,
-                  onTap: onOpenVouchers,
-                ),
+                const SizedBox(height: 8),
+                for (final inv in pending.take(5))
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '${inv.studentName?.isNotEmpty == true ? inv.studentName! : inv.invoiceNumber} · ${inv.itemLabel}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                        ),
+                        Text(
+                          inv.isOverdue
+                              ? 'overdue · '
+                              : 'due ${inv.dueDate} · ',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: inv.isOverdue
+                                ? AppColors.error
+                                : AppColors.textSecondary,
+                          ),
+                        ),
+                        Text(
+                          currency.format(inv.amount),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
-            const SizedBox(height: 12),
-            if (pending.isNotEmpty) ...[
-              AppCard(
-                onTap: onOpenPayments,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Pending payments to chase',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.navy,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    for (final inv in pending.take(5))
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                '${inv.studentName?.isNotEmpty == true ? inv.studentName! : inv.invoiceNumber} · ${inv.itemLabel}',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 13),
-                              ),
-                            ),
-                            Text(
-                              inv.isOverdue
-                                  ? 'overdue · '
-                                  : 'due ${inv.dueDate} · ',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: inv.isOverdue
-                                    ? AppColors.error
-                                    : AppColors.textSecondary,
-                              ),
-                            ),
-                            Text(
-                              currency.format(inv.amount),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
+          ),
+          const SizedBox(height: 12),
+        ],
+        if (recentPaid.isEmpty)
+          AppCard(
+            child: Text(
+              'No payments recorded yet.',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+          )
+        else
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Recent payments',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.navy,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                for (final inv in recentPaid.take(5))
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            inv.studentName?.isNotEmpty == true
+                                ? inv.studentName!
+                                : inv.invoiceNumber,
+                            style: const TextStyle(fontSize: 13),
+                          ),
                         ),
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-            ],
-            if (recentPaid.isEmpty)
-              AppCard(
-                child: Text(
-                  'No payments recorded yet.',
-                  style: TextStyle(color: AppColors.textSecondary),
-                ),
-              )
-            else
-              AppCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Recent payments',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.navy,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    for (final inv in recentPaid.take(5))
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                inv.studentName?.isNotEmpty == true
-                                    ? inv.studentName!
-                                    : inv.invoiceNumber,
-                                style: const TextStyle(fontSize: 13),
-                              ),
-                            ),
-                            Text(
-                              currency.format(inv.amount),
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.success,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
+                        Text(
+                          currency.format(inv.amount),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.success,
+                            fontSize: 13,
+                          ),
                         ),
-                      ),
-                  ],
-                ),
-              ),
-          ],
-        );
-      },
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+      ],
     );
   }
 }
