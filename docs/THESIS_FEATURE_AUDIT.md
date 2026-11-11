@@ -200,14 +200,14 @@ Status per spec item. Evidence is `file:line` in this repo.
 | **P5** Question bank with form/topic/explanation/audio | Partly | Has type, level, skill, tags, difficulty, image/audio; no form code, no explanation (`question_bank_item.dart`) | question_bank |
 | P5 Question forms L1–L3, R1–R4, T1–T5 | Partly | R1 (fill in the blank), R2 (matching), R3 (passage + choice), R4 (order sentences, via compose), true/false and L3 (listening, no audio upload) exist and are detected by the worksheet scanner (2026-10-27); T1–T3 typing and picture forms missing (`exercise_type.dart`) | ExerciseType |
 | P5 Answer keys students cannot read | Missing | Keys inside `exercises`/`quizzes`, readable by all signed-in (`firestore.rules`) | — |
-| P5 Practice vs exam | Missing | Unlimited attempts, best score (`exercise_utils.dart:8-25`); no timer | — |
+| P5 Practice vs exam | Partly | Unlimited attempts, best score (`exercise_utils.dart`); since 2026-11-11 answers are checked at submit (not per question), a clock runs and a package can carry a time limit that auto-submits (`exercises.timeLimitMinutes`) | ExerciseScreen |
 | P5 Teacher builds and assigns packages | Partly | Exercises admin-only; teachers assign with due date (`firestore_service.dart:524-554`); per-lesson quizzes | exercise_assignments, quiz_editor |
 | P5 Exam format per level | Missing | Not found | — |
 | P5 Server-time deadline enforcement | Missing | `dueDate` checked in app only | — |
-| P5 gradeSubmission function | Missing | Scoring in app (`exercise_screen.dart:172-185`, `quiz_screen.dart:79-91`) | — |
+| P5 gradeSubmission function | Partly | Packages are scored by `finishExercise` (server, returns the review, stores correct/total/time); old in-document exercises and quizzes still score in the app | finishExercise |
 | P5 Typing matcher | Missing | Not found | — |
 | P5 T5 essay grading screen | Missing | Generic manual gradebook only (`teacher_grades_tab.dart`) | Gradebook |
-| P5 Student do practice/exam + history | Partly | MCQ, compose, matching; quizzes; history in `transcript_view.dart`; no exam mode; no media shown | ExerciseScreen |
+| P5 Student do practice/exam + history | Partly | MCQ, compose, matching, typing; result review after submit; history in the Progress tab (Exercises segment, 2026-11-11) and `transcript_view.dart`; no exam mode; no media shown | ExerciseScreen |
 | **P6** Teacher enters NG rubric | Missing | Free-form grades and 1–5 evaluations only | grades / evaluations |
 | P6 calculateFinalScore + promotion rules | Missing | Letter bands only (`grade_utils.dart:7-16`) | — |
 | P6 Admin verification + level history | Missing | `users.level` editable by admin and student | `users.level` |

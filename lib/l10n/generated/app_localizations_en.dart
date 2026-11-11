@@ -567,6 +567,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get studentProgressCurrentTerm => 'Current term';
 
   @override
+  String get studentProgressLessons => 'Lessons';
+
+  @override
+  String get studentProgressExercises => 'Exercises';
+
+  @override
+  String get studentProgressAttempts => 'Attempts';
+
+  @override
+  String get studentProgressAvgScore => 'Avg. score';
+
+  @override
+  String get studentProgressBestScore => 'Best score';
+
+  @override
+  String get studentProgressNoExercisesTitle => 'No exercises finished yet';
+
+  @override
+  String get studentProgressNoExercisesSubtitle =>
+      'Finish an exercise from Home or Lessons and your scores will appear here.';
+
+  @override
+  String resultCorrectOf(int correct, int total) {
+    return '$correct/$total correct';
+  }
+
+  @override
+  String get commonExerciseFallback => 'Exercise';
+
+  @override
   String get studentProfileUpdated => 'Profile updated';
 
   @override

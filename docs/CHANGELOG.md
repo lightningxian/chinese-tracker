@@ -6,6 +6,58 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-11 — Claude: exercise player checks at the end, timer, review, exercise history
+
+**What changed**
+- **Player** (`exercise_screen.dart`, `exercise_play_service.dart`): the
+  student answers every question first (Back / Next, answers kept when
+  moving around, "n of m answered"), then presses **Submit answers** once.
+  Skipped questions are confirmed in a dialog and count as wrong. The
+  result page shows score, correct count, time taken and a **review**: each
+  question with the student's answer and, when wrong or skipped, the right
+  answer. A failed submit offers **Try again** without losing the answers.
+- **Clock**: counts up in the header from the moment the questions appear.
+  A package can carry a **time limit** (`exercises.timeLimitMinutes`, set in
+  the package form: "Time limit in minutes (optional)"); then the clock
+  counts down, turns red in the last minute and submits by itself at zero.
+- **Server** (`functions/index.js`, `functions/exercise_play.js`):
+  `finishExercise` returns `review` (per question: answered, correct, key)
+  and stores `correct`, `total`, `durationSeconds`, `exerciseTitle` and
+  `category` (type of exercise of the first worksheet) on the result.
+  `checkExerciseAnswer` is no longer called by the app and stays deployed
+  for older cached clients. Old in-document exercises are checked in the app
+  at submit time and write the same extra fields.
+- **Exercise history**: the student's Progress tab has two segments,
+  **Exercises** (every attempt newest first: title, type chip, date,
+  correct/total, time, score pill; attempts / average / best on top) and
+  **Lessons** (the previous view). The parent's overview "Recent grades" uses
+  the same tile (`core/widgets/exercise_results_list.dart`).
+  `ExerciseCategoryChip` moved to `core/widgets/`.
+- Model: `ExerciseResult` gained `correct`, `total`, `durationSeconds`,
+  `exerciseTitle`, `category`; `Exercise` gained `timeLimitMinutes`.
+  New helpers `ExerciseUtils.formatClock / newestFirst / resultStats`,
+  tests in `test/exercise_history_test.dart` (63 tests pass).
+- Strings for the Progress tab added to `app_en.arb` / `app_id.arb`; the
+  player itself stays English as before.
+
+**Why**
+- Owner feedback 2026-11-11: each answer took seconds to check (one Cloud
+  Function call per question, each re-reading the whole worksheet bank from
+  us-central1), and students had no score history or timer.
+
+**For review**
+- Deployed: functions (`finishExercise`, additive) and hosting, both on
+  2026-11-11. No rules change. Verified on the emulator as student2: package
+  of 20 questions (submit with skipped questions, review, 1-minute limit
+  auto-submit) and the old in-document exercise (3/3, review).
+- The time limit is not enforced on the server: a slow network can submit a
+  few seconds late and is accepted.
+- Known in-app quirk (pre-existing): opening a different exercise while one
+  is already open on screen keeps the first one, because the screen has no
+  key per exercise id; real navigation always pops first.
+
+---
+
 ## 2026-11-10 (night) — Claude: precise admin tables — type and due columns, student page, bulk actions, CSV, monthly income
 
 **What changed**

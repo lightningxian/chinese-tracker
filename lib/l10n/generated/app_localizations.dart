@@ -1028,6 +1028,60 @@ abstract class AppLocalizations {
   /// **'Current term'**
   String get studentProgressCurrentTerm;
 
+  /// No description provided for @studentProgressLessons.
+  ///
+  /// In en, this message translates to:
+  /// **'Lessons'**
+  String get studentProgressLessons;
+
+  /// No description provided for @studentProgressExercises.
+  ///
+  /// In en, this message translates to:
+  /// **'Exercises'**
+  String get studentProgressExercises;
+
+  /// No description provided for @studentProgressAttempts.
+  ///
+  /// In en, this message translates to:
+  /// **'Attempts'**
+  String get studentProgressAttempts;
+
+  /// No description provided for @studentProgressAvgScore.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg. score'**
+  String get studentProgressAvgScore;
+
+  /// No description provided for @studentProgressBestScore.
+  ///
+  /// In en, this message translates to:
+  /// **'Best score'**
+  String get studentProgressBestScore;
+
+  /// No description provided for @studentProgressNoExercisesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No exercises finished yet'**
+  String get studentProgressNoExercisesTitle;
+
+  /// No description provided for @studentProgressNoExercisesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish an exercise from Home or Lessons and your scores will appear here.'**
+  String get studentProgressNoExercisesSubtitle;
+
+  /// No description provided for @resultCorrectOf.
+  ///
+  /// In en, this message translates to:
+  /// **'{correct}/{total} correct'**
+  String resultCorrectOf(int correct, int total);
+
+  /// No description provided for @commonExerciseFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Exercise'**
+  String get commonExerciseFallback;
+
   /// No description provided for @studentProfileUpdated.
   ///
   /// In en, this message translates to:

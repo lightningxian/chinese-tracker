@@ -49,6 +49,8 @@ class _ExercisePackageFormScreenState extends State<ExercisePackageFormScreen> {
   late final _title = TextEditingController(text: widget.exercise?.title ?? '');
   late final _instructions =
       TextEditingController(text: widget.exercise?.instructions ?? '');
+  late final _timeLimit = TextEditingController(
+      text: widget.exercise?.timeLimitMinutes?.toString() ?? '');
   late String _level = widget.exercise?.level ?? AppConstants.hskLevels.first;
   late ExerciseSkillCategory _skill =
       widget.exercise?.skillCategory ?? ExerciseSkillCategory.reading;
@@ -70,6 +72,7 @@ class _ExercisePackageFormScreenState extends State<ExercisePackageFormScreen> {
   void dispose() {
     _title.dispose();
     _instructions.dispose();
+    _timeLimit.dispose();
     super.dispose();
   }
 
@@ -108,6 +111,7 @@ class _ExercisePackageFormScreenState extends State<ExercisePackageFormScreen> {
         bankSheets: _sheets,
         bankQuestionIds: _questionIds,
         isPublished: _published,
+        timeLimitMinutes: int.tryParse(_timeLimit.text.trim()),
       );
       if (!mounted) return;
       messenger.showSnackBar(
@@ -253,6 +257,25 @@ class _ExercisePackageFormScreenState extends State<ExercisePackageFormScreen> {
                           labelText: 'Instructions (optional)',
                           alignLabelWithHint: true,
                         ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _timeLimit,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Time limit in minutes (optional)',
+                          helperText:
+                              'Leave empty for no limit. With a limit the clock counts down and the exercise submits itself at zero.',
+                          helperMaxLines: 2,
+                        ),
+                        validator: (v) {
+                          final text = (v ?? '').trim();
+                          if (text.isEmpty) return null;
+                          final minutes = int.tryParse(text);
+                          return minutes == null || minutes <= 0
+                              ? 'Enter a whole number of minutes'
+                              : null;
+                        },
                       ),
                       SwitchListTile(
                         contentPadding: EdgeInsets.zero,

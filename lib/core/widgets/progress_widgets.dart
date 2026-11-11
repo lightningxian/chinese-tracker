@@ -153,13 +153,13 @@ class ProgressSummaryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cards = [
-      _SummaryTile(label: 'Completed', value: '$completed'),
-      _SummaryTile(
+      SummaryTile(label: 'Completed', value: '$completed'),
+      SummaryTile(
         label: 'Avg. score',
         value: avgScore != null ? '$avgScore%' : '—',
       ),
       if (thirdLabel != null && thirdValue != null)
-        _SummaryTile(label: thirdLabel!, value: thirdValue!),
+        SummaryTile(label: thirdLabel!, value: thirdValue!),
     ];
 
     return Row(
@@ -173,8 +173,9 @@ class ProgressSummaryRow extends StatelessWidget {
   }
 }
 
-class _SummaryTile extends StatelessWidget {
-  const _SummaryTile({required this.label, required this.value});
+/// Big number over a label, for summary rows.
+class SummaryTile extends StatelessWidget {
+  const SummaryTile({super.key, required this.label, required this.value});
 
   final String label;
   final String value;

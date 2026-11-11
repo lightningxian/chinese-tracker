@@ -5,6 +5,51 @@ import '../../models/exercise_result.dart';
 import '../../models/student_assigned_exercise.dart';
 
 abstract final class ExerciseUtils {
+  /// "04:32", or "1:04:32" past an hour. Null reads as "—".
+  static String formatClock(int? seconds) {
+    if (seconds == null || seconds < 0) return '—';
+    final h = seconds ~/ 3600;
+    final m = (seconds % 3600) ~/ 60;
+    final s = seconds % 60;
+    final mm = m.toString().padLeft(2, '0');
+    final ss = s.toString().padLeft(2, '0');
+    return h > 0 ? '$h:$mm:$ss' : '$mm:$ss';
+  }
+
+  /// Most recent attempt first; results without a date go last.
+  static List<ExerciseResult> newestFirst(Iterable<ExerciseResult> results) {
+    final sorted = results.toList()
+      ..sort((a, b) {
+        final aAt = a.submittedAt;
+        final bAt = b.submittedAt;
+        if (aAt == null && bAt == null) return 0;
+        if (aAt == null) return 1;
+        if (bAt == null) return -1;
+        return bAt.compareTo(aAt);
+      });
+    return sorted;
+  }
+
+  /// Attempt count, rounded average score and best score over [results]
+  /// (average and best are null when there are no attempts).
+  static ({int attempts, int? average, int? best}) resultStats(
+    Iterable<ExerciseResult> results,
+  ) {
+    var attempts = 0;
+    var sum = 0;
+    int? best;
+    for (final r in results) {
+      attempts++;
+      sum += r.score;
+      if (best == null || r.score > best) best = r.score;
+    }
+    return (
+      attempts: attempts,
+      average: attempts == 0 ? null : (sum / attempts).round(),
+      best: best,
+    );
+  }
+
   static Map<String, int> bestScores(List<ExerciseResult> results) {
     final best = <String, int>{};
     for (final result in results) {

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/progress_utils.dart';
+import '../../core/utils/exercise_utils.dart';
 import '../../core/widgets/app_card.dart';
+import '../../core/widgets/exercise_results_list.dart';
 import '../../core/widgets/stat_card.dart';
 import '../../l10n/l10n.dart';
 import '../../models/app_user.dart';
@@ -173,39 +174,16 @@ class ParentOverviewTab extends StatelessWidget {
         StreamBuilder<List<ExerciseResult>>(
           stream: firestore.watchStudentExerciseResults(child.uid),
           builder: (context, snap) {
-            final results = (snap.data ?? [])
-              ..sort((a, b) {
-                final aAt = a.submittedAt ?? DateTime(1970);
-                final bAt = b.submittedAt ?? DateTime(1970);
-                return bAt.compareTo(aAt);
-              });
+            final results = ExerciseUtils.newestFirst(snap.data ?? const []);
             if (results.isEmpty) {
               return _EmptyLine(text: l.parentOverviewNoGrades);
             }
             return Column(
               children: [
                 for (final r in results.take(5))
-                  AppCard(
-                    padding: const EdgeInsets.all(12),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            r.submittedAt != null
-                                ? DateFormat('d MMM yyyy', l.localeName)
-                                    .format(r.submittedAt!)
-                                : l.parentOverviewPractice,
-                          ),
-                        ),
-                        Text(
-                          '${r.score}%',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.navy,
-                          ),
-                        ),
-                      ],
-                    ),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: ExerciseResultTile(result: r),
                   ),
               ],
             );

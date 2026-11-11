@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/theme/app_theme.dart';
+import '../theme/app_theme.dart';
 import '../../models/exercise_category.dart';
 
 /// Tinted label for the type of exercise (exercise / quiz / exam / HSK),

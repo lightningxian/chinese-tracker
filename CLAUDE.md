@@ -51,7 +51,7 @@ decisions. This app is also the owner's thesis project (see the thesis docs belo
 flutter pub get
 flutter run -d chrome                 # no CONTENT_OWNER_ID needed locally; talks to LIVE Firebase
 flutter analyze                       # baseline: 0 errors, 0 warnings, ~18 infos
-flutter test                          # 60 pass
+flutter test                          # 63 pass
 node --check functions/index.js
 
 # Firestore rules tests (needs Java 21: brew install openjdk@21)

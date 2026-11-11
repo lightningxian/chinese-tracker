@@ -44,9 +44,16 @@ assert.strictEqual(play.checkAnswer(hanzi, {text: "钢"}).correct, false);
 assert.strictEqual(play.checkAnswer(picture, {text: "我每天跑步。"}).correct, true);
 assert.strictEqual(play.checkAnswer(picture, {text: "跑步"}).correct, false);
 
-// Scoring: unanswered counts as wrong.
-assert.deepStrictEqual(
-    play.scoreAttempt([mc, compose, hanzi, picture], {q1: {index: 0}, h1: {text: "刚"}}),
-    {score: 50, correct: 2, total: 4});
+// Scoring: unanswered counts as wrong; the review carries every key.
+const scored = play.scoreAttempt(
+    [mc, compose, hanzi, picture], {q1: {index: 0}, h1: {text: "刚"}});
+assert.strictEqual(scored.score, 50);
+assert.strictEqual(scored.correct, 2);
+assert.strictEqual(scored.total, 4);
+assert.deepStrictEqual(scored.review.map((r) => r.questionId), ["q1", "c1", "h1", "p1"]);
+assert.deepStrictEqual(scored.review.map((r) => r.answered), [true, false, true, false]);
+assert.deepStrictEqual(scored.review.map((r) => r.correct), [true, false, true, false]);
+assert.deepStrictEqual(scored.review[1].correctAnswer, {order: ["经理的", "办公室在", "二楼"]});
+assert.deepStrictEqual(play.scoreAttempt([], null), {score: 0, correct: 0, total: 0, review: []});
 
 console.log("exercise_play: all checks passed");

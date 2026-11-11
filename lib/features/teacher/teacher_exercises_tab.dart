@@ -21,7 +21,7 @@ import '../../models/exercise_type.dart';
 import '../../models/question_bank_item.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
-import '../question_bank/exercise_category_chip.dart';
+import '../../core/widgets/exercise_category_chip.dart';
 import 'exercise_assign_dialog.dart';
 
 /// Admin / teacher list of exercises as a table: one row per exercise with

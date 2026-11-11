@@ -15,7 +15,7 @@ import '../../models/exercise_type.dart';
 import '../../models/question_bank_item.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
-import 'exercise_category_chip.dart';
+import '../../core/widgets/exercise_category_chip.dart';
 import 'question_bank_bulk_import.dart';
 import 'question_bank_editor.dart';
 import 'question_bank_filters.dart';

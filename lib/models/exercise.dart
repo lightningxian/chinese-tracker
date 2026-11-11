@@ -191,6 +191,7 @@ class Exercise {
     this.audioUrl,
     this.bankSheets = const [],
     this.bankQuestionIds = const [],
+    this.timeLimitMinutes,
   });
 
   final String id;
@@ -244,6 +245,10 @@ class Exercise {
   /// Audio file URL for listening exercises.
   final String? audioUrl;
 
+  /// Minutes the student has to submit; the player counts down and submits
+  /// by itself when it reaches zero. Null: no limit, the clock only counts up.
+  final int? timeLimitMinutes;
+
   String get termLabel => termNumber != null ? 'Term $termNumber' : 'General';
 
   factory Exercise.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -271,6 +276,7 @@ class Exercise {
       bankSheets: List<String>.from(data['bankSheets'] as List? ?? const []),
       bankQuestionIds:
           List<String>.from(data['bankQuestionIds'] as List? ?? const []),
+      timeLimitMinutes: (data['timeLimitMinutes'] as num?)?.toInt(),
       questions: rawQuestions
           .map(
             (q) => ExerciseQuestion.fromMap(
@@ -298,6 +304,7 @@ class Exercise {
         'questions': questions.map((q) => q.toMap(type)).toList(),
         'bankSheets': bankSheets,
         'bankQuestionIds': bankQuestionIds,
+        if (timeLimitMinutes != null) 'timeLimitMinutes': timeLimitMinutes,
         'createdAt': createdAt != null
             ? Timestamp.fromDate(createdAt!)
             : FieldValue.serverTimestamp(),

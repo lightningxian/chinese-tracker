@@ -1,9 +1,13 @@
+import 'dart:async';
+import 'dart:math' show max;
+
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/exercise_utils.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/score_summary.dart';
 import '../../models/exercise.dart';
@@ -13,9 +17,14 @@ import '../../services/exercise_play_service.dart';
 import '../../services/firestore_service.dart';
 
 /// Plays one exercise. Questions come from an [ExercisePlaySession]: for a
-/// package the server sends them without answer keys and checks each
-/// answer; for an older exercise the keys are still in the document and
-/// the session checks locally. The screen itself never looks at a key.
+/// package the server sends them without answer keys; for an older exercise
+/// the keys are still in the document. Either way the student answers every
+/// question first (moving back and forth freely) and submits once at the
+/// end; the session scores the attempt and returns the review shown on the
+/// result page. The screen never looks at a key before submit.
+///
+/// A clock runs from the moment the questions appear. With a time limit on
+/// the exercise it counts down and submits by itself at zero.
 class ExerciseScreen extends StatefulWidget {
   const ExerciseScreen({super.key, required this.exerciseId});
 
@@ -39,17 +48,29 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   /// Typed answers: hanzi for a pinyin hint, or a sentence with a keyword.
   final _typedController = TextEditingController();
 
-  bool _checking = false;
-  AnswerCheck? _check;
-  int _correct = 0;
+  final _clock = Stopwatch();
+  Timer? _ticker;
+  int _elapsedSeconds = 0;
+  bool _timeUp = false;
+
   bool _finished = false;
   bool _submitting = false;
+  String? _submitError;
   PlayResult? _result;
 
   Exercise? get _exercise => _session?.exercise;
   List<PlayQuestion> get _questions => _session?.questions ?? const [];
   PlayQuestion get _question => _questions[_currentIndex];
-  bool get _answerSubmitted => _check != null;
+
+  int? get _limitSeconds {
+    final minutes = _exercise?.timeLimitMinutes;
+    return minutes == null || minutes <= 0 ? null : minutes * 60;
+  }
+
+  int get _answeredCount {
+    final answers = _session?.answers ?? const {};
+    return _questions.where((q) => answers.containsKey(q.id)).length;
+  }
 
   @override
   void initState() {
@@ -87,9 +108,9 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
         _session = session;
         _loading = false;
         _currentIndex = 0;
-        _correct = 0;
-        _resetQuestionState();
+        _loadQuestionState();
       });
+      if (session != null && session.questions.isNotEmpty) _startClock();
     } on FirebaseFunctionsException catch (e) {
       if (!mounted) return;
       setState(() {
@@ -106,22 +127,41 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     }
   }
 
-  void _resetQuestionState() {
-    if (_questions.isEmpty) return;
-    final q = _question;
-    if (q.isCompose) {
-      _composeOrder = [];
-      _composeBank = List<String>.from(q.segments);
-    } else {
-      _selectedIndex = null;
-      _typedController.clear();
-    }
-    _check = null;
+  void _startClock() {
+    _clock
+      ..reset()
+      ..start();
+    _ticker?.cancel();
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
   }
 
-  void _selectAnswer(int index) {
-    if (_selectedIndex != null || _finished || _answerSubmitted) return;
-    setState(() => _selectedIndex = index);
+  void _tick() {
+    if (!mounted || _finished) return;
+    final elapsed = _clock.elapsed.inSeconds;
+    if (elapsed != _elapsedSeconds) {
+      setState(() => _elapsedSeconds = elapsed);
+    }
+    final limit = _limitSeconds;
+    if (limit != null && elapsed >= limit) _submit(timeUp: true);
+  }
+
+  /// Shows the answer already given to the current question, if any.
+  void _loadQuestionState() {
+    if (_questions.isEmpty) return;
+    final q = _question;
+    final given = _session!.answers[q.id];
+    if (q.isCompose) {
+      _composeOrder = List<String>.from(given?.order ?? const []);
+      final bank = List<String>.from(q.segments);
+      for (final segment in _composeOrder) {
+        bank.remove(segment);
+      }
+      _composeBank = bank;
+    } else if (q.isTyped) {
+      _typedController.text = given?.text ?? '';
+    } else {
+      _selectedIndex = given?.index;
+    }
   }
 
   PlayAnswer? _currentAnswer() {
@@ -136,75 +176,112 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     return _selectedIndex == null ? null : PlayAnswer.index(_selectedIndex!);
   }
 
-  Future<void> _checkAnswer() async {
-    final answer = _currentAnswer();
-    if (answer == null || _checking) return;
-    setState(() => _checking = true);
-    try {
-      final check = await _session!.check(_question, answer);
-      if (check.correct) _correct++;
-      if (mounted) setState(() => _check = check);
-    } on FirebaseFunctionsException catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message ?? 'Could not check the answer.')),
-      );
-    } finally {
-      if (mounted) setState(() => _checking = false);
-    }
+  void _storeAnswer() {
+    if (_questions.isEmpty || _finished) return;
+    _session!.answer(_question, _currentAnswer());
   }
 
-  void _advanceQuestion() {
-    if (_currentIndex + 1 >= _questions.length) {
-      _finish();
-    } else {
-      setState(() {
-        _currentIndex++;
-        _resetQuestionState();
-      });
-    }
-  }
-
-  void _onPrimaryAction() {
-    if (!_answerSubmitted) {
-      _checkAnswer();
-      return;
-    }
-    _advanceQuestion();
+  void _selectAnswer(int index) {
+    if (_finished) return;
+    setState(() {
+      _selectedIndex = index;
+      _storeAnswer();
+    });
   }
 
   void _addComposeSegment(String segment) {
-    if (_answerSubmitted) return;
+    if (_finished) return;
     setState(() {
       _composeBank.remove(segment);
       _composeOrder.add(segment);
+      _storeAnswer();
     });
   }
 
   void _removeComposeSegment(int index) {
-    if (_answerSubmitted) return;
+    if (_finished) return;
     setState(() {
       final segment = _composeOrder.removeAt(index);
       _composeBank.add(segment);
+      _storeAnswer();
     });
   }
 
-  Future<void> _finish() async {
+  void _goTo(int index) {
+    _storeAnswer();
+    setState(() {
+      _currentIndex = index;
+      _loadQuestionState();
+    });
+  }
+
+  void _back() {
+    if (_currentIndex > 0) _goTo(_currentIndex - 1);
+  }
+
+  void _next() {
+    if (_currentIndex + 1 < _questions.length) {
+      _goTo(_currentIndex + 1);
+    } else {
+      _confirmSubmit();
+    }
+  }
+
+  Future<void> _confirmSubmit() async {
+    _storeAnswer();
+    final missing = _questions.length - _answeredCount;
+    if (missing > 0) {
+      final submit = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Submit now?'),
+          content: Text(
+            missing == 1
+                ? '1 question has no answer yet. It will count as wrong.'
+                : '$missing questions have no answer yet. They will count as wrong.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Keep answering'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Submit'),
+            ),
+          ],
+        ),
+      );
+      if (submit != true || !mounted) return;
+    }
+    await _submit();
+  }
+
+  Future<void> _submit({bool timeUp = false}) async {
+    if (_submitting || _result != null) return;
+    _storeAnswer();
+    _ticker?.cancel();
+    _clock.stop();
     setState(() {
       _finished = true;
       _submitting = true;
+      _submitError = null;
+      _timeUp = _timeUp || timeUp;
+      _elapsedSeconds = _clock.elapsed.inSeconds;
     });
     try {
       // Grading notifications (teacher + student) are created server-side by
       // the onExerciseResultCreated Cloud Function — students can't write
       // notifications, so this must not block or fail the submission.
-      final result = await _session!.finish();
+      final result =
+          await _session!.finish(durationSeconds: _clock.elapsed.inSeconds);
       if (mounted) setState(() => _result = result);
+    } on FirebaseFunctionsException catch (e) {
+      if (mounted) {
+        setState(() => _submitError = e.message ?? 'Could not submit.');
+      }
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not save the result: $e')),
-      );
+      if (mounted) setState(() => _submitError = '$e');
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -212,12 +289,14 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
 
   @override
   void dispose() {
+    _ticker?.cancel();
     _typedController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final showClock = _session != null && _questions.isNotEmpty;
     return Scaffold(
       appBar: AppBar(
         title: Text(_exercise?.title ?? 'Exercise'),
@@ -225,6 +304,14 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
         ),
+        actions: [
+          if (showClock)
+            _ClockChip(
+              elapsedSeconds: _elapsedSeconds,
+              limitSeconds: _limitSeconds,
+              stopped: _finished,
+            ),
+        ],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -261,20 +348,66 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   }
 
   Widget _buildResult() {
-    final total = _questions.length;
     final result = _result;
-    final correct = result?.correct ?? _correct;
-    final score =
-        result?.score ?? (total == 0 ? 0 : ((correct / total) * 100).round());
+    if (result == null) {
+      if (_submitting) {
+        return Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text(
+                'Checking your answers…',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+            ],
+          ),
+        );
+      }
+      return EmptyState(
+        icon: Icons.cloud_off_outlined,
+        title: 'Could not submit',
+        subtitle: _submitError ?? 'Check your connection and try again.',
+        action: FilledButton.icon(
+          onPressed: () => _submit(),
+          icon: const Icon(Icons.refresh),
+          label: const Text('Try again'),
+        ),
+      );
+    }
 
+    final answers = _session!.answers;
     return ScoreSummary(
-      scorePercent: score,
-      correctCount: correct,
-      totalCount: result?.total ?? total,
+      scorePercent: result.score,
+      correctCount: result.correct,
+      totalCount: result.total,
       primaryLabel: 'Done',
-      loading: _submitting,
-      subtitle: _exercise!.title,
-      onPrimaryPressed: _submitting ? null : () => context.pop(),
+      subtitle: _timeUp
+          ? "Time's up. The answers you gave were submitted."
+          : _exercise!.title,
+      timeLabel: ExerciseUtils.formatClock(result.durationSeconds),
+      onPrimaryPressed: () => context.pop(),
+      details: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            'Review',
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              color: AppColors.navy,
+              fontSize: 16,
+            ),
+          ),
+        ),
+        for (final (i, question) in _questions.indexed)
+          _ReviewTile(
+            number: i + 1,
+            question: question,
+            check: result.review[question.id],
+            given: answers[question.id],
+          ),
+      ],
     );
   }
 
@@ -290,6 +423,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     final options = question.options;
     final isLast = _currentIndex + 1 >= _questions.length;
     final passage = _session!.passage;
+    final answered = _answeredCount;
 
     return ListView(
       padding: const EdgeInsets.all(20),
@@ -320,15 +454,31 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
           borderRadius: BorderRadius.circular(3),
         ),
         const SizedBox(height: 8),
-        Text(
-          isCompose
-              ? 'Sentence ${_currentIndex + 1} of ${_questions.length}'
-              : isCloze
-                  ? 'Blank ${_currentIndex + 1} of ${_questions.length}'
-                  : isMatching
-                      ? 'Match ${_currentIndex + 1} of ${_questions.length}'
-                      : 'Question ${_currentIndex + 1} of ${_questions.length}',
-          style: TextStyle(color: AppColors.textSecondary),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                isCompose
+                    ? 'Sentence ${_currentIndex + 1} of ${_questions.length}'
+                    : isCloze
+                        ? 'Blank ${_currentIndex + 1} of ${_questions.length}'
+                        : isMatching
+                            ? 'Match ${_currentIndex + 1} of ${_questions.length}'
+                            : 'Question ${_currentIndex + 1} of ${_questions.length}',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+            ),
+            Text(
+              '$answered of ${_questions.length} answered',
+              style: TextStyle(
+                color: answered == _questions.length
+                    ? AppColors.success
+                    : AppColors.textSecondary,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 24),
         if (isMatching) ...[
@@ -375,67 +525,25 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
           const SizedBox(height: 20),
           ...List.generate(options.length, (i) {
             final selected = _selectedIndex == i;
-            final isCorrect = _check?.correctIndex == i;
-            Color? borderColor;
-            Color? fillColor;
-            IconData? resultIcon;
-            Color? resultIconColor;
-            if (_answerSubmitted) {
-              if (isCorrect) {
-                // Always mark the correct answer strongly, whether or not the
-                // student picked it — a clear green fill + check.
-                borderColor = AppColors.success;
-                fillColor = AppColors.success.withValues(alpha: 0.14);
-                resultIcon = Icons.check_circle;
-                resultIconColor = AppColors.success;
-              } else if (selected) {
-                borderColor = AppColors.error;
-                fillColor = AppColors.error.withValues(alpha: 0.10);
-                resultIcon = Icons.cancel;
-                resultIconColor = AppColors.error;
-              }
-            }
-
             return Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: AppCard(
                 onTap: () => _selectAnswer(i),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: fillColor,
+                    color: selected
+                        ? AppColors.teal.withValues(alpha: 0.08)
+                        : null,
                     borderRadius: BorderRadius.circular(8),
-                    border: borderColor != null
-                        ? Border.all(color: borderColor, width: 2)
+                    border: selected
+                        ? Border.all(color: AppColors.teal, width: 2)
                         : null,
                   ),
                   padding:
                       const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                   child: Row(
                     children: [
-                      Container(
-                        width: 32,
-                        height: 32,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: selected
-                              ? AppColors.teal.withValues(alpha: 0.15)
-                              : AppColors.surface,
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(
-                            color: selected ? AppColors.teal : AppColors.border,
-                          ),
-                        ),
-                        child: Text(
-                          String.fromCharCode(65 + i),
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            color: selected
-                                ? AppColors.teal
-                                : AppColors.textSecondary,
-                            fontSize: 15,
-                          ),
-                        ),
-                      ),
+                      _OptionLetter(index: i, selected: selected, size: 32),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
@@ -443,9 +551,9 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                           style: AppTextStyles.question.copyWith(fontSize: 20),
                         ),
                       ),
-                      if (resultIcon != null) ...[
+                      if (selected) ...[
                         const SizedBox(width: 8),
-                        Icon(resultIcon, color: resultIconColor, size: 26),
+                        Icon(Icons.check_circle, color: AppColors.teal),
                       ],
                     ],
                   ),
@@ -454,39 +562,55 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
             );
           }),
         ],
-        if (_answerSubmitted) ...[
-          const SizedBox(height: 20),
-          _resultBanner(),
-        ],
         const SizedBox(height: 24),
-        FilledButton(
-          onPressed:
-              _checking || (!_answerSubmitted && _currentAnswer() == null)
-                  ? null
-                  : _onPrimaryAction,
-          style: FilledButton.styleFrom(
-            backgroundColor: AppColors.navy,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-          ),
-          child: _checking
-              ? const SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(
-                      strokeWidth: 2, color: Colors.white),
-                )
-              : Text(
-                  !_answerSubmitted
-                      ? 'Check answer'
-                      : isLast
-                          ? 'Finish exercise'
-                          : isCompose
-                              ? 'Next sentence'
-                              : isMatching
-                                  ? 'Next match'
-                                  : 'Next question',
+        Row(
+          children: [
+            OutlinedButton.icon(
+              onPressed: _currentIndex == 0 ? null : _back,
+              style: OutlinedButton.styleFrom(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
+              ),
+              icon: const Icon(Icons.arrow_back, size: 18),
+              label: const Text('Back'),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: FilledButton.icon(
+                onPressed: _next,
+                style: FilledButton.styleFrom(
+                  backgroundColor: isLast ? AppColors.success : AppColors.navy,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
+                icon: Icon(
+                  isLast ? Icons.check : Icons.arrow_forward,
+                  size: 18,
+                ),
+                label: Text(
+                  isLast
+                      ? 'Submit answers'
+                      : isCompose
+                          ? 'Next sentence'
+                          : isMatching
+                              ? 'Next match'
+                              : 'Next question',
+                ),
+              ),
+            ),
+          ],
         ),
+        if (!isLast) ...[
+          const SizedBox(height: 10),
+          Center(
+            child: TextButton(
+              onPressed: _confirmSubmit,
+              child: Text(
+                'Submit all answers now',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -543,60 +667,17 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
         const SizedBox(height: 16),
         TextField(
           controller: _typedController,
-          enabled: !_answerSubmitted,
           autofocus: true,
           maxLines: isPicture ? 3 : 1,
           style: AppTextStyles.question.copyWith(fontSize: 22),
-          onChanged: (_) => setState(() {}),
-          onSubmitted: (_) => _onPrimaryAction(),
+          onChanged: (_) => setState(_storeAnswer),
+          onSubmitted: (_) => _next(),
           decoration: InputDecoration(
             hintText: isPicture ? '用这个词写一个句子…' : '写汉字…',
             border: const OutlineInputBorder(),
           ),
         ),
-        if (_answerSubmitted && !isPicture && _check!.accepted.isNotEmpty) ...[
-          const SizedBox(height: 10),
-          Text(
-            'Answer: ${_check!.accepted.join(' / ')}',
-            style: TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 15,
-            ),
-          ),
-        ],
       ],
-    );
-  }
-
-  Widget _resultBanner() {
-    final correct = _check?.correct == true;
-    final color = correct ? AppColors.success : AppColors.error;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.45), width: 1.5),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            correct ? Icons.check_circle : Icons.cancel,
-            color: color,
-            size: 30,
-          ),
-          const SizedBox(width: 12),
-          Text(
-            correct ? 'Correct!' : 'Not quite',
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.w800,
-              fontSize: 20,
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -645,55 +726,23 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
               const SizedBox(height: 12),
               ...List.generate(options.length, (index) {
                 final selected = _selectedIndex == index;
-                final isCorrect = _check?.correctIndex == index;
-                Color? borderColor;
-                if (_answerSubmitted) {
-                  if (selected && isCorrect) {
-                    borderColor = AppColors.success;
-                  } else if (selected && !isCorrect) {
-                    borderColor = AppColors.error;
-                  } else if (isCorrect) {
-                    borderColor = AppColors.success.withValues(alpha: 0.5);
-                  }
-                }
-
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: AppCard(
-                    onTap: _answerSubmitted ? null : () => _selectAnswer(index),
+                    onTap: () => _selectAnswer(index),
                     child: Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(8),
-                        border: borderColor != null
-                            ? Border.all(color: borderColor, width: 2)
+                        border: selected
+                            ? Border.all(color: AppColors.teal, width: 2)
                             : null,
                       ),
                       child: Row(
                         children: [
-                          Container(
-                            width: 28,
-                            height: 28,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: selected
-                                  ? AppColors.teal.withValues(alpha: 0.15)
-                                  : AppColors.surface,
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(
-                                color: selected
-                                    ? AppColors.teal
-                                    : AppColors.border,
-                              ),
-                            ),
-                            child: Text(
-                              String.fromCharCode(65 + index),
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: selected
-                                    ? AppColors.teal
-                                    : AppColors.textSecondary,
-                              ),
-                            ),
+                          _OptionLetter(
+                            index: index,
+                            selected: selected,
+                            size: 28,
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -734,7 +783,6 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   }
 
   Widget _buildComposeList() {
-    final check = _check;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -745,12 +793,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
           decoration: BoxDecoration(
             color: AppColors.card,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: _answerSubmitted
-                  ? (check!.correct ? AppColors.success : AppColors.error)
-                  : AppColors.border,
-              width: _answerSubmitted ? 2 : 1.5,
-            ),
+            border: Border.all(color: AppColors.border, width: 1.5),
           ),
           child: _composeOrder.isEmpty
               ? Text(
@@ -764,12 +807,8 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                     return InputChip(
                       label: Text(_composeOrder[index]),
                       labelStyle: AppTextStyles.question,
-                      onPressed: _answerSubmitted
-                          ? null
-                          : () => _removeComposeSegment(index),
-                      onDeleted: _answerSubmitted
-                          ? null
-                          : () => _removeComposeSegment(index),
+                      onPressed: () => _removeComposeSegment(index),
+                      onDeleted: () => _removeComposeSegment(index),
                       deleteIconColor: AppColors.teal,
                       backgroundColor: AppColors.teal.withValues(alpha: 0.08),
                       side: BorderSide(color: AppColors.border),
@@ -794,38 +833,230 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
             return ActionChip(
               label: Text(segment),
               labelStyle: AppTextStyles.question,
-              onPressed:
-                  _answerSubmitted ? null : () => _addComposeSegment(segment),
+              onPressed: () => _addComposeSegment(segment),
               backgroundColor: AppColors.surface,
               side: BorderSide(color: AppColors.border),
             );
           }).toList(),
         ),
-        if (check != null &&
-            !check.correct &&
-            check.correctOrder.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          AppCard(
+      ],
+    );
+  }
+}
+
+/// "A", "B"… box in front of a choice.
+class _OptionLetter extends StatelessWidget {
+  const _OptionLetter({
+    required this.index,
+    required this.selected,
+    required this.size,
+  });
+
+  final int index;
+  final bool selected;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: selected
+            ? AppColors.teal.withValues(alpha: 0.15)
+            : AppColors.surface,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: selected ? AppColors.teal : AppColors.border,
+        ),
+      ),
+      child: Text(
+        String.fromCharCode(65 + index),
+        style: TextStyle(
+          fontWeight: FontWeight.w700,
+          color: selected ? AppColors.teal : AppColors.textSecondary,
+          fontSize: size >= 32 ? 15 : 14,
+        ),
+      ),
+    );
+  }
+}
+
+/// Elapsed time, or the time left when the exercise has a limit (red in the
+/// last minute). Freezes once the attempt is submitted.
+class _ClockChip extends StatelessWidget {
+  const _ClockChip({
+    required this.elapsedSeconds,
+    required this.limitSeconds,
+    required this.stopped,
+  });
+
+  final int elapsedSeconds;
+  final int? limitSeconds;
+  final bool stopped;
+
+  @override
+  Widget build(BuildContext context) {
+    final limit = limitSeconds;
+    final remaining = limit == null ? null : max(0, limit - elapsedSeconds);
+    final urgent = !stopped && remaining != null && remaining <= 60;
+    final color = urgent ? AppColors.error : AppColors.navy;
+    return Container(
+      margin: const EdgeInsets.only(right: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: urgent ? 0.14 : 0.08),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            remaining == null ? Icons.timer_outlined : Icons.hourglass_bottom,
+            size: 18,
+            color: color,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            ExerciseUtils.formatClock(remaining ?? elapsedSeconds),
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.w700,
+              fontSize: 15,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One question on the result page: what the student answered and, when it
+/// was wrong or skipped, the right answer.
+class _ReviewTile extends StatelessWidget {
+  const _ReviewTile({
+    required this.number,
+    required this.question,
+    required this.check,
+    required this.given,
+  });
+
+  final int number;
+  final PlayQuestion question;
+  final AnswerCheck? check;
+  final PlayAnswer? given;
+
+  String get _prompt {
+    if (question.type == ExerciseType.pictureSentence) {
+      return 'Write a sentence with "${question.keyword}"';
+    }
+    if (question.prompt.isNotEmpty) return question.prompt;
+    if (question.isCompose) return 'Arrange the words into a sentence';
+    return 'Question $number';
+  }
+
+  String? get _yourAnswer {
+    final a = given;
+    if (a == null) return null;
+    final index = a.index;
+    if (index != null) return _option(index);
+    final order = a.order;
+    if (order != null) return order.join(' ');
+    return a.text;
+  }
+
+  String? get _correctAnswer {
+    final c = check;
+    if (c == null) return null;
+    final index = c.correctIndex;
+    if (index != null && !question.isCompose && !question.isTyped) {
+      return _option(index);
+    }
+    if (c.correctOrder.isNotEmpty) return c.correctOrder.join(' ');
+    if (c.accepted.isNotEmpty) return c.accepted.join(' / ');
+    if (c.keyword.isNotEmpty) return 'A sentence that uses "${c.keyword}"';
+    return null;
+  }
+
+  String _option(int index) {
+    final options = question.options;
+    final letter = String.fromCharCode(65 + index);
+    return index >= 0 && index < options.length
+        ? '$letter. ${options[index]}'
+        : letter;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = check;
+    final correct = c?.correct == true;
+    final skipped = given == null;
+    final color = correct
+        ? AppColors.success
+        : skipped
+            ? AppColors.textSecondary
+            : AppColors.error;
+    final yours = _yourAnswer;
+    final key = correct ? null : _correctAnswer;
+
+    return AppCard(
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 30,
+            height: 30,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              correct
+                  ? Icons.check
+                  : skipped
+                      ? Icons.remove
+                      : Icons.close,
+              size: 18,
+              color: color,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Correct sentence',
-                  style: TextStyle(
+                  '$number. $_prompt',
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.question.copyWith(
+                    fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.success,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 Text(
-                  check.correctOrder.join(' '),
-                  style: AppTextStyles.question,
+                  yours == null ? 'Not answered' : 'Your answer: $yours',
+                  style: TextStyle(color: color, fontSize: 14),
                 ),
+                if (key != null)
+                  Text(
+                    'Correct answer: $key',
+                    style: TextStyle(
+                      color: AppColors.success,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
               ],
             ),
           ),
         ],
-      ],
+      ),
     );
   }
 }

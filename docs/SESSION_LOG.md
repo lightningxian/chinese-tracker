@@ -148,6 +148,18 @@ Commit author preference (via env vars, not global git config):
 
 Update this section when you push from Mac or PC.
 
+### 2026-11-11 — Claude: player checks at the end, timer, review, exercise history
+
+- Student player: answer all questions, Submit once, review page with the right
+  answers, clock in the header, optional time limit per package (counts down,
+  auto-submits). `finishExercise` returns the review and stores correct / total /
+  time / title / type on the result. Progress tab: Exercises history segment.
+- Functions and hosting deployed 2026-11-11 (owner OK'd the functions deploy).
+- Owner decisions 2026-11-11: checking at the end for every type of exercise;
+  parent stays an optional add-on account, invoices stay on the student and a
+  linked parent may pay them (next: history tab, admin user tabs by role,
+  parent Pay now, compact home).
+
 ### 2026-11-10 (night) — Claude: precise admin tables
 
 - Exercises table: Type (from the bank) and Due (overdue count) columns.

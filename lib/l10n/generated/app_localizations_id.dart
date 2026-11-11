@@ -565,6 +565,37 @@ class AppLocalizationsId extends AppLocalizations {
   String get studentProgressCurrentTerm => 'Periode saat ini';
 
   @override
+  String get studentProgressLessons => 'Pelajaran';
+
+  @override
+  String get studentProgressExercises => 'Latihan';
+
+  @override
+  String get studentProgressAttempts => 'Percobaan';
+
+  @override
+  String get studentProgressAvgScore => 'Nilai rata-rata';
+
+  @override
+  String get studentProgressBestScore => 'Nilai terbaik';
+
+  @override
+  String get studentProgressNoExercisesTitle =>
+      'Belum ada latihan yang selesai';
+
+  @override
+  String get studentProgressNoExercisesSubtitle =>
+      'Selesaikan latihan dari Beranda atau Pelajaran, nilai Anda akan muncul di sini.';
+
+  @override
+  String resultCorrectOf(int correct, int total) {
+    return '$correct/$total benar';
+  }
+
+  @override
+  String get commonExerciseFallback => 'Latihan';
+
+  @override
   String get studentProfileUpdated => 'Profil diperbarui';
 
   @override

@@ -10,7 +10,8 @@ import 'firestore_service.dart';
 ///
 /// Legacy exercises (questions stored in the exercise doc) still carry the
 /// key inside [ExerciseQuestion]; the play screen never reads it directly,
-/// it asks [ExercisePlaySession.check] like it does for packages.
+/// it gets the review from [ExercisePlaySession.finish] like it does for
+/// packages.
 class PlayQuestion {
   const PlayQuestion({
     required this.id,
@@ -83,10 +84,11 @@ class PlayAnswer {
       };
 }
 
-/// Outcome of one check, with the key for the feedback banner.
+/// Outcome of one question in the review, with the key for the result page.
 class AnswerCheck {
   const AnswerCheck({
     required this.correct,
+    this.answered = true,
     this.correctIndex,
     this.correctOrder = const [],
     this.accepted = const [],
@@ -94,6 +96,9 @@ class AnswerCheck {
   });
 
   final bool correct;
+
+  /// False when the student skipped the question (counted as wrong).
+  final bool answered;
   final int? correctIndex;
   final List<String> correctOrder;
   final List<String> accepted;
@@ -104,6 +109,7 @@ class AnswerCheck {
         Map<String, dynamic>.from(m['correctAnswer'] as Map? ?? const {});
     return AnswerCheck(
       correct: m['correct'] == true,
+      answered: m['answered'] != false,
       correctIndex: (key['index'] as num?)?.toInt(),
       correctOrder: List<String>.from(key['order'] as List? ?? const []),
       accepted: List<String>.from(key['accepted'] as List? ?? const []),
@@ -113,24 +119,40 @@ class AnswerCheck {
 }
 
 class PlayResult {
-  const PlayResult(
-      {required this.score, required this.correct, required this.total});
+  const PlayResult({
+    required this.score,
+    required this.correct,
+    required this.total,
+    this.durationSeconds,
+    this.review = const {},
+  });
+
   final int score;
   final int correct;
   final int total;
+  final int? durationSeconds;
+
+  /// Review by question id, in no particular order: the screen walks its
+  /// own question list.
+  final Map<String, AnswerCheck> review;
 }
 
 /// A running attempt. Built by [ExercisePlayService.start]; the screen only
-/// sees questions, checks and the final score.
+/// sees questions, stores answers, and gets the review with the final score.
 abstract class ExercisePlaySession {
   Exercise get exercise;
   List<PlayQuestion> get questions;
   String get passage;
 
-  Future<AnswerCheck> check(PlayQuestion question, PlayAnswer answer);
+  /// Answers given so far, by question id (read-only view).
+  Map<String, PlayAnswer> get answers;
 
-  /// Scores the attempt and records the result. Call once, at the end.
-  Future<PlayResult> finish();
+  /// Records the student's answer to [question]; null clears it.
+  void answer(PlayQuestion question, PlayAnswer? answer);
+
+  /// Scores the whole attempt and records the result. Call once, at the end;
+  /// [durationSeconds] is the time the student took.
+  Future<PlayResult> finish({required int durationSeconds});
 }
 
 class ExercisePlayService {
@@ -169,8 +191,26 @@ class ExercisePlayService {
   }
 }
 
-/// Package: questions and checks come from Cloud Functions.
-class _ServerSession implements ExercisePlaySession {
+/// Answer store shared by both kinds of session.
+abstract class _AnswerStore implements ExercisePlaySession {
+  final Map<String, PlayAnswer> _answers = {};
+
+  @override
+  Map<String, PlayAnswer> get answers => Map.unmodifiable(_answers);
+
+  @override
+  void answer(PlayQuestion question, PlayAnswer? answer) {
+    if (answer == null) {
+      _answers.remove(question.id);
+    } else {
+      _answers[question.id] = answer;
+    }
+  }
+}
+
+/// Package: questions come from Cloud Functions, and `finishExercise` checks
+/// every answer at once, writes the result and returns the review.
+class _ServerSession extends _AnswerStore {
   _ServerSession({
     required this.exercise,
     required this.questions,
@@ -185,38 +225,36 @@ class _ServerSession implements ExercisePlaySession {
   String get passage => exercise.passage;
 
   final FirebaseFunctions _functions;
-  final Map<String, Map<String, dynamic>> _answers = {};
 
   @override
-  Future<AnswerCheck> check(PlayQuestion question, PlayAnswer answer) async {
-    _answers[question.id] = answer.toJson();
-    final result = await _functions.httpsCallable('checkExerciseAnswer').call({
-      'exerciseId': exercise.id,
-      'questionId': question.id,
-      'answer': answer.toJson(),
-    });
-    return AnswerCheck.fromServer(
-        Map<String, dynamic>.from(result.data as Map));
-  }
-
-  @override
-  Future<PlayResult> finish() async {
+  Future<PlayResult> finish({required int durationSeconds}) async {
     final result = await _functions.httpsCallable('finishExercise').call({
       'exerciseId': exercise.id,
-      'answers': _answers,
+      'answers': {
+        for (final entry in _answers.entries) entry.key: entry.value.toJson(),
+      },
+      'durationSeconds': durationSeconds,
     });
     final m = Map<String, dynamic>.from(result.data as Map);
+    final review = <String, AnswerCheck>{};
+    for (final item in m['review'] as List? ?? const []) {
+      final entry = Map<String, dynamic>.from(item as Map);
+      final id = entry['questionId'] as String? ?? '';
+      if (id.isNotEmpty) review[id] = AnswerCheck.fromServer(entry);
+    }
     return PlayResult(
       score: (m['score'] as num?)?.toInt() ?? 0,
       correct: (m['correct'] as num?)?.toInt() ?? 0,
       total: (m['total'] as num?)?.toInt() ?? questions.length,
+      durationSeconds: durationSeconds,
+      review: review,
     );
   }
 }
 
-/// Legacy exercise: questions and keys are in the exercise doc; the result is
-/// written by the client as before.
-class _LocalSession implements ExercisePlaySession {
+/// Legacy exercise: questions and keys are in the exercise doc; the attempt
+/// is checked here and the result is written by the client as before.
+class _LocalSession extends _AnswerStore {
   _LocalSession({
     required this.exercise,
     required String studentId,
@@ -252,23 +290,23 @@ class _LocalSession implements ExercisePlaySession {
 
   final String _studentId;
   final FirestoreService _firestore;
-  int _correct = 0;
 
-  @override
-  Future<AnswerCheck> check(PlayQuestion question, PlayAnswer answer) async {
-    final i = questions.indexOf(question);
-    final source = exercise.questions[i];
+  AnswerCheck _check(int index, PlayAnswer? answer) {
+    final question = questions[index];
+    final source = exercise.questions[index];
     final bool correct;
-    if (question.isCompose) {
+    if (answer == null) {
+      correct = false;
+    } else if (question.isCompose) {
       correct = source.isCorrectComposeOrder(answer.order ?? const []);
     } else if (question.isTyped) {
       correct = source.isCorrectTypedAnswer(exercise.type, answer.text ?? '');
     } else {
       correct = answer.index == source.correctIndex;
     }
-    if (correct) _correct++;
     return AnswerCheck(
       correct: correct,
+      answered: answer != null,
       correctIndex: source.correctIndex,
       correctOrder: source.segments,
       accepted: source.acceptedAnswers,
@@ -277,14 +315,28 @@ class _LocalSession implements ExercisePlaySession {
   }
 
   @override
-  Future<PlayResult> finish() async {
+  Future<PlayResult> finish({required int durationSeconds}) async {
+    final review = <String, AnswerCheck>{
+      for (final (i, q) in questions.indexed) q.id: _check(i, _answers[q.id]),
+    };
+    final correct = review.values.where((c) => c.correct).length;
     final total = questions.length;
-    final score = total == 0 ? 0 : ((_correct / total) * 100).round();
+    final score = total == 0 ? 0 : ((correct / total) * 100).round();
     await _firestore.saveExerciseResult(
       studentId: _studentId,
       exerciseId: exercise.id,
       score: score,
+      correct: correct,
+      total: total,
+      durationSeconds: durationSeconds,
+      exerciseTitle: exercise.title,
     );
-    return PlayResult(score: score, correct: _correct, total: total);
+    return PlayResult(
+      score: score,
+      correct: correct,
+      total: total,
+      durationSeconds: durationSeconds,
+      review: review,
+    );
   }
 }

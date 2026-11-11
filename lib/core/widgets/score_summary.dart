@@ -14,6 +14,8 @@ class ScoreSummary extends StatelessWidget {
     this.onPrimaryPressed,
     this.loading = false,
     this.subtitle,
+    this.timeLabel,
+    this.details = const [],
   });
 
   final int scorePercent;
@@ -24,6 +26,12 @@ class ScoreSummary extends StatelessWidget {
   final bool loading;
   final String? subtitle;
 
+  /// Time taken, e.g. "04:32"; shown under the correct count.
+  final String? timeLabel;
+
+  /// Widgets shown between the score card and the button (the review).
+  final List<Widget> details;
+
   @override
   Widget build(BuildContext context) {
     final passed = scorePercent >= 70;
@@ -32,7 +40,7 @@ class ScoreSummary extends StatelessWidget {
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
+          constraints: BoxConstraints(maxWidth: details.isEmpty ? 420 : 640),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -73,6 +81,27 @@ class ScoreSummary extends StatelessWidget {
                         fontSize: 15,
                       ),
                     ),
+                    if (timeLabel != null) ...[
+                      const SizedBox(height: 6),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.timer_outlined,
+                              size: 16, color: AppColors.textSecondary),
+                          const SizedBox(width: 4),
+                          Text(
+                            timeLabel!,
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 14,
+                              fontFeatures: const [
+                                FontFeature.tabularFigures()
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                     if (subtitle != null) ...[
                       const SizedBox(height: 8),
                       Text(
@@ -98,6 +127,10 @@ class ScoreSummary extends StatelessWidget {
                   ],
                 ),
               ),
+              for (final detail in details) ...[
+                const SizedBox(height: 12),
+                detail,
+              ],
               const SizedBox(height: 24),
               if (loading)
                 const CircularProgressIndicator()

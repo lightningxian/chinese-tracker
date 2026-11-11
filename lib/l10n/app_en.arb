@@ -233,6 +233,18 @@
   "studentProgressStartFirst": "Start your first lesson to track progress",
   "studentProgressTermPlan": "Your term plan",
   "studentProgressCurrentTerm": "Current term",
+  "studentProgressLessons": "Lessons",
+  "studentProgressExercises": "Exercises",
+  "studentProgressAttempts": "Attempts",
+  "studentProgressAvgScore": "Avg. score",
+  "studentProgressBestScore": "Best score",
+  "studentProgressNoExercisesTitle": "No exercises finished yet",
+  "studentProgressNoExercisesSubtitle": "Finish an exercise from Home or Lessons and your scores will appear here.",
+  "resultCorrectOf": "{correct}/{total} correct",
+  "@resultCorrectOf": {
+    "placeholders": {"correct": {"type": "int"}, "total": {"type": "int"}}
+  },
+  "commonExerciseFallback": "Exercise",
 
   "studentProfileUpdated": "Profile updated",
   "studentProfilePersonalTitle": "Personal information",

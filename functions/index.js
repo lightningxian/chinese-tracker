@@ -907,9 +907,11 @@ const exportClient = new firestoreAdminV1.FirestoreAdminClient();
 // Bank-based exercises ("packages"): the answer keys never reach the student.
 // A package names worksheets (`bankSheets`) and single questions
 // (`bankQuestionIds`) in `question_bank`; the student receives the questions
-// without answers from startExercise, each answer is checked by
-// checkExerciseAnswer, and finishExercise writes the result. Students cannot
-// read `question_bank` themselves (rules: staff only).
+// without answers from startExercise; finishExercise checks every answer at
+// once, writes the result and returns the review (each key) for the result
+// page. checkExerciseAnswer (one answer at a time) is kept for clients built
+// before 2026-11-11 and is no longer called by the app. Students cannot read
+// `question_bank` themselves (rules: staff only).
 // ---------------------------------------------------------------------------
 
 /** Loads the signed-in caller's profile or throws. */
@@ -1016,12 +1018,23 @@ exports.finishExercise = onCall(async (request) => {
   const answers = data.answers && typeof data.answers === "object" ?
     data.answers : {};
   const result = play.scoreAttempt(items, answers);
+  // Seconds the student spent, as measured by the app (shown in the
+  // student's exercise history; not enforced against the time limit).
+  const duration = Number(data.durationSeconds);
+  const durationSeconds = Number.isFinite(duration) && duration > 0 ?
+    Math.round(duration) : null;
+  // Type of exercise follows the first worksheet of the package.
+  const first = items.find((it) => typeof it.category === "string");
+  const category = first ? first.category : "exercise";
   await db.collection(EXERCISE_RESULTS).add({
     studentId: uid,
     exerciseId,
+    exerciseTitle: exercise.title || "",
+    category,
     score: result.score,
     correct: result.correct,
     total: result.total,
+    ...(durationSeconds === null ? {} : {durationSeconds}),
     scoredBy: "server",
     submittedAt: FieldValue.serverTimestamp(),
   });

@@ -161,19 +161,31 @@ function checkAnswer(item, answer) {
 }
 
 /**
- * Scores a whole attempt. Unanswered questions count as wrong.
+ * Scores a whole attempt. Unanswered questions count as wrong. The review
+ * lists every question in play order with its key, so the result page can
+ * show the right answers once the attempt is submitted.
  * @param {Array<Object>} items ordered bank items
  * @param {Object<string, Object>} answers questionId → answer
- * @return {{score: number, correct: number, total: number}}
+ * @return {{score: number, correct: number, total: number,
+ *   review: Array<{questionId: string, answered: boolean,
+ *   correct: boolean, correctAnswer: Object}>}}
  */
 function scoreAttempt(items, answers) {
-  let correct = 0;
-  for (const it of items) {
-    if (checkAnswer(it, (answers || {})[it.id]).correct) correct++;
-  }
+  const given = answers && typeof answers === "object" ? answers : {};
+  const review = items.map((it) => {
+    const answered = Object.prototype.hasOwnProperty.call(given, it.id);
+    const check = checkAnswer(it, given[it.id]);
+    return {
+      questionId: it.id,
+      answered,
+      correct: check.correct,
+      correctAnswer: check.correctAnswer,
+    };
+  });
+  const correct = review.filter((r) => r.correct).length;
   const total = items.length;
   const score = total === 0 ? 0 : Math.round((correct / total) * 100);
-  return {score, correct, total};
+  return {score, correct, total, review};
 }
 
 module.exports = {
