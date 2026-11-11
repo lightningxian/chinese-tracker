@@ -39,11 +39,11 @@ decisions. This app is also the owner's thesis project (see the thesis docs belo
 ## Conventions
 - **Commit author:** `GIT_AUTHOR_NAME="Wilsin Kuonadi" GIT_AUTHOR_EMAIL=wilsinkarimunwkk@gmail.com`
   (and matching `GIT_COMMITTER_*`) per commit. Don't change global git config.
-- **Push notes:** each commit body has a 2–6 bullet plain-language summary. For milestones and deploys, also `gh release create vX.Y.Z` with the same summary (latest: v0.1.9).
+- **Push notes:** each commit body has a 2–6 bullet plain-language summary. For milestones and deploys, also `gh release create vX.Y.Z` with the same summary (latest: v0.1.10).
 - **Change log:** after any code, rules, functions or config change, add an entry at the **top** of `docs/CHANGELOG.md` (What changed / Why / For review).
 - **Session log:** when a session ships something, add a dated entry at the top of `docs/SESSION_LOG.md`. Update `docs/THESIS_FEATURE_AUDIT.md` status when a spec item is finished.
 - **Scoped invariants:** `.claude/rules/*.md` (auth and link codes, exercise authoring admin/web-only, worksheet import web-only). Read the matching file before editing those areas.
-- **Deploys change the live site.** Confirm with the owner before `firebase deploy`, unless they have already said to go ahead in the current session.
+- **Auto deploy (owner decision 2026-11-11):** after a change is committed and pushed, run `scripts/deploy_web.sh --web-only` without asking and report the result. The owner tests on the live site afterwards. Still ask before anything hard to undo on live data (rules, functions, deletes).
 - There is **no staging**: a local `flutter run` talks to the live database. Use the emulator (below) for anything that writes test data.
 
 ## Commands

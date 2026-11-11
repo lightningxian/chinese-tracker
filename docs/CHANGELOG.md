@@ -62,7 +62,10 @@ edge cases, and any manual/deploy steps still required).
   swallows downloads, so the files themselves were not opened).
 - Bulk delete removes exercises / worksheets for good after a confirm
   dialog; past results stay.
-- Needs a hosting deploy (`scripts/deploy_web.sh --web-only`).
+- Deployed to hosting 2026-11-11 00:xx Jakarta (`scripts/deploy_web.sh
+  --web-only`); live `main.dart.js` checksum matches the build. Release
+  v0.1.10. From this deploy on, Claude deploys hosting after every push
+  (owner decision, recorded in `CLAUDE.md`).
 
 ---
 

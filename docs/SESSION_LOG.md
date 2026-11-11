@@ -155,7 +155,8 @@ Update this section when you push from Mac or PC.
 - Tick rows for bulk actions on Users, Exercises and Question bank.
 - Export CSV on every admin table; dashboard Income / mo shows real money
   with a twelve-month detail page.
-- Not yet deployed: owner to run `scripts/deploy_web.sh --web-only`.
+- Deployed to hosting the same night (v0.1.10). Owner decision 2026-11-11:
+  Claude deploys hosting after every push from now on (see CLAUDE.md).
 
 ### 2026-11-10 (evening) — Claude: asset caching fix, bank picker filters
 
