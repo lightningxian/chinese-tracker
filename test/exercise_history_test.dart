@@ -21,6 +21,32 @@ void main() {
     });
   });
 
+  group('ExerciseUtils.streakDays and scoreStars', () {
+    test('counts days in a row ending today or yesterday', () {
+      final now = DateTime(2026, 11, 11, 15);
+      final chain = [
+        _result('a', 80, DateTime(2026, 11, 11, 9)),
+        _result('b', 80, DateTime(2026, 11, 10, 20)),
+        _result('c', 80, DateTime(2026, 11, 9, 8)),
+        _result('d', 80, DateTime(2026, 11, 7)),
+      ];
+      expect(ExerciseUtils.streakDays(chain, now: now), 3);
+      // Nothing today yet: yesterday still counts.
+      expect(ExerciseUtils.streakDays(chain.skip(1), now: now), 2);
+      // Last attempt two days ago: chain broken.
+      expect(ExerciseUtils.streakDays(chain.skip(2), now: now), 0);
+      expect(ExerciseUtils.streakDays(const [], now: now), 0);
+    });
+
+    test('stars by score', () {
+      expect(ExerciseUtils.scoreStars(100), 3);
+      expect(ExerciseUtils.scoreStars(90), 3);
+      expect(ExerciseUtils.scoreStars(75), 2);
+      expect(ExerciseUtils.scoreStars(10), 1);
+      expect(ExerciseUtils.scoreStars(0), 0);
+    });
+  });
+
   group('ExerciseUtils history', () {
     final results = [
       _result('old', 40, DateTime(2026, 11, 1)),

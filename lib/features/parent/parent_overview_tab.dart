@@ -7,6 +7,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/progress_utils.dart';
 import '../../core/utils/exercise_utils.dart';
 import '../../core/widgets/app_card.dart';
+import '../../core/widgets/class_history_section.dart';
 import '../../core/widgets/exercise_results_list.dart';
 import '../../core/widgets/stat_card.dart';
 import '../../l10n/l10n.dart';
@@ -190,42 +191,18 @@ class ParentOverviewTab extends StatelessWidget {
           },
         ),
         const SizedBox(height: 20),
-        SectionHeader(title: l.parentOverviewRecentClasses),
-        StreamBuilder<List<AttendanceRecord>>(
-          stream: firestore.watchStudentJoinedSessions(child.uid),
-          builder: (context, snap) {
-            final records = snap.data ?? [];
-            if (records.isEmpty) {
-              return _EmptyLine(text: l.parentOverviewNoClasses);
-            }
-            return Column(
-              children: [
-                for (final record in records.take(5))
-                  AppCard(
-                    padding: const EdgeInsets.all(12),
-                    child: Row(
-                      children: [
-                        Icon(Icons.event_available_outlined,
-                            color: AppColors.teal, size: 20),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            record.sessionTitle.isNotEmpty
-                                ? record.sessionTitle
-                                : l.commonClassSession,
-                          ),
-                        ),
-                        Text(
-                          record.sessionDate,
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
+        StreamBuilder<List<StudentClassTerm>>(
+          stream: firestore.watchStudentClassTerms(child.uid),
+          builder: (context, termsSnap) {
+            return StreamBuilder<List<AttendanceRecord>>(
+              stream: firestore.watchStudentJoinedSessions(child.uid),
+              builder: (context, visitsSnap) {
+                return ClassHistorySection(
+                  terms: termsSnap.data ?? const [],
+                  visits: visitsSnap.data ?? const [],
+                  vouchersTitle: l.parentOverviewClassHistory,
+                );
+              },
             );
           },
         ),

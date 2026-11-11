@@ -6,6 +6,62 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-11 (later) — Claude: history tab, parents as add-on payers, compact student home
+
+**What changed**
+- **History tab** (student, was "My Classes"; `student_my_classes_tab.dart`,
+  shared `core/widgets/class_history_section.dart`): one card per voucher
+  (size, code, validity, Active / Used up / Expired, used-remaining bar) that
+  expands to the classes charged to it (attendance records carry
+  `classTermId`), then every class visit grouped by month with its attendance
+  status (Present / Excused / Absent / Joined). Tapping a class opens who
+  joined. The parent's overview shows the same section ("Classes and
+  vouchers") instead of the five recent classes.
+- **Parents as an optional add-on** (owner decision 2026-11-11): the invoice
+  stays on the student; whoever is linked may pay it.
+  - `linkChild` (function) now also stamps `linkedParentUid` and
+    `linkedParentName` on the student (one batch with the parent's
+    `studentIds`). `AppUser` reads and keeps both fields.
+  - Parent **Payments** tab has the same **Pay now** as the student (same
+    Midtrans link; hidden when payments are off in settings).
+  - Student **Payments** tab shows "Payments are handled by <parent>" when a
+    parent is linked; Pay buttons stay for students who pay themselves.
+  - Admin **Users**: the Role dropdown became chips with counts (All roles ·
+    Admin · Guru · Murid · Orang Tua); student rows show "Parent: name",
+    parent rows show their children.
+- **Compact student home** (`student_home_tab.dart`): greeting plus three
+  tiles (sessions left with a ring and the voucher's end date, exercises done
+  with a day streak, average score with the best), one row of round quick
+  links (Calendar, Grades, Materials, History), the open class sessions, then
+  "Continue learning" with at most three pending exercises ("See all" opens
+  Lessons), the next lesson, and a card "n done · see your scores" that opens
+  Progress. The big voucher card and the finished-exercise grid left the home.
+  `StudentShell` passes `onOpenTab` so the home can switch tabs.
+- **Fun**: 1–3 stars on finished exercise cards (90 / 70 / above 0), a day
+  streak on the home tile, confetti on the result page from 70%
+  (`core/widgets/confetti_burst.dart`, no new dependency).
+- Helpers `ExerciseUtils.streakDays` and `scoreStars` with tests (65 pass).
+  Strings for history, home and payments added to both `.arb` files.
+
+**Why**
+- Owner feedback 2026-11-11, points 3–5: long home page, no class/voucher
+  history, and a parent role that could see but not pay.
+
+**For review**
+- Verified on the emulator: History tab as student2 (voucher expands to its
+  two classes), parent overview and Payments as parent@, student1's payments
+  note, admin Users chips and relation lines, compact home.
+- `linkedParentUid` is informational only (a student could set it on their
+  own profile); the parent's access still comes from the parent's
+  `studentIds`, which the rules protect. No rules change.
+- **Functions deploy pending** (`finishExercise` review/duration and the
+  `linkChild` stamp): the sandbox refused Claude's `firebase deploy --only
+  functions`; the owner runs it (command in the session log). Until then the
+  result page shows no review, times are not stored, and new parent links
+  do not stamp the student. Hosting is deployed.
+
+---
+
 ## 2026-11-11 — Claude: exercise player checks at the end, timer, review, exercise history
 
 **What changed**

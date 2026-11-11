@@ -69,6 +69,30 @@ class HomeworkSummaryBar extends StatelessWidget {
   }
 }
 
+/// One to three small stars for a score (see [ExerciseUtils.scoreStars]).
+class ScoreStars extends StatelessWidget {
+  const ScoreStars({super.key, required this.score, this.size = 14});
+
+  final int score;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final stars = ExerciseUtils.scoreStars(score);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var i = 0; i < 3; i++)
+          Icon(
+            i < stars ? Icons.star_rounded : Icons.star_outline_rounded,
+            size: size,
+            color: i < stars ? AppColors.brandYellow : AppColors.border,
+          ),
+      ],
+    );
+  }
+}
+
 class AssignedExerciseCard extends StatelessWidget {
   const AssignedExerciseCard({
     super.key,
@@ -142,6 +166,10 @@ class AssignedExerciseCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
+                    if (bestScore != null) ...[
+                      ScoreStars(score: bestScore!),
+                      const SizedBox(width: 6),
+                    ],
                     _HomeworkStatusPill(status: status),
                   ],
                 ),

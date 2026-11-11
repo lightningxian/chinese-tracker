@@ -433,11 +433,20 @@ exports.linkChild = onCall(async (request) => {
 
   const child = snap.docs[0];
   const childData = child.data() || {};
+  const caller = callerSnap.data() || {};
   const update = {studentIds: FieldValue.arrayUnion(child.id)};
   if (childData.teacherId) {
     update.teacherIds = FieldValue.arrayUnion(childData.teacherId);
   }
-  await callerRef.update(update);
+  // The student's app shows "payments handled by <parent>" from these two
+  // fields; the parent's own access still comes from studentIds above.
+  const batch = db.batch();
+  batch.update(callerRef, update);
+  batch.update(child.ref, {
+    linkedParentUid: auth.uid,
+    linkedParentName: caller.nameIndonesian || caller.name || "",
+  });
+  await batch.commit();
 
   return {
     studentId: child.id,

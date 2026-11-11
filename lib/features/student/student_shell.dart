@@ -90,7 +90,11 @@ class _StudentShellState extends State<StudentShell> {
     final destinations = _destinations(context.l10n);
 
     final tabs = [
-      StudentHomeTab(student: user, contentOwnerId: contentOwnerId),
+      StudentHomeTab(
+        student: user,
+        contentOwnerId: contentOwnerId,
+        onOpenTab: (i) => setState(() => _index = i),
+      ),
       StudentMyClassesTab(student: user),
       StudentLessonsTab(contentOwnerId: contentOwnerId, student: user),
       StudentProgressTab(studentId: user.uid),

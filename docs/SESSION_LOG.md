@@ -157,8 +157,20 @@ Update this section when you push from Mac or PC.
 - Functions and hosting deployed 2026-11-11 (owner OK'd the functions deploy).
 - Owner decisions 2026-11-11: checking at the end for every type of exercise;
   parent stays an optional add-on account, invoices stay on the student and a
-  linked parent may pay them (next: history tab, admin user tabs by role,
-  parent Pay now, compact home).
+  linked parent may pay them.
+- Later the same day: History tab (vouchers with their classes, all classes by
+  month; same section on the parent overview), parent Pay now, "payments
+  handled by <parent>" note for linked students, admin Users role chips with
+  counts and parent/child lines, compact student home with tiles, streak, stars
+  and confetti. Hosting deployed.
+- **Owner to run** (Claude's sandbox refuses production function deploys):
+
+  ```bash
+  firebase deploy --only functions --project chinese-tracker
+  ```
+
+  It ships `finishExercise` (review + time on results) and the `linkChild`
+  parent stamp. Both additive, no rules change.
 
 ### 2026-11-10 (night) — Claude: precise admin tables
 

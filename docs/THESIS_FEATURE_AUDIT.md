@@ -105,7 +105,7 @@ Ordered by seriousness.
 
 | Topic | Spec says | App has | Options |
 |---|---|---|---|
-| Roles | admin, guru, murid | also **parent** (Orang Tua), with child linking and its own screens | Keep parent (outside the thesis text), or remove it |
+| Roles | admin, guru, murid | also **parent** (Orang Tua): optional add-on linked by the child code; sees the child's history and scores and may pay the child's invoices (2026-11-11) | Kept (owner decision) |
 | Scope | no materials, no online/video classes | Materials library; class `mode` online/hybrid | Keep as-is (not described in thesis), or remove |
 | Language | all UI text Indonesian | all English, no translation setup | Indonesian only · Indonesian + English switch · stay English |
 | Functions | TypeScript | JavaScript (9 working functions) | New functions in TS alongside, convert old ones later · stay JS |

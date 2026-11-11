@@ -312,7 +312,58 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
     );
   }
 
-  List<AppTableColumn<AppUser>> _buildColumns(BuildContext context) {
+  /// One chip per role with its count; the selected chip filters the table.
+  Widget _roleTabs(List<AppUser> allUsers) {
+    final counts = <String?, int>{null: allUsers.length};
+    for (final user in allUsers) {
+      counts[user.role] = (counts[user.role] ?? 0) + 1;
+    }
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final entry in _roleFilterOptions.entries)
+          ChoiceChip(
+            label: Text('${entry.value} (${counts[entry.key] ?? 0})'),
+            selected: _roleFilter == entry.key,
+            onSelected: (_) => setState(() {
+              _roleFilter = entry.key;
+              _selected = {};
+            }),
+          ),
+      ],
+    );
+  }
+
+  /// "Parent: Ibu Santoso" under a student, the children under a parent.
+  String? _relationLabel(AppUser user, List<AppUser> allUsers) {
+    if (user.isParent) {
+      final children = [
+        for (final id in user.studentIds)
+          for (final u in allUsers)
+            if (u.uid == id) u.name,
+      ];
+      if (children.isEmpty) return 'No child linked yet';
+      final shown = children.take(3).join(', ');
+      final more = children.length - 3;
+      return more > 0
+          ? 'Children: $shown +$more'
+          : 'Child${children.length == 1 ? '' : 'ren'}: $shown';
+    }
+    if (user.isStudent) {
+      for (final u in allUsers) {
+        if (u.isParent && u.studentIds.contains(user.uid)) {
+          return 'Parent: ${u.name}';
+        }
+      }
+    }
+    return null;
+  }
+
+  List<AppTableColumn<AppUser>> _buildColumns(
+    BuildContext context,
+    List<AppUser> allUsers,
+  ) {
     final metaStyle = TextStyle(
       fontSize: 12,
       color: AppColors.textSecondary,
@@ -323,7 +374,11 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
         id: _UserSortColumn.name.name,
         label: 'Name',
         sortable: true,
-        cell: (user) => _UserNameCell(user: user, roleColor: _roleColor(user)),
+        cell: (user) => _UserNameCell(
+          user: user,
+          roleColor: _roleColor(user),
+          detail: _relationLabel(user, allUsers),
+        ),
       ),
       AppTableColumn<AppUser>(
         id: _UserSortColumn.role.name,
@@ -477,13 +532,16 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
           );
         }
 
-        final users = _filter(snapshot.data ?? []);
+        final allUsers = snapshot.data ?? [];
+        final users = _filter(allUsers);
 
         return ListView(
           padding: EdgeInsets.all(isWide ? 32 : 20),
           children: [
             _toolbar(context, isWide, users),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
+            _roleTabs(allUsers),
+            const SizedBox(height: 12),
             _selectionBar(users),
             if (users.isEmpty)
               AppCard(
@@ -498,7 +556,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
             else
               AppDataTable<AppUser>(
                 rows: users,
-                columns: _buildColumns(context),
+                columns: _buildColumns(context, allUsers),
                 sortColumnId: _sortColumn.name,
                 sortAscending: _sortAscending,
                 onSort: _onSortById,
@@ -531,17 +589,6 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
         fileStem: 'users',
         header: _csvHeader,
         rows: () => users.map(_csvRow).toList(),
-      ),
-    );
-
-    final roleFilter = SizedBox(
-      width: isWide ? 148 : null,
-      height: _toolbarFieldHeight,
-      child: _FilterDropdown<String?>(
-        label: 'Role',
-        value: _roleFilter,
-        items: _roleFilterOptions,
-        onChanged: (value) => setState(() => _roleFilter = value),
       ),
     );
 
@@ -581,8 +628,6 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
             ),
           ),
           const SizedBox(width: 12),
-          roleFilter,
-          const SizedBox(width: 12),
           statusFilter,
           const SizedBox(width: 12),
           exportButton,
@@ -609,13 +654,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
           ],
         ),
         const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(child: roleFilter),
-            const SizedBox(width: 12),
-            Expanded(child: statusFilter),
-          ],
-        ),
+        statusFilter,
         const SizedBox(height: 12),
         Row(
           children: [
@@ -781,10 +820,17 @@ class _FilterDropdown<T> extends StatelessWidget {
 }
 
 class _UserNameCell extends StatelessWidget {
-  const _UserNameCell({required this.user, required this.roleColor});
+  const _UserNameCell({
+    required this.user,
+    required this.roleColor,
+    this.detail,
+  });
 
   final AppUser user;
   final Color roleColor;
+
+  /// Linked parent or children, under the email.
+  final String? detail;
 
   @override
   Widget build(BuildContext context) {
@@ -820,6 +866,17 @@ class _UserNameCell extends StatelessWidget {
                   color: AppColors.textSecondary,
                 ),
               ),
+              if (detail != null)
+                Text(
+                  detail!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.teal,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
             ],
           ),
         ),

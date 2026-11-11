@@ -677,7 +677,7 @@ abstract class AppLocalizations {
   /// No description provided for @studentNavMyClasses.
   ///
   /// In en, this message translates to:
-  /// **'My Classes'**
+  /// **'History'**
   String get studentNavMyClasses;
 
   /// No description provided for @studentNavLessons.
@@ -763,6 +763,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Completed practice'**
   String get studentHomeCompletedPractice;
+
+  /// No description provided for @studentHomeSessionsLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Sessions left'**
+  String get studentHomeSessionsLeft;
+
+  /// No description provided for @studentHomeExercisesDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Exercises done'**
+  String get studentHomeExercisesDone;
+
+  /// No description provided for @studentHomeAvgScore.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg. score'**
+  String get studentHomeAvgScore;
+
+  /// No description provided for @studentHomeStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'{days}-day streak'**
+  String studentHomeStreak(int days);
+
+  /// No description provided for @studentHomeBest.
+  ///
+  /// In en, this message translates to:
+  /// **'best {score}%'**
+  String studentHomeBest(int score);
+
+  /// No description provided for @studentHomeUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'until {date}'**
+  String studentHomeUntil(String date);
+
+  /// No description provided for @studentHomeNoVoucher.
+  ///
+  /// In en, this message translates to:
+  /// **'no voucher yet'**
+  String get studentHomeNoVoucher;
+
+  /// No description provided for @studentHomeSeeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'See all ({count})'**
+  String studentHomeSeeAll(int count);
+
+  /// No description provided for @studentHomeSeeScores.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} done · see your scores'**
+  String studentHomeSeeScores(int count);
+
+  /// No description provided for @studentHomeQuickCalendar.
+  ///
+  /// In en, this message translates to:
+  /// **'Calendar'**
+  String get studentHomeQuickCalendar;
+
+  /// No description provided for @studentHomeQuickGrades.
+  ///
+  /// In en, this message translates to:
+  /// **'Grades'**
+  String get studentHomeQuickGrades;
+
+  /// No description provided for @studentHomeQuickMaterials.
+  ///
+  /// In en, this message translates to:
+  /// **'Materials'**
+  String get studentHomeQuickMaterials;
+
+  /// No description provided for @studentHomeQuickHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get studentHomeQuickHistory;
 
   /// No description provided for @studentJoinTitle.
   ///
@@ -938,6 +1016,114 @@ abstract class AppLocalizations {
   /// **'Tap to see who joined'**
   String get studentMyClassesTapToSee;
 
+  /// No description provided for @historyVouchersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your vouchers'**
+  String get historyVouchersTitle;
+
+  /// No description provided for @historyNoVouchers.
+  ///
+  /// In en, this message translates to:
+  /// **'No voucher yet. After you pay for a package the admin adds it here.'**
+  String get historyNoVouchers;
+
+  /// No description provided for @historyVoucherTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{sessions}-session voucher'**
+  String historyVoucherTitle(int sessions);
+
+  /// No description provided for @historyValid.
+  ///
+  /// In en, this message translates to:
+  /// **'Valid {start} – {end}'**
+  String historyValid(String start, String end);
+
+  /// No description provided for @historyStatusActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get historyStatusActive;
+
+  /// No description provided for @historyStatusUsedUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Used up'**
+  String get historyStatusUsedUp;
+
+  /// No description provided for @historyStatusExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get historyStatusExpired;
+
+  /// No description provided for @historySessionsUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'{used} of {total} sessions used'**
+  String historySessionsUsed(int used, int total);
+
+  /// No description provided for @historyRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} left'**
+  String historyRemaining(int count);
+
+  /// No description provided for @historyShowSessions.
+  ///
+  /// In en, this message translates to:
+  /// **'Show classes ({count})'**
+  String historyShowSessions(int count);
+
+  /// No description provided for @historyHideSessions.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide classes'**
+  String get historyHideSessions;
+
+  /// No description provided for @historyNoSessionsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No class has been charged to this voucher yet.'**
+  String get historyNoSessionsYet;
+
+  /// No description provided for @historyAllClasses.
+  ///
+  /// In en, this message translates to:
+  /// **'All classes'**
+  String get historyAllClasses;
+
+  /// No description provided for @historyClassesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} classes'**
+  String historyClassesCount(int count);
+
+  /// No description provided for @attendancePresent.
+  ///
+  /// In en, this message translates to:
+  /// **'Present'**
+  String get attendancePresent;
+
+  /// No description provided for @attendanceExcused.
+  ///
+  /// In en, this message translates to:
+  /// **'Excused'**
+  String get attendanceExcused;
+
+  /// No description provided for @attendanceAbsent.
+  ///
+  /// In en, this message translates to:
+  /// **'Absent'**
+  String get attendanceAbsent;
+
+  /// No description provided for @attendanceJoined.
+  ///
+  /// In en, this message translates to:
+  /// **'Joined'**
+  String get attendanceJoined;
+
   /// No description provided for @studentPaymentsDisabledTitle.
   ///
   /// In en, this message translates to:
@@ -973,6 +1159,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sessions are added automatically when a payment is confirmed.'**
   String get studentPaymentsQuotaHint;
+
+  /// No description provided for @studentPaymentsParentHandles.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments are handled by {name}.'**
+  String studentPaymentsParentHandles(String name);
+
+  /// No description provided for @studentPaymentsParentHandlesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your parent sees the same invoices and can pay them. You can still pay one yourself below if needed.'**
+  String get studentPaymentsParentHandlesHint;
 
   /// No description provided for @studentProgressNoProgressTitle.
   ///
@@ -1309,6 +1507,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Recent classes'**
   String get parentOverviewRecentClasses;
+
+  /// No description provided for @parentOverviewClassHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Classes and vouchers'**
+  String get parentOverviewClassHistory;
 
   /// No description provided for @parentOverviewNoClasses.
   ///

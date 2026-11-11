@@ -330,7 +330,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get studentNavHome => 'Beranda';
 
   @override
-  String get studentNavMyClasses => 'Kelas Saya';
+  String get studentNavMyClasses => 'Riwayat';
 
   @override
   String get studentNavLessons => 'Pelajaran';
@@ -381,6 +381,55 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get studentHomeCompletedPractice => 'Latihan yang sudah selesai';
+
+  @override
+  String get studentHomeSessionsLeft => 'Sisa sesi';
+
+  @override
+  String get studentHomeExercisesDone => 'Latihan selesai';
+
+  @override
+  String get studentHomeAvgScore => 'Nilai rata-rata';
+
+  @override
+  String studentHomeStreak(int days) {
+    return '$days hari berturut-turut';
+  }
+
+  @override
+  String studentHomeBest(int score) {
+    return 'terbaik $score%';
+  }
+
+  @override
+  String studentHomeUntil(String date) {
+    return 'sampai $date';
+  }
+
+  @override
+  String get studentHomeNoVoucher => 'belum ada voucher';
+
+  @override
+  String studentHomeSeeAll(int count) {
+    return 'Lihat semua ($count)';
+  }
+
+  @override
+  String studentHomeSeeScores(int count) {
+    return '$count selesai · lihat nilai Anda';
+  }
+
+  @override
+  String get studentHomeQuickCalendar => 'Kalender';
+
+  @override
+  String get studentHomeQuickGrades => 'Nilai';
+
+  @override
+  String get studentHomeQuickMaterials => 'Materi';
+
+  @override
+  String get studentHomeQuickHistory => 'Riwayat';
 
   @override
   String get studentJoinTitle => 'Ikuti sesi kelas';
@@ -506,6 +555,74 @@ class AppLocalizationsId extends AppLocalizations {
       'Ketuk untuk melihat siapa yang bergabung';
 
   @override
+  String get historyVouchersTitle => 'Voucher Anda';
+
+  @override
+  String get historyNoVouchers =>
+      'Belum ada voucher. Setelah Anda membayar paket, admin menambahkannya di sini.';
+
+  @override
+  String historyVoucherTitle(int sessions) {
+    return 'Voucher $sessions sesi';
+  }
+
+  @override
+  String historyValid(String start, String end) {
+    return 'Berlaku $start – $end';
+  }
+
+  @override
+  String get historyStatusActive => 'Aktif';
+
+  @override
+  String get historyStatusUsedUp => 'Habis';
+
+  @override
+  String get historyStatusExpired => 'Kedaluwarsa';
+
+  @override
+  String historySessionsUsed(int used, int total) {
+    return '$used dari $total sesi terpakai';
+  }
+
+  @override
+  String historyRemaining(int count) {
+    return 'Sisa $count';
+  }
+
+  @override
+  String historyShowSessions(int count) {
+    return 'Lihat kelas ($count)';
+  }
+
+  @override
+  String get historyHideSessions => 'Sembunyikan kelas';
+
+  @override
+  String get historyNoSessionsYet =>
+      'Belum ada kelas yang dipotong dari voucher ini.';
+
+  @override
+  String get historyAllClasses => 'Semua kelas';
+
+  @override
+  String historyClassesCount(int count) {
+    return '$count kelas';
+  }
+
+  @override
+  String get attendancePresent => 'Hadir';
+
+  @override
+  String get attendanceExcused => 'Izin';
+
+  @override
+  String get attendanceAbsent => 'Alpa';
+
+  @override
+  String get attendanceJoined => 'Bergabung';
+
+  @override
   String get studentPaymentsDisabledTitle => 'Pembayaran tidak aktif';
 
   @override
@@ -532,6 +649,15 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get studentPaymentsQuotaHint =>
       'Sesi ditambahkan otomatis setelah pembayaran dikonfirmasi.';
+
+  @override
+  String studentPaymentsParentHandles(String name) {
+    return 'Pembayaran diurus oleh $name.';
+  }
+
+  @override
+  String get studentPaymentsParentHandlesHint =>
+      'Orang tua Anda melihat tagihan yang sama dan bisa membayarnya. Anda tetap bisa membayar sendiri di bawah bila perlu.';
 
   @override
   String get studentProgressNoProgressTitle => 'Belum ada kemajuan';
@@ -725,6 +851,9 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get parentOverviewRecentClasses => 'Kelas terbaru';
+
+  @override
+  String get parentOverviewClassHistory => 'Kelas dan voucher';
 
   @override
   String get parentOverviewNoClasses => 'Belum ada kelas yang dihadiri.';

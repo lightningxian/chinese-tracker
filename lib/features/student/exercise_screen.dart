@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/exercise_utils.dart';
 import '../../core/widgets/app_card.dart';
+import '../../core/widgets/confetti_burst.dart';
 import '../../core/widgets/score_summary.dart';
 import '../../models/exercise.dart';
 import '../../models/exercise_type.dart';
@@ -378,7 +379,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     }
 
     final answers = _session!.answers;
-    return ScoreSummary(
+    final summary = ScoreSummary(
       scorePercent: result.score,
       correctCount: result.correct,
       totalCount: result.total,
@@ -411,6 +412,13 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                   given: answers[question.id],
                 ),
             ],
+    );
+    if (result.score < 70) return summary;
+    return Stack(
+      children: [
+        summary,
+        const Positioned.fill(child: ConfettiBurst()),
+      ],
     );
   }
 

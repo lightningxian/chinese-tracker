@@ -21,6 +21,8 @@ class AppUser {
     this.phone,
     this.studentIds = const [],
     this.parentCode,
+    this.linkedParentUid,
+    this.linkedParentName,
     this.createdAt,
     this.active = true,
   });
@@ -51,6 +53,14 @@ class AppUser {
 
   /// Stable 6-char code a parent enters to link to this student.
   final String? parentCode;
+
+  /// Parent account linked to this student (written by the `linkChild`
+  /// function). Only used to tell the student who handles payments; the
+  /// parent's access comes from the parent's own [studentIds].
+  final String? linkedParentUid;
+  final String? linkedParentName;
+
+  bool get hasLinkedParent => (linkedParentUid ?? '').isNotEmpty;
   final DateTime? createdAt;
   final bool active;
 
@@ -115,6 +125,8 @@ class AppUser {
               .toList() ??
           const [],
       parentCode: data['parentCode'] as String?,
+      linkedParentUid: data['linkedParentUid'] as String?,
+      linkedParentName: data['linkedParentName'] as String?,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
       active: data['active'] as bool? ?? true,
     );
@@ -141,6 +153,10 @@ class AppUser {
         if (studentIds.isNotEmpty) 'studentIds': studentIds,
         if (parentCode != null && parentCode!.isNotEmpty)
           'parentCode': parentCode,
+        if (linkedParentUid != null && linkedParentUid!.isNotEmpty)
+          'linkedParentUid': linkedParentUid,
+        if (linkedParentName != null && linkedParentName!.isNotEmpty)
+          'linkedParentName': linkedParentName,
         'active': active,
         'createdAt': createdAt != null
             ? Timestamp.fromDate(createdAt!)

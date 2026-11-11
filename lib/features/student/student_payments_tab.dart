@@ -59,6 +59,12 @@ class StudentPaymentsTab extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               children: [
                 _QuotaCard(remaining: remaining),
+                if (student.hasLinkedParent) ...[
+                  const SizedBox(height: 12),
+                  _ParentHandlesCard(
+                    parentName: student.linkedParentName ?? '',
+                  ),
+                ],
                 const SizedBox(height: 20),
                 SectionHeader(title: context.l10n.studentPaymentsInvoices),
                 if (invoices.isEmpty)
@@ -138,6 +144,57 @@ class _QuotaCard extends StatelessWidget {
                   style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Shown to a student whose parent account is linked: the parent sees and
+/// pays the same invoices, so the student can leave payments to them.
+class _ParentHandlesCard extends StatelessWidget {
+  const _ParentHandlesCard({required this.parentName});
+
+  final String parentName;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final name = parentName.isNotEmpty ? parentName : l.parentProfileRole;
+    return AppCard(
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.teal.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(Icons.family_restroom_outlined, color: AppColors.teal),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l.studentPaymentsParentHandles(name),
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  l.studentPaymentsParentHandlesHint,
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                    height: 1.4,
                   ),
                 ),
               ],

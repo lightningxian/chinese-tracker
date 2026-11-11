@@ -330,7 +330,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get studentNavHome => 'Home';
 
   @override
-  String get studentNavMyClasses => 'My Classes';
+  String get studentNavMyClasses => 'History';
 
   @override
   String get studentNavLessons => 'Lessons';
@@ -381,6 +381,55 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get studentHomeCompletedPractice => 'Completed practice';
+
+  @override
+  String get studentHomeSessionsLeft => 'Sessions left';
+
+  @override
+  String get studentHomeExercisesDone => 'Exercises done';
+
+  @override
+  String get studentHomeAvgScore => 'Avg. score';
+
+  @override
+  String studentHomeStreak(int days) {
+    return '$days-day streak';
+  }
+
+  @override
+  String studentHomeBest(int score) {
+    return 'best $score%';
+  }
+
+  @override
+  String studentHomeUntil(String date) {
+    return 'until $date';
+  }
+
+  @override
+  String get studentHomeNoVoucher => 'no voucher yet';
+
+  @override
+  String studentHomeSeeAll(int count) {
+    return 'See all ($count)';
+  }
+
+  @override
+  String studentHomeSeeScores(int count) {
+    return '$count done · see your scores';
+  }
+
+  @override
+  String get studentHomeQuickCalendar => 'Calendar';
+
+  @override
+  String get studentHomeQuickGrades => 'Grades';
+
+  @override
+  String get studentHomeQuickMaterials => 'Materials';
+
+  @override
+  String get studentHomeQuickHistory => 'History';
 
   @override
   String get studentJoinTitle => 'Join class session';
@@ -507,6 +556,74 @@ class AppLocalizationsEn extends AppLocalizations {
   String get studentMyClassesTapToSee => 'Tap to see who joined';
 
   @override
+  String get historyVouchersTitle => 'Your vouchers';
+
+  @override
+  String get historyNoVouchers =>
+      'No voucher yet. After you pay for a package the admin adds it here.';
+
+  @override
+  String historyVoucherTitle(int sessions) {
+    return '$sessions-session voucher';
+  }
+
+  @override
+  String historyValid(String start, String end) {
+    return 'Valid $start – $end';
+  }
+
+  @override
+  String get historyStatusActive => 'Active';
+
+  @override
+  String get historyStatusUsedUp => 'Used up';
+
+  @override
+  String get historyStatusExpired => 'Expired';
+
+  @override
+  String historySessionsUsed(int used, int total) {
+    return '$used of $total sessions used';
+  }
+
+  @override
+  String historyRemaining(int count) {
+    return '$count left';
+  }
+
+  @override
+  String historyShowSessions(int count) {
+    return 'Show classes ($count)';
+  }
+
+  @override
+  String get historyHideSessions => 'Hide classes';
+
+  @override
+  String get historyNoSessionsYet =>
+      'No class has been charged to this voucher yet.';
+
+  @override
+  String get historyAllClasses => 'All classes';
+
+  @override
+  String historyClassesCount(int count) {
+    return '$count classes';
+  }
+
+  @override
+  String get attendancePresent => 'Present';
+
+  @override
+  String get attendanceExcused => 'Excused';
+
+  @override
+  String get attendanceAbsent => 'Absent';
+
+  @override
+  String get attendanceJoined => 'Joined';
+
+  @override
   String get studentPaymentsDisabledTitle => 'Payments are disabled';
 
   @override
@@ -534,6 +651,15 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get studentPaymentsQuotaHint =>
       'Sessions are added automatically when a payment is confirmed.';
+
+  @override
+  String studentPaymentsParentHandles(String name) {
+    return 'Payments are handled by $name.';
+  }
+
+  @override
+  String get studentPaymentsParentHandlesHint =>
+      'Your parent sees the same invoices and can pay them. You can still pay one yourself below if needed.';
 
   @override
   String get studentProgressNoProgressTitle => 'No progress yet';
@@ -726,6 +852,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get parentOverviewRecentClasses => 'Recent classes';
+
+  @override
+  String get parentOverviewClassHistory => 'Classes and vouchers';
 
   @override
   String get parentOverviewNoClasses => 'No classes attended yet.';

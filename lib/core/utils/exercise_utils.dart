@@ -30,6 +30,38 @@ abstract final class ExerciseUtils {
     return sorted;
   }
 
+  /// Days in a row (ending today, or yesterday if nothing was done yet
+  /// today) with at least one submitted exercise. 0 when the chain is broken.
+  static int streakDays(Iterable<ExerciseResult> results, {DateTime? now}) {
+    final today = now ?? DateTime.now();
+    final days = <DateTime>{
+      for (final r in results)
+        if (r.submittedAt != null)
+          DateTime(
+              r.submittedAt!.year, r.submittedAt!.month, r.submittedAt!.day),
+    };
+    var day = DateTime(today.year, today.month, today.day);
+    if (!days.contains(day)) {
+      day = DateTime(day.year, day.month, day.day - 1);
+      if (!days.contains(day)) return 0;
+    }
+    var streak = 0;
+    while (days.contains(day)) {
+      streak++;
+      day = DateTime(day.year, day.month, day.day - 1);
+    }
+    return streak;
+  }
+
+  /// 3 stars from 90%, 2 from 70%, 1 for anything above 0.
+  static int scoreStars(int score) => score >= 90
+      ? 3
+      : score >= 70
+          ? 2
+          : score > 0
+              ? 1
+              : 0;
+
   /// Attempt count, rounded average score and best score over [results]
   /// (average and best are null when there are no attempts).
   static ({int attempts, int? average, int? best}) resultStats(
