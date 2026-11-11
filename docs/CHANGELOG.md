@@ -54,11 +54,10 @@ edge cases, and any manual/deploy steps still required).
 - `linkedParentUid` is informational only (a student could set it on their
   own profile); the parent's access still comes from the parent's
   `studentIds`, which the rules protect. No rules change.
-- **Functions deploy pending** (`finishExercise` review/duration and the
-  `linkChild` stamp): the sandbox refused Claude's `firebase deploy --only
-  functions`; the owner runs it (command in the session log). Until then the
-  result page shows no review, times are not stored, and new parent links
-  do not stamp the student. Hosting is deployed.
+- Functions deployed by the owner on 2026-11-11 (all 14 updated, incl.
+  `finishExercise` review/duration and the `linkChild` stamp). Hosting was
+  deployed earlier the same day. Review, saved times and the parent stamp are
+  live.
 
 ---
 

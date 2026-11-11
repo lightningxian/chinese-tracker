@@ -163,14 +163,10 @@ Update this section when you push from Mac or PC.
   handled by <parent>" note for linked students, admin Users role chips with
   counts and parent/child lines, compact student home with tiles, streak, stars
   and confetti. Hosting deployed.
-- **Owner to run** (Claude's sandbox refuses production function deploys):
-
-  ```bash
-  firebase deploy --only functions --project chinese-tracker
-  ```
-
-  It ships `finishExercise` (review + time on results) and the `linkChild`
-  parent stamp. Both additive, no rules change.
+- Owner ran `firebase deploy --only functions --project chinese-tracker`
+  (Claude's sandbox refuses production function deploys): all 14 functions
+  updated. Live now: `finishExercise` review + time on results, `linkChild`
+  parent stamp. Owner tests on the live site next.
 
 ### 2026-11-10 (night) — Claude: precise admin tables
 
