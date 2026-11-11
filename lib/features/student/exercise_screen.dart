@@ -388,26 +388,29 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
           : _exercise!.title,
       timeLabel: ExerciseUtils.formatClock(result.durationSeconds),
       onPrimaryPressed: () => context.pop(),
-      details: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            'Review',
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              color: AppColors.navy,
-              fontSize: 16,
-            ),
-          ),
-        ),
-        for (final (i, question) in _questions.indexed)
-          _ReviewTile(
-            number: i + 1,
-            question: question,
-            check: result.review[question.id],
-            given: answers[question.id],
-          ),
-      ],
+      // No review when the server did not send one (older function build).
+      details: result.review.isEmpty
+          ? const []
+          : [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Review',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.navy,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              for (final (i, question) in _questions.indexed)
+                _ReviewTile(
+                  number: i + 1,
+                  question: question,
+                  check: result.review[question.id],
+                  given: answers[question.id],
+                ),
+            ],
     );
   }
 
