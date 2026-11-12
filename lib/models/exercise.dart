@@ -13,6 +13,7 @@ class ExerciseQuestion {
     this.imageUrl = '',
     this.audioUrl = '',
     this.blankNumber,
+    this.explanation = '',
   });
 
   final String prompt;
@@ -36,6 +37,10 @@ class ExerciseQuestion {
   /// Blank index inside a reading cloze passage.
   final int? blankNumber;
 
+  /// Why the key is right, shown to the student on the result page after
+  /// the attempt is checked (never sent while the exercise is being played).
+  final String explanation;
+
   factory ExerciseQuestion.fromMap(
     Map<String, dynamic> map, {
     required ExerciseType exerciseType,
@@ -46,6 +51,7 @@ class ExerciseQuestion {
           prompt: map['prompt'] as String? ?? '',
           segments: List<String>.from(map['segments'] as List? ?? []),
           imageUrl: map['imageUrl'] as String? ?? '',
+          explanation: map['explanation'] as String? ?? '',
           audioUrl: map['audioUrl'] as String? ?? '',
         );
       case ExerciseType.matching:
@@ -56,6 +62,7 @@ class ExerciseQuestion {
           options: List<String>.from(map['options'] as List? ?? []),
           correctIndex: map['correctIndex'] as int? ?? 0,
           imageUrl: map['imageUrl'] as String? ?? '',
+          explanation: map['explanation'] as String? ?? '',
           audioUrl: map['audioUrl'] as String? ?? '',
         );
       case ExerciseType.pictureSentence:
@@ -63,6 +70,7 @@ class ExerciseQuestion {
           prompt: map['prompt'] as String? ?? '',
           keyword: map['keyword'] as String? ?? map['prompt'] as String? ?? '',
           imageUrl: map['imageUrl'] as String? ?? '',
+          explanation: map['explanation'] as String? ?? '',
           audioUrl: map['audioUrl'] as String? ?? '',
         );
       case ExerciseType.typeHanzi:
@@ -71,6 +79,7 @@ class ExerciseQuestion {
           keyword: map['keyword'] as String? ?? '',
           options: List<String>.from(map['options'] as List? ?? []),
           imageUrl: map['imageUrl'] as String? ?? '',
+          explanation: map['explanation'] as String? ?? '',
           audioUrl: map['audioUrl'] as String? ?? '',
         );
       case ExerciseType.readingCloze:
@@ -80,6 +89,7 @@ class ExerciseQuestion {
           correctIndex: map['correctIndex'] as int? ?? 0,
           blankNumber: map['blankNumber'] as int?,
           imageUrl: map['imageUrl'] as String? ?? '',
+          explanation: map['explanation'] as String? ?? '',
           audioUrl: map['audioUrl'] as String? ?? '',
         );
       case ExerciseType.multipleChoice:
@@ -89,15 +99,17 @@ class ExerciseQuestion {
           options: List<String>.from(map['options'] as List? ?? []),
           correctIndex: map['correctIndex'] as int? ?? 0,
           imageUrl: map['imageUrl'] as String? ?? '',
+          explanation: map['explanation'] as String? ?? '',
           audioUrl: map['audioUrl'] as String? ?? '',
         );
     }
   }
 
   Map<String, dynamic> toMap(ExerciseType exerciseType) {
-    Map<String, dynamic> mediaFields() => {
+    Map<String, dynamic> sharedFields() => {
           if (imageUrl.isNotEmpty) 'imageUrl': imageUrl,
           if (audioUrl.isNotEmpty) 'audioUrl': audioUrl,
+          if (explanation.isNotEmpty) 'explanation': explanation,
         };
 
     switch (exerciseType) {
@@ -105,27 +117,27 @@ class ExerciseQuestion {
         return {
           'prompt': prompt,
           'segments': segments,
-          ...mediaFields(),
+          ...sharedFields(),
         };
       case ExerciseType.matching:
         return {
           'prompt': prompt,
           if (options.isNotEmpty) 'options': options,
           'correctIndex': correctIndex,
-          ...mediaFields(),
+          ...sharedFields(),
         };
       case ExerciseType.pictureSentence:
         return {
           'prompt': prompt,
           'keyword': keyword,
-          ...mediaFields(),
+          ...sharedFields(),
         };
       case ExerciseType.typeHanzi:
         return {
           'prompt': prompt,
           'keyword': keyword,
           'options': options,
-          ...mediaFields(),
+          ...sharedFields(),
         };
       case ExerciseType.readingCloze:
         return {
@@ -133,7 +145,7 @@ class ExerciseQuestion {
           'options': options,
           'correctIndex': correctIndex,
           if (blankNumber != null) 'blankNumber': blankNumber,
-          ...mediaFields(),
+          ...sharedFields(),
         };
       case ExerciseType.multipleChoice:
       case ExerciseType.listening:
@@ -141,7 +153,7 @@ class ExerciseQuestion {
           'prompt': prompt,
           'options': options,
           'correctIndex': correctIndex,
-          ...mediaFields(),
+          ...sharedFields(),
         };
     }
   }

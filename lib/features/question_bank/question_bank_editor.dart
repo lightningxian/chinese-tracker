@@ -68,6 +68,7 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
   final _tagsController = TextEditingController();
   final _keywordController = TextEditingController();
   final _blankController = TextEditingController();
+  final _explanationController = TextEditingController();
 
   /// Multiple choice / listening: one controller per choice.
   final List<TextEditingController> _optionControllers = [];
@@ -124,6 +125,7 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
     _audioUrl = e.question.audioUrl;
     _keywordController.text = e.question.keyword;
     _blankController.text = e.question.blankNumber?.toString() ?? '';
+    _explanationController.text = e.question.explanation;
     switch (e.type) {
       case ExerciseType.composeSentences:
         _linesController.text = e.question.segments.join('\n');
@@ -155,6 +157,7 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
     _tagsController.dispose();
     _keywordController.dispose();
     _blankController.dispose();
+    _explanationController.dispose();
     _linesController.dispose();
     for (final c in _optionControllers) {
       c.dispose();
@@ -179,10 +182,12 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
   ExerciseQuestion _buildQuestion() {
     final prompt = _promptController.text.trim();
     final keyword = _keywordController.text.trim();
+    final explanation = _explanationController.text.trim();
     switch (_type) {
       case ExerciseType.composeSentences:
         return ExerciseQuestion(
           prompt: prompt,
+          explanation: explanation,
           segments: _lines,
           imageUrl: _imageUrl,
           audioUrl: _audioUrl,
@@ -192,6 +197,7 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
         final bank = _lines;
         return ExerciseQuestion(
           prompt: prompt,
+          explanation: explanation,
           options: bank,
           correctIndex:
               bank.isEmpty ? 0 : _correctIndex.clamp(0, bank.length - 1),
@@ -204,6 +210,7 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
       case ExerciseType.typeHanzi:
         return ExerciseQuestion(
           prompt: prompt,
+          explanation: explanation,
           keyword: keyword,
           options: _lines,
           imageUrl: _imageUrl,
@@ -212,6 +219,7 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
       case ExerciseType.pictureSentence:
         return ExerciseQuestion(
           prompt: prompt,
+          explanation: explanation,
           keyword: keyword,
           imageUrl: _imageUrl,
           audioUrl: _audioUrl,
@@ -224,6 +232,7 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
             .toList();
         return ExerciseQuestion(
           prompt: prompt,
+          explanation: explanation,
           options: options,
           correctIndex:
               options.isEmpty ? 0 : _correctIndex.clamp(0, options.length - 1),
@@ -405,6 +414,19 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
               ),
               const SizedBox(height: 12),
               ..._buildTypeFields(),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _explanationController,
+                minLines: 1,
+                maxLines: 4,
+                decoration: const InputDecoration(
+                  labelText: 'Explanation (optional)',
+                  helperText:
+                      'Why the answer is right. Students see it on the result '
+                      'page after they submit, never while answering.',
+                  helperMaxLines: 2,
+                ),
+              ),
               const SizedBox(height: 12),
               _MediaRow(
                 imageUrl: _imageUrl,

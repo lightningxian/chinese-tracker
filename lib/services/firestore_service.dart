@@ -853,31 +853,6 @@ class FirestoreService {
         .delete();
   }
 
-  /// Result of an exercise that still keeps its questions in the document
-  /// (package results are written by the `finishExercise` function).
-  Future<void> saveExerciseResult({
-    required String studentId,
-    required String exerciseId,
-    required int score,
-    int? correct,
-    int? total,
-    int? durationSeconds,
-    String? exerciseTitle,
-  }) async {
-    await _db.collection(AppConstants.exerciseResultsCollection).add({
-      'studentId': studentId,
-      'exerciseId': exerciseId,
-      if (exerciseTitle != null && exerciseTitle.isNotEmpty)
-        'exerciseTitle': exerciseTitle,
-      'score': score,
-      if (correct != null) 'correct': correct,
-      if (total != null) 'total': total,
-      if (durationSeconds != null && durationSeconds > 0)
-        'durationSeconds': durationSeconds,
-      'submittedAt': FieldValue.serverTimestamp(),
-    });
-  }
-
   /// Quiz attempts for one student (transcript). Sorted client-side so no
   /// composite index is needed.
   Stream<List<QuizResult>> watchStudentQuizResults(String studentId) {

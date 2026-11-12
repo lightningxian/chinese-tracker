@@ -308,14 +308,15 @@ service cloud.firestore {
     }
 
     match /exercise_results/{resultId} {
+      // Written only by the finishExercise function (admin SDK), which
+      // checks the answers itself. No client write: a student could
+      // otherwise post any score (closed 2026-11-12).
       allow read: if isSignedIn() && (
         resource == null ||
         resource.data.studentId == request.auth.uid ||
         isStaff() ||
         isParentOf(resource.data.get('studentId', ''))
       );
-      allow create: if isSignedIn() &&
-        request.resource.data.studentId == request.auth.uid;
     }
 
     match /student_progress/{progressId} {

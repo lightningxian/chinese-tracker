@@ -4,7 +4,8 @@ const assert = require("assert");
 const play = require("./exercise_play");
 
 const mc = {id: "q1", type: "multiple_choice", sheetCode: "310001-RDG", sheetIndex: 1,
-  question: {prompt: "我（ ）喜欢喝茶。", options: ["很", "是", "的"], correctIndex: 0}};
+  question: {prompt: "我（ ）喜欢喝茶。", options: ["很", "是", "的"], correctIndex: 0,
+    explanation: "很 + verb of feeling, no 是."}};
 const mc0 = {id: "q0", type: "multiple_choice", tags: ["310001-RDG"], sheetIndex: 0,
   question: {prompt: "p0", options: ["A", "B"], correctIndex: 1}};
 const compose = {id: "c1", type: "compose_sentences", sheetCode: "300001-KLM", sheetIndex: 0,
@@ -32,6 +33,7 @@ assert.ok(!("options" in sh) && sh.keyword === "gāng");
 const sm = play.stripQuestion(mc);
 assert.deepStrictEqual(sm.options, ["很", "是", "的"]);
 assert.ok(!("correctIndex" in sm));
+assert.ok(!("explanation" in sm), "explanation stays until the review");
 
 // Checking.
 assert.strictEqual(play.checkAnswer(mc, {index: 0}).correct, true);
@@ -54,6 +56,8 @@ assert.deepStrictEqual(scored.review.map((r) => r.questionId), ["q1", "c1", "h1"
 assert.deepStrictEqual(scored.review.map((r) => r.answered), [true, false, true, false]);
 assert.deepStrictEqual(scored.review.map((r) => r.correct), [true, false, true, false]);
 assert.deepStrictEqual(scored.review[1].correctAnswer, {order: ["经理的", "办公室在", "二楼"]});
+assert.strictEqual(scored.review[0].explanation, "很 + verb of feeling, no 是.");
+assert.strictEqual(scored.review[1].explanation, "", "no explanation -> empty string");
 assert.deepStrictEqual(play.scoreAttempt([], null), {score: 0, correct: 0, total: 0, review: []});
 
 console.log("exercise_play: all checks passed");

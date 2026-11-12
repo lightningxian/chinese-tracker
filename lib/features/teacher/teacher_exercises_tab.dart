@@ -586,7 +586,9 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
             const SizedBox(height: 2),
             Text(
               [
-                if (row.exercise.isPackage) 'From the question bank',
+                row.exercise.isPackage
+                    ? 'From the question bank'
+                    : 'Old format, students cannot play it',
                 _contentsLabel(row.exercise),
               ].join(' · '),
               maxLines: 1,

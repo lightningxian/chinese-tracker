@@ -1,17 +1,19 @@
-import 'dart:math';
-
 import 'package:cloud_functions/cloud_functions.dart';
 
 import '../models/exercise.dart';
 import '../models/exercise_type.dart';
-import 'firestore_service.dart';
 
-/// One question as the student plays it: no answer key on board.
-///
-/// Legacy exercises (questions stored in the exercise doc) still carry the
-/// key inside [ExerciseQuestion]; the play screen never reads it directly,
-/// it gets the review from [ExercisePlaySession.finish] like it does for
-/// packages.
+/// Thrown by [ExercisePlayService.start] for an exercise made before the
+/// question bank (questions and keys inside the exercise doc). Those are no
+/// longer playable: the keys would be readable and the score would be
+/// written by the client (closed 2026-11-12).
+class LegacyExerciseException implements Exception {
+  const LegacyExerciseException();
+}
+
+/// One question as the student plays it: no answer key on board. Questions
+/// come from the `startExercise` function; the key and the explanation come
+/// back only with the review from [ExercisePlaySession.finish].
 class PlayQuestion {
   const PlayQuestion({
     required this.id,
@@ -93,6 +95,7 @@ class AnswerCheck {
     this.correctOrder = const [],
     this.accepted = const [],
     this.keyword = '',
+    this.explanation = '',
   });
 
   final bool correct;
@@ -104,6 +107,9 @@ class AnswerCheck {
   final List<String> accepted;
   final String keyword;
 
+  /// The teacher's note on why the key is right; empty when none.
+  final String explanation;
+
   factory AnswerCheck.fromServer(Map<String, dynamic> m) {
     final key =
         Map<String, dynamic>.from(m['correctAnswer'] as Map? ?? const {});
@@ -114,6 +120,7 @@ class AnswerCheck {
       correctOrder: List<String>.from(key['order'] as List? ?? const []),
       accepted: List<String>.from(key['accepted'] as List? ?? const []),
       keyword: key['keyword'] as String? ?? '',
+      explanation: m['explanation'] as String? ?? '',
     );
   }
 }
@@ -156,42 +163,32 @@ abstract class ExercisePlaySession {
 }
 
 class ExercisePlayService {
-  ExercisePlayService({
-    required FirestoreService firestore,
-    FirebaseFunctions? functions,
-  })  : _firestore = firestore,
-        _functions = functions ?? FirebaseFunctions.instance;
+  ExercisePlayService({FirebaseFunctions? functions})
+      : _functions = functions ?? FirebaseFunctions.instance;
 
-  final FirestoreService _firestore;
   final FirebaseFunctions _functions;
 
-  /// Null when the exercise does not exist or is not assigned to the student.
-  Future<ExercisePlaySession?> start(
-      Exercise exercise, String studentId) async {
-    if (exercise.isPackage) {
-      final result = await _functions
-          .httpsCallable('startExercise')
-          .call({'exerciseId': exercise.id});
-      final data = Map<String, dynamic>.from(result.data as Map);
-      final questions = (data['questions'] as List? ?? const [])
-          .map((q) =>
-              PlayQuestion.fromServer(Map<String, dynamic>.from(q as Map)))
-          .toList();
-      return _ServerSession(
-        exercise: exercise,
-        questions: questions,
-        functions: _functions,
-      );
-    }
-    return _LocalSession(
+  /// Asks `startExercise` for the questions. Throws
+  /// [FirebaseFunctionsException] (`permission-denied` when the exercise is
+  /// not assigned to the student) or [LegacyExerciseException].
+  Future<ExercisePlaySession> start(Exercise exercise) async {
+    if (!exercise.isPackage) throw const LegacyExerciseException();
+    final result = await _functions
+        .httpsCallable('startExercise')
+        .call({'exerciseId': exercise.id});
+    final data = Map<String, dynamic>.from(result.data as Map);
+    final questions = (data['questions'] as List? ?? const [])
+        .map((q) => PlayQuestion.fromServer(Map<String, dynamic>.from(q as Map)))
+        .toList();
+    return _ServerSession(
       exercise: exercise,
-      studentId: studentId,
-      firestore: _firestore,
+      questions: questions,
+      functions: _functions,
     );
   }
 }
 
-/// Answer store shared by both kinds of session.
+/// Keeps the student's answers until the attempt is submitted.
 abstract class _AnswerStore implements ExercisePlaySession {
   final Map<String, PlayAnswer> _answers = {};
 
@@ -246,95 +243,6 @@ class _ServerSession extends _AnswerStore {
       score: (m['score'] as num?)?.toInt() ?? 0,
       correct: (m['correct'] as num?)?.toInt() ?? 0,
       total: (m['total'] as num?)?.toInt() ?? questions.length,
-      durationSeconds: durationSeconds,
-      review: review,
-    );
-  }
-}
-
-/// Legacy exercise: questions and keys are in the exercise doc; the attempt
-/// is checked here and the result is written by the client as before.
-class _LocalSession extends _AnswerStore {
-  _LocalSession({
-    required this.exercise,
-    required String studentId,
-    required FirestoreService firestore,
-  })  : _studentId = studentId,
-        _firestore = firestore,
-        questions = [
-          for (final (i, q) in exercise.questions.indexed)
-            PlayQuestion(
-              id: 'q$i',
-              type: exercise.type,
-              prompt: q.prompt,
-              options: exercise.type == ExerciseType.matching ||
-                      exercise.type == ExerciseType.readingCloze
-                  ? exercise.matchingOptions
-                  : q.options,
-              segments: exercise.type == ExerciseType.composeSentences
-                  ? (List<String>.from(q.segments)..shuffle(Random(i)))
-                  : const [],
-              keyword: q.keyword,
-              imageUrl: q.imageUrl,
-              audioUrl: q.audioUrl,
-              blankNumber: q.blankNumber,
-            ),
-        ];
-
-  @override
-  final Exercise exercise;
-  @override
-  final List<PlayQuestion> questions;
-  @override
-  String get passage => exercise.passage;
-
-  final String _studentId;
-  final FirestoreService _firestore;
-
-  AnswerCheck _check(int index, PlayAnswer? answer) {
-    final question = questions[index];
-    final source = exercise.questions[index];
-    final bool correct;
-    if (answer == null) {
-      correct = false;
-    } else if (question.isCompose) {
-      correct = source.isCorrectComposeOrder(answer.order ?? const []);
-    } else if (question.isTyped) {
-      correct = source.isCorrectTypedAnswer(exercise.type, answer.text ?? '');
-    } else {
-      correct = answer.index == source.correctIndex;
-    }
-    return AnswerCheck(
-      correct: correct,
-      answered: answer != null,
-      correctIndex: source.correctIndex,
-      correctOrder: source.segments,
-      accepted: source.acceptedAnswers,
-      keyword: source.keyword,
-    );
-  }
-
-  @override
-  Future<PlayResult> finish({required int durationSeconds}) async {
-    final review = <String, AnswerCheck>{
-      for (final (i, q) in questions.indexed) q.id: _check(i, _answers[q.id]),
-    };
-    final correct = review.values.where((c) => c.correct).length;
-    final total = questions.length;
-    final score = total == 0 ? 0 : ((correct / total) * 100).round();
-    await _firestore.saveExerciseResult(
-      studentId: _studentId,
-      exerciseId: exercise.id,
-      score: score,
-      correct: correct,
-      total: total,
-      durationSeconds: durationSeconds,
-      exerciseTitle: exercise.title,
-    );
-    return PlayResult(
-      score: score,
-      correct: correct,
-      total: total,
       durationSeconds: durationSeconds,
       review: review,
     );

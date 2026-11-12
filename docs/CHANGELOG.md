@@ -6,6 +6,47 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-12 — Claude: scores locked to the server, explanations in the review
+
+**What changed**
+- **No client writes to `exercise_results`.** `firestore.rules`: the `create`
+  rule is gone; only the `finishExercise` function (admin SDK) writes results.
+  `FirestoreService.saveExerciseResult` and the client-side scorer
+  (`_LocalSession` in `exercise_play_service.dart`) are deleted.
+- **Old-format exercises are no longer playable.** An exercise whose questions
+  live inside its document (made before the question bank, 2026-11-09) now
+  shows the student "Old exercise format … ask your teacher for a new one"
+  (`ExercisePlayService.start` throws `LegacyExerciseException`). The
+  admin/teacher Exercises table labels them "Old format, students cannot play
+  it" so the admin can tick and delete them.
+- **Explanation per question.** `ExerciseQuestion.explanation` (stored inside
+  the bank item's `question` map, every type). Bank editor: "Explanation
+  (optional)" field. `finishExercise` returns it in each review entry
+  (`exercise_play.js` `scoreAttempt`); `startExercise` never sends it. The
+  result page shows it under the question, for right and wrong answers.
+- Rules tests: new "exercise results" group (student / staff cannot create,
+  change or delete; own, parent and staff reads; other student denied): 30
+  pass, 1 skipped. `functions/test_exercise_play.js` checks the explanation
+  is in the review and not in the stripped question.
+
+**Why**
+- Owner's go-ahead 2026-11-12 on the recommendation list: a student with the
+  browser console could post any score; the thesis rule "students write
+  answers, never scores" needs the collection closed. Explanations make the
+  new review page a learning tool, not only a mark.
+
+**For review**
+- **Deploy needed (owner runs):** `firebase deploy --only firestore:rules,functions
+  --project chinese-tracker`. Until the rules ship, a client can still create
+  results as before; until the function ships, the review has no explanation.
+  Hosting is deployed (client already refuses old-format exercises).
+- Owner to delete the old-format exercises on live (Exercises table, tick the
+  rows labelled "Old format").
+- Worksheet import does not read explanations (printed sheets have none);
+  teachers add them in the bank editor.
+
+---
+
 ## 2026-11-11 (later) — Claude: history tab, parents as add-on payers, compact student home
 
 **What changed**

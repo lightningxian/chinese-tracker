@@ -80,9 +80,9 @@ demo data (the app has no emulator wiring yet).
 | | Count |
 |---|---|
 | Items in the spec (phases 1–9, rules, testing) | **70** |
-| Done | **5** |
-| Partly done (something exists, but not the way the spec wants it) | **22** |
-| Missing | **43** |
+| Done | **8** |
+| Partly done (something exists, but not the way the spec wants it) | **23** |
+| Missing | **39** |
 
 The app today is a working centre-management tool: accounts, one-off classes, 8/16-session terms, exercises, quizzes, grades, materials, Midtrans invoices, PDF reports. The thesis spec describes a different, more rigorous system on top of it: repeating schedules with conflict checks, booking, teacher check-in, server-side grading with a typing matcher, a final-score formula with promotion rules, a per-student progress summary, and push notifications. Almost all of that is new work.
 
@@ -187,7 +187,7 @@ Status per spec item. Evidence is `file:line` in this repo.
 | **P3** sessionReminder 1h before | Missing | Not found | — |
 | P3 Teacher check-in with server time | Missing | Not found | — |
 | P3 checkTeacherCheckIn late notify | Missing | Not found | — |
-| P3 Attendance hadir/izin/alpa | Missing | Dormant `attendanceStatus` (present/absent), setter never called (`firestore_service.dart:1400`) | attendanceStatus |
+| P3 Attendance hadir/izin/alpa | Partly | Teacher picks hadir / izin / alpa per student when concluding the class (`conclude_class_dialog.dart`); izin is not charged. History shows Present / Excused / Absent (2026-11-11). No change after conclude (`setAttendanceStatus` unused) | ConcludeClassDialog |
 | P3 closeSession transaction, idempotent, ledger | Partly | `concludeClassSession` in-app (`:1100-1147`), not atomic overall | concludeClassSession |
 | P3 Unclosed-session flag 2h after | Missing | Not found | — |
 | P3 Teacher monthly recap | Missing | Only "classes this week" count | — |
@@ -197,9 +197,9 @@ Status per spec item. Evidence is `file:line` in this repo.
 | P4 Webhook: signature + mapping + idempotent credit | Done | `index.js:556-670`; amount not cross-checked against invoice | midtransNotification |
 | P4 Admin payments screen with filters | Partly | Sortable table, no status/date filters (`admin_invoices_tab.dart`) | AdminInvoicesTab |
 | P4 expireVouchers daily + low-balance reminders | Missing | Expiry only checked in app (`student_class_term.dart:42-58`) | voucherAlerts |
-| **P5** Question bank with form/topic/explanation/audio | Partly | Has type, level, skill, tags, difficulty, image/audio; no form code, no explanation (`question_bank_item.dart`) | question_bank |
+| **P5** Question bank with form/topic/explanation/audio | Partly | Has type, level, skill, tags, difficulty, image/audio and, since 2026-11-12, an explanation shown in the review (`ExerciseQuestion.explanation`); no form code | question_bank |
 | P5 Question forms L1–L3, R1–R4, T1–T5 | Partly | R1 (fill in the blank), R2 (matching), R3 (passage + choice), R4 (order sentences, via compose), true/false and L3 (listening, no audio upload) exist and are detected by the worksheet scanner (2026-10-27); T1–T3 typing and picture forms missing (`exercise_type.dart`) | ExerciseType |
-| P5 Answer keys students cannot read | Missing | Keys inside `exercises`/`quizzes`, readable by all signed-in (`firestore.rules`) | — |
+| P5 Answer keys students cannot read | Done | Package keys stay in `question_bank` (staff-only read); `startExercise` strips them; old-format exercises are no longer playable (2026-11-12). Quizzes (unused) still carry keys | startExercise |
 | P5 Practice vs exam | Partly | Unlimited attempts, best score (`exercise_utils.dart`); since 2026-11-11 answers are checked at submit (not per question), a clock runs and a package can carry a time limit that auto-submits (`exercises.timeLimitMinutes`) | ExerciseScreen |
 | P5 Teacher builds and assigns packages | Partly | Exercises admin-only; teachers assign with due date (`firestore_service.dart:524-554`); per-lesson quizzes | exercise_assignments, quiz_editor |
 | P5 Exam format per level | Missing | Not found | — |
@@ -223,13 +223,13 @@ Status per spec item. Evidence is `file:line` in this repo.
 | P8 Admin dashboard (6 items) | Partly | Totals, signups chart, voucher alerts, finance (`admin_dashboard_tab.dart`) | AdminDashboardTab |
 | **P9** FCM notifications | Missing | In-app only, 4 events; read query likely denied | `notifications` |
 | **Rules** kunci_jawaban unreadable | Missing | Keys in readable docs | — |
-| Rules jawaban_murid create-own, no score | Missing | Students write their own score | exercise_results |
+| Rules jawaban_murid create-own, no score | Done | `exercise_results` has no client write at all; `finishExercise` scores and writes (rules 2026-11-12, deploy pending) | exercise_results |
 | Rules nilai read-own | Done | `firestore.rules:225-230` | grades |
 | Rules voucher/riwayat read-own | Partly | Terms OK; attendance of open sessions readable by any student | student_class_terms |
 | Rules pembayaran read-own | Partly | Own/parent OK; teachers can read all invoices | invoices |
 | Rules counters only by functions | Missing | Staff update terms/attendance from app | — |
 | **Testing** seed script | Partly | `scripts/seed_test_accounts.sh`, `seed_report_demo_data.py`, run against live | seed scripts |
 | Testing question import (CSV/JSON + audio) | Partly | Paste + PDF/image/DOC OCR import; no CSV/JSON, no batch audio | Worksheet import |
-| Testing emulator rules tests | Missing | No `emulators` in `firebase.json` | — |
+| Testing emulator rules tests | Done | `rules-tests/firestore.rules.test.mjs`, 30 pass (`npm --prefix rules-tests run test:emulator`) | rules-tests |
 | Testing reconciliation script | Missing | Not found | — |
 | Testing unit tests NA formula / typing matcher | Missing | Tests cover constants and worksheet parser only | — |

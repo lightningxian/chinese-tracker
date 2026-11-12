@@ -13,6 +13,25 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-12 — Claude: scores locked to the server, explanations
+
+- Owner deployed yesterday's functions, then approved the recommendation list
+  ("implement what needs no input; list the rest").
+- `exercise_results` is now function-only in the rules; the client-side
+  scorer is gone; old-format exercises show an "Old exercise format" message
+  and are labelled in the Exercises table for deletion.
+- Question explanations: bank editor field, returned by `finishExercise` in
+  the review only, shown on the result page.
+- Attendance Present / Excused / Absent already exists in the conclude dialog
+  (`ConcludeClassDialog`); the audit row was stale. No edit after conclude.
+- Proof: analyzer baseline, 65 tests, rules tests 30 pass, function test
+  passes, emulator run of the player (explanation shown, old format blocked).
+- **Owner to run:** `firebase deploy --only firestore:rules,functions --project
+  chinese-tracker`, then delete the old-format exercises on live.
+- **Still needs the owner:** Midtrans sandbox end-to-end test (owner clicks,
+  Claude watches logs); nightly backup IAM fix in the Google Cloud console
+  (CLAUDE.md "Known blockers").
+
 ## How to start on this PC
 
 ```bash

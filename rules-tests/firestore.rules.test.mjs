@@ -208,3 +208,35 @@ describe("notifications queries (must be provable by the rules)", () => {
     if (snap.size !== 1) throw new Error(`expected 1, got ${snap.size}`);
   });
 });
+
+describe("exercise results (written by finishExercise only)", () => {
+  const seed = async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, "exercise_results", "r_own"), { studentId: "student1", exerciseId: "e1", score: 80 });
+      await setDoc(doc(db, "exercise_results", "r_other"), { studentId: "student9", exerciseId: "e1", score: 80 });
+    });
+  };
+  it("a student cannot create a result, even for themselves", async () => {
+    await assertFails(setDoc(doc(as("student1"), "exercise_results", "r_new"),
+      { studentId: "student1", exerciseId: "e1", score: 100 }));
+  });
+  it("a student cannot change or delete a result", async () => {
+    await seed();
+    await assertFails(updateDoc(doc(as("student1"), "exercise_results", "r_own"), { score: 100 }));
+    await assertFails(deleteDoc(doc(as("student1"), "exercise_results", "r_own")));
+  });
+  it("staff cannot create a result from the app either", async () => {
+    await assertFails(setDoc(doc(as("teacher1"), "exercise_results", "r_t"),
+      { studentId: "student1", exerciseId: "e1", score: 100 }));
+    await assertFails(setDoc(doc(as("admin1"), "exercise_results", "r_a"),
+      { studentId: "student1", exerciseId: "e1", score: 100 }));
+  });
+  it("a student, their parent and staff read it; another student cannot", async () => {
+    await seed();
+    await assertSucceeds(getDoc(doc(as("student1"), "exercise_results", "r_own")));
+    await assertSucceeds(getDoc(doc(as("parent1"), "exercise_results", "r_own")));
+    await assertSucceeds(getDoc(doc(as("teacher1"), "exercise_results", "r_own")));
+    await assertFails(getDoc(doc(as("student1"), "exercise_results", "r_other")));
+  });
+});

@@ -38,6 +38,7 @@ class ExerciseScreen extends StatefulWidget {
 class _ExerciseScreenState extends State<ExerciseScreen> {
   ExercisePlaySession? _session;
   bool _notAssigned = false;
+  bool _legacy = false;
   bool _loading = true;
   String? _loadError;
 
@@ -100,10 +101,8 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
       }
 
       final exercise = await firestore.getExercise(widget.exerciseId);
-      final session = exercise == null
-          ? null
-          : await ExercisePlayService(firestore: firestore)
-              .start(exercise, student.uid);
+      final session =
+          exercise == null ? null : await ExercisePlayService().start(exercise);
       if (!mounted) return;
       setState(() {
         _session = session;
@@ -112,6 +111,12 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
         _loadQuestionState();
       });
       if (session != null && session.questions.isNotEmpty) _startClock();
+    } on LegacyExerciseException {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _legacy = true;
+      });
     } on FirebaseFunctionsException catch (e) {
       if (!mounted) return;
       setState(() {
@@ -323,6 +328,14 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                   subtitle:
                       'This exercise has not been assigned to you. Ask your teacher.',
                 )
+              : _legacy
+                  ? const EmptyState(
+                      icon: Icons.inventory_2_outlined,
+                      title: 'Old exercise format',
+                      subtitle:
+                          'This exercise was made before the question bank and '
+                          'can no longer be played. Ask your teacher for a new one.',
+                    )
               : _loadError != null
                   ? EmptyState(
                       icon: Icons.cloud_off_outlined,
@@ -1011,6 +1024,7 @@ class _ReviewTile extends StatelessWidget {
             : AppColors.error;
     final yours = _yourAnswer;
     final key = correct ? null : _correctAnswer;
+    final explanation = c?.explanation.trim() ?? '';
 
     return AppCard(
       padding: const EdgeInsets.all(12),
@@ -1061,6 +1075,18 @@ class _ReviewTile extends StatelessWidget {
                       color: AppColors.success,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                if (explanation.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      explanation,
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                        height: 1.4,
+                      ),
                     ),
                   ),
               ],

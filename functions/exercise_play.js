@@ -162,24 +162,28 @@ function checkAnswer(item, answer) {
 
 /**
  * Scores a whole attempt. Unanswered questions count as wrong. The review
- * lists every question in play order with its key, so the result page can
- * show the right answers once the attempt is submitted.
+ * lists every question in play order with its key and the teacher's
+ * explanation (if any), so the result page can show the right answers once
+ * the attempt is submitted. The explanation is only ever sent here, never
+ * by stripQuestion.
  * @param {Array<Object>} items ordered bank items
  * @param {Object<string, Object>} answers questionId → answer
  * @return {{score: number, correct: number, total: number,
  *   review: Array<{questionId: string, answered: boolean,
- *   correct: boolean, correctAnswer: Object}>}}
+ *   correct: boolean, correctAnswer: Object, explanation: string}>}}
  */
 function scoreAttempt(items, answers) {
   const given = answers && typeof answers === "object" ? answers : {};
   const review = items.map((it) => {
     const answered = Object.prototype.hasOwnProperty.call(given, it.id);
     const check = checkAnswer(it, given[it.id]);
+    const q = it.question || {};
     return {
       questionId: it.id,
       answered,
       correct: check.correct,
       correctAnswer: check.correctAnswer,
+      explanation: String(q.explanation || ""),
     };
   });
   const correct = review.filter((r) => r.correct).length;
