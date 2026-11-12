@@ -39,9 +39,10 @@ edge cases, and any manual/deploy steps still required).
 - **Deploy needed (owner runs):** `firebase deploy --only firestore:rules,functions
   --project chinese-tracker`. Until then the old function ignores `peek`
   and exams behave like practice.
-- The old Android APK still calls `checkExerciseAnswer` per question: for
-  exam packages it now gets "Exams are checked only when you submit". Rebuild
-  the APK (`scripts/deploy_web.sh --apk`) when convenient.
+- The Android APK was rebuilt and deployed with this build
+  (`scripts/deploy_web.sh --apk`, 107 MB at `/downloads/easy-study.apk`), so
+  Android users get the end-of-exercise player and exam mode too. Owner
+  re-test PUB-05 still open.
 - Verified on the emulator: start screen, 1-minute countdown, auto-submit,
   "Already submitted" on reopen.
 
