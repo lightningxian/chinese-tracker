@@ -411,7 +411,9 @@ exports.linkChild = onCall(async (request) => {
 
   const callerRef = db.collection(USERS).doc(auth.uid);
   const callerSnap = await callerRef.get();
-  if (!callerSnap.exists || (callerSnap.data() || {}).role !== "parent") {
+  const callerData = callerSnap.data() || {};
+  if (!callerSnap.exists || callerData.role !== "parent" ||
+      callerData.active === false) {
     throw new HttpsError(
       "permission-denied",
       "Only parent accounts can link a child.",
@@ -474,7 +476,7 @@ exports.createInvoice = onCall(
     const caller = callerSnap.exists ? callerSnap.data() : {};
     const callerRole = (caller && caller.role) || "";
     const isStaff = callerRole === "admin" || callerRole === "teacher";
-    if (!isStaff) {
+    if (!isStaff || caller.active === false) {
       throw new HttpsError(
         "permission-denied",
         "Only staff can create invoices.",
@@ -525,7 +527,19 @@ exports.createInvoice = onCall(
       );
     }
 
-    const orderId = `ES-INV-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    // A linked voucher must be this student's (otherwise the payment would
+    // mark someone else's voucher paid).
+    if (classTermId) {
+      const termSnap = await db.collection(CLASS_TERMS).doc(classTermId).get();
+      if (!termSnap.exists || (termSnap.data() || {}).studentId !== studentId) {
+        throw new HttpsError(
+            "invalid-argument", "That voucher does not belong to this student.",
+        );
+      }
+    }
+
+    const orderId =
+      `ES-INV-${Date.now()}-${crypto.randomBytes(3).toString("hex")}`;
     const invoiceRef = db.collection(INVOICES).doc();
 
     await invoiceRef.set({
@@ -630,7 +644,7 @@ exports.createInvoice = onCall(
  * otherwise a new term is created. Book / registration / other credit nothing.
  * Returns what was credited, for the notification and the audit line.
  */
-function creditPaidInvoice(tx, invoiceRef, invoice, termValidDays) {
+function creditPaidInvoice(tx, invoiceRef, invoice, termValidDays, termSnap) {
   const sessions = Number(invoice.sessions);
   const credits = invoice.kind === "sessions" ?
     sessions > 0 :
@@ -641,8 +655,13 @@ function creditPaidInvoice(tx, invoiceRef, invoice, termValidDays) {
   if (!credits || !invoice.studentId) {
     return {invoice, packageSize: 0, book: true};
   }
-  if (invoice.classTermId) {
-    tx.update(db.collection(CLASS_TERMS).doc(invoice.classTermId), {
+  // The linked term was read by the caller before the first write (Firestore
+  // transactions read first). A term that was deleted meanwhile, or that
+  // belongs to another student, is ignored and a fresh term is created, so a
+  // settled payment never fails to credit.
+  if (termSnap && termSnap.exists &&
+      (termSnap.data() || {}).studentId === invoice.studentId) {
+    tx.update(termSnap.ref, {
       sourceInvoiceId: invoiceRef.id,
       paidAt: FieldValue.serverTimestamp(),
     });
@@ -665,6 +684,12 @@ function creditPaidInvoice(tx, invoiceRef, invoice, termValidDays) {
     createdAt: FieldValue.serverTimestamp(),
   });
   return {invoice, packageSize};
+}
+
+/** The voucher an invoice is linked to, read inside the transaction. */
+async function linkedTermSnap(tx, invoice) {
+  const id = String(invoice.classTermId || "").trim();
+  return id ? tx.get(db.collection(CLASS_TERMS).doc(id)) : null;
 }
 
 function paidAuditDetail(credited, ref) {
@@ -720,6 +745,7 @@ exports.markInvoicePaid = onCall(async (request) => {
           `This invoice is already ${invoice.status}.`,
       );
     }
+    const termSnap = await linkedTermSnap(tx, invoice);
     tx.update(invoiceRef, {
       status: "paid",
       paidAt: FieldValue.serverTimestamp(),
@@ -729,6 +755,7 @@ exports.markInvoicePaid = onCall(async (request) => {
     });
     credited = creditPaidInvoice(
         tx, invoiceRef, {...invoice, paymentMethod: method}, termValidDays,
+        termSnap,
     );
   });
 
@@ -796,7 +823,10 @@ exports.midtransNotification = onRequest(
       .update(`${orderId}${statusCode}${grossAmount}${serverKey}`)
       .digest("hex");
 
-    if (expected !== signatureKey) {
+    const expectedBuf = Buffer.from(expected, "utf8");
+    const givenBuf = Buffer.from(String(signatureKey), "utf8");
+    if (expectedBuf.length !== givenBuf.length ||
+        !crypto.timingSafeEqual(expectedBuf, givenBuf)) {
       logger.warn("midtransNotification: bad signature", {orderId});
       res.status(403).send("Invalid signature");
       return;
@@ -830,19 +860,38 @@ exports.midtransNotification = onRequest(
     // uncredited invoices (a transient failure after marking paid). Only the
     // transaction that performs the flip returns the payload to notify.
     let credited = null;
+    let amountMismatch = false;
     const {termValidDays} = await loadPricing();
     await db.runTransaction(async (tx) => {
       const snap = await tx.get(invoiceRef);
       const invoice = snap.data() || {};
       // Idempotent — don't reprocess a final invoice.
       if (invoice.status && invoice.status !== "pending") return;
+      // A settlement for a different amount than the invoice is not
+      // credited; it stays pending for the admin to look at.
+      if (newStatus === "paid" &&
+          Math.round(Number(grossAmount)) !== Math.round(Number(invoice.amount))) {
+        amountMismatch = true;
+        return;
+      }
+      const termSnap = newStatus === "paid" ?
+        await linkedTermSnap(tx, invoice) : null;
       tx.update(invoiceRef, {
         status: newStatus,
         ...(newStatus === "paid" ? {paidAt: FieldValue.serverTimestamp()} : {}),
       });
       if (newStatus !== "paid") return;
-      credited = creditPaidInvoice(tx, invoiceRef, invoice, termValidDays);
+      credited = creditPaidInvoice(
+          tx, invoiceRef, invoice, termValidDays, termSnap,
+      );
     });
+    if (amountMismatch) {
+      logger.error("midtransNotification: amount mismatch, not credited", {
+        orderId, grossAmount,
+      });
+      res.status(200).send("OK (amount mismatch, left pending)");
+      return;
+    }
 
     if (credited) {
       // Best-effort — the sessions are already credited atomically above.
@@ -1031,7 +1080,7 @@ exports.finishExercise = onCall(async (request) => {
   // student's exercise history; not enforced against the time limit).
   const duration = Number(data.durationSeconds);
   const durationSeconds = Number.isFinite(duration) && duration > 0 ?
-    Math.round(duration) : null;
+    Math.min(Math.round(duration), 24 * 3600) : null;
   // Type of exercise follows the first worksheet of the package.
   const first = items.find((it) => typeof it.category === "string");
   const category = first ? first.category : "exercise";
@@ -1077,7 +1126,10 @@ exports.deleteUserAccount = onCall(async (request) => {
 
   const batch = db.batch();
   batch.delete(db.collection(USERS).doc(targetUid));
-  batch.delete(db.collection(STUDENT_PROGRESS).doc(targetUid));
+  // Lesson progress is one doc per lesson with its own id.
+  const progress = await db.collection(STUDENT_PROGRESS)
+      .where("studentId", "==", targetUid).limit(400).get();
+  progress.docs.forEach((d) => batch.delete(d.ref));
   const assignments = await db.collection(EXERCISE_ASSIGNMENTS)
       .where("studentId", "==", targetUid).limit(400).get();
   assignments.docs.forEach((d) => batch.delete(d.ref));

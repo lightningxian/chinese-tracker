@@ -35,6 +35,10 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   parallel agents in worktrees, merged by key union; ~1,070 new keys),
   Language row on both staff profiles, `Intl.defaultLocale` follows the
   switch. See the change log for what stays English.
+- Night: full recheck (diff review + backend security review + emulator
+  walk of every role). Backend hardening in rules, storage rules and
+  functions (see the change log), rules tests 36 pass. **Owner to run**
+  `firebase deploy --only firestore:rules,functions --project chinese-tracker`.
 
 ## How to start on this PC
 

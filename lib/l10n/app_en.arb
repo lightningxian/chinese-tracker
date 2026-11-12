@@ -1761,5 +1761,7 @@
   "@activityTermAddedFor": {"placeholders": {"name": {"type": "String"}}},
   "activityTermAdded": "Term package added",
   "activityTermSubtitle": "{count} sessions · {start} → {end}",
-  "@activityTermSubtitle": {"placeholders": {"count": {"type": "int"}, "start": {"type": "String"}, "end": {"type": "String"}}}
+  "@activityTermSubtitle": {"placeholders": {"count": {"type": "int"}, "start": {"type": "String"}, "end": {"type": "String"}}},
+
+  "commonNoHskLevel": "No HSK level"
 }

@@ -137,7 +137,7 @@ class _StudentProfileTabState extends State<StudentProfileTab> {
         children: [
           ProfileHeaderCard(
             user: user,
-            subtitle: ProgressUtils.formatStudentLevel(user),
+            subtitle: ProgressUtils.formatStudentLevelLocalized(context.l10n, user),
             avatarColor: AppColors.teal,
             canEditPhoto: true,
             onPhotoChanged: (_) async {

@@ -1411,5 +1411,7 @@
   "activityClassConcluded": "Kelas ditutup",
   "activityTermAddedFor": "Paket periode ditambahkan untuk {name}",
   "activityTermAdded": "Paket periode ditambahkan",
-  "activityTermSubtitle": "{count} sesi · {start} → {end}"
+  "activityTermSubtitle": "{count} sesi · {start} → {end}",
+
+  "commonNoHskLevel": "Belum ada level HSK"
 }

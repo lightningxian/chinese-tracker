@@ -9,16 +9,22 @@ service firebase.storage {
       return firestore.get(/databases/(default)/documents/users/$(request.auth.uid));
     }
 
+    function isActive() {
+      return userDoc().data.get('active', true) == true;
+    }
+
     function isAdmin() {
-      return isSignedIn() && userDoc().data.role == 'admin';
+      return isSignedIn() && isActive() && userDoc().data.role == 'admin';
     }
 
     function isTeacher() {
-      return isSignedIn() && userDoc().data.role == 'teacher';
+      return isSignedIn() && isActive() && userDoc().data.role == 'teacher';
     }
 
+    // Raster images only: an SVG can carry scripts.
     function isImage() {
-      return request.resource.contentType.matches('image/.*');
+      return request.resource.contentType.matches('image/.*') &&
+        request.resource.contentType != 'image/svg+xml';
     }
 
     match /ocr_uploads/{teacherId}/{fileName} {

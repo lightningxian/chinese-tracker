@@ -240,3 +240,68 @@ describe("exercise results (written by finishExercise only)", () => {
     await assertFails(getDoc(doc(as("student1"), "exercise_results", "r_other")));
   });
 });
+
+describe("hardening 2026-11-12 (registration, invoices, attendance, quizzes)", () => {
+  const seedSession = (id, extra = {}) => env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), "class_sessions", id), {
+      teacherId: "teacher1", isOpen: true, isConcluded: false, sessionDate: "2026-11-12",
+      sessionTitle: "HSK 1", startMinutes: 600, endMinutes: 690, capacity: 8, ...extra,
+    });
+  });
+  const record = (sessionId, extra = {}) => ({
+    sessionId, studentId: "student1", teacherId: "teacher1", sessionDate: "2026-11-12",
+    sessionTitle: "HSK 1", startMinutes: 600, endMinutes: 690, attended: true, joinedBy: "student",
+    studentName: "Murid", sessionCredited: false, joinedAt: Timestamp.now(), ...extra,
+  });
+  const manual = {
+    invoiceNumber: "ES-INV-2-M1", studentId: "student1", studentName: "S", teacherId: "teacher1",
+    item: "package", description: "8 class sessions", packageSize: 8, priceItemId: "package8",
+    kind: "sessions", sessions: 8, amount: 2450000, currency: "IDR", status: "pending",
+    paymentMethod: "manual", dueDate: "2026-11-30", createdBy: "admin1", createdAt: Timestamp.now(),
+  };
+
+  it("a student cannot register under a made-up or deactivated teacher", async () => {
+    const base = { role: "student", email: "x@test", name: "X", active: true, level: "HSK 1", termSize: 8 };
+    await assertFails(setDoc(doc(as("newstudent"), "users", "newstudent"), { ...base, teacherId: "nobody" }));
+    await assertFails(setDoc(doc(as("newstudent"), "users", "newstudent"), { ...base, teacherId: "teacher2" }));
+    await assertSucceeds(setDoc(doc(as("newstudent"), "users", "newstudent"), { ...base, teacherId: "teacher1" }));
+  });
+  it("a student sets the child code once and cannot change it afterwards", async () => {
+    await assertSucceeds(updateDoc(doc(as("student1"), "users", "student1"), { parentCode: "ABCDEF" }));
+    await assertFails(updateDoc(doc(as("student1"), "users", "student1"), { parentCode: "AAAAAA" }));
+  });
+  it("a manual invoice cannot carry extra fields, inflated sessions or another student's voucher", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, "student_class_terms", "t_own"), { studentId: "student1", packageSize: 8, sessionsRemaining: 8, status: "active" });
+      await setDoc(doc(db, "student_class_terms", "t_other"), { studentId: "student9", packageSize: 8, sessionsRemaining: 8, status: "active" });
+    });
+    await assertFails(setDoc(doc(as("admin1"), "invoices", "h1"), { ...manual, midtransOrderId: "ES-INV-real" }));
+    await assertFails(setDoc(doc(as("admin1"), "invoices", "h2"), { ...manual, sessions: 999, packageSize: 999 }));
+    await assertFails(setDoc(doc(as("admin1"), "invoices", "h3"), { ...manual, classTermId: "t_other" }));
+    await assertFails(setDoc(doc(as("admin1"), "invoices", "h4"), { ...manual, classTermId: "t_missing" }));
+    await assertSucceeds(setDoc(doc(as("admin1"), "invoices", "h5"), { ...manual, classTermId: "t_own" }));
+    await assertSucceeds(setDoc(doc(as("admin1"), "invoices", "h6"), { ...manual, kind: "book", item: "book", sessions: 0, packageSize: 0 }));
+  });
+  it("a student joins a class only as sessionId_uid, without status or voucher fields", async () => {
+    await seedSession("s_open");
+    await assertFails(setDoc(doc(as("student1"), "attendance", "s_open_student1"), record("s_open", { attendanceStatus: "izin" })));
+    await assertFails(setDoc(doc(as("student1"), "attendance", "s_open_student1"), record("s_open", { classTermId: "t_own" })));
+    await assertFails(setDoc(doc(as("student1"), "attendance", "wrong_id"), record("s_open")));
+    await assertSucceeds(setDoc(doc(as("student1"), "attendance", "s_open_student1"), record("s_open")));
+  });
+  it("a student can leave an open class but not a concluded one", async () => {
+    await seedSession("s_open");
+    await seedSession("s_done", { isOpen: false, isConcluded: true });
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, "attendance", "s_open_student1"), record("s_open"));
+      await setDoc(doc(db, "attendance", "s_done_student1"), record("s_done", { sessionCredited: true, classTermId: "t_own" }));
+    });
+    await assertSucceeds(deleteDoc(doc(as("student1"), "attendance", "s_open_student1")));
+    await assertFails(deleteDoc(doc(as("student1"), "attendance", "s_done_student1")));
+  });
+  it("quiz results cannot be written from the app any more", async () => {
+    await assertFails(setDoc(doc(as("student1"), "quiz_results", "q1"), { studentId: "student1", score: 100 }));
+  });
+});

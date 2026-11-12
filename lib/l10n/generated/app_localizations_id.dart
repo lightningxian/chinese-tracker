@@ -5189,4 +5189,7 @@ class AppLocalizationsId extends AppLocalizations {
   String activityTermSubtitle(int count, String start, String end) {
     return '$count sesi · $start → $end';
   }
+
+  @override
+  String get commonNoHskLevel => 'Belum ada level HSK';
 }

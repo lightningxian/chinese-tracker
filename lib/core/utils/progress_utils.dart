@@ -1,3 +1,4 @@
+import '../../l10n/generated/app_localizations.dart';
 import '../../models/app_user.dart';
 import '../../models/exercise.dart';
 import '../../models/lesson.dart';
@@ -194,8 +195,16 @@ abstract final class ProgressUtils {
     return (scores.reduce((a, b) => a + b) / scores.length).round();
   }
 
+  /// English, for reports and CSV. Screens use [formatStudentLevelLocalized].
   static String formatStudentLevel(AppUser student) {
     final level = student.level ?? 'No HSK level';
     return '$level · ${student.lessonsPerTerm} lessons/term';
+  }
+
+  /// "HSK 1 · 8 pelajaran/periode" in the app language.
+  static String formatStudentLevelLocalized(
+      AppLocalizations l, AppUser student) {
+    final level = student.level ?? l.commonNoHskLevel;
+    return '$level · ${l.studentDetailLessonsPerTerm(student.lessonsPerTerm)}';
   }
 }

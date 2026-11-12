@@ -51,6 +51,22 @@ service cloud.firestore {
         userDoc().data.get('role', '') == 'parent';
     }
 
+    // The teacher a student registers under must be a real, active teacher
+    // (the link code itself is checked by resolveLinkCode before sign-up;
+    // this stops a profile written with a made-up or foreign teacherId).
+    function isActiveTeacher(uid) {
+      return uid is string && uid.size() > 0 &&
+        exists(/databases/$(database)/documents/users/$(uid)) &&
+        get(/databases/$(database)/documents/users/$(uid)).data.get('role', '') == 'teacher' &&
+        get(/databases/$(database)/documents/users/$(uid)).data.get('active', true) == true;
+    }
+
+    // The voucher an invoice is linked to must belong to the invoiced student.
+    function termBelongsTo(termId, studentId) {
+      return exists(/databases/$(database)/documents/student_class_terms/$(termId)) &&
+        get(/databases/$(database)/documents/student_class_terms/$(termId)).data.get('studentId', '') == studentId;
+    }
+
     // True when the caller is a parent linked to the given studentId.
     function isParentOf(studentId) {
       return isParent() &&
@@ -98,8 +114,7 @@ service cloud.firestore {
         data.get('name', '') is string &&
         data.get('active', true) == true &&
         (role != 'student' || (
-          data.get('teacherId', '') is string &&
-          data.get('teacherId', '').size() > 0 &&
+          isActiveTeacher(data.get('teacherId', '')) &&
           data.get('level', '') is string &&
           data.get('termSize', 0) in [8, 16]
         )) &&
@@ -120,6 +135,10 @@ service cloud.firestore {
         data.email == existing.email &&
         data.get('active', true) == existing.get('active', true) &&
         data.get('teacherId', '') == existing.get('teacherId', '') &&
+        // The child access code is set once (ensureParentCode) and never
+        // changed by the student afterwards.
+        (existing.get('parentCode', '') == '' ||
+          data.get('parentCode', '') == existing.get('parentCode', '')) &&
         // Child links are managed only by the linkChild Cloud Function.
         data.get('studentIds', []) == existing.get('studentIds', []) &&
         data.get('teacherIds', []) == existing.get('teacherIds', []);
@@ -167,7 +186,9 @@ service cloud.firestore {
         (isAdmin() && adminUserCreateValid())
       );
       allow update: if isSignedIn() && (
-        (request.auth.uid == userId && selfUserUpdateValid()) ||
+        (request.auth.uid == userId &&
+          resource.data.get('active', true) == true &&
+          selfUserUpdateValid()) ||
         isAdmin()
       );
     }
@@ -231,13 +252,28 @@ service cloud.firestore {
       // so the Snap token + order id are set atomically. Staff may record a
       // pending cash/transfer invoice directly; settling it is server-side
       // (markInvoicePaid callable), so update stays closed to clients.
+      // Only the fields createManualInvoice writes; packages are 8 or 16
+      // sessions (0 for a book / registration); a linked voucher must be the
+      // student's own. markInvoicePaid credits `sessions`, so a client must
+      // not be able to inflate it.
       allow create: if isStaff() &&
+        request.resource.data.keys().hasOnly([
+          'invoiceNumber', 'studentId', 'studentName', 'teacherId', 'item',
+          'description', 'packageSize', 'priceItemId', 'kind', 'sessions',
+          'amount', 'currency', 'status', 'paymentMethod', 'dueDate',
+          'classTermId', 'createdBy', 'createdAt'
+        ]) &&
         request.resource.data.get('status', '') == 'pending' &&
         request.resource.data.get('paymentMethod', '') == 'manual' &&
         request.resource.data.get('createdBy', '') == request.auth.uid &&
         request.resource.data.get('studentId', '') is string &&
         request.resource.data.get('amount', 0) is int &&
-        request.resource.data.amount > 0;
+        request.resource.data.amount > 0 &&
+        request.resource.data.get('kind', '') in ['sessions', 'book', 'registration', 'other'] &&
+        request.resource.data.get('sessions', 0) in [0, 8, 16] &&
+        request.resource.data.get('packageSize', 0) == request.resource.data.get('sessions', 0) &&
+        (!('classTermId' in request.resource.data) ||
+          termBelongsTo(request.resource.data.classTermId, request.resource.data.studentId));
       allow update: if false;
       allow delete: if isAdmin() && resource.data.get('status', '') == 'pending';
     }
@@ -342,8 +378,9 @@ service cloud.firestore {
         isStaff() ||
         isParentOf(resource.data.get('studentId', ''))
       );
-      allow create: if isSignedIn() &&
-        request.resource.data.studentId == request.auth.uid;
+      // Quizzes are no longer used (owner decision 2026-11-10); a client
+      // could otherwise write any score here. Closed 2026-11-12.
+      allow create: if false;
     }
 
     match /student_class_terms/{termId} {
@@ -372,8 +409,17 @@ service cloud.firestore {
         hasJoinedSession(resource.data.get('sessionId', '')) ||
         (isStudent() && sessionIsOpen(resource.data.get('sessionId', '')))
       );
+      // A student joins an open class under the id `sessionId_uid`, with
+      // only the fields joinSession writes: no attendance status (the
+      // teacher sets hadir / izin / alpa at conclude) and no voucher link.
       allow create: if isSignedIn() && (
         (request.auth.uid == request.resource.data.studentId &&
+          recordId == request.resource.data.sessionId + '_' + request.auth.uid &&
+          request.resource.data.keys().hasOnly([
+            'sessionId', 'studentId', 'teacherId', 'sessionDate', 'sessionTitle',
+            'startMinutes', 'endMinutes', 'attended', 'joinedBy', 'studentName',
+            'notes', 'sessionCredited', 'joinedAt'
+          ]) &&
           request.resource.data.get('joinedBy', '') == 'student' &&
           request.resource.data.get('attended', false) == true &&
           request.resource.data.get('sessionCredited', false) == false &&
@@ -383,10 +429,13 @@ service cloud.firestore {
           request.resource.data.get('sessionCredited', false) == false)
       );
       allow update: if isStaff();
+      // A student may leave only while the class is still open; after the
+      // conclude the record is the centre's attendance evidence.
       allow delete: if isSignedIn() && (
         isStaff() ||
         (resource.data.get('studentId', '') == request.auth.uid &&
-          resource.data.get('joinedBy', '') == 'student')
+          resource.data.get('joinedBy', '') == 'student' &&
+          sessionIsOpen(resource.data.get('sessionId', '')))
       );
     }
 

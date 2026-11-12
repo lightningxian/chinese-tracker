@@ -8401,6 +8401,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} sessions · {start} → {end}'**
   String activityTermSubtitle(int count, String start, String end);
+
+  /// No description provided for @commonNoHskLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'No HSK level'**
+  String get commonNoHskLevel;
 }
 
 class _AppLocalizationsDelegate

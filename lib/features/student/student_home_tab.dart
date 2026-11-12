@@ -133,7 +133,7 @@ class _HeroHeader extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          ProgressUtils.formatStudentLevel(student),
+          ProgressUtils.formatStudentLevelLocalized(context.l10n, student),
           style: TextStyle(color: AppColors.textSecondary),
         ),
       ],

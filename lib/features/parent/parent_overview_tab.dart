@@ -43,7 +43,7 @@ class ParentOverviewTab extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          ProgressUtils.formatStudentLevel(child),
+          ProgressUtils.formatStudentLevelLocalized(context.l10n, child),
           style: TextStyle(color: AppColors.textSecondary),
         ),
         const SizedBox(height: 20),

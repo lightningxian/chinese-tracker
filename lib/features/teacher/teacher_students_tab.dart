@@ -88,6 +88,7 @@ class TeacherStudentsTab extends StatelessWidget {
 
                                 final rosters =
                                     TeacherStatsUtils.buildStudentRosters(
+                                  l: context.l10n,
                                   students: students,
                                   progress: progressSnap.data ?? const [],
                                   assignments: assignmentsSnap.data ?? const [],

@@ -1,4 +1,5 @@
 import '../../core/constants/app_constants.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../../models/app_user.dart';
 import '../../models/attendance_record.dart';
 import '../../models/class_session.dart';
@@ -52,6 +53,7 @@ abstract final class TeacherStatsUtils {
   }
 
   static List<StudentRosterSummary> buildStudentRosters({
+    AppLocalizations? l,
     required List<AppUser> students,
     required List<StudentProgress> progress,
     required List<ExerciseAssignment> assignments,
@@ -132,7 +134,9 @@ abstract final class TeacherStatsUtils {
       return StudentRosterSummary(
         studentId: student.uid,
         name: student.name,
-        levelLabel: ProgressUtils.formatStudentLevel(student),
+        levelLabel: l == null
+            ? ProgressUtils.formatStudentLevel(student)
+            : ProgressUtils.formatStudentLevelLocalized(l, student),
         lessonsCompleted: ProgressUtils.totalCompleted(studentProgress),
         lessonsTotal: lessons.length,
         termProgressLabel: termProgressLabel,

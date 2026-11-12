@@ -6,6 +6,52 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-12 (night) — Claude: backend hardening after a full recheck
+
+**What changed**
+- `firestore.rules`: a student profile can only be created under an existing,
+  active teacher (`isActiveTeacher`); the child access code is set once and
+  cannot be changed by the student; a deactivated account cannot edit its own
+  profile; manual invoices accept only the fields `createManualInvoice`
+  writes, `sessions` in {0, 8, 16} equal to `packageSize`, and a linked
+  voucher that belongs to the invoiced student (`termBelongsTo`); a student
+  joins a class only as `sessionId_uid` with the join fields only (no
+  `attendanceStatus`, no `classTermId`) and may leave only while the class
+  is open; `quiz_results` has no client write (quizzes are unused).
+- `storage.rules`: deactivated staff cannot upload; SVG is refused as a
+  profile photo.
+- `functions/index.js`: a paid invoice linked to a voucher that was deleted
+  (or belongs to another student) now credits a fresh voucher instead of
+  failing the webhook transaction forever (`linkedTermSnap` read before the
+  first write); `createInvoice` refuses a voucher of another student and
+  inactive callers, and uses `crypto.randomBytes` for the order id;
+  `linkChild` refuses inactive parents; the Midtrans signature is compared
+  in constant time and a settlement whose `gross_amount` differs from the
+  invoice amount is left pending and logged; `durationSeconds` is capped at
+  24 h; `deleteUserAccount` deletes the student's per-lesson progress docs
+  (it deleted a non-existent `student_progress/{uid}` before).
+- Rules tests: 36 pass, 1 skipped (+6).
+- Client: the roster / profile level line ("HSK 1 · 8 pelajaran/periode")
+  follows the language (`ProgressUtils.formatStudentLevelLocalized`).
+
+**Why**
+- Owner asked for a full recheck on 2026-11-12. A backend review found that
+  a teacher could write an invoice for 999 sessions that an admin would then
+  credit, that a profile could be written with any teacherId, that a student
+  could pre-mark themselves "izin" or delete a concluded attendance record,
+  and that a settled payment could fail to credit after a voucher deletion.
+
+**For review**
+- **Deploy needed (owner runs):** `firebase deploy --only firestore:rules,functions
+  --project chinese-tracker` (ships this and the 2026-11-12 morning changes).
+- Not changed, recommended later: one-attempt exam mode (today a student can
+  submit, read the review and retake; `checkExerciseAnswer` is still
+  deployed for the old APK); App Check and rate limiting on the public
+  `resolveLinkCode` / `resolveChildCode`; `materials/{ownerId}` storage path
+  not scoped to the uploader; teachers may create notifications for any role.
+
+---
+
 ## 2026-11-12 (later) — Claude: Indonesian for admin, teacher and question bank screens
 
 **What changed**

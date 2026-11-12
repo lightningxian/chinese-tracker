@@ -5209,4 +5209,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String activityTermSubtitle(int count, String start, String end) {
     return '$count sessions · $start → $end';
   }
+
+  @override
+  String get commonNoHskLevel => 'No HSK level';
 }

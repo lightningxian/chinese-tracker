@@ -59,7 +59,7 @@ node --check functions/index.js
 
 # Firestore rules tests (needs Java 21: brew install openjdk@21)
 export PATH="/opt/homebrew/opt/openjdk@21/bin:$PATH"
-npm --prefix rules-tests run test:emulator      # 30 pass, 1 skipped (emulator limitation)
+npm --prefix rules-tests run test:emulator      # 36 pass, 1 skipped (emulator limitation)
 
 # Full emulator suite (auth 9099, firestore 8080, functions 5001, storage 9199, UI 4000)
 firebase emulators:start --project demo-chinese-tracker
