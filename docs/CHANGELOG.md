@@ -6,6 +6,47 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-13 — Claude: one-attempt exams with a server clock, rate-limited code resolvers
+
+**What changed**
+- **Exam mode.** A package whose first worksheet is of type Exam or HSK
+  Simulation allows one attempt. The player first calls `startExercise`
+  with `peek: true` and shows a start screen (type, title, one attempt,
+  time limit, question count); Start creates `exercise_attempts/{exerciseId}_{uid}`
+  with the server time and returns the questions plus `remainingSeconds`.
+  A reload resumes the same clock; a finished attempt shows "Already
+  submitted"; `finishExercise` closes the attempt (second submit refused)
+  and, when the answers arrive more than 3 minutes after the clock ran
+  out, scores 0 with `late: true` (review still returned). Practice
+  packages are unchanged (unlimited attempts, client clock).
+  `checkExerciseAnswer` refuses one-attempt packages, so it is no longer a
+  key oracle for exams. Rules: `exercise_attempts` readable by the student,
+  parent and staff, never written by clients. History shows "Late".
+- **Rate limiting.** `resolveLinkCode` and `resolveChildCode` (public,
+  pre-sign-in) allow 30 calls per 10 minutes per client address
+  (`rate_limits` counters, no client access, cleaned up hourly by
+  `cleanupExpiredLinkCodes`).
+- Rules tests 37 pass; function test covers `packageCategory` /
+  `isOneAttempt`.
+
+**Why**
+- Recommendation accepted by the owner 2026-11-12: with unlimited retakes a
+  student could submit, read the review and retake for 100%; the thesis test
+  codes need one supervised attempt. Child codes are permanent six-letter
+  codes; the resolver had no throttle.
+
+**For review**
+- **Deploy needed (owner runs):** `firebase deploy --only firestore:rules,functions
+  --project chinese-tracker`. Until then the old function ignores `peek`
+  and exams behave like practice.
+- The old Android APK still calls `checkExerciseAnswer` per question: for
+  exam packages it now gets "Exams are checked only when you submit". Rebuild
+  the APK (`scripts/deploy_web.sh --apk`) when convenient.
+- Verified on the emulator: start screen, 1-minute countdown, auto-submit,
+  "Already submitted" on reopen.
+
+---
+
 ## 2026-11-12 (night) — Claude: backend hardening after a full recheck
 
 **What changed**

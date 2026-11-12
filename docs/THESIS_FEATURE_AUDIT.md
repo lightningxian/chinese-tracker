@@ -80,9 +80,9 @@ demo data (the app has no emulator wiring yet).
 | | Count |
 |---|---|
 | Items in the spec (phases 1–9, rules, testing) | **70** |
-| Done | **8** |
+| Done | **9** |
 | Partly done (something exists, but not the way the spec wants it) | **23** |
-| Missing | **39** |
+| Missing | **38** |
 
 The app today is a working centre-management tool: accounts, one-off classes, 8/16-session terms, exercises, quizzes, grades, materials, Midtrans invoices, PDF reports. The thesis spec describes a different, more rigorous system on top of it: repeating schedules with conflict checks, booking, teacher check-in, server-side grading with a typing matcher, a final-score formula with promotion rules, a per-student progress summary, and push notifications. Almost all of that is new work.
 
@@ -200,10 +200,10 @@ Status per spec item. Evidence is `file:line` in this repo.
 | **P5** Question bank with form/topic/explanation/audio | Partly | Has type, level, skill, tags, difficulty, image/audio and, since 2026-11-12, an explanation shown in the review (`ExerciseQuestion.explanation`); no form code | question_bank |
 | P5 Question forms L1–L3, R1–R4, T1–T5 | Partly | R1 (fill in the blank), R2 (matching), R3 (passage + choice), R4 (order sentences, via compose), true/false and L3 (listening, no audio upload) exist and are detected by the worksheet scanner (2026-10-27); T1–T3 typing and picture forms missing (`exercise_type.dart`) | ExerciseType |
 | P5 Answer keys students cannot read | Done | Package keys stay in `question_bank` (staff-only read); `startExercise` strips them; old-format exercises are no longer playable (2026-11-12). Quizzes (unused) still carry keys | startExercise |
-| P5 Practice vs exam | Partly | Unlimited attempts, best score (`exercise_utils.dart`); since 2026-11-11 answers are checked at submit (not per question), a clock runs and a package can carry a time limit that auto-submits (`exercises.timeLimitMinutes`) | ExerciseScreen |
+| P5 Practice vs exam | Done | Practice: unlimited attempts, best score. Exam / HSK Simulation packages (type of the first worksheet): one attempt, start screen, server clock from `exercise_attempts`, late submit scored 0 (2026-11-13) | startExercise / finishExercise |
 | P5 Teacher builds and assigns packages | Partly | Exercises admin-only; teachers assign with due date (`firestore_service.dart:524-554`); per-lesson quizzes | exercise_assignments, quiz_editor |
 | P5 Exam format per level | Missing | Not found | — |
-| P5 Server-time deadline enforcement | Missing | `dueDate` checked in app only | — |
+| P5 Server-time deadline enforcement | Partly | Exam time limit enforced by the server clock (2026-11-13); assignment `dueDate` still checked in app only | finishExercise |
 | P5 gradeSubmission function | Partly | Packages are scored by `finishExercise` (server, returns the review, stores correct/total/time); old in-document exercises and quizzes still score in the app | finishExercise |
 | P5 Typing matcher | Missing | Not found | — |
 | P5 T5 essay grading screen | Missing | Generic manual gradebook only (`teacher_grades_tab.dart`) | Gradebook |

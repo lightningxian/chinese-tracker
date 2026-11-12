@@ -5212,4 +5212,44 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get commonNoHskLevel => 'No HSK level';
+
+  @override
+  String get exercisePlayExamIntroTitle => 'Before you start';
+
+  @override
+  String get exercisePlayOneAttempt =>
+      'You get one attempt. Once you submit, you cannot take it again.';
+
+  @override
+  String exercisePlayTimeLimit(int minutes) {
+    return 'Time limit: $minutes minutes. The clock keeps running if you close the page.';
+  }
+
+  @override
+  String exercisePlayQuestionCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count questions',
+      one: '1 question',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get exercisePlayStart => 'Start';
+
+  @override
+  String get exercisePlayAttemptUsedTitle => 'Already submitted';
+
+  @override
+  String get exercisePlayAttemptUsedSubtitle =>
+      'This exam allows one attempt. Your score is under Progress.';
+
+  @override
+  String get exercisePlayLateSubtitle =>
+      'Submitted after the time limit, so it was not scored.';
+
+  @override
+  String get resultLate => 'Late';
 }

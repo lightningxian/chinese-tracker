@@ -28,6 +28,7 @@ decisions. This app is also the owner's thesis project (see the thesis docs belo
 - **Quizzes and Levels (2026-11-10):** owner does not need them. Buttons removed from the Exercises tab; routes/screens still exist. The bank carries a **Type of exercise** per worksheet instead (`ExerciseCategory`: Exercise · Quiz · Exam · HSK Simulation).
 - **Exercise play (2026-11-11):** students answer every question first and submit once; `finishExercise` checks the whole attempt and returns the review. No per-answer function calls. A package may carry `timeLimitMinutes` (counts down, auto-submits).
 - **Parents (2026-11-11):** the parent is an optional add-on account linked by the child code. Invoices stay on the student; both the student and the linked parent see them and may pay. `linkChild` stamps `linkedParentUid`/`linkedParentName` on the student so the student's Payments tab can say who handles payments. Admin Users is split by role with chips.
+- **Exam mode (2026-11-13):** a package whose first worksheet is Exam or HSK Simulation is one attempt with a server clock (`exercise_attempts`, `startExercise` `peek` → start screen → `finishExercise` closes it; late = 0). Practice packages stay unlimited. `resolveLinkCode` / `resolveChildCode` are rate-limited per address.
 - **Scores (2026-11-12):** `exercise_results` is written only by `finishExercise`; the rules have no client write. Old-format exercises (questions inside the doc) cannot be played; the admin deletes them. Bank questions may carry an `explanation`, sent only with the review.
 - **Dark mode (2026-11-10):** `AppColors.*` are getters over the palette that is on (`AppPalette.light` / `.dark` in `lib/core/theme/app_theme.dart`, switched by `ThemeController`). Never write `const` in front of a widget or style that uses an `AppColors` value (the analyzer will refuse). A new colour goes into **both** palettes. The landing page keeps its own light `LandingBrand` tokens.
 
@@ -59,7 +60,7 @@ node --check functions/index.js
 
 # Firestore rules tests (needs Java 21: brew install openjdk@21)
 export PATH="/opt/homebrew/opt/openjdk@21/bin:$PATH"
-npm --prefix rules-tests run test:emulator      # 36 pass, 1 skipped (emulator limitation)
+npm --prefix rules-tests run test:emulator      # 37 pass, 1 skipped (emulator limitation)
 
 # Full emulator suite (auth 9099, firestore 8080, functions 5001, storage 9199, UI 4000)
 firebase emulators:start --project demo-chinese-tracker

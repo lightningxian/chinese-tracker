@@ -39,6 +39,7 @@ class ExerciseResultTile extends StatelessWidget {
       if (result.hasCounts) l.resultCorrectOf(result.correct!, result.total!),
       if (result.durationSeconds != null)
         ExerciseUtils.formatClock(result.durationSeconds),
+      if (result.late) l.resultLate,
     ].join(' · ');
 
     return AppCard(

@@ -1,6 +1,7 @@
 import 'package:cloud_functions/cloud_functions.dart';
 
 import '../models/exercise.dart';
+import '../models/exercise_category.dart';
 import '../models/exercise_type.dart';
 
 /// Thrown by [ExercisePlayService.start] for an exercise made before the
@@ -125,6 +126,41 @@ class AnswerCheck {
   }
 }
 
+/// What the player knows before fetching the questions (`startExercise`
+/// with `peek`): exams and HSK simulations allow one attempt and show a
+/// start screen first.
+class ExercisePeek {
+  const ExercisePeek({
+    required this.category,
+    required this.oneAttempt,
+    required this.questionCount,
+    this.timeLimitMinutes,
+    this.started = false,
+    this.finished = false,
+    this.remainingSeconds,
+  });
+
+  final ExerciseCategory category;
+  final bool oneAttempt;
+  final int questionCount;
+  final int? timeLimitMinutes;
+
+  /// One-attempt only: the clock already runs (reload) / the attempt is over.
+  final bool started;
+  final bool finished;
+  final int? remainingSeconds;
+
+  factory ExercisePeek.fromServer(Map<String, dynamic> m) => ExercisePeek(
+        category: ExerciseCategory.fromValue(m['category'] as String?),
+        oneAttempt: m['oneAttempt'] == true,
+        questionCount: (m['questionCount'] as num?)?.toInt() ?? 0,
+        timeLimitMinutes: (m['timeLimitMinutes'] as num?)?.toInt(),
+        started: m['started'] == true,
+        finished: m['finished'] == true,
+        remainingSeconds: (m['remainingSeconds'] as num?)?.toInt(),
+      );
+}
+
 class PlayResult {
   const PlayResult({
     required this.score,
@@ -132,12 +168,16 @@ class PlayResult {
     required this.total,
     this.durationSeconds,
     this.review = const {},
+    this.late = false,
   });
 
   final int score;
   final int correct;
   final int total;
   final int? durationSeconds;
+
+  /// One-attempt exam submitted after the server clock ran out: not scored.
+  final bool late;
 
   /// Review by question id, in no particular order: the screen walks its
   /// own question list.
@@ -150,6 +190,10 @@ abstract class ExercisePlaySession {
   Exercise get exercise;
   List<PlayQuestion> get questions;
   String get passage;
+
+  /// Seconds left on the server clock of a one-attempt exam, else null (the
+  /// player then uses the package's own time limit from the start).
+  int? get remainingSeconds;
 
   /// Answers given so far, by question id (read-only view).
   Map<String, PlayAnswer> get answers;
@@ -168,9 +212,22 @@ class ExercisePlayService {
 
   final FirebaseFunctions _functions;
 
-  /// Asks `startExercise` for the questions. Throws
-  /// [FirebaseFunctionsException] (`permission-denied` when the exercise is
-  /// not assigned to the student) or [LegacyExerciseException].
+  /// What the exercise is, without fetching the questions or starting the
+  /// clock of a one-attempt exam.
+  Future<ExercisePeek> peek(Exercise exercise) async {
+    if (!exercise.isPackage) throw const LegacyExerciseException();
+    final result = await _functions
+        .httpsCallable('startExercise')
+        .call({'exerciseId': exercise.id, 'peek': true});
+    return ExercisePeek.fromServer(
+        Map<String, dynamic>.from(result.data as Map));
+  }
+
+  /// Asks `startExercise` for the questions (and starts the server clock of
+  /// a one-attempt exam). Throws [FirebaseFunctionsException]
+  /// (`permission-denied` when the exercise is not assigned to the student,
+  /// `failed-precondition` with details `reason: already-attempted`) or
+  /// [LegacyExerciseException].
   Future<ExercisePlaySession> start(Exercise exercise) async {
     if (!exercise.isPackage) throw const LegacyExerciseException();
     final result = await _functions
@@ -178,11 +235,13 @@ class ExercisePlayService {
         .call({'exerciseId': exercise.id});
     final data = Map<String, dynamic>.from(result.data as Map);
     final questions = (data['questions'] as List? ?? const [])
-        .map((q) => PlayQuestion.fromServer(Map<String, dynamic>.from(q as Map)))
+        .map(
+            (q) => PlayQuestion.fromServer(Map<String, dynamic>.from(q as Map)))
         .toList();
     return _ServerSession(
       exercise: exercise,
       questions: questions,
+      remainingSeconds: (data['remainingSeconds'] as num?)?.toInt(),
       functions: _functions,
     );
   }
@@ -211,6 +270,7 @@ class _ServerSession extends _AnswerStore {
   _ServerSession({
     required this.exercise,
     required this.questions,
+    required this.remainingSeconds,
     required FirebaseFunctions functions,
   }) : _functions = functions;
 
@@ -218,6 +278,8 @@ class _ServerSession extends _AnswerStore {
   final Exercise exercise;
   @override
   final List<PlayQuestion> questions;
+  @override
+  final int? remainingSeconds;
   @override
   String get passage => exercise.passage;
 
@@ -245,6 +307,7 @@ class _ServerSession extends _AnswerStore {
       total: (m['total'] as num?)?.toInt() ?? questions.length,
       durationSeconds: durationSeconds,
       review: review,
+      late: m['late'] == true,
     );
   }
 }

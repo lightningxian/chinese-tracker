@@ -8407,6 +8407,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No HSK level'**
   String get commonNoHskLevel;
+
+  /// No description provided for @exercisePlayExamIntroTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Before you start'**
+  String get exercisePlayExamIntroTitle;
+
+  /// No description provided for @exercisePlayOneAttempt.
+  ///
+  /// In en, this message translates to:
+  /// **'You get one attempt. Once you submit, you cannot take it again.'**
+  String get exercisePlayOneAttempt;
+
+  /// No description provided for @exercisePlayTimeLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Time limit: {minutes} minutes. The clock keeps running if you close the page.'**
+  String exercisePlayTimeLimit(int minutes);
+
+  /// No description provided for @exercisePlayQuestionCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 question} other{{count} questions}}'**
+  String exercisePlayQuestionCount(int count);
+
+  /// No description provided for @exercisePlayStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get exercisePlayStart;
+
+  /// No description provided for @exercisePlayAttemptUsedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Already submitted'**
+  String get exercisePlayAttemptUsedTitle;
+
+  /// No description provided for @exercisePlayAttemptUsedSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This exam allows one attempt. Your score is under Progress.'**
+  String get exercisePlayAttemptUsedSubtitle;
+
+  /// No description provided for @exercisePlayLateSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Submitted after the time limit, so it was not scored.'**
+  String get exercisePlayLateSubtitle;
+
+  /// No description provided for @resultLate.
+  ///
+  /// In en, this message translates to:
+  /// **'Late'**
+  String get resultLate;
 }
 
 class _AppLocalizationsDelegate

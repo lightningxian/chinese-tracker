@@ -16,6 +16,8 @@ const LINK_CODES = "teacher_link_codes";
 const USERS = "users";
 const NOTIFICATIONS = "notifications";
 const EXERCISE_RESULTS = "exercise_results";
+const EXERCISE_ATTEMPTS = "exercise_attempts";
+const RATE_LIMITS = "rate_limits";
 const EXERCISES = "exercises";
 const INVOICES = "invoices";
 const CLASS_TERMS = "student_class_terms";
@@ -138,6 +140,7 @@ async function writeAudit(entry) {
  * account yet, so this must work without `request.auth`.
  */
 exports.resolveLinkCode = onCall(async (request) => {
+  await throttle(request, "link", 30, 10 * 60 * 1000);
   const code = normalizeCode(request.data && request.data.code);
   if (code.length < 4) {
     throw new HttpsError(
@@ -340,15 +343,25 @@ exports.cleanupExpiredLinkCodes = onSchedule("every 60 minutes", async () => {
     .limit(500)
     .get();
 
-  if (snap.empty) {
+  const stale = await db
+    .collection(RATE_LIMITS)
+    .where("updatedAt", "<", Timestamp.fromMillis(Date.now() - 86400000))
+    .limit(400)
+    .get();
+
+  if (snap.empty && stale.empty) {
     logger.info("cleanupExpiredLinkCodes: nothing to delete");
     return;
   }
 
   const batch = db.batch();
   snap.docs.forEach((doc) => batch.delete(doc.ref));
+  stale.docs.forEach((doc) => batch.delete(doc.ref));
   await batch.commit();
-  logger.info(`cleanupExpiredLinkCodes: deleted ${snap.size} codes`);
+  logger.info(
+      `cleanupExpiredLinkCodes: deleted ${snap.size} codes, ` +
+      `${stale.size} rate-limit counters`,
+  );
 });
 
 /**
@@ -359,6 +372,7 @@ exports.cleanupExpiredLinkCodes = onSchedule("every 60 minutes", async () => {
  * and so the `users` collection stays closed to code enumeration.
  */
 exports.resolveChildCode = onCall(async (request) => {
+  await throttle(request, "child", 30, 10 * 60 * 1000);
   const code = normalizeCode(request.data && request.data.code);
   if (code.length < 4) {
     throw new HttpsError(
@@ -972,6 +986,70 @@ const exportClient = new firestoreAdminV1.FirestoreAdminClient();
 // `question_bank` themselves (rules: staff only).
 // ---------------------------------------------------------------------------
 
+/** Client address behind the Cloud Run proxy, for rate limiting only. */
+function clientIp(request) {
+  const raw = request.rawRequest || {};
+  const fwd = raw.headers && raw.headers["x-forwarded-for"];
+  const first = typeof fwd === "string" ? fwd.split(",")[0].trim() : "";
+  return first || raw.ip || "unknown";
+}
+
+/**
+ * At most `max` calls per `windowMs` per client for `bucket` (the public
+ * code resolvers, which run before sign-in and could otherwise be used to
+ * guess codes). Counters live in `rate_limits` (no client access) and are
+ * cleaned up by cleanupExpiredLinkCodes.
+ */
+async function throttle(request, bucket, max, windowMs) {
+  const key = crypto.createHash("sha256")
+      .update(`${bucket}:${clientIp(request)}`).digest("hex").slice(0, 24);
+  const ref = db.collection(RATE_LIMITS).doc(key);
+  const now = Date.now();
+  const blocked = await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const d = snap.exists ? snap.data() || {} : {};
+    const start = typeof d.windowStart === "number" ? d.windowStart : 0;
+    const inWindow = now - start < windowMs;
+    const count = inWindow ? Number(d.count) || 0 : 0;
+    if (count >= max) return true;
+    tx.set(ref, {
+      bucket,
+      count: count + 1,
+      windowStart: inWindow ? start : now,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+    return false;
+  });
+  if (blocked) {
+    throw new HttpsError(
+        "resource-exhausted", "Too many attempts. Try again in a few minutes.",
+    );
+  }
+}
+
+/** Seconds allowed for a package, or null when it has no time limit. */
+function timeLimitSeconds(exercise) {
+  const minutes = Number(exercise.timeLimitMinutes);
+  return Number.isFinite(minutes) && minutes > 0 ? Math.round(minutes * 60) : null;
+}
+
+/** Seconds left on an attempt's server clock, or null without a limit. */
+function remainingSecondsOf(attempt, limitSeconds) {
+  if (!limitSeconds) return null;
+  const started = attempt.startedAt && typeof attempt.startedAt.toMillis === "function" ?
+    attempt.startedAt.toMillis() : Date.now();
+  return Math.max(0, limitSeconds - Math.round((Date.now() - started) / 1000));
+}
+
+/** Submitted more than three minutes after the clock ran out. */
+const LATE_GRACE_SECONDS = 180;
+function isLate(attempt, limitSeconds) {
+  if (!limitSeconds) return false;
+  const started = attempt.startedAt && typeof attempt.startedAt.toMillis === "function" ?
+    attempt.startedAt.toMillis() : Date.now();
+  return Date.now() > started + (limitSeconds + LATE_GRACE_SECONDS) * 1000;
+}
+
 /** Loads the signed-in caller's profile or throws. */
 async function requireCaller(request) {
   const auth = request.auth;
@@ -1039,14 +1117,70 @@ async function loadPackageItems(exercise) {
 
 exports.startExercise = onCall(async (request) => {
   const {uid} = await requireCaller(request);
-  const exerciseId = String((request.data || {}).exerciseId || "").trim();
+  const data = request.data || {};
+  const exerciseId = String(data.exerciseId || "").trim();
   const exercise = await loadAssignedPackage(exerciseId, uid);
   const items = await loadPackageItems(exercise);
-  return {
+  const category = play.packageCategory(items);
+  const oneAttempt = play.isOneAttempt(category);
+  const limitSeconds = timeLimitSeconds(exercise);
+  const attemptRef = db.collection(EXERCISE_ATTEMPTS).doc(`${exerciseId}_${uid}`);
+  const meta = {
     exerciseId,
     title: exercise.title || "",
     instructions: exercise.instructions || "",
+    category,
+    oneAttempt,
+    timeLimitMinutes: limitSeconds ? Math.round(limitSeconds / 60) : null,
+    questionCount: items.length,
+  };
+
+  // `peek`: what the player shows before the student starts (exams show a
+  // start screen first, so the clock does not run while they read it).
+  if (data.peek === true) {
+    const snap = oneAttempt ? await attemptRef.get() : null;
+    const attempt = snap && snap.exists ? snap.data() || {} : null;
+    return {
+      ...meta,
+      started: attempt !== null,
+      finished: !!(attempt && attempt.finishedAt),
+      remainingSeconds: attempt ? remainingSecondsOf(attempt, limitSeconds) : null,
+    };
+  }
+
+  let remainingSeconds = null;
+  if (oneAttempt) {
+    // One attempt: the first start writes the attempt with the server time;
+    // a reload resumes the same clock; a finished attempt cannot be reopened.
+    const attempt = await db.runTransaction(async (tx) => {
+      const snap = await tx.get(attemptRef);
+      if (snap.exists) {
+        const existing = snap.data() || {};
+        if (existing.finishedAt) {
+          throw new HttpsError(
+              "failed-precondition", "This exam allows one attempt.",
+              {reason: "already-attempted"},
+          );
+        }
+        return existing;
+      }
+      const fresh = {
+        studentId: uid,
+        exerciseId,
+        category,
+        startedAt: FieldValue.serverTimestamp(),
+        ...(limitSeconds ? {timeLimitSeconds: limitSeconds} : {}),
+      };
+      tx.set(attemptRef, fresh);
+      return {...fresh, startedAt: Timestamp.now()};
+    });
+    remainingSeconds = remainingSecondsOf(attempt, limitSeconds);
+  }
+
+  return {
+    ...meta,
     questions: items.map(play.stripQuestion),
+    remainingSeconds,
   };
 });
 
@@ -1060,6 +1194,12 @@ exports.checkExerciseAnswer = onCall(async (request) => {
   }
   const exercise = await loadAssignedPackage(exerciseId, uid);
   const items = await loadPackageItems(exercise);
+  // Never a key oracle for a one-attempt exam.
+  if (play.isOneAttempt(play.packageCategory(items))) {
+    throw new HttpsError(
+        "permission-denied", "Exams are checked only when you submit.",
+    );
+  }
   const item = items.find((it) => it.id === questionId);
   if (!item) {
     throw new HttpsError("not-found", "This question is not in the exercise.");
@@ -1075,15 +1215,50 @@ exports.finishExercise = onCall(async (request) => {
   const items = await loadPackageItems(exercise);
   const answers = data.answers && typeof data.answers === "object" ?
     data.answers : {};
-  const result = play.scoreAttempt(items, answers);
+  // Type of exercise follows the first worksheet of the package.
+  const category = play.packageCategory(items);
+  const oneAttempt = play.isOneAttempt(category);
+  const limitSeconds = timeLimitSeconds(exercise);
+
+  // One attempt: close it (no second submit) and apply the server clock.
+  let late = false;
+  if (oneAttempt) {
+    const attemptRef =
+      db.collection(EXERCISE_ATTEMPTS).doc(`${exerciseId}_${uid}`);
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(attemptRef);
+      if (!snap.exists) {
+        throw new HttpsError(
+            "failed-precondition", "Start the exam first.",
+            {reason: "not-started"},
+        );
+      }
+      const attempt = snap.data() || {};
+      if (attempt.finishedAt) {
+        throw new HttpsError(
+            "failed-precondition", "This exam allows one attempt.",
+            {reason: "already-attempted"},
+        );
+      }
+      late = isLate(attempt, limitSeconds);
+      tx.update(attemptRef, {
+        finishedAt: FieldValue.serverTimestamp(),
+        ...(late ? {late: true} : {}),
+      });
+    });
+  }
+
+  const scored = play.scoreAttempt(items, answers);
+  // Answers that arrive after the clock (plus grace) are not counted; the
+  // review is still returned so the student sees the keys.
+  const result = late ?
+    {score: 0, correct: 0, total: scored.total, review: scored.review} :
+    scored;
   // Seconds the student spent, as measured by the app (shown in the
-  // student's exercise history; not enforced against the time limit).
+  // student's exercise history; the time limit is enforced above).
   const duration = Number(data.durationSeconds);
   const durationSeconds = Number.isFinite(duration) && duration > 0 ?
     Math.min(Math.round(duration), 24 * 3600) : null;
-  // Type of exercise follows the first worksheet of the package.
-  const first = items.find((it) => typeof it.category === "string");
-  const category = first ? first.category : "exercise";
   await db.collection(EXERCISE_RESULTS).add({
     studentId: uid,
     exerciseId,
@@ -1093,10 +1268,11 @@ exports.finishExercise = onCall(async (request) => {
     correct: result.correct,
     total: result.total,
     ...(durationSeconds === null ? {} : {durationSeconds}),
+    ...(late ? {late: true} : {}),
     scoredBy: "server",
     submittedAt: FieldValue.serverTimestamp(),
   });
-  return result;
+  return {...result, late};
 });
 
 /**

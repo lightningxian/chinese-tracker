@@ -1413,5 +1413,15 @@
   "activityTermAdded": "Paket periode ditambahkan",
   "activityTermSubtitle": "{count} sesi · {start} → {end}",
 
-  "commonNoHskLevel": "Belum ada level HSK"
+  "commonNoHskLevel": "Belum ada level HSK",
+
+  "exercisePlayExamIntroTitle": "Sebelum mulai",
+  "exercisePlayOneAttempt": "Anda hanya punya satu kesempatan. Setelah dikirim, tidak bisa diulang.",
+  "exercisePlayTimeLimit": "Batas waktu: {minutes} menit. Waktu terus berjalan walau halaman ditutup.",
+  "exercisePlayQuestionCount": "{count, plural, other{{count} soal}}",
+  "exercisePlayStart": "Mulai",
+  "exercisePlayAttemptUsedTitle": "Sudah dikirim",
+  "exercisePlayAttemptUsedSubtitle": "Ujian ini hanya satu kesempatan. Skor Anda ada di Kemajuan.",
+  "exercisePlayLateSubtitle": "Dikirim setelah batas waktu, jadi tidak dinilai.",
+  "resultLate": "Terlambat"
 }

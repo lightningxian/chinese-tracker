@@ -13,6 +13,17 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-13 — Claude: exam mode, rate limits
+
+- Owner: "go for it" on the recommendation list. Built one-attempt exams
+  with a server clock (Exam / HSK Simulation packages), closed the exam key
+  oracle, rate-limited the public code resolvers. Change log has the detail.
+- **Owner to run:** `firebase deploy --only firestore:rules,functions --project
+  chinese-tracker`; then rebuild the APK when convenient.
+- Not done (needs the owner or a decision): App Check (console setup),
+  web push reminders (VAPID key from the console), teachers building
+  packages (owner's earlier decision keeps authoring admin-only).
+
 ### 2026-11-12 — Claude: scores locked to the server, explanations
 
 - Owner deployed yesterday's functions, then approved the recommendation list

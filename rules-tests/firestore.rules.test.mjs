@@ -301,6 +301,18 @@ describe("hardening 2026-11-12 (registration, invoices, attendance, quizzes)", (
     await assertSucceeds(deleteDoc(doc(as("student1"), "attendance", "s_open_student1")));
     await assertFails(deleteDoc(doc(as("student1"), "attendance", "s_done_student1")));
   });
+  it("exam attempts are readable by the student, parent and staff, never written", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "exercise_attempts", "e1_student1"), { studentId: "student1", exerciseId: "e1", category: "exam" });
+    });
+    await assertSucceeds(getDoc(doc(as("student1"), "exercise_attempts", "e1_student1")));
+    await assertSucceeds(getDoc(doc(as("parent1"), "exercise_attempts", "e1_student1")));
+    await assertSucceeds(getDoc(doc(as("teacher1"), "exercise_attempts", "e1_student1")));
+    await assertFails(getDoc(doc(as("student9"), "exercise_attempts", "e1_student1")));
+    await assertFails(updateDoc(doc(as("student1"), "exercise_attempts", "e1_student1"), { finishedAt: null }));
+    await assertFails(setDoc(doc(as("student1"), "exercise_attempts", "e2_student1"), { studentId: "student1", exerciseId: "e2" }));
+    await assertFails(getDoc(doc(as("student1"), "rate_limits", "abc")));
+  });
   it("quiz results cannot be written from the app any more", async () => {
     await assertFails(setDoc(doc(as("student1"), "quiz_results", "q1"), { studentId: "student1", score: 100 }));
   });

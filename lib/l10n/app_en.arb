@@ -1763,5 +1763,17 @@
   "activityTermSubtitle": "{count} sessions · {start} → {end}",
   "@activityTermSubtitle": {"placeholders": {"count": {"type": "int"}, "start": {"type": "String"}, "end": {"type": "String"}}},
 
-  "commonNoHskLevel": "No HSK level"
+  "commonNoHskLevel": "No HSK level",
+
+  "exercisePlayExamIntroTitle": "Before you start",
+  "exercisePlayOneAttempt": "You get one attempt. Once you submit, you cannot take it again.",
+  "exercisePlayTimeLimit": "Time limit: {minutes} minutes. The clock keeps running if you close the page.",
+  "@exercisePlayTimeLimit": {"placeholders": {"minutes": {"type": "int"}}},
+  "exercisePlayQuestionCount": "{count, plural, =1{1 question} other{{count} questions}}",
+  "@exercisePlayQuestionCount": {"placeholders": {"count": {"type": "int"}}},
+  "exercisePlayStart": "Start",
+  "exercisePlayAttemptUsedTitle": "Already submitted",
+  "exercisePlayAttemptUsedSubtitle": "This exam allows one attempt. Your score is under Progress.",
+  "exercisePlayLateSubtitle": "Submitted after the time limit, so it was not scored.",
+  "resultLate": "Late"
 }

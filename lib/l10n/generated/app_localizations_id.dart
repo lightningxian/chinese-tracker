@@ -5192,4 +5192,43 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get commonNoHskLevel => 'Belum ada level HSK';
+
+  @override
+  String get exercisePlayExamIntroTitle => 'Sebelum mulai';
+
+  @override
+  String get exercisePlayOneAttempt =>
+      'Anda hanya punya satu kesempatan. Setelah dikirim, tidak bisa diulang.';
+
+  @override
+  String exercisePlayTimeLimit(int minutes) {
+    return 'Batas waktu: $minutes menit. Waktu terus berjalan walau halaman ditutup.';
+  }
+
+  @override
+  String exercisePlayQuestionCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count soal',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get exercisePlayStart => 'Mulai';
+
+  @override
+  String get exercisePlayAttemptUsedTitle => 'Sudah dikirim';
+
+  @override
+  String get exercisePlayAttemptUsedSubtitle =>
+      'Ujian ini hanya satu kesempatan. Skor Anda ada di Kemajuan.';
+
+  @override
+  String get exercisePlayLateSubtitle =>
+      'Dikirim setelah batas waktu, jadi tidak dinilai.';
+
+  @override
+  String get resultLate => 'Terlambat';
 }

@@ -19,6 +19,7 @@ class ExerciseResult {
     this.durationSeconds,
     this.exerciseTitle,
     this.category,
+    this.late = false,
   });
 
   final String id;
@@ -41,6 +42,9 @@ class ExerciseResult {
   /// Type of exercise of the package's first worksheet.
   final ExerciseCategory? category;
 
+  /// One-attempt exam submitted after its clock ran out: scored 0.
+  final bool late;
+
   bool get hasCounts => correct != null && total != null && total! > 0;
 
   factory ExerciseResult.fromFirestore(
@@ -60,6 +64,7 @@ class ExerciseResult {
       exerciseTitle: data['exerciseTitle'] as String?,
       category:
           category is String ? ExerciseCategory.fromValue(category) : null,
+      late: data['late'] == true,
     );
   }
 }

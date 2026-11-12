@@ -10,6 +10,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/exercise_utils.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/confetti_burst.dart';
+import '../../core/widgets/exercise_category_chip.dart';
 import '../../core/widgets/score_summary.dart';
 import '../../l10n/l10n.dart';
 import '../../models/exercise.dart';
@@ -43,6 +44,13 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   bool _loading = true;
   String? _loadError;
 
+  /// One-attempt exam: the attempt is over (opened again, or submitted twice).
+  bool _attemptUsed = false;
+
+  /// One-attempt exam not started yet: the start screen is showing.
+  ExercisePeek? _peek;
+  Exercise? _pendingExercise;
+
   int _currentIndex = 0;
   int? _selectedIndex;
   List<String> _composeOrder = [];
@@ -66,6 +74,9 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   PlayQuestion get _question => _questions[_currentIndex];
 
   int? get _limitSeconds {
+    // One-attempt exams: the server clock (survives a reload).
+    final remaining = _session?.remainingSeconds;
+    if (remaining != null) return remaining;
     final minutes = _exercise?.timeLimitMinutes;
     return minutes == null || minutes <= 0 ? null : minutes * 60;
   }
@@ -102,16 +113,36 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
       }
 
       final exercise = await firestore.getExercise(widget.exerciseId);
-      final session =
-          exercise == null ? null : await ExercisePlayService().start(exercise);
-      if (!mounted) return;
-      setState(() {
-        _session = session;
-        _loading = false;
-        _currentIndex = 0;
-        _loadQuestionState();
-      });
-      if (session != null && session.questions.isNotEmpty) _startClock();
+      if (exercise == null) {
+        if (!mounted) return;
+        setState(() {
+          _session = null;
+          _loading = false;
+        });
+        return;
+      }
+      if (exercise.isPackage) {
+        final peek = await ExercisePlayService().peek(exercise);
+        if (!mounted) return;
+        if (peek.oneAttempt && peek.finished) {
+          setState(() {
+            _attemptUsed = true;
+            _loading = false;
+          });
+          return;
+        }
+        if (peek.oneAttempt && !peek.started) {
+          // Exams start on the student's go, so the clock does not run
+          // while they read the start screen.
+          setState(() {
+            _peek = peek;
+            _pendingExercise = exercise;
+            _loading = false;
+          });
+          return;
+        }
+      }
+      await _openSession(exercise);
     } on LegacyExerciseException {
       if (!mounted) return;
       setState(() {
@@ -120,11 +151,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
       });
     } on FirebaseFunctionsException catch (e) {
       if (!mounted) return;
-      setState(() {
-        _loading = false;
-        _notAssigned = e.code == 'permission-denied';
-        _loadError = e.message;
-      });
+      _showLoadFailure(e);
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -132,6 +159,50 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
         _loadError = '$e';
       });
     }
+  }
+
+  /// Fetches the questions and starts the clock.
+  Future<void> _openSession(Exercise exercise) async {
+    final session = await ExercisePlayService().start(exercise);
+    if (!mounted) return;
+    setState(() {
+      _session = session;
+      _peek = null;
+      _loading = false;
+      _currentIndex = 0;
+      _loadQuestionState();
+    });
+    if (session.questions.isNotEmpty) _startClock();
+  }
+
+  /// Start button of the exam start screen.
+  Future<void> _startExam() async {
+    final exercise = _pendingExercise;
+    if (exercise == null || _loading) return;
+    setState(() => _loading = true);
+    try {
+      await _openSession(exercise);
+    } on FirebaseFunctionsException catch (e) {
+      if (!mounted) return;
+      _showLoadFailure(e);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _loadError = '$e';
+      });
+    }
+  }
+
+  void _showLoadFailure(FirebaseFunctionsException e) {
+    final details = e.details;
+    final used = details is Map && details['reason'] == 'already-attempted';
+    setState(() {
+      _loading = false;
+      _attemptUsed = used;
+      _notAssigned = e.code == 'permission-denied';
+      _loadError = used ? null : e.message;
+    });
   }
 
   void _startClock() {
@@ -307,7 +378,9 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     final showClock = _session != null && _questions.isNotEmpty;
     return Scaffold(
       appBar: AppBar(
-        title: Text(_exercise?.title ?? l.commonExerciseFallback),
+        title: Text(_exercise?.title ??
+            _pendingExercise?.title ??
+            l.commonExerciseFallback),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
@@ -335,27 +408,101 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                       title: l.exercisePlayLegacyTitle,
                       subtitle: l.exercisePlayLegacySubtitle,
                     )
-              : _loadError != null
-                  ? EmptyState(
-                      icon: Icons.cloud_off_outlined,
-                      title: l.exercisePlayLoadFailedTitle,
-                      subtitle: _loadError!,
-                    )
-                  : _session == null
+                  : _attemptUsed
                       ? EmptyState(
-                          icon: Icons.fitness_center_outlined,
-                          title: l.exercisePlayNotFoundTitle,
-                          subtitle: l.exercisePlayNotFoundSubtitle,
+                          icon: Icons.task_alt,
+                          title: l.exercisePlayAttemptUsedTitle,
+                          subtitle: l.exercisePlayAttemptUsedSubtitle,
                         )
-                      : _questions.isEmpty
-                          ? EmptyState(
-                              icon: Icons.fitness_center_outlined,
-                              title: l.exercisePlayNoQuestionsTitle,
-                              subtitle: l.exercisePlayNoQuestionsSubtitle,
-                            )
-                          : _finished
-                              ? _buildResult()
-                              : _buildQuestion(),
+                      : _peek != null && _session == null
+                          ? _buildIntro()
+                          : _loadError != null
+                              ? EmptyState(
+                                  icon: Icons.cloud_off_outlined,
+                                  title: l.exercisePlayLoadFailedTitle,
+                                  subtitle: _loadError!,
+                                )
+                              : _session == null
+                                  ? EmptyState(
+                                      icon: Icons.fitness_center_outlined,
+                                      title: l.exercisePlayNotFoundTitle,
+                                      subtitle: l.exercisePlayNotFoundSubtitle,
+                                    )
+                                  : _questions.isEmpty
+                                      ? EmptyState(
+                                          icon: Icons.fitness_center_outlined,
+                                          title: l.exercisePlayNoQuestionsTitle,
+                                          subtitle:
+                                              l.exercisePlayNoQuestionsSubtitle,
+                                        )
+                                      : _finished
+                                          ? _buildResult()
+                                          : _buildQuestion(),
+    );
+  }
+
+  /// Start screen of a one-attempt exam: what it is, how long, one go.
+  Widget _buildIntro() {
+    final l = context.l10n;
+    final peek = _peek!;
+    final exercise = _pendingExercise!;
+    final minutes = peek.timeLimitMinutes;
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: AppCard(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ExerciseCategoryChip(category: peek.category),
+                const SizedBox(height: 10),
+                Text(
+                  exercise.title,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.navy,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  l.exercisePlayExamIntroTitle,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _IntroLine(
+                  icon: Icons.looks_one_outlined,
+                  text: l.exercisePlayOneAttempt,
+                ),
+                if (minutes != null)
+                  _IntroLine(
+                    icon: Icons.timer_outlined,
+                    text: l.exercisePlayTimeLimit(minutes),
+                  ),
+                _IntroLine(
+                  icon: Icons.list_alt_outlined,
+                  text: l.exercisePlayQuestionCount(peek.questionCount),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: _startExam,
+                    icon: const Icon(Icons.play_arrow_rounded),
+                    label: Text(l.exercisePlayStart),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -396,7 +543,11 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
       correctCount: result.correct,
       totalCount: result.total,
       primaryLabel: l.exercisePlayDone,
-      subtitle: _timeUp ? l.exercisePlayTimeUpSubtitle : _exercise!.title,
+      subtitle: result.late
+          ? l.exercisePlayLateSubtitle
+          : _timeUp
+              ? l.exercisePlayTimeUpSubtitle
+              : _exercise!.title,
       timeLabel: ExerciseUtils.formatClock(result.durationSeconds),
       onPrimaryPressed: () => context.pop(),
       // No review when the server did not send one (older function build).
@@ -1100,6 +1251,28 @@ class _ReviewTile extends StatelessWidget {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _IntroLine extends StatelessWidget {
+  const _IntroLine({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 20, color: AppColors.teal),
+          const SizedBox(width: 10),
+          Expanded(child: Text(text, style: const TextStyle(height: 1.4))),
         ],
       ),
     );

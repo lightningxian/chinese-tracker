@@ -60,4 +60,13 @@ assert.strictEqual(scored.review[0].explanation, "很 + verb of feeling, no 是.
 assert.strictEqual(scored.review[1].explanation, "", "no explanation -> empty string");
 assert.deepStrictEqual(play.scoreAttempt([], null), {score: 0, correct: 0, total: 0, review: []});
 
+// Exams and HSK simulations are one attempt; the category follows the first
+// worksheet that has one.
+assert.strictEqual(play.packageCategory([compose, {...mc, category: "exam"}]), "exam");
+assert.strictEqual(play.packageCategory([mc]), "exercise");
+assert.strictEqual(play.isOneAttempt("exam"), true);
+assert.strictEqual(play.isOneAttempt("hsk_simulation"), true);
+assert.strictEqual(play.isOneAttempt("quiz"), false);
+assert.strictEqual(play.isOneAttempt(undefined), false);
+
 console.log("exercise_play: all checks passed");

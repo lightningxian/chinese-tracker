@@ -371,6 +371,16 @@ service cloud.firestore {
         request.resource.data.studentId == request.auth.uid;
     }
 
+    match /exercise_attempts/{attemptId} {
+      // One-attempt exams: written only by startExercise / finishExercise.
+      allow read: if isSignedIn() && (
+        resource == null ||
+        resource.data.studentId == request.auth.uid ||
+        isStaff() ||
+        isParentOf(resource.data.get('studentId', ''))
+      );
+    }
+
     match /quiz_results/{resultId} {
       allow read: if isSignedIn() && (
         resource == null ||

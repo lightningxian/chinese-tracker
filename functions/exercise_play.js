@@ -192,7 +192,22 @@ function scoreAttempt(items, answers) {
   return {score, correct, total, review};
 }
 
+/** Categories that allow a single attempt with a server-side clock. */
+const ONE_ATTEMPT = new Set(["exam", "hsk_simulation"]);
+
+/** Type of exercise of a package: its first worksheet's, else "exercise". */
+function packageCategory(items) {
+  const first = items.find((it) => typeof it.category === "string" && it.category);
+  return first ? first.category : "exercise";
+}
+
+function isOneAttempt(category) {
+  return ONE_ATTEMPT.has(String(category || ""));
+}
+
 module.exports = {
+  packageCategory,
+  isOneAttempt,
   orderPackageItems,
   stripQuestion,
   checkAnswer,
