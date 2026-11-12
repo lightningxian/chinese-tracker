@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/stat_card.dart';
+import '../../l10n/l10n.dart';
 import '../../models/app_user.dart';
 import '../../models/student_class_term.dart';
 import '../../services/admin_report_service.dart';
@@ -55,6 +56,7 @@ class MonthlyStudentsChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (months.isEmpty) return const SizedBox.shrink();
+    final l = context.l10n;
 
     final maxCount = months.fold<int>(
       1,
@@ -70,7 +72,7 @@ class MonthlyStudentsChart extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'New students / month',
+                  l.adminDashNewStudentsPerMonth,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: AppColors.navy,
@@ -152,12 +154,13 @@ class AdminQuickActionsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Quick actions',
+            l.adminDashQuickActions,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: AppColors.navy,
@@ -172,7 +175,7 @@ class AdminQuickActionsCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               icon: const Icon(Icons.add, size: 18),
-              label: const Text('New exercise'),
+              label: Text(l.adminDashNewExercise),
             ),
             const SizedBox(height: 8),
           ],
@@ -183,7 +186,7 @@ class AdminQuickActionsCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
             icon: const Icon(Icons.calendar_today_outlined, size: 18),
-            label: const Text('New class'),
+            label: Text(l.adminDashNewClass),
           ),
         ],
       ),
@@ -204,12 +207,12 @@ class AdminVoucherAlert {
 
   bool get depleted => sessionsRemaining == 0;
 
-  String get title => depleted
-      ? '${student.name} — voucher depleted'
-      : '${student.name} — low balance';
+  String title(AppLocalizations l) => depleted
+      ? l.adminDashVoucherDepleted(student.name)
+      : l.adminDashVoucherLowBalance(student.name);
 
-  String get subtitle =>
-      '$sessionsRemaining session${sessionsRemaining == 1 ? '' : 's'} remaining';
+  String subtitle(AppLocalizations l) =>
+      l.studentPaymentsSessionsRemaining(sessionsRemaining);
 
   Color get accentColor => depleted ? AppColors.error : AppColors.teal;
 }
@@ -259,6 +262,7 @@ class AdminAttentionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return AppCard(
       onTap: onTap,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -284,7 +288,7 @@ class AdminAttentionCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    alert.title,
+                    alert.title(l),
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
@@ -293,7 +297,7 @@ class AdminAttentionCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    alert.subtitle,
+                    alert.subtitle(l),
                     style: TextStyle(
                       fontSize: 12,
                       color: AppColors.textSecondary,

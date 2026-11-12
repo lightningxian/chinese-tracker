@@ -4,6 +4,8 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/question_import_utils.dart';
 import '../../core/utils/worksheet_answer_keys.dart';
 import '../../core/widgets/app_card.dart';
+import '../../l10n/l10n.dart';
+import '../../l10n/labels_exercises.dart';
 import '../../models/exercise_type.dart';
 
 enum WorksheetImportReviewAction { cancel, instructionsOnly, importQuestions }
@@ -84,22 +86,18 @@ class _WorksheetImportReviewScreenState
   /// Whether the admin has to supply answers for this type of question.
   bool get _needsAnswers => _selectedType != ExerciseType.pictureSentence;
 
-  String? get _answerKeyNote {
+  String? _answerKeyNote(AppLocalizations l) {
     if (_previewCount == 0 || !_needsAnswers) return null;
     if (_keyedAnswers > 0) {
       final code = _parsed.sheetCode;
-      return 'Answer key: $_keyedAnswers of $_previewCount answers filled '
-          'from the centre\'s sample set${code == null ? '' : ' ($code)'}.';
+      return code == null
+          ? l.worksheetAnswerKeyFilled(_keyedAnswers, _previewCount)
+          : l.worksheetAnswerKeyFilledCode(_keyedAnswers, _previewCount, code);
     }
     return switch (_selectedType) {
-      ExerciseType.composeSentences =>
-        'No answer key on this sheet: the sentences keep the order shown on '
-            'the sheet. Put the words in the correct order in the question bank.',
-      ExerciseType.typeHanzi =>
-        'No answer key on this sheet: add the accepted hanzi for each item in '
-            'the question bank.',
-      _ => 'No answer key on this sheet: every answer is set to A (the first '
-          'option). Correct them in the question bank.',
+      ExerciseType.composeSentences => l.worksheetNoKeyCompose,
+      ExerciseType.typeHanzi => l.worksheetNoKeyTypeHanzi,
+      _ => l.worksheetNoKeyDefault,
     };
   }
 
@@ -156,12 +154,14 @@ class _WorksheetImportReviewScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final isWide = MediaQuery.sizeOf(context).width >= 720;
+    final answerKeyNote = _answerKeyNote(l);
 
     return Scaffold(
       backgroundColor: AppColors.surface,
       appBar: AppBar(
-        title: const Text('Review import'),
+        title: Text(l.worksheetReviewTitle),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => _pop(WorksheetImportReviewAction.cancel),
@@ -204,7 +204,7 @@ class _WorksheetImportReviewScreenState
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Detected format',
+                            l.worksheetDetectedFormat,
                             style: TextStyle(
                               fontWeight: FontWeight.w700,
                               color: AppColors.navy,
@@ -225,14 +225,14 @@ class _WorksheetImportReviewScreenState
                       if (_parsed.suggestedLevel != null) ...[
                         const SizedBox(height: 6),
                         Text(
-                          'Suggested level: ${_parsed.suggestedLevel}',
+                          l.worksheetSuggestedLevel(_parsed.suggestedLevel!),
                           style: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 12,
                           ),
                         ),
                       ],
-                      if (_answerKeyNote != null) ...[
+                      if (answerKeyNote != null) ...[
                         const SizedBox(height: 8),
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -249,7 +249,7 @@ class _WorksheetImportReviewScreenState
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
-                                _answerKeyNote!,
+                                answerKeyNote,
                                 style: TextStyle(
                                   color: _keyedAnswers > 0
                                       ? AppColors.navy
@@ -285,8 +285,7 @@ class _WorksheetImportReviewScreenState
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            'This exercise type is not fully supported yet. '
-                            'You can still copy instructions or edit the text.',
+                            l.worksheetTypeNotSupported,
                             style: TextStyle(
                               color: AppColors.error,
                               fontSize: 13,
@@ -327,12 +326,12 @@ class _WorksheetImportReviewScreenState
                   TextButton(
                     onPressed: () =>
                         _pop(WorksheetImportReviewAction.instructionsOnly),
-                    child: const Text('Instructions only'),
+                    child: Text(l.worksheetInstructionsOnly),
                   ),
                   const Spacer(),
                   TextButton(
                     onPressed: () => _pop(WorksheetImportReviewAction.cancel),
-                    child: const Text('Cancel'),
+                    child: Text(l.commonCancel),
                   ),
                   const SizedBox(width: 8),
                   FilledButton(
@@ -349,8 +348,8 @@ class _WorksheetImportReviewScreenState
                     ),
                     child: Text(
                       _previewCount > 0
-                          ? 'Import $_previewCount question${_previewCount == 1 ? '' : 's'}'
-                          : 'Import questions',
+                          ? l.worksheetImportCount(_previewCount)
+                          : l.worksheetImportQuestions,
                     ),
                   ),
                 ],
@@ -363,20 +362,21 @@ class _WorksheetImportReviewScreenState
   }
 
   Widget _buildEditorColumn() {
+    final l = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         DropdownButtonFormField<ExerciseType>(
           value: _selectedType,
-          decoration: const InputDecoration(
-            labelText: 'Exercise type',
+          decoration: InputDecoration(
+            labelText: l.worksheetExerciseType,
             isDense: true,
           ),
           items: ExerciseType.values
               .map(
                 (type) => DropdownMenuItem(
                   value: type,
-                  child: Text(type.label),
+                  child: Text(type.localized(l)),
                 ),
               )
               .toList(),
@@ -390,8 +390,8 @@ class _WorksheetImportReviewScreenState
           controller: _instructionsController,
           minLines: 2,
           maxLines: 4,
-          decoration: const InputDecoration(
-            labelText: 'Instructions (optional)',
+          decoration: InputDecoration(
+            labelText: l.packageFormInstructionsOptional,
             alignLabelWithHint: true,
           ),
         ),
@@ -401,9 +401,9 @@ class _WorksheetImportReviewScreenState
           minLines: 8,
           maxLines: 14,
           style: AppTextStyles.question.copyWith(fontSize: 16),
-          decoration: const InputDecoration(
-            labelText: 'Extracted text',
-            hintText: 'Edit if OCR misread anything…',
+          decoration: InputDecoration(
+            labelText: l.worksheetExtractedText,
+            hintText: l.worksheetEditIfMisread,
             alignLabelWithHint: true,
           ),
         ),
@@ -413,7 +413,7 @@ class _WorksheetImportReviewScreenState
           child: TextButton.icon(
             onPressed: _reanalyze,
             icon: const Icon(Icons.refresh, size: 18),
-            label: const Text('Re-analyze'),
+            label: Text(l.worksheetReanalyze),
           ),
         ),
       ],
@@ -421,14 +421,15 @@ class _WorksheetImportReviewScreenState
   }
 
   Widget _buildPreviewColumn() {
+    final l = context.l10n;
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             _selectedType == ExerciseType.composeSentences
-                ? 'Sentence preview'
-                : 'Question preview',
+                ? l.worksheetSentencePreview
+                : l.worksheetQuestionPreview,
             style: TextStyle(
               fontWeight: FontWeight.w700,
               color: AppColors.navy,
@@ -437,7 +438,7 @@ class _WorksheetImportReviewScreenState
           const SizedBox(height: 12),
           if (_previewCount == 0)
             Text(
-              'No questions detected yet. Edit the text and tap Re-analyze.',
+              l.worksheetNoQuestionsDetected,
               style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
             )
           else
@@ -446,7 +447,7 @@ class _WorksheetImportReviewScreenState
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text(
-                '…and ${_previewCount - 5} more',
+                l.worksheetAndMore(_previewCount - 5),
                 style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 12,
@@ -481,13 +482,19 @@ class _WorksheetImportReviewScreenState
         ),
       );
     }
+    final l = context.l10n;
     final question = _parsed.mcQuestions[index];
     final optionPreview = switch (_selectedType) {
-      ExerciseType.typeHanzi =>
-        'pinyin: ${question.keyword} → ${question.options.isEmpty ? '(type the hanzi in the editor)' : question.options.join(' / ')}',
-      ExerciseType.pictureSentence => 'keyword: ${question.keyword}',
+      ExerciseType.typeHanzi => l.worksheetPreviewPinyin(
+          question.keyword,
+          question.options.isEmpty
+              ? l.worksheetPreviewTypeInEditor
+              : question.options.join(' / '),
+        ),
+      ExerciseType.pictureSentence =>
+        l.worksheetPreviewKeyword(question.keyword),
       _ => question.options.isEmpty
-          ? '(add options)'
+          ? l.worksheetPreviewAddOptions
           : question.options.take(3).join(' · '),
     };
     return Padding(

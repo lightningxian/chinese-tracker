@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/l10n.dart';
 import '../constants/app_constants.dart';
 import '../theme/app_theme.dart';
 import 'theme_toggle.dart';
@@ -266,7 +267,7 @@ class _AppSidebar extends StatelessWidget {
                 onPressed: onSignOut,
                 icon: Icon(Icons.logout, size: 16, color: AppColors.error),
                 label: Text(
-                  'Sign out',
+                  context.l10n.commonSignOut,
                   style: TextStyle(
                     color: AppColors.error,
                     fontSize: 12,
@@ -399,7 +400,7 @@ class _AppTopBar extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.arrow_back, size: 20),
               color: AppColors.navy,
-              tooltip: 'Back',
+              tooltip: context.l10n.appShellBack,
               onPressed: onBack,
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
@@ -617,7 +618,7 @@ class _FigmaMobileAppBar extends StatelessWidget
               child: onBack != null
                   ? IconButton(
                       icon: Icon(Icons.arrow_back, color: AppColors.navy),
-                      tooltip: 'Back',
+                      tooltip: context.l10n.appShellBack,
                       onPressed: onBack,
                     )
                   : Row(

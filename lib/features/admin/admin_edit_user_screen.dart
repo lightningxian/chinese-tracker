@@ -8,6 +8,8 @@ import '../../core/widgets/app_card.dart';
 import '../../core/widgets/class_term_widgets.dart';
 import '../../core/widgets/profile_widgets.dart';
 import '../../core/widgets/shell_nested_page.dart';
+import '../../l10n/l10n.dart';
+import '../../l10n/labels_admin.dart';
 import '../../models/app_user.dart';
 import '../../services/firestore_service.dart';
 
@@ -63,7 +65,7 @@ class _AdminEditUserScreenState extends State<AdminEditUserScreen> {
     if (user == null) {
       setState(() {
         _loading = false;
-        _error = 'User not found';
+        _error = context.l10n.adminUserFormNotFound;
       });
       return;
     }
@@ -105,7 +107,8 @@ class _AdminEditUserScreenState extends State<AdminEditUserScreen> {
           );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$indonesian updated')),
+          SnackBar(
+              content: Text(context.l10n.adminUserFormUpdated(indonesian))),
         );
         context.pop();
       }
@@ -119,16 +122,19 @@ class _AdminEditUserScreenState extends State<AdminEditUserScreen> {
   @override
   Widget build(BuildContext context) {
     final user = _user;
+    final l = context.l10n;
 
     return ShellNestedPage(
       embedded: widget.embedded,
-      title: user == null ? 'Edit user' : 'Edit ${user.roleDisplayLabel}',
+      title: user == null
+          ? l.adminUserFormEditTitle
+          : l.adminUserFormEditRole(user.roleLocalized(l)),
       child: _loading
           ? const Center(child: CircularProgressIndicator())
           : user == null
               ? Center(
                   child: Text(
-                    _error ?? 'User not found',
+                    _error ?? l.adminUserFormNotFound,
                     style: TextStyle(color: AppColors.error),
                   ),
                 )
@@ -173,7 +179,7 @@ class _AdminEditUserScreenState extends State<AdminEditUserScreen> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             Text(
-                              'Profile details',
+                              l.adminUserFormProfileDetails,
                               style: Theme.of(context)
                                   .textTheme
                                   .titleSmall
@@ -185,8 +191,7 @@ class _AdminEditUserScreenState extends State<AdminEditUserScreen> {
                             if (user.isStudent) ...[
                               const SizedBox(height: 4),
                               Text(
-                                'Change HSK level to control which practice '
-                                'exercises this murid can access.',
+                                l.adminUserFormHskHint,
                                 style: TextStyle(
                                   color: AppColors.textSecondary,
                                   fontSize: 13,

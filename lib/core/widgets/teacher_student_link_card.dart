@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../theme/app_theme.dart';
+import '../../l10n/l10n.dart';
 import '../../models/teacher_link_code.dart';
 import '../../services/teacher_link_code_service.dart';
 import 'app_card.dart';
@@ -77,7 +78,7 @@ class _TeacherStudentLinkCardState extends State<TeacherStudentLinkCard> {
     await Clipboard.setData(ClipboardData(text: code));
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Link code copied')),
+      SnackBar(content: Text(context.l10n.linkCardCopied)),
     );
   }
 
@@ -91,12 +92,13 @@ class _TeacherStudentLinkCardState extends State<TeacherStudentLinkCard> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Student linking',
+            l.linkCardTitle,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: AppColors.navy,
@@ -104,7 +106,7 @@ class _TeacherStudentLinkCardState extends State<TeacherStudentLinkCard> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Share this code when a murid registers. It refreshes every 15 minutes.',
+            l.linkCardBody,
             style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 13,
@@ -145,7 +147,7 @@ class _TeacherStudentLinkCardState extends State<TeacherStudentLinkCard> {
                     ),
                   ),
                   IconButton(
-                    tooltip: 'Copy code',
+                    tooltip: l.linkCardCopyTooltip,
                     onPressed: _copyCode,
                     icon: Icon(Icons.copy_outlined, color: AppColors.navy),
                   ),
@@ -218,7 +220,7 @@ class _CountdownLabelState extends State<_CountdownLabel> {
   @override
   Widget build(BuildContext context) {
     return Text(
-      'Refreshes in ${widget.formatRemaining(_remaining)}',
+      context.l10n.linkCardRefreshesIn(widget.formatRemaining(_remaining)),
       style: TextStyle(
         color: AppColors.textSecondary,
         fontSize: 12,

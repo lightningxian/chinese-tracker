@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 
 class StatusPill extends StatelessWidget {
@@ -34,24 +35,42 @@ class StatusPill extends StatelessWidget {
   }
 }
 
+/// A [StatusPill] whose label is looked up from the UI language at build
+/// time, so the [StatusPills] helpers can stay context-free.
+class _LocalizedStatusPill extends StatusPill {
+  const _LocalizedStatusPill({required this.resolve, required super.color})
+      : super(label: '');
+
+  final String Function(AppLocalizations l) resolve;
+
+  @override
+  Widget build(BuildContext context) {
+    return StatusPill(
+      label: resolve(context.l10n),
+      color: color,
+      backgroundColor: backgroundColor,
+    );
+  }
+}
+
 class StatusPills {
-  static StatusPill open() => StatusPill(
-        label: 'Open',
+  static StatusPill open() => _LocalizedStatusPill(
+        resolve: (l) => l.statusPillOpen,
         color: AppColors.success,
       );
 
-  static StatusPill closed() => StatusPill(
-        label: 'Closed',
+  static StatusPill closed() => _LocalizedStatusPill(
+        resolve: (l) => l.statusPillClosed,
         color: AppColors.textSecondary,
       );
 
-  static StatusPill full() => StatusPill(
-        label: 'Full',
+  static StatusPill full() => _LocalizedStatusPill(
+        resolve: (l) => l.commonFull,
         color: AppColors.error,
       );
 
-  static StatusPill concluded() => StatusPill(
-        label: 'Concluded',
+  static StatusPill concluded() => _LocalizedStatusPill(
+        resolve: (l) => l.statusPillConcluded,
         color: AppColors.navy,
       );
 }

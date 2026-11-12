@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 
 import '../constants/app_constants.dart';
 import '../theme/app_theme.dart';
+import '../../l10n/l10n.dart';
+import '../../l10n/labels_admin.dart';
 import '../../models/attendance_record.dart';
 import '../../models/invoice.dart';
 import '../../models/student_class_term.dart';
@@ -25,6 +27,7 @@ Future<({DateTime start, DateTime deadline})?> _pickTermDates(
   required DateTime initialStart,
   required DateTime initialDeadline,
 }) async {
+  final l = context.l10n;
   var start = initialStart;
   var deadline = initialDeadline;
 
@@ -58,20 +61,20 @@ Future<({DateTime start, DateTime deadline})?> _pickTermDates(
         }
 
         return AlertDialog(
-          title: const Text('Term dates'),
+          title: Text(l.termDatesTitle),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Start date'),
+                title: Text(l.termStartDate),
                 subtitle: Text(_formatDateKey(start)),
                 trailing: const Icon(Icons.calendar_today_outlined),
                 onTap: pickStart,
               ),
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Deadline date'),
+                title: Text(l.termDeadlineDate),
                 subtitle: Text(_formatDateKey(deadline)),
                 trailing: const Icon(Icons.event_outlined),
                 onTap: pickDeadline,
@@ -81,12 +84,12 @@ Future<({DateTime start, DateTime deadline})?> _pickTermDates(
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
+              child: Text(l.commonCancel),
             ),
             FilledButton(
               onPressed: () =>
                   Navigator.pop(ctx, (start: start, deadline: deadline)),
-              child: const Text('Save'),
+              child: Text(l.termSave),
             ),
           ],
         );
@@ -117,6 +120,7 @@ class ClassTermBalanceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final firestore = context.read<FirestoreService>();
+    final l = context.l10n;
     final remaining = firestore.totalRemainingClassSessions(terms);
     final activeTerms =
         terms.where((t) => t.isActive && t.isWithinTermDates).toList();
@@ -164,9 +168,7 @@ class ClassTermBalanceCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      remaining == 1
-                          ? 'Class meeting left this term'
-                          : 'Class meetings left this term',
+                      l.termMeetingsLeftTitle(remaining),
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 16,
@@ -177,7 +179,7 @@ class ClassTermBalanceCard extends StatelessWidget {
                     const SizedBox(height: 6),
                     if (isEmpty)
                       Text(
-                        'No paid sessions left. Ask your teacher to add a new term.',
+                        l.termNoPaidSessions,
                         style: TextStyle(
                           color: AppColors.error,
                           fontSize: 13,
@@ -186,8 +188,11 @@ class ClassTermBalanceCard extends StatelessWidget {
                       )
                     else if (primary != null) ...[
                       Text(
-                        '${primary.sessionsUsed} used · '
-                        '${primary.sessionsRemaining} remaining of ${primary.packageSize}',
+                        l.termUsedRemaining(
+                          primary.sessionsUsed,
+                          primary.sessionsRemaining,
+                          primary.packageSize,
+                        ),
                         style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 13,
@@ -195,7 +200,7 @@ class ClassTermBalanceCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Valid until ${_displayDate(primary.deadlineDate)}',
+                        l.termValidUntil(_displayDate(primary.deadlineDate)),
                         style: TextStyle(
                           color: accent,
                           fontWeight: FontWeight.w600,
@@ -205,8 +210,8 @@ class ClassTermBalanceCard extends StatelessWidget {
                     ] else
                       Text(
                         activePackages == 0
-                            ? 'No active term in the current date range.'
-                            : '$activePackages active package${activePackages == 1 ? '' : 's'}',
+                            ? l.termNoActiveInRange
+                            : l.termActivePackages(activePackages),
                         style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 13,
@@ -214,7 +219,7 @@ class ClassTermBalanceCard extends StatelessWidget {
                       ),
                     const SizedBox(height: 6),
                     Text(
-                      'One session is charged when your teacher concludes each class.',
+                      l.termChargedOnConclude,
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,
@@ -250,7 +255,7 @@ class ClassTermBalanceCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '$remaining class session${remaining == 1 ? '' : 's'} left',
+                      l.termSessionsLeft(remaining),
                       style: const TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 18,
@@ -258,8 +263,8 @@ class ClassTermBalanceCard extends StatelessWidget {
                     ),
                     Text(
                       activePackages == 0
-                          ? 'No active term in date range'
-                          : '$activePackages active package${activePackages == 1 ? '' : 's'}',
+                          ? l.termNoActiveInRangeShort
+                          : l.termActivePackages(activePackages),
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 13,
@@ -267,7 +272,7 @@ class ClassTermBalanceCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Sessions deduct when the teacher concludes a class.',
+                      l.termDeductOnConclude,
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,
@@ -289,13 +294,16 @@ class ClassTermBalanceCard extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        '${term.packageSize}-session · '
-                        '${_displayDate(term.startDate)} – ${_displayDate(term.deadlineDate)}',
+                        l.termRowLabel(
+                          term.packageSize,
+                          _displayDate(term.startDate),
+                          _displayDate(term.deadlineDate),
+                        ),
                         style: const TextStyle(fontSize: 13),
                       ),
                     ),
                     Text(
-                      '${term.sessionsRemaining} left',
+                      l.historyRemaining(term.sessionsRemaining),
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -331,21 +339,21 @@ class ClassTermPackagesList extends StatelessWidget {
   final Map<String, Invoice> invoicesById;
   final bool allowManage;
 
-  (String, Color) _paymentLine(StudentClassTerm term) {
+  (String, Color) _paymentLine(AppLocalizations l, StudentClassTerm term) {
     final inv = invoicesById[term.sourceInvoiceId];
     if (inv == null) {
-      return ('No payment recorded', AppColors.textSecondary);
+      return (l.termNoPaymentRecorded, AppColors.textSecondary);
     }
     if (inv.isPaid) {
       final when = inv.paidAt == null
           ? ''
           : ' · ${_displayDate(inv.paidAt!.toIso8601String())}';
       return (
-        'Paid ${formatRupiah(inv.amount)} (${inv.methodLabel.toLowerCase()})$when',
+        '${l.termPaidLine(formatRupiah(inv.amount), inv.methodLocalized(l).toLowerCase())}$when',
         AppColors.success
       );
     }
-    return ('Pending payment · ${formatRupiah(inv.amount)}', AppColors.error);
+    return (l.termPendingPayment(formatRupiah(inv.amount)), AppColors.error);
   }
 
   Future<void> _editTerm(BuildContext context, StudentClassTerm term) async {
@@ -370,7 +378,7 @@ class ClassTermPackagesList extends StatelessWidget {
           );
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Term updated')),
+          SnackBar(content: Text(context.l10n.termUpdated)),
         );
       }
     } catch (e) {
@@ -386,24 +394,23 @@ class ClassTermPackagesList extends StatelessWidget {
   }
 
   Future<void> _deleteTerm(BuildContext context, StudentClassTerm term) async {
+    final l = context.l10n;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete this term?'),
+        title: Text(l.termDeleteTitle),
         content: Text(
-          'Delete the ${term.packageSize}-session term '
-          '(${term.sessionsRemaining} left)? Past class charges linked to '
-          'this term are kept in history. This cannot be undone.',
+          l.termDeleteBody(term.packageSize, term.sessionsRemaining),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Delete'),
+            child: Text(l.termDelete),
           ),
         ],
       ),
@@ -415,7 +422,7 @@ class ClassTermPackagesList extends StatelessWidget {
       await context.read<FirestoreService>().deleteClassTerm(term.id);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Term deleted')),
+          SnackBar(content: Text(l.termDeleted)),
         );
       }
     } catch (e) {
@@ -432,10 +439,11 @@ class ClassTermPackagesList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     if (terms.isEmpty) {
       return AppCard(
         child: Text(
-          'No paid term packages yet. Add an 8 or 16 session term when the student pays.',
+          l.termNoPackages,
           style: TextStyle(color: AppColors.textSecondary, height: 1.4),
         ),
       );
@@ -458,28 +466,30 @@ class ClassTermPackagesList extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        '${term.packageSize}-session term',
+                        l.termPackageTitle(term.packageSize),
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                     ),
                     if (allowManage) ...[
                       IconButton(
                         icon: const Icon(Icons.edit_outlined, size: 20),
-                        tooltip: 'Edit term',
+                        tooltip: l.termEdit,
                         onPressed: () => _editTerm(context, term),
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete_outline, size: 20),
                         color: AppColors.error,
-                        tooltip: 'Delete term',
+                        tooltip: l.termDeleteTooltip,
                         onPressed: () => _deleteTerm(context, term),
                       ),
                     ],
                   ],
                 ),
                 Text(
-                  'Start: ${_displayDate(term.startDate)} · '
-                  'Deadline: ${_displayDate(term.deadlineDate)}',
+                  l.termStartDeadline(
+                    _displayDate(term.startDate),
+                    _displayDate(term.deadlineDate),
+                  ),
                   style: TextStyle(
                     color: inRange ? AppColors.textSecondary : AppColors.error,
                     fontSize: 12,
@@ -487,7 +497,7 @@ class ClassTermPackagesList extends StatelessWidget {
                 ),
                 if (!inRange)
                   Text(
-                    'Outside term dates today',
+                    l.termOutsideDates,
                     style: TextStyle(
                       color: AppColors.error,
                       fontSize: 12,
@@ -495,7 +505,7 @@ class ClassTermPackagesList extends StatelessWidget {
                     ),
                   ),
                 Builder(builder: (context) {
-                  final (label, color) = _paymentLine(term);
+                  final (label, color) = _paymentLine(l, term);
                   return Text(
                     label,
                     style: TextStyle(
@@ -509,7 +519,8 @@ class ClassTermPackagesList extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      '${term.sessionsRemaining} / ${term.packageSize} left',
+                      l.termRemainingOf(
+                          term.sessionsRemaining, term.packageSize),
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         color: term.isActive && inRange
@@ -519,7 +530,9 @@ class ClassTermPackagesList extends StatelessWidget {
                     ),
                     const Spacer(),
                     Text(
-                      term.isActive ? 'Active' : 'Used up',
+                      term.isActive
+                          ? l.historyStatusActive
+                          : l.historyStatusUsedUp,
                       style: TextStyle(
                         fontSize: 12,
                         color: term.isActive
@@ -551,11 +564,12 @@ class _TermVisitHistory extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Classes attended ($usedCount)',
+          l.termClassesAttended(usedCount),
           style: TextStyle(
             fontWeight: FontWeight.w600,
             color: AppColors.navy,
@@ -565,7 +579,7 @@ class _TermVisitHistory extends StatelessWidget {
         const SizedBox(height: 6),
         if (visits.isEmpty)
           Text(
-            'No classes charged to this term yet.',
+            l.termNoClassesCharged,
             style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 12,
@@ -641,10 +655,11 @@ class ClassAttendanceHistoryList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     if (records.isEmpty) {
       return AppCard(
         child: Text(
-          'No concluded class visits yet.',
+          l.termNoConcludedVisits,
           style: TextStyle(color: AppColors.textSecondary),
         ),
       );
@@ -676,7 +691,7 @@ class ClassAttendanceHistoryList extends StatelessWidget {
                       Text(
                         record.sessionTitle.isNotEmpty
                             ? record.sessionTitle
-                            : 'Class',
+                            : l.termClassFallback,
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                       Text(
@@ -690,7 +705,7 @@ class ClassAttendanceHistoryList extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '−1 session',
+                  l.termMinusOneSession,
                   style: TextStyle(
                     color: AppColors.teal,
                     fontSize: 12,
@@ -745,7 +760,7 @@ class _EditClassTermDialogState extends State<_EditClassTermDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Enter sessions remaining between 0 and ${widget.term.packageSize}',
+            context.l10n.termRemainingRangeError(widget.term.packageSize),
           ),
           backgroundColor: AppColors.error,
         ),
@@ -761,15 +776,16 @@ class _EditClassTermDialogState extends State<_EditClassTermDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return AlertDialog(
-      title: Text('Edit ${widget.term.packageSize}-session term'),
+      title: Text(l.termEditTitle(widget.term.packageSize)),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Start date'),
+              title: Text(l.termStartDate),
               subtitle: Text(_formatDateKey(_start)),
               trailing: const Icon(Icons.calendar_today_outlined),
               onTap: () async {
@@ -789,7 +805,7 @@ class _EditClassTermDialogState extends State<_EditClassTermDialog> {
             ),
             ListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Deadline date'),
+              title: Text(l.termDeadlineDate),
               subtitle: Text(_formatDateKey(_deadline)),
               trailing: const Icon(Icons.event_outlined),
               onTap: () async {
@@ -807,8 +823,8 @@ class _EditClassTermDialogState extends State<_EditClassTermDialog> {
               controller: _remainingController,
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
-                labelText: 'Sessions remaining',
-                helperText: 'Out of ${widget.term.packageSize} in this package',
+                labelText: l.termSessionsRemaining,
+                helperText: l.termOutOfPackage(widget.term.packageSize),
                 border: const OutlineInputBorder(),
               ),
             ),
@@ -818,11 +834,11 @@ class _EditClassTermDialogState extends State<_EditClassTermDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(l.commonCancel),
         ),
         FilledButton(
           onPressed: _save,
-          child: const Text('Save'),
+          child: Text(l.termSave),
         ),
       ],
     );
@@ -842,19 +858,17 @@ class AddClassTermButton extends StatelessWidget {
   Future<void> _showAddDialog(BuildContext context) async {
     final teacherId = context.read<AuthService>().appUser?.uid;
     if (teacherId == null) return;
+    final l = context.l10n;
 
     final packageSize = await showDialog<int>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Add paid term'),
+        title: Text(l.termAddTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Choose how many class sessions the student paid for. '
-              'Sessions are deducted when you conclude each class.',
-            ),
+            Text(l.termAddBody),
             const SizedBox(height: 16),
             for (final size in AppConstants.termSizes)
               Padding(
@@ -864,7 +878,7 @@ class AddClassTermButton extends StatelessWidget {
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.navy,
                   ),
-                  child: Text('$size sessions'),
+                  child: Text(l.termSessionsCount(size)),
                 ),
               ),
           ],
@@ -872,7 +886,7 @@ class AddClassTermButton extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(l.commonCancel),
           ),
         ],
       ),
@@ -919,21 +933,19 @@ class AddClassTermButton extends StatelessWidget {
             termId: termId,
             invoiceId: invoiceId,
           );
-          paymentNote = ' Pending payment of ${formatRupiah(item.price)} '
-              'recorded for the admin.';
+          paymentNote =
+              ' ${l.termPaymentNoteRecorded(formatRupiah(item.price))}';
         } else {
-          paymentNote = ' No price-list item for $packageSize sessions: the '
-              'admin must add the payment by hand.';
+          paymentNote = ' ${l.termPaymentNoteNoItem(packageSize)}';
         }
       } catch (e) {
-        paymentNote = ' Could not record the payment ($e); the admin must add '
-            'it in Payments.';
+        paymentNote = ' ${l.termPaymentNoteFailed('$e')}';
       }
       onAdded?.call();
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Added $packageSize-session term.$paymentNote'),
+            content: Text('${l.termAdded(packageSize)}$paymentNote'),
           ),
         );
       }
@@ -954,7 +966,7 @@ class AddClassTermButton extends StatelessWidget {
     return FilledButton.icon(
       onPressed: () => _showAddDialog(context),
       icon: const Icon(Icons.add),
-      label: const Text('Add term'),
+      label: Text(context.l10n.termAddButton),
       style: FilledButton.styleFrom(backgroundColor: AppColors.navy),
     );
   }
@@ -1065,6 +1077,7 @@ class StudentClassTermSection extends StatelessWidget {
       {
         {
           {
+            final l = context.l10n;
             final unlinkedVisits = history
                 .where(
                   (r) => r.classTermId == null || r.classTermId!.isEmpty,
@@ -1075,7 +1088,7 @@ class StudentClassTermSection extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SectionHeader(
-                  title: 'Paid class terms',
+                  title: l.termPaidTermsTitle,
                   action: showAddButton
                       ? AddClassTermButton(studentId: studentId)
                       : null,
@@ -1086,7 +1099,7 @@ class StudentClassTermSection extends StatelessWidget {
                   ClassTermBalanceCard(terms: terms),
                   const SizedBox(height: 16),
                   Text(
-                    'Term packages',
+                    l.termPackagesTitle,
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       color: AppColors.navy,
@@ -1102,8 +1115,7 @@ class StudentClassTermSection extends StatelessWidget {
                   if (unlinkedVisits.isNotEmpty) ...[
                     const SizedBox(height: 20),
                     SectionHeader(
-                      title:
-                          'Other concluded visits (${unlinkedVisits.length})',
+                      title: l.termOtherVisits(unlinkedVisits.length),
                     ),
                     ClassAttendanceHistoryList(records: unlinkedVisits),
                   ],

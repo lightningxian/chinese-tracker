@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
+import '../../l10n/l10n.dart';
+import '../../l10n/labels_exercises.dart';
 import '../../models/exercise.dart';
 import '../../models/exercise_category.dart';
 import '../../models/exercise_skill_category.dart';
@@ -243,29 +245,25 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
   }
 
   /// Null when the question is complete, else what is missing.
-  String? _validate(ExerciseQuestion q) {
+  String? _validate(AppLocalizations l, ExerciseQuestion q) {
     switch (_type) {
       case ExerciseType.composeSentences:
-        if (q.segments.length < 2) return 'Enter at least two sentence parts.';
+        if (q.segments.length < 2) return l.bankEditorNeedTwoParts;
       case ExerciseType.matching:
       case ExerciseType.readingCloze:
-        if (q.prompt.isEmpty) return 'Enter the question.';
-        if (q.options.length < 2) {
-          return 'Enter at least two words in the word bank.';
-        }
+        if (q.prompt.isEmpty) return l.bankEditorEnterQuestion;
+        if (q.options.length < 2) return l.bankEditorNeedTwoWords;
       case ExerciseType.typeHanzi:
-        if (q.keyword.isEmpty) return 'Enter the pinyin hint.';
-        if (q.acceptedAnswers.isEmpty) {
-          return 'Enter at least one accepted answer.';
-        }
+        if (q.keyword.isEmpty) return l.bankEditorEnterPinyin;
+        if (q.acceptedAnswers.isEmpty) return l.bankEditorNeedAccepted;
       case ExerciseType.pictureSentence:
-        if (q.keyword.isEmpty) return 'Enter the word the sentence must use.';
+        if (q.keyword.isEmpty) return l.bankEditorEnterKeyword;
       case ExerciseType.multipleChoice:
       case ExerciseType.listening:
-        if (q.prompt.isEmpty) return 'Enter the question.';
-        if (q.options.length < 2) return 'Enter at least two choices.';
+        if (q.prompt.isEmpty) return l.bankEditorEnterQuestion;
+        if (q.options.length < 2) return l.bankEditorNeedTwoChoices;
         if (_optionControllers[_correctIndex].text.trim().isEmpty) {
-          return 'The correct choice is empty.';
+          return l.bankEditorCorrectEmpty;
         }
     }
     return null;
@@ -290,7 +288,7 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Upload failed: $e')),
+        SnackBar(content: Text(context.l10n.bankEditorUploadFailed('$e'))),
       );
     } finally {
       if (mounted) setState(() => _uploadingMedia = false);
@@ -298,8 +296,9 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
   }
 
   Future<void> _save() async {
+    final l = context.l10n;
     final question = _buildQuestion();
-    final problem = _validate(question);
+    final problem = _validate(l, question);
     if (problem != null) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(problem)));
@@ -366,20 +365,21 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
       if (!mounted) return;
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not save: $e')),
+        SnackBar(content: Text(l.bankEditorCouldNotSave('$e'))),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     final sheet = widget.sheet;
     final heading = _isEditing
-        ? 'Edit question'
+        ? l.bankSheetEditQuestion
         : sheet != null
-            ? 'Add a question to ${sheet.title}'
-            : 'New question';
+            ? l.bankEditorAddToSheetTitle(sheet.title)
+            : l.bankEditorNewQuestion;
     return Padding(
       padding: EdgeInsets.only(
           left: 20, right: 20, top: 20, bottom: 20 + bottomInset),
@@ -401,10 +401,10 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
               DropdownButtonFormField<ExerciseType>(
                 initialValue: _type,
                 isExpanded: true,
-                decoration: const InputDecoration(labelText: 'Type'),
+                decoration: InputDecoration(labelText: l.bankImportType),
                 items: [
                   for (final t in ExerciseType.values)
-                    DropdownMenuItem(value: t, child: Text(t.label)),
+                    DropdownMenuItem(value: t, child: Text(t.localized(l))),
                 ],
                 onChanged: (t) => setState(() {
                   _type = t ?? ExerciseType.multipleChoice;
@@ -419,11 +419,9 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
                 controller: _explanationController,
                 minLines: 1,
                 maxLines: 4,
-                decoration: const InputDecoration(
-                  labelText: 'Explanation (optional)',
-                  helperText:
-                      'Why the answer is right. Students see it on the result '
-                      'page after they submit, never while answering.',
+                decoration: InputDecoration(
+                  labelText: l.bankEditorExplanationOptional,
+                  helperText: l.bankEditorExplanationHelper,
                   helperMaxLines: 2,
                 ),
               ),
@@ -444,13 +442,14 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
                     child: DropdownButtonFormField<String>(
                       initialValue: _level,
                       isExpanded: true,
-                      decoration: const InputDecoration(labelText: 'Level'),
+                      decoration:
+                          InputDecoration(labelText: l.bankFiltersLevel),
                       items: [
-                        for (final l in AppConstants.hskLevels)
-                          DropdownMenuItem(value: l, child: Text(l)),
+                        for (final level in AppConstants.hskLevels)
+                          DropdownMenuItem(value: level, child: Text(level)),
                       ],
-                      onChanged: (l) => setState(
-                          () => _level = l ?? AppConstants.hskLevels.first),
+                      onChanged: (level) => setState(
+                          () => _level = level ?? AppConstants.hskLevels.first),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -458,10 +457,11 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
                     child: DropdownButtonFormField<ExerciseSkillCategory>(
                       initialValue: _skill,
                       isExpanded: true,
-                      decoration: const InputDecoration(labelText: 'Skill'),
+                      decoration: InputDecoration(labelText: l.bankEditorSkill),
                       items: [
                         for (final c in ExerciseSkillCategory.values)
-                          DropdownMenuItem(value: c, child: Text(c.label)),
+                          DropdownMenuItem(
+                              value: c, child: Text(c.localized(l))),
                       ],
                       onChanged: (c) => setState(
                           () => _skill = c ?? ExerciseSkillCategory.reading),
@@ -473,12 +473,12 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
               DropdownButtonFormField<ExerciseCategory>(
                 initialValue: _category,
                 isExpanded: true,
-                decoration: const InputDecoration(
-                  labelText: 'Type of exercise',
+                decoration: InputDecoration(
+                  labelText: l.bankFiltersTypeOfExercise,
                 ),
                 items: [
                   for (final c in ExerciseCategory.values)
-                    DropdownMenuItem(value: c, child: Text(c.label)),
+                    DropdownMenuItem(value: c, child: Text(c.localized(l))),
                 ],
                 onChanged: (c) => setState(() => _category = c ?? _category),
               ),
@@ -501,10 +501,10 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
                           ),
                         )
                       : Text(_isEditing
-                          ? 'Save'
+                          ? l.bankEditorSave
                           : sheet != null
-                              ? 'Add to worksheet'
-                              : 'Add to bank'),
+                              ? l.bankEditorAddToWorksheet
+                              : l.bankEditorAddToBank),
                 ),
               ),
             ],
@@ -522,7 +522,8 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
       minLines: 1,
       maxLines: 4,
       decoration: InputDecoration(
-        labelText: optional ? '$label (optional)' : label,
+        labelText:
+            optional ? context.l10n.bankEditorOptionalSuffix(label) : label,
         helperText: helper,
         helperMaxLines: 2,
       ),
@@ -546,19 +547,20 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
   }
 
   List<Widget> _buildTypeFields() {
+    final l = context.l10n;
     switch (_type) {
       case ExerciseType.multipleChoice:
       case ExerciseType.listening:
         return [
           _prompt(
-            label: 'Question',
+            label: l.bankEditorQuestion,
             helper: _type == ExerciseType.listening
-                ? 'Add the audio below; the student hears it and picks a choice.'
+                ? l.bankEditorListeningHelper
                 : null,
           ),
           const SizedBox(height: 12),
-          const Text('Choices (tick the correct one)',
-              style: TextStyle(fontWeight: FontWeight.w600)),
+          Text(l.bankEditorChoicesTick,
+              style: const TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 4),
           ..._buildChoiceFields(),
         ];
@@ -568,16 +570,16 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
         final isCloze = _type == ExerciseType.readingCloze;
         return [
           _prompt(
-            label: isCloze ? 'Sentence with the blank' : 'Question or line',
-            helper: isCloze
-                ? 'Write the blank as ____ ; the student picks the word from the bank.'
-                : 'The student matches it to one word or reply from the bank.',
+            label: isCloze
+                ? l.bankEditorSentenceWithBlank
+                : l.bankEditorQuestionOrLine,
+            helper:
+                isCloze ? l.bankEditorClozeHelper : l.bankEditorMatchingHelper,
           ),
           const SizedBox(height: 12),
           _linesField(
-            label: 'Word bank (one per line)',
-            helper: 'Shared by the whole worksheet: the same list on every '
-                'question of this sheet.',
+            label: l.bankEditorWordBank,
+            helper: l.bankEditorWordBankHelper,
           ),
           const SizedBox(height: 12),
           Row(
@@ -591,7 +593,7 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
                       : _correctIndex.clamp(0, bank.length - 1),
                   isExpanded: true,
                   decoration:
-                      const InputDecoration(labelText: 'Correct answer'),
+                      InputDecoration(labelText: l.bankEditorCorrectAnswer),
                   items: [
                     for (final (i, w) in bank.indexed)
                       DropdownMenuItem(
@@ -615,7 +617,8 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
                   child: TextFormField(
                     controller: _blankController,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'Blank #'),
+                    decoration:
+                        InputDecoration(labelText: l.bankEditorBlankNumber),
                   ),
                 ),
               ],
@@ -625,49 +628,48 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
       case ExerciseType.composeSentences:
         return [
           _linesField(
-            label: 'Sentence parts in the right order (one per line)',
-            helper:
-                'The student sees them shuffled and puts them back in order.',
+            label: l.bankEditorSentenceParts,
+            helper: l.bankEditorSentencePartsHelper,
           ),
           const SizedBox(height: 12),
-          _prompt(label: 'Instruction', optional: true),
+          _prompt(label: l.bankEditorInstruction, optional: true),
         ];
       case ExerciseType.typeHanzi:
         return [
           TextFormField(
             controller: _keywordController,
             style: AppTextStyles.question,
-            decoration: const InputDecoration(
-              labelText: 'Pinyin hint',
-              helperText: 'What the student sees, e.g. nǐ hǎo.',
+            decoration: InputDecoration(
+              labelText: l.bankEditorPinyinHint,
+              helperText: l.bankEditorPinyinHelper,
             ),
           ),
           const SizedBox(height: 12),
           _linesField(
-            label: 'Accepted answers (one per line)',
-            helper: 'Hanzi that count as correct, e.g. 你好.',
+            label: l.bankEditorAcceptedAnswers,
+            helper: l.bankEditorAcceptedHelper,
           ),
           const SizedBox(height: 12),
-          _prompt(label: 'Instruction', optional: true),
+          _prompt(label: l.bankEditorInstruction, optional: true),
         ];
       case ExerciseType.pictureSentence:
         return [
           TextFormField(
             controller: _keywordController,
             style: AppTextStyles.question,
-            decoration: const InputDecoration(
-              labelText: 'Word the sentence must use',
-              helperText:
-                  'The student writes a sentence with this word about the picture.',
+            decoration: InputDecoration(
+              labelText: l.bankEditorKeywordLabel,
+              helperText: l.bankEditorKeywordHelper,
             ),
           ),
           const SizedBox(height: 12),
-          _prompt(label: 'Instruction', optional: true),
+          _prompt(label: l.bankEditorInstruction, optional: true),
         ];
     }
   }
 
   List<Widget> _buildChoiceFields() {
+    final l = context.l10n;
     return [
       for (var i = 0; i < _optionControllers.length; i++)
         Padding(
@@ -684,13 +686,13 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
                   controller: _optionControllers[i],
                   style: AppTextStyles.question,
                   decoration: InputDecoration(
-                    labelText: 'Choice ${String.fromCharCode(65 + i)}',
+                    labelText: l.bankEditorChoice(String.fromCharCode(65 + i)),
                     isDense: true,
                   ),
                 ),
               ),
               IconButton(
-                tooltip: 'Remove choice',
+                tooltip: l.bankEditorRemoveChoice,
                 icon: const Icon(Icons.close, size: 18),
                 onPressed: _optionControllers.length <= 2
                     ? null
@@ -711,7 +713,7 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
             onPressed: () =>
                 setState(() => _optionControllers.add(TextEditingController())),
             icon: const Icon(Icons.add, size: 18),
-            label: const Text('Add choice'),
+            label: Text(l.bankEditorAddChoice),
           ),
         ),
     ];
@@ -739,11 +741,12 @@ class _MediaRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Media (optional)',
-            style: TextStyle(fontWeight: FontWeight.w600)),
+        Text(l.bankEditorMediaOptional,
+            style: const TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
@@ -752,7 +755,9 @@ class _MediaRow extends StatelessWidget {
             OutlinedButton.icon(
               onPressed: uploading ? null : onUploadImage,
               icon: const Icon(Icons.image_outlined, size: 18),
-              label: Text(imageUrl.isEmpty ? 'Add image' : 'Image attached'),
+              label: Text(imageUrl.isEmpty
+                  ? l.bankEditorAddImage
+                  : l.bankEditorImageAttached),
             ),
             if (imageUrl.isNotEmpty)
               IconButton(
@@ -762,7 +767,9 @@ class _MediaRow extends StatelessWidget {
             OutlinedButton.icon(
               onPressed: uploading ? null : onUploadAudio,
               icon: const Icon(Icons.audiotrack_outlined, size: 18),
-              label: Text(audioUrl.isEmpty ? 'Add audio' : 'Audio attached'),
+              label: Text(audioUrl.isEmpty
+                  ? l.bankEditorAddAudio
+                  : l.bankEditorAudioAttached),
             ),
             if (audioUrl.isNotEmpty)
               IconButton(

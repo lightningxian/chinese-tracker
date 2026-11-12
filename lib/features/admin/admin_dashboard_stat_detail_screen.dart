@@ -9,6 +9,10 @@ import '../../core/widgets/app_card.dart';
 import '../../core/widgets/responsive_card_grid.dart';
 import '../../core/widgets/shell_nested_page.dart';
 import '../../core/widgets/status_pill.dart';
+import '../../l10n/l10n.dart';
+import '../../l10n/labels_admin.dart';
+import '../../l10n/labels_exercises.dart';
+import '../../l10n/labels_reports.dart';
 import '../../models/admin_dashboard_stat_kind.dart';
 import '../../models/app_user.dart';
 import '../../models/dashboard_stat_routes.dart';
@@ -33,11 +37,12 @@ class AdminDashboardStatDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final firestore = context.read<FirestoreService>();
 
     return ShellNestedPage(
       embedded: embedded,
-      title: kind.title,
+      title: kind.localizedTitle(l),
       child: StreamBuilder<List<AppUser>>(
         stream: firestore.watchAllUsers(),
         builder: (context, usersSnap) {
@@ -110,12 +115,13 @@ class _AdminStatDetailBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
         AppCard(
           child: Text(
-            kind.description,
+            kind.localizedDescription(l),
             style: TextStyle(
               color: AppColors.textSecondary,
               height: 1.45,
@@ -129,9 +135,10 @@ class _AdminStatDetailBody extends StatelessWidget {
   }
 
   List<Widget> _buildContent(BuildContext context) {
+    final l = context.l10n;
     return switch (kind) {
       AdminDashboardStatKind.totalUsers => [
-          _roleSummary(),
+          _roleSummary(l),
           const SizedBox(height: 12),
           _userList(context, users),
         ],
@@ -139,8 +146,8 @@ class _AdminStatDetailBody extends StatelessWidget {
           _userList(
             context,
             users.where((u) => u.isStudent && u.active).toList(),
-            emptyTitle: 'No active murid',
-            emptySubtitle: 'Active student accounts will appear here.',
+            emptyTitle: l.adminDashNoActiveMurid,
+            emptySubtitle: l.adminDashActiveAccountsAppear,
           ),
         ],
       AdminDashboardStatKind.exercises => [
@@ -160,27 +167,27 @@ class _AdminStatDetailBody extends StatelessWidget {
     };
   }
 
-  Widget _roleSummary() {
+  Widget _roleSummary(AppLocalizations l) {
     return AppCard(
       child: Wrap(
         spacing: 8,
         runSpacing: 8,
         children: [
           StatusPill(
-            label: '${report.totalMurid} murid',
+            label: l.adminDashMuridCount(report.totalMurid),
             color: AppColors.teal,
           ),
           StatusPill(
-            label: '${report.totalTeachers} guru',
+            label: l.adminDashGuruCount(report.totalTeachers),
             color: AppColors.navy,
           ),
           StatusPill(
-            label: '${report.totalAdmins} admin',
+            label: l.adminDashAdminCount(report.totalAdmins),
             color: adminPurple,
           ),
           if (report.inactiveUsers > 0)
             StatusPill(
-              label: '${report.inactiveUsers} inactive',
+              label: l.adminDashInactiveCount(report.inactiveUsers),
               color: AppColors.textSecondary,
             ),
         ],
@@ -191,14 +198,15 @@ class _AdminStatDetailBody extends StatelessWidget {
   Widget _userList(
     BuildContext context,
     List<AppUser> items, {
-    String emptyTitle = 'No users',
-    String emptySubtitle = 'Users will appear here after registration.',
+    String? emptyTitle,
+    String? emptySubtitle,
   }) {
+    final l = context.l10n;
     if (items.isEmpty) {
       return EmptyState(
         icon: Icons.people_outline,
-        title: emptyTitle,
-        subtitle: emptySubtitle,
+        title: emptyTitle ?? l.adminDashNoUsers,
+        subtitle: emptySubtitle ?? l.adminDashUsersAppear,
       );
     }
 
@@ -248,13 +256,13 @@ class _AdminStatDetailBody extends StatelessWidget {
                     ),
                   ),
                   StatusPill(
-                    label: user.roleDisplayLabel,
+                    label: user.roleLocalized(l),
                     color: _roleColor(user),
                   ),
                   if (!user.active) ...[
                     const SizedBox(width: 6),
                     StatusPill(
-                      label: 'Inactive',
+                      label: l.adminDashInactive,
                       color: AppColors.textSecondary,
                     ),
                   ],
@@ -274,14 +282,15 @@ class _AdminStatDetailBody extends StatelessWidget {
   }
 
   Widget _exerciseList(BuildContext context) {
+    final l = context.l10n;
     final published = exercises.where((e) => e.isPublished).toList()
       ..sort((a, b) => a.title.compareTo(b.title));
 
     if (published.isEmpty) {
-      return const EmptyState(
+      return EmptyState(
         icon: Icons.menu_book_outlined,
-        title: 'No published exercises',
-        subtitle: 'Publish exercises from the Exercises tab.',
+        title: l.adminDashNoPublishedExercises,
+        subtitle: l.adminDashPublishFromTab,
       );
     }
 
@@ -311,8 +320,8 @@ class _AdminStatDetailBody extends StatelessWidget {
                         Text(
                           [
                             if (exercise.level != null) exercise.level!,
-                            exercise.skillCategory.label,
-                            '${exercise.questions.length} questions',
+                            exercise.skillCategory.localized(l),
+                            l.adminDashQuestionCount(exercise.questions.length),
                           ].join(' · '),
                           style: TextStyle(
                             color: AppColors.textSecondary,
@@ -323,7 +332,7 @@ class _AdminStatDetailBody extends StatelessWidget {
                     ),
                   ),
                   StatusPill(
-                    label: 'Published',
+                    label: l.adminDashPublished,
                     color: AppColors.success,
                   ),
                   if (routes.exerciseEdit != null) ...[
@@ -342,6 +351,7 @@ class _AdminStatDetailBody extends StatelessWidget {
   }
 
   Widget _signupList(BuildContext context) {
+    final l = context.l10n;
     final students = users.where((u) => u.isStudent).toList()
       ..sort((a, b) {
         final aAt = a.createdAt;
@@ -353,10 +363,10 @@ class _AdminStatDetailBody extends StatelessWidget {
       });
 
     if (students.isEmpty) {
-      return const EmptyState(
+      return EmptyState(
         icon: Icons.person_add_alt_1_outlined,
-        title: 'No student signups yet',
-        subtitle: 'New murid registrations will appear here.',
+        title: l.adminDashNoSignups,
+        subtitle: l.adminDashSignupsAppear,
       );
     }
 
@@ -381,7 +391,7 @@ class _AdminStatDetailBody extends StatelessWidget {
                           style: const TextStyle(fontWeight: FontWeight.w600),
                         ),
                         Text(
-                          student.level ?? 'Murid',
+                          student.level ?? l.commonStudent,
                           style: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 13,
@@ -415,11 +425,12 @@ class _AdminStatDetailBody extends StatelessWidget {
   }
 
   Widget _voucherAlertList(BuildContext context) {
+    final l = context.l10n;
     if (voucherAlerts.isEmpty) {
-      return const EmptyState(
+      return EmptyState(
         icon: Icons.check_circle_outline,
-        title: 'All caught up',
-        subtitle: 'No voucher alerts right now.',
+        title: l.adminDashAllCaughtUp,
+        subtitle: l.adminDashNoVoucherAlerts,
       );
     }
 
@@ -460,6 +471,7 @@ class _IncomeByMonth extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final currency = NumberFormat.currency(
       locale: 'id_ID',
       symbol: 'Rp ',
@@ -474,11 +486,10 @@ class _IncomeByMonth extends StatelessWidget {
         final months = InvoiceUtils.paidByMonth(snap.data ?? const []);
         final yearTotal = months.fold(0, (sum, m) => sum + m.total);
         if (yearTotal == 0) {
-          return const EmptyState(
+          return EmptyState(
             icon: Icons.payments_outlined,
-            title: 'No payments in the last twelve months',
-            subtitle:
-                'Payments show here once an invoice is marked paid in Payments.',
+            title: l.adminDashNoPaymentsTwelveMonths,
+            subtitle: l.adminDashPaymentsShowHint,
           );
         }
         return AppCard(
@@ -511,9 +522,7 @@ class _IncomeByMonth extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        m.count == 0
-                            ? '—'
-                            : '${m.count} payment${m.count == 1 ? '' : 's'}',
+                        m.count == 0 ? '—' : l.adminDashPaymentCount(m.count),
                         style: TextStyle(
                           fontSize: 12,
                           color: AppColors.textSecondary,

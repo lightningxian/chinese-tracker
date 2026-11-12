@@ -15,6 +15,8 @@ import '../../core/widgets/profile_widgets.dart';
 import '../../core/widgets/progress_widgets.dart';
 import '../../core/widgets/shell_nested_page.dart';
 import '../../core/widgets/status_pill.dart';
+import '../../l10n/l10n.dart';
+import '../../l10n/labels_admin.dart';
 import '../../models/app_user.dart';
 import '../../models/attendance_record.dart';
 import '../../models/invoice.dart';
@@ -65,6 +67,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final firestore = context.read<FirestoreService>();
 
     return FutureBuilder(
@@ -80,7 +83,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
         if (student == null) {
           return Scaffold(
             appBar: AppBar(),
-            body: const Center(child: Text('Student not found')),
+            body: Center(child: Text(l.studentDetailNotFound)),
           );
         }
 
@@ -96,12 +99,12 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
               IconButton(
                 onPressed: () =>
                     context.push('/admin/users/${widget.studentId}/edit'),
-                tooltip: 'Edit profile',
+                tooltip: l.studentDetailEditProfile,
                 icon: const Icon(Icons.edit_outlined),
               ),
             IconButton(
               onPressed: _exporting ? null : () => _exportReport(student),
-              tooltip: 'Export progress report',
+              tooltip: l.studentDetailExportReport,
               icon: _exporting
                   ? const SizedBox(
                       width: 22,
@@ -198,7 +201,9 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
                                           ),
                                         ),
                                         child: Text(
-                                          '${student.lessonsPerTerm} lessons/term',
+                                          l.studentDetailLessonsPerTerm(
+                                            student.lessonsPerTerm,
+                                          ),
                                           style: TextStyle(
                                             fontSize: 11,
                                             fontWeight: FontWeight.w600,
@@ -223,7 +228,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Contact',
+                                l.studentDetailContact,
                                 style: Theme.of(context)
                                     .textTheme
                                     .titleSmall
@@ -241,13 +246,13 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
                                 ),
                               if (student.parentName != null)
                                 ProfileInfoRow(
-                                  label: 'Parent name',
+                                  label: l.identityParentName,
                                   value: student.parentName!,
                                   icon: Icons.family_restroom_outlined,
                                 ),
                               if (student.parentPhone != null)
                                 ProfileInfoRow(
-                                  label: 'Parent telephone',
+                                  label: l.identityParentPhone,
                                   value: student.parentPhone!,
                                   icon: Icons.phone_outlined,
                                 ),
@@ -261,7 +266,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
                           onPressed:
                               _exporting ? null : () => _exportReport(student),
                           icon: const Icon(Icons.picture_as_pdf_outlined),
-                          label: const Text('Export progress report (PDF)'),
+                          label: Text(l.studentDetailExportReportPdf),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AppColors.navy,
                             side: BorderSide(color: AppColors.border),
@@ -276,13 +281,13 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
                         allowManage: true,
                       ),
                       const SizedBox(height: 24),
-                      const SectionHeader(title: 'Payments'),
+                      SectionHeader(title: l.navPayments),
                       _PaymentsSection(
                         studentId: widget.studentId,
                         firestore: firestore,
                       ),
                       const SizedBox(height: 24),
-                      const SectionHeader(title: 'Attendance'),
+                      SectionHeader(title: l.studentDetailAttendance),
                       _AttendanceSection(
                         studentId: widget.studentId,
                         firestore: firestore,
@@ -294,17 +299,19 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
                             contentOwnerId,
                       ),
                       const SizedBox(height: 24),
-                      const SectionHeader(title: 'Practice results'),
+                      SectionHeader(title: l.studentDetailPracticeResults),
                       StudentPracticeResultsSection(
                         studentId: widget.studentId,
                         firestore: firestore,
                       ),
                       const SizedBox(height: 24),
-                      const SectionHeader(title: 'Lesson progress by term'),
+                      SectionHeader(
+                        title: l.studentDetailLessonProgressByTerm,
+                      ),
                       if (terms.isEmpty)
                         AppCard(
                           child: Text(
-                            'No lesson progress yet.',
+                            l.studentDetailNoLessonProgress,
                             style: TextStyle(color: AppColors.textSecondary),
                           ),
                         )
@@ -341,6 +348,7 @@ class _PaymentsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return StreamBuilder<List<Invoice>>(
       stream: firestore.watchStudentInvoices(studentId),
       builder: (context, snap) {
@@ -352,7 +360,7 @@ class _PaymentsSection extends StatelessWidget {
         if (invoices.isEmpty) {
           return AppCard(
             child: Text(
-              'No invoices yet.',
+              l.studentDetailNoInvoices,
               style: TextStyle(color: AppColors.textSecondary),
             ),
           );
@@ -370,12 +378,12 @@ class _PaymentsSection extends StatelessWidget {
                 runSpacing: 6,
                 children: [
                   StatusPill(
-                    label: 'Paid ${formatRupiah(paid)}',
+                    label: l.studentDetailPaidTotal(formatRupiah(paid)),
                     color: AppColors.success,
                   ),
                   if (pending > 0)
                     StatusPill(
-                      label: 'Pending ${formatRupiah(pending)}',
+                      label: l.studentDetailPendingTotal(formatRupiah(pending)),
                       color: AppColors.brandYellow,
                     ),
                 ],
@@ -391,7 +399,7 @@ class _PaymentsSection extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              inv.itemLabel,
+                              inv.itemLocalized(l),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
@@ -402,11 +410,13 @@ class _PaymentsSection extends StatelessWidget {
                             Text(
                               [
                                 inv.invoiceNumber,
-                                inv.methodLabel,
+                                inv.methodLocalized(l),
                                 if (inv.paidAt != null)
-                                  'paid ${_date.format(inv.paidAt!)}'
+                                  l.studentDetailPaidOn(
+                                    _date.format(inv.paidAt!),
+                                  )
                                 else if (inv.dueDate.isNotEmpty)
-                                  'due ${inv.dueDate}',
+                                  l.studentDetailDueOn(inv.dueDate),
                               ].join(' · '),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -430,7 +440,7 @@ class _PaymentsSection extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       StatusPill(
-                        label: inv.status.label,
+                        label: inv.status.localized(l),
                         color: inv.isPaid
                             ? AppColors.success
                             : inv.isPending
@@ -444,7 +454,7 @@ class _PaymentsSection extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(top: 6),
                   child: Text(
-                    'and ${invoices.length - 8} more in Payments',
+                    l.studentDetailMoreInPayments(invoices.length - 8),
                     style: TextStyle(
                       fontSize: 12,
                       color: AppColors.textSecondary,
@@ -471,6 +481,7 @@ class _AttendanceSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return StreamBuilder<List<AttendanceRecord>>(
       stream: firestore.watchStudentAttendance(studentId),
       builder: (context, snap) {
@@ -479,7 +490,7 @@ class _AttendanceSection extends StatelessWidget {
         if (records.isEmpty) {
           return AppCard(
             child: Text(
-              'No classes attended yet.',
+              l.parentOverviewNoClasses,
               style: TextStyle(color: AppColors.textSecondary),
             ),
           );
@@ -502,16 +513,19 @@ class _AttendanceSection extends StatelessWidget {
                 runSpacing: 6,
                 children: [
                   StatusPill(
-                    label: '$presentCount present',
+                    label: l.studentDetailPresentCount(presentCount),
                     color: AppColors.success,
                   ),
                   StatusPill(
-                    label: '$excused excused',
+                    label: l.studentDetailExcusedCount(excused),
                     color: AppColors.brandYellow,
                   ),
-                  StatusPill(label: '$absent absent', color: AppColors.error),
                   StatusPill(
-                    label: '${records.length} classes',
+                    label: l.studentDetailAbsentCount(absent),
+                    color: AppColors.error,
+                  ),
+                  StatusPill(
+                    label: l.historyClassesCount(records.length),
                     color: AppColors.textSecondary,
                   ),
                 ],
@@ -532,12 +546,12 @@ class _AttendanceSection extends StatelessWidget {
                       ),
                       Text(
                         present(r)
-                            ? 'Present'
+                            ? l.attendancePresent
                             : r.isExcused
-                                ? 'Excused'
+                                ? l.attendanceExcused
                                 : r.normalizedStatus == AttendanceRecord.alpa
-                                    ? 'Absent'
-                                    : 'Not marked',
+                                    ? l.attendanceAbsent
+                                    : l.studentDetailNotMarked,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,

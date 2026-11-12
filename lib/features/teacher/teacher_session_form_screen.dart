@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/shell_nested_page.dart';
+import '../../l10n/l10n.dart';
 import '../../models/class_session.dart';
 import '../../services/firestore_service.dart';
 
@@ -121,7 +122,7 @@ class _TeacherSessionFormScreenState extends State<TeacherSessionFormScreen> {
     final startMinutes = FirestoreService.minutesOfDay(_startTime);
     final endMinutes = FirestoreService.minutesOfDay(_endTime);
     if (endMinutes <= startMinutes) {
-      setState(() => _error = 'End time must be after start time.');
+      setState(() => _error = context.l10n.teacherSessionEndAfterStart);
       return;
     }
 
@@ -170,11 +171,14 @@ class _TeacherSessionFormScreenState extends State<TeacherSessionFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final dateLabel = DateFormat('EEE, d MMM yyyy').format(_selectedDate);
 
     return ShellNestedPage(
       embedded: widget.embedded,
-      title: widget.isEditing ? 'Edit class' : 'New class',
+      title: widget.isEditing
+          ? l.teacherSessionEditTitle
+          : l.teacherShellNewClass,
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Form(
@@ -198,12 +202,12 @@ class _TeacherSessionFormScreenState extends State<TeacherSessionFormScreen> {
               ],
               TextFormField(
                 controller: _titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Class title',
-                  hintText: 'e.g. HSK 3 — Speaking practice',
+                decoration: InputDecoration(
+                  labelText: l.teacherSessionClassTitle,
+                  hintText: l.teacherSessionClassTitleHint,
                 ),
                 validator: (v) => v == null || v.trim().isEmpty
-                    ? 'Enter a class title'
+                    ? l.teacherSessionClassTitleRequired
                     : null,
               ),
               const SizedBox(height: 16),
@@ -218,7 +222,7 @@ class _TeacherSessionFormScreenState extends State<TeacherSessionFormScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Date',
+                            l.teacherSessionDate,
                             style: TextStyle(
                               fontSize: 12,
                               color: AppColors.textSecondary,
@@ -248,7 +252,7 @@ class _TeacherSessionFormScreenState extends State<TeacherSessionFormScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Start',
+                            l.teacherSessionStart,
                             style: TextStyle(
                               fontSize: 12,
                               color: AppColors.textSecondary,
@@ -273,7 +277,7 @@ class _TeacherSessionFormScreenState extends State<TeacherSessionFormScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'End',
+                            l.teacherSessionEnd,
                             style: TextStyle(
                               fontSize: 12,
                               color: AppColors.textSecondary,
@@ -294,7 +298,7 @@ class _TeacherSessionFormScreenState extends State<TeacherSessionFormScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Duration',
+                l.teacherSessionDuration,
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   color: AppColors.navy,
@@ -307,7 +311,7 @@ class _TeacherSessionFormScreenState extends State<TeacherSessionFormScreen> {
                 children: _durationPresets.map((minutes) {
                   final selected = _selectedDurationMinutes == minutes;
                   return ChoiceChip(
-                    label: Text('$minutes min'),
+                    label: Text(l.teacherSessionMinutes(minutes)),
                     selected: selected,
                     onSelected: (_) => _applyDurationPreset(minutes),
                     selectedColor: AppColors.teal.withValues(alpha: 0.15),
@@ -326,14 +330,13 @@ class _TeacherSessionFormScreenState extends State<TeacherSessionFormScreen> {
               TextFormField(
                 controller: _capacityController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Capacity',
-                  hintText: 'Max students who can join',
+                decoration: InputDecoration(
+                  labelText: l.teacherSessionCapacity,
+                  hintText: l.teacherSessionCapacityHint,
                 ),
                 validator: (v) {
                   final n = int.tryParse(v?.trim() ?? '');
-                  if (n == null || n < 1)
-                    return 'Enter a capacity of at least 1';
+                  if (n == null || n < 1) return l.teacherSessionCapacityMin;
                   return null;
                 },
               ),
@@ -345,10 +348,8 @@ class _TeacherSessionFormScreenState extends State<TeacherSessionFormScreen> {
               AppCard(
                 child: SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('Open for students to join'),
-                  subtitle: const Text(
-                    'Students can join from Home while the class is open.',
-                  ),
+                  title: Text(l.teacherSessionOpenToJoin),
+                  subtitle: Text(l.teacherSessionOpenToJoinHint),
                   value: _isOpen,
                   onChanged: (v) => setState(() => _isOpen = v),
                 ),
@@ -366,7 +367,11 @@ class _TeacherSessionFormScreenState extends State<TeacherSessionFormScreen> {
                         width: 22,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : Text(widget.isEditing ? 'Save changes' : 'Create class'),
+                    : Text(
+                        widget.isEditing
+                            ? l.teacherSessionSaveChanges
+                            : l.teacherSessionCreate,
+                      ),
               ),
             ],
           ),

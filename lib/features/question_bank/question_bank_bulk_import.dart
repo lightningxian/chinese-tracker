@@ -5,6 +5,8 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:provider/provider.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../l10n/l10n.dart';
+import '../../l10n/labels_exercises.dart';
 import '../../models/exercise_type.dart';
 import '../../models/question_bank_item.dart';
 import '../../services/firestore_service.dart';
@@ -20,46 +22,45 @@ Future<void> showQuestionBankPasteImport(
   final controller = TextEditingController();
   ExerciseType type = ExerciseType.multipleChoice;
   String level = AppConstants.hskLevels.first;
+  final l = context.l10n;
 
   final confirmed = await showDialog<bool>(
     context: context,
     builder: (ctx) => StatefulBuilder(
       builder: (ctx, setLocal) => AlertDialog(
-        title: const Text('Paste questions'),
+        title: Text(l.bankImportPasteTitle),
         content: SizedBox(
           width: 480,
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'Paste worksheet text (numbered questions + A/B/C/D options).',
-                ),
+                Text(l.bankImportPasteHint),
                 const SizedBox(height: 12),
                 TextField(
                   controller: controller,
                   minLines: 8,
                   maxLines: 14,
-                  decoration: const InputDecoration(
-                    hintText: '1. 你好 means…\nA. hello\nB. goodbye',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    hintText: l.bankImportPasteExample,
+                    border: const OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<ExerciseType>(
                   initialValue: type,
-                  decoration: const InputDecoration(labelText: 'Type'),
+                  decoration: InputDecoration(labelText: l.bankImportType),
                   items: [
                     for (final t in ExerciseType.values)
                       if (t.isImplemented)
-                        DropdownMenuItem(value: t, child: Text(t.label)),
+                        DropdownMenuItem(value: t, child: Text(t.localized(l))),
                   ],
                   onChanged: (v) => setLocal(() => type = v ?? type),
                 ),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
                   initialValue: level,
-                  decoration: const InputDecoration(labelText: 'Level'),
+                  decoration: InputDecoration(labelText: l.bankFiltersLevel),
                   items: [
                     for (final l in AppConstants.hskLevels)
                       DropdownMenuItem(value: l, child: Text(l)),
@@ -75,11 +76,11 @@ Future<void> showQuestionBankPasteImport(
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Import'),
+            child: Text(l.bankImportImport),
           ),
         ],
       ),
@@ -102,7 +103,7 @@ Future<void> showQuestionBankPasteImport(
   if (items.isEmpty) {
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('No questions could be parsed.')),
+      SnackBar(content: Text(l.bankImportNoneParsed)),
     );
     return;
   }
@@ -121,14 +122,13 @@ Future<void> runQuestionBankSampleSetImport(
   final raw = await rootBundle
       .loadString('assets/question_sets/contoh_latihan_soal.json');
   if (!context.mounted) return;
+  final l = context.l10n;
   final set = Map<String, dynamic>.from(jsonDecode(raw) as Map);
   final all = QuestionBankImportUtils.fromQuestionSet(set, ownerId: ownerId);
   final deduped = QuestionBankImportUtils.dedupeAgainstBank(all, existingBank);
   if (deduped.novel.isEmpty) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('All sample questions are already in the bank.'),
-      ),
+      SnackBar(content: Text(l.bankImportAllSamplesPresent)),
     );
     return;
   }
@@ -136,9 +136,11 @@ Future<void> runQuestionBankSampleSetImport(
     context,
     ownerId: ownerId,
     items: deduped.novel,
-    summary: '${set['name']}: ${all.length} questions from 10 sheets with '
-        'answer keys${deduped.skipped > 0 ? ', ${deduped.skipped} already in the bank' : ''}. '
-        'Pictures for the 看图写句子 keywords are added in the editor.',
+    summary: l.bankImportSampleSummary(
+      '${set['name']}',
+      all.length,
+      deduped.skipped > 0 ? l.bankImportSampleSkipped(deduped.skipped) : '',
+    ),
   );
 }
 
@@ -160,7 +162,7 @@ Future<List<String>?> runQuestionBankWorksheetImport(
   );
   if (items.isEmpty) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('No questions to import.')),
+      SnackBar(content: Text(context.l10n.bankImportNothingToImport)),
     );
     return null;
   }
@@ -191,14 +193,13 @@ Future<List<QuestionBankItem>?> _confirmAndInsert(
   String? summary,
   List<QuestionBankItem> existingBank = const [],
 }) async {
+  final l = context.l10n;
   final decision = await Navigator.of(context).push<QuestionBankImportDecision>(
     MaterialPageRoute(
       fullscreenDialog: true,
       builder: (_) => QuestionBankImportReviewScreen(
         items: items,
-        summary: summary ??
-            '${items.length} question${items.length == 1 ? '' : 's'} parsed '
-                'from the pasted text.',
+        summary: summary ?? l.bankImportParsedFromPaste(items.length),
         existingBank: existingBank,
       ),
     ),
@@ -216,19 +217,23 @@ Future<List<QuestionBankItem>?> _confirmAndInsert(
     await firestore.addQuestionBankItems(confirmed);
     if (!context.mounted) return confirmed;
     final sheets = QuestionBankSheet.group(confirmed);
-    final n = confirmed.length;
-    final verb = decision.replaceIds.isNotEmpty ? 'Replaced' : 'Added';
-    final what = sheets.length == 1 && sheets.first.isSheet
-        ? 'worksheet ${sheets.first.code} ($n question${n == 1 ? '' : 's'})'
-        : '$n question${n == 1 ? '' : 's'}';
+    final questions = l.bankTextQuestionCount(confirmed.length);
+    final replaced = decision.replaceIds.isNotEmpty;
+    final message = sheets.length == 1 && sheets.first.isSheet
+        ? (replaced
+            ? l.bankImportReplacedSheet(sheets.first.code, questions)
+            : l.bankImportAddedSheet(sheets.first.code, questions))
+        : (replaced
+            ? l.bankImportReplacedQuestions(questions)
+            : l.bankImportAddedQuestions(questions));
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$verb $what in the bank.')),
+      SnackBar(content: Text(message)),
     );
     return confirmed;
   } catch (e) {
     if (!context.mounted) return null;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Could not import: $e')),
+      SnackBar(content: Text(l.bankImportCouldNotImport('$e'))),
     );
     return null;
   }

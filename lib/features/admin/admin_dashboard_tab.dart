@@ -7,6 +7,8 @@ import '../../core/constants/exercise_authoring_platform.dart';
 import '../../core/utils/invoice_utils.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/responsive_card_grid.dart';
+import '../../l10n/l10n.dart';
+import '../../l10n/labels_admin.dart';
 import '../../models/admin_dashboard_stat_kind.dart';
 import '../../models/app_user.dart';
 import '../../models/invoice.dart';
@@ -128,6 +130,7 @@ class AdminDashboardTab extends StatelessWidget {
     AdminReportData report,
     List<Invoice> invoices,
   ) {
+    final l = context.l10n;
     final now = DateTime.now();
     final income = InvoiceUtils.paidTotalInMonth(invoices, now);
     final paidCount = invoices
@@ -147,16 +150,19 @@ class AdminDashboardTab extends StatelessWidget {
       maxColumns: 4,
       children: [
         AdminStatCard(
-          label: 'Total users',
+          label: l.adminDashTotalUsers,
           value: '${report.totalUsers}',
           icon: Icons.people_outline,
           color: adminPurple,
-          subtitle: '${report.totalMurid} murid · ${report.totalTeachers} guru',
+          subtitle: l.adminDashUsersBreakdown(
+            report.totalMurid,
+            report.totalTeachers,
+          ),
           onTap: () =>
               _openPlatformStat(context, AdminDashboardStatKind.totalUsers),
         ),
         AdminStatCard(
-          label: 'Active murid',
+          label: l.adminDashActiveMurid,
           value: '${report.activeStudents}',
           icon: Icons.person_outline,
           color: AppColors.teal,
@@ -164,7 +170,7 @@ class AdminDashboardTab extends StatelessWidget {
               _openPlatformStat(context, AdminDashboardStatKind.activeMurid),
         ),
         AdminStatCard(
-          label: 'Exercises',
+          label: l.studentProgressExercises,
           value: '${report.totalExercises}',
           icon: Icons.menu_book_outlined,
           color: AppColors.navy,
@@ -172,14 +178,16 @@ class AdminDashboardTab extends StatelessWidget {
               _openPlatformStat(context, AdminDashboardStatKind.exercises),
         ),
         AdminStatCard(
-          label: 'Income / mo',
+          label: l.adminDashIncomePerMonth,
           value: currency.format(income),
           icon: Icons.attach_money,
           color: AppColors.success,
           subtitle: paidCount == 0
-              ? 'No payments in ${DateFormat('MMMM').format(now)}'
-              : '$paidCount payment${paidCount == 1 ? '' : 's'} in '
-                  '${DateFormat('MMMM').format(now)}',
+              ? l.adminDashNoPaymentsInMonth(DateFormat('MMMM').format(now))
+              : l.adminDashPaymentsInMonth(
+                  paidCount,
+                  DateFormat('MMMM').format(now),
+                ),
           onTap: () =>
               _openPlatformStat(context, AdminDashboardStatKind.incomeMonthly),
         ),
@@ -229,11 +237,12 @@ class AdminDashboardTab extends StatelessWidget {
     BuildContext context,
     List<AdminVoucherAlert> alerts,
   ) {
+    final l = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         AdminSectionHeader(
-          title: 'Needs attention',
+          title: l.adminDashNeedsAttention,
           badgeCount: alerts.isEmpty ? null : alerts.length,
           onTap: alerts.isEmpty
               ? null
@@ -245,7 +254,7 @@ class AdminDashboardTab extends StatelessWidget {
         if (alerts.isEmpty)
           AppCard(
             child: Text(
-              'All caught up — no voucher alerts right now.',
+              l.adminDashAllCaughtUpNoAlerts,
               style: TextStyle(color: AppColors.textSecondary),
             ),
           )
@@ -286,6 +295,7 @@ class _FinancialSummarySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final currency = NumberFormat.currency(
       locale: 'id_ID',
       symbol: 'Rp ',
@@ -321,20 +331,20 @@ class _FinancialSummarySection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const AdminSectionHeader(title: 'Financial summary'),
+        AdminSectionHeader(title: l.adminDashFinancialSummary),
         ResponsiveCardGrid(
           minCardWidth: 220,
           maxColumns: 3,
           children: [
             AdminStatCard(
-              label: 'Revenue this month',
+              label: l.adminDashRevenueThisMonth,
               value: currency.format(revenueThisMonth),
               icon: Icons.trending_up,
               color: AppColors.success,
               onTap: onOpenPayments,
             ),
             AdminStatCard(
-              label: 'Pending payments',
+              label: l.adminDashPendingPayments,
               value: '${pending.length}',
               subtitle: currency.format(outstanding),
               icon: Icons.pending_actions_outlined,
@@ -342,9 +352,9 @@ class _FinancialSummarySection extends StatelessWidget {
               onTap: onOpenPayments,
             ),
             AdminStatCard(
-              label: 'Vouchers without payment',
+              label: l.adminDashVouchersWithoutPayment,
               value: '$vouchersWithoutPayment',
-              subtitle: 'Active vouchers with no invoice',
+              subtitle: l.adminDashActiveVouchersNoInvoice,
               icon: Icons.confirmation_number_outlined,
               color: AppColors.error,
               onTap: onOpenVouchers,
@@ -359,7 +369,7 @@ class _FinancialSummarySection extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Pending payments to chase',
+                  l.adminDashPendingToChase,
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     color: AppColors.navy,
@@ -373,7 +383,7 @@ class _FinancialSummarySection extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            '${inv.studentName?.isNotEmpty == true ? inv.studentName! : inv.invoiceNumber} · ${inv.itemLabel}',
+                            '${inv.studentName?.isNotEmpty == true ? inv.studentName! : inv.invoiceNumber} · ${inv.itemLocalized(l)}',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(fontSize: 13),
@@ -381,8 +391,8 @@ class _FinancialSummarySection extends StatelessWidget {
                         ),
                         Text(
                           inv.isOverdue
-                              ? 'overdue · '
-                              : 'due ${inv.dueDate} · ',
+                              ? '${l.adminDashOverdue} · '
+                              : '${l.adminDashDue(inv.dueDate)} · ',
                           style: TextStyle(
                             fontSize: 12,
                             color: inv.isOverdue
@@ -408,7 +418,7 @@ class _FinancialSummarySection extends StatelessWidget {
         if (recentPaid.isEmpty)
           AppCard(
             child: Text(
-              'No payments recorded yet.',
+              l.adminDashNoPaymentsYet,
               style: TextStyle(color: AppColors.textSecondary),
             ),
           )
@@ -418,7 +428,7 @@ class _FinancialSummarySection extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Recent payments',
+                  l.adminDashRecentPayments,
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     color: AppColors.navy,

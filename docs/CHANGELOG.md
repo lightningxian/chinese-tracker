@@ -6,6 +6,49 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-12 (later) — Claude: Indonesian for admin, teacher and question bank screens
+
+**What changed**
+- Every admin, teacher, question bank, worksheet import, materials and
+  exercise player screen now reads `context.l10n`; `app_en.arb` /
+  `app_id.arb` grew from 311 to about 1,380 keys. Five parallel Claude
+  agents each converted a disjoint file set (admin people and money; admin
+  dashboard, reports and settings; teacher classes, attendance, students and
+  grades; exercises and question bank; student player and materials), then
+  the key sets were merged.
+- Model enums keep their English `label`; the UI shows them through
+  `lib/l10n/labels_admin.dart`, `labels_reports.dart`, `labels_classes.dart`
+  and `labels_exercises.dart` (`localized(l)` extensions). Attention items
+  and the teacher activity feed are built with the app language
+  (`TeacherActivityUtils.buildFeed(l: …)`, `AttentionItem.localizedMessage`).
+- Nested page titles (`ShellRouteUtils.*TitleForLocation(l, path)`), the
+  notification sheet, the import progress dialog, the roster labels and the
+  platform messages shown in the Exercises tab are localized too.
+- Admin and teacher profile tabs have the Language row (ID | EN).
+- `LocaleController` sets `Intl.defaultLocale` and `main()` loads the
+  Indonesian date symbols, so every `DateFormat` without an explicit locale
+  prints Indonesian month and weekday names in Indonesian mode (before, dates
+  stayed English even on student screens).
+
+**Why**
+- Owner's go-ahead 2026-11-12 on the recommendation list: staff screens were
+  English-only while students and parents already had the switch.
+
+**For review**
+- Still English on purpose: the legacy exercise editor, quiz and level
+  screens (unused), error messages thrown from `lib/services` and
+  `lib/core/errors` (shown as they come), PDF and CSV exports built in
+  `lib/services`, the worksheet scanner's detection summary and OCR progress
+  details, the price list default item names (stored data), and the
+  `roleLabel` literals that pick the avatar colour.
+- The bank search still matches on the English type label, not the
+  Indonesian one.
+- Verified on the emulator in Indonesian: admin dashboard, Users, Invoices,
+  teacher dashboard, exercises, question bank, student player.
+- Hosting deployed; no rules or functions change.
+
+---
+
 ## 2026-11-12 — Claude: scores locked to the server, explanations in the review
 
 **What changed**

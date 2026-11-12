@@ -6,6 +6,8 @@ import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/shell_nested_page.dart';
+import '../../l10n/l10n.dart';
+import '../../l10n/labels_exercises.dart';
 import '../../models/exercise.dart';
 import '../../models/exercise_skill_category.dart';
 import '../../models/question_bank_item.dart';
@@ -89,11 +91,11 @@ class _ExercisePackageFormScreenState extends State<ExercisePackageFormScreen> {
   }
 
   Future<void> _save({bool thenAssign = false}) async {
+    final l = context.l10n;
     if (!_formKey.currentState!.validate()) return;
     if (_sheets.isEmpty && _questionIds.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Add at least one worksheet or question.')),
+        SnackBar(content: Text(l.packageFormAddAtLeastOne)),
       );
       return;
     }
@@ -117,7 +119,7 @@ class _ExercisePackageFormScreenState extends State<ExercisePackageFormScreen> {
       messenger.showSnackBar(
         SnackBar(
             content:
-                Text(_isEditing ? 'Exercise saved.' : 'Exercise created.')),
+                Text(_isEditing ? l.packageFormSaved : l.packageFormCreated)),
       );
       if (thenAssign) {
         final saved = await firestore.getExercise(id);
@@ -129,7 +131,8 @@ class _ExercisePackageFormScreenState extends State<ExercisePackageFormScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      messenger.showSnackBar(SnackBar(content: Text('Could not save: $e')));
+      messenger.showSnackBar(
+          SnackBar(content: Text(l.bankEditorCouldNotSave('$e'))));
     }
   }
 
@@ -162,10 +165,11 @@ class _ExercisePackageFormScreenState extends State<ExercisePackageFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final firestore = context.read<FirestoreService>();
     return ShellNestedPage(
       embedded: widget.embedded,
-      title: _isEditing ? 'Edit exercise' : 'New exercise',
+      title: _isEditing ? l.packageFormEditTitle : l.teacherExNewExercise,
       child: StreamBuilder<List<QuestionBankItem>>(
         stream: firestore.watchQuestionBank(widget.teacherId),
         builder: (context, snap) {
@@ -203,9 +207,10 @@ class _ExercisePackageFormScreenState extends State<ExercisePackageFormScreen> {
                       TextFormField(
                         controller: _title,
                         onChanged: (_) => _titleTouched = true,
-                        decoration: const InputDecoration(labelText: 'Title'),
+                        decoration:
+                            InputDecoration(labelText: l.packageFormTitle),
                         validator: (v) => (v == null || v.trim().isEmpty)
-                            ? 'Enter a title'
+                            ? l.packageFormEnterTitle
                             : null,
                       ),
                       const SizedBox(height: 12),
@@ -217,10 +222,11 @@ class _ExercisePackageFormScreenState extends State<ExercisePackageFormScreen> {
                               initialValue: _level,
                               isExpanded: true,
                               decoration:
-                                  const InputDecoration(labelText: 'HSK level'),
+                                  InputDecoration(labelText: l.commonHskLevel),
                               items: [
-                                for (final l in AppConstants.hskLevels)
-                                  DropdownMenuItem(value: l, child: Text(l)),
+                                for (final level in AppConstants.hskLevels)
+                                  DropdownMenuItem(
+                                      value: level, child: Text(level)),
                               ],
                               onChanged: (v) => setState(() {
                                 _titleTouched = true;
@@ -235,12 +241,12 @@ class _ExercisePackageFormScreenState extends State<ExercisePackageFormScreen> {
                               key: ValueKey('skill-${_skill.value}'),
                               initialValue: _skill,
                               isExpanded: true,
-                              decoration: const InputDecoration(
-                                  labelText: 'Skill section'),
+                              decoration: InputDecoration(
+                                  labelText: l.packageFormSkillSection),
                               items: [
                                 for (final c in ExerciseSkillCategory.values)
                                   DropdownMenuItem(
-                                      value: c, child: Text(c.label)),
+                                      value: c, child: Text(c.localized(l))),
                               ],
                               onChanged: (v) =>
                                   setState(() => _skill = v ?? _skill),
@@ -253,8 +259,8 @@ class _ExercisePackageFormScreenState extends State<ExercisePackageFormScreen> {
                         controller: _instructions,
                         minLines: 2,
                         maxLines: 4,
-                        decoration: const InputDecoration(
-                          labelText: 'Instructions (optional)',
+                        decoration: InputDecoration(
+                          labelText: l.packageFormInstructionsOptional,
                           alignLabelWithHint: true,
                         ),
                       ),
@@ -262,10 +268,9 @@ class _ExercisePackageFormScreenState extends State<ExercisePackageFormScreen> {
                       TextFormField(
                         controller: _timeLimit,
                         keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Time limit in minutes (optional)',
-                          helperText:
-                              'Leave empty for no limit. With a limit the clock counts down and the exercise submits itself at zero.',
+                        decoration: InputDecoration(
+                          labelText: l.packageFormTimeLimit,
+                          helperText: l.packageFormTimeLimitHelper,
                           helperMaxLines: 2,
                         ),
                         validator: (v) {
@@ -273,17 +278,15 @@ class _ExercisePackageFormScreenState extends State<ExercisePackageFormScreen> {
                           if (text.isEmpty) return null;
                           final minutes = int.tryParse(text);
                           return minutes == null || minutes <= 0
-                              ? 'Enter a whole number of minutes'
+                              ? l.packageFormEnterMinutes
                               : null;
                         },
                       ),
                       SwitchListTile(
                         contentPadding: EdgeInsets.zero,
                         value: _published,
-                        title: const Text('Published'),
-                        subtitle: const Text(
-                          'Assigned students can open it. Drafts stay hidden.',
-                        ),
+                        title: Text(l.teacherExPublished),
+                        subtitle: Text(l.packageFormPublishedSubtitle),
                         onChanged: (v) => setState(() => _published = v),
                       ),
                     ],
@@ -294,7 +297,9 @@ class _ExercisePackageFormScreenState extends State<ExercisePackageFormScreen> {
                   children: [
                     Expanded(
                       child: Text(
-                        'Contents · ${QuestionBankText.questionCount(total)}',
+                        l.packageFormContents(
+                          QuestionBankText.questionCount(l, total),
+                        ),
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 16,
@@ -308,7 +313,7 @@ class _ExercisePackageFormScreenState extends State<ExercisePackageFormScreen> {
                       style: FilledButton.styleFrom(
                           backgroundColor: AppColors.navy),
                       icon: const Icon(Icons.inventory_2_outlined, size: 18),
-                      label: const Text('Add from bank'),
+                      label: Text(l.packageFormAddFromBank),
                     ),
                   ],
                 ),
@@ -316,9 +321,7 @@ class _ExercisePackageFormScreenState extends State<ExercisePackageFormScreen> {
                 if (_sheets.isEmpty && _questionIds.isEmpty)
                   AppCard(
                     child: Text(
-                      'Nothing yet. Add worksheets from the question bank; the '
-                      'students get them in this order. Edit a worksheet in the '
-                      'bank later and this exercise follows.',
+                      l.packageFormNothingYet,
                       style: TextStyle(
                           color: AppColors.textSecondary, height: 1.5),
                     ),
@@ -329,9 +332,13 @@ class _ExercisePackageFormScreenState extends State<ExercisePackageFormScreen> {
                     icon: Icons.description_outlined,
                     title: byKey[key]?.title ?? key,
                     subtitle: byKey[key] == null
-                        ? 'Not in the bank any more'
-                        : '$key · ${byKey[key]!.type.label} · '
-                            '${QuestionBankText.questionCount(byKey[key]!.count)}',
+                        ? l.packageFormNotInBank
+                        : [
+                            key,
+                            byKey[key]!.type.localized(l),
+                            QuestionBankText.questionCount(
+                                l, byKey[key]!.count),
+                          ].join(' · '),
                     canMoveUp: i > 0,
                     canMoveDown: i < _sheets.length - 1,
                     onMove: (d) => setState(() {
@@ -344,10 +351,11 @@ class _ExercisePackageFormScreenState extends State<ExercisePackageFormScreen> {
                   _ContentRow(
                     index: _sheets.length + i,
                     icon: Icons.help_outline,
-                    title: byQuestion[id]?.displayText ?? '(question removed)',
+                    title: byQuestion[id]?.displayText ??
+                        l.packageFormQuestionRemoved,
                     subtitle: byQuestion[id] == null
-                        ? 'Not in the bank any more'
-                        : QuestionBankText.answerLine(byQuestion[id]!),
+                        ? l.packageFormNotInBank
+                        : QuestionBankText.answerLine(l, byQuestion[id]!),
                     canMoveUp: i > 0,
                     canMoveDown: i < _questionIds.length - 1,
                     onMove: (d) => setState(() {
@@ -365,8 +373,9 @@ class _ExercisePackageFormScreenState extends State<ExercisePackageFormScreen> {
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
-                        child: Text(
-                            _isEditing ? 'Save' : 'Save as draft or publish'),
+                        child: Text(_isEditing
+                            ? l.bankEditorSave
+                            : l.packageFormSaveDraftOrPublish),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -380,7 +389,7 @@ class _ExercisePackageFormScreenState extends State<ExercisePackageFormScreen> {
                         ),
                         icon:
                             const Icon(Icons.assignment_ind_outlined, size: 18),
-                        label: const Text('Save and assign'),
+                        label: Text(l.packageFormSaveAndAssign),
                       ),
                     ),
                   ],
@@ -417,6 +426,7 @@ class _ContentRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: AppCard(
@@ -462,17 +472,17 @@ class _ContentRow extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.arrow_upward, size: 18),
               onPressed: canMoveUp ? () => onMove(-1) : null,
-              tooltip: 'Move up',
+              tooltip: l.packageFormMoveUp,
             ),
             IconButton(
               icon: const Icon(Icons.arrow_downward, size: 18),
               onPressed: canMoveDown ? () => onMove(1) : null,
-              tooltip: 'Move down',
+              tooltip: l.packageFormMoveDown,
             ),
             IconButton(
               icon: Icon(Icons.close, size: 18, color: AppColors.error),
               onPressed: onRemove,
-              tooltip: 'Remove',
+              tooltip: l.packageFormRemove,
             ),
           ],
         ),
@@ -547,6 +557,7 @@ class _BankPickerState extends State<_BankPicker> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final count = _sheets.length + _questionIds.length;
 
     return DraggableScrollableSheet(
@@ -571,7 +582,7 @@ class _BankPickerState extends State<_BankPicker> {
                       children: [
                         Expanded(
                           child: Text(
-                            'Add from the question bank',
+                            l.packageFormAddFromQuestionBank,
                             style: TextStyle(
                               fontWeight: FontWeight.w700,
                               fontSize: 16,
@@ -583,7 +594,7 @@ class _BankPickerState extends State<_BankPicker> {
                           onPressed: _scan,
                           icon: const Icon(Icons.document_scanner_outlined,
                               size: 18),
-                          label: const Text('Scan worksheet'),
+                          label: Text(l.bankScanWorksheet),
                         ),
                         const SizedBox(width: 8),
                         FilledButton(
@@ -594,7 +605,7 @@ class _BankPickerState extends State<_BankPicker> {
                           ),
                           style: FilledButton.styleFrom(
                               backgroundColor: AppColors.navy),
-                          child: Text('Done ($count)'),
+                          child: Text(l.packageFormDoneCount(count)),
                         ),
                       ],
                     ),
@@ -602,7 +613,7 @@ class _BankPickerState extends State<_BankPicker> {
                     QuestionBankFilterBar(
                       filter: _filter,
                       onChanged: (f) => setState(() => _filter = f),
-                      searchHint: 'Search worksheets and questions…',
+                      searchHint: l.packageFormSearchHint,
                     ),
                   ],
                 ),
@@ -612,11 +623,11 @@ class _BankPickerState extends State<_BankPicker> {
                     ? EmptyState(
                         icon: Icons.inventory_2_outlined,
                         title: bank.isEmpty
-                            ? 'The bank is empty'
-                            : 'Nothing in the bank matches',
+                            ? l.packageFormBankEmptyTitle
+                            : l.packageFormNoMatchTitle,
                         subtitle: bank.isEmpty
-                            ? 'Scan a worksheet to add the first one.'
-                            : 'Change the search or the filters.',
+                            ? l.packageFormBankEmptySubtitle
+                            : l.packageFormNoMatchSubtitle,
                       )
                     : ListView.builder(
                         controller: scrollController,
@@ -633,8 +644,8 @@ class _BankPickerState extends State<_BankPicker> {
                             secondary: IconButton(
                               icon: const Icon(Icons.edit_outlined),
                               tooltip: row.isSheet
-                                  ? 'Open and edit this worksheet'
-                                  : 'Edit this question',
+                                  ? l.packageFormOpenEditSheet
+                                  : l.packageFormEditQuestion,
                               onPressed: () => _edit(row),
                             ),
                             title: Text(
@@ -649,12 +660,12 @@ class _BankPickerState extends State<_BankPicker> {
                             subtitle: Text(
                               [
                                 if (row.isSheet) row.code,
-                                row.category.label,
-                                row.type.label,
+                                row.category.localized(l),
+                                row.type.localized(l),
                                 if (row.level != null && row.level!.isNotEmpty)
                                   row.level!,
                                 if (row.isSheet)
-                                  QuestionBankText.questionCount(row.count),
+                                  QuestionBankText.questionCount(l, row.count),
                               ].join(' · '),
                             ),
                             onChanged: (v) => setState(() {

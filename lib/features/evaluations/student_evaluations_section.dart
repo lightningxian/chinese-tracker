@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
+import '../../l10n/l10n.dart';
 import '../../models/evaluation.dart';
 import '../../models/org_settings.dart';
 import '../../services/firestore_service.dart';
@@ -21,6 +22,7 @@ class StudentEvaluationsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final firestore = context.read<FirestoreService>();
 
     return StreamBuilder<OrgSettings>(
@@ -38,7 +40,7 @@ class StudentEvaluationsSection extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 SectionHeader(
-                  title: 'Evaluations',
+                  title: l.evaluationsTitle,
                   action: TextButton.icon(
                     onPressed: formsOpen
                         ? () => _openEditor(
@@ -48,15 +50,14 @@ class StudentEvaluationsSection extends StatelessWidget {
                             )
                         : null,
                     icon: const Icon(Icons.add, size: 16),
-                    label: const Text('New'),
+                    label: Text(l.evaluationsNew),
                   ),
                 ),
                 if (!formsOpen)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8),
                     child: Text(
-                      'Evaluation forms are closed. An admin can open them in '
-                      'Settings.',
+                      l.evaluationsFormsClosed,
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,
@@ -66,7 +67,7 @@ class StudentEvaluationsSection extends StatelessWidget {
                 if (evaluations.isEmpty)
                   AppCard(
                     child: Text(
-                      'No evaluations yet.',
+                      l.evaluationsEmpty,
                       style: TextStyle(color: AppColors.textSecondary),
                     ),
                   )
@@ -125,6 +126,7 @@ class _EvaluationRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final e = evaluation;
     final color = e.isPublished ? AppColors.success : AppColors.textSecondary;
     return AppCard(
@@ -137,7 +139,7 @@ class _EvaluationRow extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  e.term.isEmpty ? 'Evaluation' : e.term,
+                  e.term.isEmpty ? l.evaluationsFallbackTitle : e.term,
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 15,
@@ -162,7 +164,7 @@ class _EvaluationRow extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  e.isPublished ? 'Published' : 'Draft',
+                  e.isPublished ? l.evaluationsPublished : l.evaluationsDraft,
                   style: TextStyle(
                     color: color,
                     fontWeight: FontWeight.w700,
@@ -287,6 +289,7 @@ class _EvaluationEditorSheetState extends State<_EvaluationEditorSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return Padding(
       padding: EdgeInsets.fromLTRB(
         20,
@@ -302,7 +305,7 @@ class _EvaluationEditorSheetState extends State<_EvaluationEditorSheet> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                _isEditing ? 'Edit evaluation' : 'New evaluation',
+                _isEditing ? l.evaluationsEditTitle : l.evaluationsNewTitle,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -324,19 +327,20 @@ class _EvaluationEditorSheetState extends State<_EvaluationEditorSheet> {
               ],
               TextFormField(
                 controller: _termController,
-                decoration: const InputDecoration(
-                  labelText: 'Term',
-                  hintText: 'e.g. Semester 1 2026',
-                  prefixIcon: Icon(Icons.calendar_today_outlined),
+                decoration: InputDecoration(
+                  labelText: l.evaluationsTermLabel,
+                  hintText: l.evaluationsTermHint,
+                  prefixIcon: const Icon(Icons.calendar_today_outlined),
                 ),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Enter a term' : null,
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? l.evaluationsTermRequired
+                    : null,
               ),
               const SizedBox(height: 16),
               Row(
                 children: [
-                  const Text('Rating',
-                      style: TextStyle(fontWeight: FontWeight.w600)),
+                  Text(l.evaluationsRating,
+                      style: const TextStyle(fontWeight: FontWeight.w600)),
                   const SizedBox(width: 12),
                   for (var i = 1; i <= 5; i++)
                     IconButton(
@@ -355,20 +359,21 @@ class _EvaluationEditorSheetState extends State<_EvaluationEditorSheet> {
               TextFormField(
                 controller: _strengthsController,
                 maxLines: 2,
-                decoration: const InputDecoration(labelText: 'Strengths'),
+                decoration:
+                    InputDecoration(labelText: l.evaluationsStrengths),
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _improvementsController,
                 maxLines: 2,
                 decoration:
-                    const InputDecoration(labelText: 'Areas to improve'),
+                    InputDecoration(labelText: l.evaluationsImprovements),
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _commentController,
                 maxLines: 3,
-                decoration: const InputDecoration(labelText: 'Comment'),
+                decoration: InputDecoration(labelText: l.evaluationsComment),
               ),
               const SizedBox(height: 16),
               Row(
@@ -381,7 +386,7 @@ class _EvaluationEditorSheetState extends State<_EvaluationEditorSheet> {
                         side: BorderSide(color: AppColors.border),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
-                      child: const Text('Save draft'),
+                      child: Text(l.evaluationsSaveDraft),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -398,7 +403,7 @@ class _EvaluationEditorSheetState extends State<_EvaluationEditorSheet> {
                               width: 18,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Text('Publish'),
+                          : Text(l.evaluationsPublish),
                     ),
                   ),
                 ],
@@ -408,8 +413,10 @@ class _EvaluationEditorSheetState extends State<_EvaluationEditorSheet> {
                 TextButton.icon(
                   onPressed: _saving ? null : _delete,
                   icon: Icon(Icons.delete_outline, color: AppColors.error),
-                  label:
-                      Text('Delete', style: TextStyle(color: AppColors.error)),
+                  label: Text(
+                    l.teacherAttDelete,
+                    style: TextStyle(color: AppColors.error),
+                  ),
                 ),
               ],
             ],

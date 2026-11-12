@@ -17,11 +17,18 @@ class AttentionItem {
     required this.student,
     required this.message,
     required this.reason,
+    this.count,
   });
 
   final AppUser student;
+
+  /// English wording; screens show [localizedMessage] from
+  /// `lib/l10n/labels_classes.dart` instead.
   final String message;
   final AttentionReason reason;
+
+  /// Days (stale, inactive) or sessions left (low sessions); null otherwise.
+  final int? count;
 }
 
 abstract final class TeacherAttentionUtils {
@@ -75,6 +82,7 @@ abstract final class TeacherAttentionUtils {
             AttentionItem(
               student: student,
               reason: AttentionReason.staleAssignment,
+              count: now.difference(assignedAt).inDays,
               message:
                   '${student.name} has assigned practice not started (${now.difference(assignedAt).inDays}d)',
             ),
@@ -107,6 +115,7 @@ abstract final class TeacherAttentionUtils {
           AttentionItem(
             student: student,
             reason: AttentionReason.inactiveStudent,
+            count: _inactiveDays,
             message: '${student.name} inactive for $_inactiveDays+ days',
           ),
         );
@@ -118,6 +127,7 @@ abstract final class TeacherAttentionUtils {
           AttentionItem(
             student: student,
             reason: AttentionReason.lowSessions,
+            count: remaining,
             message: remaining == 0
                 ? '${student.name} has no class sessions left'
                 : '${student.name} has $remaining class session${remaining == 1 ? '' : 's'} left',

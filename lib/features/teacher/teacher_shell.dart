@@ -7,6 +7,7 @@ import '../../core/constants/app_constants.dart';
 import '../../core/utils/shell_route_utils.dart';
 import '../../core/widgets/app_shell.dart';
 import '../../core/widgets/notification_sheet.dart';
+import '../../l10n/l10n.dart';
 import '../../models/app_notification.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
@@ -29,38 +30,38 @@ class TeacherShell extends StatefulWidget {
 class _TeacherShellState extends State<TeacherShell> {
   int _index = 0;
 
-  static const _destinations = [
-    AppShellDestination(
-      label: 'Dashboard',
-      icon: Icons.home_outlined,
-      selectedIcon: Icons.home,
-    ),
-    AppShellDestination(
-      label: 'Students',
-      icon: Icons.people_outline,
-      selectedIcon: Icons.people,
-    ),
-    AppShellDestination(
-      label: 'Exercises',
-      icon: Icons.fitness_center_outlined,
-      selectedIcon: Icons.fitness_center,
-    ),
-    AppShellDestination(
-      label: 'Classes',
-      icon: Icons.event_outlined,
-      selectedIcon: Icons.event,
-    ),
-    AppShellDestination(
-      label: 'Grades',
-      icon: Icons.grading_outlined,
-      selectedIcon: Icons.grading,
-    ),
-    AppShellDestination(
-      label: 'Profile',
-      icon: Icons.person_outline,
-      selectedIcon: Icons.person,
-    ),
-  ];
+  static List<AppShellDestination> _destinations(AppLocalizations l) => [
+        AppShellDestination(
+          label: l.teacherShellNavDashboard,
+          icon: Icons.home_outlined,
+          selectedIcon: Icons.home,
+        ),
+        AppShellDestination(
+          label: l.teacherShellNavStudents,
+          icon: Icons.people_outline,
+          selectedIcon: Icons.people,
+        ),
+        AppShellDestination(
+          label: l.teacherShellNavExercises,
+          icon: Icons.fitness_center_outlined,
+          selectedIcon: Icons.fitness_center,
+        ),
+        AppShellDestination(
+          label: l.teacherShellNavClasses,
+          icon: Icons.event_outlined,
+          selectedIcon: Icons.event,
+        ),
+        AppShellDestination(
+          label: l.teacherShellNavGrades,
+          icon: Icons.grading_outlined,
+          selectedIcon: Icons.grading,
+        ),
+        AppShellDestination(
+          label: l.navProfile,
+          icon: Icons.person_outline,
+          selectedIcon: Icons.person,
+        ),
+      ];
 
   void _switchTab(int index) {
     final path = GoRouterState.of(context).uri.path;
@@ -83,7 +84,7 @@ class _TeacherShellState extends State<TeacherShell> {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           ),
           icon: const Icon(Icons.add, size: 16),
-          label: const Text('New class'),
+          label: Text(context.l10n.teacherShellNewClass),
         ),
       _ => null,
     };
@@ -100,6 +101,7 @@ class _TeacherShellState extends State<TeacherShell> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final auth = context.watch<AuthService>();
     final user = auth.appUser;
     if (user == null) {
@@ -128,9 +130,10 @@ class _TeacherShellState extends State<TeacherShell> {
       TeacherProfileTab(user: user),
     ];
 
+    final destinations = _destinations(l);
     final title = nested
-        ? ShellRouteUtils.teacherTitleForLocation(path)
-        : _destinations[_index].label;
+        ? ShellRouteUtils.teacherTitleForLocation(l, path)
+        : destinations[_index].label;
 
     return StreamBuilder<List<AppNotification>>(
       stream: firestore.watchNotificationsForUser(user),
@@ -142,7 +145,7 @@ class _TeacherShellState extends State<TeacherShell> {
           title: title,
           selectedIndex: _index,
           onSelectedIndexChanged: _switchTab,
-          destinations: _destinations,
+          destinations: destinations,
           userName: user.name,
           roleLabel: 'Guru',
           topBarAction: _topBarAction(context),
@@ -153,7 +156,7 @@ class _TeacherShellState extends State<TeacherShell> {
           fabLabel: nested
               ? null
               : switch (_index) {
-                  3 => 'New class',
+                  3 => l.teacherShellNewClass,
                   _ => null,
                 },
           onFabPressed: nested

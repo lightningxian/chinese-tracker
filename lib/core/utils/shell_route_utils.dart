@@ -1,3 +1,6 @@
+import '../../l10n/generated/app_localizations.dart';
+import '../../l10n/labels_classes.dart';
+import '../../l10n/labels_reports.dart';
 import '../../models/admin_dashboard_stat_kind.dart';
 import '../../models/teacher_dashboard_stat_kind.dart';
 
@@ -36,76 +39,76 @@ abstract final class ShellRouteUtils {
     return null;
   }
 
-  static String adminTitleForLocation(String location) {
+  static String adminTitleForLocation(AppLocalizations l, String location) {
     if (location.contains('/dashboard/stat/')) {
       final slug = location.split('/dashboard/stat/').last;
       final adminKind = AdminDashboardStatKind.fromRouteSlug(slug);
-      if (adminKind != null) return adminKind.title;
+      if (adminKind != null) return adminKind.localizedTitle(l);
       final centreKind = TeacherDashboardStatKind.fromRouteSlug(slug);
-      if (centreKind != null) return centreKind.title;
+      if (centreKind != null) return centreKind.localizedTitle(l);
     }
-    if (location.endsWith('/users/new')) return 'New user';
+    if (location.endsWith('/users/new')) return l.routeTitleNewUser;
     if (location.contains('/users/') && location.endsWith('/edit')) {
-      return 'Edit user';
+      return l.routeTitleEditUser;
     }
-    if (location.contains('/users/')) return 'Student';
-    if (location.endsWith('/vouchers/new')) return 'New voucher';
+    if (location.contains('/users/')) return l.routeTitleStudent;
+    if (location.endsWith('/vouchers/new')) return l.routeTitleNewVoucher;
     if (location.contains('/vouchers/') && location.endsWith('/edit')) {
-      return 'Edit voucher';
+      return l.routeTitleEditVoucher;
     }
-    if (location.endsWith('/exercise/new')) return 'New exercise';
+    if (location.endsWith('/exercise/new')) return l.routeTitleNewExercise;
     if (location.contains('/exercise/') && location.endsWith('/edit')) {
-      return 'Edit exercise';
+      return l.routeTitleEditExercise;
     }
-    if (location.endsWith('/session/new')) return 'New class';
+    if (location.endsWith('/session/new')) return l.routeTitleNewClass;
     if (location.contains('/session/') && location.endsWith('/edit')) {
-      return 'Edit class';
+      return l.routeTitleEditClass;
     }
     if (location.contains('/session/') && !location.endsWith('/edit')) {
-      return 'Class details';
+      return l.routeTitleClassDetails;
     }
-    if (location.endsWith('/question-bank')) return 'Question bank';
-    if (location.endsWith('/levels')) return 'Levels';
-    if (location.endsWith('/levels/new')) return 'New level';
+    if (location.endsWith('/question-bank')) return l.routeTitleQuestionBank;
+    if (location.endsWith('/levels')) return l.routeTitleLevels;
+    if (location.endsWith('/levels/new')) return l.routeTitleNewLevel;
     if (location.contains('/levels/') && location.endsWith('/edit')) {
-      return 'Edit level';
+      return l.routeTitleEditLevel;
     }
-    if (location.contains('/quizzes')) return 'Quizzes';
-    if (location.endsWith('/settings')) return 'Settings';
-    if (location.endsWith('/price-list')) return 'Price list';
-    if (location.endsWith('/audit-logs')) return 'Audit logs';
-    if (location.endsWith('/materials')) return 'Materials';
-    return 'Admin';
+    if (location.contains('/quizzes')) return l.routeTitleQuizzes;
+    if (location.endsWith('/settings')) return l.routeTitleSettings;
+    if (location.endsWith('/price-list')) return l.routeTitlePriceList;
+    if (location.endsWith('/audit-logs')) return l.routeTitleAuditLogs;
+    if (location.endsWith('/materials')) return l.routeTitleMaterials;
+    return l.routeTitleAdmin;
   }
 
-  static String teacherTitleForLocation(String location) {
+  static String teacherTitleForLocation(AppLocalizations l, String location) {
     if (location.contains('/dashboard/stat/')) {
       final slug = location.split('/dashboard/stat/').last;
       final kind = TeacherDashboardStatKind.fromRouteSlug(slug);
-      if (kind != null) return kind.title;
+      if (kind != null) return kind.localizedTitle(l);
     }
-    if (location.contains('/student/')) return 'Student profile';
-    if (location.endsWith('/exercise/new')) return 'New exercise';
+    if (location.contains('/student/')) return l.routeTitleStudentProfile;
+    if (location.endsWith('/exercise/new')) return l.routeTitleNewExercise;
     if (location.contains('/exercise/') && location.endsWith('/edit')) {
-      return 'Edit exercise';
+      return l.routeTitleEditExercise;
     }
-    if (location.endsWith('/session/new')) return 'New class';
+    if (location.endsWith('/session/new')) return l.routeTitleNewClass;
     if (location.contains('/session/') && location.endsWith('/edit')) {
-      return 'Edit class';
+      return l.routeTitleEditClass;
     }
     if (location.contains('/session/') && !location.endsWith('/edit')) {
-      return 'Class details';
+      return l.routeTitleClassDetails;
     }
-    if (location.endsWith('/calendar')) return 'Calendar';
-    if (location.endsWith('/grades')) return 'Grades';
-    if (location.endsWith('/question-bank')) return 'Question bank';
-    if (location.endsWith('/levels')) return 'Levels';
-    if (location.endsWith('/levels/new')) return 'New level';
+    if (location.endsWith('/calendar')) return l.routeTitleCalendar;
+    if (location.endsWith('/grades')) return l.routeTitleGrades;
+    if (location.endsWith('/question-bank')) return l.routeTitleQuestionBank;
+    if (location.endsWith('/levels')) return l.routeTitleLevels;
+    if (location.endsWith('/levels/new')) return l.routeTitleNewLevel;
     if (location.contains('/levels/') && location.endsWith('/edit')) {
-      return 'Edit level';
+      return l.routeTitleEditLevel;
     }
-    if (location.contains('/quizzes')) return 'Quizzes';
-    if (location.endsWith('/materials')) return 'Materials';
-    return 'Guru';
+    if (location.contains('/quizzes')) return l.routeTitleQuizzes;
+    if (location.endsWith('/materials')) return l.routeTitleMaterials;
+    return l.routeTitleTeacher;
   }
 }

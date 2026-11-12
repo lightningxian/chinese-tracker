@@ -4,9 +4,11 @@ import 'package:provider/provider.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
+import '../../core/widgets/language_toggle.dart';
 import '../../core/widgets/profile_widgets.dart';
 import '../../core/widgets/theme_toggle.dart';
 import '../../core/widgets/teacher_student_link_card.dart';
+import '../../l10n/l10n.dart';
 import '../../models/app_user.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
@@ -67,6 +69,7 @@ class _TeacherProfileTabState extends State<TeacherProfileTab> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    final l = context.l10n;
 
     setState(() {
       _saving = true;
@@ -88,7 +91,7 @@ class _TeacherProfileTabState extends State<TeacherProfileTab> {
       await auth.refreshProfile();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile updated')),
+          SnackBar(content: Text(l.studentProfileUpdated)),
         );
       }
     } catch (e) {
@@ -101,6 +104,7 @@ class _TeacherProfileTabState extends State<TeacherProfileTab> {
   @override
   Widget build(BuildContext context) {
     final user = widget.user;
+    final l = context.l10n;
 
     return Form(
       key: _formKey,
@@ -109,7 +113,7 @@ class _TeacherProfileTabState extends State<TeacherProfileTab> {
         children: [
           ProfileHeaderCard(
             user: user,
-            subtitle: 'Guru · Centre teacher',
+            subtitle: l.teacherProfileRoleSubtitle,
             avatarColor: AppColors.navy,
             canEditPhoto: true,
             onPhotoChanged: (_) async {
@@ -122,8 +126,8 @@ class _TeacherProfileTabState extends State<TeacherProfileTab> {
           ],
           const SizedBox(height: 16),
           ProfileSectionCard(
-            title: 'Personal information',
-            subtitle: 'Indonesian and Chinese names plus WhatsApp contact.',
+            title: l.studentProfilePersonalTitle,
+            subtitle: l.teacherProfilePersonalSubtitle,
             children: [
               ProfilePersonalFields(
                 nameIndonesianController: _nameIndonesianController,
@@ -136,6 +140,8 @@ class _TeacherProfileTabState extends State<TeacherProfileTab> {
           ),
           const SizedBox(height: 16),
           TeacherStudentLinkCard(teacherId: user.uid),
+          const SizedBox(height: 16),
+          const AppCard(child: LanguageSettingRow()),
           const SizedBox(height: 16),
           const AppCard(child: ThemeSettingRow()),
           const SizedBox(height: 16),

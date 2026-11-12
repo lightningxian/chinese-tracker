@@ -15,6 +15,8 @@ import '../../core/widgets/responsive_card_grid.dart';
 import '../../core/widgets/shell_nested_page.dart';
 import '../../core/widgets/status_pill.dart';
 import '../../core/widgets/teacher_activity_widgets.dart';
+import '../../l10n/l10n.dart';
+import '../../l10n/labels_classes.dart';
 import '../../models/app_user.dart';
 import '../../models/attendance_record.dart';
 import '../../models/class_session.dart';
@@ -58,7 +60,7 @@ class TeacherDashboardStatDetailScreen extends StatelessWidget {
 
     return ShellNestedPage(
       embedded: embedded,
-      title: kind.title,
+      title: kind.localizedTitle(context.l10n),
       child: StreamBuilder<List<AppUser>>(
         stream: firestore.watchAllStudents(),
         builder: (context, studentsSnap) {
@@ -168,6 +170,7 @@ class TeacherDashboardStatDetailScreen extends StatelessWidget {
                                           );
                                           final activityFeed =
                                               TeacherActivityUtils.buildFeed(
+                                            l: context.l10n,
                                             students: students,
                                             progress: progress,
                                             assignments: assignments,
@@ -246,12 +249,13 @@ class _StatDetailBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
         AppCard(
           child: Text(
-            kind.description,
+            kind.localizedDescription(l),
             style: TextStyle(
               color: AppColors.textSecondary,
               height: 1.45,
@@ -265,26 +269,26 @@ class _StatDetailBody extends StatelessWidget {
   }
 
   List<Widget> _buildContent(BuildContext context) {
+    final l = context.l10n;
     return switch (kind) {
-      TeacherDashboardStatKind.students => [_rosterList(rosters)],
+      TeacherDashboardStatKind.students => [_rosterList(context, rosters)],
       TeacherDashboardStatKind.activeThisWeek => [
-          _rosterList(_activeRosters()),
+          _rosterList(context, _activeRosters()),
         ],
       TeacherDashboardStatKind.homeworkDone => [
           _homeworkRows(
             context,
             homeworkOverview.rows.where((row) => row.isDone).toList(),
-            emptyTitle: 'No completed homework yet',
-            emptySubtitle:
-                'Completed practice will appear here once murid submit scores.',
+            emptyTitle: l.teacherDashNoCompletedHomeworkTitle,
+            emptySubtitle: l.teacherDashNoCompletedHomeworkSubtitle,
           ),
         ],
       TeacherDashboardStatKind.overdue => [
           _homeworkRows(
             context,
             homeworkOverview.rows.where((row) => row.isOverdue).toList(),
-            emptyTitle: 'No overdue practice',
-            emptySubtitle: 'All assigned homework is on track.',
+            emptyTitle: l.teacherDashNoOverdueTitle,
+            emptySubtitle: l.teacherDashNoOverdueSubtitle,
           ),
         ],
       TeacherDashboardStatKind.avgQuiz => [
@@ -302,18 +306,16 @@ class _StatDetailBody extends StatelessWidget {
                 )
                 .toList()
               ..sort((a, b) => b.score.compareTo(a.score)),
-            emptyTitle: 'No quiz scores yet',
-            emptySubtitle:
-                'Quiz averages appear after murid complete lesson quizzes.',
+            emptyTitle: l.teacherDashNoQuizScoresTitle,
+            emptySubtitle: l.teacherDashNoQuizScoresSubtitle,
           ),
         ],
       TeacherDashboardStatKind.avgPractice => [
           _scoreList(
             context,
-            _practiceAverages(),
-            emptyTitle: 'No practice scores yet',
-            emptySubtitle:
-                'Practice averages appear after murid complete assigned exercises.',
+            _practiceAverages(l),
+            emptyTitle: l.teacherDashNoPracticeScoresTitle,
+            emptySubtitle: l.teacherDashNoPracticeScoresSubtitle,
           ),
         ],
       TeacherDashboardStatKind.sessionsLeft => [
@@ -331,14 +333,13 @@ class _StatDetailBody extends StatelessWidget {
           _weeklyEventList(context),
         ],
       TeacherDashboardStatKind.homeworkOverview => [
-          _homeworkSummary(),
+          _homeworkSummary(context),
           const SizedBox(height: 12),
           _homeworkRows(
             context,
             homeworkOverview.rows,
-            emptyTitle: 'No homework assigned yet',
-            emptySubtitle:
-                'Assign practice from the Exercises tab to track completion here.',
+            emptyTitle: l.teacherDashNoHomeworkTitle,
+            emptySubtitle: l.teacherDashNoHomeworkSubtitle,
           ),
         ],
     };
@@ -355,7 +356,7 @@ class _StatDetailBody extends StatelessWidget {
         .toList();
   }
 
-  List<_ScoreRow> _practiceAverages() {
+  List<_ScoreRow> _practiceAverages(AppLocalizations l) {
     final bestByAssignment = ExerciseUtils.bestScoresByStudentExercise(results);
     final totals = <String, _PracticeAccumulator>{};
 
@@ -377,7 +378,7 @@ class _StatDetailBody extends StatelessWidget {
           studentId: roster.studentId,
           name: roster.name,
           subtitle:
-              '${total.count} exercise${total.count == 1 ? '' : 's'} · ${roster.levelLabel}',
+              l.teacherDashExerciseCountLevel(total.count, roster.levelLabel),
           score: (total.sum / total.count).round(),
         ),
       );
@@ -386,34 +387,36 @@ class _StatDetailBody extends StatelessWidget {
     return rows;
   }
 
-  Widget _rosterList(List<StudentRosterSummary> items) {
+  Widget _rosterList(BuildContext context, List<StudentRosterSummary> items) {
     if (items.isEmpty) {
-      return const EmptyState(
+      final l = context.l10n;
+      return EmptyState(
         icon: Icons.people_outline,
-        title: 'No students to show',
-        subtitle: 'Try again later or check your student roster.',
+        title: l.teacherDashNoStudentsToShowTitle,
+        subtitle: l.teacherDashNoStudentsToShowSubtitle,
       );
     }
     return StudentRosterList(students: items, padding: EdgeInsets.zero);
   }
 
-  Widget _homeworkSummary() {
+  Widget _homeworkSummary(BuildContext context) {
+    final l = context.l10n;
     return AppCard(
       child: Wrap(
         spacing: 8,
         runSpacing: 8,
         children: [
           StatusPill(
-            label: '${homeworkOverview.completed} done',
+            label: l.teacherDashHomeworkDone(homeworkOverview.completed),
             color: AppColors.success,
           ),
           StatusPill(
-            label: '${homeworkOverview.pending} to do',
+            label: l.teacherDashHomeworkToDo(homeworkOverview.pending),
             color: AppColors.teal,
           ),
           if (homeworkOverview.overdue > 0)
             StatusPill(
-              label: '${homeworkOverview.overdue} overdue',
+              label: l.teacherDashHomeworkOverdue(homeworkOverview.overdue),
               color: AppColors.error,
             ),
         ],
@@ -434,6 +437,7 @@ class _StatDetailBody extends StatelessWidget {
         subtitle: emptySubtitle,
       );
     }
+    final l = context.l10n;
 
     return Column(
       children: [
@@ -489,7 +493,9 @@ class _StatDetailBody extends StatelessWidget {
                     )
                   else
                     StatusPill(
-                      label: row.isOverdue ? 'Overdue' : 'Pending',
+                      label: row.isOverdue
+                          ? l.teacherDashOverdue
+                          : l.teacherDashPending,
                       color: row.isOverdue
                           ? AppColors.error
                           : AppColors.textSecondary,
@@ -572,14 +578,15 @@ class _StatDetailBody extends StatelessWidget {
   }
 
   Widget _sessionBalanceList(BuildContext context) {
+    final l = context.l10n;
     final items = rosters.toList()
       ..sort((a, b) => a.sessionsRemaining.compareTo(b.sessionsRemaining));
 
     if (items.isEmpty) {
-      return const EmptyState(
+      return EmptyState(
         icon: Icons.event_busy_outlined,
-        title: 'No session packages',
-        subtitle: 'Add class terms on a student profile to track sessions.',
+        title: l.teacherDashNoSessionPackagesTitle,
+        subtitle: l.teacherDashNoSessionPackagesSubtitle,
       );
     }
 
@@ -613,8 +620,7 @@ class _StatDetailBody extends StatelessWidget {
                     ),
                   ),
                   StatusPill(
-                    label:
-                        '${student.sessionsRemaining} session${student.sessionsRemaining == 1 ? '' : 's'} left',
+                    label: l.teacherDashSessionsLeft(student.sessionsRemaining),
                     color: student.sessionsRemaining > 0
                         ? AppColors.teal
                         : AppColors.error,
@@ -633,6 +639,7 @@ class _StatDetailBody extends StatelessWidget {
   }
 
   Widget _classesThisWeekList(BuildContext context) {
+    final l = context.l10n;
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final weekStart = today.subtract(Duration(days: today.weekday - 1));
@@ -647,10 +654,10 @@ class _StatDetailBody extends StatelessWidget {
       ..sort((a, b) => a.sessionDate.compareTo(b.sessionDate));
 
     if (thisWeek.isEmpty) {
-      return const EmptyState(
+      return EmptyState(
         icon: Icons.event_outlined,
-        title: 'No classes this week',
-        subtitle: 'Create a class session from the Classes tab.',
+        title: l.teacherDashNoClassesThisWeekTitle,
+        subtitle: l.teacherDashNoClassesThisWeekSubtitle,
       );
     }
 
@@ -679,7 +686,7 @@ class _StatDetailBody extends StatelessWidget {
                           [
                             _formatSessionDate(session.sessionDate),
                             session.timeRangeLabel,
-                            if (session.isConcluded) 'Concluded',
+                            if (session.isConcluded) l.teacherDashConcluded,
                           ].join(' · '),
                           style: TextStyle(
                             color: AppColors.textSecondary,
@@ -703,10 +710,11 @@ class _StatDetailBody extends StatelessWidget {
 
   Widget _attentionList(BuildContext context) {
     if (attentionItems.isEmpty) {
-      return const EmptyState(
+      final l = context.l10n;
+      return EmptyState(
         icon: Icons.check_circle_outline,
-        title: 'All caught up',
-        subtitle: 'No students need follow-up right now.',
+        title: l.teacherDashAllCaughtUp,
+        subtitle: l.teacherDashNoFollowUp,
       );
     }
 
@@ -756,10 +764,11 @@ class _StatDetailBody extends StatelessWidget {
         .toList();
 
     if (events.isEmpty) {
-      return const EmptyState(
+      final l = context.l10n;
+      return EmptyState(
         icon: Icons.insights_outlined,
-        title: 'No activity this week',
-        subtitle: 'Lesson and practice activity will show up here.',
+        title: l.teacherDashNoActivityTitle,
+        subtitle: l.teacherDashNoActivitySubtitle,
       );
     }
 

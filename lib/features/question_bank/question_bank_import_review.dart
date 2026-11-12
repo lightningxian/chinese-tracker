@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
+import '../../l10n/l10n.dart';
+import '../../l10n/labels_exercises.dart';
 import '../../models/exercise_category.dart';
 import '../../models/question_bank_item.dart';
 import 'question_bank_text.dart';
@@ -89,11 +91,12 @@ class _QuestionBankImportReviewScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final sheet = _sheet;
     return Scaffold(
       backgroundColor: AppColors.surface,
       appBar: AppBar(
-        title: const Text('Check before adding'),
+        title: Text(l.bankImportReviewTitle),
         backgroundColor: AppColors.card,
         foregroundColor: AppColors.navy,
         elevation: 0,
@@ -115,8 +118,10 @@ class _QuestionBankImportReviewScreenState
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'Worksheet ${sheet.code}'
-                            '${sheet.title != sheet.code ? ' · ${sheet.title}' : ''}',
+                            l.bankImportReviewWorksheet(sheet.code) +
+                                (sheet.title != sheet.code
+                                    ? ' · ${sheet.title}'
+                                    : ''),
                             style: TextStyle(
                               fontWeight: FontWeight.w700,
                               fontSize: 16,
@@ -128,8 +133,7 @@ class _QuestionBankImportReviewScreenState
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Added to the bank as one worksheet. Untick a question '
-                      'to leave it out.',
+                      l.bankImportReviewAddedAsOne,
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         height: 1.4,
@@ -150,8 +154,10 @@ class _QuestionBankImportReviewScreenState
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
-                                'This worksheet is already in the bank with '
-                                '${QuestionBankText.questionCount(_existingSame.length)}.',
+                                l.bankImportReviewAlreadyInBank(
+                                  QuestionBankText.questionCount(
+                                      l, _existingSame.length),
+                                ),
                                 style: const TextStyle(height: 1.4),
                               ),
                             ),
@@ -161,7 +167,9 @@ class _QuestionBankImportReviewScreenState
                                   setState(() => _replaceExisting = v),
                             ),
                             Text(
-                              _replaceExisting ? 'Replace it' : 'Keep both',
+                              _replaceExisting
+                                  ? l.bankImportReviewReplaceIt
+                                  : l.bankImportReviewKeepBoth,
                               style:
                                   const TextStyle(fontWeight: FontWeight.w600),
                             ),
@@ -186,8 +194,8 @@ class _QuestionBankImportReviewScreenState
                           width: 220,
                           child: DropdownButtonFormField<String>(
                             initialValue: _level,
-                            decoration: const InputDecoration(
-                              labelText: 'HSK level',
+                            decoration: InputDecoration(
+                              labelText: l.commonHskLevel,
                               isDense: true,
                             ),
                             items: [
@@ -202,13 +210,14 @@ class _QuestionBankImportReviewScreenState
                         width: 220,
                         child: DropdownButtonFormField<ExerciseCategory>(
                           initialValue: _category,
-                          decoration: const InputDecoration(
-                            labelText: 'Type of exercise',
+                          decoration: InputDecoration(
+                            labelText: l.bankFiltersTypeOfExercise,
                             isDense: true,
                           ),
                           items: [
                             for (final c in ExerciseCategory.values)
-                              DropdownMenuItem(value: c, child: Text(c.label)),
+                              DropdownMenuItem(
+                                  value: c, child: Text(c.localized(l))),
                           ],
                           onChanged: (v) =>
                               setState(() => _category = v ?? _category),
@@ -260,7 +269,7 @@ class _QuestionBankImportReviewScreenState
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: Text(
-                                      item.type.label,
+                                      item.type.localized(l),
                                       style: TextStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w600,
@@ -282,7 +291,7 @@ class _QuestionBankImportReviewScreenState
                               ),
                               const SizedBox(height: 6),
                               Text(
-                                QuestionBankText.answerLine(item),
+                                QuestionBankText.answerLine(l, item),
                                 style: AppTextStyles.questionDetail,
                               ),
                             ],
@@ -304,7 +313,7 @@ class _QuestionBankImportReviewScreenState
             children: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
+                child: Text(l.commonCancel),
               ),
               const Spacer(),
               FilledButton.icon(
@@ -313,9 +322,12 @@ class _QuestionBankImportReviewScreenState
                 icon: const Icon(Icons.library_add_outlined, size: 18),
                 label: Text(
                   sheet != null
-                      ? '${_existingSame.isNotEmpty && _replaceExisting ? 'Replace' : 'Add'} '
-                          'worksheet (${QuestionBankText.questionCount(_kept)})'
-                      : 'Add $_kept to bank',
+                      ? (_existingSame.isNotEmpty && _replaceExisting
+                          ? l.bankImportReviewReplaceWorksheet(
+                              QuestionBankText.questionCount(l, _kept))
+                          : l.bankImportReviewAddWorksheet(
+                              QuestionBankText.questionCount(l, _kept)))
+                      : l.bankImportReviewAddToBank(_kept),
                 ),
               ),
             ],

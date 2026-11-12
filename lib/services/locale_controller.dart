@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// The UI language (Indonesian or English), chosen with the ID | EN toggle.
@@ -7,11 +8,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Saved on this device under [prefsKey] ('en' or 'id'). With nothing saved,
 /// the app follows the device language when it is Indonesian and otherwise
 /// starts in English.
+///
+/// Also sets [Intl.defaultLocale], so every `DateFormat` without an explicit
+/// locale prints month and weekday names in the chosen language. `main()`
+/// loads the Indonesian date symbols before the app starts.
 class LocaleController extends ChangeNotifier {
   LocaleController({Locale? deviceLocale})
       : _locale = _fromDevice(
           deviceLocale ?? PlatformDispatcher.instance.locale,
-        );
+        ) {
+    Intl.defaultLocale = _locale.languageCode;
+  }
 
   static const prefsKey = 'app_locale';
   static const supportedLocales = [Locale('en'), Locale('id')];
@@ -33,6 +40,7 @@ class LocaleController extends ChangeNotifier {
         final next = Locale(saved!);
         if (next != _locale) {
           _locale = next;
+          Intl.defaultLocale = next.languageCode;
           notifyListeners();
         }
       }
@@ -48,6 +56,7 @@ class LocaleController extends ChangeNotifier {
     final next = Locale(code);
     if (next == _locale) return;
     _locale = next;
+    Intl.defaultLocale = code;
     notifyListeners();
     try {
       final prefs = await SharedPreferences.getInstance();

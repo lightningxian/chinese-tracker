@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../constants/app_constants.dart';
 import '../theme/app_theme.dart';
+import '../../l10n/l10n.dart';
 import '../../models/app_user.dart';
 import '../../services/firestore_service.dart';
 import '../../services/profile_photo_service.dart';
@@ -131,7 +132,7 @@ class _ProfilePhotoAvatarState extends State<ProfilePhotoAvatar> {
       if (!mounted) return;
       widget.onPhotoChanged?.call(url);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profile photo updated')),
+        SnackBar(content: Text(context.l10n.profileWidgetPhotoUpdated)),
       );
     } on ProfilePhotoCancelledException {
       // User cancelled picker — ignore.
@@ -347,38 +348,39 @@ class ProfilePersonalFields extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return Column(
       children: [
         TextFormField(
           controller: nameIndonesianController,
           enabled: enabled,
           textCapitalization: TextCapitalization.words,
-          decoration: const InputDecoration(
-            labelText: 'Indonesian name',
-            prefixIcon: Icon(Icons.person_outline),
+          decoration: InputDecoration(
+            labelText: l.identityNameIndonesian,
+            prefixIcon: const Icon(Icons.person_outline),
           ),
           validator: (value) => value == null || value.trim().isEmpty
-              ? 'Indonesian name is required'
+              ? l.identityNameIndonesianRequired
               : null,
         ),
         const SizedBox(height: 16),
         TextFormField(
           controller: nameChineseController,
           enabled: enabled,
-          decoration: const InputDecoration(
-            labelText: 'Chinese name',
+          decoration: InputDecoration(
+            labelText: l.identityNameChinese,
             hintText: '中文名',
-            prefixIcon: Icon(Icons.translate_outlined),
+            prefixIcon: const Icon(Icons.translate_outlined),
           ),
         ),
         const SizedBox(height: 16),
         TextFormField(
           initialValue: email,
           readOnly: true,
-          decoration: const InputDecoration(
-            labelText: 'Email',
-            prefixIcon: Icon(Icons.email_outlined),
-            helperText: 'Contact support to change your email',
+          decoration: InputDecoration(
+            labelText: l.commonEmail,
+            prefixIcon: const Icon(Icons.email_outlined),
+            helperText: l.profileWidgetEmailHelper,
           ),
         ),
         const SizedBox(height: 16),
@@ -386,10 +388,10 @@ class ProfilePersonalFields extends StatelessWidget {
           controller: whatsappController,
           enabled: enabled,
           keyboardType: TextInputType.phone,
-          decoration: const InputDecoration(
-            labelText: 'WhatsApp number',
+          decoration: InputDecoration(
+            labelText: l.identityWhatsapp,
             hintText: '08xxxxxxxxxx',
-            prefixIcon: Icon(Icons.chat_outlined),
+            prefixIcon: const Icon(Icons.chat_outlined),
           ),
         ),
         if (showParentFields &&
@@ -399,7 +401,7 @@ class ProfilePersonalFields extends StatelessWidget {
           Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              'Parent / guardian',
+              l.identityParentSection,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: AppColors.navy,
@@ -410,7 +412,7 @@ class ProfilePersonalFields extends StatelessWidget {
           Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              'Used by staff to contact family when needed.',
+              l.profileWidgetParentHint,
               style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 13,
@@ -422,9 +424,9 @@ class ProfilePersonalFields extends StatelessWidget {
             controller: parentNameController,
             enabled: enabled,
             textCapitalization: TextCapitalization.words,
-            decoration: const InputDecoration(
-              labelText: 'Parent name',
-              prefixIcon: Icon(Icons.family_restroom_outlined),
+            decoration: InputDecoration(
+              labelText: l.identityParentName,
+              prefixIcon: const Icon(Icons.family_restroom_outlined),
             ),
           ),
           const SizedBox(height: 16),
@@ -432,10 +434,10 @@ class ProfilePersonalFields extends StatelessWidget {
             controller: parentPhoneController,
             enabled: enabled,
             keyboardType: TextInputType.phone,
-            decoration: const InputDecoration(
-              labelText: 'Parent telephone',
+            decoration: InputDecoration(
+              labelText: l.identityParentPhone,
               hintText: '08xxxxxxxxxx',
-              prefixIcon: Icon(Icons.phone_outlined),
+              prefixIcon: const Icon(Icons.phone_outlined),
             ),
           ),
         ],
@@ -462,13 +464,14 @@ class ProfileStudentLearningFields extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return Column(
       children: [
         DropdownButtonFormField<String>(
           initialValue: level,
-          decoration: const InputDecoration(
-            labelText: 'HSK level',
-            prefixIcon: Icon(Icons.school_outlined),
+          decoration: InputDecoration(
+            labelText: l.commonHskLevel,
+            prefixIcon: const Icon(Icons.school_outlined),
           ),
           items: AppConstants.hskLevels
               .map(
@@ -483,15 +486,15 @@ class ProfileStudentLearningFields extends StatelessWidget {
         const SizedBox(height: 16),
         DropdownButtonFormField<int>(
           initialValue: termSize,
-          decoration: const InputDecoration(
-            labelText: 'Lessons per term',
-            prefixIcon: Icon(Icons.calendar_view_week_outlined),
+          decoration: InputDecoration(
+            labelText: l.commonLessonsPerTerm,
+            prefixIcon: const Icon(Icons.calendar_view_week_outlined),
           ),
           items: AppConstants.termSizes
               .map(
                 (size) => DropdownMenuItem(
                   value: size,
-                  child: Text('$size lessons per term'),
+                  child: Text(l.commonLessonsPerTermOption(size)),
                 ),
               )
               .toList(),
@@ -510,21 +513,22 @@ class ProfileAccountMeta extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final joined = user.createdAt == null
         ? '—'
         : DateFormat('d MMM yyyy').format(user.createdAt!);
 
     return ProfileSectionCard(
-      title: 'Account',
+      title: l.profileWidgetAccountTitle,
       children: [
         ProfileInfoRow(
-          label: 'Member since',
+          label: l.profileWidgetMemberSince,
           value: joined,
           icon: Icons.calendar_today_outlined,
         ),
         ProfileInfoRow(
-          label: 'Status',
-          value: user.active ? 'Active' : 'Inactive',
+          label: l.profileWidgetStatus,
+          value: user.active ? l.historyStatusActive : l.profileWidgetInactive,
           icon: Icons.verified_user_outlined,
         ),
       ],
@@ -559,7 +563,7 @@ class ProfileSaveButton extends StatelessWidget {
                 color: Colors.white,
               ),
             )
-          : const Text('Save changes'),
+          : Text(context.l10n.profileWidgetSaveChanges),
     );
   }
 }
@@ -581,7 +585,7 @@ class ProfileSignOutButton extends StatelessWidget {
         side: BorderSide(color: AppColors.error),
         padding: const EdgeInsets.symmetric(vertical: 14),
       ),
-      child: const Text('Sign out'),
+      child: Text(context.l10n.commonSignOut),
     );
   }
 }

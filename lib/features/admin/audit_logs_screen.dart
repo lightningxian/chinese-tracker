@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/shell_nested_page.dart';
+import '../../l10n/l10n.dart';
 import '../../models/audit_log.dart';
 import '../../services/firestore_service.dart';
 
@@ -16,11 +17,12 @@ class AuditLogsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final firestore = context.read<FirestoreService>();
 
     return ShellNestedPage(
       embedded: embedded,
-      title: 'Audit logs',
+      title: l.auditLogTitle,
       child: StreamBuilder<List<AuditLog>>(
         stream: firestore.watchAuditLogs(),
         builder: (context, snap) {
@@ -30,12 +32,10 @@ class AuditLogsScreen extends StatelessWidget {
           }
           final logs = snap.data ?? const <AuditLog>[];
           if (logs.isEmpty) {
-            return const EmptyState(
+            return EmptyState(
               icon: Icons.history,
-              title: 'No activity yet',
-              subtitle:
-                  'Money movements and permission changes will be recorded '
-                  'here automatically.',
+              title: l.auditLogEmptyTitle,
+              subtitle: l.auditLogEmptySubtitle,
             );
           }
           return ListView.separated(

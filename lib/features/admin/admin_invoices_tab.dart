@@ -11,6 +11,8 @@ import '../../core/widgets/app_card.dart';
 import '../../core/widgets/app_data_table.dart';
 import '../../core/widgets/table_tools.dart';
 import '../../core/widgets/status_pill.dart';
+import '../../l10n/l10n.dart';
+import '../../l10n/labels_admin.dart';
 import '../../models/app_user.dart';
 import '../../models/invoice.dart';
 import '../../models/pricing_settings.dart';
@@ -67,25 +69,25 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
   /// Rows the table shows now, for the CSV export in the header.
   List<Invoice> _visible = const [];
 
-  static const _csvHeader = [
-    'Invoice',
-    'Student',
-    'Item',
-    'Amount',
-    'Status',
-    'Method',
-    'Due',
-    'Paid on',
-    'Created',
-  ];
+  static List<String> _csvHeader(AppLocalizations l) => [
+        l.adminInvoicesColInvoice,
+        l.commonStudent,
+        l.adminInvoicesColItem,
+        l.adminInvoicesColAmount,
+        l.profileWidgetStatus,
+        l.adminInvoicesColMethod,
+        l.adminInvoicesColDue,
+        l.adminInvoicesColPaidOn,
+        l.adminInvoicesColCreated,
+      ];
 
-  static List<Object?> _csvRow(Invoice inv) => [
+  static List<Object?> _csvRow(AppLocalizations l, Invoice inv) => [
         inv.invoiceNumber,
         inv.studentName ?? inv.studentId,
-        inv.itemLabel,
+        inv.itemLocalized(l),
         inv.amount,
-        inv.status.label,
-        inv.methodLabel,
+        inv.status.localized(l),
+        inv.methodLocalized(l),
         inv.dueDate,
         inv.paidAt == null ? '' : DateFormat('yyyy-MM-dd').format(inv.paidAt!),
         inv.createdAt == null
@@ -96,6 +98,7 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
   @override
   Widget build(BuildContext context) {
     final firestore = context.read<FirestoreService>();
+    final l = context.l10n;
 
     return StreamBuilder<OrgSettings>(
       stream: firestore.watchOrgSettings(),
@@ -103,11 +106,10 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
         final paymentsOn =
             (settingsSnap.data ?? OrgSettings.defaults).enablePayments;
         if (!paymentsOn) {
-          return const EmptyState(
+          return EmptyState(
             icon: Icons.money_off_outlined,
-            title: 'Payments are disabled',
-            subtitle: 'Enable payments in Settings to create invoices and bill '
-                'students for session packages.',
+            title: l.studentPaymentsDisabledTitle,
+            subtitle: l.adminInvoicesDisabledSubtitle,
           );
         }
         return _buildContent(context, firestore);
@@ -116,6 +118,7 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
   }
 
   Widget _buildContent(BuildContext context, FirestoreService firestore) {
+    final l = context.l10n;
     return Column(
       children: [
         Padding(
@@ -124,7 +127,7 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
             children: [
               Expanded(
                 child: Text(
-                  'Invoices',
+                  l.studentPaymentsInvoices,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
@@ -134,33 +137,29 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
               ),
               ExportCsvButton(
                 fileStem: 'invoices',
-                header: _csvHeader,
-                rows: () => _visible.map(_csvRow).toList(),
+                header: _csvHeader(l),
+                rows: () => _visible.map((inv) => _csvRow(l, inv)).toList(),
               ),
               const SizedBox(width: 8),
               OutlinedButton.icon(
                 onPressed: () => context.push('/admin/price-list'),
                 icon: const Icon(Icons.sell_outlined, size: 18),
-                label: const Text('Price list'),
+                label: Text(l.adminInvoicesPriceList),
               ),
               const SizedBox(width: 8),
               FilledButton.icon(
                 onPressed: () => _openCreateInvoice(context),
                 style: FilledButton.styleFrom(backgroundColor: AppColors.navy),
                 icon: const Icon(Icons.add, size: 18),
-                label: const Text('Create invoice'),
+                label: Text(l.adminInvoicesCreate),
               ),
             ],
           ),
         ),
         if (!AppConstants.hasMidtransClientKey)
-          const Padding(
-            padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
-            child: _InfoBanner(
-              text:
-                  'Payments run in code-only mode: add Midtrans keys and deploy '
-                  'Cloud Functions (Blaze) to enable live checkout.',
-            ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+            child: _InfoBanner(text: l.adminInvoicesCodeOnlyBanner),
           ),
         Expanded(
           child: StreamBuilder<List<Invoice>>(
@@ -171,11 +170,10 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
               }
               final invoices = snap.data ?? [];
               if (invoices.isEmpty) {
-                return const EmptyState(
+                return EmptyState(
                   icon: Icons.receipt_long_outlined,
-                  title: 'No invoices yet',
-                  subtitle:
-                      'Tap "Create invoice" to bill a student for a session package or the HSK book.',
+                  title: l.adminInvoicesEmptyTitle,
+                  subtitle: l.adminInvoicesEmptySubtitle,
                 );
               }
               _visible = _sorted(invoices);
@@ -184,7 +182,7 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
                 children: [
                   AppDataTable<Invoice>(
                     rows: _visible,
-                    columns: _buildColumns(),
+                    columns: _buildColumns(l),
                     sortColumnId: _sortColumnId,
                     sortAscending: _sortAscending,
                     onSort: _onSort,
@@ -204,7 +202,7 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
     );
   }
 
-  List<AppTableColumn<Invoice>> _buildColumns() {
+  List<AppTableColumn<Invoice>> _buildColumns(AppLocalizations l) {
     final currency = NumberFormat.currency(
       locale: 'id_ID',
       symbol: 'Rp ',
@@ -216,7 +214,7 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
     return [
       AppTableColumn<Invoice>(
         id: 'invoice',
-        label: 'Invoice #',
+        label: l.adminInvoicesColInvoiceNumber,
         sortable: true,
         flex: 2,
         cell: (invoice) => Text(
@@ -232,7 +230,7 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
       ),
       AppTableColumn<Invoice>(
         id: 'student',
-        label: 'Student',
+        label: l.commonStudent,
         sortable: true,
         flex: 2,
         cell: (invoice) => Text(
@@ -244,11 +242,11 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
       ),
       AppTableColumn<Invoice>(
         id: 'package',
-        label: 'Item',
+        label: l.adminInvoicesColItem,
         sortable: true,
         width: 150,
         cell: (invoice) => Text(
-          invoice.itemLabel,
+          invoice.itemLocalized(l),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: metaStyle,
@@ -256,7 +254,7 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
       ),
       AppTableColumn<Invoice>(
         id: 'amount',
-        label: 'Amount',
+        label: l.adminInvoicesColAmount,
         sortable: true,
         width: 130,
         cell: (invoice) => Text(
@@ -268,7 +266,7 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
       ),
       AppTableColumn<Invoice>(
         id: 'due',
-        label: 'Due',
+        label: l.adminInvoicesColDue,
         sortable: true,
         width: 110,
         cell: (invoice) => Text(
@@ -280,10 +278,10 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
       ),
       AppTableColumn<Invoice>(
         id: 'method',
-        label: 'Method',
+        label: l.adminInvoicesColMethod,
         width: 100,
         cell: (invoice) => Text(
-          invoice.methodLabel,
+          invoice.methodLocalized(l),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: metaStyle,
@@ -291,11 +289,13 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
       ),
       AppTableColumn<Invoice>(
         id: 'status',
-        label: 'Status',
+        label: l.profileWidgetStatus,
         sortable: true,
         width: 96,
         cell: (invoice) => StatusPill(
-          label: invoice.isOverdue ? 'Overdue' : invoice.status.label,
+          label: invoice.isOverdue
+              ? l.adminInvoicesOverdue
+              : invoice.status.localized(l),
           color: switch (invoice.status) {
             InvoiceStatus.paid => AppColors.success,
             InvoiceStatus.pending =>
@@ -312,7 +312,7 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
         alignment: Alignment.centerRight,
         cell: (invoice) => invoice.isPending
             ? PopupMenuButton<String>(
-                tooltip: 'Actions',
+                tooltip: l.adminUsersColActions,
                 icon: const Icon(Icons.more_vert, size: 20),
                 onSelected: (action) {
                   switch (action) {
@@ -323,14 +323,14 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
                   }
                 },
                 itemBuilder: (_) => [
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'paid',
-                    child: Text('Mark as paid (cash / transfer)'),
+                    child: Text(l.adminInvoicesMarkPaidMenu),
                   ),
                   if (!invoice.isOnline)
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'delete',
-                      child: Text('Delete pending invoice'),
+                      child: Text(l.adminInvoicesDeletePending),
                     ),
                 ],
               )
@@ -342,6 +342,7 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
   /// Admin records money received by hand. The server flips the invoice to
   /// paid and credits the sessions or marks the linked voucher paid.
   Future<void> _recordPayment(BuildContext context, Invoice invoice) async {
+    final l = context.l10n;
     final result = await showDialog<({String method, String note})>(
       context: context,
       builder: (_) => _RecordPaymentDialog(invoice: invoice),
@@ -357,8 +358,11 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
       messenger.showSnackBar(
         SnackBar(
           content: Text(
-            'Recorded: ${invoice.studentName ?? 'student'} paid '
-            '${invoice.itemLabel} by ${result.method}.',
+            l.adminInvoicesRecorded(
+              invoice.studentName ?? l.adminInvoicesStudentFallback,
+              invoice.itemLocalized(l),
+              localizedPaymentMethod(l, result.method).toLowerCase(),
+            ),
           ),
         ),
       );
@@ -370,24 +374,27 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
   }
 
   Future<void> _deleteInvoice(BuildContext context, Invoice invoice) async {
+    final l = context.l10n;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete this pending invoice?'),
+        title: Text(l.adminInvoicesDeleteTitle),
         content: Text(
-          '${invoice.invoiceNumber} · ${invoice.itemLabel} for '
-          '${invoice.studentName ?? invoice.studentId}. A voucher linked to it '
-          'will show "No payment" again.',
+          l.adminInvoicesDeleteBody(
+            invoice.invoiceNumber,
+            invoice.itemLocalized(l),
+            invoice.studentName ?? invoice.studentId,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Delete'),
+            child: Text(l.termDelete),
           ),
         ],
       ),
@@ -398,7 +405,7 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not delete: $e')),
+        SnackBar(content: Text(l.adminInvoicesDeleteFailed('$e'))),
       );
     }
   }
@@ -431,6 +438,7 @@ class InvoiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final currency = NumberFormat.currency(
       locale: 'id_ID',
       symbol: 'Rp ',
@@ -459,14 +467,14 @@ class InvoiceCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            '${invoice.itemLabel} · ${currency.format(invoice.amount)}',
+            '${invoice.itemLocalized(l)} · ${currency.format(invoice.amount)}',
             style: TextStyle(color: AppColors.textSecondary),
           ),
           const SizedBox(height: 2),
           Text(
-            'Invoice ${invoice.invoiceNumber}'
-            '${invoice.dueDate.isNotEmpty ? ' · due ${invoice.dueDate}' : ''}'
-            ' · ${invoice.methodLabel}',
+            '${l.adminInvoicesCardInvoice(invoice.invoiceNumber)}'
+            '${invoice.dueDate.isNotEmpty ? ' · ${l.adminInvoicesCardDue(invoice.dueDate)}' : ''}'
+            ' · ${invoice.methodLocalized(l)}',
             style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 12,
@@ -480,14 +488,13 @@ class InvoiceCard extends StatelessWidget {
                 onPressed: onPay,
                 style: FilledButton.styleFrom(backgroundColor: AppColors.teal),
                 icon: const Icon(Icons.payment, size: 18),
-                label: const Text('Pay now'),
+                label: Text(l.adminInvoicesPayNow),
               ),
             ),
           ] else if (onPay != null && invoice.isPayable) ...[
             const SizedBox(height: 10),
             Text(
-              'Pay at the centre by cash or bank transfer. The admin marks it '
-              'paid and your sessions are added.',
+              l.adminInvoicesPayAtCentre,
               style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
             ),
           ],
@@ -498,7 +505,7 @@ class InvoiceCard extends StatelessWidget {
               child: OutlinedButton.icon(
                 onPressed: onRecordPayment,
                 icon: const Icon(Icons.price_check, size: 18),
-                label: const Text('Mark as paid'),
+                label: Text(l.adminInvoicesMarkPaid),
               ),
             ),
           ],
@@ -528,7 +535,7 @@ class _StatusChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        status.label,
+        status.localized(context.l10n),
         style: TextStyle(
           color: color,
           fontWeight: FontWeight.w700,
@@ -612,6 +619,7 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
   @override
   Widget build(BuildContext context) {
     final firestore = context.read<FirestoreService>();
+    final l = context.l10n;
     final currency = NumberFormat.currency(
       locale: 'id_ID',
       symbol: 'Rp ',
@@ -631,7 +639,7 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Create invoice',
+              l.adminInvoicesCreate,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -657,9 +665,9 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
                 return DropdownButtonFormField<AppUser>(
                   initialValue: _student,
                   isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Student',
-                    prefixIcon: Icon(Icons.person_outline),
+                  decoration: InputDecoration(
+                    labelText: l.commonStudent,
+                    prefixIcon: const Icon(Icons.person_outline),
                   ),
                   items: [
                     for (final s in students)
@@ -676,9 +684,9 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
             DropdownButtonFormField<String>(
               initialValue: _item?.id,
               isExpanded: true,
-              decoration: const InputDecoration(
-                labelText: 'Item (from the Price list)',
-                prefixIcon: Icon(Icons.sell_outlined),
+              decoration: InputDecoration(
+                labelText: l.adminInvoicesItemFromPriceList,
+                prefixIcon: const Icon(Icons.sell_outlined),
               ),
               items: [
                 for (final it in _pricing.items)
@@ -692,8 +700,8 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
             if (_item != null) ...[
               const SizedBox(height: 6),
               Text(
-                'Gives ${_item!.givesLabel}. '
-                '${_item!.creditsSessions ? 'A voucher is opened when this is paid.' : ''}',
+                '${l.adminInvoicesGives(_item!.givesLocalized(l))} '
+                '${_item!.creditsSessions ? l.adminInvoicesVoucherOpened : ''}',
                 style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 12.5,
@@ -702,16 +710,16 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
             ],
             const SizedBox(height: 16),
             SegmentedButton<bool>(
-              segments: const [
+              segments: [
                 ButtonSegment(
                   value: false,
-                  icon: Icon(Icons.storefront_outlined, size: 18),
-                  label: Text('Cash / transfer'),
+                  icon: const Icon(Icons.storefront_outlined, size: 18),
+                  label: Text(l.adminInvoicesCashTransfer),
                 ),
                 ButtonSegment(
                   value: true,
-                  icon: Icon(Icons.link, size: 18),
-                  label: Text('Online link'),
+                  icon: const Icon(Icons.link, size: 18),
+                  label: Text(l.adminInvoicesOnlineLink),
                 ),
               ],
               selected: {_online},
@@ -719,11 +727,7 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
             ),
             const SizedBox(height: 6),
             Text(
-              _online
-                  ? 'The student gets a Midtrans payment link; the sessions '
-                      'are added automatically when they pay.'
-                  : 'Recorded as pending. When the money arrives, open the '
-                      'invoice menu and choose Mark as paid.',
+              _online ? l.adminInvoicesOnlineHint : l.adminInvoicesManualHint,
               style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 12.5,
@@ -731,20 +735,17 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
             ),
             if (_online && !AppConstants.hasMidtransClientKey) ...[
               const SizedBox(height: 8),
-              const _InfoBanner(
-                text: 'Online payments need Midtrans keys and the Cloud '
-                    'Functions deployed.',
-              ),
+              _InfoBanner(text: l.adminInvoicesOnlineNeedsKeys),
             ],
             const SizedBox(height: 16),
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.event_outlined),
-              title: const Text('Due date'),
+              title: Text(l.adminInvoicesDueDate),
               subtitle: Text(DateFormat('EEE, d MMM yyyy').format(_dueDate)),
               trailing: TextButton(
                 onPressed: _pickDueDate,
-                child: const Text('Change'),
+                child: Text(l.adminInvoicesChange),
               ),
             ),
             const SizedBox(height: 12),
@@ -762,8 +763,10 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
                     )
                   : Text(
                       _item == null
-                          ? 'Create invoice'
-                          : 'Create invoice · ${currency.format(_item!.price)}',
+                          ? l.adminInvoicesCreate
+                          : l.adminInvoicesCreateWithPrice(
+                              currency.format(_item!.price),
+                            ),
                     ),
             ),
           ],
@@ -783,14 +786,15 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
   }
 
   Future<void> _submit() async {
+    final l = context.l10n;
     final student = _student;
     final item = _item;
     if (student == null) {
-      setState(() => _error = 'Choose a student.');
+      setState(() => _error = l.adminInvoicesChooseStudent);
       return;
     }
     if (item == null) {
-      setState(() => _error = 'Choose an item from the Price list.');
+      setState(() => _error = l.adminInvoicesChooseItem);
       return;
     }
     final uid = context.read<AuthService>().appUser?.uid;
@@ -819,8 +823,9 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Invoice created for ${student.displayNameIndonesian}'
-            '${_online ? '' : ' · pending until you mark it paid'}',
+            _online
+                ? l.adminInvoicesCreatedOnline(student.displayNameIndonesian)
+                : l.adminInvoicesCreatedManual(student.displayNameIndonesian),
           ),
         ),
       );
@@ -857,13 +862,14 @@ class _RecordPaymentDialogState extends State<_RecordPaymentDialog> {
   @override
   Widget build(BuildContext context) {
     final inv = widget.invoice;
+    final l = context.l10n;
     final currency = NumberFormat.currency(
       locale: 'id_ID',
       symbol: 'Rp ',
       decimalDigits: 0,
     );
     return AlertDialog(
-      title: const Text('Mark as paid'),
+      title: Text(l.adminInvoicesMarkPaid),
       content: SizedBox(
         width: 420,
         child: Column(
@@ -871,15 +877,21 @@ class _RecordPaymentDialogState extends State<_RecordPaymentDialog> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              '${inv.studentName ?? inv.studentId} · ${inv.itemLabel} · '
+              '${inv.studentName ?? inv.studentId} · ${inv.itemLocalized(l)} · '
               '${currency.format(inv.amount)}',
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 14),
             SegmentedButton<String>(
-              segments: const [
-                ButtonSegment(value: 'cash', label: Text('Cash')),
-                ButtonSegment(value: 'transfer', label: Text('Bank transfer')),
+              segments: [
+                ButtonSegment(
+                  value: 'cash',
+                  label: Text(l.adminInvoicesMethodCash),
+                ),
+                ButtonSegment(
+                  value: 'transfer',
+                  label: Text(l.adminInvoicesBankTransfer),
+                ),
               ],
               selected: {_method},
               onSelectionChanged: (v) => setState(() => _method = v.first),
@@ -887,18 +899,18 @@ class _RecordPaymentDialogState extends State<_RecordPaymentDialog> {
             const SizedBox(height: 14),
             TextField(
               controller: _note,
-              decoration: const InputDecoration(
-                labelText: 'Note (optional)',
-                hintText: 'e.g. BCA transfer 27 Oct',
+              decoration: InputDecoration(
+                labelText: l.adminInvoicesNoteOptional,
+                hintText: l.adminInvoicesNoteHint,
               ),
             ),
             const SizedBox(height: 10),
             Text(
               inv.creditsSessions
                   ? (inv.classTermId != null
-                      ? 'The linked voucher is marked paid.'
-                      : 'A ${inv.sessions}-session voucher is opened for the student.')
-                  : 'No sessions are added for this item.',
+                      ? l.adminInvoicesLinkedVoucherPaid
+                      : l.adminInvoicesVoucherOpenedFor(inv.sessions))
+                  : l.adminInvoicesNoSessionsAdded,
               style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 12.5,
@@ -910,14 +922,14 @@ class _RecordPaymentDialogState extends State<_RecordPaymentDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(l.commonCancel),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(
             context,
             (method: _method, note: _note.text.trim()),
           ),
-          child: const Text('Confirm payment'),
+          child: Text(l.adminInvoicesConfirmPayment),
         ),
       ],
     );

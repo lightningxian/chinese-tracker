@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/constants/worksheet_import_platform.dart';
+import '../../l10n/l10n.dart';
 import '../../models/worksheet_import_stage.dart';
 import '../../services/auth_service.dart';
 import '../../services/worksheet_import_service.dart';
@@ -17,9 +18,10 @@ import 'worksheet_import_review_screen.dart';
 /// the question bank, the quiz editor and the exercise form.
 Future<WorksheetImportReviewResult?> scanWorksheet(BuildContext context) async {
   final user = context.read<AuthService>().appUser;
+  final l = context.l10n;
   if (!WorksheetImportPlatform.isSupportedFor(user)) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text(WorksheetImportPlatform.unsupportedMessage)),
+      SnackBar(content: Text(l.worksheetUploadUnsupported)),
     );
     return null;
   }
@@ -35,7 +37,7 @@ Future<WorksheetImportReviewResult?> scanWorksheet(BuildContext context) async {
   final bytes = file.bytes;
   if (bytes == null) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Could not read the selected file.')),
+      SnackBar(content: Text(l.worksheetCouldNotReadFile)),
     );
     return null;
   }
@@ -85,7 +87,7 @@ Future<WorksheetImportReviewResult?> scanWorksheet(BuildContext context) async {
         (route) => route is! PopupRoute || route.isFirst,
       );
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Import failed: $e')),
+        SnackBar(content: Text(l.worksheetImportFailed('$e'))),
       );
     }
     return null;

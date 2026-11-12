@@ -8,6 +8,7 @@ import '../../core/constants/exercise_authoring_platform.dart';
 import '../../core/utils/shell_route_utils.dart';
 import '../../core/widgets/app_shell.dart';
 import '../../core/widgets/notification_sheet.dart';
+import '../../l10n/l10n.dart';
 import '../../models/app_notification.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
@@ -33,53 +34,54 @@ class AdminShell extends StatefulWidget {
 class _AdminShellState extends State<AdminShell> {
   int _index = 0;
 
-  static const _destinations = [
-    AppShellDestination(
-      label: 'Dashboard',
-      icon: Icons.dashboard_outlined,
-      selectedIcon: Icons.dashboard,
-    ),
-    AppShellDestination(
-      label: 'Users',
-      icon: Icons.people_outline,
-      selectedIcon: Icons.people,
-    ),
-    AppShellDestination(
-      label: 'Exercises',
-      icon: Icons.menu_book_outlined,
-      selectedIcon: Icons.menu_book,
-    ),
-    AppShellDestination(
-      label: 'Question bank',
-      icon: Icons.inventory_2_outlined,
-      selectedIcon: Icons.inventory_2,
-    ),
-    AppShellDestination(
-      label: 'Classes',
-      icon: Icons.event_outlined,
-      selectedIcon: Icons.event,
-    ),
-    AppShellDestination(
-      label: 'Vouchers',
-      icon: Icons.confirmation_number_outlined,
-      selectedIcon: Icons.confirmation_number,
-    ),
-    AppShellDestination(
-      label: 'Payments',
-      icon: Icons.receipt_long_outlined,
-      selectedIcon: Icons.receipt_long,
-    ),
-    AppShellDestination(
-      label: 'Reports',
-      icon: Icons.bar_chart_outlined,
-      selectedIcon: Icons.bar_chart,
-    ),
-    AppShellDestination(
-      label: 'Account',
-      icon: Icons.manage_accounts_outlined,
-      selectedIcon: Icons.manage_accounts,
-    ),
-  ];
+  /// Sidebar entries; built per locale so the labels follow the UI language.
+  List<AppShellDestination> _destinations(AppLocalizations l) => [
+        AppShellDestination(
+          label: l.adminShellNavDashboard,
+          icon: Icons.dashboard_outlined,
+          selectedIcon: Icons.dashboard,
+        ),
+        AppShellDestination(
+          label: l.adminShellNavUsers,
+          icon: Icons.people_outline,
+          selectedIcon: Icons.people,
+        ),
+        AppShellDestination(
+          label: l.adminShellNavExercises,
+          icon: Icons.menu_book_outlined,
+          selectedIcon: Icons.menu_book,
+        ),
+        AppShellDestination(
+          label: l.adminShellNavQuestionBank,
+          icon: Icons.inventory_2_outlined,
+          selectedIcon: Icons.inventory_2,
+        ),
+        AppShellDestination(
+          label: l.adminShellNavClasses,
+          icon: Icons.event_outlined,
+          selectedIcon: Icons.event,
+        ),
+        AppShellDestination(
+          label: l.adminShellNavVouchers,
+          icon: Icons.confirmation_number_outlined,
+          selectedIcon: Icons.confirmation_number,
+        ),
+        AppShellDestination(
+          label: l.navPayments,
+          icon: Icons.receipt_long_outlined,
+          selectedIcon: Icons.receipt_long,
+        ),
+        AppShellDestination(
+          label: l.adminShellNavReports,
+          icon: Icons.bar_chart_outlined,
+          selectedIcon: Icons.bar_chart,
+        ),
+        AppShellDestination(
+          label: l.adminShellNavAccount,
+          icon: Icons.manage_accounts_outlined,
+          selectedIcon: Icons.manage_accounts,
+        ),
+      ];
 
   /// Sidebar position of the question bank; it opens as its own page.
   static const _questionBankIndex = 3;
@@ -118,6 +120,7 @@ class _AdminShellState extends State<AdminShell> {
       return null;
     }
 
+    final l = context.l10n;
     final canManageExercises = ExerciseAuthoringPlatform.canManageExercises(
       context.read<AuthService>().appUser,
     );
@@ -130,7 +133,7 @@ class _AdminShellState extends State<AdminShell> {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           ),
           icon: const Icon(Icons.document_scanner_outlined, size: 16),
-          label: const Text('Scan worksheet'),
+          label: Text(l.adminShellScanWorksheet),
         ),
       4 => FilledButton.icon(
           onPressed: () => context.push('/admin/session/new'),
@@ -139,7 +142,7 @@ class _AdminShellState extends State<AdminShell> {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           ),
           icon: const Icon(Icons.add, size: 16),
-          label: const Text('New class'),
+          label: Text(l.adminShellNewClass),
         ),
       5 => FilledButton.icon(
           onPressed: () => context.push('/admin/vouchers/new'),
@@ -148,7 +151,7 @@ class _AdminShellState extends State<AdminShell> {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           ),
           icon: const Icon(Icons.add, size: 16),
-          label: const Text('New voucher'),
+          label: Text(l.adminVouchersNewVoucher),
         ),
       _ => null,
     };
@@ -181,6 +184,8 @@ class _AdminShellState extends State<AdminShell> {
     }
 
     final firestore = context.read<FirestoreService>();
+    final l = context.l10n;
+    final destinations = _destinations(l);
 
     return StreamBuilder<List<AppNotification>>(
       stream: firestore.watchNotificationsForUser(user),
@@ -202,8 +207,8 @@ class _AdminShellState extends State<AdminShell> {
         ];
 
         final title = nested
-            ? ShellRouteUtils.adminTitleForLocation(path)
-            : _destinations[_index].label;
+            ? ShellRouteUtils.adminTitleForLocation(l, path)
+            : destinations[_index].label;
 
         final canManageExercises = ExerciseAuthoringPlatform.canManageExercises(
           user,
@@ -213,9 +218,9 @@ class _AdminShellState extends State<AdminShell> {
           title: title,
           selectedIndex: _index,
           onSelectedIndexChanged: _switchTab,
-          destinations: _destinations,
+          destinations: destinations,
           userName: user.name,
-          roleLabel: 'Admin',
+          roleLabel: l.adminUsersRoleAdmin,
           topBarAction: _topBarAction(context),
           onBack: nested ? () => context.pop() : null,
           figmaMobileAppBar: true,
@@ -225,8 +230,8 @@ class _AdminShellState extends State<AdminShell> {
           fabLabel: nested
               ? null
               : switch (_index) {
-                  2 when canManageExercises => 'Scan worksheet',
-                  4 => 'New class',
+                  2 when canManageExercises => l.adminShellScanWorksheet,
+                  4 => l.adminShellNewClass,
                   _ => null,
                 },
           onFabPressed: nested

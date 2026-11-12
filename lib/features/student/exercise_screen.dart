@@ -11,6 +11,7 @@ import '../../core/utils/exercise_utils.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/confetti_burst.dart';
 import '../../core/widgets/score_summary.dart';
+import '../../l10n/l10n.dart';
 import '../../models/exercise.dart';
 import '../../models/exercise_type.dart';
 import '../../services/auth_service.dart';
@@ -237,23 +238,20 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     _storeAnswer();
     final missing = _questions.length - _answeredCount;
     if (missing > 0) {
+      final l = context.l10n;
       final submit = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Submit now?'),
-          content: Text(
-            missing == 1
-                ? '1 question has no answer yet. It will count as wrong.'
-                : '$missing questions have no answer yet. They will count as wrong.',
-          ),
+          title: Text(l.exercisePlaySubmitNowTitle),
+          content: Text(l.exercisePlayUnansweredWarning(missing)),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Keep answering'),
+              child: Text(l.exercisePlayKeepAnswering),
             ),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Submit'),
+              child: Text(l.exercisePlaySubmit),
             ),
           ],
         ),
@@ -284,7 +282,10 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
       if (mounted) setState(() => _result = result);
     } on FirebaseFunctionsException catch (e) {
       if (mounted) {
-        setState(() => _submitError = e.message ?? 'Could not submit.');
+        final l = context.l10n;
+        setState(
+          () => _submitError = e.message ?? l.exercisePlayCouldNotSubmitMessage,
+        );
       }
     } catch (e) {
       if (mounted) setState(() => _submitError = '$e');
@@ -302,10 +303,11 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final showClock = _session != null && _questions.isNotEmpty;
     return Scaffold(
       appBar: AppBar(
-        title: Text(_exercise?.title ?? 'Exercise'),
+        title: Text(_exercise?.title ?? l.commonExerciseFallback),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
@@ -322,38 +324,34 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _notAssigned
-              ? const EmptyState(
+              ? EmptyState(
                   icon: Icons.lock_outline,
-                  title: 'Exercise not available',
-                  subtitle:
-                      'This exercise has not been assigned to you. Ask your teacher.',
+                  title: l.exercisePlayNotAvailableTitle,
+                  subtitle: l.exercisePlayNotAvailableSubtitle,
                 )
               : _legacy
-                  ? const EmptyState(
+                  ? EmptyState(
                       icon: Icons.inventory_2_outlined,
-                      title: 'Old exercise format',
-                      subtitle:
-                          'This exercise was made before the question bank and '
-                          'can no longer be played. Ask your teacher for a new one.',
+                      title: l.exercisePlayLegacyTitle,
+                      subtitle: l.exercisePlayLegacySubtitle,
                     )
               : _loadError != null
                   ? EmptyState(
                       icon: Icons.cloud_off_outlined,
-                      title: 'Could not load the exercise',
+                      title: l.exercisePlayLoadFailedTitle,
                       subtitle: _loadError!,
                     )
                   : _session == null
-                      ? const EmptyState(
+                      ? EmptyState(
                           icon: Icons.fitness_center_outlined,
-                          title: 'Exercise not found',
-                          subtitle: 'This exercise may have been removed.',
+                          title: l.exercisePlayNotFoundTitle,
+                          subtitle: l.exercisePlayNotFoundSubtitle,
                         )
                       : _questions.isEmpty
-                          ? const EmptyState(
+                          ? EmptyState(
                               icon: Icons.fitness_center_outlined,
-                              title: 'No questions yet',
-                              subtitle:
-                                  'Your teacher has not added questions to this exercise.',
+                              title: l.exercisePlayNoQuestionsTitle,
+                              subtitle: l.exercisePlayNoQuestionsSubtitle,
                             )
                           : _finished
                               ? _buildResult()
@@ -362,6 +360,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   }
 
   Widget _buildResult() {
+    final l = context.l10n;
     final result = _result;
     if (result == null) {
       if (_submitting) {
@@ -372,7 +371,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
               const CircularProgressIndicator(),
               const SizedBox(height: 16),
               Text(
-                'Checking your answers…',
+                l.exercisePlayChecking,
                 style: TextStyle(color: AppColors.textSecondary),
               ),
             ],
@@ -381,12 +380,12 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
       }
       return EmptyState(
         icon: Icons.cloud_off_outlined,
-        title: 'Could not submit',
-        subtitle: _submitError ?? 'Check your connection and try again.',
+        title: l.exercisePlayCouldNotSubmitTitle,
+        subtitle: _submitError ?? l.exercisePlayCheckConnection,
         action: FilledButton.icon(
           onPressed: () => _submit(),
           icon: const Icon(Icons.refresh),
-          label: const Text('Try again'),
+          label: Text(l.exercisePlayTryAgain),
         ),
       );
     }
@@ -396,10 +395,8 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
       scorePercent: result.score,
       correctCount: result.correct,
       totalCount: result.total,
-      primaryLabel: 'Done',
-      subtitle: _timeUp
-          ? "Time's up. The answers you gave were submitted."
-          : _exercise!.title,
+      primaryLabel: l.exercisePlayDone,
+      subtitle: _timeUp ? l.exercisePlayTimeUpSubtitle : _exercise!.title,
       timeLabel: ExerciseUtils.formatClock(result.durationSeconds),
       onPrimaryPressed: () => context.pop(),
       // No review when the server did not send one (older function build).
@@ -409,7 +406,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'Review',
+                  l.exercisePlayReview,
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     color: AppColors.navy,
@@ -436,6 +433,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   }
 
   Widget _buildQuestion() {
+    final l = context.l10n;
     final exercise = _exercise!;
     final question = _question;
     final progress = (_currentIndex + 1) / _questions.length;
@@ -483,17 +481,21 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
             Expanded(
               child: Text(
                 isCompose
-                    ? 'Sentence ${_currentIndex + 1} of ${_questions.length}'
+                    ? l.exercisePlaySentenceOf(
+                        _currentIndex + 1, _questions.length)
                     : isCloze
-                        ? 'Blank ${_currentIndex + 1} of ${_questions.length}'
+                        ? l.exercisePlayBlankOf(
+                            _currentIndex + 1, _questions.length)
                         : isMatching
-                            ? 'Match ${_currentIndex + 1} of ${_questions.length}'
-                            : 'Question ${_currentIndex + 1} of ${_questions.length}',
+                            ? l.exercisePlayMatchOf(
+                                _currentIndex + 1, _questions.length)
+                            : l.exercisePlayQuestionOf(
+                                _currentIndex + 1, _questions.length),
                 style: TextStyle(color: AppColors.textSecondary),
               ),
             ),
             Text(
-              '$answered of ${_questions.length} answered',
+              l.exercisePlayAnsweredOf(answered, _questions.length),
               style: TextStyle(
                 color: answered == _questions.length
                     ? AppColors.success
@@ -511,7 +513,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
           Text(
             question.prompt.isNotEmpty
                 ? question.prompt
-                : 'Arrange the words to form a correct sentence',
+                : l.exercisePlayComposePrompt,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: AppColors.navy,
@@ -519,7 +521,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Tap words below to build your sentence',
+            l.exercisePlayComposeHint,
             style: TextStyle(color: AppColors.textSecondary),
           ),
           const SizedBox(height: 16),
@@ -596,7 +598,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                     const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
               ),
               icon: const Icon(Icons.arrow_back, size: 18),
-              label: const Text('Back'),
+              label: Text(l.exercisePlayBack),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -612,12 +614,12 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                 ),
                 label: Text(
                   isLast
-                      ? 'Submit answers'
+                      ? l.exercisePlaySubmitAnswers
                       : isCompose
-                          ? 'Next sentence'
+                          ? l.exercisePlayNextSentence
                           : isMatching
-                              ? 'Next match'
-                              : 'Next question',
+                              ? l.exercisePlayNextMatch
+                              : l.exercisePlayNextQuestion,
                 ),
               ),
             ),
@@ -629,7 +631,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
             child: TextButton(
               onPressed: _confirmSubmit,
               child: Text(
-                'Submit all answers now',
+                l.exercisePlaySubmitAllNow,
                 style: TextStyle(color: AppColors.textSecondary),
               ),
             ),
@@ -642,6 +644,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   /// Type the hanzi: the sentence with a gap and its pinyin hint. Picture
   /// sentence: the picture (if any) and the keyword to use.
   Widget _buildTypedQuestion(PlayQuestion question) {
+    final l = context.l10n;
     final isPicture = question.type == ExerciseType.pictureSentence;
     final hint = question.keyword;
     return Column(
@@ -660,7 +663,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
           const SizedBox(height: 16),
         ],
         Text(
-          isPicture ? 'Write a sentence that uses this word:' : question.prompt,
+          isPicture ? l.exercisePlayPictureSentencePrompt : question.prompt,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w700,
                 color: AppColors.navy,
@@ -706,6 +709,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   }
 
   Widget _buildMatchingQuestion(PlayQuestion question, List<String> options) {
+    final l = context.l10n;
     final isWide = MediaQuery.sizeOf(context).width >= 640;
 
     Widget promptCard() => AppCard(
@@ -714,8 +718,8 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
             children: [
               Text(
                 question.type == ExerciseType.readingCloze
-                    ? 'Choose the word for the blank'
-                    : 'Prompt',
+                    ? l.exercisePlayClozeLabel
+                    : l.exercisePlayPromptLabel,
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   color: AppColors.textSecondary,
@@ -740,7 +744,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Choose the best response',
+                l.exercisePlayChooseResponse,
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   color: AppColors.textSecondary,
@@ -807,6 +811,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   }
 
   Widget _buildComposeList() {
+    final l = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -821,7 +826,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
           ),
           child: _composeOrder.isEmpty
               ? Text(
-                  'Your sentence appears here…',
+                  l.exercisePlayComposeEmpty,
                   style: TextStyle(color: AppColors.textSecondary),
                 )
               : Wrap(
@@ -842,7 +847,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
         ),
         const SizedBox(height: 16),
         Text(
-          'Word bank',
+          l.exercisePlayWordBank,
           style: TextStyle(
             fontWeight: FontWeight.w600,
             color: AppColors.navy,
@@ -972,13 +977,13 @@ class _ReviewTile extends StatelessWidget {
   final AnswerCheck? check;
   final PlayAnswer? given;
 
-  String get _prompt {
+  String _prompt(AppLocalizations l) {
     if (question.type == ExerciseType.pictureSentence) {
-      return 'Write a sentence with "${question.keyword}"';
+      return l.exercisePlayReviewPictureSentence(question.keyword);
     }
     if (question.prompt.isNotEmpty) return question.prompt;
-    if (question.isCompose) return 'Arrange the words into a sentence';
-    return 'Question $number';
+    if (question.isCompose) return l.exercisePlayReviewCompose;
+    return l.exercisePlayReviewQuestionNumber(number);
   }
 
   String? get _yourAnswer {
@@ -991,7 +996,7 @@ class _ReviewTile extends StatelessWidget {
     return a.text;
   }
 
-  String? get _correctAnswer {
+  String? _correctAnswer(AppLocalizations l) {
     final c = check;
     if (c == null) return null;
     final index = c.correctIndex;
@@ -1000,7 +1005,7 @@ class _ReviewTile extends StatelessWidget {
     }
     if (c.correctOrder.isNotEmpty) return c.correctOrder.join(' ');
     if (c.accepted.isNotEmpty) return c.accepted.join(' / ');
-    if (c.keyword.isNotEmpty) return 'A sentence that uses "${c.keyword}"';
+    if (c.keyword.isNotEmpty) return l.exercisePlayReviewKeywordKey(c.keyword);
     return null;
   }
 
@@ -1014,6 +1019,7 @@ class _ReviewTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final c = check;
     final correct = c?.correct == true;
     final skipped = given == null;
@@ -1023,7 +1029,7 @@ class _ReviewTile extends StatelessWidget {
             ? AppColors.textSecondary
             : AppColors.error;
     final yours = _yourAnswer;
-    final key = correct ? null : _correctAnswer;
+    final key = correct ? null : _correctAnswer(l);
     final explanation = c?.explanation.trim() ?? '';
 
     return AppCard(
@@ -1055,7 +1061,7 @@ class _ReviewTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '$number. $_prompt',
+                  '$number. ${_prompt(l)}',
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.question.copyWith(
@@ -1065,12 +1071,14 @@ class _ReviewTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  yours == null ? 'Not answered' : 'Your answer: $yours',
+                  yours == null
+                      ? l.exercisePlayNotAnswered
+                      : l.exercisePlayYourAnswer(yours),
                   style: TextStyle(color: color, fontSize: 14),
                 ),
                 if (key != null)
                   Text(
-                    'Correct answer: $key',
+                    l.exercisePlayCorrectAnswer(key),
                     style: TextStyle(
                       color: AppColors.success,
                       fontSize: 14,

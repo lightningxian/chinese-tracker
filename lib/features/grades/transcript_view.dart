@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/grade_utils.dart';
 import '../../core/widgets/app_card.dart';
+import '../../l10n/l10n.dart';
+import '../../l10n/labels_classes.dart';
 import '../../models/evaluation.dart';
 import '../../models/exercise_result.dart';
 import '../../models/grade.dart';
@@ -22,6 +24,7 @@ class TranscriptView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final firestore = context.read<FirestoreService>();
 
     return StreamBuilder<List<Grade>>(
@@ -42,11 +45,11 @@ class TranscriptView extends StatelessWidget {
 
                 final grades = gradeSnap.data ?? const <Grade>[];
                 final entries = <_TranscriptEntry>[
-                  for (final g in grades) _TranscriptEntry.fromGrade(g),
+                  for (final g in grades) _TranscriptEntry.fromGrade(g, l),
                   for (final r in (exSnap.data ?? const <ExerciseResult>[]))
-                    _TranscriptEntry.fromExercise(r),
+                    _TranscriptEntry.fromExercise(r, l),
                   for (final q in (quizSnap.data ?? const <QuizResult>[]))
-                    _TranscriptEntry.fromQuiz(q),
+                    _TranscriptEntry.fromQuiz(q, l),
                 ]..sort((a, b) => b.date.compareTo(a.date));
 
                 final pending = grades.where((g) => g.isPending).toList();
@@ -60,11 +63,10 @@ class TranscriptView extends StatelessWidget {
                     final evaluations = evalSnap.data ?? const <Evaluation>[];
 
                     if (entries.isEmpty && evaluations.isEmpty) {
-                      return const EmptyState(
+                      return EmptyState(
                         icon: Icons.grading_outlined,
-                        title: 'No grades yet',
-                        subtitle: 'Assessment results and practice scores will '
-                            'appear here as they are recorded.',
+                        title: l.teacherGradesEmptyTitle,
+                        subtitle: l.transcriptEmptySubtitle,
                       );
                     }
 
@@ -72,7 +74,7 @@ class TranscriptView extends StatelessWidget {
                       padding: const EdgeInsets.all(20),
                       children: [
                         if (pending.isNotEmpty) ...[
-                          const SectionHeader(title: 'Upcoming / pending'),
+                          SectionHeader(title: l.transcriptPendingHeader),
                           for (final g in pending) ...[
                             _PendingCard(grade: g),
                             const SizedBox(height: 10),
@@ -80,14 +82,14 @@ class TranscriptView extends StatelessWidget {
                           const SizedBox(height: 12),
                         ],
                         if (evaluations.isNotEmpty) ...[
-                          const SectionHeader(title: 'Teacher evaluations'),
+                          SectionHeader(title: l.transcriptTeacherEvaluations),
                           for (final e in evaluations) ...[
                             _EvaluationCard(evaluation: e),
                             const SizedBox(height: 10),
                           ],
                           const SizedBox(height: 12),
                         ],
-                        const SectionHeader(title: 'Transcript'),
+                        SectionHeader(title: l.transcriptTitle),
                         for (final e in entries.where((e) => !e.isPending)) ...[
                           _EntryCard(entry: e),
                           const SizedBox(height: 10),
@@ -123,24 +125,30 @@ class _TranscriptEntry {
   String? get letter =>
       score == null ? null : GradeUtils.letterGradeFor(score!);
 
-  factory _TranscriptEntry.fromGrade(Grade g) => _TranscriptEntry(
-        title: g.title.isEmpty ? g.category.label : g.title,
-        category: g.category.label,
+  factory _TranscriptEntry.fromGrade(Grade g, AppLocalizations l) =>
+      _TranscriptEntry(
+        title: g.title.isEmpty ? g.category.localized(l) : g.title,
+        category: g.category.localized(l),
         date: g.gradedAt ?? g.createdAt ?? DateTime(1970),
         score: g.score,
         isPending: g.isPending,
       );
 
-  factory _TranscriptEntry.fromExercise(ExerciseResult r) => _TranscriptEntry(
-        title: 'Practice exercise',
-        category: 'Exercise',
+  factory _TranscriptEntry.fromExercise(
+    ExerciseResult r,
+    AppLocalizations l,
+  ) =>
+      _TranscriptEntry(
+        title: l.transcriptPracticeExercise,
+        category: GradeCategory.exercise.localized(l),
         date: r.submittedAt ?? DateTime(1970),
         score: r.score,
       );
 
-  factory _TranscriptEntry.fromQuiz(QuizResult q) => _TranscriptEntry(
-        title: 'Lesson quiz',
-        category: 'Quiz',
+  factory _TranscriptEntry.fromQuiz(QuizResult q, AppLocalizations l) =>
+      _TranscriptEntry(
+        title: l.transcriptLessonQuiz,
+        category: GradeCategory.quiz.localized(l),
         date: q.submittedAt ?? DateTime(1970),
         score: q.score,
       );
@@ -228,6 +236,7 @@ class _EvaluationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final e = evaluation;
     return AppCard(
       padding: const EdgeInsets.all(14),
@@ -238,7 +247,7 @@ class _EvaluationCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  e.term.isEmpty ? 'Evaluation' : e.term,
+                  e.term.isEmpty ? l.evaluationsFallbackTitle : e.term,
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 15,
@@ -263,11 +272,11 @@ class _EvaluationCard extends StatelessWidget {
             ],
           ),
           if (e.strengths.isNotEmpty)
-            _EvalLine(label: 'Strengths', text: e.strengths),
+            _EvalLine(label: l.evaluationsStrengths, text: e.strengths),
           if (e.improvements.isNotEmpty)
-            _EvalLine(label: 'To improve', text: e.improvements),
+            _EvalLine(label: l.transcriptToImprove, text: e.improvements),
           if (e.comment.isNotEmpty)
-            _EvalLine(label: 'Comment', text: e.comment),
+            _EvalLine(label: l.evaluationsComment, text: e.comment),
         ],
       ),
     );
@@ -311,6 +320,7 @@ class _PendingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return AppCard(
       padding: const EdgeInsets.all(14),
       child: Row(
@@ -329,14 +339,14 @@ class _PendingCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  grade.title.isEmpty ? grade.category.label : grade.title,
+                  grade.title.isEmpty ? grade.category.localized(l) : grade.title,
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 15,
                   ),
                 ),
                 Text(
-                  '${grade.category.label} · awaiting score',
+                  l.transcriptAwaitingScore(grade.category.localized(l)),
                   style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,

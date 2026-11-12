@@ -5,6 +5,8 @@ import '../../core/constants/exercise_authoring_platform.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/constants/app_constants.dart';
+import '../../l10n/l10n.dart';
+import '../../l10n/labels_exercises.dart';
 import '../../models/exercise_category.dart';
 import '../../models/exercise_skill_category.dart';
 import '../../models/exercise_type.dart';
@@ -35,6 +37,7 @@ class QuestionBankSheetScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final firestore = context.read<FirestoreService>();
     return StreamBuilder<List<QuestionBankItem>>(
       stream: firestore.watchQuestionBank(ownerId),
@@ -58,7 +61,7 @@ class QuestionBankSheetScreen extends StatelessWidget {
                   FilledButton.icon(
                     onPressed: () => _assignSheet(context, sheet),
                     icon: const Icon(Icons.assignment_ind_outlined, size: 18),
-                    label: const Text('Assign this worksheet'),
+                    label: Text(l.bankSheetAssignThis),
                     style:
                         FilledButton.styleFrom(backgroundColor: AppColors.navy),
                   ),
@@ -66,12 +69,12 @@ class QuestionBankSheetScreen extends StatelessWidget {
                 IconButton(
                   onPressed: () => _editSheet(context, sheet),
                   icon: const Icon(Icons.tune),
-                  tooltip: 'Edit worksheet (title, type, level)',
+                  tooltip: l.bankSheetEditTooltip,
                 ),
                 IconButton(
                   onPressed: () => _deleteSheet(context, sheet),
                   icon: Icon(Icons.delete_outline, color: AppColors.error),
-                  tooltip: 'Delete worksheet',
+                  tooltip: l.bankSheetDeleteTooltip,
                 ),
               ],
               const SizedBox(width: 8),
@@ -80,10 +83,10 @@ class QuestionBankSheetScreen extends StatelessWidget {
           body: sheet == null
               ? (snap.connectionState == ConnectionState.waiting
                   ? const Center(child: CircularProgressIndicator())
-                  : const EmptyState(
+                  : EmptyState(
                       icon: Icons.description_outlined,
-                      title: 'Worksheet removed',
-                      subtitle: 'Its questions are no longer in the bank.',
+                      title: l.bankSheetRemovedTitle,
+                      subtitle: l.bankSheetRemovedSubtitle,
                     ))
               : ListView(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
@@ -112,7 +115,7 @@ class QuestionBankSheetScreen extends StatelessWidget {
                       child: OutlinedButton.icon(
                         onPressed: () => _addQuestion(context, sheet),
                         icon: const Icon(Icons.add, size: 18),
-                        label: const Text('Add question'),
+                        label: Text(l.bankSheetAddQuestion),
                       ),
                     ),
                   ],
@@ -167,8 +170,7 @@ class QuestionBankSheetScreen extends StatelessWidget {
           skillCategory:
               result.skill == sheet.first.skillCategory ? null : result.skill,
           type: result.type == sheet.type ? null : result.type,
-          category:
-              result.category == sheet.category ? null : result.category,
+          category: result.category == sheet.category ? null : result.category,
         );
   }
 
@@ -176,6 +178,7 @@ class QuestionBankSheetScreen extends StatelessWidget {
   /// picker. Assigning the same sheet again reuses that exercise.
   Future<void> _assignSheet(
       BuildContext context, QuestionBankSheet sheet) async {
+    final l = context.l10n;
     final firestore = context.read<FirestoreService>();
     final messenger = ScaffoldMessenger.of(context);
     try {
@@ -204,17 +207,17 @@ class QuestionBankSheetScreen extends StatelessWidget {
       if (exercise == null || !context.mounted) return;
       await showExerciseAssignDialog(context, exercise: exercise);
     } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Could not assign: $e')));
+      messenger.showSnackBar(SnackBar(content: Text(l.assignCouldNot('$e'))));
     }
   }
 
   Future<void> _deleteQuestion(
       BuildContext context, QuestionBankItem item) async {
+    final l = context.l10n;
     final ok = await _confirm(
       context,
-      title: 'Remove this question?',
-      body:
-          'It leaves the worksheet and the bank. Exercises that already use it keep their copy.',
+      title: l.bankSheetRemoveQuestionTitle,
+      body: l.bankSheetRemoveQuestionBody,
     );
     if (ok && context.mounted) {
       await context.read<FirestoreService>().deleteQuestionBankItem(item.id);
@@ -223,12 +226,13 @@ class QuestionBankSheetScreen extends StatelessWidget {
 
   Future<void> _deleteSheet(
       BuildContext context, QuestionBankSheet sheet) async {
+    final l = context.l10n;
     final ok = await _confirm(
       context,
-      title: 'Delete worksheet ${sheet.code}?',
-      body:
-          'All ${QuestionBankText.questionCount(sheet.count)} leave the bank. '
-          'Exercises that already use them keep their copies.',
+      title: l.bankSheetDeleteSheetTitle(sheet.code),
+      body: l.bankSheetDeleteSheetBody(
+        QuestionBankText.questionCount(l, sheet.count),
+      ),
     );
     if (!ok || !context.mounted) return;
     final navigator = Navigator.of(context);
@@ -243,6 +247,7 @@ class QuestionBankSheetScreen extends StatelessWidget {
     required String title,
     required String body,
   }) async {
+    final l = context.l10n;
     final result = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -251,12 +256,12 @@ class QuestionBankSheetScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Delete'),
+            child: Text(l.bankDelete),
           ),
         ],
       ),
@@ -271,13 +276,14 @@ class _SheetHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final facts = [
       sheet.code,
-      sheet.category.label,
-      sheet.type.label,
+      sheet.category.localized(l),
+      sheet.type.localized(l),
       if (sheet.level != null && sheet.level!.isNotEmpty) sheet.level!,
-      QuestionBankText.questionCount(sheet.count),
-      if (sheet.usageCount > 0) 'used ${sheet.usageCount}×',
+      QuestionBankText.questionCount(l, sheet.count),
+      if (sheet.usageCount > 0) l.bankSheetUsedTimes(sheet.usageCount),
     ];
     return AppCard(
       padding: const EdgeInsets.all(18),
@@ -343,6 +349,7 @@ class _QuestionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return AppCard(
       onTap: onTap,
       padding: const EdgeInsets.fromLTRB(18, 14, 8, 14),
@@ -366,7 +373,9 @@ class _QuestionRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item.displayText.isEmpty ? '(no prompt)' : item.displayText,
+                  item.displayText.isEmpty
+                      ? l.bankSheetNoPrompt
+                      : item.displayText,
                   style: AppTextStyles.question.copyWith(
                     fontWeight: FontWeight.w600,
                     color: AppColors.navy,
@@ -374,7 +383,7 @@ class _QuestionRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  QuestionBankText.answerLine(item),
+                  QuestionBankText.answerLine(l, item),
                   style: AppTextStyles.questionDetail,
                 ),
                 if (item.question.imageUrl.isNotEmpty)
@@ -398,13 +407,13 @@ class _QuestionRow extends StatelessWidget {
             children: [
               IconButton(
                 icon: const Icon(Icons.keyboard_arrow_up),
-                tooltip: 'Move up',
+                tooltip: l.packageFormMoveUp,
                 visualDensity: VisualDensity.compact,
                 onPressed: onMoveUp,
               ),
               IconButton(
                 icon: const Icon(Icons.keyboard_arrow_down),
-                tooltip: 'Move down',
+                tooltip: l.packageFormMoveDown,
                 visualDensity: VisualDensity.compact,
                 onPressed: onMoveDown,
               ),
@@ -412,12 +421,12 @@ class _QuestionRow extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.edit_outlined),
-            tooltip: 'Edit question',
+            tooltip: l.bankSheetEditQuestion,
             onPressed: onTap,
           ),
           IconButton(
             icon: Icon(Icons.delete_outline, color: AppColors.error),
-            tooltip: 'Remove from worksheet',
+            tooltip: l.bankSheetRemoveFromSheet,
             onPressed: onDelete,
           ),
         ],
@@ -482,8 +491,9 @@ class _SheetEditDialogState extends State<_SheetEditDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return AlertDialog(
-      title: const Text('Edit worksheet'),
+      title: Text(l.bankSheetEditSheet),
       content: SizedBox(
         width: 440,
         child: Column(
@@ -494,21 +504,21 @@ class _SheetEditDialogState extends State<_SheetEditDialog> {
               autofocus: true,
               style: AppTextStyles.question,
               decoration: InputDecoration(
-                labelText: 'Title',
-                helperText: 'Code ${widget.sheet.code} stays the same.',
+                labelText: l.packageFormTitle,
+                helperText: l.bankSheetCodeStays(widget.sheet.code),
               ),
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<ExerciseCategory>(
               initialValue: _category,
               isExpanded: true,
-              decoration: const InputDecoration(
-                labelText: 'Type of exercise',
-                helperText: 'Exercise, quiz, exam or HSK simulation.',
+              decoration: InputDecoration(
+                labelText: l.bankFiltersTypeOfExercise,
+                helperText: l.bankSheetCategoryHelper,
               ),
               items: [
                 for (final c in ExerciseCategory.values)
-                  DropdownMenuItem(value: c, child: Text(c.label)),
+                  DropdownMenuItem(value: c, child: Text(c.localized(l))),
               ],
               onChanged: (c) => setState(() => _category = c ?? _category),
             ),
@@ -517,16 +527,15 @@ class _SheetEditDialogState extends State<_SheetEditDialog> {
               initialValue: _type,
               isExpanded: true,
               decoration: InputDecoration(
-                labelText: 'Question type',
+                labelText: l.bankFiltersQuestionType,
                 helperText: _typeChangesShape
-                    ? 'This type stores answers differently: open each '
-                        'question afterwards and check its answer.'
-                    : 'Applies to every question on the sheet.',
+                    ? l.bankSheetTypeChangesShape
+                    : l.bankSheetTypeAppliesAll,
                 helperMaxLines: 3,
               ),
               items: [
                 for (final t in ExerciseType.values)
-                  DropdownMenuItem(value: t, child: Text(t.label)),
+                  DropdownMenuItem(value: t, child: Text(t.localized(l))),
               ],
               onChanged: (t) => setState(() {
                 _type = t ?? _type;
@@ -540,13 +549,13 @@ class _SheetEditDialogState extends State<_SheetEditDialog> {
                   child: DropdownButtonFormField<String?>(
                     initialValue: _level,
                     isExpanded: true,
-                    decoration: const InputDecoration(labelText: 'Level'),
+                    decoration: InputDecoration(labelText: l.bankFiltersLevel),
                     items: [
                       const DropdownMenuItem(value: null, child: Text('—')),
-                      for (final l in AppConstants.hskLevels)
-                        DropdownMenuItem(value: l, child: Text(l)),
+                      for (final level in AppConstants.hskLevels)
+                        DropdownMenuItem(value: level, child: Text(level)),
                     ],
-                    onChanged: (l) => setState(() => _level = l),
+                    onChanged: (level) => setState(() => _level = level),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -554,10 +563,10 @@ class _SheetEditDialogState extends State<_SheetEditDialog> {
                   child: DropdownButtonFormField<ExerciseSkillCategory>(
                     initialValue: _skill,
                     isExpanded: true,
-                    decoration: const InputDecoration(labelText: 'Skill'),
+                    decoration: InputDecoration(labelText: l.bankEditorSkill),
                     items: [
                       for (final c in ExerciseSkillCategory.values)
-                        DropdownMenuItem(value: c, child: Text(c.label)),
+                        DropdownMenuItem(value: c, child: Text(c.localized(l))),
                     ],
                     onChanged: (c) => setState(() => _skill = c ?? _skill),
                   ),
@@ -570,7 +579,7 @@ class _SheetEditDialogState extends State<_SheetEditDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(l.commonCancel),
         ),
         FilledButton(
           onPressed: () {
@@ -587,7 +596,7 @@ class _SheetEditDialogState extends State<_SheetEditDialog> {
               ),
             );
           },
-          child: const Text('Save'),
+          child: Text(l.bankEditorSave),
         ),
       ],
     );

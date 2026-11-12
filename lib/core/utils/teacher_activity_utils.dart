@@ -1,3 +1,4 @@
+import '../../l10n/generated/app_localizations.dart';
 import '../../models/app_user.dart';
 import '../../models/attendance_record.dart';
 import '../../models/class_session.dart';
@@ -14,6 +15,7 @@ abstract final class TeacherActivityUtils {
   static const _feedLimit = 25;
 
   static List<TeacherActivityEvent> buildFeed({
+    required AppLocalizations l,
     required List<AppUser> students,
     required List<StudentProgress> progress,
     required List<ExerciseAssignment> assignments,
@@ -41,9 +43,9 @@ abstract final class TeacherActivityUtils {
           studentId: result.studentId,
           studentName: student?.name,
           title: student != null
-              ? '${student.name} scored ${result.score}%'
-              : 'Practice submitted · ${result.score}%',
-          subtitle: exercise?.title ?? 'Exercise',
+              ? l.activityScored(student.name, result.score)
+              : l.activitySubmitted(result.score),
+          subtitle: exercise?.title ?? l.activityExerciseFallback,
         ),
       );
     }
@@ -61,11 +63,11 @@ abstract final class TeacherActivityUtils {
           studentId: record.studentId,
           studentName: student?.name,
           title: student != null
-              ? '${student.name} completed a lesson'
-              : 'Lesson completed',
+              ? l.activityLessonCompletedBy(student.name)
+              : l.activityLessonCompleted,
           subtitle: lesson != null
               ? '${lesson.termLabel} · ${lesson.title}'
-              : 'Lesson ${record.lessonId}',
+              : l.activityLessonFallback(record.lessonId),
         ),
       );
     }
@@ -82,9 +84,9 @@ abstract final class TeacherActivityUtils {
           studentId: assignment.studentId,
           studentName: student?.name,
           title: student != null
-              ? 'Assigned practice to ${student.name}'
-              : 'Practice assigned',
-          subtitle: exercise?.title ?? 'Exercise',
+              ? l.activityAssignedTo(student.name)
+              : l.activityAssigned,
+          subtitle: exercise?.title ?? l.activityExerciseFallback,
         ),
       );
     }
@@ -93,7 +95,8 @@ abstract final class TeacherActivityUtils {
       final at = record.joinedAt;
       if (at == null || !record.attended) continue;
       final student = studentsById[record.studentId];
-      final name = student?.name ?? record.studentName ?? 'Student';
+      final name =
+          student?.name ?? record.studentName ?? l.activityStudentFallback;
       events.add(
         TeacherActivityEvent(
           type: record.joinedByStudent
@@ -103,8 +106,8 @@ abstract final class TeacherActivityUtils {
           studentId: record.studentId,
           studentName: name,
           title: record.joinedByStudent
-              ? '$name joined a class'
-              : 'You added $name to a class',
+              ? l.activityJoined(name)
+              : l.activityAdded(name),
           subtitle: record.sessionTitle.isNotEmpty
               ? '${record.sessionDate} · ${record.sessionTitle}'
               : record.sessionDate,
@@ -120,7 +123,7 @@ abstract final class TeacherActivityUtils {
         TeacherActivityEvent(
           type: TeacherActivityType.classConcluded,
           occurredAt: at,
-          title: 'Class concluded',
+          title: l.activityClassConcluded,
           subtitle: session.sessionTitle.isNotEmpty
               ? '${session.sessionDate} · ${session.sessionTitle}'
               : session.sessionDate,
@@ -139,10 +142,10 @@ abstract final class TeacherActivityUtils {
           studentId: term.studentId,
           studentName: student?.name,
           title: student != null
-              ? 'Term package added for ${student.name}'
-              : 'Term package added',
-          subtitle:
-              '${term.packageSize} sessions · ${term.startDate} → ${term.deadlineDate}',
+              ? l.activityTermAddedFor(student.name)
+              : l.activityTermAdded,
+          subtitle: l.activityTermSubtitle(
+              term.packageSize, term.startDate, term.deadlineDate),
         ),
       );
     }
@@ -206,9 +209,7 @@ abstract final class TeacherActivityUtils {
       if (aDue != null && bDue != null) return aDue.compareTo(bDue);
       if (aDue != null) return -1;
       if (bDue != null) return 1;
-      return a.studentName
-          .toLowerCase()
-          .compareTo(b.studentName.toLowerCase());
+      return a.studentName.toLowerCase().compareTo(b.studentName.toLowerCase());
     });
 
     final completed = rows.where((r) => r.isDone).length;

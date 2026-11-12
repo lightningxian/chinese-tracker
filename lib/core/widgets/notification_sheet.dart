@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../l10n/l10n.dart';
 import '../../models/app_notification.dart';
 import '../../services/firestore_service.dart';
 import '../theme/app_theme.dart';
@@ -26,7 +27,7 @@ Future<void> showNotificationsSheet({
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Notifications',
+              ctx.l10n.notificationsTitle,
               style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: AppColors.navy,
@@ -37,7 +38,7 @@ Future<void> showNotificationsSheet({
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 24),
                 child: Text(
-                  'No notifications yet.',
+                  ctx.l10n.notificationsEmpty,
                   textAlign: TextAlign.center,
                   style: TextStyle(color: AppColors.textSecondary),
                 ),

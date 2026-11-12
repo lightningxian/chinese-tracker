@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import 'app_card.dart';
 import '../../models/attendance_record.dart';
@@ -9,18 +10,21 @@ class AttendanceHistoryList extends StatelessWidget {
   const AttendanceHistoryList({
     super.key,
     required this.records,
-    this.emptyMessage = 'No attendance recorded yet.',
+    this.emptyMessage,
   });
 
   final List<AttendanceRecord> records;
-  final String emptyMessage;
+
+  /// Defaults to the localized "No attendance recorded yet." text.
+  final String? emptyMessage;
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     if (records.isEmpty) {
       return AppCard(
         child: Text(
-          emptyMessage,
+          emptyMessage ?? l.teacherAttNoAttendanceYet,
           style: TextStyle(color: AppColors.textSecondary),
         ),
       );
@@ -52,7 +56,7 @@ class AttendanceHistoryList extends StatelessWidget {
                       Text(
                         record.sessionTitle.isNotEmpty
                             ? record.sessionTitle
-                            : 'Class session',
+                            : l.commonClassSession,
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(height: 4),
@@ -62,7 +66,7 @@ class AttendanceHistoryList extends StatelessWidget {
                           if (record.startMinutes != 0 ||
                               record.endMinutes != 0)
                             record.timeRangeLabel,
-                          if (record.joinedByStudent) 'Self join',
+                          if (record.joinedByStudent) l.teacherSessionSelfJoin,
                         ].join(' · '),
                         style: TextStyle(
                           color: AppColors.textSecondary,
@@ -73,7 +77,7 @@ class AttendanceHistoryList extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  record.attended ? 'Present' : 'Absent',
+                  record.attended ? l.attendancePresent : l.attendanceAbsent,
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     color:
@@ -96,10 +100,11 @@ class AttendanceSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     if (records.isEmpty) {
       return AppCard(
         child: Text(
-          'No class attendance recorded yet.',
+          l.teacherAttNoClassAttendanceYet,
           style: TextStyle(color: AppColors.textSecondary),
         ),
       );
@@ -113,9 +118,9 @@ class AttendanceSummaryCard extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _Tile(label: 'Sessions', value: '${records.length}'),
-          _Tile(label: 'Present', value: '$present'),
-          _Tile(label: 'Rate', value: '$rate%'),
+          _Tile(label: l.teacherAttSessions, value: '${records.length}'),
+          _Tile(label: l.attendancePresent, value: '$present'),
+          _Tile(label: l.teacherAttRate, value: '$rate%'),
         ],
       ),
     );

@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 
 import '../theme/app_theme.dart';
 import '../utils/exercise_utils.dart';
+import '../../l10n/l10n.dart';
+import '../../l10n/labels_exercises.dart';
 import '../../models/app_user.dart';
 import '../../models/exercise.dart';
 import '../../models/exercise_assignment.dart';
@@ -24,6 +26,32 @@ HomeworkStatus homeworkStatus({
   return HomeworkStatus.pending;
 }
 
+/// "2 worksheets · 1 question" for a package, "7 questions" otherwise:
+/// [Exercise.contentsLabel] in the UI language.
+String exerciseContentsLabel(AppLocalizations l, Exercise exercise) {
+  if (exercise.isPackage) {
+    return [
+      if (exercise.bankSheets.isNotEmpty)
+        l.exerciseCardWorksheets(exercise.bankSheets.length),
+      if (exercise.bankQuestionIds.isNotEmpty)
+        l.bankTextQuestionCount(exercise.bankQuestionIds.length),
+    ].join(' · ');
+  }
+  return l.bankTextQuestionCount(exercise.questions.length);
+}
+
+/// "Due 12 Nov 2026" / "Overdue · 12 Nov 2026": [ExerciseUtils.dueDateLabel]
+/// in the UI language.
+String exerciseDueDateLabel(
+  AppLocalizations l,
+  DateTime? dueDate, {
+  required bool isOverdue,
+}) {
+  if (dueDate == null) return '';
+  final date = ExerciseUtils.formatDueDate(dueDate);
+  return isOverdue ? l.exerciseCardOverdueOn(date) : l.exerciseCardDue(date);
+}
+
 class HomeworkSummaryBar extends StatelessWidget {
   const HomeworkSummaryBar({
     super.key,
@@ -41,6 +69,7 @@ class HomeworkSummaryBar extends StatelessWidget {
     if (pending == 0 && overdue == 0 && done == 0) {
       return const SizedBox.shrink();
     }
+    final l = context.l10n;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -50,17 +79,17 @@ class HomeworkSummaryBar extends StatelessWidget {
         children: [
           if (pending > 0)
             StatusPill(
-              label: '$pending to do',
+              label: l.exerciseCardToDoCount(pending),
               color: AppColors.teal,
             ),
           if (overdue > 0)
             StatusPill(
-              label: '$overdue overdue',
+              label: l.exerciseCardOverdueCount(overdue),
               color: AppColors.error,
             ),
           if (done > 0)
             StatusPill(
-              label: '$done done',
+              label: l.exerciseCardDoneCount(done),
               color: AppColors.success,
             ),
         ],
@@ -115,6 +144,7 @@ class AssignedExerciseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final overdue = assignment?.isOverdue == true && bestScore == null;
     final status = homeworkStatus(
       bestScore: bestScore,
@@ -175,7 +205,7 @@ class AssignedExerciseCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  _categorySubtitle(overdue: overdue),
+                  _categorySubtitle(l, overdue: overdue),
                   style: TextStyle(
                     color: overdue ? AppColors.error : AppColors.textSecondary,
                     fontSize: 13,
@@ -184,7 +214,8 @@ class AssignedExerciseCard extends StatelessWidget {
                 if (assignment?.dueDate != null) ...[
                   const SizedBox(height: 2),
                   Text(
-                    ExerciseUtils.dueDateLabel(
+                    exerciseDueDateLabel(
+                      l,
                       assignment!.dueDate,
                       isOverdue: overdue,
                     ),
@@ -211,33 +242,35 @@ class AssignedExerciseCard extends StatelessWidget {
     );
   }
 
-  String _categorySubtitle({required bool overdue}) {
+  String _categorySubtitle(AppLocalizations l, {required bool overdue}) {
     final categoryParts = <String>[
       if (exercise.level != null) exercise.level!,
-      exercise.skillCategory.label,
+      exercise.skillCategory.localized(l),
     ];
-    final progress = _subtitle(overdue: overdue);
+    final progress = _subtitle(l, overdue: overdue);
     if (categoryParts.isEmpty) return progress;
     return '${categoryParts.join(' · ')} · $progress';
   }
 
-  String _subtitle({required bool overdue}) {
+  String _subtitle(AppLocalizations l, {required bool overdue}) {
     if (bestScore == null) {
-      return overdue
-          ? '${exercise.contentsLabel} · Not started · overdue'
-          : '${exercise.contentsLabel} · Not started';
+      return [
+        exerciseContentsLabel(l, exercise),
+        l.exerciseCardNotStarted,
+        if (overdue) l.exerciseCardOverdueLower,
+      ].join(' · ');
     }
 
-    final parts = <String>['Best $bestScore%'];
+    final parts = <String>[l.exerciseCardBest(bestScore!)];
     if (attempts != null) {
-      parts.insert(0, '$attempts attempt${attempts == 1 ? '' : 's'}');
+      parts.insert(0, l.exerciseCardAttempts(attempts!));
     } else {
-      parts.add('Tap to retry');
+      parts.add(l.exerciseCardTapToRetry);
     }
 
     final submittedAt = latestResult?.submittedAt;
     if (submittedAt != null) {
-      parts.add('Last ${DateFormat('d MMM').format(submittedAt)}');
+      parts.add(l.exerciseCardLast(DateFormat('d MMM').format(submittedAt)));
     }
 
     return parts.join(' · ');
@@ -251,10 +284,11 @@ class _HomeworkStatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final (label, color) = switch (status) {
-      HomeworkStatus.pending => ('To do', AppColors.teal),
-      HomeworkStatus.overdue => ('Overdue', AppColors.error),
-      HomeworkStatus.done => ('Done', AppColors.success),
+      HomeworkStatus.pending => (l.exerciseCardStatusToDo, AppColors.teal),
+      HomeworkStatus.overdue => (l.exerciseCardStatusOverdue, AppColors.error),
+      HomeworkStatus.done => (l.exerciseCardStatusDone, AppColors.success),
     };
     return StatusPill(label: label, color: color);
   }
@@ -267,6 +301,7 @@ Future<void> showExerciseHomeworkProgressDialog({
   required List<ExerciseResult> results,
   required List<AppUser> students,
 }) {
+  final l = context.l10n;
   final scoresByStudent =
       ExerciseUtils.bestScoresByStudentForExercise(exercise.id, results);
 
@@ -279,7 +314,7 @@ Future<void> showExerciseHomeworkProgressDialog({
       final overdue = assignment.isOverdue && best == null;
       rows.add(
         _ProgressRow(
-          name: student?.name ?? 'Unknown student',
+          name: student?.name ?? l.exerciseCardUnknownStudent,
           level: student?.level,
           dueDate: assignment.dueDate,
           bestScore: best,
@@ -316,7 +351,7 @@ Future<void> showExerciseHomeworkProgressDialog({
   });
 
   final completed = rows.where((r) => r.bestScore != null).length;
-  final levelLabel = exercise.level ?? 'this level';
+  final levelLabel = exercise.level ?? l.exerciseCardThisLevel;
 
   return showDialog<void>(
     context: context,
@@ -328,7 +363,7 @@ Future<void> showExerciseHomeworkProgressDialog({
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Student progress'),
+          Text(l.exerciseCardStudentProgress),
           const SizedBox(height: 4),
           Text(
             exercise.title,
@@ -343,13 +378,17 @@ Future<void> showExerciseHomeworkProgressDialog({
       content: SizedBox(
         width: double.maxFinite,
         child: rows.isEmpty
-            ? Text('No $levelLabel students registered yet.')
+            ? Text(l.exerciseCardNoStudentsRegistered(levelLabel))
             : Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '$completed/${rows.length} completed · open to $levelLabel',
+                    l.exerciseCardCompletedOpenTo(
+                      completed,
+                      rows.length,
+                      levelLabel,
+                    ),
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       color: AppColors.teal,
@@ -374,7 +413,8 @@ Future<void> showExerciseHomeworkProgressDialog({
                             [
                               if (row.level != null) row.level!,
                               if (row.dueDate != null)
-                                ExerciseUtils.dueDateLabel(
+                                exerciseDueDateLabel(
+                                  l,
                                   row.dueDate,
                                   isOverdue: row.overdue,
                                 ),
@@ -395,7 +435,9 @@ Future<void> showExerciseHomeworkProgressDialog({
                                   ),
                                 )
                               : StatusPill(
-                                  label: row.overdue ? 'Overdue' : 'Pending',
+                                  label: row.overdue
+                                      ? l.exerciseCardStatusOverdue
+                                      : l.exerciseCardPending,
                                   color: row.overdue
                                       ? AppColors.error
                                       : AppColors.textSecondary,
@@ -410,7 +452,7 @@ Future<void> showExerciseHomeworkProgressDialog({
       actions: [
         FilledButton(
           onPressed: () => Navigator.pop(ctx),
-          child: const Text('Close'),
+          child: Text(l.exerciseCardClose),
         ),
       ],
     ),
@@ -458,10 +500,10 @@ class StudentPracticeResultsSection extends StatelessWidget {
 
             final assignments = assignmentsSnap.data ?? [];
             if (assignments.isEmpty) {
-              return const EmptyState(
+              return EmptyState(
                 icon: Icons.fitness_center_outlined,
-                title: 'No practice assigned',
-                subtitle: 'Assigned exercises will appear here.',
+                title: context.l10n.exerciseCardNoPracticeTitle,
+                subtitle: context.l10n.exerciseCardNoPracticeSubtitle,
               );
             }
 
@@ -537,20 +579,23 @@ class StudentPracticeResultsSection extends StatelessWidget {
   }
 }
 
-String assignedExerciseSubtitle({
+String assignedExerciseSubtitle(
+  AppLocalizations l, {
   required Exercise exercise,
   required ExerciseAssignment assignment,
   required int? bestScore,
 }) {
   final parts = <String>[];
   if (bestScore == null) {
-    parts.add('${exercise.contentsLabel} · Not started');
+    parts.add(
+        '${exerciseContentsLabel(l, exercise)} · ${l.exerciseCardNotStarted}');
   } else {
-    parts.add('Best score: $bestScore% · Tap to retry');
+    parts.add(l.exerciseCardBestScoreRetry(bestScore));
   }
   if (assignment.dueDate != null) {
     parts.add(
-      ExerciseUtils.dueDateLabel(
+      exerciseDueDateLabel(
+        l,
         assignment.dueDate,
         isOverdue: assignment.isOverdue && bestScore == null,
       ),

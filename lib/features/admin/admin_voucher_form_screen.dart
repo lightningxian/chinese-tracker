@@ -10,6 +10,8 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/shell_nested_page.dart';
 import '../../core/utils/money_format.dart';
+import '../../l10n/l10n.dart';
+import '../../l10n/labels_admin.dart';
 import '../../models/app_user.dart';
 import '../../models/invoice.dart';
 import '../../models/pricing_settings.dart';
@@ -92,15 +94,16 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
 
   /// Record a cash / transfer payment now and use it for this voucher.
   Future<void> _recordNewPayment(AppUser student) async {
+    final l = context.l10n;
     final items = _pricing.sessionItems;
     if (items.isEmpty) {
-      setState(() => _error = 'Add a sessions item to the Price list first.');
+      setState(() => _error = l.adminVoucherFormAddPriceItem);
       return;
     }
     final item = await showDialog<PriceItem>(
       context: context,
       builder: (ctx) => SimpleDialog(
-        title: const Text('Record a payment for'),
+        title: Text(l.adminVoucherFormRecordPaymentFor),
         children: [
           for (final it in items)
             SimpleDialogOption(
@@ -129,7 +132,9 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
       if (!mounted) return;
       _selectInvoice(match);
     } catch (e) {
-      if (mounted) setState(() => _error = 'Could not record the payment: $e');
+      if (mounted) {
+        setState(() => _error = l.adminVoucherFormRecordFailed('$e'));
+      }
     }
   }
 
@@ -144,11 +149,12 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
     final student =
         term == null ? null : await firestore.getUser(term.studentId);
     if (!mounted) return;
+    final l = context.l10n;
 
     if (term == null) {
       setState(() {
         _loading = false;
-        _error = 'Voucher not found';
+        _error = l.adminVoucherFormNotFound;
       });
       return;
     }
@@ -157,7 +163,7 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
     setState(() {
       _term = term;
       _studentId = term.studentId;
-      _studentName = student?.name ?? 'Unknown student';
+      _studentName = student?.name ?? l.adminVouchersUnknownStudent;
       _packageSize = term.packageSize;
       _sessionsRemaining = term.sessionsRemaining;
       _startDate = DateTime.tryParse(term.startDate) ?? DateTime.now();
@@ -193,6 +199,7 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    final l = context.l10n;
 
     final staffId = context.read<AuthService>().appUser?.uid;
     if (staffId == null) return;
@@ -216,8 +223,7 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
         final invoice = _invoice;
         if (invoice == null) {
           setState(() {
-            _error = 'Choose the payment this voucher belongs to, or record '
-                'a new one.';
+            _error = l.adminVoucherFormChoosePayment;
             _saving = false;
           });
           return;
@@ -237,7 +243,9 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              widget.isEditing ? 'Voucher updated' : 'Voucher created',
+              widget.isEditing
+                  ? l.adminVoucherFormUpdated
+                  : l.adminVoucherFormCreated,
             ),
           ),
         );
@@ -252,15 +260,16 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return ShellNestedPage(
       embedded: widget.embedded,
-      title: widget.isEditing ? 'Edit voucher' : 'New voucher',
+      title: widget.isEditing ? l.adminVouchersEdit : l.adminVouchersNewVoucher,
       child: _loading
           ? const Center(child: CircularProgressIndicator())
           : widget.isEditing && _term == null
               ? Center(
                   child: Text(
-                    _error ?? 'Voucher not found',
+                    _error ?? l.adminVoucherFormNotFound,
                     style: TextStyle(color: AppColors.error),
                   ),
                 )
@@ -273,7 +282,7 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Voucher code',
+                              l.adminVouchersVoucherCode,
                               style: TextStyle(
                                 fontSize: 12,
                                 color: AppColors.textSecondary,
@@ -299,10 +308,7 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
                       Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: Text(
-                          'Every voucher belongs to a payment. Pick the '
-                          'student, then the invoice that pays for it (or '
-                          'record a cash / transfer payment here). A unique '
-                          'code is generated automatically (e.g. 2026_07_001).',
+                          l.adminVoucherFormIntro,
                           style: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 13,
@@ -322,7 +328,7 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
                           children: [
                             if (widget.isEditing)
                               _ReadOnlyField(
-                                label: 'Student',
+                                label: l.commonStudent,
                                 value: _studentName,
                               )
                             else
@@ -334,16 +340,17 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
                                   final students = snapshot.data ?? [];
                                   return DropdownButtonFormField<String>(
                                     initialValue: _studentId,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Student',
-                                      prefixIcon: Icon(Icons.person_outline),
+                                    decoration: InputDecoration(
+                                      labelText: l.commonStudent,
+                                      prefixIcon:
+                                          const Icon(Icons.person_outline),
                                     ),
                                     items: students
                                         .map(
                                           (student) => DropdownMenuItem(
                                             value: student.uid,
                                             child: Text(
-                                              '${student.name} · ${student.level ?? 'No HSK'}',
+                                              '${student.name} · ${student.level ?? l.adminVoucherFormNoHsk}',
                                             ),
                                           ),
                                         )
@@ -353,7 +360,7 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
                                         : (value) =>
                                             setState(() => _studentId = value),
                                     validator: (value) => value == null
-                                        ? 'Select a student'
+                                        ? l.adminVoucherFormSelectStudent
                                         : null,
                                   );
                                 },
@@ -373,27 +380,27 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
                             const SizedBox(height: 16),
                             if (widget.isEditing)
                               _ReadOnlyField(
-                                label: 'Package size',
-                                value: '$_packageSize sessions',
+                                label: l.adminVoucherFormPackageSize,
+                                value: l.termSessionsCount(_packageSize),
                               )
                             else if (_invoice != null && _invoice!.sessions > 0)
                               _ReadOnlyField(
-                                label: 'Package size (from the payment)',
-                                value: '$_packageSize sessions',
+                                label: l.adminVoucherFormPackageSizeFromPayment,
+                                value: l.termSessionsCount(_packageSize),
                               )
                             else
                               DropdownButtonFormField<int>(
                                 initialValue: _packageSize,
-                                decoration: const InputDecoration(
-                                  labelText: 'Package size',
-                                  prefixIcon:
-                                      Icon(Icons.confirmation_number_outlined),
+                                decoration: InputDecoration(
+                                  labelText: l.adminVoucherFormPackageSize,
+                                  prefixIcon: const Icon(
+                                      Icons.confirmation_number_outlined),
                                 ),
                                 items: AppConstants.termSizes
                                     .map(
                                       (size) => DropdownMenuItem(
                                         value: size,
-                                        child: Text('$size sessions'),
+                                        child: Text(l.termSessionsCount(size)),
                                       ),
                                     )
                                     .toList(),
@@ -411,17 +418,20 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
                                 enabled: !_saving,
                                 keyboardType: TextInputType.number,
                                 decoration: InputDecoration(
-                                  labelText: 'Sessions remaining',
+                                  labelText: l.termSessionsRemaining,
                                   prefixIcon: const Icon(
                                       Icons.event_available_outlined),
                                   helperText:
-                                      'Of $_packageSize total in this package',
+                                      l.adminVoucherFormOfTotal(_packageSize),
                                 ),
                                 validator: (value) {
                                   final n = int.tryParse(value ?? '');
-                                  if (n == null) return 'Enter a number';
+                                  if (n == null) {
+                                    return l.adminVoucherFormEnterNumber;
+                                  }
                                   if (n < 0 || n > _packageSize) {
-                                    return 'Must be between 0 and $_packageSize';
+                                    return l
+                                        .adminVoucherFormRange(_packageSize);
                                   }
                                   return null;
                                 },
@@ -437,7 +447,10 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
                                   _saving ? null : () => _pickDate(start: true),
                               icon: const Icon(Icons.calendar_today_outlined,
                                   size: 18),
-                              label: Text('Start: ${_formatDate(_startDate)}'),
+                              label: Text(
+                                l.adminVoucherFormStart(
+                                    _formatDate(_startDate)),
+                              ),
                               style: OutlinedButton.styleFrom(
                                 alignment: Alignment.centerLeft,
                                 minimumSize: const Size.fromHeight(44),
@@ -450,7 +463,10 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
                                   : () => _pickDate(start: false),
                               icon: const Icon(Icons.event_outlined, size: 18),
                               label: Text(
-                                  'Deadline: ${_formatDate(_deadlineDate)}'),
+                                l.adminVoucherFormDeadline(
+                                  _formatDate(_deadlineDate),
+                                ),
+                              ),
                               style: OutlinedButton.styleFrom(
                                 alignment: Alignment.centerLeft,
                                 minimumSize: const Size.fromHeight(44),
@@ -461,9 +477,9 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
                               controller: _notesController,
                               enabled: !_saving,
                               maxLines: 3,
-                              decoration: const InputDecoration(
-                                labelText: 'Notes (optional)',
-                                prefixIcon: Icon(Icons.notes_outlined),
+                              decoration: InputDecoration(
+                                labelText: l.adminVoucherFormNotesOptional,
+                                prefixIcon: const Icon(Icons.notes_outlined),
                                 alignLabelWithHint: true,
                               ),
                             ),
@@ -495,8 +511,8 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
                               ),
                             )
                           : Text(widget.isEditing
-                              ? 'Save changes'
-                              : 'Create voucher'),
+                              ? l.profileWidgetSaveChanges
+                              : l.adminVoucherFormCreate),
                     ),
                   ],
                 ),
@@ -539,6 +555,7 @@ class _PaymentPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final firestore = context.read<FirestoreService>();
+    final l = context.l10n;
     return StreamBuilder<List<Invoice>>(
       stream: firestore.watchStudentInvoices(studentId),
       builder: (context, invSnap) {
@@ -566,19 +583,18 @@ class _PaymentPicker extends StatelessWidget {
                   key: ValueKey('payment-$selectedId-${candidates.length}'),
                   initialValue: selectedId,
                   isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Payment',
-                    prefixIcon: Icon(Icons.receipt_long_outlined),
-                    helperText: 'Paid or pending session invoices without a '
-                        'voucher yet',
+                  decoration: InputDecoration(
+                    labelText: l.adminVouchersColPayment,
+                    prefixIcon: const Icon(Icons.receipt_long_outlined),
+                    helperText: l.adminVoucherFormPaymentHelper,
                   ),
                   items: [
                     for (final inv in candidates)
                       DropdownMenuItem(
                         value: inv.id,
                         child: Text(
-                          '${inv.itemLabel} · ${formatRupiah(inv.amount)} · '
-                          '${inv.isPaid ? 'Paid' : 'Pending'} · '
+                          '${inv.itemLocalized(l)} · ${formatRupiah(inv.amount)} · '
+                          '${inv.isPaid ? l.adminInvoicesStatusPaid : l.adminInvoicesStatusPending} · '
                           '${inv.invoiceNumber}',
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -594,7 +610,7 @@ class _PaymentPicker extends StatelessWidget {
                           onChanged!(match);
                         },
                   validator: (v) =>
-                      v == null ? 'Choose a payment or record a new one' : null,
+                      v == null ? l.adminVoucherFormChoosePaymentShort : null,
                 ),
                 const SizedBox(height: 8),
                 Align(
@@ -606,7 +622,7 @@ class _PaymentPicker extends StatelessWidget {
                           ? null
                           : () => onRecordNew!(userSnap.data!),
                       icon: const Icon(Icons.add_card_outlined, size: 18),
-                      label: const Text('Record a cash / transfer payment'),
+                      label: Text(l.adminVoucherFormRecordPayment),
                     ),
                   ),
                 ),
@@ -627,10 +643,11 @@ class _PaymentStatusField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     if (!term.hasPayment) {
-      return const _ReadOnlyField(
-        label: 'Payment',
-        value: 'No payment recorded (older voucher)',
+      return _ReadOnlyField(
+        label: l.adminVouchersColPayment,
+        value: l.adminVoucherFormNoPaymentOlder,
       );
     }
     return StreamBuilder<List<Invoice>>(
@@ -642,11 +659,11 @@ class _PaymentStatusField extends StatelessWidget {
           if (i.id == term.sourceInvoiceId) inv = i;
         }
         final value = inv == null
-            ? 'Invoice ${term.sourceInvoiceId}'
+            ? l.adminInvoicesCardInvoice('${term.sourceInvoiceId}')
             : '${inv.invoiceNumber} · ${formatRupiah(inv.amount)} · '
-                '${inv.isPaid ? 'Paid' : inv.status.label}'
+                '${inv.status.localized(l)}'
                 '${inv.paidAt != null ? ' ${DateFormat('d MMM yyyy').format(inv.paidAt!)}' : ''}';
-        return _ReadOnlyField(label: 'Payment', value: value);
+        return _ReadOnlyField(label: l.adminVouchersColPayment, value: value);
       },
     );
   }

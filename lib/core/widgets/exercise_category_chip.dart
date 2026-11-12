@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import '../../l10n/l10n.dart';
+import '../../l10n/labels_exercises.dart';
 import '../../models/exercise_category.dart';
 
 /// Tinted label for the type of exercise (exercise / quiz / exam / HSK),
@@ -11,6 +13,7 @@ class ExerciseCategoryChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final (bg, fg) = switch (category) {
       ExerciseCategory.exercise => (AppColors.chipBlueBg, AppColors.chipBlueFg),
       ExerciseCategory.quiz => (AppColors.chipGreenBg, AppColors.chipGreenFg),
@@ -29,7 +32,7 @@ class ExerciseCategoryChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(6),
         ),
         child: Text(
-          category.label,
+          category.localized(l),
           style: TextStyle(
             color: fg,
             fontSize: 12,

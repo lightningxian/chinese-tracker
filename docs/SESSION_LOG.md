@@ -31,6 +31,10 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 - **Still needs the owner:** Midtrans sandbox end-to-end test (owner clicks,
   Claude watches logs); nightly backup IAM fix in the Google Cloud console
   (CLAUDE.md "Known blockers").
+- Later: Indonesian for admin, teacher and question bank screens (five
+  parallel agents in worktrees, merged by key union; ~1,070 new keys),
+  Language row on both staff profiles, `Intl.defaultLocale` follows the
+  switch. See the change log for what stays English.
 
 ## How to start on this PC
 

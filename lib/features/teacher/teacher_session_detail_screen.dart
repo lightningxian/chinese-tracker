@@ -10,6 +10,8 @@ import '../../core/widgets/conclude_class_dialog.dart';
 import '../../core/widgets/app_shell.dart';
 import '../../core/widgets/status_pill.dart';
 import '../../core/widgets/shell_nested_page.dart';
+import '../../l10n/l10n.dart';
+import '../../l10n/labels_classes.dart';
 import '../../models/app_user.dart';
 import '../../models/class_session.dart';
 import '../../models/org_settings.dart';
@@ -38,14 +40,12 @@ class _TeacherSessionDetailScreenState
   bool _concluding = false;
 
   Future<void> _confirmDelete(ClassSession session) async {
+    final l = context.l10n;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete this class?'),
-        content: Text(
-          'Delete "${session.sessionTitle}"? All student join records for '
-          'this class will be removed. This cannot be undone.',
-        ),
+        title: Text(l.teacherAttDeleteClassTitle),
+        content: Text(l.teacherAttDeleteClassBody(session.sessionTitle)),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
           side: BorderSide(color: AppColors.border),
@@ -53,12 +53,12 @@ class _TeacherSessionDetailScreenState
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Delete'),
+            child: Text(l.teacherAttDelete),
           ),
         ],
       ),
@@ -71,7 +71,7 @@ class _TeacherSessionDetailScreenState
       await context.read<FirestoreService>().deleteClassSession(session.id);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Class deleted')),
+          SnackBar(content: Text(l.teacherAttClassDeleted)),
         );
         context.go('/teacher');
       }
@@ -96,6 +96,7 @@ class _TeacherSessionDetailScreenState
       sessionTitle: session.sessionTitle,
     );
     if (statuses == null || !mounted) return;
+    final l = context.l10n;
 
     setState(() => _concluding = true);
     final firestore = context.read<FirestoreService>();
@@ -103,15 +104,21 @@ class _TeacherSessionDetailScreenState
     try {
       final result =
           await firestore.concludeClassSession(session.id, statuses: statuses);
+      final summary = l.teacherAttConcludeSummary(
+        result.creditedCount,
+        result.excusedCount,
+      );
       await notifications.notifySession(
-        title: 'Class concluded',
-        body: '${session.sessionTitle} concluded. ${result.summary}.',
+        title: l.teacherAttClassConcludedTitle,
+        body: l.teacherAttClassConcludedBody(session.sessionTitle, summary),
       );
       if (mounted) {
         final msg = result.hasFailures
-            ? 'Class concluded. ${result.creditedCount} charged; '
-                'could not charge: ${result.failedStudents.join(', ')}'
-            : 'Class concluded. ${result.summary}.';
+            ? l.teacherAttConcludedWithFailures(
+                result.creditedCount,
+                result.failedStudents.join(', '),
+              )
+            : l.teacherAttConcludedSnack(summary);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(msg)),
         );
@@ -132,17 +139,19 @@ class _TeacherSessionDetailScreenState
   }
 
   String _errorMessage(Object e) {
+    final l = context.l10n;
     if (e is FirebaseException) {
       if (e.code == 'permission-denied') {
-        return 'Could not complete action: permission denied.';
+        return l.teacherSessionPermissionDenied;
       }
-      return e.message ?? 'Could not complete action (${e.code})';
+      return e.message ?? l.teacherSessionActionFailed(e.code);
     }
     return e.toString();
   }
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final firestore = context.read<FirestoreService>();
     final busy = _deleting || _concluding;
 
@@ -159,7 +168,7 @@ class _TeacherSessionDetailScreenState
         if (session == null) {
           return Scaffold(
             appBar: AppBar(),
-            body: const Center(child: Text('Class not found')),
+            body: Center(child: Text(l.studentClassNotFound)),
           );
         }
 
@@ -234,7 +243,10 @@ class _TeacherSessionDetailScreenState
                                       ),
                                       const SizedBox(height: 6),
                                       Text(
-                                        '${session.timeRangeLabel} · $durationMinutes min',
+                                        l.teacherSessionTimeAndDuration(
+                                          session.timeRangeLabel,
+                                          durationMinutes,
+                                        ),
                                         style: TextStyle(
                                           color: AppColors.textSecondary,
                                         ),
@@ -246,7 +258,7 @@ class _TeacherSessionDetailScreenState
                                         Text(
                                           [
                                             if (session.mode != null)
-                                              session.mode!.label,
+                                              session.mode!.localized(l),
                                             if (session.room != null &&
                                                 session.room!.isNotEmpty)
                                               session.room!,
@@ -281,7 +293,10 @@ class _TeacherSessionDetailScreenState
                                                   BorderRadius.circular(20),
                                             ),
                                             child: Text(
-                                              '$joined / ${session.capacity} joined',
+                                              l.studentJoinCount(
+                                                joined,
+                                                session.capacity,
+                                              ),
                                               style: TextStyle(
                                                 color: AppColors.teal,
                                                 fontSize: 12,
@@ -303,8 +318,8 @@ class _TeacherSessionDetailScreenState
                                                     BorderRadius.circular(20),
                                               ),
                                               child: Text(
-                                                session
-                                                    .registrationState!.label,
+                                                session.registrationState!
+                                                    .localized(l),
                                                 style: TextStyle(
                                                   color: AppColors.navy,
                                                   fontSize: 12,
@@ -318,7 +333,10 @@ class _TeacherSessionDetailScreenState
                                           session.concludedAt != null) ...[
                                         const SizedBox(height: 10),
                                         Text(
-                                          'Concluded ${DateFormat('d MMM yyyy, HH:mm').format(session.concludedAt!)}',
+                                          l.teacherAttConcludedAt(
+                                            DateFormat('d MMM yyyy, HH:mm')
+                                                .format(session.concludedAt!),
+                                          ),
                                           style: TextStyle(
                                             color: AppColors.textSecondary,
                                             fontSize: 13,
@@ -329,12 +347,12 @@ class _TeacherSessionDetailScreenState
                                   ),
                                 ),
                                 const SizedBox(height: 20),
-                                const SectionHeader(
-                                    title: 'Students who joined'),
+                                SectionHeader(
+                                    title: l.teacherSessionStudentsJoined),
                                 if (records.isEmpty)
                                   AppCard(
                                     child: Text(
-                                      'No students have joined yet.',
+                                      l.studentClassNoneJoined,
                                       style: TextStyle(
                                           color: AppColors.textSecondary),
                                     ),
@@ -346,7 +364,8 @@ class _TeacherSessionDetailScreenState
                                     final name =
                                         record.studentName?.isNotEmpty == true
                                             ? record.studentName!
-                                            : (student?.name ?? 'Student');
+                                            : (student?.name ??
+                                                l.commonStudent);
                                     return Padding(
                                       padding: const EdgeInsets.only(bottom: 8),
                                       child: AppCard(
@@ -376,8 +395,8 @@ class _TeacherSessionDetailScreenState
                                                   ),
                                                   Text(
                                                     record.joinedByStudent
-                                                        ? 'Self join'
-                                                        : 'Added by teacher',
+                                                        ? l.teacherSessionSelfJoin
+                                                        : l.studentClassAddedByTeacher,
                                                     style: TextStyle(
                                                       color: AppColors
                                                           .textSecondary,
@@ -413,7 +432,7 @@ class _TeacherSessionDetailScreenState
                     child: OutlinedButton.icon(
                       onPressed: busy ? null : () => _confirmDelete(session),
                       icon: const Icon(Icons.delete_outline),
-                      label: const Text('Delete class'),
+                      label: Text(l.teacherSessionDeleteClass),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.error,
                         side: BorderSide(color: AppColors.error),
@@ -433,7 +452,7 @@ class _TeacherSessionDetailScreenState
                             onPressed:
                                 busy ? null : () => _confirmDelete(session),
                             icon: const Icon(Icons.delete_outline),
-                            label: const Text('Delete'),
+                            label: Text(l.teacherAttDelete),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: AppColors.error,
                               side: BorderSide(color: AppColors.error),
@@ -448,7 +467,7 @@ class _TeacherSessionDetailScreenState
                             onPressed:
                                 busy ? null : () => _confirmConclude(session),
                             icon: const Icon(Icons.check_circle_outline),
-                            label: const Text('Conclude class'),
+                            label: Text(l.concludeTitle),
                             style: FilledButton.styleFrom(
                               backgroundColor: AppColors.navy,
                               padding: const EdgeInsets.symmetric(vertical: 14),

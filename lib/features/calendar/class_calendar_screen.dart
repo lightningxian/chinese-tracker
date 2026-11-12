@@ -4,6 +4,8 @@ import 'package:table_calendar/table_calendar.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
+import '../../l10n/l10n.dart';
+import '../../l10n/labels_classes.dart';
 import '../../models/class_session.dart';
 
 /// Week/Day/Month calendar over class sessions. Shared by teacher, student and
@@ -49,6 +51,7 @@ class _ClassCalendarScreenState extends State<ClassCalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final body = StreamBuilder<List<ClassSession>>(
       stream: widget.sessions,
       builder: (context, snap) {
@@ -67,10 +70,10 @@ class _ClassCalendarScreenState extends State<ClassCalendarScreen> {
                 lastDay: DateTime.utc(2030, 12, 31),
                 focusedDay: _focusedDay,
                 calendarFormat: _format,
-                availableCalendarFormats: const {
-                  CalendarFormat.month: 'Month',
-                  CalendarFormat.twoWeeks: '2 weeks',
-                  CalendarFormat.week: 'Week',
+                availableCalendarFormats: {
+                  CalendarFormat.month: l.calendarFormatMonth,
+                  CalendarFormat.twoWeeks: l.calendarFormatTwoWeeks,
+                  CalendarFormat.week: l.calendarFormatWeek,
                 },
                 startingDayOfWeek: StartingDayOfWeek.monday,
                 selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
@@ -103,9 +106,10 @@ class _ClassCalendarScreenState extends State<ClassCalendarScreen> {
               child: selected.isEmpty
                   ? EmptyState(
                       icon: Icons.event_busy_outlined,
-                      title: 'No classes',
-                      subtitle:
-                          'No class sessions on ${DateFormat('EEE, d MMM').format(_selectedDay)}.',
+                      title: l.calendarNoClasses,
+                      subtitle: l.calendarNoSessionsOn(
+                        DateFormat('EEE, d MMM').format(_selectedDay),
+                      ),
                     )
                   : ListView.separated(
                       padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
@@ -140,17 +144,18 @@ class _SessionTile extends StatelessWidget {
   final ClassSession session;
   final VoidCallback? onTap;
 
-  static String _metaLine(ClassSession s) {
+  static String _metaLine(ClassSession s, AppLocalizations l) {
     final parts = <String>[
-      if (s.mode != null) s.mode!.label,
+      if (s.mode != null) s.mode!.localized(l),
       if (s.room != null && s.room!.isNotEmpty) s.room!,
-      'Cap ${s.capacity}',
+      l.calendarCapacity(s.capacity),
     ];
     return parts.join(' · ');
   }
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return AppCard(
       onTap: onTap,
       padding: const EdgeInsets.all(14),
@@ -182,7 +187,7 @@ class _SessionTile extends StatelessWidget {
                 Text(
                   session.sessionTitle.isNotEmpty
                       ? session.sessionTitle
-                      : 'Class session',
+                      : l.commonClassSession,
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 15,
@@ -191,16 +196,16 @@ class _SessionTile extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   session.timeRangeLabel +
-                      (session.isConcluded ? ' · concluded' : ''),
+                      (session.isConcluded ? ' · ${l.calendarConcluded}' : ''),
                   style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 13,
                   ),
                 ),
-                if (_metaLine(session).isNotEmpty) ...[
+                if (_metaLine(session, l).isNotEmpty) ...[
                   const SizedBox(height: 2),
                   Text(
-                    _metaLine(session),
+                    _metaLine(session, l),
                     style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 12,
@@ -219,7 +224,7 @@ class _SessionTile extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      'Open for registration',
+                      l.teacherSessionRegOpen,
                       style: TextStyle(
                         color: AppColors.success,
                         fontSize: 11,

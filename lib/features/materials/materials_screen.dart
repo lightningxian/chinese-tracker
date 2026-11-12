@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/shell_nested_page.dart';
+import '../../l10n/l10n.dart';
 import '../../models/material_item.dart';
 import '../../services/firestore_service.dart';
 import '../../services/materials_storage_service.dart';
@@ -25,6 +26,7 @@ class MaterialsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final firestore = context.read<FirestoreService>();
     final stream = readOnly
         ? firestore.watchPublishedMaterials(ownerId)
@@ -32,14 +34,14 @@ class MaterialsScreen extends StatelessWidget {
 
     return ShellNestedPage(
       embedded: embedded,
-      title: 'Materials',
+      title: l.materialsTitle,
       floatingActionButton: readOnly
           ? null
           : FloatingActionButton.extended(
               onPressed: () => _openEditor(context, ownerId: ownerId),
               backgroundColor: AppColors.navy,
               icon: const Icon(Icons.add),
-              label: const Text('Add material'),
+              label: Text(l.materialsAdd),
             ),
       child: StreamBuilder<List<MaterialItem>>(
         stream: stream,
@@ -52,10 +54,10 @@ class MaterialsScreen extends StatelessWidget {
           if (items.isEmpty) {
             return EmptyState(
               icon: Icons.folder_open_outlined,
-              title: 'No materials yet',
+              title: l.materialsEmptyTitle,
               subtitle: readOnly
-                  ? 'Published materials from your teacher will appear here.'
-                  : 'Tap "Add material" to upload a file or add a resource.',
+                  ? l.materialsEmptyStudentSubtitle
+                  : l.materialsEmptyStaffSubtitle,
             );
           }
           return ListView.separated(
@@ -96,7 +98,7 @@ Future<void> _openMaterial(BuildContext context, String url) async {
   final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
   if (!ok && context.mounted) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Could not open the file.')),
+      SnackBar(content: Text(context.l10n.materialsOpenFailed)),
     );
   }
 }
@@ -114,6 +116,7 @@ class _MaterialCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final meta = [
       if (item.level != null && item.level!.isNotEmpty) item.level!,
       if (item.skill != null && item.skill!.isNotEmpty) item.skill!,
@@ -181,7 +184,7 @@ class _MaterialCard extends StatelessWidget {
               child: TextButton.icon(
                 onPressed: onEdit,
                 icon: const Icon(Icons.edit_outlined, size: 16),
-                label: const Text('Edit'),
+                label: Text(l.materialsEdit),
               ),
             ),
           ],
@@ -211,6 +214,7 @@ class _StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final color = published ? AppColors.success : AppColors.textSecondary;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -219,7 +223,7 @@ class _StatusPill extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        published ? 'Published' : 'Draft',
+        published ? l.materialsStatusPublished : l.materialsStatusDraft,
         style: TextStyle(
           color: color,
           fontWeight: FontWeight.w700,
@@ -343,20 +347,21 @@ class _MaterialEditorSheetState extends State<_MaterialEditorSheet> {
   }
 
   Future<void> _delete() async {
+    final l = context.l10n;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete material?'),
-        content: Text('Delete "${widget.item!.title}"? This cannot be undone.'),
+        title: Text(l.materialsDeleteTitle),
+        content: Text(l.materialsDeleteBody(widget.item!.title)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Delete'),
+            child: Text(l.materialsDelete),
           ),
         ],
       ),
@@ -372,6 +377,7 @@ class _MaterialEditorSheetState extends State<_MaterialEditorSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return Padding(
       padding: EdgeInsets.fromLTRB(
         20,
@@ -387,7 +393,7 @@ class _MaterialEditorSheetState extends State<_MaterialEditorSheet> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                _isEditing ? 'Edit material' : 'Add material',
+                _isEditing ? l.materialsEditTitle : l.materialsAdd,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -409,12 +415,13 @@ class _MaterialEditorSheetState extends State<_MaterialEditorSheet> {
               ],
               TextFormField(
                 controller: _titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Title',
-                  prefixIcon: Icon(Icons.title),
+                decoration: InputDecoration(
+                  labelText: l.materialsFieldTitle,
+                  prefixIcon: const Icon(Icons.title),
                 ),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Enter a title' : null,
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? l.materialsTitleRequired
+                    : null,
               ),
               const SizedBox(height: 12),
               Row(
@@ -422,8 +429,8 @@ class _MaterialEditorSheetState extends State<_MaterialEditorSheet> {
                   Expanded(
                     child: TextFormField(
                       controller: _levelController,
-                      decoration: const InputDecoration(
-                        labelText: 'Level (optional)',
+                      decoration: InputDecoration(
+                        labelText: l.materialsFieldLevel,
                       ),
                     ),
                   ),
@@ -431,8 +438,8 @@ class _MaterialEditorSheetState extends State<_MaterialEditorSheet> {
                   Expanded(
                     child: TextFormField(
                       controller: _skillController,
-                      decoration: const InputDecoration(
-                        labelText: 'Skill (optional)',
+                      decoration: InputDecoration(
+                        labelText: l.materialsFieldSkill,
                       ),
                     ),
                   ),
@@ -441,9 +448,9 @@ class _MaterialEditorSheetState extends State<_MaterialEditorSheet> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _tagsController,
-                decoration: const InputDecoration(
-                  labelText: 'Tags (comma-separated)',
-                  prefixIcon: Icon(Icons.label_outline),
+                decoration: InputDecoration(
+                  labelText: l.materialsFieldTags,
+                  prefixIcon: const Icon(Icons.label_outline),
                 ),
               ),
               const SizedBox(height: 12),
@@ -457,7 +464,9 @@ class _MaterialEditorSheetState extends State<_MaterialEditorSheet> {
                       )
                     : const Icon(Icons.upload_file),
                 label: Text(
-                  _fileName != null ? 'Replace file' : 'Upload file (optional)',
+                  _fileName != null
+                      ? l.materialsReplaceFile
+                      : l.materialsUploadFile,
                 ),
               ),
               if (_fileName != null)
@@ -476,10 +485,10 @@ class _MaterialEditorSheetState extends State<_MaterialEditorSheet> {
                 contentPadding: EdgeInsets.zero,
                 value: _published,
                 onChanged: (v) => setState(() => _published = v),
-                title: const Text('Published'),
-                subtitle: const Text(
-                  'Visible to students and parents.',
-                  style: TextStyle(fontSize: 12),
+                title: Text(l.materialsStatusPublished),
+                subtitle: Text(
+                  l.materialsPublishedHint,
+                  style: const TextStyle(fontSize: 12),
                 ),
               ),
               const SizedBox(height: 8),
@@ -495,15 +504,18 @@ class _MaterialEditorSheetState extends State<_MaterialEditorSheet> {
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : Text(_isEditing ? 'Save changes' : 'Add material'),
+                    : Text(
+                        _isEditing ? l.materialsSaveChanges : l.materialsAdd),
               ),
               if (_isEditing) ...[
                 const SizedBox(height: 8),
                 TextButton.icon(
                   onPressed: _saving ? null : _delete,
                   icon: Icon(Icons.delete_outline, color: AppColors.error),
-                  label:
-                      Text('Delete', style: TextStyle(color: AppColors.error)),
+                  label: Text(
+                    l.materialsDelete,
+                    style: TextStyle(color: AppColors.error),
+                  ),
                 ),
               ],
             ],

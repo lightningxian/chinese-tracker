@@ -4,8 +4,10 @@ import 'package:provider/provider.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
+import '../../core/widgets/language_toggle.dart';
 import '../../core/widgets/theme_toggle.dart';
 import '../../core/widgets/profile_widgets.dart';
+import '../../l10n/l10n.dart';
 import '../../models/app_user.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
@@ -66,6 +68,7 @@ class _AdminProfileTabState extends State<AdminProfileTab> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    final l = context.l10n;
 
     setState(() {
       _saving = true;
@@ -85,7 +88,7 @@ class _AdminProfileTabState extends State<AdminProfileTab> {
       await context.read<AuthService>().refreshProfile();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile updated')),
+          SnackBar(content: Text(l.studentProfileUpdated)),
         );
       }
     } catch (e) {
@@ -98,6 +101,7 @@ class _AdminProfileTabState extends State<AdminProfileTab> {
   @override
   Widget build(BuildContext context) {
     final user = widget.user;
+    final l = context.l10n;
 
     return Form(
       key: _formKey,
@@ -106,7 +110,7 @@ class _AdminProfileTabState extends State<AdminProfileTab> {
         children: [
           ProfileHeaderCard(
             user: user,
-            subtitle: 'Platform administrator',
+            subtitle: l.adminProfileSubtitle,
             avatarColor: const Color(0xFF7A4FBF),
             canEditPhoto: true,
             onPhotoChanged: (_) async {
@@ -120,8 +124,7 @@ class _AdminProfileTabState extends State<AdminProfileTab> {
           const SizedBox(height: 16),
           AppCard(
             child: Text(
-              'Manage users, vouchers, reports, and notifications from the '
-              'admin tabs. Teaching workflows use the Guru role.',
+              l.adminProfileIntro,
               style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 13,
@@ -140,11 +143,11 @@ class _AdminProfileTabState extends State<AdminProfileTab> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Centre settings',
-                          style: TextStyle(fontWeight: FontWeight.w600)),
+                      Text(l.adminProfileCentreSettings,
+                          style: const TextStyle(fontWeight: FontWeight.w600)),
                       const SizedBox(height: 2),
                       Text(
-                        'Payments, evaluations, materials, audit logs.',
+                        l.adminProfileCentreSettingsHint,
                         style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 12,
@@ -159,8 +162,8 @@ class _AdminProfileTabState extends State<AdminProfileTab> {
           ),
           const SizedBox(height: 16),
           ProfileSectionCard(
-            title: 'Personal information',
-            subtitle: 'Indonesian and Chinese names plus WhatsApp contact.',
+            title: l.studentProfilePersonalTitle,
+            subtitle: l.adminProfilePersonalSubtitle,
             children: [
               ProfilePersonalFields(
                 nameIndonesianController: _nameIndonesianController,
@@ -171,6 +174,8 @@ class _AdminProfileTabState extends State<AdminProfileTab> {
               ),
             ],
           ),
+          const SizedBox(height: 16),
+          const AppCard(child: LanguageSettingRow()),
           const SizedBox(height: 16),
           const AppCard(child: ThemeSettingRow()),
           const SizedBox(height: 16),

@@ -5,6 +5,9 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/money_format.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/shell_nested_page.dart';
+import '../../l10n/l10n.dart';
+import '../../l10n/labels_admin.dart';
+import '../../l10n/labels_reports.dart';
 import '../../models/pricing_settings.dart';
 import '../../services/firestore_service.dart';
 
@@ -18,10 +21,11 @@ class AdminPriceListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final firestore = context.read<FirestoreService>();
     return ShellNestedPage(
       embedded: embedded,
-      title: 'Price list',
+      title: l.adminPriceTitle,
       child: StreamBuilder<PricingSettings>(
         stream: firestore.watchPricing(),
         builder: (context, snap) {
@@ -48,17 +52,18 @@ class _PriceListBodyState extends State<_PriceListBody> {
   bool _busy = false;
 
   Future<void> _save(PricingSettings next) async {
+    final l = context.l10n;
     setState(() => _busy = true);
     try {
       await context.read<FirestoreService>().updatePricing(next);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Price list saved')),
+        SnackBar(content: Text(l.adminPriceSaved)),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not save: $e')),
+        SnackBar(content: Text(l.adminPriceSaveFailed('$e'))),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -85,23 +90,21 @@ class _PriceListBodyState extends State<_PriceListBody> {
   }
 
   Future<void> _remove(PriceItem item) async {
+    final l = context.l10n;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Remove "${item.name}"?'),
-        content: const Text(
-          'Invoices already created keep their price. New invoices can no '
-          'longer pick this item.',
-        ),
+        title: Text(l.adminPriceRemoveTitle(item.name)),
+        content: Text(l.adminPriceRemoveBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Remove'),
+            child: Text(l.loginRemove),
           ),
         ],
       ),
@@ -115,30 +118,31 @@ class _PriceListBodyState extends State<_PriceListBody> {
   }
 
   Future<void> _editValidity() async {
+    final l = context.l10n;
     final controller =
         TextEditingController(text: '${widget.pricing.termValidDays}');
     final days = await showDialog<int>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Voucher validity'),
+        title: Text(l.adminPriceVoucherValidity),
         content: TextField(
           controller: controller,
           keyboardType: TextInputType.number,
           autofocus: true,
-          decoration: const InputDecoration(
-            labelText: 'Days a paid voucher stays valid',
-            helperText: 'Flyer: 2 months = 60 days',
+          decoration: InputDecoration(
+            labelText: l.adminPriceValidityDaysLabel,
+            helperText: l.adminPriceValidityHelper,
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(l.commonCancel),
           ),
           FilledButton(
             onPressed: () =>
                 Navigator.pop(ctx, int.tryParse(controller.text.trim())),
-            child: const Text('Save'),
+            child: Text(l.adminPriceSave),
           ),
         ],
       ),
@@ -150,14 +154,13 @@ class _PriceListBodyState extends State<_PriceListBody> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final p = widget.pricing;
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
         Text(
-          'Everything a payment can be for. Create invoice picks a row from '
-          'this list and the server charges exactly this price. Rows that give '
-          'class sessions become vouchers when paid.',
+          l.adminPriceIntro,
           style: TextStyle(
             color: AppColors.textSecondary,
             fontSize: 13,
@@ -169,7 +172,7 @@ class _PriceListBodyState extends State<_PriceListBody> {
           children: [
             Expanded(
               child: Text(
-                'Items',
+                l.adminPriceItems,
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 16,
@@ -180,7 +183,7 @@ class _PriceListBodyState extends State<_PriceListBody> {
             FilledButton.icon(
               onPressed: _busy ? null : () => _edit(),
               icon: const Icon(Icons.add, size: 18),
-              label: const Text('Add item'),
+              label: Text(l.adminPriceAddItem),
             ),
           ],
         ),
@@ -221,7 +224,7 @@ class _PriceListBodyState extends State<_PriceListBody> {
                         ),
                       ),
                       Text(
-                        'Gives ${item.givesLabel}',
+                        l.adminPriceGives(item.givesLocalized(l)),
                         style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 12.5,
@@ -239,12 +242,12 @@ class _PriceListBodyState extends State<_PriceListBody> {
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Edit',
+                  tooltip: l.adminPriceEdit,
                   icon: const Icon(Icons.edit_outlined, size: 20),
                   onPressed: _busy ? null : () => _edit(item),
                 ),
                 IconButton(
-                  tooltip: 'Remove',
+                  tooltip: l.loginRemove,
                   icon: const Icon(Icons.delete_outline, size: 20),
                   color: AppColors.error,
                   onPressed: _busy ? null : () => _remove(item),
@@ -265,13 +268,17 @@ class _PriceListBodyState extends State<_PriceListBody> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Voucher validity',
-                      style: TextStyle(fontWeight: FontWeight.w700),
+                    Text(
+                      l.adminPriceVoucherValidity,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
                     Text(
-                      '${p.termValidDays} days from payment '
-                      '(${(p.termValidDays / 30).toStringAsFixed(p.termValidDays % 30 == 0 ? 0 : 1)} months)',
+                      l.adminPriceValiditySummary(
+                        p.termValidDays,
+                        (p.termValidDays / 30).toStringAsFixed(
+                          p.termValidDays % 30 == 0 ? 0 : 1,
+                        ),
+                      ),
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12.5,
@@ -287,7 +294,9 @@ class _PriceListBodyState extends State<_PriceListBody> {
         if (p.updatedAt != null) ...[
           const SizedBox(height: 12),
           Text(
-            'Last saved ${p.updatedAt!.day}/${p.updatedAt!.month}/${p.updatedAt!.year}',
+            l.adminPriceLastSaved(
+              '${p.updatedAt!.day}/${p.updatedAt!.month}/${p.updatedAt!.year}',
+            ),
             style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 12,
@@ -362,8 +371,11 @@ class _PriceItemDialogState extends State<_PriceItemDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return AlertDialog(
-      title: Text(widget.existing == null ? 'New item' : 'Edit item'),
+      title: Text(
+        widget.existing == null ? l.adminPriceNewItem : l.adminPriceEditItem,
+      ),
       content: Form(
         key: _formKey,
         child: SizedBox(
@@ -374,33 +386,33 @@ class _PriceItemDialogState extends State<_PriceItemDialog> {
               TextFormField(
                 controller: _name,
                 autofocus: true,
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                  hintText: 'e.g. 8 class sessions',
+                decoration: InputDecoration(
+                  labelText: l.adminPriceName,
+                  hintText: l.adminPriceNameHint,
                 ),
                 validator: (v) =>
-                    (v ?? '').trim().isEmpty ? 'Enter a name' : null,
+                    (v ?? '').trim().isEmpty ? l.adminPriceNameRequired : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _price,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Price (Rp, whole number)',
+                decoration: InputDecoration(
+                  labelText: l.adminPricePriceLabel,
                   hintText: '2450000',
                 ),
                 validator: (v) {
                   final n = int.tryParse((v ?? '').trim());
-                  return n == null || n <= 0 ? 'Enter a price above 0' : null;
+                  return n == null || n <= 0 ? l.adminPricePriceInvalid : null;
                 },
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<PriceKind>(
                 initialValue: _kind,
-                decoration: const InputDecoration(labelText: 'What it gives'),
+                decoration: InputDecoration(labelText: l.adminPriceWhatItGives),
                 items: [
                   for (final k in PriceKind.values)
-                    DropdownMenuItem(value: k, child: Text(k.label)),
+                    DropdownMenuItem(value: k, child: Text(k.localized(l))),
                 ],
                 onChanged: (k) => setState(() => _kind = k ?? _kind),
               ),
@@ -409,13 +421,15 @@ class _PriceItemDialogState extends State<_PriceItemDialog> {
                 TextFormField(
                   controller: _sessions,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Number of class sessions',
+                  decoration: InputDecoration(
+                    labelText: l.adminPriceSessionsLabel,
                     hintText: '8',
                   ),
                   validator: (v) {
                     final n = int.tryParse((v ?? '').trim());
-                    return n == null || n <= 0 ? 'Enter 1 or more' : null;
+                    return n == null || n <= 0
+                        ? l.adminPriceSessionsInvalid
+                        : null;
                   },
                 ),
               ],
@@ -426,9 +440,9 @@ class _PriceItemDialogState extends State<_PriceItemDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(l.commonCancel),
         ),
-        FilledButton(onPressed: _submit, child: const Text('Save')),
+        FilledButton(onPressed: _submit, child: Text(l.adminPriceSave)),
       ],
     );
   }

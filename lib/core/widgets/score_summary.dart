@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import 'app_card.dart';
 
@@ -34,6 +35,7 @@ class ScoreSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final passed = scorePercent >= 70;
 
     return Center(
@@ -75,7 +77,7 @@ class ScoreSummary extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '$correctCount of $totalCount correct',
+                      l.scoreSummaryCorrectOf(correctCount, totalCount),
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 15,
@@ -116,8 +118,8 @@ class ScoreSummary extends StatelessWidget {
                     const SizedBox(height: 8),
                     Text(
                       passed
-                          ? 'Great work!'
-                          : 'Keep practicing — you\'re improving.',
+                          ? l.scoreSummaryPassed
+                          : l.scoreSummaryKeepPracticing,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontWeight: FontWeight.w600,

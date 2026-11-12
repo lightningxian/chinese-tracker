@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 import '../core/constants/app_constants.dart';
 import '../core/utils/level_utils.dart';
 import '../models/app_user.dart';
@@ -18,22 +20,8 @@ class ReportMonth implements Comparable<ReportMonth> {
   final int year;
   final int month;
 
-  static const _names = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-
-  String get label => '${_names[month - 1]} $year';
+  /// "Nov 2026" in the app language (Intl.defaultLocale).
+  String get label => DateFormat('MMM yyyy').format(DateTime(year, month));
 
   /// The [count] months ending with the month of [now], oldest first.
   static List<ReportMonth> last(int count, DateTime now) => [

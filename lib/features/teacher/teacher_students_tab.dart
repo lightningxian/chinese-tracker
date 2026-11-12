@@ -6,6 +6,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/teacher_stats_utils.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/cohort_stats_widgets.dart';
+import '../../l10n/l10n.dart';
 import '../../models/app_user.dart';
 import '../../models/attendance_record.dart';
 import '../../models/exercise_assignment.dart';
@@ -21,6 +22,7 @@ class TeacherStudentsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final firestore = context.read<FirestoreService>();
     final user = context.watch<AuthService>().appUser;
     // Per-teacher content model: teachers read their own library.
@@ -40,7 +42,7 @@ class TeacherStudentsTab extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.all(24),
               child: Text(
-                'Could not load students: ${studentsSnap.error}',
+                l.teacherStudentsLoadFailed('${studentsSnap.error}'),
                 style: TextStyle(color: AppColors.error),
                 textAlign: TextAlign.center,
               ),
@@ -50,12 +52,10 @@ class TeacherStudentsTab extends StatelessWidget {
 
         final students = studentsSnap.data ?? [];
         if (students.isEmpty) {
-          return const EmptyState(
+          return EmptyState(
             icon: Icons.people_outline,
-            title: 'No students yet',
-            subtitle:
-                'No demo data yet — run scripts/seed_test_accounts.sh then '
-                'python3 scripts/seed_report_demo_data.py',
+            title: l.teacherDashNoStudentsTitle,
+            subtitle: l.studentLessonsNoDemoData,
           );
         }
 

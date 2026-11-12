@@ -8,6 +8,8 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/registration_identity_fields.dart';
 import '../../core/widgets/shell_nested_page.dart';
+import '../../l10n/l10n.dart';
+import '../../l10n/labels_admin.dart';
 import '../../models/app_user.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
@@ -55,8 +57,9 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    final l = context.l10n;
     if (_isParent && _childIds.isEmpty) {
-      setState(() => _error = 'Select at least one child for this parent.');
+      setState(() => _error = l.adminUserFormSelectChild);
       return;
     }
 
@@ -88,13 +91,16 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '${profile.roleDisplayLabel} account created for ${profile.displayNameIndonesian}',
+            l.adminUserFormCreated(
+              profile.roleLocalized(l),
+              profile.displayNameIndonesian,
+            ),
           ),
         ),
       );
       context.pop();
     } on FirebaseAuthException catch (e) {
-      setState(() => _error = _authErrorMessage(e));
+      setState(() => _error = _authErrorMessage(l, e));
     } catch (e) {
       setState(() => _error = e.toString());
     } finally {
@@ -102,24 +108,24 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
     }
   }
 
-  String _authErrorMessage(FirebaseAuthException e) {
+  String _authErrorMessage(AppLocalizations l, FirebaseAuthException e) {
     return switch (e.code) {
-      'email-already-in-use' => 'This email is already registered.',
-      'weak-password' => 'Password is too weak. Use at least 6 characters.',
-      'invalid-email' => 'Invalid email address.',
-      'operation-not-allowed' =>
-        'Email/password sign-in is disabled in Firebase.',
-      _ => e.message ?? 'Registration failed (${e.code})',
+      'email-already-in-use' => l.adminUserFormErrorEmailInUse,
+      'weak-password' => l.registerErrorWeakPassword,
+      'invalid-email' => l.registerErrorInvalidEmail,
+      'operation-not-allowed' => l.registerErrorOperationNotAllowed,
+      _ => e.message ?? l.registerErrorGeneric(e.code),
     };
   }
 
   @override
   Widget build(BuildContext context) {
     final isWide = MediaQuery.sizeOf(context).width >= 720;
+    final l = context.l10n;
 
     return ShellNestedPage(
       embedded: widget.embedded,
-      title: 'Register new user',
+      title: l.adminUserFormTitle,
       child: Center(
         child: SingleChildScrollView(
           padding: EdgeInsets.all(isWide ? 32 : 20),
@@ -131,7 +137,7 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'Create a Murid or Guru account',
+                    l.adminUserFormHeading,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
@@ -140,8 +146,7 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'The new user can sign in with the email and password you set. '
-                    'You stay signed in as admin.',
+                    l.adminUserFormIntro,
                     style: TextStyle(
                       color: AppColors.textSecondary,
                       height: 1.45,
@@ -149,18 +154,18 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
                   ),
                   const SizedBox(height: 24),
                   SegmentedButton<String>(
-                    segments: const [
+                    segments: [
                       ButtonSegment(
                         value: AppConstants.roleStudent,
-                        label: Text('Murid'),
+                        label: Text(l.adminUsersRoleStudent),
                       ),
                       ButtonSegment(
                         value: AppConstants.roleTeacher,
-                        label: Text('Guru'),
+                        label: Text(l.adminUsersRoleTeacher),
                       ),
                       ButtonSegment(
                         value: AppConstants.roleParent,
-                        label: Text('Ortu'),
+                        label: Text(l.adminUserFormRoleParentShort),
                       ),
                     ],
                     selected: {_role},
@@ -206,13 +211,13 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
                           enabled: !_loading,
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
-                          decoration: const InputDecoration(
-                            labelText: 'Email',
-                            prefixIcon: Icon(Icons.email_outlined),
+                          decoration: InputDecoration(
+                            labelText: l.commonEmail,
+                            prefixIcon: const Icon(Icons.email_outlined),
                           ),
                           validator: (value) =>
                               value == null || !value.contains('@')
-                                  ? 'Enter a valid email'
+                                  ? l.registerEmailInvalid
                                   : null,
                         ),
                         const SizedBox(height: 16),
@@ -222,14 +227,14 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
                           obscureText: true,
                           textInputAction: TextInputAction.done,
                           onFieldSubmitted: (_) => _submit(),
-                          decoration: const InputDecoration(
-                            labelText: 'Password',
-                            prefixIcon: Icon(Icons.lock_outline),
-                            helperText: 'Minimum 6 characters',
+                          decoration: InputDecoration(
+                            labelText: l.commonPassword,
+                            prefixIcon: const Icon(Icons.lock_outline),
+                            helperText: l.registerPasswordTooShort,
                           ),
                           validator: (value) =>
                               value == null || value.length < 6
-                                  ? 'Minimum 6 characters'
+                                  ? l.registerPasswordTooShort
                                   : null,
                         ),
                         if (_isParent) ...[
@@ -250,9 +255,9 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
                           const SizedBox(height: 16),
                           DropdownButtonFormField<String>(
                             initialValue: _level,
-                            decoration: const InputDecoration(
-                              labelText: 'HSK level',
-                              prefixIcon: Icon(Icons.school_outlined),
+                            decoration: InputDecoration(
+                              labelText: l.commonHskLevel,
+                              prefixIcon: const Icon(Icons.school_outlined),
                             ),
                             items: AppConstants.hskLevels
                                 .map(
@@ -270,16 +275,17 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
                           const SizedBox(height: 16),
                           DropdownButtonFormField<int>(
                             initialValue: _termSize,
-                            decoration: const InputDecoration(
-                              labelText: 'Lessons per term',
+                            decoration: InputDecoration(
+                              labelText: l.commonLessonsPerTerm,
                               prefixIcon:
-                                  Icon(Icons.calendar_view_week_outlined),
+                                  const Icon(Icons.calendar_view_week_outlined),
                             ),
                             items: AppConstants.termSizes
                                 .map(
                                   (size) => DropdownMenuItem(
                                     value: size,
-                                    child: Text('$size lessons per term'),
+                                    child: Text(
+                                        l.commonLessonsPerTermOption(size)),
                                   ),
                                 )
                                 .toList(),
@@ -307,11 +313,13 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : Text(
-                            _isStudent
-                                ? 'Create Murid account'
-                                : _isParent
-                                    ? 'Create Ortu account'
-                                    : 'Create Guru account',
+                            l.adminUserFormSubmit(
+                              _isStudent
+                                  ? l.adminUsersRoleStudent
+                                  : _isParent
+                                      ? l.adminUserFormRoleParentShort
+                                      : l.adminUsersRoleTeacher,
+                            ),
                           ),
                   ),
                 ],
@@ -339,19 +347,20 @@ class _ChildPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final firestore = context.read<FirestoreService>();
+    final l = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Align(
+        Align(
           alignment: Alignment.centerLeft,
           child: Text(
-            'Linked children',
-            style: TextStyle(fontWeight: FontWeight.w600),
+            l.parentProfileLinkedChildren,
+            style: const TextStyle(fontWeight: FontWeight.w600),
           ),
         ),
         const SizedBox(height: 4),
         Text(
-          'Choose which students this parent can follow (read-only).',
+          l.adminUserFormChildHint,
           style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
         ),
         const SizedBox(height: 8),
@@ -371,9 +380,9 @@ class _ChildPicker extends StatelessWidget {
               }
               final students = snap.data ?? [];
               if (students.isEmpty) {
-                return const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Text('No students to link yet.'),
+                return Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(l.adminUserFormNoStudents),
                 );
               }
               return _SearchableStudentList(
@@ -423,6 +432,7 @@ class _SearchableStudentListState extends State<_SearchableStudentList> {
           (s.level ?? '').toLowerCase().contains(q);
     }).toList();
     final selectedCount = widget.selectedIds.length;
+    final l = context.l10n;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -433,19 +443,21 @@ class _SearchableStudentListState extends State<_SearchableStudentList> {
             enabled: widget.enabled,
             onChanged: (v) => setState(() => _query = v),
             decoration: InputDecoration(
-              hintText: 'Search by name, email or HSK level',
+              hintText: l.adminUserFormSearchHint,
               prefixIcon: const Icon(Icons.search, size: 20),
               isDense: true,
-              suffixText: selectedCount == 0 ? null : '$selectedCount selected',
+              suffixText: selectedCount == 0
+                  ? null
+                  : l.adminUserFormSelectedCount(selectedCount),
             ),
           ),
         ),
         ConstrainedBox(
           constraints: const BoxConstraints(maxHeight: 260),
           child: shown.isEmpty
-              ? const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Text('No students match this search.'),
+              ? Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(l.adminUserFormNoMatch),
                 )
               : ListView(
                   shrinkWrap: true,

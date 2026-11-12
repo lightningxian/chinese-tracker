@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../l10n/l10n.dart';
+import '../../l10n/labels_exercises.dart';
 import '../../models/exercise_category.dart';
 import '../../models/exercise_type.dart';
 import '../../models/question_bank_item.dart';
@@ -69,47 +71,50 @@ class QuestionBankFilterBar extends StatelessWidget {
     super.key,
     required this.filter,
     required this.onChanged,
-    this.searchHint = 'Search worksheet or question',
+    this.searchHint,
   });
 
   final QuestionBankFilter filter;
   final ValueChanged<QuestionBankFilter> onChanged;
-  final String searchHint;
+
+  /// Placeholder of the search field; the bank's own wording when null.
+  final String? searchHint;
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return LayoutBuilder(
       builder: (context, constraints) {
         final wide = constraints.maxWidth >= 820;
         final search = TextField(
           decoration: InputDecoration(
             prefixIcon: const Icon(Icons.search),
-            hintText: searchHint,
+            hintText: searchHint ?? l.bankFiltersSearchHint,
             isDense: true,
           ),
           onChanged: (v) => onChanged(filter.copyWith(search: v)),
         );
         final dropdowns = [
           _Dropdown<ExerciseCategory?>(
-            label: 'Type of exercise',
+            label: l.bankFiltersTypeOfExercise,
             value: filter.category,
             width: wide ? 180 : null,
             items: [
-              for (final c in ExerciseCategory.values) (c, c.label),
+              for (final c in ExerciseCategory.values) (c, c.localized(l)),
             ],
             onChanged: (v) => onChanged(filter.copyWith(category: v)),
           ),
           _Dropdown<ExerciseType?>(
-            label: 'Question type',
+            label: l.bankFiltersQuestionType,
             value: filter.type,
             width: wide ? 220 : null,
             items: [
-              for (final t in ExerciseType.values) (t, t.label),
+              for (final t in ExerciseType.values) (t, t.localized(l)),
             ],
             onChanged: (v) => onChanged(filter.copyWith(type: v)),
           ),
           _Dropdown<String?>(
-            label: 'Level',
+            label: l.bankFiltersLevel,
             value: filter.level,
             width: wide ? 120 : null,
             items: [
@@ -162,6 +167,7 @@ class _Dropdown<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final field = DropdownButtonFormField<T>(
       // A new key when the value changes from outside keeps the field in
       // step (DropdownButtonFormField only reads initialValue once).
@@ -170,7 +176,7 @@ class _Dropdown<T> extends StatelessWidget {
       isExpanded: true,
       decoration: InputDecoration(labelText: label, isDense: true),
       items: [
-        DropdownMenuItem<T>(value: null as T, child: const Text('All')),
+        DropdownMenuItem<T>(value: null as T, child: Text(l.bankFiltersAll)),
         for (final (v, text) in items)
           DropdownMenuItem<T>(
             value: v,

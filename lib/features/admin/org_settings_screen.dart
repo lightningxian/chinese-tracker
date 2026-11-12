@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/shell_nested_page.dart';
+import '../../l10n/l10n.dart';
 import '../../models/org_settings.dart';
 import '../../services/firestore_service.dart';
 
@@ -17,11 +18,12 @@ class OrgSettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final firestore = context.read<FirestoreService>();
 
     return ShellNestedPage(
       embedded: embedded,
-      title: 'Settings',
+      title: l.orgSettingsTitle,
       child: StreamBuilder<OrgSettings>(
         stream: firestore.watchOrgSettings(),
         builder: (context, snap) {
@@ -39,7 +41,7 @@ class OrgSettingsScreen extends StatelessWidget {
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Could not save: $e'),
+                    content: Text(l.adminPriceSaveFailed('$e')),
                     backgroundColor: AppColors.error,
                   ),
                 );
@@ -50,92 +52,81 @@ class OrgSettingsScreen extends StatelessWidget {
           return ListView(
             padding: const EdgeInsets.all(20),
             children: [
-              const SectionHeader(title: 'Features'),
+              SectionHeader(title: l.orgSettingsFeatures),
               _ToggleCard(
-                title: 'Payments',
-                subtitle:
-                    'Show invoices and the pay/checkout UI for students and '
-                    'admins. Turn off to hide billing entirely.',
+                title: l.navPayments,
+                subtitle: l.orgSettingsPaymentsHint,
                 icon: Icons.receipt_long_outlined,
                 value: settings.enablePayments,
                 onChanged: (v) => update(settings.copyWith(enablePayments: v)),
               ),
               _ToggleCard(
-                title: 'Evaluation forms open',
-                subtitle:
-                    'Allow teachers to create or edit semester evaluations. '
-                    'Close between terms to freeze the forms.',
+                title: l.orgSettingsEvalOpen,
+                subtitle: l.orgSettingsEvalOpenHint,
                 icon: Icons.assignment_outlined,
                 value: settings.evaluationFormsOpen,
                 onChanged: (v) =>
                     update(settings.copyWith(evaluationFormsOpen: v)),
               ),
               _ToggleCard(
-                title: 'Teachers can reschedule',
-                subtitle:
-                    'Let teachers edit their own class sessions. Turn off so '
-                    'only admins can reschedule.',
+                title: l.orgSettingsTeacherReschedule,
+                subtitle: l.orgSettingsTeacherRescheduleHint,
                 icon: Icons.event_repeat_outlined,
                 value: settings.allowTeacherReschedule,
                 onChanged: (v) =>
                     update(settings.copyWith(allowTeacherReschedule: v)),
               ),
               const SizedBox(height: 12),
-              const SectionHeader(title: 'Accounts'),
+              SectionHeader(title: l.orgSettingsAccounts),
               _ToggleCard(
-                title: 'Require email verification',
-                subtitle:
-                    'Stored preference for future sign-up flows. Not enforced '
-                    'automatically yet.',
+                title: l.orgSettingsRequireEmailVerification,
+                subtitle: l.orgSettingsRequireEmailVerificationHint,
                 icon: Icons.mark_email_read_outlined,
                 value: settings.requireEmailVerification,
                 onChanged: (v) =>
                     update(settings.copyWith(requireEmailVerification: v)),
               ),
               _ToggleCard(
-                title: 'Auto-generate staff passwords',
-                subtitle:
-                    'Stored preference for future staff creation. Not enforced '
-                    'automatically yet.',
+                title: l.orgSettingsAutoPasswords,
+                subtitle: l.orgSettingsAutoPasswordsHint,
                 icon: Icons.password_outlined,
                 value: settings.autoGenerateStaffPasswords,
                 onChanged: (v) =>
                     update(settings.copyWith(autoGenerateStaffPasswords: v)),
               ),
               const SizedBox(height: 12),
-              const SectionHeader(title: 'Prices'),
+              SectionHeader(title: l.orgSettingsPrices),
               AppCard(
                 onTap: () => context.push('/admin/price-list'),
-                child: const _NavRow(
+                child: _NavRow(
                   icon: Icons.sell_outlined,
-                  title: 'Price list',
-                  subtitle: 'What a payment can be for: sessions, book, '
-                      'registration. Invoices pick from this list.',
+                  title: l.adminPriceTitle,
+                  subtitle: l.orgSettingsPriceListHint,
                 ),
               ),
               const SizedBox(height: 12),
-              const SectionHeader(title: 'Administration'),
+              SectionHeader(title: l.orgSettingsAdministration),
               AppCard(
                 onTap: () => context.push('/admin/audit-logs'),
-                child: const _NavRow(
+                child: _NavRow(
                   icon: Icons.history,
-                  title: 'Audit logs',
-                  subtitle: 'Money and permission events, newest first.',
+                  title: l.auditLogTitle,
+                  subtitle: l.orgSettingsAuditLogsHint,
                 ),
               ),
               const SizedBox(height: 10),
               AppCard(
                 onTap: () => context.push('/admin/materials'),
-                child: const _NavRow(
+                child: _NavRow(
                   icon: Icons.folder_open_outlined,
-                  title: 'Materials',
-                  subtitle: 'Shared files for students and parents.',
+                  title: l.studentHomeQuickMaterials,
+                  subtitle: l.orgSettingsMaterialsHint,
                 ),
               ),
               if (settings.updatedAt != null) ...[
                 const SizedBox(height: 16),
                 Text(
-                  'Last updated ${settings.updatedAt}',
+                  l.orgSettingsLastUpdated('${settings.updatedAt}'),
                   style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,

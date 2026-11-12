@@ -14,6 +14,7 @@ import '../../core/widgets/app_card.dart';
 import '../../core/widgets/conclude_class_dialog.dart';
 import '../../core/widgets/responsive_card_grid.dart';
 import '../../core/widgets/status_pill.dart';
+import '../../l10n/l10n.dart';
 import '../../models/app_user.dart';
 import '../../models/attendance_record.dart';
 import '../../models/class_session.dart';
@@ -58,6 +59,7 @@ class _TeacherAttendanceTabState extends State<TeacherAttendanceTab> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final user = context.watch<AuthService>().appUser;
     if (user == null) return const SizedBox.shrink();
     final teacherId = AppConstants.contentTeacherId(user);
@@ -100,9 +102,9 @@ class _TeacherAttendanceTabState extends State<TeacherAttendanceTab> {
                     focusedDay: _focusedDay,
                     calendarFormat: _format,
                     startingDayOfWeek: StartingDayOfWeek.monday,
-                    availableCalendarFormats: const {
-                      CalendarFormat.month: 'Month',
-                      CalendarFormat.week: 'Week',
+                    availableCalendarFormats: {
+                      CalendarFormat.month: l.calendarFormatMonth,
+                      CalendarFormat.week: l.calendarFormatWeek,
                     },
                     selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
                     eventLoader: (day) => byDay[_dayKey(day)] ?? const [],
@@ -165,9 +167,11 @@ class _TeacherAttendanceTabState extends State<TeacherAttendanceTab> {
                           ),
                           Text(
                             selected.isEmpty
-                                ? 'No classes'
-                                : '${selected.length} class${selected.length == 1 ? '' : 'es'}'
-                                    '${openCount < selected.length ? ' · ${selected.length - openCount} concluded' : ''}',
+                                ? l.calendarNoClasses
+                                : l.teacherAttClassCount(selected.length) +
+                                    (openCount < selected.length
+                                        ? ' · ${l.teacherAttConcludedCount(selected.length - openCount)}'
+                                        : ''),
                             style: TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 13,
@@ -179,7 +183,7 @@ class _TeacherAttendanceTabState extends State<TeacherAttendanceTab> {
                     FilledButton.icon(
                       onPressed: () => _newClass(context, user),
                       icon: const Icon(Icons.add, size: 18),
-                      label: const Text('New class this day'),
+                      label: Text(l.teacherAttNewClassThisDay),
                     ),
                   ],
                 ),
@@ -188,8 +192,7 @@ class _TeacherAttendanceTabState extends State<TeacherAttendanceTab> {
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 24),
                     child: Text(
-                      'Pick another day, or create a class on this date. '
-                      'Dots on the calendar mark days with classes: teal = open, grey = concluded.',
+                      l.teacherAttEmptyDayHint,
                       style: TextStyle(
                           color: AppColors.textSecondary, height: 1.4),
                       textAlign: TextAlign.center,
@@ -246,6 +249,7 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
       sessionTitle: session.sessionTitle,
     );
     if (statuses == null || !mounted) return;
+    final l = context.l10n;
 
     setState(() => _concluding = true);
     final firestore = context.read<FirestoreService>();
@@ -253,15 +257,21 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
     try {
       final result =
           await firestore.concludeClassSession(session.id, statuses: statuses);
+      final summary = l.teacherAttConcludeSummary(
+        result.creditedCount,
+        result.excusedCount,
+      );
       await notifications.notifySession(
-        title: 'Class concluded',
-        body: '${session.sessionTitle} concluded. ${result.summary}.',
+        title: l.teacherAttClassConcludedTitle,
+        body: l.teacherAttClassConcludedBody(session.sessionTitle, summary),
       );
       if (mounted) {
         final msg = result.hasFailures
-            ? 'Class concluded. ${result.creditedCount} charged; '
-                'could not charge: ${result.failedStudents.join(', ')}'
-            : 'Class concluded. ${result.summary}.';
+            ? l.teacherAttConcludedWithFailures(
+                result.creditedCount,
+                result.failedStudents.join(', '),
+              )
+            : l.teacherAttConcludedSnack(summary);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(msg)),
         );
@@ -282,6 +292,7 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
 
   Future<void> _addStudent(AppUser student) async {
     if (_busyStudentIds.contains(student.uid)) return;
+    final l = context.l10n;
 
     setState(() => _busyStudentIds.add(student.uid));
     try {
@@ -293,7 +304,7 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${student.name} added to class')),
+          SnackBar(content: Text(l.teacherAttStudentAdded(student.name))),
         );
       }
     } on SessionFullException catch (e) {
@@ -323,22 +334,23 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
     AttendanceRecord record,
     String name,
   ) async {
+    final l = context.l10n;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Remove student?'),
+        title: Text(l.teacherAttRemoveStudentTitle),
         content: Text(
-          'Remove $name from "${session.sessionTitle}"?',
+          l.teacherAttRemoveStudentBody(name, session.sessionTitle),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Remove'),
+            child: Text(l.loginRemove),
           ),
         ],
       ),
@@ -354,7 +366,7 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
           );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$name removed from class')),
+          SnackBar(content: Text(l.teacherAttStudentRemoved(name))),
         );
       }
     } catch (e) {
@@ -377,12 +389,13 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
     List<AppUser> allStudents,
     Set<String> joinedIds,
   ) async {
+    final l = context.l10n;
     final available =
         allStudents.where((s) => !joinedIds.contains(s.uid)).toList();
 
     if (available.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('All students are already in this class')),
+        SnackBar(content: Text(l.teacherAttAllStudentsInClass)),
       );
       return;
     }
@@ -390,7 +403,7 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
     await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Add student'),
+        title: Text(l.teacherAttAddStudent),
         content: SizedBox(
           width: double.maxFinite,
           child: ListView.separated(
@@ -437,7 +450,7 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Close'),
+            child: Text(l.teacherAttClose),
           ),
         ],
       ),
@@ -445,23 +458,21 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
   }
 
   Future<void> _confirmDelete() async {
+    final l = context.l10n;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete this class?'),
-        content: Text(
-          'Delete "${session.sessionTitle}"? All student join records for '
-          'this class will be removed. This cannot be undone.',
-        ),
+        title: Text(l.teacherAttDeleteClassTitle),
+        content: Text(l.teacherAttDeleteClassBody(session.sessionTitle)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Delete'),
+            child: Text(l.teacherAttDelete),
           ),
         ],
       ),
@@ -474,7 +485,7 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
       await context.read<FirestoreService>().deleteClassSession(session.id);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Class deleted')),
+          SnackBar(content: Text(l.teacherAttClassDeleted)),
         );
       }
     } catch (e) {
@@ -492,18 +503,19 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
   }
 
   String _errorMessage(Object e, {String? studentName}) {
+    final l = context.l10n;
     if (e is ClassConcludeException) {
       return e.message;
     }
     if (e is NoClassCreditsException) {
-      final who = studentName ?? 'This student';
-      return '$who has no class sessions left. Add an 8 or 16 session term from their profile.';
+      final who = studentName ?? l.teacherAttThisStudent;
+      return l.teacherAttNoCreditsFor(who);
     }
     if (e is FirebaseException) {
       if (e.code == 'permission-denied') {
-        return 'Could not delete: permission denied.';
+        return l.teacherAttDeletePermissionDenied;
       }
-      return e.message ?? 'Could not delete class (${e.code})';
+      return e.message ?? l.teacherAttDeleteFailed(e.code);
     }
     return e.toString();
   }
@@ -523,6 +535,7 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final firestore = context.read<FirestoreService>();
     final date = DateTime.tryParse(session.sessionDate);
     final dateLabel = date != null
@@ -558,9 +571,12 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
                       records.where((r) => r.sessionCredited).length;
 
                   final statsLine = concluded
-                      ? '$joined joined · $chargedCount charged'
-                      : '$joined/${session.capacity} joined · '
-                          '$pendingCharge pending';
+                      ? l.teacherAttStatsConcluded(joined, chargedCount)
+                      : l.teacherAttStatsOpen(
+                          joined,
+                          session.capacity,
+                          pendingCharge,
+                        );
 
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -618,7 +634,10 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
                                   Padding(
                                     padding: const EdgeInsets.only(top: 2),
                                     child: Text(
-                                      'Concluded ${DateFormat('d MMM yyyy, HH:mm').format(session.concludedAt!)}',
+                                      l.teacherAttConcludedAt(
+                                        DateFormat('d MMM yyyy, HH:mm')
+                                            .format(session.concludedAt!),
+                                      ),
                                       style: TextStyle(
                                         color: AppColors.textSecondary,
                                         fontSize: 11,
@@ -642,7 +661,7 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
                             FilledButton.icon(
                               onPressed: busy ? null : _confirmConclude,
                               icon: const Icon(Icons.done_all, size: 16),
-                              label: const Text('Conclude'),
+                              label: Text(l.teacherAttConclude),
                               style: _compactButtonStyle.copyWith(
                                 backgroundColor: WidgetStatePropertyAll(
                                   AppColors.teal,
@@ -658,7 +677,7 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
                                         extra: session,
                                       ),
                               icon: const Icon(Icons.edit_outlined, size: 16),
-                              label: const Text('Edit'),
+                              label: Text(l.teacherAttEdit),
                               style: OutlinedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 12,
@@ -675,7 +694,7 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
                           OutlinedButton.icon(
                             onPressed: busy ? null : _confirmDelete,
                             icon: const Icon(Icons.delete_outline, size: 16),
-                            label: const Text('Delete'),
+                            label: Text(l.teacherAttDelete),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: AppColors.error,
                               side: BorderSide(color: AppColors.error),
@@ -703,7 +722,9 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
                                 Icons.person_add_outlined,
                                 size: 16,
                               ),
-                              label: Text(isFull ? 'Full' : 'Add'),
+                              label: Text(
+                                isFull ? l.commonFull : l.teacherAttAdd,
+                              ),
                               style: TextButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 8,
@@ -722,7 +743,7 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
                       if (!concluded && isFull) ...[
                         const SizedBox(height: 6),
                         Text(
-                          'Class is at capacity.',
+                          l.teacherAttAtCapacity,
                           style: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 11,
@@ -733,7 +754,7 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
                       const Divider(height: 1),
                       const SizedBox(height: 8),
                       Text(
-                        'Students ($joined)',
+                        l.teacherAttStudentsCount(joined),
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
                           color: AppColors.navy,
@@ -748,7 +769,7 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
                         )
                       else if (records.isEmpty)
                         Text(
-                          'No students joined yet.',
+                          l.teacherAttNoStudentsJoined,
                           style: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 12,
@@ -762,16 +783,16 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
                             final student = studentsById[record.studentId];
                             final name = record.studentName?.isNotEmpty == true
                                 ? record.studentName!
-                                : (student?.name ?? 'Student');
+                                : (student?.name ?? l.commonStudent);
                             final removing =
                                 _busyStudentIds.contains(record.studentId);
                             final status = record.sessionCredited
-                                ? 'Charged'
+                                ? l.teacherAttChipCharged
                                 : concluded
-                                    ? 'Not charged'
+                                    ? l.teacherAttChipNotCharged
                                     : record.joinedByStudent
-                                        ? 'Joined'
-                                        : 'Added';
+                                        ? l.attendanceJoined
+                                        : l.teacherAttChipAdded;
 
                             if (removing) {
                               return const Chip(

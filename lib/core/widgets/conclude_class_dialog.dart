@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../l10n/l10n.dart';
 import '../../models/attendance_record.dart';
 import '../../services/firestore_service.dart';
 import '../theme/app_theme.dart';
@@ -47,9 +48,10 @@ class _ConcludeClassDialogState extends State<ConcludeClassDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final firestore = context.read<FirestoreService>();
     return AlertDialog(
-      title: const Text('Conclude class'),
+      title: Text(l.concludeTitle),
       content: SizedBox(
         width: 460,
         child: StreamBuilder<List<AttendanceRecord>>(
@@ -81,8 +83,7 @@ class _ConcludeClassDialogState extends State<ConcludeClassDialog> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Mark who came. Hadir and Alpa charge 1 session from the '
-                  "student's term; Izin (excused before class) is not charged.",
+                  l.concludeHint,
                   style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 13,
@@ -91,7 +92,7 @@ class _ConcludeClassDialogState extends State<ConcludeClassDialog> {
                 const SizedBox(height: 12),
                 if (pending.isEmpty)
                   Text(
-                    'No students to charge. Concluding only closes the class.',
+                    l.concludeNoStudents,
                     style: TextStyle(color: AppColors.textSecondary),
                   )
                 else
@@ -108,7 +109,7 @@ class _ConcludeClassDialogState extends State<ConcludeClassDialog> {
                               child: Text(
                                 r.studentName?.isNotEmpty == true
                                     ? r.studentName!
-                                    : 'Student',
+                                    : l.commonStudent,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -120,16 +121,16 @@ class _ConcludeClassDialogState extends State<ConcludeClassDialog> {
                                 visualDensity: VisualDensity.compact,
                                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               ),
-                              segments: const [
+                              segments: [
                                 ButtonSegment(
                                     value: AttendanceRecord.hadir,
-                                    label: Text('Hadir')),
+                                    label: Text(l.attendancePresent)),
                                 ButtonSegment(
                                     value: AttendanceRecord.izin,
-                                    label: Text('Izin')),
+                                    label: Text(l.attendanceExcused)),
                                 ButtonSegment(
                                     value: AttendanceRecord.alpa,
-                                    label: Text('Alpa')),
+                                    label: Text(l.attendanceAbsent)),
                               ],
                               selected: {_statusFor(r)},
                               onSelectionChanged: (s) => setState(
@@ -143,7 +144,7 @@ class _ConcludeClassDialogState extends State<ConcludeClassDialog> {
                 if (pending.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   Text(
-                    '$charged of ${pending.length} will be charged. This cannot be undone.',
+                    l.concludeChargeSummary(charged, pending.length),
                     style: const TextStyle(
                         fontSize: 13, fontWeight: FontWeight.w600),
                   ),
@@ -156,12 +157,12 @@ class _ConcludeClassDialogState extends State<ConcludeClassDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(l.commonCancel),
         ),
         FilledButton(
           onPressed: () =>
               Navigator.pop(context, Map<String, String>.from(_statuses)),
-          child: const Text('Conclude class'),
+          child: Text(l.concludeTitle),
         ),
       ],
     );

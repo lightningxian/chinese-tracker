@@ -9,6 +9,8 @@ import '../../core/widgets/app_card.dart';
 import '../../core/widgets/app_data_table.dart';
 import '../../core/widgets/shell_nested_page.dart';
 import '../../core/widgets/table_tools.dart';
+import '../../l10n/l10n.dart';
+import '../../l10n/labels_exercises.dart';
 import '../../models/app_user.dart';
 import '../../models/exercise_category.dart';
 import '../../models/exercise_type.dart';
@@ -53,21 +55,21 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
   static String _rowKey(QuestionBankSheet sheet) =>
       sheet.isSheet ? 'sheet:${sheet.key}' : 'question:${sheet.first.id}';
 
-  static const _csvHeader = [
-    'Worksheet / question',
-    'Code',
-    'Type of exercise',
-    'Question type',
-    'Level',
-    'Questions',
-    'Used',
-  ];
+  static List<String> _csvHeader(AppLocalizations l) => [
+        l.bankCsvWorksheetOrQuestion,
+        l.bankCsvCode,
+        l.bankFiltersTypeOfExercise,
+        l.bankFiltersQuestionType,
+        l.bankFiltersLevel,
+        l.bankQuestions,
+        l.bankUsed,
+      ];
 
-  static List<Object?> _csvRow(QuestionBankSheet sheet) => [
+  static List<Object?> _csvRow(AppLocalizations l, QuestionBankSheet sheet) => [
         sheet.title,
         sheet.isSheet ? sheet.code : '',
-        sheet.category.label,
-        sheet.type.label,
+        sheet.category.localized(l),
+        sheet.type.localized(l),
         sheet.level ?? '',
         sheet.count,
         sheet.usageCount,
@@ -111,9 +113,10 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
     FirestoreService firestore,
     List<QuestionBankSheet> picked,
   ) async {
+    final l = context.l10n;
     final category = await _pickOption<ExerciseCategory>(
-      title: 'Type of exercise for ${_countLabel(picked)}',
-      options: [for (final c in ExerciseCategory.values) (c, c.label)],
+      title: l.bankTypeOfExerciseFor(_countLabel(l, picked)),
+      options: [for (final c in ExerciseCategory.values) (c, c.localized(l))],
       initial: picked.first.category,
     );
     if (category == null || !mounted) return;
@@ -122,7 +125,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
         [for (final s in picked) ...s.items.map((i) => i.id)],
         category: category,
       ),
-      '${_countLabel(picked)} set to ${category.label}.',
+      l.bankSetTo(_countLabel(l, picked), category.localized(l)),
     );
   }
 
@@ -130,9 +133,10 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
     FirestoreService firestore,
     List<QuestionBankSheet> picked,
   ) async {
+    final l = context.l10n;
     final level = await _pickOption<String>(
-      title: 'Level for ${_countLabel(picked)}',
-      options: [for (final l in AppConstants.hskLevels) (l, l)],
+      title: l.bankLevelFor(_countLabel(l, picked)),
+      options: [for (final level in AppConstants.hskLevels) (level, level)],
       initial: picked.first.level,
     );
     if (level == null || !mounted) return;
@@ -141,7 +145,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
         [for (final s in picked) ...s.items.map((i) => i.id)],
         level: level,
       ),
-      '${_countLabel(picked)} set to $level.',
+      l.bankSetTo(_countLabel(l, picked), level),
     );
   }
 
@@ -149,25 +153,24 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
     FirestoreService firestore,
     List<QuestionBankSheet> picked,
   ) async {
+    final l = context.l10n;
     final questions = picked.fold(0, (n, s) => n + s.count);
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Delete ${_countLabel(picked)}?'),
+        title: Text(l.bankDeleteWhat(_countLabel(l, picked))),
         content: Text(
-          'All ${QuestionBankText.questionCount(questions)} leave the bank. '
-          'Exercises that already use them keep their copies. '
-          'This cannot be undone.',
+          l.bankDeleteBulkBody(QuestionBankText.questionCount(l, questions)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Delete'),
+            child: Text(l.bankDelete),
           ),
         ],
       ),
@@ -177,17 +180,26 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
       () => firestore.deleteQuestionBankItems(
         [for (final s in picked) ...s.items.map((i) => i.id)],
       ),
-      '${_countLabel(picked)} deleted.',
+      l.bankDeleted(_countLabel(l, picked)),
     );
   }
 
-  static String _countLabel(List<QuestionBankSheet> picked) {
+  /// "2 worksheets and 1 question" for the ticked rows.
+  static String _countLabel(
+    AppLocalizations l,
+    List<QuestionBankSheet> picked,
+  ) {
     final sheets = picked.where((s) => s.isSheet).length;
     final singles = picked.length - sheets;
-    return [
-      if (sheets > 0) '$sheets worksheet${sheets == 1 ? '' : 's'}',
-      if (singles > 0) '$singles question${singles == 1 ? '' : 's'}',
-    ].join(' and ');
+    if (sheets > 0 && singles > 0) {
+      return l.bankCountJoin(
+        l.exerciseCardWorksheets(sheets),
+        l.bankTextQuestionCount(singles),
+      );
+    }
+    return sheets > 0
+        ? l.exerciseCardWorksheets(sheets)
+        : l.bankTextQuestionCount(singles);
   }
 
   Future<T?> _pickOption<T>({
@@ -195,6 +207,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
     required List<(T, String)> options,
     T? initial,
   }) {
+    final l = context.l10n;
     var value = initial ?? options.first.$1;
     return showDialog<T>(
       context: context,
@@ -215,11 +228,11 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
+              child: Text(l.commonCancel),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(ctx, value),
-              child: const Text('Apply'),
+              child: Text(l.bankApply),
             ),
           ],
         ),
@@ -232,37 +245,39 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
     AppUser user,
     List<QuestionBankSheet> rows,
   ) {
+    final l = context.l10n;
     final picked = _selectedRows(rows);
     final sheetsPicked = picked.where((s) => s.isSheet).length;
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
       child: TableSelectionBar(
         count: picked.length,
+        noun: l.teacherExSelected,
         onClear: () => setState(() => _selected = {}),
         actions: [
           if (ExerciseAuthoringPlatform.canManageExercises(user))
             SelectionActionButton(
               label: sheetsPicked == 0
-                  ? 'New exercise'
-                  : 'New exercise ($sheetsPicked worksheet'
-                      '${sheetsPicked == 1 ? '' : 's'})',
+                  ? l.teacherExNewExercise
+                  : l.bankNewExerciseWithSheets(
+                      l.exerciseCardWorksheets(sheetsPicked)),
               icon: Icons.add,
               onPressed: _busy || sheetsPicked == 0
                   ? null
                   : () => _newExerciseFrom(picked, user),
             ),
           SelectionActionButton(
-            label: 'Set type of exercise',
+            label: l.bankSetTypeOfExercise,
             icon: Icons.category_outlined,
             onPressed: _busy ? null : () => _bulkSetCategory(firestore, picked),
           ),
           SelectionActionButton(
-            label: 'Set level',
+            label: l.bankSetLevel,
             icon: Icons.signal_cellular_alt_outlined,
             onPressed: _busy ? null : () => _bulkSetLevel(firestore, picked),
           ),
           SelectionActionButton(
-            label: 'Delete',
+            label: l.bankDelete,
             icon: Icons.delete_outline,
             destructive: true,
             onPressed: _busy ? null : () => _bulkDelete(firestore, picked),
@@ -304,6 +319,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final firestore = context.read<FirestoreService>();
     final user = context.watch<AuthService>().appUser;
     if (user == null) {
@@ -313,18 +329,19 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
 
     return ShellNestedPage(
       embedded: widget.embedded,
-      title: 'Question bank',
+      title: l.bankTitle,
       actions: [
         ExportCsvButton(
           fileStem: 'question_bank',
-          header: _csvHeader,
-          rows: () => _visible.map(_csvRow).toList(),
+          label: l.teacherExExportCsv,
+          header: _csvHeader(l),
+          rows: () => _visible.map((s) => _csvRow(l, s)).toList(),
         ),
         const SizedBox(width: 8),
         TextButton.icon(
           onPressed: () => _openEditor(ownerId: ownerId),
           icon: const Icon(Icons.edit_outlined, size: 18),
-          label: const Text('Type a question'),
+          label: Text(l.bankTypeAQuestion),
         ),
         PopupMenuButton<String>(
           icon: const Icon(Icons.more_vert),
@@ -350,15 +367,15 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
                 );
             }
           },
-          itemBuilder: (_) => const [
+          itemBuilder: (_) => [
             PopupMenuItem(
               value: 'samples',
-              child: Text("Load the centre's sample sheets (10 worksheets)"),
+              child: Text(l.bankLoadSamples),
             ),
-            PopupMenuItem(value: 'paste', child: Text('Bulk import — paste')),
+            PopupMenuItem(value: 'paste', child: Text(l.bankBulkPaste)),
             PopupMenuItem(
               value: 'harvest',
-              child: Text('Import from exercises'),
+              child: Text(l.bankHarvestTitle),
             ),
           ],
         ),
@@ -372,7 +389,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
         ),
         backgroundColor: AppColors.navy,
         icon: const Icon(Icons.document_scanner_outlined),
-        label: const Text('Scan worksheet'),
+        label: Text(l.bankScanWorksheet),
       ),
       child: StreamBuilder<List<QuestionBankItem>>(
         stream: firestore.watchQuestionBank(ownerId),
@@ -398,18 +415,16 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
               _selectionBar(firestore, user, rows),
               Expanded(
                 child: all.isEmpty
-                    ? const EmptyState(
+                    ? EmptyState(
                         icon: Icons.inventory_2_outlined,
-                        title: 'No worksheets yet',
-                        subtitle:
-                            'Scan a worksheet to add it whole, or type a single '
-                            'question. Exercises pull from here.',
+                        title: l.bankNoWorksheetsTitle,
+                        subtitle: l.bankNoWorksheetsSubtitle,
                       )
                     : rows.isEmpty
-                        ? const EmptyState(
+                        ? EmptyState(
                             icon: Icons.filter_alt_off_outlined,
-                            title: 'No matches',
-                            subtitle: 'Adjust the filters.',
+                            title: l.bankNoMatchesTitle,
+                            subtitle: l.bankAdjustFilters,
                           )
                         : Padding(
                             padding: const EdgeInsets.fromLTRB(20, 8, 20, 80),
@@ -445,40 +460,41 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
   List<AppTableColumn<QuestionBankSheet>> _buildColumns(
     FirestoreService firestore,
   ) {
+    final l = context.l10n;
     final ownerId =
         AppConstants.contentTeacherId(context.read<AuthService>().appUser!);
     return [
       AppTableColumn(
         id: 'title',
-        label: 'Worksheet / question',
+        label: l.bankCsvWorksheetOrQuestion,
         flex: 3,
         sortable: true,
         cell: (sheet) => _TitleCell(sheet: sheet),
       ),
       AppTableColumn(
         id: 'category',
-        label: 'Type of exercise',
+        label: l.bankFiltersTypeOfExercise,
         width: 140,
         sortable: true,
         cell: (sheet) => ExerciseCategoryChip(category: sheet.category),
       ),
       AppTableColumn(
         id: 'type',
-        label: 'Question type',
+        label: l.bankFiltersQuestionType,
         width: 150,
         sortable: true,
-        cell: (sheet) => Text(sheet.type.label),
+        cell: (sheet) => Text(sheet.type.localized(l)),
       ),
       AppTableColumn(
         id: 'level',
-        label: 'Level',
+        label: l.bankFiltersLevel,
         width: 70,
         sortable: true,
         cell: (sheet) => Text(sheet.level ?? '—'),
       ),
       AppTableColumn(
         id: 'count',
-        label: 'Questions',
+        label: l.bankQuestions,
         width: 96,
         sortable: true,
         alignment: Alignment.centerRight,
@@ -486,7 +502,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
       ),
       AppTableColumn(
         id: 'used',
-        label: 'Used',
+        label: l.bankUsed,
         width: 56,
         sortable: true,
         alignment: Alignment.centerRight,
@@ -494,7 +510,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
       ),
       AppTableColumn(
         id: 'actions',
-        label: 'Actions',
+        label: l.bankActions,
         width: 200,
         cell: (sheet) => _RowActions(
           onEdit: () => _open(ownerId, sheet),
@@ -525,23 +541,25 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
       await firestore.deleteQuestionBankItem(sheet.first.id);
       return;
     }
+    final l = context.l10n;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Delete worksheet ${sheet.code}?'),
+        title: Text(l.bankSheetDeleteSheetTitle(sheet.code)),
         content: Text(
-          'All ${QuestionBankText.questionCount(sheet.count)} leave the bank. '
-          'Exercises that already use them keep their copies.',
+          l.bankSheetDeleteSheetBody(
+            QuestionBankText.questionCount(l, sheet.count),
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Delete'),
+            child: Text(l.bankDelete),
           ),
         ],
       ),
@@ -628,6 +646,7 @@ class _SheetCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return AppCard(
       onTap: onTap,
       padding: const EdgeInsets.all(16),
@@ -654,14 +673,16 @@ class _SheetCard extends StatelessWidget {
                   runSpacing: 6,
                   children: [
                     if (sheet.isSheet) _Chip(label: sheet.code),
-                    _Chip(label: sheet.category.label),
-                    _Chip(label: sheet.type.label),
+                    _Chip(label: sheet.category.localized(l)),
+                    _Chip(label: sheet.type.localized(l)),
                     if (sheet.level != null && sheet.level!.isNotEmpty)
                       _Chip(label: sheet.level!),
                     if (sheet.isSheet)
-                      _Chip(label: QuestionBankText.questionCount(sheet.count)),
+                      _Chip(
+                          label:
+                              QuestionBankText.questionCount(l, sheet.count)),
                     if (sheet.usageCount > 0)
-                      _Chip(label: 'Used ${sheet.usageCount}'),
+                      _Chip(label: l.bankUsedCount(sheet.usageCount)),
                   ],
                 ),
               ],
@@ -690,6 +711,7 @@ class _RowActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final style = OutlinedButton.styleFrom(
       padding: EdgeInsets.symmetric(horizontal: compact ? 10 : 12, vertical: 8),
       minimumSize: const Size(0, 36),
@@ -702,7 +724,7 @@ class _RowActions extends StatelessWidget {
           onPressed: onEdit,
           style: style,
           icon: const Icon(Icons.edit_outlined, size: 18),
-          label: const Text('Edit'),
+          label: Text(l.bankEdit),
         ),
         const SizedBox(width: 8),
         OutlinedButton.icon(
@@ -712,7 +734,7 @@ class _RowActions extends StatelessWidget {
             side: WidgetStatePropertyAll(BorderSide(color: AppColors.error)),
           ),
           icon: const Icon(Icons.delete_outline, size: 18),
-          label: const Text('Delete'),
+          label: Text(l.bankDelete),
         ),
       ],
     );
@@ -785,6 +807,7 @@ class _QuestionBankPickerState extends State<_QuestionBankPicker> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final firestore = context.read<FirestoreService>();
     return DraggableScrollableSheet(
       expand: false,
@@ -822,7 +845,7 @@ class _QuestionBankPickerState extends State<_QuestionBankPicker> {
                         children: [
                           Expanded(
                             child: Text(
-                              'Add from bank — ${widget.type.label}',
+                              l.bankAddFromBankType(widget.type.localized(l)),
                               style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 16,
@@ -837,16 +860,16 @@ class _QuestionBankPickerState extends State<_QuestionBankPicker> {
                             style: FilledButton.styleFrom(
                               backgroundColor: AppColors.navy,
                             ),
-                            child: Text('Add (${_selected.length})'),
+                            child: Text(l.bankAddCount(_selected.length)),
                           ),
                         ],
                       ),
                       const SizedBox(height: 8),
                       TextField(
-                        decoration: const InputDecoration(
-                          hintText: 'Filter worksheets and questions…',
+                        decoration: InputDecoration(
+                          hintText: l.bankFilterHint,
                           isDense: true,
-                          prefixIcon: Icon(Icons.search, size: 20),
+                          prefixIcon: const Icon(Icons.search, size: 20),
                         ),
                         onChanged: (v) => setState(() => _filter = v),
                       ),
@@ -855,7 +878,7 @@ class _QuestionBankPickerState extends State<_QuestionBankPicker> {
                         child: TextButton(
                           onPressed:
                               items.isEmpty ? null : () => _toggle(items, true),
-                          child: Text('Select all (${items.length} filtered)'),
+                          child: Text(l.bankSelectAllFiltered(items.length)),
                         ),
                       ),
                     ],
@@ -863,11 +886,10 @@ class _QuestionBankPickerState extends State<_QuestionBankPicker> {
                 ),
                 Expanded(
                   child: items.isEmpty
-                      ? const EmptyState(
+                      ? EmptyState(
                           icon: Icons.inventory_2_outlined,
-                          title: 'No matching bank questions',
-                          subtitle:
-                              'Add questions of this type to the bank first.',
+                          title: l.bankNoMatchingTitle,
+                          subtitle: l.bankNoMatchingSubtitle,
                         )
                       : ListView(
                           controller: scrollController,
@@ -905,7 +927,7 @@ class _QuestionBankPickerState extends State<_QuestionBankPicker> {
         style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.navy),
       ),
       subtitle: Text(
-        '${sheet.code} · ${QuestionBankText.questionCount(sheet.count)}'
+        '${sheet.code} · ${QuestionBankText.questionCount(context.l10n, sheet.count)}'
         '${sheet.level != null ? ' · ${sheet.level}' : ''}',
       ),
       onChanged: (_) => _toggle(sheet.items, !all),
@@ -913,12 +935,13 @@ class _QuestionBankPickerState extends State<_QuestionBankPicker> {
   }
 
   Widget _questionTile(QuestionBankItem item, {required bool indented}) {
+    final l = context.l10n;
     return CheckboxListTile(
       value: _selected.contains(item.id),
       controlAffinity: ListTileControlAffinity.leading,
       contentPadding: EdgeInsets.only(left: indented ? 36 : 16, right: 16),
       title: Text(
-        item.displayText.isEmpty ? '(no prompt)' : item.displayText,
+        item.displayText.isEmpty ? l.bankSheetNoPrompt : item.displayText,
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
         style: AppTextStyles.question.copyWith(fontSize: 17),
@@ -928,7 +951,7 @@ class _QuestionBankPickerState extends State<_QuestionBankPicker> {
           if (!indented && item.level != null) item.level!,
           if (item.question.imageUrl.isNotEmpty) '🖼',
           if (item.question.audioUrl.isNotEmpty) '🔊',
-          QuestionBankText.answerLine(item),
+          QuestionBankText.answerLine(l, item),
         ].join(' · '),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,

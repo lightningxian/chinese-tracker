@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import '../utils/csv_export.dart';
 
@@ -12,15 +13,18 @@ class ExportCsvButton extends StatelessWidget {
     required this.fileStem,
     required this.header,
     required this.rows,
-    this.label = 'Export CSV',
+    this.label,
   });
 
   final String fileStem;
   final List<String> header;
   final List<List<Object?>> Function() rows;
-  final String label;
+
+  /// Button text; defaults to the localized "Export CSV".
+  final String? label;
 
   Future<void> _export(BuildContext context) async {
+    final l = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
     final data = rows();
     // Say it first: the browser's download prompt can take the focus and
@@ -29,8 +33,8 @@ class ExportCsvButton extends StatelessWidget {
       SnackBar(
         content: Text(
           kIsWeb
-              ? 'Downloading ${data.length} rows as CSV…'
-              : 'Copied ${data.length} rows as CSV to the clipboard.',
+              ? l.tableToolsDownloadingRows(data.length)
+              : l.tableToolsCopiedRows(data.length),
         ),
       ),
     );
@@ -39,10 +43,11 @@ class ExportCsvButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return OutlinedButton.icon(
       onPressed: () => _export(context),
       icon: const Icon(Icons.download_outlined, size: 18),
-      label: Text(label),
+      label: Text(label ?? l.tableToolsExportCsv),
     );
   }
 }
@@ -55,17 +60,21 @@ class TableSelectionBar extends StatelessWidget {
     required this.count,
     required this.actions,
     required this.onClear,
-    this.noun = 'selected',
+    this.noun,
   });
 
   final int count;
   final List<Widget> actions;
   final VoidCallback onClear;
-  final String noun;
+
+  /// Word after the count ("3 exercises"); defaults to the localized
+  /// "{count} selected".
+  final String? noun;
 
   @override
   Widget build(BuildContext context) {
     if (count == 0) return const SizedBox.shrink();
+    final l = context.l10n;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -80,7 +89,7 @@ class TableSelectionBar extends StatelessWidget {
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           Text(
-            '$count $noun',
+            noun == null ? l.tableToolsSelectedCount(count) : '$count $noun',
             style: TextStyle(
               fontWeight: FontWeight.w700,
               color: AppColors.navy,
@@ -88,7 +97,7 @@ class TableSelectionBar extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           ...actions,
-          TextButton(onPressed: onClear, child: const Text('Clear')),
+          TextButton(onPressed: onClear, child: Text(l.tableToolsClear)),
         ],
       ),
     );

@@ -7,6 +7,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/utils/money_format.dart';
 import '../../core/widgets/responsive_card_grid.dart';
+import '../../l10n/l10n.dart';
 import '../../models/app_user.dart';
 import '../../models/attendance_record.dart';
 import '../../models/class_session.dart';
@@ -86,12 +87,13 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     if (_error != null) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Text(
-            'Could not load report data: $_error',
+            l.adminReportsLoadFailed('$_error'),
             style: TextStyle(color: AppColors.error),
           ),
         ),
@@ -145,7 +147,7 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
           padding: EdgeInsets.all(horizontalPadding),
           children: [
             Text(
-              'Reports',
+              l.adminReportsTitle,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: AppColors.navy,
@@ -153,17 +155,20 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
             ),
             const SizedBox(height: 6),
             Text(
-              'Live numbers for $month. Each PDF covers the last 6 months.',
+              l.adminReportsSubtitle(month),
               style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 14,
               ),
             ),
             const SizedBox(height: 24),
-            section('Students', _studentTiles(ops, export)),
-            section('Classes & teachers', _classTiles(ops, export)),
-            section('Money', _moneyTiles(ops, export)),
-            section('Platform exports', _platformTiles(report, export)),
+            section(l.cohortStudents, _studentTiles(l, ops, export)),
+            section(l.adminReportsSectionClasses, _classTiles(l, ops, export)),
+            section(l.adminReportsSectionMoney, _moneyTiles(l, ops, export)),
+            section(
+              l.adminReportsSectionPlatform,
+              _platformTiles(l, report, export),
+            ),
           ],
         );
       },
@@ -171,65 +176,68 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
   }
 
   List<_ReportTile> _studentTiles(
+    AppLocalizations l,
     AdminOpsReportData ops,
     AdminReportExportService export,
   ) {
     final attendance = ops.attendance.last;
     final retention = ops.retention;
     final levels = ops.progressByLevel;
-    final students = levels.fold(0, (s, l) => s + l.studentCount);
-    final assigned = levels.fold(0, (s, l) => s + l.assigned);
-    final completed = levels.fold(0, (s, l) => s + l.completed);
+    final students = levels.fold(0, (s, lv) => s + lv.studentCount);
+    final assigned = levels.fold(0, (s, lv) => s + lv.assigned);
+    final completed = levels.fold(0, (s, lv) => s + lv.completed);
     final overdue = ops.overdueHomework;
     return [
       _ReportTile(
         number: 1,
-        title: 'Attendance per student',
-        description: 'Hadir / Izin / Alpa for every student, month by month.',
+        title: l.adminReportsAttendanceTitle,
+        description: l.adminReportsAttendanceDesc,
         stats: [
-          ('Students', '${attendance.rows.length}'),
-          ('Present', '${attendance.presentPercent}%'),
-          ('Alpa', '${attendance.alpa}'),
+          (l.cohortStudents, '${attendance.rows.length}'),
+          (l.attendancePresent, '${attendance.presentPercent}%'),
+          (l.adminReportsAlpa, '${attendance.alpa}'),
         ],
         onExport: () => export.exportPdf(AdminExportReport.attendanceMonthly),
       ),
       _ReportTile(
         number: 4,
-        title: 'New students & retention',
-        description: 'Sign-ups per month and how many are still active today.',
+        title: l.adminReportsRetentionTitle,
+        description: l.adminReportsRetentionDesc,
         stats: [
-          ('New this month', '${retention.newThisMonth}'),
+          (l.adminReportsNewThisMonth, '${retention.newThisMonth}'),
           (
-            'Active',
+            l.historyStatusActive,
             '${retention.activeStudents} / ${retention.totalStudents}'
           ),
-          ('Retention', '${retention.retentionPercent}%'),
+          (l.adminReportsRetention, '${retention.retentionPercent}%'),
         ],
         onExport: () => export.exportPdf(AdminExportReport.studentRetention),
       ),
       _ReportTile(
         number: 7,
-        title: 'Progress per HSK level',
-        description:
-            'Exercises assigned and done, average best score, no activity.',
+        title: l.adminReportsProgressTitle,
+        description: l.adminReportsProgressDesc,
         stats: [
-          ('Students', '$students'),
+          (l.cohortStudents, '$students'),
           (
-            'Done',
+            l.adminReportsDone,
             assigned == 0 ? '—' : '${(completed * 100 / assigned).round()}%'
           ),
-          ('No activity', '${levels.fold(0, (s, l) => s + l.inactive)}'),
+          (
+            l.adminReportsNoActivity,
+            '${levels.fold(0, (s, lv) => s + lv.inactive)}'
+          ),
         ],
         onExport: () => export.exportPdf(AdminExportReport.progressByLevel),
       ),
       _ReportTile(
         number: 8,
-        title: 'Overdue homework',
-        description: 'Past-due assignments without a submission, per teacher.',
+        title: l.adminReportsOverdueHomeworkTitle,
+        description: l.adminReportsOverdueHomeworkDesc,
         stats: [
-          ('Overdue', '${overdue.total}'),
-          ('Open', '${overdue.open}'),
-          ('Teachers', '${overdue.groups.length}'),
+          (l.cohortOverdue, '${overdue.total}'),
+          (l.adminReportsOpen, '${overdue.open}'),
+          (l.adminReportsTeachers, '${overdue.groups.length}'),
         ],
         onExport: () => export.exportPdf(AdminExportReport.overdueHomework),
       ),
@@ -237,6 +245,7 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
   }
 
   List<_ReportTile> _classTiles(
+    AppLocalizations l,
     AdminOpsReportData ops,
     AdminReportExportService export,
   ) {
@@ -247,24 +256,23 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
     return [
       _ReportTile(
         number: 5,
-        title: 'Class fill rate',
-        description: 'Seats taken against capacity, per month and per class.',
+        title: l.adminReportsFillRateTitle,
+        description: l.adminReportsFillRateDesc,
         stats: [
-          ('Classes', '${fill.classes}'),
-          ('Full', '${fill.fillPercent}%'),
-          ('Empty', '${fill.empty}'),
+          (l.adminReportsClasses, '${fill.classes}'),
+          (l.commonFull, '${fill.fillPercent}%'),
+          (l.adminReportsEmpty, '${fill.empty}'),
         ],
         onExport: () => export.exportPdf(AdminExportReport.classFillRate),
       ),
       _ReportTile(
         number: 6,
-        title: 'Teacher recap',
-        description:
-            'Classes, teaching hours, students taught and attendance per teacher.',
+        title: l.adminReportsTeacherRecapTitle,
+        description: l.adminReportsTeacherRecapDesc,
         stats: [
-          ('Teachers', '${recap.rows.length}'),
-          ('Classes held', '$held'),
-          ('Hours', hours.toStringAsFixed(1)),
+          (l.adminReportsTeachers, '${recap.rows.length}'),
+          (l.adminReportsClassesHeld, '$held'),
+          (l.adminReportsHours, hours.toStringAsFixed(1)),
         ],
         onExport: () => export.exportPdf(AdminExportReport.teacherRecap),
       ),
@@ -272,6 +280,7 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
   }
 
   List<_ReportTile> _moneyTiles(
+    AppLocalizations l,
     AdminOpsReportData ops,
     AdminReportExportService export,
   ) {
@@ -280,25 +289,32 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
     return [
       _ReportTile(
         number: 2,
-        title: 'Term balance alerts',
-        description:
-            'Who to call: 2 or fewer sessions left, expiring within 7 days, expired.',
+        title: l.adminReportsTermAlertsTitle,
+        description: l.adminReportsTermAlertsDesc,
         stats: [
-          ('Low balance', '${alerts.count(TermAlertKind.lowBalance)}'),
-          ('Expiring', '${alerts.count(TermAlertKind.expiringSoon)}'),
-          ('Expired', '${alerts.count(TermAlertKind.expiredWithBalance)}'),
+          (
+            l.adminReportsLowBalance,
+            '${alerts.count(TermAlertKind.lowBalance)}'
+          ),
+          (
+            l.adminReportsExpiring,
+            '${alerts.count(TermAlertKind.expiringSoon)}'
+          ),
+          (
+            l.historyStatusExpired,
+            '${alerts.count(TermAlertKind.expiredWithBalance)}'
+          ),
         ],
         onExport: () => export.exportPdf(AdminExportReport.termBalanceAlerts),
       ),
       _ReportTile(
         number: 3,
-        title: 'Revenue per month',
-        description:
-            'Paid invoices by item, plus every unpaid invoice and how overdue it is.',
+        title: l.adminReportsRevenueTitle,
+        description: l.adminReportsRevenueDesc,
         stats: [
-          ('This month', formatRupiah(revenue.thisMonth.total)),
-          ('Unpaid', formatRupiah(revenue.outstandingAmount)),
-          ('Overdue', '${revenue.overdue.length}'),
+          (l.adminReportsThisMonth, formatRupiah(revenue.thisMonth.total)),
+          (l.adminReportsUnpaid, formatRupiah(revenue.outstandingAmount)),
+          (l.cohortOverdue, '${revenue.overdue.length}'),
         ],
         onExport: () => export.exportPdf(AdminExportReport.revenueMonthly),
       ),
@@ -306,6 +322,7 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
   }
 
   List<_ReportTile> _platformTiles(
+    AppLocalizations l,
     AdminReportData report,
     AdminReportExportService export,
   ) {
@@ -319,44 +336,47 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
     return [
       _ReportTile(
         number: 9,
-        title: 'User roster',
-        description: 'Every account with role, join date and status.',
+        title: l.adminReportsUserRosterTitle,
+        description: l.adminReportsUserRosterDesc,
         stats: [
-          ('Users', '${report.totalUsers}'),
-          ('Active murid', '${report.activeStudents}'),
-          ('Inactive', '${report.inactiveUsers}'),
+          (l.adminReportsUsers, '${report.totalUsers}'),
+          (l.adminDashActiveMurid, '${report.activeStudents}'),
+          (l.adminDashInactive, '${report.inactiveUsers}'),
         ],
         onExport: () => export.exportPdf(AdminExportReport.userRoster),
       ),
       _ReportTile(
         number: 10,
-        title: 'Registration & growth',
-        description: 'New murid per month and current HSK level bands.',
+        title: l.adminReportsGrowthTitle,
+        description: l.adminReportsGrowthDesc,
         stats: [
-          ('This month', '$thisMonthStudents'),
-          ('Last 6 months', '$sixMonths'),
+          (l.adminReportsThisMonth, '$thisMonthStudents'),
+          (l.adminReportsLastSixMonths, '$sixMonths'),
         ],
         onExport: () => export.exportPdf(AdminExportReport.registrationGrowth),
       ),
       _ReportTile(
         number: 11,
-        title: 'Vouchers & packages',
-        description: 'All session packages with codes and balance.',
+        title: l.adminReportsVouchersTitle,
+        description: l.adminReportsVouchersDesc,
         stats: [
-          ('Packages', '${_terms!.length}'),
-          ('Low balance', '${report.lowVouchers}'),
-          ('Issued this month', '$thisMonthVouchers'),
+          (l.adminReportsPackages, '${_terms!.length}'),
+          (l.adminReportsLowBalance, '${report.lowVouchers}'),
+          (l.adminReportsIssuedThisMonth, '$thisMonthVouchers'),
         ],
         onExport: () => export.exportPdf(AdminExportReport.voucherSessions),
       ),
       _ReportTile(
         number: 12,
-        title: 'Worksheet inventory',
-        description: 'Practice worksheets by HSK level and skill section.',
+        title: l.adminReportsWorksheetInventoryTitle,
+        description: l.adminReportsWorksheetInventoryDesc,
         stats: [
-          ('Worksheets', '${report.totalWorksheets}'),
-          ('Published', '${report.totalExercises}'),
-          ('Draft', '${report.totalWorksheets - report.totalExercises}'),
+          (l.adminReportsWorksheets, '${report.totalWorksheets}'),
+          (l.adminDashPublished, '${report.totalExercises}'),
+          (
+            l.adminReportsDraft,
+            '${report.totalWorksheets - report.totalExercises}'
+          ),
         ],
         onExport: () => export.exportPdf(AdminExportReport.worksheetInventory),
       ),
@@ -384,6 +404,7 @@ class _ReportTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return AppCard(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       child: Column(
@@ -445,7 +466,7 @@ class _ReportTile extends StatelessWidget {
                   visualDensity: VisualDensity.compact,
                 ),
                 icon: const Icon(Icons.picture_as_pdf_outlined, size: 16),
-                label: const Text('PDF'),
+                label: Text(l.adminReportsPdf),
               ),
             ],
           ),

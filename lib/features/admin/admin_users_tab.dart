@@ -10,6 +10,8 @@ import '../../core/widgets/app_card.dart';
 import '../../core/widgets/app_data_table.dart';
 import '../../core/widgets/app_shell.dart';
 import '../../core/widgets/table_tools.dart';
+import '../../l10n/l10n.dart';
+import '../../l10n/labels_admin.dart';
 import '../../models/app_user.dart';
 import '../../services/firestore_service.dart';
 import 'admin_dashboard_widgets.dart';
@@ -36,24 +38,24 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
   Set<String> _selected = {};
   bool _busy = false;
 
-  static const _csvHeader = [
-    'Name',
-    'Chinese name',
-    'Email',
-    'Role',
-    'HSK',
-    'WhatsApp',
-    'Parent name',
-    'Parent phone',
-    'Joined',
-    'Status',
-  ];
+  List<String> _csvHeader(AppLocalizations l) => [
+        l.adminUsersColName,
+        l.identityNameChinese,
+        l.commonEmail,
+        l.adminUsersColRole,
+        l.adminUsersColHsk,
+        l.adminUsersColWhatsapp,
+        l.identityParentName,
+        l.adminUsersColParentPhone,
+        l.attendanceJoined,
+        l.profileWidgetStatus,
+      ];
 
-  List<Object?> _csvRow(AppUser user) => [
+  List<Object?> _csvRow(AppLocalizations l, AppUser user) => [
         user.displayNameIndonesian,
         user.displayNameChinese ?? '',
         user.email,
-        _roleLabel(user),
+        _roleLabel(l, user),
         user.isStudent ? (user.level ?? '') : '',
         user.displayWhatsapp ?? '',
         user.parentName ?? '',
@@ -61,7 +63,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
         user.createdAt == null
             ? ''
             : DateFormat('yyyy-MM-dd').format(user.createdAt!),
-        user.active ? 'Active' : 'Inactive',
+        user.active ? l.historyStatusActive : l.profileWidgetInactive,
       ];
 
   static const _toolbarFieldHeight = 48.0;
@@ -71,19 +73,19 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
   static const _colStatusWidth = 84.0;
   static const _colActionsWidth = 232.0;
 
-  static const _roleFilterOptions = <String?, String>{
-    null: 'All roles',
-    AppConstants.roleAdmin: 'Admin',
-    AppConstants.roleTeacher: 'Guru',
-    AppConstants.roleStudent: 'Murid',
-    AppConstants.roleParent: 'Orang Tua',
-  };
+  Map<String?, String> _roleFilterOptions(AppLocalizations l) => {
+        null: l.adminUsersAllRoles,
+        AppConstants.roleAdmin: l.adminUsersRoleAdmin,
+        AppConstants.roleTeacher: l.adminUsersRoleTeacher,
+        AppConstants.roleStudent: l.adminUsersRoleStudent,
+        AppConstants.roleParent: l.adminUsersRoleParent,
+      };
 
-  static const _statusFilterOptions = <String?, String>{
-    null: 'All status',
-    'active': 'Active',
-    'inactive': 'Inactive',
-  };
+  Map<String?, String> _statusFilterOptions(AppLocalizations l) => {
+        null: l.adminUsersAllStatus,
+        'active': l.historyStatusActive,
+        'inactive': l.profileWidgetInactive,
+      };
 
   @override
   void dispose() {
@@ -91,7 +93,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
     super.dispose();
   }
 
-  String _roleLabel(AppUser user) => user.roleDisplayLabel;
+  String _roleLabel(AppLocalizations l, AppUser user) => user.roleLocalized(l);
 
   Color _roleColor(AppUser user) {
     if (user.isAdmin) return adminPurple;
@@ -110,7 +112,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
     return user.level ?? '—';
   }
 
-  List<AppUser> _filter(List<AppUser> users) {
+  List<AppUser> _filter(AppLocalizations l, List<AppUser> users) {
     var result = users;
 
     if (_roleFilter != null) {
@@ -128,11 +130,11 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
       result = result.where((user) {
         return user.name.toLowerCase().contains(q) ||
             user.email.toLowerCase().contains(q) ||
-            _roleLabel(user).toLowerCase().contains(q);
+            _roleLabel(l, user).toLowerCase().contains(q);
       }).toList();
     }
 
-    return _sortUsers(result);
+    return _sortUsers(l, result);
   }
 
   int _roleSortOrder(AppUser user) {
@@ -144,7 +146,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
     };
   }
 
-  List<AppUser> _sortUsers(List<AppUser> users) {
+  List<AppUser> _sortUsers(AppLocalizations l, List<AppUser> users) {
     final sorted = [...users];
     sorted.sort((a, b) {
       int compare;
@@ -154,7 +156,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
         case _UserSortColumn.role:
           compare = _roleSortOrder(a).compareTo(_roleSortOrder(b));
           if (compare == 0) {
-            compare = _roleLabel(a).compareTo(_roleLabel(b));
+            compare = _roleLabel(l, a).compareTo(_roleLabel(l, b));
           }
         case _UserSortColumn.joined:
           final aDate = a.createdAt;
@@ -230,29 +232,28 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
 
   Future<void> _bulkSetActive(List<AppUser> picked, bool active) {
     final firestore = context.read<FirestoreService>();
+    final l = context.l10n;
     final n = picked.length;
     return _runBulk(
       () => firestore.setUsersActive([for (final u in picked) u.uid], active),
-      '$n account${n == 1 ? '' : 's'} ${active ? 'activated' : 'deactivated'}.',
+      active ? l.adminUsersActivated(n) : l.adminUsersDeactivated(n),
     );
   }
 
   Future<void> _bulkSetLevel(List<AppUser> students) async {
+    final l = context.l10n;
     var level = students.first.level ?? AppConstants.hskLevels.first;
     final chosen = await showDialog<String>(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          title: Text(
-            'HSK level for ${students.length} '
-            'student${students.length == 1 ? '' : 's'}',
-          ),
+          title: Text(l.adminUsersHskDialogTitle(students.length)),
           content: DropdownButtonFormField<String>(
             initialValue: level,
             isExpanded: true,
             items: [
-              for (final l in AppConstants.hskLevels)
-                DropdownMenuItem(value: l, child: Text(l)),
+              for (final hsk in AppConstants.hskLevels)
+                DropdownMenuItem(value: hsk, child: Text(hsk)),
             ],
             onChanged: (v) {
               if (v != null) setDialogState(() => level = v);
@@ -261,11 +262,11 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
+              child: Text(l.commonCancel),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(ctx, level),
-              child: const Text('Apply'),
+              child: Text(l.adminUsersApply),
             ),
           ],
         ),
@@ -278,12 +279,11 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
         [for (final u in students) u.uid],
         chosen,
       ),
-      '${students.length} student${students.length == 1 ? '' : 's'} '
-      'set to $chosen.',
+      l.adminUsersLevelSet(students.length, chosen),
     );
   }
 
-  Widget _selectionBar(List<AppUser> users) {
+  Widget _selectionBar(AppLocalizations l, List<AppUser> users) {
     final picked = _selectedUsers(users);
     final students = picked.where((u) => u.isStudent).toList();
     return TableSelectionBar(
@@ -291,19 +291,19 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
       onClear: () => setState(() => _selected = {}),
       actions: [
         SelectionActionButton(
-          label: 'Activate',
+          label: l.adminUsersActivate,
           icon: Icons.check_circle_outline,
           onPressed: _busy ? null : () => _bulkSetActive(picked, true),
         ),
         SelectionActionButton(
-          label: 'Deactivate',
+          label: l.adminUsersDeactivate,
           icon: Icons.block_outlined,
           onPressed: _busy ? null : () => _bulkSetActive(picked, false),
         ),
         SelectionActionButton(
           label: students.isEmpty
-              ? 'Set HSK level'
-              : 'Set HSK level (${students.length})',
+              ? l.adminUsersSetHskLevel
+              : l.adminUsersSetHskLevelCount(students.length),
           icon: Icons.signal_cellular_alt_outlined,
           onPressed:
               _busy || students.isEmpty ? null : () => _bulkSetLevel(students),
@@ -313,7 +313,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
   }
 
   /// One chip per role with its count; the selected chip filters the table.
-  Widget _roleTabs(List<AppUser> allUsers) {
+  Widget _roleTabs(AppLocalizations l, List<AppUser> allUsers) {
     final counts = <String?, int>{null: allUsers.length};
     for (final user in allUsers) {
       counts[user.role] = (counts[user.role] ?? 0) + 1;
@@ -322,7 +322,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
       spacing: 8,
       runSpacing: 8,
       children: [
-        for (final entry in _roleFilterOptions.entries)
+        for (final entry in _roleFilterOptions(l).entries)
           ChoiceChip(
             label: Text('${entry.value} (${counts[entry.key] ?? 0})'),
             selected: _roleFilter == entry.key,
@@ -336,24 +336,28 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
   }
 
   /// "Parent: Ibu Santoso" under a student, the children under a parent.
-  String? _relationLabel(AppUser user, List<AppUser> allUsers) {
+  String? _relationLabel(
+    AppLocalizations l,
+    AppUser user,
+    List<AppUser> allUsers,
+  ) {
     if (user.isParent) {
       final children = [
         for (final id in user.studentIds)
           for (final u in allUsers)
             if (u.uid == id) u.name,
       ];
-      if (children.isEmpty) return 'No child linked yet';
+      if (children.isEmpty) return l.adminUsersNoChildLinked;
       final shown = children.take(3).join(', ');
       final more = children.length - 3;
       return more > 0
-          ? 'Children: $shown +$more'
-          : 'Child${children.length == 1 ? '' : 'ren'}: $shown';
+          ? l.adminUsersChildrenMore(shown, more)
+          : l.adminUsersChildren(children.length, shown);
     }
     if (user.isStudent) {
       for (final u in allUsers) {
         if (u.isParent && u.studentIds.contains(user.uid)) {
-          return 'Parent: ${u.name}';
+          return l.adminUsersParentOf(u.name);
         }
       }
     }
@@ -364,6 +368,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
     BuildContext context,
     List<AppUser> allUsers,
   ) {
+    final l = context.l10n;
     final metaStyle = TextStyle(
       fontSize: 12,
       color: AppColors.textSecondary,
@@ -372,27 +377,27 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
     return [
       AppTableColumn<AppUser>(
         id: _UserSortColumn.name.name,
-        label: 'Name',
+        label: l.adminUsersColName,
         sortable: true,
         cell: (user) => _UserNameCell(
           user: user,
           roleColor: _roleColor(user),
-          detail: _relationLabel(user, allUsers),
+          detail: _relationLabel(l, user, allUsers),
         ),
       ),
       AppTableColumn<AppUser>(
         id: _UserSortColumn.role.name,
-        label: 'Role',
+        label: l.adminUsersColRole,
         sortable: true,
         width: _colRoleWidth,
         cell: (user) => _RolePill(
-          label: _roleLabel(user),
+          label: _roleLabel(l, user),
           color: _roleColor(user),
         ),
       ),
       AppTableColumn<AppUser>(
         id: 'hsk',
-        label: 'HSK',
+        label: l.adminUsersColHsk,
         width: _colHskWidth,
         cell: (user) => Text(
           _hskLabel(user),
@@ -403,7 +408,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
       ),
       AppTableColumn<AppUser>(
         id: _UserSortColumn.joined.name,
-        label: 'Joined',
+        label: l.attendanceJoined,
         sortable: true,
         width: _colJoinedWidth,
         cell: (user) => Text(
@@ -415,11 +420,11 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
       ),
       AppTableColumn<AppUser>(
         id: _UserSortColumn.status.name,
-        label: 'Status',
+        label: l.profileWidgetStatus,
         sortable: true,
         width: _colStatusWidth,
         cell: (user) => Text(
-          user.active ? 'Active' : 'Inactive',
+          user.active ? l.historyStatusActive : l.profileWidgetInactive,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
@@ -431,7 +436,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
       ),
       AppTableColumn<AppUser>(
         id: 'actions',
-        label: 'Actions',
+        label: l.adminUsersColActions,
         width: _colActionsWidth,
         alignment: Alignment.centerRight,
         cell: (user) => user.isAdmin
@@ -450,24 +455,21 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
   /// Removes the login and the profile for good (Cloud Function
   /// `deleteUserAccount`); results, invoices and attendance stay as records.
   Future<void> _deleteAccount(AppUser user) async {
+    final l = context.l10n;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Delete ${user.displayNameIndonesian}?'),
-        content: Text(
-          '${user.email} will no longer be able to sign in and the profile is '
-          'removed. This cannot be undone. Exercise results, invoices and '
-          'attendance stay as the centre\'s records.',
-        ),
+        title: Text(l.adminUsersDeleteTitle(user.displayNameIndonesian)),
+        content: Text(l.adminUsersDeleteBody(user.email)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Delete account'),
+            child: Text(l.adminUsersDeleteAccount),
           ),
         ],
       ),
@@ -479,12 +481,12 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
           .httpsCallable('deleteUserAccount')
           .call({'uid': user.uid});
       messenger.showSnackBar(
-        SnackBar(content: Text('Deleted ${user.email}.')),
+        SnackBar(content: Text(l.adminUsersDeleted(user.email))),
       );
     } on FirebaseFunctionsException catch (e) {
       messenger.showSnackBar(
         SnackBar(
-          content: Text(e.message ?? 'Could not delete the account.'),
+          content: Text(e.message ?? l.adminUsersDeleteFailed),
           backgroundColor: AppColors.error,
         ),
       );
@@ -511,6 +513,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
   @override
   Widget build(BuildContext context) {
     final isWide = MediaQuery.sizeOf(context).width >= 720;
+    final l = context.l10n;
 
     return StreamBuilder<List<AppUser>>(
       stream: context.read<FirestoreService>().watchAllUsers(),
@@ -524,7 +527,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
             child: Padding(
               padding: const EdgeInsets.all(24),
               child: Text(
-                'Could not load users: ${snapshot.error}',
+                l.adminUsersLoadFailed('${snapshot.error}'),
                 style: TextStyle(color: AppColors.error),
                 textAlign: TextAlign.center,
               ),
@@ -533,23 +536,22 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
         }
 
         final allUsers = snapshot.data ?? [];
-        final users = _filter(allUsers);
+        final users = _filter(l, allUsers);
 
         return ListView(
           padding: EdgeInsets.all(isWide ? 32 : 20),
           children: [
             _toolbar(context, isWide, users),
             const SizedBox(height: 12),
-            _roleTabs(allUsers),
+            _roleTabs(l, allUsers),
             const SizedBox(height: 12),
-            _selectionBar(users),
+            _selectionBar(l, users),
             if (users.isEmpty)
               AppCard(
                 child: Text(
                   snapshot.data?.isEmpty ?? true
-                      ? 'No users found. Run scripts/seed_test_accounts.sh '
-                          'or check that your admin account has role: admin in Firestore.'
-                      : 'No users match your search.',
+                      ? l.adminUsersEmpty
+                      : l.adminUsersNoMatch,
                   style: TextStyle(color: AppColors.textSecondary),
                 ),
               )
@@ -567,7 +569,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                 mobileCardBuilder: (user) => _UserMobileCard(
                   user: user,
                   onOpen: user.isStudent ? () => _openUser(user) : null,
-                  roleLabel: _roleLabel(user),
+                  roleLabel: _roleLabel(l, user),
                   roleColor: _roleColor(user),
                   joinedLabel: _joinedLabel(user),
                   hskLabel: _hskLabel(user),
@@ -583,12 +585,13 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
   }
 
   Widget _toolbar(BuildContext context, bool isWide, List<AppUser> users) {
+    final l = context.l10n;
     final exportButton = SizedBox(
       height: _toolbarFieldHeight,
       child: ExportCsvButton(
         fileStem: 'users',
-        header: _csvHeader,
-        rows: () => users.map(_csvRow).toList(),
+        header: _csvHeader(l),
+        rows: () => users.map((user) => _csvRow(l, user)).toList(),
       ),
     );
 
@@ -596,9 +599,9 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
       width: isWide ? 148 : null,
       height: _toolbarFieldHeight,
       child: _FilterDropdown<String?>(
-        label: 'Status',
+        label: l.profileWidgetStatus,
         value: _statusFilter,
-        items: _statusFilterOptions,
+        items: _statusFilterOptions(l),
         onChanged: (value) => setState(() => _statusFilter = value),
       ),
     );
@@ -612,7 +615,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
           padding: const EdgeInsets.symmetric(horizontal: 16),
         ),
         icon: const Icon(Icons.add, size: 18),
-        label: const Text('New user'),
+        label: Text(l.adminUsersNewUser),
       ),
     );
 
@@ -684,7 +687,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
       controller: _searchController,
       onChanged: (value) => setState(() => _query = value),
       decoration: InputDecoration(
-        hintText: 'Search users…',
+        hintText: context.l10n.adminUsersSearchHint,
         prefixIcon: const Icon(Icons.search, size: 20),
         filled: true,
         fillColor: AppColors.card,
@@ -707,11 +710,11 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
 enum _UserSortColumn { name, role, joined, status }
 
 extension on _UserSortColumn {
-  String get label => switch (this) {
-        _UserSortColumn.name => 'Name',
-        _UserSortColumn.role => 'Role',
-        _UserSortColumn.joined => 'Joined',
-        _UserSortColumn.status => 'Status',
+  String label(AppLocalizations l) => switch (this) {
+        _UserSortColumn.name => l.adminUsersColName,
+        _UserSortColumn.role => l.adminUsersColRole,
+        _UserSortColumn.joined => l.attendanceJoined,
+        _UserSortColumn.status => l.profileWidgetStatus,
       };
 }
 
@@ -728,10 +731,11 @@ class _SortDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return DropdownButtonFormField<String>(
       initialValue: '${sortColumn.name}_${sortAscending ? 'asc' : 'desc'}',
       decoration: InputDecoration(
-        labelText: 'Sort by',
+        labelText: l.adminUsersSortBy,
         filled: true,
         fillColor: AppColors.card,
         isDense: true,
@@ -750,11 +754,11 @@ class _SortDropdown extends StatelessWidget {
         for (final column in _UserSortColumn.values) ...[
           DropdownMenuItem(
             value: '${column.name}_asc',
-            child: Text('${column.label} (A–Z)'),
+            child: Text('${column.label(l)} (A–Z)'),
           ),
           DropdownMenuItem(
             value: '${column.name}_desc',
-            child: Text('${column.label} (Z–A)'),
+            child: Text('${column.label(l)} (Z–A)'),
           ),
         ],
       ],
@@ -912,6 +916,7 @@ class _UserMobileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return AppCard(
       padding: const EdgeInsets.all(14),
       onTap: onOpen,
@@ -976,7 +981,7 @@ class _UserMobileCard extends StatelessWidget {
               ],
               const Spacer(),
               Text(
-                user.active ? 'Active' : 'Inactive',
+                user.active ? l.historyStatusActive : l.profileWidgetInactive,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -1060,7 +1065,7 @@ class _UserActionsBar extends StatelessWidget {
         IconButton(
           onPressed: onDelete,
           icon: Icon(Icons.delete_forever_outlined, color: AppColors.error),
-          tooltip: 'Delete account',
+          tooltip: context.l10n.adminUsersDeleteAccount,
           visualDensity: VisualDensity.compact,
         ),
       ],
@@ -1081,7 +1086,7 @@ class _UserEditButton extends StatelessWidget {
   Widget build(BuildContext context) {
     if (compact) {
       return Tooltip(
-        message: 'Edit profile',
+        message: context.l10n.adminUsersEditProfile,
         child: Material(
           color: AppColors.navy.withValues(alpha: 0.07),
           shape: RoundedRectangleBorder(
@@ -1110,7 +1115,7 @@ class _UserEditButton extends StatelessWidget {
     return OutlinedButton.icon(
       onPressed: onPressed,
       icon: const Icon(Icons.edit_outlined, size: 16),
-      label: const Text('Edit'),
+      label: Text(context.l10n.adminUsersEdit),
       style: OutlinedButton.styleFrom(
         foregroundColor: AppColors.navy,
         backgroundColor: AppColors.navy.withValues(alpha: 0.04),
@@ -1148,7 +1153,11 @@ class _ActionButton extends StatelessWidget {
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
       ),
-      child: Text(active ? 'Deactivate' : 'Activate'),
+      child: Text(
+        active
+            ? context.l10n.adminUsersDeactivate
+            : context.l10n.adminUsersActivate,
+      ),
     );
   }
 }

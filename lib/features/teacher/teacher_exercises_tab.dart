@@ -11,6 +11,8 @@ import '../../core/widgets/app_card.dart';
 import '../../core/widgets/app_data_table.dart';
 import '../../core/widgets/exercise_widgets.dart';
 import '../../core/widgets/table_tools.dart';
+import '../../l10n/l10n.dart';
+import '../../l10n/labels_exercises.dart';
 import '../../models/app_user.dart';
 import '../../models/exercise.dart';
 import '../../models/exercise_assignment.dart';
@@ -196,31 +198,31 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
 
   static final _dueFormat = DateFormat('d MMM yyyy');
 
-  static List<Object?> _csvRow(_ExerciseRow row) => [
+  static List<Object?> _csvRow(AppLocalizations l, _ExerciseRow row) => [
         row.exercise.title,
-        row.category?.label ?? '',
+        row.category?.localized(l) ?? '',
         row.exercise.level ?? '',
-        row.exercise.skillCategory.label,
-        _contentsLabel(row.exercise),
+        row.exercise.skillCategory.localized(l),
+        _contentsLabel(l, row.exercise),
         row.assigned.length,
         row.completed,
         row.nextDue == null ? '' : _dueFormat.format(row.nextDue!),
         row.overdue,
-        row.exercise.isPublished ? 'Published' : 'Draft',
+        row.exercise.isPublished ? l.teacherExPublished : l.teacherExDraft,
       ];
 
-  static const _csvHeader = [
-    'Exercise',
-    'Type of exercise',
-    'Level',
-    'Skill',
-    'Contents',
-    'Students',
-    'Done',
-    'Next due',
-    'Overdue',
-    'Status',
-  ];
+  static List<String> _csvHeader(AppLocalizations l) => [
+        l.teacherExExercise,
+        l.bankFiltersTypeOfExercise,
+        l.bankFiltersLevel,
+        l.bankEditorSkill,
+        l.teacherExContents,
+        l.teacherExStudents,
+        l.teacherExDone,
+        l.teacherExNextDue,
+        l.exerciseCardStatusOverdue,
+        l.teacherExStatus,
+      ];
 
   /// Ticked rows that are still in the table (a deleted or filtered-out
   /// exercise keeps its id in [_selected] until Clear).
@@ -252,34 +254,34 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
   }
 
   Future<void> _bulkPublish(List<_ExerciseRow> rows, bool published) {
+    final l = context.l10n;
     final firestore = context.read<FirestoreService>();
     return _runBulk(
       rows,
       (ids) => firestore.setExercisesPublished(ids, published),
-      '${rows.length} exercise${rows.length == 1 ? '' : 's'} '
-      '${published ? 'published' : 'set to draft'}.',
+      published
+          ? l.teacherExBulkPublished(rows.length)
+          : l.teacherExBulkDraft(rows.length),
     );
   }
 
   Future<void> _bulkDelete(List<_ExerciseRow> rows) async {
+    final l = context.l10n;
     final n = rows.length;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Delete $n exercise${n == 1 ? '' : 's'}?'),
-        content: const Text(
-          'Students lose these assignments. Their past results stay. '
-          'This cannot be undone.',
-        ),
+        title: Text(l.teacherExDeleteCountTitle(n)),
+        content: Text(l.teacherExDeleteBulkBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Delete'),
+            child: Text(l.bankDelete),
           ),
         ],
       ),
@@ -293,31 +295,33 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
           await firestore.deleteExercise(id);
         }
       },
-      '$n exercise${n == 1 ? '' : 's'} deleted.',
+      l.teacherExBulkDeleted(n),
     );
   }
 
   Widget _selectionBar(bool canManage, List<_ExerciseRow> rows) {
+    final l = context.l10n;
     final picked = _selectedRows(rows);
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
       child: TableSelectionBar(
         count: picked.length,
+        noun: l.teacherExSelected,
         onClear: () => setState(() => _selected = {}),
         actions: [
           if (canManage) ...[
             SelectionActionButton(
-              label: 'Publish',
+              label: l.teacherExPublish,
               icon: Icons.visibility_outlined,
               onPressed: _busy ? null : () => _bulkPublish(picked, true),
             ),
             SelectionActionButton(
-              label: 'Set to draft',
+              label: l.teacherExSetToDraft,
               icon: Icons.visibility_off_outlined,
               onPressed: _busy ? null : () => _bulkPublish(picked, false),
             ),
             SelectionActionButton(
-              label: 'Delete',
+              label: l.bankDelete,
               icon: Icons.delete_outline,
               destructive: true,
               onPressed: _busy ? null : () => _bulkDelete(picked),
@@ -333,14 +337,16 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
       return const SizedBox.shrink();
     }
 
+    final l = context.l10n;
     final isTeacherOnWeb =
         user?.isTeacher == true && ExerciseAuthoringPlatform.isWeb;
     final message = !ExerciseAuthoringPlatform.isWeb
-        ? ExerciseAuthoringPlatform.unsupportedMessage
+        ? l.teacherExAuthoringUnsupported
         : isTeacherOnWeb
-            ? ExerciseAuthoringPlatform.teacherReadOnlyMessage
-            : ExerciseAuthoringPlatform.adminOnlyMessage;
-    final title = isTeacherOnWeb ? 'View only' : 'Admin access required';
+            ? l.teacherExAuthoringReadOnly
+            : l.teacherExAuthoringAdminOnly;
+    final title =
+        isTeacherOnWeb ? l.teacherExViewOnly : l.teacherExAdminRequired;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
@@ -389,22 +395,21 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
   }
 
   Future<void> _confirmDelete(Exercise exercise) async {
+    final l = context.l10n;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete exercise?'),
-        content: Text(
-          'Delete "${exercise.title}"? This cannot be undone.',
-        ),
+        title: Text(l.teacherExDeleteTitle),
+        content: Text(l.teacherExDeleteBody(exercise.title)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Delete'),
+            child: Text(l.bankDelete),
           ),
         ],
       ),
@@ -416,7 +421,7 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
       await context.read<FirestoreService>().deleteExercise(exercise.id);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Exercise deleted')),
+          SnackBar(content: Text(l.teacherExDeleted)),
         );
       }
     } catch (e) {
@@ -453,23 +458,24 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
 
   /// "3 worksheets · 1 question" for a package, "Multiple choice · 7
   /// questions" otherwise.
-  static String _contentsLabel(Exercise exercise) {
+  static String _contentsLabel(AppLocalizations l, Exercise exercise) {
     if (exercise.isPackage) {
       final n = exercise.bankSheets.length;
       final q = exercise.bankQuestionIds.length;
       return [
-        if (n > 0) '$n worksheet${n == 1 ? '' : 's'}',
-        if (q > 0) '$q single question${q == 1 ? '' : 's'}',
+        if (n > 0) l.exerciseCardWorksheets(n),
+        if (q > 0) l.teacherExSingleQuestions(q),
       ].join(' · ');
     }
     final n = exercise.questions.length;
     final unit = exercise.type == ExerciseType.composeSentences
-        ? 'sentence'
-        : 'question';
-    return '${exercise.type.label} · $n $unit${n == 1 ? '' : 's'}';
+        ? l.teacherExSentences(n)
+        : l.bankTextQuestionCount(n);
+    return '${exercise.type.localized(l)} · $unit';
   }
 
   Widget _toolbar(bool canManage, List<_ExerciseRow> rows) {
+    final l = context.l10n;
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
       child: Wrap(
@@ -480,9 +486,9 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
           SizedBox(
             width: 260,
             child: TextField(
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.search),
-                hintText: 'Search exercises',
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.search),
+                hintText: l.teacherExSearchExercises,
                 isDense: true,
               ),
               onChanged: (v) => setState(() => _search = v),
@@ -493,14 +499,14 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
             child: DropdownButtonFormField<ExerciseCategory?>(
               initialValue: _categoryFilter,
               isExpanded: true,
-              decoration: const InputDecoration(
-                labelText: 'Type of exercise',
+              decoration: InputDecoration(
+                labelText: l.bankFiltersTypeOfExercise,
                 isDense: true,
               ),
               items: [
-                const DropdownMenuItem(value: null, child: Text('All')),
+                DropdownMenuItem(value: null, child: Text(l.bankFiltersAll)),
                 for (final c in ExerciseCategory.values)
-                  DropdownMenuItem(value: c, child: Text(c.label)),
+                  DropdownMenuItem(value: c, child: Text(c.localized(l))),
               ],
               onChanged: (v) => setState(() => _categoryFilter = v),
             ),
@@ -511,11 +517,11 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
               initialValue: _levelFilter,
               isExpanded: true,
               decoration:
-                  const InputDecoration(labelText: 'Level', isDense: true),
+                  InputDecoration(labelText: l.bankFiltersLevel, isDense: true),
               items: [
-                const DropdownMenuItem(value: null, child: Text('All')),
-                for (final l in AppConstants.hskLevels)
-                  DropdownMenuItem(value: l, child: Text(l)),
+                DropdownMenuItem(value: null, child: Text(l.bankFiltersAll)),
+                for (final level in AppConstants.hskLevels)
+                  DropdownMenuItem(value: level, child: Text(level)),
               ],
               onChanged: (v) => setState(() => _levelFilter = v),
             ),
@@ -526,30 +532,31 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
               initialValue: _skillFilter,
               isExpanded: true,
               decoration:
-                  const InputDecoration(labelText: 'Skill', isDense: true),
+                  InputDecoration(labelText: l.bankEditorSkill, isDense: true),
               items: [
-                const DropdownMenuItem(value: null, child: Text('All')),
+                DropdownMenuItem(value: null, child: Text(l.bankFiltersAll)),
                 for (final c in ExerciseSkillCategory.values)
-                  DropdownMenuItem(value: c, child: Text(c.label)),
+                  DropdownMenuItem(value: c, child: Text(c.localized(l))),
               ],
               onChanged: (v) => setState(() => _skillFilter = v),
             ),
           ),
           ExportCsvButton(
             fileStem: 'exercises',
-            header: _csvHeader,
-            rows: () => rows.map(_csvRow).toList(),
+            label: l.teacherExExportCsv,
+            header: _csvHeader(l),
+            rows: () => rows.map((r) => _csvRow(l, r)).toList(),
           ),
           if (canManage) ...[
             OutlinedButton.icon(
               onPressed: () => context.push('$_base/question-bank'),
               icon: const Icon(Icons.inventory_2_outlined, size: 18),
-              label: const Text('Question bank'),
+              label: Text(l.bankTitle),
             ),
             FilledButton.icon(
               onPressed: () => context.push('$_base/exercise/new'),
               icon: const Icon(Icons.add, size: 18),
-              label: const Text('New exercise'),
+              label: Text(l.teacherExNewExercise),
             ),
           ],
         ],
@@ -563,10 +570,11 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
     required List<ExerciseResult> results,
     required List<AppUser> students,
   }) {
+    final l = context.l10n;
     return [
       AppTableColumn(
         id: 'title',
-        label: 'Exercise',
+        label: l.teacherExExercise,
         flex: 3,
         sortable: true,
         cell: (row) => Column(
@@ -587,9 +595,9 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
             Text(
               [
                 row.exercise.isPackage
-                    ? 'From the question bank'
-                    : 'Old format, students cannot play it',
-                _contentsLabel(row.exercise),
+                    ? l.teacherExFromBank
+                    : l.teacherExOldFormat,
+                _contentsLabel(l, row.exercise),
               ].join(' · '),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -600,7 +608,7 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
       ),
       AppTableColumn(
         id: 'category',
-        label: 'Type',
+        label: l.bankImportType,
         width: 112,
         sortable: true,
         cell: (row) => row.category == null
@@ -609,18 +617,18 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
       ),
       AppTableColumn(
         id: 'level',
-        label: 'Level',
+        label: l.bankFiltersLevel,
         width: 58,
         sortable: true,
         cell: (row) => Text(row.exercise.level ?? '—'),
       ),
       AppTableColumn(
         id: 'skill',
-        label: 'Skill',
+        label: l.bankEditorSkill,
         width: 100,
         sortable: true,
         cell: (row) => Text(
-          row.exercise.skillCategory.label,
+          row.exercise.skillCategory.localized(l),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -628,17 +636,19 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
       // "3/6" = students finished / students assigned; click for names.
       AppTableColumn(
         id: 'done',
-        label: 'Done',
+        label: l.teacherExDone,
         width: 76,
         sortable: true,
         alignment: Alignment.centerRight,
         cell: (row) => !row.exercise.isPublished
             ? const Text('—')
             : row.assigned.isEmpty
-                ? const Text('None')
+                ? Text(l.teacherExNone)
                 : Tooltip(
-                    message: '${row.completed} of ${row.assigned.length} '
-                        'students finished',
+                    message: l.teacherExStudentsFinished(
+                      row.completed,
+                      row.assigned.length,
+                    ),
                     child: TextButton(
                       onPressed: () =>
                           _showProgress(row, assignments, results, students),
@@ -652,21 +662,21 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
       ),
       AppTableColumn(
         id: 'due',
-        label: 'Due',
+        label: l.teacherExDue,
         width: 92,
         sortable: true,
         cell: (row) => _DueCell(row: row),
       ),
       AppTableColumn(
         id: 'status',
-        label: 'Status',
+        label: l.teacherExStatus,
         width: 88,
         sortable: true,
         cell: (row) => _StatusChip(published: row.exercise.isPublished),
       ),
       AppTableColumn(
         id: 'actions',
-        label: 'Actions',
+        label: l.bankActions,
         width: canManage ? 190 : 100,
         cell: (row) => _RowActions(
           row: row,
@@ -682,6 +692,7 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final user = context.watch<AuthService>().appUser;
     final canManage = ExerciseAuthoringPlatform.canManageExercises(user);
 
@@ -709,18 +720,15 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
               Expanded(
                 child: EmptyState(
                   icon: Icons.fitness_center_outlined,
-                  title: 'No exercises yet',
+                  title: l.teacherExNoExercisesTitle,
                   subtitle: canManage
-                      ? 'An exercise bundles worksheets from the question bank; '
-                          'students see it once it is assigned to them.'
-                      : 'An exercise bundles worksheets from the question bank; '
-                          'students see it once it is assigned to them. '
-                          'Admins create exercises on web.',
+                      ? l.teacherExNoExercisesSubtitle
+                      : l.teacherExNoExercisesSubtitleReadOnly,
                   action: canManage
                       ? FilledButton.icon(
                           onPressed: () => context.push('$_base/exercise/new'),
                           icon: const Icon(Icons.add, size: 18),
-                          label: const Text('New exercise'),
+                          label: Text(l.teacherExNewExercise),
                         )
                       : null,
                 ),
@@ -760,10 +768,10 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
                             _selectionBar(canManage, rows),
                             Expanded(
                               child: rows.isEmpty
-                                  ? const EmptyState(
+                                  ? EmptyState(
                                       icon: Icons.filter_alt_off_outlined,
-                                      title: 'No matches',
-                                      subtitle: 'Adjust the filters.',
+                                      title: l.bankNoMatchesTitle,
+                                      subtitle: l.bankAdjustFilters,
                                     )
                                   : Padding(
                                       padding: const EdgeInsets.fromLTRB(
@@ -791,7 +799,7 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
                                               _ExerciseMobileCard(
                                             row: row,
                                             contents:
-                                                _contentsLabel(row.exercise),
+                                                _contentsLabel(l, row.exercise),
                                             canManage: canManage,
                                             onProgress: row.assigned.isEmpty
                                                 ? null
@@ -882,7 +890,7 @@ class _DueCell extends StatelessWidget {
         ),
         if (late)
           Text(
-            '${row.overdue} overdue',
+            context.l10n.exerciseCardOverdueCount(row.overdue),
             style: TextStyle(
               fontSize: 11,
               color: AppColors.error,
@@ -910,7 +918,9 @@ class _StatusChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(6),
         ),
         child: Text(
-          published ? 'Published' : 'Draft',
+          published
+              ? context.l10n.teacherExPublished
+              : context.l10n.teacherExDraft,
           style: TextStyle(
             color: color,
             fontWeight: FontWeight.w600,
@@ -941,6 +951,7 @@ class _RowActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -954,20 +965,20 @@ class _RowActions extends StatelessWidget {
               visualDensity: VisualDensity.compact,
             ),
             icon: const Icon(Icons.assignment_ind_outlined, size: 18),
-            label: const Text('Assign'),
+            label: Text(l.teacherExAssign),
           ),
         if (canManage) ...[
           const SizedBox(width: 8),
           _IconAction(
             icon: Icons.edit_outlined,
-            tooltip: 'Edit',
+            tooltip: l.bankEdit,
             color: AppColors.navy,
             onPressed: onEdit,
           ),
           const SizedBox(width: 8),
           _IconAction(
             icon: Icons.delete_outline,
-            tooltip: 'Delete',
+            tooltip: l.bankDelete,
             color: AppColors.error,
             onPressed: onDelete,
           ),
@@ -1037,12 +1048,13 @@ class _ExerciseMobileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final e = row.exercise;
     final access = !e.isPublished
-        ? 'Draft — not visible to students'
+        ? l.teacherExDraftHidden
         : row.assigned.isEmpty
-            ? 'Not assigned yet'
-            : '${row.completed}/${row.assigned.length} students done';
+            ? l.teacherExNotAssigned
+            : l.teacherExStudentsDone(row.completed, row.assigned.length);
     return AppCard(
       padding: const EdgeInsets.all(14),
       onTap: onProgress,
@@ -1071,9 +1083,9 @@ class _ExerciseMobileCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             [
-              if (row.category != null) row.category!.label,
+              if (row.category != null) row.category!.localized(l),
               e.level ?? '—',
-              e.skillCategory.label,
+              e.skillCategory.localized(l),
               contents,
             ].join(' · '),
             style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
@@ -1082,8 +1094,8 @@ class _ExerciseMobileCard extends StatelessWidget {
             [
               access,
               if (row.nextDue != null)
-                'due ${DateFormat('d MMM').format(row.nextDue!)}',
-              if (row.overdue > 0) '${row.overdue} overdue',
+                l.teacherExDueLower(DateFormat('d MMM').format(row.nextDue!)),
+              if (row.overdue > 0) l.exerciseCardOverdueCount(row.overdue),
             ].join(' · '),
             style: TextStyle(
               fontSize: 12,
@@ -1104,7 +1116,7 @@ class _ExerciseMobileCard extends StatelessWidget {
                     visualDensity: VisualDensity.compact,
                   ),
                   icon: const Icon(Icons.assignment_ind_outlined, size: 18),
-                  label: const Text('Assign'),
+                  label: Text(l.teacherExAssign),
                 ),
               if (canManage) ...[
                 OutlinedButton.icon(
@@ -1113,7 +1125,7 @@ class _ExerciseMobileCard extends StatelessWidget {
                     visualDensity: VisualDensity.compact,
                   ),
                   icon: const Icon(Icons.edit_outlined, size: 18),
-                  label: const Text('Edit'),
+                  label: Text(l.bankEdit),
                 ),
                 OutlinedButton.icon(
                   onPressed: onDelete,
@@ -1123,7 +1135,7 @@ class _ExerciseMobileCard extends StatelessWidget {
                     visualDensity: VisualDensity.compact,
                   ),
                   icon: const Icon(Icons.delete_outline, size: 18),
-                  label: const Text('Delete'),
+                  label: Text(l.bankDelete),
                 ),
               ],
             ],

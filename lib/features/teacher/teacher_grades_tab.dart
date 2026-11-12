@@ -8,6 +8,8 @@ import '../../core/utils/grade_utils.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/app_data_table.dart';
 import '../../core/widgets/status_pill.dart';
+import '../../l10n/l10n.dart';
+import '../../l10n/labels_classes.dart';
 import '../../models/app_user.dart';
 import '../../models/grade.dart';
 import '../../services/auth_service.dart';
@@ -59,6 +61,7 @@ class _TeacherGradesTabState extends State<TeacherGradesTab> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final firestore = context.read<FirestoreService>();
     final user = context.watch<AuthService>().appUser;
     if (user == null) {
@@ -72,7 +75,7 @@ class _TeacherGradesTabState extends State<TeacherGradesTab> {
         onPressed: () => _openGradeSheet(context, teacherId: teacherId),
         backgroundColor: AppColors.navy,
         icon: const Icon(Icons.add),
-        label: const Text('New grade'),
+        label: Text(l.teacherGradesNew),
       ),
       body: StreamBuilder<List<Grade>>(
         stream: firestore.watchTeacherGrades(teacherId),
@@ -86,12 +89,10 @@ class _TeacherGradesTabState extends State<TeacherGradesTab> {
           final graded = grades.where((g) => g.isGraded).toList();
 
           if (grades.isEmpty) {
-            return const EmptyState(
+            return EmptyState(
               icon: Icons.grading_outlined,
-              title: 'No grades yet',
-              subtitle:
-                  'Record an assessment score, or schedule a pending grade to '
-                  'fill in later.',
+              title: l.teacherGradesEmptyTitle,
+              subtitle: l.teacherGradesEmptySubtitle,
             );
           }
 
@@ -99,17 +100,19 @@ class _TeacherGradesTabState extends State<TeacherGradesTab> {
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 96),
             children: [
               if (pending.isNotEmpty) ...[
-                SectionHeader(title: 'Grades pending (${pending.length})'),
+                SectionHeader(
+                  title: l.teacherGradesPendingHeader(pending.length),
+                ),
                 const SizedBox(height: 10),
                 _gradeTable(context, firestore, pending),
                 const SizedBox(height: 20),
               ],
-              const SectionHeader(title: 'Recorded'),
+              SectionHeader(title: l.teacherGradesRecorded),
               if (graded.isEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   child: Text(
-                    'No recorded grades yet.',
+                    l.teacherGradesNoRecorded,
                     style: TextStyle(color: AppColors.textSecondary),
                   ),
                 )
@@ -147,6 +150,7 @@ class _TeacherGradesTabState extends State<TeacherGradesTab> {
     BuildContext context,
     FirestoreService firestore,
   ) {
+    final l = context.l10n;
     final cellStyle = TextStyle(fontSize: 13, color: AppColors.textPrimary);
     final metaStyle = TextStyle(fontSize: 12, color: AppColors.textSecondary);
     final dateFormat = DateFormat('d MMM yyyy');
@@ -154,7 +158,7 @@ class _TeacherGradesTabState extends State<TeacherGradesTab> {
     return [
       AppTableColumn<Grade>(
         id: 'student',
-        label: 'Student',
+        label: l.commonStudent,
         flex: 2,
         cell: (grade) => _StudentLine(
           studentId: grade.studentId,
@@ -163,11 +167,11 @@ class _TeacherGradesTabState extends State<TeacherGradesTab> {
       ),
       AppTableColumn<Grade>(
         id: 'title',
-        label: 'Assessment',
+        label: l.teacherGradesColAssessment,
         sortable: true,
         flex: 2,
         cell: (grade) => Text(
-          grade.title.isEmpty ? grade.category.label : grade.title,
+          grade.title.isEmpty ? grade.category.localized(l) : grade.title,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
@@ -179,11 +183,11 @@ class _TeacherGradesTabState extends State<TeacherGradesTab> {
       ),
       AppTableColumn<Grade>(
         id: 'category',
-        label: 'Category',
+        label: l.teacherGradesColCategory,
         sortable: true,
         width: 110,
         cell: (grade) => Text(
-          grade.category.label,
+          grade.category.localized(l),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: metaStyle,
@@ -191,7 +195,7 @@ class _TeacherGradesTabState extends State<TeacherGradesTab> {
       ),
       AppTableColumn<Grade>(
         id: 'score',
-        label: 'Score',
+        label: l.teacherGradesColScore,
         sortable: true,
         width: 70,
         cell: (grade) => Text(
@@ -207,7 +211,7 @@ class _TeacherGradesTabState extends State<TeacherGradesTab> {
       ),
       AppTableColumn<Grade>(
         id: 'letter',
-        label: 'Letter',
+        label: l.teacherGradesColLetter,
         width: 64,
         cell: (grade) => Text(
           grade.displayLetter ?? '—',
@@ -222,17 +226,17 @@ class _TeacherGradesTabState extends State<TeacherGradesTab> {
       ),
       AppTableColumn<Grade>(
         id: 'status',
-        label: 'Status',
+        label: l.teacherGradesColStatus,
         sortable: true,
         width: 96,
         cell: (grade) => StatusPill(
-          label: grade.status.label,
+          label: grade.status.localized(l),
           color: grade.isGraded ? AppColors.success : AppColors.brandYellow,
         ),
       ),
       AppTableColumn<Grade>(
         id: 'date',
-        label: 'Date',
+        label: l.teacherSessionDate,
         sortable: true,
         width: 110,
         cell: (grade) {
@@ -247,7 +251,7 @@ class _TeacherGradesTabState extends State<TeacherGradesTab> {
       ),
       AppTableColumn<Grade>(
         id: 'actions',
-        label: 'Actions',
+        label: l.teacherGradesColActions,
         width: 100,
         alignment: Alignment.centerRight,
         cell: (grade) => Row(
@@ -257,13 +261,15 @@ class _TeacherGradesTabState extends State<TeacherGradesTab> {
               icon: grade.isPending
                   ? Icons.grading_outlined
                   : Icons.edit_outlined,
-              tooltip: grade.isPending ? 'Add score' : 'Edit grade',
+              tooltip: grade.isPending
+                  ? l.teacherGradesAddScore
+                  : l.teacherGradesEdit,
               onPressed: () => _openScoreSheet(context, grade),
             ),
             const SizedBox(width: 10),
             _GradeIconAction(
               icon: Icons.delete_outline,
-              tooltip: 'Delete grade',
+              tooltip: l.teacherGradesDelete,
               color: AppColors.error,
               onPressed: () => _confirmDeleteGrade(context, grade),
             ),
@@ -274,21 +280,22 @@ class _TeacherGradesTabState extends State<TeacherGradesTab> {
   }
 
   Future<void> _confirmDeleteGrade(BuildContext context, Grade grade) async {
+    final l = context.l10n;
     final firestore = context.read<FirestoreService>();
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete grade?'),
-        content: const Text('This removes the grade for this student.'),
+        title: Text(l.teacherGradesDeleteTitle),
+        content: Text(l.teacherGradesDeleteBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(l.commonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             child: Text(
-              'Delete',
+              l.teacherAttDelete,
               style: TextStyle(color: AppColors.error),
             ),
           ),
@@ -383,6 +390,7 @@ class _GradeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final firestore = context.read<FirestoreService>();
     final pending = grade.isPending;
     return AppCard(
@@ -409,7 +417,7 @@ class _GradeCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  grade.title.isEmpty ? grade.category.label : grade.title,
+                  grade.title.isEmpty ? grade.category.localized(l) : grade.title,
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 15,
@@ -418,7 +426,7 @@ class _GradeCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 _StudentLine(studentId: grade.studentId, firestore: firestore),
                 Text(
-                  grade.category.label,
+                  grade.category.localized(l),
                   style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,
@@ -451,7 +459,7 @@ class _GradeCard extends StatelessWidget {
             )
           else
             Text(
-              'Add score',
+              l.teacherGradesAddScore,
               style: TextStyle(
                 color: AppColors.brandYellow,
                 fontWeight: FontWeight.w600,
@@ -532,8 +540,9 @@ class _GradeFormSheetState extends State<_GradeFormSheet> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    final l = context.l10n;
     if (_studentId == null || _studentId!.isEmpty) {
-      setState(() => _error = 'Pick a student.');
+      setState(() => _error = l.teacherGradesPickStudentError);
       return;
     }
     setState(() {
@@ -570,13 +579,14 @@ class _GradeFormSheetState extends State<_GradeFormSheet> {
     } catch (e) {
       setState(() {
         _saving = false;
-        _error = 'Could not save grade: $e';
+        _error = l.teacherGradesSaveFailed('$e');
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final firestore = context.read<FirestoreService>();
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
@@ -595,7 +605,7 @@ class _GradeFormSheetState extends State<_GradeFormSheet> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                _isEditing ? 'Edit grade' : 'New grade',
+                _isEditing ? l.teacherGradesEdit : l.teacherGradesNew,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: AppColors.navy,
@@ -617,7 +627,7 @@ class _GradeFormSheetState extends State<_GradeFormSheet> {
                     return DropdownButtonFormField<String>(
                       initialValue: _studentId,
                       isExpanded: true,
-                      decoration: const InputDecoration(labelText: 'Student'),
+                      decoration: InputDecoration(labelText: l.commonStudent),
                       items: [
                         for (final s in students)
                           DropdownMenuItem(
@@ -626,29 +636,32 @@ class _GradeFormSheetState extends State<_GradeFormSheet> {
                           ),
                       ],
                       onChanged: (v) => setState(() => _studentId = v),
-                      validator: (v) =>
-                          (v == null || v.isEmpty) ? 'Pick a student' : null,
+                      validator: (v) => (v == null || v.isEmpty)
+                          ? l.teacherGradesPickStudent
+                          : null,
                     );
                   },
                 ),
               if (!_isEditing) const SizedBox(height: 12),
               TextFormField(
                 controller: _titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Title',
-                  hintText: 'e.g. Speaking Test, Midterm',
+                decoration: InputDecoration(
+                  labelText: l.teacherGradesTitleLabel,
+                  hintText: l.teacherGradesTitleHint,
                 ),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Enter a title' : null,
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? l.teacherGradesTitleRequired
+                    : null,
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<GradeCategory>(
                 initialValue: _category,
                 isExpanded: true,
-                decoration: const InputDecoration(labelText: 'Category'),
+                decoration:
+                    InputDecoration(labelText: l.teacherGradesColCategory),
                 items: [
                   for (final c in GradeCategory.values)
-                    DropdownMenuItem(value: c, child: Text(c.label)),
+                    DropdownMenuItem(value: c, child: Text(c.localized(l))),
                 ],
                 onChanged: (v) =>
                     setState(() => _category = v ?? GradeCategory.other),
@@ -659,9 +672,9 @@ class _GradeFormSheetState extends State<_GradeFormSheet> {
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
                   labelText: _isEditing
-                      ? 'Score (0–100)'
-                      : 'Score (0–100) — leave blank to schedule',
-                  helperText: _buildLetterHint(),
+                      ? l.teacherGradesScoreLabel
+                      : l.teacherGradesScoreLabelOptional,
+                  helperText: _buildLetterHint(l),
                 ),
                 onChanged: (_) => setState(() {}),
                 validator: (v) {
@@ -669,7 +682,7 @@ class _GradeFormSheetState extends State<_GradeFormSheet> {
                   if (text.isEmpty) return null;
                   final n = num.tryParse(text);
                   if (n == null || n < 0 || n > 100) {
-                    return 'Enter a number 0–100';
+                    return l.teacherGradesScoreRange;
                   }
                   return null;
                 },
@@ -699,7 +712,11 @@ class _GradeFormSheetState extends State<_GradeFormSheet> {
                             color: Colors.white,
                           ),
                         )
-                      : Text(_isEditing ? 'Save' : 'Create grade'),
+                      : Text(
+                          _isEditing
+                              ? l.teacherGradesSave
+                              : l.teacherGradesCreate,
+                        ),
                 ),
               ),
               if (_isEditing) ...[
@@ -709,7 +726,7 @@ class _GradeFormSheetState extends State<_GradeFormSheet> {
                   child: TextButton.icon(
                     onPressed: _saving ? null : _confirmDelete,
                     icon: Icon(Icons.delete_outline, color: AppColors.error),
-                    label: Text('Delete grade',
+                    label: Text(l.teacherGradesDelete,
                         style: TextStyle(color: AppColors.error)),
                   ),
                 ),
@@ -721,30 +738,34 @@ class _GradeFormSheetState extends State<_GradeFormSheet> {
     );
   }
 
-  String? _buildLetterHint() {
+  String? _buildLetterHint(AppLocalizations l) {
     final text = _scoreController.text.trim();
     if (text.isEmpty) return null;
     final n = num.tryParse(text);
     if (n == null || n < 0 || n > 100) return null;
-    return 'Letter grade: ${GradeUtils.letterGradeFor(n)}';
+    return l.teacherGradesLetterHint(GradeUtils.letterGradeFor(n));
   }
 
   Future<void> _confirmDelete() async {
+    final l = context.l10n;
     final navigator = Navigator.of(context);
     final firestore = context.read<FirestoreService>();
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete grade?'),
-        content: const Text('This removes the grade for this student.'),
+        title: Text(l.teacherGradesDeleteTitle),
+        content: Text(l.teacherGradesDeleteBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(l.commonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text('Delete', style: TextStyle(color: AppColors.error)),
+            child: Text(
+              l.teacherAttDelete,
+              style: TextStyle(color: AppColors.error),
+            ),
           ),
         ],
       ),

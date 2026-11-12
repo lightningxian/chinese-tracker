@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../l10n/l10n.dart';
 import '../../models/exercise.dart';
 import '../../models/question_bank_item.dart';
 import '../../services/firestore_service.dart';
@@ -13,6 +14,7 @@ Future<void> showQuestionBankHarvestFromExercises(
   required List<QuestionBankItem> existingBank,
 }) async {
   final firestore = context.read<FirestoreService>();
+  final l = context.l10n;
 
   if (!context.mounted) return;
   showDialog<void>(
@@ -28,7 +30,7 @@ Future<void> showQuestionBankHarvestFromExercises(
     if (context.mounted) Navigator.pop(context);
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not load exercises: $e')),
+        SnackBar(content: Text(l.bankHarvestCouldNotLoad('$e'))),
       );
     }
     return;
@@ -59,11 +61,7 @@ Future<void> showQuestionBankHarvestFromExercises(
 
   if (deduped.novel.isEmpty) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'No new questions — ${deduped.skipped} already in the bank.',
-        ),
-      ),
+      SnackBar(content: Text(l.bankHarvestNoNew(deduped.skipped))),
     );
     return;
   }
@@ -71,19 +69,16 @@ Future<void> showQuestionBankHarvestFromExercises(
   final ok = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: const Text('Import from exercises'),
-      content: Text(
-        'Found ${deduped.novel.length} new question(s).\n'
-        '${deduped.skipped} already in the bank (skipped).',
-      ),
+      title: Text(l.bankHarvestTitle),
+      content: Text(l.bankHarvestFound(deduped.novel.length, deduped.skipped)),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Cancel'),
+          child: Text(l.commonCancel),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(ctx, true),
-          child: Text('Import ${deduped.novel.length}'),
+          child: Text(l.bankHarvestImportCount(deduped.novel.length)),
         ),
       ],
     ),
@@ -95,15 +90,12 @@ Future<void> showQuestionBankHarvestFromExercises(
     await firestore.addQuestionBankItems(deduped.novel);
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-            'Imported ${deduped.novel.length} question(s) from exercises.'),
-      ),
+      SnackBar(content: Text(l.bankHarvestImported(deduped.novel.length))),
     );
   } catch (e) {
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Import failed: $e')),
+      SnackBar(content: Text(l.worksheetImportFailed('$e'))),
     );
   }
 }

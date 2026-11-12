@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../l10n/l10n.dart';
+import '../../l10n/labels_reports.dart';
 import '../../models/cohort_report_models.dart';
 import '../../models/teacher_dashboard_stat_kind.dart';
 import '../../services/admin_report_export_service.dart';
@@ -96,11 +98,12 @@ class _StudentRosterListState extends State<StudentRosterList> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     if (widget.students.isEmpty) {
-      return const EmptyState(
+      return EmptyState(
         icon: Icons.people_outline,
-        title: 'No students yet',
-        subtitle: 'Students appear here after they register in the app.',
+        title: l.cohortNoStudentsTitle,
+        subtitle: l.cohortNoStudentsSubtitle,
       );
     }
 
@@ -127,7 +130,7 @@ class _StudentRosterListState extends State<StudentRosterList> {
               padding: const EdgeInsets.symmetric(vertical: 32),
               child: Center(
                 child: Text(
-                  'No students match this search.',
+                  l.cohortNoMatch,
                   style: TextStyle(color: AppColors.textSecondary),
                 ),
               ),
@@ -143,14 +146,14 @@ class _StudentRosterListState extends State<StudentRosterList> {
               columns: [
                 AppTableColumn(
                   id: 'name',
-                  label: 'Student',
+                  label: l.commonStudent,
                   flex: 3,
                   sortable: true,
                   cell: (s) => _StudentIdentity(student: s),
                 ),
                 AppTableColumn(
                   id: 'level',
-                  label: 'Level',
+                  label: l.cohortLevel,
                   width: 90,
                   sortable: true,
                   cell: (s) =>
@@ -158,17 +161,17 @@ class _StudentRosterListState extends State<StudentRosterList> {
                 ),
                 AppTableColumn(
                   id: 'term',
-                  label: 'This term',
+                  label: l.cohortThisTerm,
                   width: 120,
                   cell: (s) => Text(s.termProgressLabel,
                       style: const TextStyle(fontSize: 13)),
                 ),
                 AppTableColumn(
                   id: 'homework',
-                  label: 'Homework',
+                  label: l.cohortHomework,
                   flex: 2,
                   cell: (s) => Text(
-                    s.homeworkLabel,
+                    s.homeworkLocalized(l),
                     style: TextStyle(
                       fontSize: 13,
                       color: s.homeworkOverdue > 0
@@ -182,7 +185,7 @@ class _StudentRosterListState extends State<StudentRosterList> {
                 ),
                 AppTableColumn(
                   id: 'quiz',
-                  label: 'Quiz avg',
+                  label: l.cohortQuizAvg,
                   width: 90,
                   sortable: true,
                   alignment: Alignment.centerRight,
@@ -195,18 +198,18 @@ class _StudentRosterListState extends State<StudentRosterList> {
                 ),
                 AppTableColumn(
                   id: 'sessions',
-                  label: 'Sessions left',
+                  label: l.cohortSessionsLeft,
                   width: 120,
                   sortable: true,
                   cell: (s) => _SessionsPill(remaining: s.sessionsRemaining),
                 ),
                 AppTableColumn(
                   id: 'active',
-                  label: 'Last active',
+                  label: l.cohortLastActive,
                   width: 100,
                   sortable: true,
                   cell: (s) => Text(
-                    s.lastActivityLabel,
+                    s.lastActivityLocalized(l),
                     style:
                         TextStyle(fontSize: 13, color: AppColors.textSecondary),
                   ),
@@ -253,9 +256,12 @@ class _RosterToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final summary = StringBuffer('$total student${total == 1 ? '' : 's'}');
-    if (shown != total) summary.write(' · $shown shown');
-    if (attention > 0) summary.write(' · $attention need attention');
+    final l = context.l10n;
+    final summary = StringBuffer(l.cohortStudentCount(total));
+    if (shown != total) summary.write(' · ${l.cohortShownCount(shown)}');
+    if (attention > 0) {
+      summary.write(' · ${l.cohortNeedAttentionCount(attention)}');
+    }
 
     return Wrap(
       spacing: 12,
@@ -266,12 +272,12 @@ class _RosterToolbar extends StatelessWidget {
           width: 260,
           child: TextField(
             onChanged: onQuery,
-            decoration: const InputDecoration(
-              hintText: 'Search students',
-              prefixIcon: Icon(Icons.search, size: 20),
+            decoration: InputDecoration(
+              hintText: l.cohortSearchStudents,
+              prefixIcon: const Icon(Icons.search, size: 20),
               isDense: true,
               contentPadding:
-                  EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             ),
           ),
         ),
@@ -280,7 +286,7 @@ class _RosterToolbar extends StatelessWidget {
             spacing: 6,
             children: [
               ChoiceChip(
-                label: const Text('All levels'),
+                label: Text(l.cohortAllLevels),
                 selected: selectedLevel == null,
                 onSelected: (_) => onLevel(null),
               ),
@@ -366,7 +372,7 @@ class _SessionsPill extends StatelessWidget {
         : remaining <= 2
             ? AppColors.chipAmberFg
             : AppColors.success;
-    return StatusPill(label: '$remaining left', color: color);
+    return StatusPill(label: context.l10n.historyRemaining(remaining), color: color);
   }
 }
 
@@ -380,11 +386,13 @@ class _StudentRosterCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final detail = <String>[
       student.termProgressLabel,
-      student.homeworkLabel,
-      if (student.avgQuizScore != null) 'Quiz ${student.avgQuizScore}%',
-      student.lastActivityLabel,
+      student.homeworkLocalized(l),
+      if (student.avgQuizScore != null)
+        l.cohortQuizPercent(student.avgQuizScore!),
+      student.lastActivityLocalized(l),
     ].join(' · ');
     return AppCard(
       onTap: onTap,
@@ -420,12 +428,13 @@ class CohortStatsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Centre statistics',
+            l.cohortCentreStatistics,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: AppColors.navy,
@@ -441,7 +450,7 @@ class CohortStatsGrid extends StatelessWidget {
                 gap: 10,
                 children: [
                   _StatTile(
-                    label: 'Homework done',
+                    label: l.cohortHomeworkDone,
                     value: '${stats.homeworkCompletionPercent}%',
                     color: AppColors.teal,
                     onTap: onStatTap == null
@@ -451,7 +460,7 @@ class CohortStatsGrid extends StatelessWidget {
                             ),
                   ),
                   _StatTile(
-                    label: 'Overdue',
+                    label: l.cohortOverdue,
                     value: '${stats.overdueAssignments}',
                     color: stats.overdueAssignments > 0
                         ? AppColors.error
@@ -461,7 +470,7 @@ class CohortStatsGrid extends StatelessWidget {
                         : () => onStatTap!(TeacherDashboardStatKind.overdue),
                   ),
                   _StatTile(
-                    label: 'Avg quiz',
+                    label: l.cohortAvgQuiz,
                     value: stats.avgQuizScore != null
                         ? '${stats.avgQuizScore}%'
                         : '—',
@@ -471,7 +480,7 @@ class CohortStatsGrid extends StatelessWidget {
                         : () => onStatTap!(TeacherDashboardStatKind.avgQuiz),
                   ),
                   _StatTile(
-                    label: 'Avg practice',
+                    label: l.cohortAvgPractice,
                     value: stats.avgPracticeScore != null
                         ? '${stats.avgPracticeScore}%'
                         : '—',
@@ -482,7 +491,7 @@ class CohortStatsGrid extends StatelessWidget {
                             onStatTap!(TeacherDashboardStatKind.avgPractice),
                   ),
                   _StatTile(
-                    label: 'Sessions left',
+                    label: l.cohortSessionsLeft,
                     value: '${stats.totalSessionsRemaining}',
                     color: AppColors.teal,
                     onTap: onStatTap == null
@@ -491,7 +500,7 @@ class CohortStatsGrid extends StatelessWidget {
                             onStatTap!(TeacherDashboardStatKind.sessionsLeft),
                   ),
                   _StatTile(
-                    label: 'Classes this week',
+                    label: l.cohortClassesThisWeek,
                     value: '${stats.classesThisWeek}',
                     color: AppColors.navy,
                     onTap: onStatTap == null
@@ -501,7 +510,7 @@ class CohortStatsGrid extends StatelessWidget {
                             ),
                   ),
                   _StatTile(
-                    label: 'Need attention',
+                    label: l.cohortNeedAttention,
                     value: '${stats.studentsNeedingAttention}',
                     color: stats.studentsNeedingAttention > 0
                         ? AppColors.error
@@ -512,7 +521,7 @@ class CohortStatsGrid extends StatelessWidget {
                             onStatTap!(TeacherDashboardStatKind.needAttention),
                   ),
                   _StatTile(
-                    label: 'Students',
+                    label: l.cohortStudents,
                     value: '${stats.totalStudents}',
                     color: AppColors.navy,
                     onTap: onStatTap == null
@@ -618,6 +627,7 @@ class CohortExportActions extends StatelessWidget {
   }
 
   Future<void> _exportCsv(BuildContext context) async {
+    final l = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
     try {
       final service = context.read<CohortReportService>();
@@ -629,14 +639,12 @@ class CohortExportActions extends StatelessWidget {
       try {
         file_download.downloadTextFile(filename, csv);
         messenger.showSnackBar(
-          const SnackBar(content: Text('Roster CSV downloaded')),
+          SnackBar(content: Text(l.cohortRosterCsvDownloaded)),
         );
       } on UnsupportedError {
         await Clipboard.setData(ClipboardData(text: csv));
         messenger.showSnackBar(
-          const SnackBar(
-            content: Text('Roster CSV copied to clipboard'),
-          ),
+          SnackBar(content: Text(l.cohortRosterCsvCopied)),
         );
       }
     } catch (e) {
@@ -667,6 +675,7 @@ class CohortExportActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final firestore = context.read<FirestoreService>();
 
     return StreamBuilder(
@@ -689,7 +698,7 @@ class CohortExportActions extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Reports',
+                      l.adminReportsTitle,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w700,
                             color: AppColors.navy,
@@ -697,7 +706,7 @@ class CohortExportActions extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Export centre summaries and worksheet inventory for your records.',
+                      l.cohortReportsSubtitle,
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 13,
@@ -708,36 +717,34 @@ class CohortExportActions extends StatelessWidget {
                       width: constraints.maxWidth,
                       children: [
                         ExportReportCard(
-                          title: 'Centre summary',
-                          description:
-                              'Homework completion, quiz averages, sessions '
-                              'remaining, and students needing attention.',
+                          title: l.cohortCentreSummary,
+                          description: l.cohortCentreSummaryDesc,
                           preview: [
-                            'Students tracked: $studentCount',
-                            'Worksheets published: ${worksheetReport.totalExercises}',
+                            l.cohortStudentsTracked(studentCount),
+                            l.cohortWorksheetsPublished(
+                              worksheetReport.totalExercises,
+                            ),
                           ],
                           onExport: () => _exportPdf(context),
                         ),
                         ExportReportCard(
-                          title: 'Student roster',
-                          description:
-                              'Full student list with progress, homework, and '
-                              'session balance. Spreadsheet export.',
+                          title: l.cohortStudentRoster,
+                          description: l.cohortStudentRosterDesc,
                           preview: [
-                            'Students: $studentCount',
-                            'Columns: level, homework, quiz, sessions',
+                            l.cohortStudentsPreview(studentCount),
+                            l.cohortColumnsPreview,
                           ],
-                          exportLabel: 'Export CSV',
+                          exportLabel: l.tableToolsExportCsv,
                           exportIcon: Icons.table_chart_outlined,
                           onExport: () => _exportCsv(context),
                         ),
                         ExportReportCard(
-                          title: 'Worksheet inventory',
-                          description:
-                              'All practice worksheets produced, grouped by HSK '
-                              'level and skill section (Reading, Listening, etc.).',
+                          title: l.adminReportsWorksheetInventoryTitle,
+                          description: l.cohortWorksheetInventoryDesc,
                           preview: [
-                            'Total worksheets: ${worksheetReport.totalWorksheets}',
+                            l.cohortTotalWorksheets(
+                              worksheetReport.totalWorksheets,
+                            ),
                             ...worksheetReport.worksheetInventory.take(3).map(
                                   (row) => row.skillSummary.isEmpty
                                       ? '${row.hskLevel}: ${row.total}'

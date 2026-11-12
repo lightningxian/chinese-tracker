@@ -60,7 +60,7 @@ retake" and "P6 Admin screen to edit weights" are superseded by the table above.
 | 12 | Admin: registration approval with placement choice | Nothing (accounts are active at once) | Build (Phase 1) |
 | 13 | Admin: promotion verification "HSK 3 → HSK 4" with 3 passed codes | Nothing | Build (Phase 6) |
 | 14 | Admin dashboard: pending registrations, unconfirmed schedules, late check-ins, unclosed sessions, students needing attention | Dashboard with totals, sign-ups, voucher alerts, finance | Rework after Phases 1–3 exist |
-| 15 | Admin: Pembayaran with lunas / pending / expire | Invoices tab with pending / paid / expired / failed (English) | Indonesian labels + filters (Phase 4) |
+| 15 | Admin: Pembayaran with lunas / pending / expire | Invoices tab with Lunas / Menunggu / Kedaluwarsa / Gagal filters (Indonesian since 2026-11-12) | Done for the labels; Phase 4 filters as spec |
 
 Roughly: 2 screens exist in a usable form, 5 exist partly, 8 don't exist. Taking
 the 15 screenshots means building most of the Phase 1–7 UI first, on emulator
@@ -107,7 +107,7 @@ Ordered by seriousness.
 |---|---|---|---|
 | Roles | admin, guru, murid | also **parent** (Orang Tua): optional add-on linked by the child code; sees the child's history and scores and may pay the child's invoices (2026-11-11) | Kept (owner decision) |
 | Scope | no materials, no online/video classes | Materials library; class `mode` online/hybrid | Keep as-is (not described in thesis), or remove |
-| Language | all UI text Indonesian | all English, no translation setup | Indonesian only · Indonesian + English switch · stay English |
+| Language | all UI text Indonesian | Indonesian + English switch on every screen since 2026-11-12 (`lib/l10n/`); owner chose the switch over Indonesian-only | Decided: Indonesian + English switch |
 | Functions | TypeScript | JavaScript (9 working functions) | New functions in TS alongside, convert old ones later · stay JS |
 | Architecture | MVVM with ViewModels | widgets call `FirestoreService` directly (48 files, ~98 StreamBuilders) | New and rebuilt screens get ViewModels; old ones migrate as the redesign touches them |
 | Teacher sign-up | admin creates teachers | self-registration allowed | Close self-registration (recommended, see §2.1) |

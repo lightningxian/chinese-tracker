@@ -12,6 +12,8 @@ import '../../core/widgets/cohort_stats_widgets.dart';
 import '../../core/widgets/responsive_card_grid.dart';
 import '../../core/widgets/teacher_activity_widgets.dart';
 import '../admin/admin_dashboard_widgets.dart';
+import '../../l10n/l10n.dart';
+import '../../l10n/labels_classes.dart';
 import '../../models/app_user.dart';
 import '../../models/attendance_record.dart';
 import '../../models/class_session.dart';
@@ -56,6 +58,7 @@ class TeacherDashboardTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final firestore = context.read<FirestoreService>();
     final teacher = context.watch<AuthService>().appUser;
     // Per-teacher content model via contentOwnerFor (same key students use).
@@ -72,11 +75,10 @@ class TeacherDashboardTab extends StatelessWidget {
 
         final students = studentsSnap.data ?? [];
         if (students.isEmpty) {
-          return const EmptyState(
+          return EmptyState(
             icon: Icons.school_outlined,
-            title: 'No demo data yet',
-            subtitle: 'Run scripts/seed_test_accounts.sh then '
-                'python3 scripts/seed_report_demo_data.py',
+            title: l.teacherDashNoDemoTitle,
+            subtitle: l.teacherDashNoDemoSubtitle,
           );
         }
 
@@ -170,6 +172,7 @@ class TeacherDashboardTab extends StatelessWidget {
 
                                         final activityFeed =
                                             TeacherActivityUtils.buildFeed(
+                                          l: l,
                                           students: students,
                                           progress: allProgress,
                                           assignments: assignments,
@@ -201,7 +204,7 @@ class TeacherDashboardTab extends StatelessWidget {
                                           padding: const EdgeInsets.all(20),
                                           children: [
                                             Text(
-                                              'Dashboard',
+                                              l.teacherShellNavDashboard,
                                               style: Theme.of(context)
                                                   .textTheme
                                                   .headlineSmall
@@ -236,10 +239,10 @@ class TeacherDashboardTab extends StatelessWidget {
                                                     ),
                                                   ),
                                                   const SizedBox(width: 12),
-                                                  const Expanded(
+                                                  Expanded(
                                                     child: Text(
-                                                      'View class calendar',
-                                                      style: TextStyle(
+                                                      l.commonViewClassCalendar,
+                                                      style: const TextStyle(
                                                         fontWeight:
                                                             FontWeight.w600,
                                                         fontSize: 15,
@@ -291,10 +294,11 @@ class TeacherDashboardTab extends StatelessWidget {
                                                         ),
                                                       ),
                                                       const SizedBox(width: 12),
-                                                      const Expanded(
+                                                      Expanded(
                                                         child: Text(
-                                                          'Gradebook',
-                                                          style: TextStyle(
+                                                          l.teacherDashGradebook,
+                                                          style:
+                                                              const TextStyle(
                                                             fontWeight:
                                                                 FontWeight.w600,
                                                             fontSize: 15,
@@ -321,7 +325,8 @@ class TeacherDashboardTab extends StatelessWidget {
                                                                         20),
                                                           ),
                                                           child: Text(
-                                                            '$pending pending',
+                                                            l.teacherDashPendingCount(
+                                                                pending),
                                                             style: TextStyle(
                                                               color: AppColors
                                                                   .navy,
@@ -371,10 +376,10 @@ class TeacherDashboardTab extends StatelessWidget {
                                                     ),
                                                   ),
                                                   const SizedBox(width: 12),
-                                                  const Expanded(
+                                                  Expanded(
                                                     child: Text(
-                                                      'Materials',
-                                                      style: TextStyle(
+                                                      l.studentHomeQuickMaterials,
+                                                      style: const TextStyle(
                                                         fontWeight:
                                                             FontWeight.w600,
                                                         fontSize: 15,
@@ -398,7 +403,8 @@ class TeacherDashboardTab extends StatelessWidget {
                                                   maxColumns: 2,
                                                   children: [
                                                     AdminStatCard(
-                                                      label: 'Students',
+                                                      label: l
+                                                          .teacherShellNavStudents,
                                                       value:
                                                           '${students.length}',
                                                       icon:
@@ -412,7 +418,8 @@ class TeacherDashboardTab extends StatelessWidget {
                                                       ),
                                                     ),
                                                     AdminStatCard(
-                                                      label: 'Active this week',
+                                                      label: l
+                                                          .teacherDashActiveThisWeek,
                                                       value: '$activeThisWeek',
                                                       icon: Icons.trending_up,
                                                       color: AppColors.teal,
@@ -453,16 +460,17 @@ class TeacherDashboardTab extends StatelessWidget {
                                               ),
                                             ),
                                             const SizedBox(height: 24),
-                                            const SectionHeader(
-                                              title: 'Needs attention',
+                                            SectionHeader(
+                                              title:
+                                                  l.teacherDashNeedsAttention,
                                             ),
                                             if (attentionItems.isEmpty)
-                                              const EmptyState(
+                                              EmptyState(
                                                 icon:
                                                     Icons.check_circle_outline,
-                                                title: 'All caught up',
+                                                title: l.teacherDashAllCaughtUp,
                                                 subtitle:
-                                                    'No students need follow-up right now.',
+                                                    l.teacherDashNoFollowUp,
                                               )
                                             else
                                               LayoutBuilder(
@@ -505,7 +513,8 @@ class TeacherDashboardTab extends StatelessWidget {
                                                               ),
                                                               Expanded(
                                                                 child: Text(
-                                                                  item.message,
+                                                                  item.localizedMessage(
+                                                                      l),
                                                                   style:
                                                                       const TextStyle(
                                                                     fontWeight:
@@ -532,15 +541,17 @@ class TeacherDashboardTab extends StatelessWidget {
                                               events: activityFeed,
                                             ),
                                             const SizedBox(height: 24),
-                                            const SectionHeader(
-                                              title: 'Recent students',
+                                            SectionHeader(
+                                              title:
+                                                  l.teacherDashRecentStudents,
                                             ),
                                             if (recentStudents.isEmpty)
-                                              const EmptyState(
+                                              EmptyState(
                                                 icon: Icons.people_outline,
-                                                title: 'No students yet',
-                                                subtitle:
-                                                    'Students appear here after they register.',
+                                                title: l
+                                                    .teacherDashNoStudentsTitle,
+                                                subtitle: l
+                                                    .teacherDashNoStudentsSubtitle,
                                               )
                                             else
                                               LayoutBuilder(
@@ -608,7 +619,7 @@ class TeacherDashboardTab extends StatelessWidget {
                                                                     ),
                                                                     Text(
                                                                       student.level ??
-                                                                          'Student',
+                                                                          l.commonStudent,
                                                                       style:
                                                                           TextStyle(
                                                                         color: AppColors
@@ -635,9 +646,7 @@ class TeacherDashboardTab extends StatelessWidget {
                                               const SizedBox(height: 16),
                                               AppCard(
                                                 child: Text(
-                                                  'No demo data yet — run '
-                                                  'scripts/seed_test_accounts.sh '
-                                                  'then python3 scripts/seed_report_demo_data.py',
+                                                  l.studentLessonsNoDemoData,
                                                   style: TextStyle(
                                                     color:
                                                         AppColors.textSecondary,

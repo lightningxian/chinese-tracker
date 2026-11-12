@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../l10n/l10n.dart';
 import '../../../models/worksheet_import_stage.dart';
 
 /// Modal progress while a worksheet is uploaded and processed.
@@ -53,15 +54,28 @@ class _WorksheetImportProgressDialogState
     );
   }
 
+  static String _stageLabel(AppLocalizations l, WorksheetImportStage stage) =>
+      switch (stage.stepIndex) {
+        0 => l.worksheetStagePreparing,
+        1 => l.worksheetStageReading,
+        2 => l.worksheetStageDetecting,
+        _ => l.worksheetStageDone,
+      };
+
   Widget _buildDialog(WorksheetImportStage stage) {
-    final activeStep =
-        stage.stepIndex.clamp(0, WorksheetImportStage.steps.length - 1);
+    final l = context.l10n;
+    final steps = [
+      l.worksheetStepPrepare,
+      l.worksheetStepRead,
+      l.worksheetStepDetect,
+    ];
+    final activeStep = stage.stepIndex.clamp(0, steps.length - 1);
     final fraction = stage.progress.clamp(0.0, 1.0);
     final elapsed = _stopwatch.elapsed;
-    final timing = _timingLine(fraction, elapsed);
+    final timing = _timingLine(l, fraction, elapsed);
 
     return AlertDialog(
-      title: const Text('Importing worksheet'),
+      title: Text(l.worksheetImporting),
       content: SizedBox(
         width: double.maxFinite,
         child: Column(
@@ -114,7 +128,7 @@ class _WorksheetImportProgressDialogState
             ),
             const SizedBox(height: 12),
             Text(
-              stage.label,
+              _stageLabel(l, stage),
               style: TextStyle(
                 color: AppColors.navy,
                 fontWeight: FontWeight.w600,
@@ -131,7 +145,7 @@ class _WorksheetImportProgressDialogState
               ),
             ],
             const SizedBox(height: 16),
-            ...List.generate(WorksheetImportStage.steps.length, (index) {
+            ...List.generate(steps.length, (index) {
               final done = index < activeStep;
               final active = index == activeStep;
               final icon = done
@@ -153,7 +167,7 @@ class _WorksheetImportProgressDialogState
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        WorksheetImportStage.steps[index],
+                        steps[index],
                         style: TextStyle(
                           color: color,
                           fontWeight:
@@ -168,9 +182,7 @@ class _WorksheetImportProgressDialogState
             }),
             const SizedBox(height: 8),
             Text(
-              'Text PDFs and Word files take a few seconds. Scanned pages and '
-              'photos take 20–40 seconds each; the first scan also downloads '
-              'the Chinese OCR data (about 15 MB).',
+              l.worksheetTimingNote,
               style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
             ),
           ],
@@ -182,23 +194,28 @@ class _WorksheetImportProgressDialogState
   /// "Elapsed 0:14 · about 20 s left". The estimate assumes the remaining
   /// work runs at the average speed so far, so it is only shown once there is
   /// enough progress to go on.
-  static String _timingLine(double fraction, Duration elapsed) {
-    final buffer = StringBuffer('Elapsed ${_clock(elapsed)}');
+  static String _timingLine(
+    AppLocalizations l,
+    double fraction,
+    Duration elapsed,
+  ) {
+    final buffer = StringBuffer(l.worksheetElapsed(_clock(elapsed)));
     if (fraction >= 0.995) return buffer.toString();
     if (elapsed.inSeconds < 3 || fraction < 0.12) {
-      buffer.write(' · estimating time left…');
+      buffer.write(' · ${l.worksheetEstimating}');
       return buffer.toString();
     }
     final remaining = elapsed.inMilliseconds * (1 - fraction) / fraction;
     final seconds = (remaining / 1000).ceil();
     if (seconds <= 5) {
-      buffer.write(' · almost done');
+      buffer.write(' · ${l.worksheetAlmostDone}');
     } else if (seconds < 60) {
-      buffer.write(' · about ${((seconds + 4) ~/ 5) * 5} s left');
+      buffer
+          .write(' · ${l.worksheetAboutSecondsLeft(((seconds + 4) ~/ 5) * 5)}');
     } else if (seconds < 180) {
-      buffer.write(' · about ${(seconds / 60).ceil()} min left');
+      buffer.write(' · ${l.worksheetAboutMinutesLeft((seconds / 60).ceil())}');
     } else {
-      buffer.write(' · a few minutes left');
+      buffer.write(' · ${l.worksheetFewMinutesLeft}');
     }
     return buffer.toString();
   }

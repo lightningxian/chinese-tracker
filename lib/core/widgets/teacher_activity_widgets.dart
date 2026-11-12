@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../l10n/l10n.dart';
 import '../theme/app_theme.dart';
-import '../utils/exercise_utils.dart';
 import '../../models/teacher_activity_event.dart';
 import 'app_card.dart';
+import 'exercise_widgets.dart';
 import 'status_pill.dart';
 
 class WeeklyActivityChart extends StatelessWidget {
@@ -21,6 +22,7 @@ class WeeklyActivityChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (days.isEmpty) return const SizedBox.shrink();
+    final l = context.l10n;
 
     final maxCount = days.fold<int>(
       1,
@@ -33,7 +35,7 @@ class WeeklyActivityChart extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Activity this week',
+            l.teacherActivityThisWeek,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: AppColors.navy,
@@ -44,7 +46,7 @@ class WeeklyActivityChart extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Lesson completions and practice submissions',
+                  l.teacherActivityThisWeekSubtitle,
                   style:
                       TextStyle(color: AppColors.textSecondary, fontSize: 13),
                 ),
@@ -132,6 +134,7 @@ class HomeworkOverviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return AppCard(
       onTap: onTap,
       child: Column(
@@ -141,7 +144,7 @@ class HomeworkOverviewCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Homework overview',
+                  l.teacherActivityHomeworkOverview,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: AppColors.navy,
@@ -157,7 +160,7 @@ class HomeworkOverviewCard extends StatelessWidget {
                         context: context,
                         overview: overview,
                       ),
-                      child: const Text('Quick view'),
+                      child: Text(l.teacherActivityQuickView),
                     ),
                     if (onTap != null)
                       Icon(
@@ -171,7 +174,7 @@ class HomeworkOverviewCard extends StatelessWidget {
           const SizedBox(height: 8),
           if (overview.totalAssigned == 0)
             Text(
-              'No homework assigned yet. Assign practice from the Exercises tab.',
+              l.teacherActivityNoHomeworkAssign,
               style: TextStyle(color: AppColors.textSecondary, height: 1.4),
             )
           else ...[
@@ -180,23 +183,26 @@ class HomeworkOverviewCard extends StatelessWidget {
               runSpacing: 8,
               children: [
                 StatusPill(
-                  label: '${overview.pending} to do',
+                  label: l.teacherActivityToDo(overview.pending),
                   color: AppColors.teal,
                 ),
                 if (overview.overdue > 0)
                   StatusPill(
-                    label: '${overview.overdue} overdue',
+                    label: l.teacherActivityOverdueCount(overview.overdue),
                     color: AppColors.error,
                   ),
                 StatusPill(
-                  label: '${overview.completed} done',
+                  label: l.teacherActivityDoneCount(overview.completed),
                   color: AppColors.success,
                 ),
               ],
             ),
             const SizedBox(height: 8),
             Text(
-              '${overview.completed}/${overview.totalAssigned} assignments completed',
+              l.teacherActivityAssignmentsCompleted(
+                overview.completed,
+                overview.totalAssigned,
+              ),
               style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 13,
@@ -253,6 +259,7 @@ Future<void> showClassHomeworkOverviewDialog({
   required BuildContext context,
   required HomeworkOverview overview,
 }) {
+  final l = context.l10n;
   return showDialog<void>(
     context: context,
     builder: (ctx) => AlertDialog(
@@ -260,17 +267,20 @@ Future<void> showClassHomeworkOverviewDialog({
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(color: AppColors.border),
       ),
-      title: const Text('Homework overview'),
+      title: Text(l.teacherActivityHomeworkOverview),
       content: SizedBox(
         width: double.maxFinite,
         child: overview.rows.isEmpty
-            ? const Text('No homework assigned yet.')
+            ? Text(l.teacherActivityNoHomework)
             : Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${overview.completed}/${overview.totalAssigned} completed',
+                    l.teacherActivityCompletedOf(
+                      overview.completed,
+                      overview.totalAssigned,
+                    ),
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       color: AppColors.teal,
@@ -299,7 +309,8 @@ Future<void> showClassHomeworkOverviewDialog({
                             [
                               row.exerciseTitle,
                               if (row.dueDate != null)
-                                ExerciseUtils.dueDateLabel(
+                                exerciseDueDateLabel(
+                                  l,
                                   row.dueDate,
                                   isOverdue: row.isOverdue,
                                 ),
@@ -320,7 +331,9 @@ Future<void> showClassHomeworkOverviewDialog({
                                   ),
                                 )
                               : StatusPill(
-                                  label: row.isOverdue ? 'Overdue' : 'Pending',
+                                  label: row.isOverdue
+                                      ? l.cohortOverdue
+                                      : l.teacherActivityPending,
                                   color: row.isOverdue
                                       ? AppColors.error
                                       : AppColors.textSecondary,
@@ -335,7 +348,7 @@ Future<void> showClassHomeworkOverviewDialog({
       actions: [
         FilledButton(
           onPressed: () => Navigator.pop(ctx),
-          child: const Text('Close'),
+          child: Text(l.teacherActivityClose),
         ),
       ],
     ),
@@ -377,12 +390,13 @@ class _TeacherActivityFeedState extends State<TeacherActivityFeed> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final filtered = _filtered;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionHeader(title: 'Recent activity'),
+        SectionHeader(title: l.teacherActivityRecent),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
@@ -391,7 +405,7 @@ class _TeacherActivityFeedState extends State<TeacherActivityFeed> {
               return Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: FilterChip(
-                  label: Text(_filterLabel(filter)),
+                  label: Text(_filterLabel(l, filter)),
                   selected: selected,
                   onSelected: (_) => setState(() => _filter = filter),
                   selectedColor: AppColors.teal.withValues(alpha: 0.15),
@@ -409,7 +423,7 @@ class _TeacherActivityFeedState extends State<TeacherActivityFeed> {
         if (filtered.isEmpty)
           AppCard(
             child: Text(
-              'No recent activity for this filter.',
+              l.teacherActivityNoRecent,
               style: TextStyle(color: AppColors.textSecondary),
             ),
           )
@@ -465,7 +479,7 @@ class _TeacherActivityFeedState extends State<TeacherActivityFeed> {
                           ],
                           const SizedBox(height: 4),
                           Text(
-                            _formatWhen(event.occurredAt),
+                            _formatWhen(l, event.occurredAt),
                             style: TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 12,
@@ -488,12 +502,12 @@ class _TeacherActivityFeedState extends State<TeacherActivityFeed> {
     );
   }
 
-  static String _filterLabel(TeacherActivityFilter filter) {
+  static String _filterLabel(AppLocalizations l, TeacherActivityFilter filter) {
     return switch (filter) {
-      TeacherActivityFilter.all => 'All',
-      TeacherActivityFilter.practice => 'Practice',
-      TeacherActivityFilter.lessons => 'Lessons',
-      TeacherActivityFilter.classes => 'Classes',
+      TeacherActivityFilter.all => l.teacherActivityFilterAll,
+      TeacherActivityFilter.practice => l.parentOverviewPractice,
+      TeacherActivityFilter.lessons => l.studentProgressLessons,
+      TeacherActivityFilter.classes => l.adminReportsClasses,
     };
   }
 
@@ -521,13 +535,13 @@ class _TeacherActivityFeedState extends State<TeacherActivityFeed> {
     };
   }
 
-  static String _formatWhen(DateTime at) {
+  static String _formatWhen(AppLocalizations l, DateTime at) {
     final now = DateTime.now();
     final diff = now.difference(at);
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inHours < 1) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    if (diff.inDays < 7) return '${diff.inDays}d ago';
+    if (diff.inMinutes < 1) return l.teacherActivityJustNow;
+    if (diff.inHours < 1) return l.teacherActivityMinutesAgo(diff.inMinutes);
+    if (diff.inHours < 24) return l.teacherActivityHoursAgo(diff.inHours);
+    if (diff.inDays < 7) return l.teacherActivityDaysAgo(diff.inDays);
     return DateFormat('d MMM yyyy').format(at);
   }
 }

@@ -8,6 +8,8 @@ import '../../core/widgets/app_card.dart';
 import '../../core/widgets/app_data_table.dart';
 import '../../core/widgets/table_tools.dart';
 import '../../core/widgets/status_pill.dart';
+import '../../l10n/l10n.dart';
+import '../../l10n/labels_admin.dart';
 import '../../models/app_user.dart';
 import '../../models/invoice.dart';
 import '../../models/student_class_term.dart';
@@ -39,15 +41,21 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
     return inv.isPaid ? _PaymentState.paid : _PaymentState.pending;
   }
 
-  (String label, Color color) _paymentLabel(StudentClassTerm term) {
+  (String label, Color color) _paymentLabel(
+    AppLocalizations l,
+    StudentClassTerm term,
+  ) {
     final inv = _invoicesById[term.sourceInvoiceId];
     return switch (_paymentState(term)) {
       _PaymentState.paid => (
-          'Paid${inv?.paidAt != null ? ' · ${DateFormat('d MMM').format(inv!.paidAt!)}' : ''}',
+          '${l.adminInvoicesStatusPaid}${inv?.paidAt != null ? ' · ${DateFormat('d MMM').format(inv!.paidAt!)}' : ''}',
           AppColors.success,
         ),
-      _PaymentState.pending => ('Pending payment', AppColors.brandYellow),
-      _PaymentState.none => ('No payment', AppColors.error),
+      _PaymentState.pending => (
+          l.adminVouchersPendingPayment,
+          AppColors.brandYellow,
+        ),
+      _PaymentState.none => (l.adminVouchersNoPayment, AppColors.error),
     };
   }
 
@@ -126,19 +134,23 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
 
   static const _horizontalPadding = 20.0;
 
-  static const _csvHeader = [
-    'Voucher',
-    'Student',
-    'Sessions',
-    'Used',
-    'Remaining',
-    'Start',
-    'Deadline',
-    'Status',
-    'Payment',
-  ];
+  List<String> _csvHeader(AppLocalizations l) => [
+        l.adminVouchersColVoucher,
+        l.commonStudent,
+        l.adminVouchersColSessions,
+        l.adminVouchersColUsed,
+        l.adminVouchersColRemaining,
+        l.adminVouchersColStart,
+        l.adminVouchersColDeadline,
+        l.profileWidgetStatus,
+        l.adminVouchersColPayment,
+      ];
 
-  List<Object?> _csvRow(StudentClassTerm t, Map<String, String> usersById) {
+  List<Object?> _csvRow(
+    AppLocalizations l,
+    StudentClassTerm t,
+    Map<String, String> usersById,
+  ) {
     final invoice = _invoicesById[t.sourceInvoiceId];
     return [
       t.voucherCode ?? '',
@@ -148,12 +160,12 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
       t.sessionsRemaining,
       t.startDate,
       t.deadlineDate,
-      t.voucherStatusLabel,
+      t.voucherStatusLocalized(l),
       !t.hasPayment
-          ? 'No payment'
+          ? l.adminVouchersNoPayment
           : invoice == null
-              ? 'Invoice missing'
-              : invoice.status.label,
+              ? l.adminVouchersInvoiceMissing
+              : invoice.status.localized(l),
     ];
   }
 
@@ -162,6 +174,7 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
     required List<StudentClassTerm> terms,
     required Map<String, String> usersById,
   }) {
+    final l = context.l10n;
     return AppDataTable<StudentClassTerm>(
       rows: _sorted(terms, usersById),
       columns: _buildColumns(context, usersById),
@@ -170,15 +183,15 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
       onSort: _onSort,
       mobileCardBuilder: (term) => _VoucherCard(
         term: term,
-        studentName: usersById[term.studentId] ?? 'Unknown student',
-        payment: _paymentLabel(term),
+        studentName: usersById[term.studentId] ?? l.adminVouchersUnknownStudent,
+        payment: _paymentLabel(l, term),
         statusColor: _statusColor(term.voucherStatusLabel),
         displayDate: _displayDate,
         onEdit: () => context.push('/admin/vouchers/${term.id}/edit'),
         onDelete: () => _confirmDelete(
           context,
           term,
-          usersById[term.studentId] ?? 'Unknown student',
+          usersById[term.studentId] ?? l.adminVouchersUnknownStudent,
         ),
       ),
     );
@@ -188,13 +201,14 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
     BuildContext context,
     Map<String, String> usersById,
   ) {
+    final l = context.l10n;
     final cellStyle = TextStyle(fontSize: 13, color: AppColors.textPrimary);
     final metaStyle = TextStyle(fontSize: 12, color: AppColors.textSecondary);
 
     return [
       AppTableColumn<StudentClassTerm>(
         id: 'code',
-        label: 'Voucher code',
+        label: l.adminVouchersVoucherCode,
         sortable: true,
         flex: 2,
         cell: (term) => Text(
@@ -212,11 +226,11 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
       ),
       AppTableColumn<StudentClassTerm>(
         id: 'student',
-        label: 'Student',
+        label: l.commonStudent,
         sortable: true,
         flex: 2,
         cell: (term) => Text(
-          usersById[term.studentId] ?? 'Unknown student',
+          usersById[term.studentId] ?? l.adminVouchersUnknownStudent,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: cellStyle,
@@ -224,11 +238,11 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
       ),
       AppTableColumn<StudentClassTerm>(
         id: 'package',
-        label: 'Package',
+        label: l.adminVouchersColPackage,
         sortable: true,
         width: 96,
         cell: (term) => Text(
-          '${term.packageSize} sessions',
+          l.termSessionsCount(term.packageSize),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: metaStyle,
@@ -236,7 +250,7 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
       ),
       AppTableColumn<StudentClassTerm>(
         id: 'remaining',
-        label: 'Sessions left',
+        label: l.studentHomeSessionsLeft,
         sortable: true,
         width: 110,
         cell: (term) => Text(
@@ -248,7 +262,7 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
       ),
       AppTableColumn<StudentClassTerm>(
         id: 'deadline',
-        label: 'Deadline',
+        label: l.adminVouchersColDeadline,
         sortable: true,
         width: 120,
         cell: (term) => Text(
@@ -260,27 +274,27 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
       ),
       AppTableColumn<StudentClassTerm>(
         id: 'status',
-        label: 'Status',
+        label: l.profileWidgetStatus,
         sortable: true,
         width: 100,
         cell: (term) => StatusPill(
-          label: term.voucherStatusLabel,
+          label: term.voucherStatusLocalized(l),
           color: _statusColor(term.voucherStatusLabel),
         ),
       ),
       AppTableColumn<StudentClassTerm>(
         id: 'payment',
-        label: 'Payment',
+        label: l.adminVouchersColPayment,
         sortable: true,
         width: 130,
         cell: (term) {
-          final (label, color) = _paymentLabel(term);
+          final (label, color) = _paymentLabel(l, term);
           return StatusPill(label: label, color: color);
         },
       ),
       AppTableColumn<StudentClassTerm>(
         id: 'actions',
-        label: 'Actions',
+        label: l.adminUsersColActions,
         width: 100,
         alignment: Alignment.centerRight,
         cell: (term) => Row(
@@ -288,18 +302,18 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
           children: [
             _VoucherIconAction(
               icon: Icons.edit_outlined,
-              tooltip: 'Edit voucher',
+              tooltip: l.adminVouchersEdit,
               onPressed: () => context.push('/admin/vouchers/${term.id}/edit'),
             ),
             const SizedBox(width: 10),
             _VoucherIconAction(
               icon: Icons.delete_outline,
-              tooltip: 'Delete voucher',
+              tooltip: l.adminVouchersDelete,
               color: AppColors.error,
               onPressed: () => _confirmDelete(
                 context,
                 term,
-                usersById[term.studentId] ?? 'Unknown student',
+                usersById[term.studentId] ?? l.adminVouchersUnknownStudent,
               ),
             ),
           ],
@@ -313,14 +327,13 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
     StudentClassTerm term,
     String studentName,
   ) async {
-    final code = term.voucherCode ?? 'this voucher';
+    final l = context.l10n;
+    final code = term.voucherCode ?? l.adminVouchersThisVoucher;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete voucher?'),
-        content: Text(
-          'Delete $code for $studentName? This cannot be undone.',
-        ),
+        title: Text(l.adminVouchersDeleteTitle),
+        content: Text(l.adminVouchersDeleteBody(code, studentName)),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
           side: BorderSide(color: AppColors.border),
@@ -328,12 +341,12 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Delete'),
+            child: Text(l.termDelete),
           ),
         ],
       ),
@@ -345,7 +358,7 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
       await context.read<FirestoreService>().deleteClassTerm(term.id);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Deleted $code')),
+          SnackBar(content: Text(l.adminVouchersDeleted(code))),
         );
       }
     } catch (e) {
@@ -395,6 +408,7 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
   ) {
     {
       {
+        final l = context.l10n;
         final usersById = <String, String>{
           for (final u in usersSnap.data ?? []) u.uid: u.name,
         };
@@ -406,12 +420,7 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: Text(
-                "A voucher is a student's paid term: 8 or 16 class sessions "
-                'with a start date and a deadline, always linked to a '
-                'payment (Payments tab). "Pending payment" means the '
-                'invoice is not settled yet; "No payment" is an older '
-                'voucher created before payments were linked. One session '
-                'is deducted each time a class is concluded.',
+                l.adminVouchersIntro,
                 style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 13,
@@ -423,7 +432,7 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
               controller: _searchController,
               onChanged: (value) => setState(() => _query = value),
               decoration: InputDecoration(
-                hintText: 'Search by code or student…',
+                hintText: l.adminVouchersSearchHint,
                 prefixIcon: const Icon(Icons.search, size: 20),
                 filled: true,
                 fillColor: AppColors.card,
@@ -444,10 +453,10 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 for (final (label, value) in <(String, _PaymentState?)>[
-                  ('All', null),
-                  ('Pending payment', _PaymentState.pending),
-                  ('No payment', _PaymentState.none),
-                  ('Paid', _PaymentState.paid),
+                  (l.adminVouchersFilterAll, null),
+                  (l.adminVouchersPendingPayment, _PaymentState.pending),
+                  (l.adminVouchersNoPayment, _PaymentState.none),
+                  (l.adminInvoicesStatusPaid, _PaymentState.paid),
                 ])
                   ChoiceChip(
                     label: Text(label),
@@ -458,10 +467,10 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
                   ),
                 ExportCsvButton(
                   fileStem: 'vouchers',
-                  header: _csvHeader,
+                  header: _csvHeader(l),
                   rows: () => [
                     for (final t in _sorted(terms, usersById))
-                      _csvRow(t, usersById),
+                      _csvRow(l, t, usersById),
                   ],
                 ),
               ],
@@ -479,8 +488,8 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
                     const SizedBox(height: 12),
                     Text(
                       (termsSnap.data ?? []).isEmpty
-                          ? 'No vouchers yet'
-                          : 'No vouchers match your search',
+                          ? l.adminVouchersEmptyTitle
+                          : l.adminVouchersNoMatch,
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 16,
@@ -489,8 +498,7 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Create a voucher to issue session packages with '
-                      'trackable codes like 2026_07_001.',
+                      l.adminVouchersEmptySubtitle,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: AppColors.textSecondary,
@@ -506,7 +514,7 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
                           backgroundColor: AppColors.navy,
                         ),
                         icon: const Icon(Icons.add, size: 18),
-                        label: const Text('New voucher'),
+                        label: Text(l.adminVouchersNewVoucher),
                       ),
                     ],
                   ],
@@ -546,6 +554,7 @@ class _VoucherCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final code = term.voucherCode ?? '—';
 
     return AppCard(
@@ -580,8 +589,10 @@ class _VoucherCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${term.packageSize} sessions · '
-                      '${term.sessionsRemaining} remaining',
+                      l.adminVouchersCardSessions(
+                        term.packageSize,
+                        term.sessionsRemaining,
+                      ),
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 13,
@@ -614,7 +625,7 @@ class _VoucherCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   StatusPill(
-                    label: term.voucherStatusLabel,
+                    label: term.voucherStatusLocalized(l),
                     color: statusColor,
                   ),
                   const SizedBox(height: 6),
@@ -629,13 +640,13 @@ class _VoucherCard extends StatelessWidget {
             children: [
               _VoucherIconAction(
                 icon: Icons.edit_outlined,
-                tooltip: 'Edit voucher',
+                tooltip: l.adminVouchersEdit,
                 onPressed: onEdit,
               ),
               const SizedBox(width: 10),
               _VoucherIconAction(
                 icon: Icons.delete_outline,
-                tooltip: 'Delete voucher',
+                tooltip: l.adminVouchersDelete,
                 color: AppColors.error,
                 onPressed: onDelete,
               ),

@@ -9,6 +9,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:pdfrx/pdfrx.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'app.dart';
 import 'core/constants/build_flags.dart';
@@ -48,6 +49,9 @@ Future<void> main() async {
     };
 
     await pdfrxFlutterInitialize();
+    // Month and weekday names for Indonesian dates (LocaleController sets
+    // Intl.defaultLocale); English is built in.
+    await initializeDateFormatting('id');
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
