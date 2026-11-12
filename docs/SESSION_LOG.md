@@ -18,8 +18,9 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 - Owner: "go for it" on the recommendation list. Built one-attempt exams
   with a server clock (Exam / HSK Simulation packages), closed the exam key
   oracle, rate-limited the public code resolvers. Change log has the detail.
-- **Owner to run:** `firebase deploy --only firestore:rules,functions --project
-  chinese-tracker`; then rebuild the APK when convenient.
+- Owner ran `firebase deploy --only firestore:rules,functions --project
+  chinese-tracker`: rules released, all 14 functions updated. Exam mode,
+  rate limits and the 2026-11-12 hardening are live. APK rebuilt and live.
 - Not done (needs the owner or a decision): App Check (console setup),
   web push reminders (VAPID key from the console), teachers building
   packages (owner's earlier decision keeps authoring admin-only).
@@ -37,8 +38,8 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   (`ConcludeClassDialog`); the audit row was stale. No edit after conclude.
 - Proof: analyzer baseline, 65 tests, rules tests 30 pass, function test
   passes, emulator run of the player (explanation shown, old format blocked).
-- **Owner to run:** `firebase deploy --only firestore:rules,functions --project
-  chinese-tracker`, then delete the old-format exercises on live.
+- Rules and functions deployed by the owner in the 2026-11-13 session.
+  Owner still to delete the old-format exercises on live.
 - **Still needs the owner:** Midtrans sandbox end-to-end test (owner clicks,
   Claude watches logs); nightly backup IAM fix in the Google Cloud console
   (CLAUDE.md "Known blockers").
@@ -48,8 +49,8 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   switch. See the change log for what stays English.
 - Night: full recheck (diff review + backend security review + emulator
   walk of every role). Backend hardening in rules, storage rules and
-  functions (see the change log), rules tests 36 pass. **Owner to run**
-  `firebase deploy --only firestore:rules,functions --project chinese-tracker`.
+  functions (see the change log), rules tests 36 pass. Deployed by the owner
+  in the 2026-11-13 session.
 
 ## How to start on this PC
 

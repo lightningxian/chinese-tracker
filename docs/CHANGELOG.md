@@ -36,9 +36,9 @@ edge cases, and any manual/deploy steps still required).
   codes; the resolver had no throttle.
 
 **For review**
-- **Deploy needed (owner runs):** `firebase deploy --only firestore:rules,functions
-  --project chinese-tracker`. Until then the old function ignores `peek`
-  and exams behave like practice.
+- **Deployed by the owner** (`firebase deploy --only firestore:rules,functions
+  --project chinese-tracker`, all 14 functions updated, rules released).
+  Exam mode is live.
 - The Android APK was rebuilt and deployed with this build
   (`scripts/deploy_web.sh --apk`, 107 MB at `/downloads/easy-study.apk`), so
   Android users get the end-of-exercise player and exam mode too. Owner
@@ -90,8 +90,8 @@ edge cases, and any manual/deploy steps still required).
   and that a settled payment could fail to credit after a voucher deletion.
 
 **For review**
-- **Deploy needed (owner runs):** `firebase deploy --only firestore:rules,functions
-  --project chinese-tracker` (ships this and the 2026-11-12 morning changes).
+- **Deployed by the owner** together with the 2026-11-13 exam-mode change
+  (rules released, all 14 functions updated).
 - Not changed, recommended later: one-attempt exam mode (today a student can
   submit, read the review and retake; `checkExerciseAnswer` is still
   deployed for the old APK); App Check and rate limiting on the public
@@ -173,10 +173,8 @@ edge cases, and any manual/deploy steps still required).
   new review page a learning tool, not only a mark.
 
 **For review**
-- **Deploy needed (owner runs):** `firebase deploy --only firestore:rules,functions
-  --project chinese-tracker`. Until the rules ship, a client can still create
-  results as before; until the function ships, the review has no explanation.
-  Hosting is deployed (client already refuses old-format exercises).
+- **Deployed by the owner** together with the 2026-11-13 exam-mode change
+  (rules released, all 14 functions updated). Hosting was deployed earlier.
 - Owner to delete the old-format exercises on live (Exercises table, tick the
   rows labelled "Old format").
 - Worksheet import does not read explanations (printed sheets have none);

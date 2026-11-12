@@ -48,19 +48,24 @@ flutter pub get
 | Stack | Flutter web (primary) · Firestore · Cloud Functions v2 · Hosting · Storage · Midtrans sandbox |
 | Roles | admin · teacher · student · parent |
 
-### Cloud Functions (9, deployed)
+### Cloud Functions (14, deployed 2026-11-13 with the current rules)
 
 | Export | Role |
 |--------|------|
-| `resolveLinkCode` | Callable — teacher invite code → teacherId |
-| `resolveChildCode` | Callable — child code for parents |
+| `resolveLinkCode` | Callable — teacher invite code → teacherId (rate-limited per address) |
+| `resolveChildCode` | Callable — child code for parents (rate-limited per address) |
 | `linkChild` | Callable — parent↔child link (**server-validated** — pattern to copy for students) |
 | `createInvoice` | Callable — creates invoice + Midtrans Snap token |
+| `markInvoicePaid` | Callable — admin records a cash/transfer payment, credits the term |
 | `midtransNotification` | HTTP webhook — payment status + session credit |
+| `startExercise` | Callable — package questions without keys; `peek` for metadata; opens the one-attempt exam clock |
+| `checkExerciseAnswer` | Callable — per-question check for old clients; refuses exam packages |
+| `finishExercise` | Callable — scores the whole attempt, writes `exercise_results`, returns the review |
+| `deleteUserAccount` | Callable — admin deletes a user and their data |
 | `onUserCreated` | Trigger — welcome / setup on user doc create |
 | `onExerciseResultCreated` | Trigger — notifications on exercise result |
-| `cleanupExpiredLinkCodes` | Schedule — every 60 minutes |
-| `scheduledFirestoreExport` | Schedule — Firestore backup export |
+| `cleanupExpiredLinkCodes` | Schedule — every 60 minutes (also clears old `rate_limits`) |
+| `scheduledFirestoreExport` | Schedule — Firestore backup export (fails: IAM, see CLAUDE.md) |
 
 **Webhook URL (registered in Midtrans):**  
 `https://us-central1-chinese-tracker.cloudfunctions.net/midtransNotification`
