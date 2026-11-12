@@ -59,7 +59,7 @@ class StudentRosterSummary {
     final diff = now.difference(lastActivityAt!);
     if (diff.inDays < 1) return 'Today';
     if (diff.inDays < 7) return '${diff.inDays}d ago';
-    return DateFormat('d MMM').format(lastActivityAt!);
+    return DateFormat('d MMM', 'en_US').format(lastActivityAt!);
   }
 
   String get homeworkLabel {
@@ -83,5 +83,5 @@ class CohortSummaryReportData {
   final List<StudentRosterSummary> students;
 
   String get generatedAtLabel =>
-      DateFormat('d MMM yyyy, HH:mm').format(generatedAt);
+      DateFormat('d MMM yyyy, HH:mm', 'en_US').format(generatedAt);
 }

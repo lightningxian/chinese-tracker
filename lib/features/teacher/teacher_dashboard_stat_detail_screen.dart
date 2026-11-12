@@ -740,7 +740,7 @@ class _StatDetailBody extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        item.message,
+                        item.localizedMessage(context.l10n),
                         style: const TextStyle(fontWeight: FontWeight.w500),
                       ),
                     ),

@@ -33,6 +33,12 @@ edge cases, and any manual/deploy steps still required).
 - Rules tests: 36 pass, 1 skipped (+6).
 - Client: the roster / profile level line ("HSK 1 · 8 pelajaran/periode")
   follows the language (`ProgressUtils.formatStudentLevelLocalized`).
+- Diff review fixes: the attention list on the teacher stat page was still
+  English; two `static final DateFormat`s froze the first language used
+  (now getters); the bank search also matches the Indonesian type and
+  category names; the profile role chip is localized; PDF reports pin their
+  dates and month headings to English (`ReportMonth.labelEn`) so an
+  Indonesian admin does not get a mixed-language PDF.
 
 **Why**
 - Owner asked for a full recheck on 2026-11-12. A backend review found that

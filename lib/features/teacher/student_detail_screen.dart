@@ -344,7 +344,8 @@ class _PaymentsSection extends StatelessWidget {
   final String studentId;
   final FirestoreService firestore;
 
-  static final _date = DateFormat('d MMM yyyy');
+  // A getter, not a static final: the locale is read when it is built.
+  static DateFormat get _date => DateFormat('d MMM yyyy');
 
   @override
   Widget build(BuildContext context) {

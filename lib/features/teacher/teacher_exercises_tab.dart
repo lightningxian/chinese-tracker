@@ -196,7 +196,8 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
     return rows;
   }
 
-  static final _dueFormat = DateFormat('d MMM yyyy');
+  // A getter, not a static final: the locale is read when it is built.
+  static DateFormat get _dueFormat => DateFormat('d MMM yyyy');
 
   static List<Object?> _csvRow(AppLocalizations l, _ExerciseRow row) => [
         row.exercise.title,

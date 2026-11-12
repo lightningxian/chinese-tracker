@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../constants/app_constants.dart';
 import '../theme/app_theme.dart';
 import '../../l10n/l10n.dart';
+import '../../l10n/labels_admin.dart';
 import '../../models/app_user.dart';
 import '../../services/firestore_service.dart';
 import '../../services/profile_photo_service.dart';
@@ -75,7 +76,8 @@ class ProfileHeaderCard extends StatelessWidget {
                   spacing: 6,
                   runSpacing: 6,
                   children: [
-                    ProfileRoleChip(label: user.roleDisplayLabel, color: color),
+                    ProfileRoleChip(
+                        label: user.roleLocalized(context.l10n), color: color),
                     if (subtitle != null)
                       Text(
                         subtitle!,

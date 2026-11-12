@@ -13,7 +13,7 @@ abstract final class AdminOpsReportsPdf {
   static String rp(int v) => formatRupiah(v);
 
   static String _date(DateTime? d) =>
-      d == null ? '—' : DateFormat('d MMM yyyy').format(d);
+      d == null ? '—' : DateFormat('d MMM yyyy', 'en_US').format(d);
 
   static String _isoDate(String iso) => _date(DateTime.tryParse(iso));
 
@@ -43,7 +43,7 @@ abstract final class AdminOpsReportsPdf {
           ),
           pw.SizedBox(height: 4),
           pw.Text(
-            'Generated ${DateFormat('d MMM yyyy, HH:mm').format(generatedAt)}',
+            'Generated ${DateFormat('d MMM yyyy, HH:mm', 'en_US').format(generatedAt)}',
             style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
           ),
           pw.SizedBox(height: 14),
@@ -120,7 +120,7 @@ abstract final class AdminOpsReportsPdf {
           _note('Hadir = present, Izin = excused (not charged), Alpa = absent. '
               'Open classes are not counted until they are concluded.'),
           for (final m in d.attendance.reversed) ...[
-            _h('${m.month.label} · ${m.rows.length} students · '
+            _h('${m.month.labelEn} · ${m.rows.length} students · '
                 '${m.presentPercent}% present'),
             _table(
               const ['Student', 'Level', 'Hadir', 'Izin', 'Alpa', 'Present %'],
@@ -212,7 +212,7 @@ abstract final class AdminOpsReportsPdf {
           [
             for (final m in r.months)
               [
-                m.month.label,
+                m.month.labelEn,
                 rp(m.package8),
                 rp(m.package16),
                 rp(m.book),
@@ -271,7 +271,7 @@ abstract final class AdminOpsReportsPdf {
           [
             for (final c in r.cohorts)
               [
-                c.month.label,
+                c.month.labelEn,
                 '${c.joined}',
                 '${c.stillActive}',
                 '${c.retentionPercent}%'
@@ -304,7 +304,7 @@ abstract final class AdminOpsReportsPdf {
           [
             for (final m in d.fillRate)
               [
-                m.month.label,
+                m.month.labelEn,
                 '${m.classes}',
                 '${m.capacity}',
                 '${m.joined}',
@@ -314,7 +314,7 @@ abstract final class AdminOpsReportsPdf {
               ],
           ],
         ),
-        _h('${thisMonth.month.label} · every class'),
+        _h('${thisMonth.month.labelEn} · every class'),
         _table(
           const ['Date', 'Class', 'Teacher', 'Joined', 'Fill', 'Status'],
           [
@@ -343,7 +343,7 @@ abstract final class AdminOpsReportsPdf {
           _note('Hours and students count concluded classes only. Attendance = '
               'Hadir marks over all marks in those classes.'),
           for (final m in d.teacherRecap.reversed) ...[
-            _h(m.month.label),
+            _h(m.month.labelEn),
             _table(
               const [
                 'Teacher',

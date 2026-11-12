@@ -64,10 +64,10 @@ class StudentProgressReportData {
   final List<ReportExerciseLine> exercises;
 
   String get generatedAtLabel =>
-      DateFormat('d MMM yyyy, HH:mm').format(generatedAt);
+      DateFormat('d MMM yyyy, HH:mm', 'en_US').format(generatedAt);
 
   String get lastActivityLabel {
     if (lastActivityAt == null) return 'No activity recorded';
-    return DateFormat('d MMM yyyy').format(lastActivityAt!);
+    return DateFormat('d MMM yyyy', 'en_US').format(lastActivityAt!);
   }
 }

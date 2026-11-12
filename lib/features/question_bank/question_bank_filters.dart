@@ -46,7 +46,9 @@ class QuestionBankFilter {
 
   /// A worksheet matches when the dropdowns match and the search text is in
   /// its code, title, type or any of its questions.
-  bool matches(QuestionBankSheet sheet) {
+  /// [l] adds the translated type and category names to the search, so
+  /// typing what the chips show ("Ujian", "Pilihan ganda") finds the sheet.
+  bool matches(QuestionBankSheet sheet, {AppLocalizations? l}) {
     if (type != null && sheet.type != type) return false;
     if (category != null && sheet.category != category) return false;
     if (level != null && sheet.level != level) return false;
@@ -57,6 +59,8 @@ class QuestionBankFilter {
       sheet.title,
       sheet.type.label,
       sheet.category.label,
+      if (l != null) sheet.type.localized(l),
+      if (l != null) sheet.category.localized(l),
       sheet.level ?? '',
       for (final item in sheet.items) item.displayText,
     ].join(' ').toLowerCase();

@@ -400,7 +400,9 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
           }
           final all = snap.data ?? const <QuestionBankItem>[];
           final sheets = QuestionBankSheet.group(all);
-          final rows = _sorted(sheets.where(_filter.matches).toList());
+          final l = context.l10n;
+          final rows =
+              _sorted(sheets.where((s) => _filter.matches(s, l: l)).toList());
           _visible = rows;
 
           return Column(

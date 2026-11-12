@@ -20,8 +20,12 @@ class ReportMonth implements Comparable<ReportMonth> {
   final int year;
   final int month;
 
-  /// "Nov 2026" in the app language (Intl.defaultLocale).
+  /// "Nov 2026" in the app language (Intl.defaultLocale); screens use it.
   String get label => DateFormat('MMM yyyy').format(DateTime(year, month));
+
+  /// Always English, for the PDF reports.
+  String get labelEn =>
+      DateFormat('MMM yyyy', 'en_US').format(DateTime(year, month));
 
   /// The [count] months ending with the month of [now], oldest first.
   static List<ReportMonth> last(int count, DateTime now) => [

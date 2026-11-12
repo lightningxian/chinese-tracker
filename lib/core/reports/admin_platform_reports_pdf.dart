@@ -11,7 +11,7 @@ import '../constants/app_constants.dart';
 abstract final class AdminPlatformReportsPdf {
   static String _dateLabel(DateTime? date) {
     if (date == null) return '—';
-    return DateFormat('MMM d, yyyy').format(date);
+    return DateFormat('MMM d, yyyy', 'en_US').format(date);
   }
 
   static pw.Widget _title(String text) => pw.Text(
@@ -57,7 +57,7 @@ abstract final class AdminPlatformReportsPdf {
           _title('${AppConstants.brandName} — User roster'),
           pw.SizedBox(height: 4),
           _subtitle(
-              'Generated ${DateFormat('d MMM yyyy, HH:mm').format(generatedAt)}'),
+              'Generated ${DateFormat('d MMM yyyy, HH:mm', 'en_US').format(generatedAt)}'),
           pw.SizedBox(height: 12),
           _subtitle('Total users: ${users.length}'),
           pw.SizedBox(height: 16),
@@ -122,7 +122,7 @@ abstract final class AdminPlatformReportsPdf {
           _title('${AppConstants.brandName} — Monthly registration & growth'),
           pw.SizedBox(height: 4),
           _subtitle(
-              'Generated ${DateFormat('d MMM yyyy, HH:mm').format(generatedAt)}'),
+              'Generated ${DateFormat('d MMM yyyy, HH:mm', 'en_US').format(generatedAt)}'),
           pw.SizedBox(height: 16),
           _section('Summary'),
           pw.SizedBox(height: 8),
@@ -212,7 +212,7 @@ abstract final class AdminPlatformReportsPdf {
           _title('${AppConstants.brandName} — Vouchers & monthly packages'),
           pw.SizedBox(height: 4),
           _subtitle(
-              'Generated ${DateFormat('d MMM yyyy, HH:mm').format(generatedAt)}'),
+              'Generated ${DateFormat('d MMM yyyy, HH:mm', 'en_US').format(generatedAt)}'),
           pw.SizedBox(height: 12),
           _subtitle('Packages tracked: ${terms.length}'),
           pw.SizedBox(height: 16),
@@ -318,7 +318,7 @@ abstract final class AdminPlatformReportsPdf {
           _title('${AppConstants.brandName} — Worksheet inventory'),
           pw.SizedBox(height: 4),
           _subtitle(
-            'Generated ${DateFormat('d MMM yyyy, HH:mm').format(generatedAt)}',
+            'Generated ${DateFormat('d MMM yyyy, HH:mm', 'en_US').format(generatedAt)}',
           ),
           pw.SizedBox(height: 12),
           _subtitle(
