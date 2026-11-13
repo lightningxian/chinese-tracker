@@ -828,7 +828,9 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
   @override
   Widget build(BuildContext context) {
     final user = context.read<AuthService>().appUser;
-    if (!ExerciseAuthoringPlatform.canManageExercises(user)) {
+    // Old-format exercises (questions inside the document): admins only.
+    // Teachers build packages in ExercisePackageFormScreen instead.
+    if (!ExerciseAuthoringPlatform.canManageLegacyExercises(user)) {
       final message = !ExerciseAuthoringPlatform.isWeb
           ? ExerciseAuthoringPlatform.unsupportedMessage
           : ExerciseAuthoringPlatform.adminOnlyMessage;

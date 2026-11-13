@@ -53,12 +53,57 @@ class FirestoreService {
     return AppUser.fromFirestore(doc);
   }
 
-  Future<bool> _currentUserIsAdmin() async {
+  /// Uid and role of the signed-in user from their profile; null when
+  /// signed out, without a profile or deactivated.
+  Future<({String uid, String role})?> _currentUserRole() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return false;
+    if (uid == null) return null;
     final doc =
         await _db.collection(AppConstants.usersCollection).doc(uid).get();
-    return doc.data()?['role'] == AppConstants.roleAdmin;
+    final data = doc.data();
+    if (data == null || data['active'] == false) return null;
+    return (uid: uid, role: data['role'] as String? ?? '');
+  }
+
+  Future<bool> _currentUserIsAdmin() async =>
+      (await _currentUserRole())?.role == AppConstants.roleAdmin;
+
+  /// Admins manage every exercise. An active teacher manages only packages
+  /// (bank-based, no questions inside) whose `teacherId` is their own uid:
+  /// [newTeacherId] for a create or save, and every doc in [exerciseIds]
+  /// that already exists. Mirrors the `exercises` rules.
+  Future<void> _ensureCanManagePackages({
+    Iterable<String> exerciseIds = const [],
+    String? newTeacherId,
+  }) async {
+    ExerciseAuthoringPlatform.ensureWeb();
+    final me = await _currentUserRole();
+    if (me == null ||
+        (me.role != AppConstants.roleAdmin &&
+            me.role != AppConstants.roleTeacher)) {
+      throw ExerciseAuthoringPlatformException(
+        ExerciseAuthoringPlatform.staffOnlyMessage,
+      );
+    }
+    if (me.role == AppConstants.roleAdmin) return;
+    if (newTeacherId != null && newTeacherId != me.uid) {
+      throw ExerciseAuthoringPlatformException(
+        ExerciseAuthoringPlatform.ownPackagesOnlyMessage,
+      );
+    }
+    final ids = exerciseIds.toSet();
+    if (ids.isEmpty) return;
+    final col = _db.collection(AppConstants.exercisesCollection);
+    final snaps = await Future.wait([for (final id in ids) col.doc(id).get()]);
+    for (final snap in snaps) {
+      final data = snap.data();
+      final questions = data?['questions'] as List? ?? const [];
+      if (data == null || data['teacherId'] != me.uid || questions.isNotEmpty) {
+        throw ExerciseAuthoringPlatformException(
+          ExerciseAuthoringPlatform.ownPackagesOnlyMessage,
+        );
+      }
+    }
   }
 
   Stream<List<AppUser>> watchAllStudents() {
@@ -172,7 +217,8 @@ class FirestoreService {
     for (var i = 0; i < ids.length; i += chunkSize) {
       final batch = _db.batch();
       for (final id in ids.skip(i).take(chunkSize)) {
-        batch.update(_db.collection(AppConstants.usersCollection).doc(id), data);
+        batch.update(
+            _db.collection(AppConstants.usersCollection).doc(id), data);
       }
       await batch.commit();
     }
@@ -397,12 +443,10 @@ class FirestoreService {
     ExerciseSkillCategory skillCategory = ExerciseSkillCategory.reading,
     int? timeLimitMinutes,
   }) async {
-    ExerciseAuthoringPlatform.ensureWeb();
-    if (!await _currentUserIsAdmin()) {
-      throw ExerciseAuthoringPlatformException(
-        ExerciseAuthoringPlatform.adminOnlyMessage,
-      );
-    }
+    await _ensureCanManagePackages(
+      exerciseIds: [if (exerciseId != null) exerciseId],
+      newTeacherId: teacherId,
+    );
     final data = <String, dynamic>{
       'title': title.trim(),
       'instructions': instructions.trim(),
@@ -525,13 +569,8 @@ class FirestoreService {
     Iterable<String> exerciseIds,
     bool published,
   ) async {
-    ExerciseAuthoringPlatform.ensureWeb();
-    if (!await _currentUserIsAdmin()) {
-      throw ExerciseAuthoringPlatformException(
-        ExerciseAuthoringPlatform.adminOnlyMessage,
-      );
-    }
     final ids = exerciseIds.toSet().toList();
+    await _ensureCanManagePackages(exerciseIds: ids);
     const chunkSize = 400;
     for (var i = 0; i < ids.length; i += chunkSize) {
       final batch = _db.batch();
@@ -546,12 +585,7 @@ class FirestoreService {
   }
 
   Future<void> deleteExercise(String exerciseId) async {
-    ExerciseAuthoringPlatform.ensureWeb();
-    if (!await _currentUserIsAdmin()) {
-      throw ExerciseAuthoringPlatformException(
-        ExerciseAuthoringPlatform.adminOnlyMessage,
-      );
-    }
+    await _ensureCanManagePackages(exerciseIds: [exerciseId]);
 
     final assignments = await _db
         .collection(AppConstants.exerciseAssignmentsCollection)

@@ -6,6 +6,53 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-13 — Claude: teachers build and assign their own packages
+
+**What changed**
+- **Teachers author packages.** On web a teacher now sees **New exercise**
+  and **Question bank** on the Exercises tab, builds a package from the
+  bank (worksheets and single questions), sets level, skill, time limit and
+  publish state, saves it under their own uid and assigns it. They edit,
+  publish/draft and delete only the packages they created; admin-made
+  packages (and old-format exercises) are assign-only for them. Admins are
+  unchanged.
+- **The bank stays admin-only.** Teachers browse it read-only: no scan,
+  type, paste, samples, harvest, edit, move, delete or "Add question";
+  rows show **View** instead of **Edit**, the worksheet screen keeps
+  **Assign this**. The package form's picker hides **Scan worksheet** for
+  teachers.
+- Gate split in `ExerciseAuthoringPlatform`: `canManageExercises` (staff
+  on web), `canEditExercise(user, exercise)` (admin any; teacher own
+  package), `canManageBank` and `canManageLegacyExercises` (admin on web).
+  `WorksheetImportPlatform` uses `canManageBank`.
+- Service: `_ensureCanManagePackages` checks the caller's role and, for a
+  teacher, that `teacherId` is their uid and every existing doc touched is
+  their own package. Used by `saveExercisePackage`,
+  `setExercisesPublished`, `deleteExercise`.
+- Rules: `exercises` create/update/delete = admin, or an active teacher
+  whose `teacherId` matches on both the existing and the new data, with no
+  `questions` inside and at least one sheet or question. Tests: "teacher
+  packages (2026-11-13)" (2 tests, 39 pass, 1 skipped).
+- Docs: `.claude/rules/exercise-authoring-web-only.md` rewritten,
+  `worksheet-import-web-only.md`, `docs/WORKSHEET_IMPORT.md`, thesis audit
+  (P5 "Teacher builds and assigns packages" → Done), CLAUDE.md decision.
+
+**Why**
+- Thesis Phase 5 wants teachers to build practice packages; the owner said
+  go on 2026-11-13. The bank keeps one curator (admin) so worksheets stay
+  consistent.
+
+**For review**
+- **Deploy needed (owner runs):** `firebase deploy --only firestore:rules
+  --project chinese-tracker`. Until then a teacher's save is refused by the
+  live rules (the app shows the error).
+- Admin-created content carries `CONTENT_OWNER_ID` (a teacher uid) as
+  `teacherId`, so that teacher account can edit admin-made packages. Accepted
+  (it is the centre's content account); note in the rule file.
+- Teachers assign to any active student, as before.
+
+---
+
 ## 2026-11-13 — Claude: one-attempt exams with a server clock, rate-limited code resolvers
 
 **What changed**

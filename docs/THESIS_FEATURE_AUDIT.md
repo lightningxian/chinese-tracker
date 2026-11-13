@@ -19,7 +19,7 @@ section says otherwise.
 | **Test format per HSK level** (40/60/80/100/100/101 questions, 35–135 min, objective = 1 pt, T5 = 10 pt) | No timer, no sections, no per-level format | Missing |
 | **Leaderboard per test code** (`leaderboard/{kodeTes}/entri/{muridId}`, names masked for students, own row highlighted) | Nothing | Missing |
 | **Placement test** at registration: "Mulai dari HSK 1" or "Ikut tes penempatan" + target HSK 2–6; later take one code of the level below the target | Register screen lets the student pick any HSK level directly | Missing (and the current behaviour contradicts v2) |
-| **Practice**: 1 package of 15 questions per level, built by the teacher from the bank | Exercises are built by **admins only** (web) and assigned per student with a due date; teachers can only assign | Partly, with the roles reversed |
+| **Practice**: 1 package of 15 questions per level, built by the teacher from the bank | Teachers build packages from the bank on web and assign them per student with a due date (2026-11-13); the bank itself stays admin-only. No fixed "15 per level" rule | Done (free size) |
 | **Settings**: pass marks and minimum number of codes editable by admin | `settings/org` has 5 booleans | Missing |
 | **Progress report**: "2 of 3 codes passed", test history with leaderboard rank; warning 5 = failed 2 tests in a row | Progress tab is a list of lessons/terms; no summary doc, no chart | Missing |
 | **Import of old results** from the "Nilai Simulasi HSK" project (`easy-study-hsk`) | Nothing; access to that project not yet checked | Missing, needs owner's go-ahead |
@@ -80,8 +80,8 @@ demo data (the app has no emulator wiring yet).
 | | Count |
 |---|---|
 | Items in the spec (phases 1–9, rules, testing) | **70** |
-| Done | **9** |
-| Partly done (something exists, but not the way the spec wants it) | **23** |
+| Done | **10** |
+| Partly done (something exists, but not the way the spec wants it) | **22** |
 | Missing | **38** |
 
 The app today is a working centre-management tool: accounts, one-off classes, 8/16-session terms, exercises, quizzes, grades, materials, Midtrans invoices, PDF reports. The thesis spec describes a different, more rigorous system on top of it: repeating schedules with conflict checks, booking, teacher check-in, server-side grading with a typing matcher, a final-score formula with promotion rules, a per-student progress summary, and push notifications. Almost all of that is new work.
@@ -201,7 +201,7 @@ Status per spec item. Evidence is `file:line` in this repo.
 | P5 Question forms L1–L3, R1–R4, T1–T5 | Partly | R1 (fill in the blank), R2 (matching), R3 (passage + choice), R4 (order sentences, via compose), true/false and L3 (listening, no audio upload) exist and are detected by the worksheet scanner (2026-10-27); T1–T3 typing and picture forms missing (`exercise_type.dart`) | ExerciseType |
 | P5 Answer keys students cannot read | Done | Package keys stay in `question_bank` (staff-only read); `startExercise` strips them; old-format exercises are no longer playable (2026-11-12). Quizzes (unused) still carry keys | startExercise |
 | P5 Practice vs exam | Done | Practice: unlimited attempts, best score. Exam / HSK Simulation packages (type of the first worksheet): one attempt, start screen, server clock from `exercise_attempts`, late submit scored 0 (2026-11-13) | startExercise / finishExercise |
-| P5 Teacher builds and assigns packages | Partly | Exercises admin-only; teachers assign with due date (`firestore_service.dart:524-554`); per-lesson quizzes | exercise_assignments, quiz_editor |
+| P5 Teacher builds and assigns packages | Done | Teachers create, edit, publish and delete their own packages from the bank (web) and assign them with a due date; admins manage every exercise; the bank and the old-format editor stay admin-only (2026-11-13, `ExerciseAuthoringPlatform`, `exercises` rules) | saveExercisePackage, exercise_assignments |
 | P5 Exam format per level | Missing | Not found | — |
 | P5 Server-time deadline enforcement | Partly | Exam time limit enforced by the server clock (2026-11-13); assignment `dueDate` still checked in app only | finishExercise |
 | P5 gradeSubmission function | Partly | Packages are scored by `finishExercise` (server, returns the review, stores correct/total/time); old in-document exercises and quizzes still score in the app | finishExercise |

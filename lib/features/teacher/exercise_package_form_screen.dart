@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../core/constants/exercise_authoring_platform.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/shell_nested_page.dart';
@@ -11,6 +12,7 @@ import '../../l10n/labels_exercises.dart';
 import '../../models/exercise.dart';
 import '../../models/exercise_skill_category.dart';
 import '../../models/question_bank_item.dart';
+import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../question_bank/question_bank_bulk_import.dart';
 import '../question_bank/question_bank_editor.dart';
@@ -536,6 +538,11 @@ class _BankPickerState extends State<_BankPicker> {
     setState(() => _sheets.addAll(codes));
   }
 
+  /// Admins may change the bank from here; teachers only read a worksheet.
+  bool get _canManageBank => ExerciseAuthoringPlatform.canManageBank(
+        context.read<AuthService>().appUser,
+      );
+
   void _edit(QuestionBankSheet row) {
     if (row.isSheet) {
       Navigator.of(context).push(
@@ -546,7 +553,7 @@ class _BankPickerState extends State<_BankPicker> {
           ),
         ),
       );
-    } else {
+    } else if (_canManageBank) {
       showQuestionBankEditor(
         context,
         ownerId: widget.ownerId,
@@ -590,13 +597,15 @@ class _BankPickerState extends State<_BankPicker> {
                             ),
                           ),
                         ),
-                        OutlinedButton.icon(
-                          onPressed: _scan,
-                          icon: const Icon(Icons.document_scanner_outlined,
-                              size: 18),
-                          label: Text(l.bankScanWorksheet),
-                        ),
-                        const SizedBox(width: 8),
+                        if (_canManageBank) ...[
+                          OutlinedButton.icon(
+                            onPressed: _scan,
+                            icon: const Icon(Icons.document_scanner_outlined,
+                                size: 18),
+                            label: Text(l.bankScanWorksheet),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
                         FilledButton(
                           onPressed: () => Navigator.pop(
                             context,

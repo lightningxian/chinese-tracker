@@ -6644,6 +6644,12 @@ abstract class AppLocalizations {
   /// **'Edit'**
   String get bankEdit;
 
+  /// No description provided for @bankView.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get bankView;
+
   /// No description provided for @bankTypeAQuestion.
   ///
   /// In en, this message translates to:
@@ -7979,7 +7985,7 @@ abstract class AppLocalizations {
   /// No description provided for @teacherExNoExercisesSubtitleReadOnly.
   ///
   /// In en, this message translates to:
-  /// **'An exercise bundles worksheets from the question bank; students see it once it is assigned to them. Admins create exercises on web.'**
+  /// **'An exercise bundles worksheets from the question bank; students see it once it is assigned to them. Exercises are built on web.'**
   String get teacherExNoExercisesSubtitleReadOnly;
 
   /// No description provided for @teacherExPublished.
@@ -8195,7 +8201,7 @@ abstract class AppLocalizations {
   /// No description provided for @teacherExAuthoringReadOnly.
   ///
   /// In en, this message translates to:
-  /// **'View only — browse published practice and assign it to murid. Creating and editing exercises is done by admins on web.'**
+  /// **'View only — browse published practice and assign it to murid. Creating and editing exercises is done on web.'**
   String get teacherExAuthoringReadOnly;
 
   /// No description provided for @worksheetUploadUnsupported.

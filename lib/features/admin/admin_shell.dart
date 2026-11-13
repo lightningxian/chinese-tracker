@@ -121,7 +121,7 @@ class _AdminShellState extends State<AdminShell> {
     }
 
     final l = context.l10n;
-    final canManageExercises = ExerciseAuthoringPlatform.canManageExercises(
+    final canManageExercises = ExerciseAuthoringPlatform.canManageBank(
       context.read<AuthService>().appUser,
     );
 
@@ -210,7 +210,7 @@ class _AdminShellState extends State<AdminShell> {
             ? ShellRouteUtils.adminTitleForLocation(l, path)
             : destinations[_index].label;
 
-        final canManageExercises = ExerciseAuthoringPlatform.canManageExercises(
+        final canManageExercises = ExerciseAuthoringPlatform.canManageBank(
           user,
         );
 

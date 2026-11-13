@@ -4046,6 +4046,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get bankEdit => 'Ubah';
 
   @override
+  String get bankView => 'Lihat';
+
+  @override
   String get bankTypeAQuestion => 'Ketik soal';
 
   @override
@@ -4931,7 +4934,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get teacherExNoExercisesSubtitleReadOnly =>
-      'Latihan menggabungkan lembar soal dari bank soal; murid melihatnya setelah ditugaskan kepada mereka. Admin membuat latihan lewat web.';
+      'Latihan menggabungkan lembar soal dari bank soal; murid melihatnya setelah ditugaskan kepada mereka. Latihan dibuat lewat web.';
 
   @override
   String get teacherExPublished => 'Terbit';
@@ -5046,7 +5049,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get teacherExAuthoringReadOnly =>
-      'Hanya lihat: telusuri latihan yang terbit dan tugaskan ke murid. Membuat dan mengubah latihan dilakukan admin di web.';
+      'Hanya lihat: telusuri latihan yang terbit dan tugaskan ke murid. Membuat dan mengubah latihan dilakukan di web.';
 
   @override
   String get worksheetUploadUnsupported =>

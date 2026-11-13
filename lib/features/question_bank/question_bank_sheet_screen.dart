@@ -45,6 +45,10 @@ class QuestionBankSheetScreen extends StatelessWidget {
         final sheet = QuestionBankSheet.group(snap.data ?? const [])
             .where((s) => s.key == sheetKey)
             .firstOrNull;
+        final user = context.watch<AuthService>().appUser;
+        // Teachers open a worksheet to read it (and assign it); only admins
+        // change the bank.
+        final canManageBank = ExerciseAuthoringPlatform.canManageBank(user);
 
         return Scaffold(
           backgroundColor: AppColors.surface,
@@ -55,9 +59,7 @@ class QuestionBankSheetScreen extends StatelessWidget {
             title: Text(sheet?.title ?? sheetKey),
             actions: [
               if (sheet != null) ...[
-                if (ExerciseAuthoringPlatform.canManageExercises(
-                  context.watch<AuthService>().appUser,
-                ))
+                if (ExerciseAuthoringPlatform.canManageExercises(user))
                   FilledButton.icon(
                     onPressed: () => _assignSheet(context, sheet),
                     icon: const Icon(Icons.assignment_ind_outlined, size: 18),
@@ -66,16 +68,18 @@ class QuestionBankSheetScreen extends StatelessWidget {
                         FilledButton.styleFrom(backgroundColor: AppColors.navy),
                   ),
                 const SizedBox(width: 8),
-                IconButton(
-                  onPressed: () => _editSheet(context, sheet),
-                  icon: const Icon(Icons.tune),
-                  tooltip: l.bankSheetEditTooltip,
-                ),
-                IconButton(
-                  onPressed: () => _deleteSheet(context, sheet),
-                  icon: Icon(Icons.delete_outline, color: AppColors.error),
-                  tooltip: l.bankSheetDeleteTooltip,
-                ),
+                if (canManageBank) ...[
+                  IconButton(
+                    onPressed: () => _editSheet(context, sheet),
+                    icon: const Icon(Icons.tune),
+                    tooltip: l.bankSheetEditTooltip,
+                  ),
+                  IconButton(
+                    onPressed: () => _deleteSheet(context, sheet),
+                    icon: Icon(Icons.delete_outline, color: AppColors.error),
+                    tooltip: l.bankSheetDeleteTooltip,
+                  ),
+                ],
               ],
               const SizedBox(width: 8),
             ],
@@ -99,6 +103,7 @@ class QuestionBankSheetScreen extends StatelessWidget {
                         child: _QuestionRow(
                           index: i,
                           item: item,
+                          readOnly: !canManageBank,
                           onTap: () => _edit(context, item, sheet),
                           onMoveUp: i == 0
                               ? null
@@ -110,14 +115,15 @@ class QuestionBankSheetScreen extends StatelessWidget {
                         ),
                       ),
                     const SizedBox(height: 6),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: OutlinedButton.icon(
-                        onPressed: () => _addQuestion(context, sheet),
-                        icon: const Icon(Icons.add, size: 18),
-                        label: Text(l.bankSheetAddQuestion),
+                    if (canManageBank)
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: OutlinedButton.icon(
+                          onPressed: () => _addQuestion(context, sheet),
+                          icon: const Icon(Icons.add, size: 18),
+                          label: Text(l.bankSheetAddQuestion),
+                        ),
                       ),
-                    ),
                   ],
                 ),
         );
@@ -338,6 +344,7 @@ class _QuestionRow extends StatelessWidget {
     required this.onMoveUp,
     required this.onMoveDown,
     required this.onDelete,
+    this.readOnly = false,
   });
 
   final int index;
@@ -347,11 +354,14 @@ class _QuestionRow extends StatelessWidget {
   final VoidCallback? onMoveDown;
   final VoidCallback onDelete;
 
+  /// Teachers read the sheet: no edit, move or delete controls.
+  final bool readOnly;
+
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
     return AppCard(
-      onTap: onTap,
+      onTap: readOnly ? null : onTap,
       padding: const EdgeInsets.fromLTRB(18, 14, 8, 14),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -402,33 +412,35 @@ class _QuestionRow extends StatelessWidget {
               ],
             ),
           ),
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.keyboard_arrow_up),
-                tooltip: l.packageFormMoveUp,
-                visualDensity: VisualDensity.compact,
-                onPressed: onMoveUp,
-              ),
-              IconButton(
-                icon: const Icon(Icons.keyboard_arrow_down),
-                tooltip: l.packageFormMoveDown,
-                visualDensity: VisualDensity.compact,
-                onPressed: onMoveDown,
-              ),
-            ],
-          ),
-          IconButton(
-            icon: const Icon(Icons.edit_outlined),
-            tooltip: l.bankSheetEditQuestion,
-            onPressed: onTap,
-          ),
-          IconButton(
-            icon: Icon(Icons.delete_outline, color: AppColors.error),
-            tooltip: l.bankSheetRemoveFromSheet,
-            onPressed: onDelete,
-          ),
+          if (!readOnly) ...[
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.keyboard_arrow_up),
+                  tooltip: l.packageFormMoveUp,
+                  visualDensity: VisualDensity.compact,
+                  onPressed: onMoveUp,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.keyboard_arrow_down),
+                  tooltip: l.packageFormMoveDown,
+                  visualDensity: VisualDensity.compact,
+                  onPressed: onMoveDown,
+                ),
+              ],
+            ),
+            IconButton(
+              icon: const Icon(Icons.edit_outlined),
+              tooltip: l.bankSheetEditQuestion,
+              onPressed: onTap,
+            ),
+            IconButton(
+              icon: Icon(Icons.delete_outline, color: AppColors.error),
+              tooltip: l.bankSheetRemoveFromSheet,
+              onPressed: onDelete,
+            ),
+          ],
         ],
       ),
     );

@@ -6,7 +6,7 @@ Admins upload **PDF, Word, or image** worksheets on the exercise form (**web onl
 
 **No Gemini. No API keys. No separate AI billing.**
 
-> **Platform:** Exercise **creation and editing** is **admin-only on web**. Murid can still **do** exercises on mobile; Gurus can browse and assign published practice but cannot create or edit exercises.
+> **Platform:** Worksheet import and the question bank are **admin-only on web**. Since 2026-11-13 Gurus build their own practice packages from the bank (web), assign them and edit or delete only the packages they created. Murid can still **do** exercises on mobile.
 
 ---
 

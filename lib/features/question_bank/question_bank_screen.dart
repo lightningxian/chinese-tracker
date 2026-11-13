@@ -248,6 +248,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
     final l = context.l10n;
     final picked = _selectedRows(rows);
     final sheetsPicked = picked.where((s) => s.isSheet).length;
+    final canManageBank = ExerciseAuthoringPlatform.canManageBank(user);
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
       child: TableSelectionBar(
@@ -266,22 +267,25 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
                   ? null
                   : () => _newExerciseFrom(picked, user),
             ),
-          SelectionActionButton(
-            label: l.bankSetTypeOfExercise,
-            icon: Icons.category_outlined,
-            onPressed: _busy ? null : () => _bulkSetCategory(firestore, picked),
-          ),
-          SelectionActionButton(
-            label: l.bankSetLevel,
-            icon: Icons.signal_cellular_alt_outlined,
-            onPressed: _busy ? null : () => _bulkSetLevel(firestore, picked),
-          ),
-          SelectionActionButton(
-            label: l.bankDelete,
-            icon: Icons.delete_outline,
-            destructive: true,
-            onPressed: _busy ? null : () => _bulkDelete(firestore, picked),
-          ),
+          if (canManageBank) ...[
+            SelectionActionButton(
+              label: l.bankSetTypeOfExercise,
+              icon: Icons.category_outlined,
+              onPressed:
+                  _busy ? null : () => _bulkSetCategory(firestore, picked),
+            ),
+            SelectionActionButton(
+              label: l.bankSetLevel,
+              icon: Icons.signal_cellular_alt_outlined,
+              onPressed: _busy ? null : () => _bulkSetLevel(firestore, picked),
+            ),
+            SelectionActionButton(
+              label: l.bankDelete,
+              icon: Icons.delete_outline,
+              destructive: true,
+              onPressed: _busy ? null : () => _bulkDelete(firestore, picked),
+            ),
+          ],
         ],
       ),
     );
@@ -326,6 +330,8 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     final ownerId = AppConstants.contentTeacherId(user);
+    // Teachers browse the bank (to build packages); only admins change it.
+    final canManageBank = ExerciseAuthoringPlatform.canManageBank(user);
 
     return ShellNestedPage(
       embedded: widget.embedded,
@@ -338,59 +344,63 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
           rows: () => _visible.map((s) => _csvRow(l, s)).toList(),
         ),
         const SizedBox(width: 8),
-        TextButton.icon(
-          onPressed: () => _openEditor(ownerId: ownerId),
-          icon: const Icon(Icons.edit_outlined, size: 18),
-          label: Text(l.bankTypeAQuestion),
-        ),
-        PopupMenuButton<String>(
-          icon: const Icon(Icons.more_vert),
-          onSelected: (action) async {
-            switch (action) {
-              case 'samples':
-                final all = await firestore.watchQuestionBank(ownerId).first;
-                if (!context.mounted) return;
-                await runQuestionBankSampleSetImport(
-                  context,
-                  ownerId: ownerId,
-                  existingBank: all,
-                );
-              case 'paste':
-                await showQuestionBankPasteImport(context, ownerId: ownerId);
-              case 'harvest':
-                final all = await firestore.watchQuestionBank(ownerId).first;
-                if (!context.mounted) return;
-                await showQuestionBankHarvestFromExercises(
-                  context,
-                  ownerId: ownerId,
-                  existingBank: all,
-                );
-            }
-          },
-          itemBuilder: (_) => [
-            PopupMenuItem(
-              value: 'samples',
-              child: Text(l.bankLoadSamples),
-            ),
-            PopupMenuItem(value: 'paste', child: Text(l.bankBulkPaste)),
-            PopupMenuItem(
-              value: 'harvest',
-              child: Text(l.bankHarvestTitle),
-            ),
-          ],
-        ),
+        if (canManageBank) ...[
+          TextButton.icon(
+            onPressed: () => _openEditor(ownerId: ownerId),
+            icon: const Icon(Icons.edit_outlined, size: 18),
+            label: Text(l.bankTypeAQuestion),
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            onSelected: (action) async {
+              switch (action) {
+                case 'samples':
+                  final all = await firestore.watchQuestionBank(ownerId).first;
+                  if (!context.mounted) return;
+                  await runQuestionBankSampleSetImport(
+                    context,
+                    ownerId: ownerId,
+                    existingBank: all,
+                  );
+                case 'paste':
+                  await showQuestionBankPasteImport(context, ownerId: ownerId);
+                case 'harvest':
+                  final all = await firestore.watchQuestionBank(ownerId).first;
+                  if (!context.mounted) return;
+                  await showQuestionBankHarvestFromExercises(
+                    context,
+                    ownerId: ownerId,
+                    existingBank: all,
+                  );
+              }
+            },
+            itemBuilder: (_) => [
+              PopupMenuItem(
+                value: 'samples',
+                child: Text(l.bankLoadSamples),
+              ),
+              PopupMenuItem(value: 'paste', child: Text(l.bankBulkPaste)),
+              PopupMenuItem(
+                value: 'harvest',
+                child: Text(l.bankHarvestTitle),
+              ),
+            ],
+          ),
+        ],
       ],
       // Scanner first: upload a worksheet, the app detects each question's
       // type and answer, and the admin checks the list before it is added.
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => runQuestionBankWorksheetImport(
-          context,
-          ownerId: ownerId,
-        ),
-        backgroundColor: AppColors.navy,
-        icon: const Icon(Icons.document_scanner_outlined),
-        label: Text(l.bankScanWorksheet),
-      ),
+      floatingActionButton: !canManageBank
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: () => runQuestionBankWorksheetImport(
+                context,
+                ownerId: ownerId,
+              ),
+              backgroundColor: AppColors.navy,
+              icon: const Icon(Icons.document_scanner_outlined),
+              label: Text(l.bankScanWorksheet),
+            ),
       child: StreamBuilder<List<QuestionBankItem>>(
         stream: firestore.watchQuestionBank(ownerId),
         builder: (context, snap) {
@@ -446,7 +456,9 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
                                   sheet: sheet,
                                   onTap: () => _open(ownerId, sheet),
                                   onEdit: () => _open(ownerId, sheet),
-                                  onDelete: () => _delete(firestore, sheet),
+                                  onDelete: canManageBank
+                                      ? () => _delete(firestore, sheet)
+                                      : null,
                                 ),
                               ),
                             ),
@@ -463,8 +475,9 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
     FirestoreService firestore,
   ) {
     final l = context.l10n;
-    final ownerId =
-        AppConstants.contentTeacherId(context.read<AuthService>().appUser!);
+    final user = context.read<AuthService>().appUser!;
+    final ownerId = AppConstants.contentTeacherId(user);
+    final canManageBank = ExerciseAuthoringPlatform.canManageBank(user);
     return [
       AppTableColumn(
         id: 'title',
@@ -516,13 +529,14 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
         width: 200,
         cell: (sheet) => _RowActions(
           onEdit: () => _open(ownerId, sheet),
-          onDelete: () => _delete(firestore, sheet),
+          onDelete: canManageBank ? () => _delete(firestore, sheet) : null,
         ),
       ),
     ];
   }
 
   void _open(String ownerId, QuestionBankSheet sheet) {
+    final user = context.read<AuthService>().appUser;
     if (sheet.isSheet) {
       Navigator.of(context).push(
         MaterialPageRoute<void>(
@@ -532,7 +546,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
           ),
         ),
       );
-    } else {
+    } else if (ExerciseAuthoringPlatform.canManageBank(user)) {
       _openEditor(ownerId: ownerId, existing: sheet.first);
     }
   }
@@ -644,7 +658,9 @@ class _SheetCard extends StatelessWidget {
   final QuestionBankSheet sheet;
   final VoidCallback onTap;
   final VoidCallback onEdit;
-  final VoidCallback onDelete;
+
+  /// Null when the viewer may not change the bank (teachers).
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -699,7 +715,8 @@ class _SheetCard extends StatelessWidget {
 }
 
 /// Edit and Delete as labelled buttons: big enough to hit, and Edit is
-/// visible without opening the worksheet first.
+/// visible without opening the worksheet first. Without [onDelete] (a
+/// teacher browsing the bank) only a View button is shown.
 class _RowActions extends StatelessWidget {
   const _RowActions({
     required this.onEdit,
@@ -708,7 +725,7 @@ class _RowActions extends StatelessWidget {
   });
 
   final VoidCallback onEdit;
-  final VoidCallback onDelete;
+  final VoidCallback? onDelete;
   final bool compact;
 
   @override
@@ -725,19 +742,24 @@ class _RowActions extends StatelessWidget {
         OutlinedButton.icon(
           onPressed: onEdit,
           style: style,
-          icon: const Icon(Icons.edit_outlined, size: 18),
-          label: Text(l.bankEdit),
-        ),
-        const SizedBox(width: 8),
-        OutlinedButton.icon(
-          onPressed: onDelete,
-          style: style.copyWith(
-            foregroundColor: WidgetStatePropertyAll(AppColors.error),
-            side: WidgetStatePropertyAll(BorderSide(color: AppColors.error)),
+          icon: Icon(
+            onDelete == null ? Icons.visibility_outlined : Icons.edit_outlined,
+            size: 18,
           ),
-          icon: const Icon(Icons.delete_outline, size: 18),
-          label: Text(l.bankDelete),
+          label: Text(onDelete == null ? l.bankView : l.bankEdit),
         ),
+        if (onDelete != null) ...[
+          const SizedBox(width: 8),
+          OutlinedButton.icon(
+            onPressed: onDelete,
+            style: style.copyWith(
+              foregroundColor: WidgetStatePropertyAll(AppColors.error),
+              side: WidgetStatePropertyAll(BorderSide(color: AppColors.error)),
+            ),
+            icon: const Icon(Icons.delete_outline, size: 18),
+            label: Text(l.bankDelete),
+          ),
+        ],
       ],
     );
   }

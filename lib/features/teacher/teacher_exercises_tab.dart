@@ -300,9 +300,18 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
     );
   }
 
+  /// Admins edit every exercise; a teacher only the packages they created.
+  bool _canEdit(AppUser? user, Exercise exercise) =>
+      ExerciseAuthoringPlatform.canEditExercise(user, exercise);
+
   Widget _selectionBar(bool canManage, List<_ExerciseRow> rows) {
     final l = context.l10n;
-    final picked = _selectedRows(rows);
+    final user = context.read<AuthService>().appUser;
+    // Bulk actions only touch the rows this user may change.
+    final picked = [
+      for (final r in _selectedRows(rows))
+        if (_canEdit(user, r.exercise)) r,
+    ];
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
       child: TableSelectionBar(
@@ -567,6 +576,7 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
 
   List<AppTableColumn<_ExerciseRow>> _columns({
     required bool canManage,
+    required AppUser? user,
     required List<ExerciseAssignment> assignments,
     required List<ExerciseResult> results,
     required List<AppUser> students,
@@ -681,7 +691,7 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
         width: canManage ? 190 : 100,
         cell: (row) => _RowActions(
           row: row,
-          canManage: canManage,
+          canManage: _canEdit(user, row.exercise),
           onAssign: () =>
               showExerciseAssignDialog(context, exercise: row.exercise),
           onEdit: () => _edit(row.exercise),
@@ -788,10 +798,16 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
                                           onSelectionChanged: (keys) =>
                                               setState(() => _selected = keys),
                                           onRowTap: canManage
-                                              ? (row) => _edit(row.exercise)
+                                              ? (row) {
+                                                  if (_canEdit(
+                                                      user, row.exercise)) {
+                                                    _edit(row.exercise);
+                                                  }
+                                                }
                                               : null,
                                           columns: _columns(
                                             canManage: canManage,
+                                            user: user,
                                             assignments: assignments,
                                             results: results,
                                             students: students,
@@ -801,7 +817,8 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
                                             row: row,
                                             contents:
                                                 _contentsLabel(l, row.exercise),
-                                            canManage: canManage,
+                                            canManage:
+                                                _canEdit(user, row.exercise),
                                             onProgress: row.assigned.isEmpty
                                                 ? null
                                                 : () => _showProgress(
