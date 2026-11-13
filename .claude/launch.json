@@ -4,8 +4,27 @@
     {
       "name": "web-release",
       "runtimeExecutable": "flutter",
-      "runtimeArgs": ["run", "-d", "web-server", "--web-port=5180", "--release"],
+      "runtimeArgs": [
+        "run",
+        "-d",
+        "web-server",
+        "--web-port=5180",
+        "--release"
+      ],
       "port": 5180
+    },
+    {
+      "name": "web-emulator",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "--yes",
+        "serve@14",
+        "-s",
+        "build/web-emulator",
+        "-l",
+        "5181"
+      ],
+      "port": 5181
     }
   ]
 }

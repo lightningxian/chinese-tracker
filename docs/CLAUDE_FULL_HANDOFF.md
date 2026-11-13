@@ -48,7 +48,7 @@ flutter pub get
 | Stack | Flutter web (primary) · Firestore · Cloud Functions v2 · Hosting · Storage · Midtrans sandbox |
 | Roles | admin · teacher · student · parent |
 
-### Cloud Functions (14, deployed 2026-11-13 with the current rules)
+### Cloud Functions (16; 14 deployed 2026-11-13, onNotificationCreated + dailyReminders after the next functions deploy)
 
 | Export | Role |
 |--------|------|
@@ -292,6 +292,8 @@ Today’s tests are thin: constants check, PDF import probe, question import uti
 | `docs/SESSION_LOG.md` | Shorter Mac↔PC Cursor session brief |
 | `docs/BACKLOG.md` | Priority backlog Claude maintains |
 | `docs/CHANGELOG.md` | Append-only change history |
+| `docs/OWNER_PROCEDURES.md` | Step-by-step: Midtrans sandbox test, nightly backup (owner runs) |
+| `docs/WORKSHEET_IMPORT.md` | Both scanners; the AI reader's one-time console setup (AI Logic + App Check) |
 | `docs/GO_LIVE_CHECKLIST.md` | Launch / Midtrans / smoke-test runbook |
 | `docs/FIREBASE_BACKEND.md` | Functions & rules overview |
 | `docs/APP_OVERVIEW.md` | Product overview |

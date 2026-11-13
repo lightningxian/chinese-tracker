@@ -1,10 +1,39 @@
-# Worksheet import (local scan)
+# Worksheet import
 
 > **App:** Easy Study · Figma UI spec: [design/FIGMA_AI_SPEC.md](design/FIGMA_AI_SPEC.md)
 
-Admins upload **PDF, Word, or image** worksheets on the exercise form (**web only**). The app reads the file **on your device**, detects the worksheet type, and builds draft questions for review.
+Two scanners, both admin-only on web, both ending on the same *Check before adding* review:
 
-**No Gemini. No API keys. No separate AI billing.**
+| | **Scan paper with AI** (question bank main button, since 2026-11-13) | **Scan without AI** (⋮ menu, exercise form) |
+|---|---|---|
+| Reads | PDF (any page count up to 900) or JPG/PNG/WebP, scanned or text | text PDFs, DOCX, images; scanned PDFs up to 8 pages (Tesseract OCR) |
+| Where | Gemini `gemini-3.8-flash` through **Firebase AI Logic** (no API key in the app) | on your device |
+| Returns | every question typed and in its printed part, keys for reading/writing (solved by the model or read from a printed key), pictures cut out and uploaded, HSK level and paper code | plain text → `QuestionImportUtils` layout parser |
+| Code | `lib/services/worksheet_ai_import_service.dart`, `worksheet_page_images.dart`, `lib/features/question_bank/question_bank_ai_import*.dart` | `worksheet_import_service.dart`, `worksheet_text/`, `question_import_utils.dart` |
+
+## AI reader: one-time setup (owner, Firebase console)
+
+1. **AI Services → AI Logic → Get started.** Choose the **Gemini Developer API** (free tier, no card). The wizard enables the API and turns on App Check enforcement for AI Logic (required by Google since 2026-11-02).
+2. **Build & Release → App Check → Apps → Web app → Register** with **reCAPTCHA v3** (create the key at the link the console shows; domain `chinese-tracker.web.app`). Copy the **site key**.
+3. On the Mac: create `deploy.env` in the repo (git-ignored) with `APP_CHECK_SITE_KEY=<site key>` and run `scripts/deploy_web.sh --web-only`.
+4. For local runs, App Check → Apps → ⋮ → **Manage debug tokens**: add the token the browser console prints when the app runs with `--dart-define=APP_CHECK_DEBUG=true`.
+5. Leave **Firestore, Functions and Storage unenforced** (the Android APK is sideloaded and has no Play Integrity).
+
+Until step 3 is live, **Scan paper with AI** says "AI reading is not set up for this project yet". Cost: Gemini 3.8 Flash has a free tier; one 16-page paper is a fraction of a cent beyond it.
+
+## After an AI scan of an HSK paper
+
+- The sheet is one worksheet (the paper code, e.g. `H326202Z`) with part headings (`一、听力 · 第一部分 · 第1-5题`), category **HSK Simulation**, level from the paper.
+- Listening keys are unknown (the reader has no audio): open the worksheet → **Answer key** (key icon) and type the printed key (`1 D 2 A …`, `11 √ 12 ×`, `41-45 ECBAD`).
+- Upload the **Listening recording** on the worksheet screen (one MP3 for the whole listening part; students get one player while answering those questions). A question's own clip goes in the editor's *Add audio*.
+- Pictures the reader cut out appear on the questions (a picture per choice for part 1). Wrong crop → open the question in the editor and replace the choice's picture.
+- Build the package: Exercises → New → pick the worksheet, set the time limit (HSK 3: 85 minutes), publish, assign. The player gives one attempt with a server clock and shows HSK marks per part at the end.
+
+---
+
+## On-device scanner (the original path)
+
+Admins upload **PDF, Word, or image** worksheets on the exercise form or from the bank's ⋮ menu (**web only**). The app reads the file **on your device**, detects the worksheet type, and builds draft questions for review.
 
 > **Platform:** Worksheet import and the question bank are **admin-only on web**. Since 2026-11-13 Gurus build their own practice packages from the bank (web), assign them and edit or delete only the packages they created. Murid can still **do** exercises on mobile.
 

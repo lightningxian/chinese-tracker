@@ -13,6 +13,28 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-13 (day) — Claude: HSK simulation, AI paper reader, teachers' packages, App Check + push
+
+- Owner: items 6 and 7 "go for it"; a scanned HSK 3 paper (H326202Z, 16
+  pages) was "not readable" by the scanner (8-page OCR limit); wants pictures
+  cut into the questions, a listening upload, an HSK simulation.
+- Three tracks (two agents in worktrees, merged): **teachers build and
+  assign their own packages** (bank stays admin-only); **App Check + web
+  push reminders** (keys from the console, feature off until set);
+  **HSK simulation**: AI paper reader (Gemini via Firebase AI Logic), a
+  picture per choice, part headings, listening recording per worksheet,
+  Answer key dialog, player with audio + picture grid + HSK marks per part.
+  Change log has the detail.
+- Proof: analyzer baseline, 74 Flutter tests, rules tests 41 pass /
+  1 skipped, function tests, emulator walk (HSK-style sheet seeded by REST).
+- **Owner to do** (plain steps in the change log and
+  `docs/OWNER_PROCEDURES.md`): Firebase console → AI Logic *Get started* +
+  App Check web key (`deploy.env`); Cloud Messaging web push key;
+  `firebase deploy --only firestore:rules,functions`; the Midtrans sandbox
+  test; the one-command Firestore backup schedule.
+- Not possible from here: the nightly backup command and a live Firestore
+  read (item 2, old-format exercises) were refused by the sandbox.
+
 ### 2026-11-13 — Claude: exam mode, rate limits
 
 - Owner: "go for it" on the recommendation list. Built one-attempt exams

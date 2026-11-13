@@ -48,7 +48,7 @@ retake" and "P6 Admin screen to edit weights" are superseded by the table above.
 |---|---|---|---|
 | 01 | Register with "Mulai dari HSK 1 / Ikut tes penempatan" + target level | Register exists; picks a level directly | Change the form (Phase 1 + placement) |
 | 02 | Sesi Kelas: level, time, room, teacher (info), seats left, **Daftar**, rejection reason | `student_join_session_section.dart`: "spots left", Join, "Class is full" dialog | Indonesian text, level filter, teacher name, seats; booking via function (Phase 2) |
-| 03 | R1 fill-in-the-blank with pembahasan | **Partly (2026-10-27):** `reading_cloze` is editable (word bank A–F) and playable, and the worksheet scanner imports it; no explanation (pembahasan) field yet | Add pembahasan (Phase 5) |
+| 03 | R1 fill-in-the-blank with pembahasan | **Done (2026-11-12):** `reading_cloze` is editable (word bank A–F) and playable, the scanners import it, and every bank question carries an optional explanation shown on the result page | — |
 | 04 | T2/T3 hanzi typing question | Nothing | Build typing forms (Phase 5) |
 | 05 | Voucher Kursus: remaining, expiry, history, **Beli** | Term section shows remaining/expiry/visit history; no self-purchase | Add packages + Beli (Phase 4) |
 | 06 | Test token entry with code and duration | Nothing | Build (Phase 5 supervised flow) |
@@ -198,7 +198,7 @@ Status per spec item. Evidence is `file:line` in this repo.
 | P4 Admin payments screen with filters | Partly | Sortable table, no status/date filters (`admin_invoices_tab.dart`) | AdminInvoicesTab |
 | P4 expireVouchers daily + low-balance reminders | Missing | Expiry only checked in app (`student_class_term.dart:42-58`) | voucherAlerts |
 | **P5** Question bank with form/topic/explanation/audio | Partly | Has type, level, skill, tags, difficulty, image/audio and, since 2026-11-12, an explanation shown in the review (`ExerciseQuestion.explanation`); no form code | question_bank |
-| P5 Question forms L1–L3, R1–R4, T1–T5 | Partly | R1 (fill in the blank), R2 (matching), R3 (passage + choice), R4 (order sentences, via compose), true/false and L3 (listening, no audio upload) exist and are detected by the worksheet scanner (2026-10-27); T1–T3 typing and picture forms missing (`exercise_type.dart`) | ExerciseType |
+| P5 Question forms L1–L3, R1–R4, T1–T5 | Done (2026-11-13) | L1 picture choice (`optionImageUrls`), L2 true/false, L3 listening with a recording per worksheet or a clip per question, R1–R4, T1 type the hanzi, T2 compose, T5 picture + keyword sentence; all importable by the AI paper reader, playable, and keyed on the server | ExerciseType, AI import |
 | P5 Answer keys students cannot read | Done | Package keys stay in `question_bank` (staff-only read); `startExercise` strips them; old-format exercises are no longer playable (2026-11-12). Quizzes (unused) still carry keys | startExercise |
 | P5 Practice vs exam | Done | Practice: unlimited attempts, best score. Exam / HSK Simulation packages (type of the first worksheet): one attempt, start screen, server clock from `exercise_attempts`, late submit scored 0 (2026-11-13) | startExercise / finishExercise |
 | P5 Teacher builds and assigns packages | Done | Teachers create, edit, publish and delete their own packages from the bank (web) and assign them with a due date; admins manage every exercise; the bank and the old-format editor stay admin-only (2026-11-13, `ExerciseAuthoringPlatform`, `exercises` rules) | saveExercisePackage, exercise_assignments |
@@ -229,7 +229,7 @@ Status per spec item. Evidence is `file:line` in this repo.
 | Rules pembayaran read-own | Partly | Own/parent OK; teachers can read all invoices | invoices |
 | Rules counters only by functions | Missing | Staff update terms/attendance from app | — |
 | **Testing** seed script | Partly | `scripts/seed_test_accounts.sh`, `seed_report_demo_data.py`, run against live | seed scripts |
-| Testing question import (CSV/JSON + audio) | Partly | Paste + PDF/image/DOC OCR import; no CSV/JSON, no batch audio | Worksheet import |
+| Testing question import (CSV/JSON + audio) | Partly | AI paper reader (PDF/photo → typed, keyed questions with pictures) + paste + on-device OCR; one recording per worksheet; no CSV/JSON | Worksheet import |
 | Testing emulator rules tests | Done | `rules-tests/firestore.rules.test.mjs`, 30 pass (`npm --prefix rules-tests run test:emulator`) | rules-tests |
 | Testing reconciliation script | Missing | Not found | — |
 | Testing unit tests NA formula / typing matcher | Missing | Tests cover constants and worksheet parser only | — |

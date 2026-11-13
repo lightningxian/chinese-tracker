@@ -6,6 +6,69 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-13 — Claude: HSK simulation (AI paper reader, pictures, listening recording, marks per part)
+
+**What changed**
+- **AI paper reader** (`lib/services/worksheet_ai_import_service.dart`,
+  `question_bank_ai_import.dart`): the question bank's main button is now
+  **Scan paper with AI**. The PDF or photo goes to Gemini
+  (`gemini-3.8-flash`) through **Firebase AI Logic**; it returns every
+  question typed (picture choice, true/false, choice, matching, cloze,
+  reorder, write hanzi), grouped in the paper's parts, keyed where the paper
+  prints a key or the model can solve it (reading, writing), `-1` for
+  listening without a transcript. Pictures are cut out of the page
+  (`worksheet_page_images.dart`, pdfrx + image) and uploaded to
+  `question_bank_media/`. The old on-device scanner (text PDFs, Tesseract
+  OCR, 8-page limit) is **Scan without AI** in the ⋮ menu. The owner's
+  16-page scanned HSK 3 paper failed on that limit; the AI path has no
+  page limit below 900.
+- **Models**: `ExerciseQuestion.optionImageUrls` (a picture per choice);
+  `QuestionBankItem.section` (part heading) and `sectionAudioUrl`
+  (recording of the listening part, stored on every listening question of
+  the sheet). `QuestionBankSheet.sections` / `listeningItems` /
+  `sectionAudioUrl`.
+- **Worksheet screen**: *Listening recording* card (upload / replace /
+  remove, admin only), **Answer key** dialog (`AnswerKeyParser`: `1 D 2 A`,
+  `11 √ 12 ×`, `41-45 ECBAD`; numbers follow sheet order; choice-style
+  questions only), part headings between rows, picture thumbnails.
+  Editor: a picture per choice.
+- **Player**: part heading above the question, one audio player for the
+  listening part (keeps playing across its questions) plus one for a
+  question's own clip (`just_audio`), picture choices as a lettered grid,
+  review shows the letter for picture choices. HSK simulations show **HSK
+  marks**: listening / reading / writing each scaled to 100, total and pass
+  mark (60% of the total, 180 of 300 for HSK 3), from the server's
+  `bySkill`.
+- **Functions**: `stripQuestion` passes `optionImageUrls`, `skill`,
+  `section`, `sectionAudioUrl` (never a key); `scoreAttempt` returns
+  `bySkill`; `finishExercise` stores it on the result (zeroed when late).
+  `firestore.rules` unchanged (the fields live inside existing documents).
+
+**Why**
+- The owner wants an HSK simulation: the real paper scanned in, pictures in
+  the questions, the listening recording added later, one attempt with a
+  clock, marks like the real exam. The on-device OCR could not read a
+  16-page scan and cannot place pictures.
+
+**For review**
+- **Owner setup (console, once)**: Firebase console → **AI Services → AI
+  Logic → Get started** (choose the Gemini Developer API; the wizard turns
+  on App Check for AI Logic), then **App Check → register the web app
+  (reCAPTCHA v3)** and put the site key in `deploy.env`
+  (`APP_CHECK_SITE_KEY`), redeploy hosting. Until then the AI button shows
+  "AI reading is not set up for this project yet"; everything else
+  (pictures, recording, answer key, player, marks) works now.
+- Firebase AI Logic requires App Check enforcement since 2026-11-02;
+  enforcement stays off for Firestore / Functions / Storage (sideloaded APK).
+- Cost: Gemini 3.8 Flash on the Developer API has a free tier; a 16-page
+  paper is well under a cent beyond it.
+- Not verified end to end with a real Gemini call (needs the console
+  setup); the JSON → bank conversion is unit-tested with an HSK 3 fixture
+  (`test/question_bank_ai_import_utils_test.dart`), the key parser too.
+- Emulator walk: see the session log.
+- `docs/OWNER_PROCEDURES.md` (new): Midtrans sandbox test and the nightly
+  backup, step by step.
+
 ## 2026-11-13 — Claude: App Check wired, web push reminders
 
 **What changed**
