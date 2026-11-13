@@ -10,6 +10,7 @@ import '../../core/utils/progress_utils.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/class_term_widgets.dart';
 import '../../core/widgets/language_toggle.dart';
+import '../../core/widgets/push_setting_card.dart';
 import '../../core/widgets/theme_toggle.dart';
 import '../../core/widgets/profile_widgets.dart';
 import '../../l10n/l10n.dart';
@@ -187,6 +188,7 @@ class _StudentProfileTabState extends State<StudentProfileTab> {
             initialCode: user.parentCode,
           ),
           const SizedBox(height: 16),
+          PushSettingCard(uid: user.uid),
           const AppCard(child: LanguageSettingRow()),
           const SizedBox(height: 16),
           const AppCard(child: ThemeSettingRow()),

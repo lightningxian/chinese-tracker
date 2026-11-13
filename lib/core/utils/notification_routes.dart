@@ -16,11 +16,13 @@ abstract final class NotificationRoutes {
           : role == AppConstants.roleAdmin
               ? '/admin'
               : '/teacher',
-      NotificationKind.session => role == AppConstants.roleStudent
-          ? '/student'
-          : role == AppConstants.roleAdmin
-              ? '/admin'
-              : '/teacher',
+      NotificationKind.session ||
+      NotificationKind.reminder =>
+        role == AppConstants.roleStudent
+            ? '/student'
+            : role == AppConstants.roleAdmin
+                ? '/admin'
+                : '/teacher',
     };
   }
 

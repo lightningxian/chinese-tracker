@@ -317,3 +317,23 @@ describe("hardening 2026-11-12 (registration, invoices, attendance, quizzes)", (
     await assertFails(setDoc(doc(as("student1"), "quiz_results", "q1"), { studentId: "student1", score: 100 }));
   });
 });
+
+describe("push tokens 2026-11-13", () => {
+  const token = (uid, extra = {}) => ({ uid, platform: "web", updatedAt: Timestamp.now(), ...extra });
+
+  it("a device registers, reads and removes its own user's token only", async () => {
+    await assertSucceeds(setDoc(doc(as("student1"), "push_tokens", "tok1"), token("student1")));
+    await assertSucceeds(getDoc(doc(as("student1"), "push_tokens", "tok1")));
+    await assertSucceeds(updateDoc(doc(as("student1"), "push_tokens", "tok1"), { platform: "android", updatedAt: Timestamp.now() }));
+    await assertFails(getDoc(doc(as("teacher1"), "push_tokens", "tok1")));
+    await assertFails(getDoc(doc(as("admin1"), "push_tokens", "tok1")));
+    await assertFails(setDoc(doc(as("teacher1"), "push_tokens", "tok1"), token("teacher1")));
+    await assertFails(deleteDoc(doc(as("teacher1"), "push_tokens", "tok1")));
+    await assertSucceeds(deleteDoc(doc(as("student1"), "push_tokens", "tok1")));
+  });
+  it("a token cannot name another user, an unknown platform or extra fields", async () => {
+    await assertFails(setDoc(doc(as("student1"), "push_tokens", "tok2"), token("teacher1")));
+    await assertFails(setDoc(doc(as("student1"), "push_tokens", "tok3"), token("student1", { platform: "ios" })));
+    await assertFails(setDoc(doc(as("student1"), "push_tokens", "tok4"), token("student1", { role: "admin" })));
+  });
+});

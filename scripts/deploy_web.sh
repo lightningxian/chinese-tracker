@@ -22,6 +22,19 @@ MIDTRANS_CLIENT_KEY="Mid-client-kQ_Bo0DQepeH8IhU"   # sandbox
 APK_SRC="build/app/outputs/flutter-apk/app-release.apk"
 APK_URL="https://chinese-tracker.web.app/downloads/easy-study.apk"
 
+# App Check site key and Web Push (VAPID) key: created by the owner in the
+# Firebase console, kept out of git. Put them in deploy.env (git-ignored via
+# *.env) as `APP_CHECK_SITE_KEY=...` / `FCM_VAPID_KEY=...`, or export them
+# before running. Empty values leave both features off.
+if [[ -f deploy.env ]]; then
+  # shellcheck disable=SC1091
+  source deploy.env
+fi
+KEY_DEFINES=(
+  --dart-define=APP_CHECK_SITE_KEY="${APP_CHECK_SITE_KEY:-}"
+  --dart-define=FCM_VAPID_KEY="${FCM_VAPID_KEY:-}"
+)
+
 export JAVA_HOME="${JAVA_HOME:-/opt/homebrew/opt/openjdk@21}"
 export PATH="$JAVA_HOME/bin:$PATH"
 
@@ -31,7 +44,8 @@ if [[ "$MODE" != "--web-only" ]]; then
     echo "▶ Building Android APK…"
     flutter build apk --release \
       --dart-define=CONTENT_OWNER_ID="$CONTENT_OWNER_ID" \
-      --dart-define=MIDTRANS_CLIENT_KEY="$MIDTRANS_CLIENT_KEY"
+      --dart-define=MIDTRANS_CLIENT_KEY="$MIDTRANS_CLIENT_KEY" \
+      "${KEY_DEFINES[@]}"
   fi
   APK_DEFINE=(--dart-define=ANDROID_APK_URL="$APK_URL")
 fi
@@ -41,6 +55,7 @@ rm -rf build/web
 flutter build web --release \
   --dart-define=CONTENT_OWNER_ID="$CONTENT_OWNER_ID" \
   --dart-define=MIDTRANS_CLIENT_KEY="$MIDTRANS_CLIENT_KEY" \
+  "${KEY_DEFINES[@]}" \
   ${APK_DEFINE[@]+"${APK_DEFINE[@]}"}   # empty-array-safe on macOS bash 3.2
 
 if [[ "$MODE" != "--web-only" ]]; then

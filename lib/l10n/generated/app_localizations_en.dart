@@ -88,6 +88,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonParent => 'Parent';
 
   @override
+  String get pushRowLabel => 'Push notifications';
+
+  @override
+  String get pushRowHint =>
+      'Reminders on this device when something is due or graded.';
+
+  @override
+  String get pushRowBlocked =>
+      'Notifications are blocked in the browser or phone settings.';
+
+  @override
+  String get pushEnableFailed => 'Could not turn on notifications. Try again.';
+
+  @override
   String get languageRowLabel => 'Bahasa / Language';
 
   @override

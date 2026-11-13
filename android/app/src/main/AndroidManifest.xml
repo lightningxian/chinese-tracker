@@ -2,6 +2,8 @@
     <!-- Required for Firebase network access in release builds (debug/profile
          manifests add this automatically, but release does not). -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Push notifications (Android 13+ asks the user; PushService requests it). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
         android:label="Easy Study"
         android:name="${applicationName}"

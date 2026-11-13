@@ -6,6 +6,62 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-13 — Claude: App Check wired, web push reminders
+
+**What changed**
+- **App Check** (`firebase_app_check`). `lib/main.dart` activates it right
+  after Firebase starts when the build carries
+  `--dart-define=APP_CHECK_SITE_KEY=<reCAPTCHA v3 site key>` (web) or
+  `APP_CHECK_DEBUG=true` (web debug provider, prints a token to register);
+  Android uses Play Integrity in release builds, the debug provider in
+  debug builds. With no key the call is skipped, so nothing changes until
+  the owner sets the key up. `scripts/deploy_web.sh` and
+  `scripts/run_emulator_web.sh` read `APP_CHECK_SITE_KEY` / `FCM_VAPID_KEY`
+  from the environment or a git-ignored `deploy.env`.
+- **Web push** (`firebase_messaging`). New `PushService`
+  (`lib/services/push_service.dart`): the profile tab of every role shows a
+  "Push notifications" card with a switch (hidden when the build has no
+  `FCM_VAPID_KEY` or the browser cannot show notifications). On: asks for
+  permission, stores the device token in `push_tokens/{token}` =
+  `{uid, platform, updatedAt}`. Off: deletes the doc and the token. A
+  message that arrives while the app is open shows as a SnackBar.
+  `web/firebase-messaging-sw.js` (public web config, SDK 12.19.0 like the
+  page) shows background notifications and focuses the app on click;
+  `firebase.json` serves it with no-cache. Android manifest gains
+  `POST_NOTIFICATIONS`.
+- **Functions.** `onNotificationCreated` (trigger on `notifications`): a
+  notification addressed to one user (`userId` set) is sent to that user's
+  tokens (`sendEachForMulticast`), dead tokens are deleted; broadcasts
+  (`userId == ''`) are not pushed yet. `dailyReminders` (07:00 Jakarta):
+  one `notifications` doc of kind `reminder` per assignment due within 24 h
+  with no result yet; the assignment gets `reminderSentOn: yyyy-mm-dd` so a
+  re-run never sends twice. Helpers in `functions/reminders.js` with
+  `functions/test_reminders.js`.
+- **Rules.** `push_tokens`: a signed-in user reads, creates, updates and
+  deletes only docs whose `uid` is their own, with exactly the three
+  fields and `platform` in `web` / `android`. Two rules tests added.
+- Client: `NotificationKind.reminder` (routes to the student home).
+
+**Why**
+- Firebase AI Logic (worksheet import, next change) refuses requests
+  without App Check since 2026-11-02; the thesis spec wants reminders
+  (due exercises) that reach the student outside the app.
+
+**For review**
+- **Owner console steps** (handoff, "App Check + push: what the owner sets
+  up"): register the web app with reCAPTCHA v3 → site key; Cloud Messaging
+  → Web Push certificates → key pair; put both in `deploy.env`; redeploy
+  hosting; `firebase deploy --only firestore:rules,functions` for the two
+  new functions and the `push_tokens` rules. Leave App Check
+  **unenforced** for Firestore / Functions / Storage: the APK is sideloaded,
+  Play Integrity has no verdict for it, enforcement would lock Android out.
+- Not pushed: broadcasts (`userId == ''`), class reminders, voucher
+  warnings. Notification text from the functions is English, like the
+  existing grading / registration ones.
+- Proof: analyzer 17 infos (baseline), `flutter test` 65 pass, rules
+  tests 39 pass / 1 skipped, `node --check`, `node test_reminders.js`,
+  `node test_exercise_play.js`.
+
 ## 2026-11-13 — Claude: one-attempt exams with a server clock, rate-limited code resolvers
 
 **What changed**

@@ -236,6 +236,30 @@ abstract class AppLocalizations {
   /// **'Parent'**
   String get commonParent;
 
+  /// No description provided for @pushRowLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Push notifications'**
+  String get pushRowLabel;
+
+  /// No description provided for @pushRowHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders on this device when something is due or graded.'**
+  String get pushRowHint;
+
+  /// No description provided for @pushRowBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications are blocked in the browser or phone settings.'**
+  String get pushRowBlocked;
+
+  /// No description provided for @pushEnableFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not turn on notifications. Try again.'**
+  String get pushEnableFailed;
+
   /// No description provided for @languageRowLabel.
   ///
   /// In en, this message translates to:

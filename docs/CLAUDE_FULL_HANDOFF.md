@@ -66,6 +66,8 @@ flutter pub get
 | `onExerciseResultCreated` | Trigger — notifications on exercise result |
 | `cleanupExpiredLinkCodes` | Schedule — every 60 minutes (also clears old `rate_limits`) |
 | `scheduledFirestoreExport` | Schedule — Firestore backup export (fails: IAM, see CLAUDE.md) |
+| `onNotificationCreated` | Trigger — pushes a notification addressed to one user to their `push_tokens` devices (added 2026-11-13, deploy pending) |
+| `dailyReminders` | Schedule — 07:00 Jakarta, "due today" reminder per unfinished assignment (added 2026-11-13, deploy pending) |
 
 **Webhook URL (registered in Midtrans):**  
 `https://us-central1-chinese-tracker.cloudfunctions.net/midtransNotification`
@@ -90,6 +92,49 @@ flutter build web --release \
   --dart-define=MIDTRANS_CLIENT_KEY=Mid-client-kQ_Bo0DQepeH8IhU
 firebase deploy --only hosting
 ```
+
+### App Check + push: what the owner sets up (added 2026-11-13)
+
+The code is wired; both features stay off until these keys exist. Do them
+once, on the Mac, in this order.
+
+1. **App Check site key (web).** Firebase console → **Build → App Check**
+   (under Security) → **Apps** tab → find the **Web** app → **Register** →
+   choose **reCAPTCHA v3** → the console sends you to the reCAPTCHA admin
+   page: create a key of type **v3**, domain `chinese-tracker.web.app`
+   (add `localhost` too) → copy the **site key** (public, long string
+   starting with `6L`) and paste it into the Firebase App Check dialog; the
+   **secret key** goes into the same dialog (Firebase keeps it, never the
+   app). Save.
+2. **Keep App Check unenforced** for Firestore, Cloud Functions and
+   Storage (App Check → **APIs** tab: leave them "Unenforced"). The Android
+   APK is installed from our download link, not from Google Play, so Play
+   Integrity cannot vouch for it; enforcing would lock Android users out.
+   Only **Firebase AI Logic** is enforced (it requires it).
+3. **Web Push key.** Firebase console → **Project settings** (gear) →
+   **Cloud Messaging** tab → section **Web configuration → Web Push
+   certificates** → **Generate key pair** → copy the key (starts with `B`).
+4. **Put both keys on the Mac.** Create the file `deploy.env` in the repo
+   root (it is git-ignored) with two lines:
+   ```bash
+   APP_CHECK_SITE_KEY=6L...your site key...
+   FCM_VAPID_KEY=B...your web push key...
+   ```
+   `scripts/deploy_web.sh` reads this file on every deploy. Copy the same
+   file to the PC when you deploy from there.
+5. **Deploy.** `scripts/deploy_web.sh --web-only` (hosting, picks up the
+   keys), then `firebase deploy --only firestore:rules,functions --project
+   chinese-tracker` (the `push_tokens` rules and the two new functions
+   `onNotificationCreated`, `dailyReminders`).
+6. **Try it.** Sign in on the live site → Profile → **Push
+   notifications** → switch on → allow in the browser prompt. Then, as a
+   teacher, assign an exercise due today to that student: the 07:00
+   reminder (or any grading notification) arrives as a browser
+   notification. The switch is hidden until step 4 + 5 are done.
+7. **Local runs with App Check on.** `APP_CHECK_DEBUG=true
+   scripts/run_emulator_web.sh` → open the browser console → copy the
+   printed debug token → Firebase console → App Check → Apps → Web app
+   → ⋮ → **Manage debug tokens** → add it. Keep that token private.
 
 ### Test login (if still seeded)
 
