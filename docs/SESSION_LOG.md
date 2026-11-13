@@ -36,8 +36,8 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   `onNotificationCreated` created. Teacher packages, marks per part and
   push triggers are live.
 - Owner ran the backup command: Firestore scheduled backup created (daily,
-  7-day retention). `scheduledFirestoreExport` removed from the code; the
-  owner deletes it on live at the next `firebase deploy --only functions`.
+  7-day retention). `scheduledFirestoreExport` removed from the code and deleted on live
+  (owner's `firebase deploy --only functions`: 15 updated, 1 deleted).
 - Not possible from here: a live Firestore read (item 2, old-format
   exercises) was refused by the sandbox.
 

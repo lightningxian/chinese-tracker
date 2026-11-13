@@ -87,7 +87,7 @@ account on record. Users add the web app to the home screen from Safari.
 ## Known blockers (update when resolved)
 - Cloud Functions run on **Node 22** since 2026-11-05 (Node 20 was retired 2026-10-30); `functions/package.json` engines = 22, firebase-functions 7, firebase-admin 14.
 - Billing was off 2026-10-13 → 2026-10-20. Owner upgraded to **Blaze on 2026-10-20**; all 9 functions and the APK were redeployed and work (owner re-test PUB-09 passed).
-- **Nightly backup: resolved 2026-11-13.** The owner created a Firestore scheduled backup (daily, 7-day retention, `firebase firestore:backups:schedules:create`, schedule id `c3d18000-…`). The failing `scheduledFirestoreExport` function was removed from the code the same day; the next `firebase deploy --only functions` asks to delete it on live (answer yes). List / restore commands: `docs/OWNER_PROCEDURES.md` §B. The NAS pull in `docs/NAS_BACKUP_SETUP.md` no longer receives Firestore exports.
+- **Nightly backup: resolved 2026-11-13.** The owner created a Firestore scheduled backup (daily, 7-day retention, `firebase firestore:backups:schedules:create`, schedule id `c3d18000-…`). The failing `scheduledFirestoreExport` function was removed from the code and deleted on live the same day (15 functions remain). List / restore commands: `docs/OWNER_PROCEDURES.md` §B. The NAS pull in `docs/NAS_BACKUP_SETUP.md` no longer receives Firestore exports.
 - Test accounts on the live project: `admin@`, `teacher@`, `student1-3@test.chinesetracker`, password in `docs/CLAUDE_FULL_HANDOFF.md`. No test parent yet.
 
 ## Tools on the owner's Mac

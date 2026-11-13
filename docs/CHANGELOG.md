@@ -25,9 +25,8 @@ edge cases, and any manual/deploy steps still required).
   no function.
 
 **For review**
-- Owner: `firebase deploy --only functions --project chinese-tracker` and
-  answer **yes** when the CLI asks to delete `scheduledFirestoreExport`.
-  Until then the dead function keeps failing at 02:00 (harmless).
+- Owner ran `firebase deploy --only functions` the same day: 15 functions
+  updated, `scheduledFirestoreExport` deleted on live.
 - Checks: `node --check functions/index.js`, `node functions/test_exercise_play.js`,
   `node functions/test_reminders.js` pass. No web change, hosting untouched.
 

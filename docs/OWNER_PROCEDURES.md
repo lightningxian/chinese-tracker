@@ -70,8 +70,8 @@ log lines and marks the Midtrans item done. After that, production keys:
 Firestore's own scheduled backup is on: daily, 7-day retention (schedule
 `c3d18000-952e-4759-8aa6-aaf1df6fa48c`, created with
 `firebase firestore:backups:schedules:create`). The old export function
-`scheduledFirestoreExport` is gone from the code; the next
-`firebase deploy --only functions` asks to delete it on live (answer **yes**).
+`scheduledFirestoreExport` is gone from the code and was deleted on live the
+same day.
 
 Check the schedule:
 

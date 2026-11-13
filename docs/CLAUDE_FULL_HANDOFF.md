@@ -48,7 +48,7 @@ flutter pub get
 | Stack | Flutter web (primary) · Firestore · Cloud Functions v2 · Hosting · Storage · Midtrans sandbox |
 | Roles | admin · teacher · student · parent |
 
-### Cloud Functions (15, all deployed 2026-11-13 with the current rules; `scheduledFirestoreExport` removed from the code 2026-11-13, delete on live at the next functions deploy)
+### Cloud Functions (15, all deployed 2026-11-13 with the current rules; `scheduledFirestoreExport` deleted on live 2026-11-13)
 
 | Export | Role |
 |--------|------|
