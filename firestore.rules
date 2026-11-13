@@ -229,9 +229,30 @@ service cloud.firestore {
       allow write: if isStaff();
     }
 
+    // A package: questions live in the bank (bankSheets / bankQuestionIds),
+    // none inside the document. Old-format exercises carry `questions`.
+    function isPackageDoc(d) {
+      return d.get('questions', []).size() == 0 &&
+        (d.get('bankSheets', []).size() > 0 ||
+          d.get('bankQuestionIds', []).size() > 0);
+    }
+
+    function ownsPackage(d) {
+      return d.get('teacherId', '') == request.auth.uid && isPackageDoc(d);
+    }
+
     match /exercises/{exerciseId} {
       allow read: if isSignedIn();
-      allow create, update, delete: if isAdmin();
+      // Admins manage every exercise. Teachers (2026-11-13) create, edit
+      // and delete their own packages (teacherId = their uid), never an
+      // old-format exercise, and cannot hand a package to someone else.
+      allow create: if isAdmin() ||
+        (isTeacher() && ownsPackage(request.resource.data));
+      allow update: if isAdmin() ||
+        (isTeacher() && ownsPackage(resource.data) &&
+          ownsPackage(request.resource.data));
+      allow delete: if isAdmin() ||
+        (isTeacher() && ownsPackage(resource.data));
     }
 
     match /exercise_assignments/{assignmentId} {

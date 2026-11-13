@@ -241,6 +241,45 @@ describe("exercise results (written by finishExercise only)", () => {
   });
 });
 
+describe("teacher packages (2026-11-13)", () => {
+  const pkg = (teacherId, extra = {}) => ({
+    title: "HSK 1 A", instructions: "", teacherId, order: 0, type: "multiple_choice", level: "HSK 1",
+    skillCategory: "reading", isPublished: true, questions: [], bankSheets: ["310001-RDG"],
+    bankQuestionIds: [], createdAt: Timestamp.now(), ...extra,
+  });
+  const seed = () => env.withSecurityRulesDisabled(async (ctx) => {
+    const db = ctx.firestore();
+    await setDoc(doc(db, "exercises", "own"), pkg("teacher1"));
+    await setDoc(doc(db, "exercises", "other"), pkg("teacherX"));
+    await setDoc(doc(db, "exercises", "legacy"), pkg("teacher1", { questions: [{ prompt: "q", options: ["a", "b"], correctIndex: 0 }], bankSheets: [] }));
+  });
+
+  it("a teacher creates a package only under their own uid, never an old-format exercise", async () => {
+    await assertSucceeds(setDoc(doc(as("teacher1"), "exercises", "p1"), pkg("teacher1")));
+    await assertFails(setDoc(doc(as("teacher1"), "exercises", "p2"), pkg("admin1")));
+    await assertFails(setDoc(doc(as("teacher1"), "exercises", "p3"), pkg("teacher1", { questions: [{ prompt: "q" }], bankSheets: [] })));
+    await assertFails(setDoc(doc(as("teacher1"), "exercises", "p4"), pkg("teacher1", { bankSheets: [], bankQuestionIds: [] })));
+    await assertFails(setDoc(doc(as("teacher2"), "exercises", "p5"), pkg("teacher2")));
+    await assertFails(setDoc(doc(as("student1"), "exercises", "p6"), pkg("student1")));
+    await assertSucceeds(setDoc(doc(as("admin1"), "exercises", "p7"), pkg("teacherX")));
+  });
+  it("a teacher edits and deletes only their own packages; admins any exercise", async () => {
+    await seed();
+    await assertSucceeds(updateDoc(doc(as("teacher1"), "exercises", "own"), { title: "Renamed", isPublished: false }));
+    await assertFails(updateDoc(doc(as("teacher1"), "exercises", "own"), { teacherId: "teacherX" }));
+    await assertFails(updateDoc(doc(as("teacher1"), "exercises", "own"), { questions: [{ prompt: "q" }] }));
+    await assertFails(updateDoc(doc(as("teacher1"), "exercises", "other"), { title: "x" }));
+    await assertFails(updateDoc(doc(as("teacher1"), "exercises", "legacy"), { title: "x" }));
+    await assertFails(deleteDoc(doc(as("teacher1"), "exercises", "other")));
+    await assertFails(deleteDoc(doc(as("teacher1"), "exercises", "legacy")));
+    await assertFails(deleteDoc(doc(as("student1"), "exercises", "own")));
+    await assertSucceeds(deleteDoc(doc(as("teacher1"), "exercises", "own")));
+    await assertSucceeds(updateDoc(doc(as("admin1"), "exercises", "other"), { title: "x" }));
+    await assertSucceeds(updateDoc(doc(as("admin1"), "exercises", "legacy"), { title: "x" }));
+    await assertSucceeds(deleteDoc(doc(as("admin1"), "exercises", "other")));
+  });
+});
+
 describe("hardening 2026-11-12 (registration, invoices, attendance, quizzes)", () => {
   const seedSession = (id, extra = {}) => env.withSecurityRulesDisabled(async (ctx) => {
     await setDoc(doc(ctx.firestore(), "class_sessions", id), {

@@ -1,10 +1,11 @@
 import '../../models/app_user.dart';
 import 'exercise_authoring_platform.dart';
 
-/// Worksheet upload / OCR import is admin-only on web.
+/// Worksheet upload / OCR import is admin-only on web (it writes to the
+/// question bank, which teachers only read).
 abstract final class WorksheetImportPlatform {
   static bool isSupportedFor(AppUser? user) =>
-      ExerciseAuthoringPlatform.canManageExercises(user);
+      ExerciseAuthoringPlatform.canManageBank(user);
 
   static const String unsupportedMessage =
       'Worksheet upload is only available to admins on web. '

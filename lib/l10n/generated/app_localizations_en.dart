@@ -4060,6 +4060,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bankEdit => 'Edit';
 
   @override
+  String get bankView => 'View';
+
+  @override
   String get bankTypeAQuestion => 'Type a question';
 
   @override
@@ -4950,7 +4953,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get teacherExNoExercisesSubtitleReadOnly =>
-      'An exercise bundles worksheets from the question bank; students see it once it is assigned to them. Admins create exercises on web.';
+      'An exercise bundles worksheets from the question bank; students see it once it is assigned to them. Exercises are built on web.';
 
   @override
   String get teacherExPublished => 'Published';
@@ -5065,7 +5068,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get teacherExAuthoringReadOnly =>
-      'View only — browse published practice and assign it to murid. Creating and editing exercises is done by admins on web.';
+      'View only — browse published practice and assign it to murid. Creating and editing exercises is done on web.';
 
   @override
   String get worksheetUploadUnsupported =>

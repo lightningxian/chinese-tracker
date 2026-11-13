@@ -7,16 +7,18 @@ paths:
 
 # Worksheet import: web only
 
-Worksheet **upload and OCR import** is available only on **web** (`kIsWeb`), as
-part of exercise authoring (see `exercise-authoring-web-only.md`).
+Worksheet **upload and OCR import** is available only to **admins** on **web**
+(`kIsWeb`): it writes to the question bank, which teachers only read (see
+`exercise-authoring-web-only.md`).
 
 ## Enforcement layers
 
 1. **Platform gate**: `WorksheetImportPlatform` in
    `lib/core/constants/worksheet_import_platform.dart`.
-   - `isSupported` → web + `ExerciseAuthoringPlatform.isSupported`
-   - `ensureSupported()` throws `WorksheetImportPlatformException` on mobile and
-     desktop native.
+   - `isSupportedFor(user)` → `ExerciseAuthoringPlatform.canManageBank(user)`
+     (admin on web).
+   - `ensureSupportedFor(user)` throws `WorksheetImportPlatformException`
+     for teachers and off web.
 2. **Service**: `WorksheetImportService.extractTextFromWorksheet()` calls
    `ensureSupported()` first.
 3. **UI**: exercise form (`teacher_exercise_form_screen.dart`).
