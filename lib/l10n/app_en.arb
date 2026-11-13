@@ -31,6 +31,11 @@
   "commonStudent": "Student",
   "commonParent": "Parent",
 
+  "pushRowLabel": "Push notifications",
+  "pushRowHint": "Reminders on this device when something is due or graded.",
+  "pushRowBlocked": "Notifications are blocked in the browser or phone settings.",
+  "pushEnableFailed": "Could not turn on notifications. Try again.",
+
   "languageRowLabel": "Bahasa / Language",
   "languageToggleIndonesian": "Bahasa Indonesia",
   "languageToggleEnglish": "English",

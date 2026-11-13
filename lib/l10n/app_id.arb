@@ -25,6 +25,11 @@
   "commonStudent": "Murid",
   "commonParent": "Orang tua",
 
+  "pushRowLabel": "Notifikasi push",
+  "pushRowHint": "Pengingat di perangkat ini saat ada tugas jatuh tempo atau nilai keluar.",
+  "pushRowBlocked": "Notifikasi diblokir di pengaturan browser atau HP.",
+  "pushEnableFailed": "Notifikasi tidak bisa diaktifkan. Coba lagi.",
+
   "languageRowLabel": "Bahasa / Language",
   "languageToggleIndonesian": "Bahasa Indonesia",
   "languageToggleEnglish": "English",

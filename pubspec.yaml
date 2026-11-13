@@ -37,6 +37,8 @@ dependencies:
   web: ^1.1.1
   firebase_ai: ^4.0.0
   just_audio: ^0.10.6
+  firebase_app_check: ^0.4.9
+  firebase_messaging: ^16.7.1
 dev_dependencies:
   flutter_test:
     sdk: flutter

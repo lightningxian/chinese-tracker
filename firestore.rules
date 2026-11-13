@@ -470,6 +470,30 @@ service cloud.firestore {
       );
     }
 
+    // Push tokens (web / Android devices that opted in on the profile tab).
+    // A device may register, read and remove only its own user's tokens;
+    // onNotificationCreated reads them with admin privileges.
+    match /push_tokens/{token} {
+      // `resource == null`: PushService reads its own token id to learn
+      // whether this device is registered; a missing doc must read as
+      // "not registered", not as an error.
+      allow read: if isSignedIn() && (
+        resource == null ||
+        resource.data.get('uid', '') == request.auth.uid
+      );
+      allow delete: if isSignedIn() &&
+        resource.data.get('uid', '') == request.auth.uid;
+      allow create: if isSignedIn() &&
+        request.resource.data.keys().hasOnly(['uid', 'platform', 'updatedAt']) &&
+        request.resource.data.get('uid', '') == request.auth.uid &&
+        request.resource.data.get('platform', '') in ['web', 'android'];
+      allow update: if isSignedIn() &&
+        resource.data.get('uid', '') == request.auth.uid &&
+        request.resource.data.keys().hasOnly(['uid', 'platform', 'updatedAt']) &&
+        request.resource.data.get('uid', '') == request.auth.uid &&
+        request.resource.data.get('platform', '') in ['web', 'android'];
+    }
+
     match /teacher_link_codes/{code} {
       // Students resolve codes via the resolveLinkCode Cloud Function (admin
       // privileges), so clients never read this collection directly. Teachers

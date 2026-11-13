@@ -17,7 +17,14 @@ PORT="${PORT:-5181}"
 
 echo "▶ Building emulator web bundle → $OUT"
 rm -rf "$OUT"
-flutter build web --release --dart-define=USE_EMULATORS=true --output "$OUT"
+# APP_CHECK_DEBUG=true turns on App Check with the debug provider (the
+# browser console prints a token to register in the Firebase console).
+# FCM_VAPID_KEY shows the push switch; both default to off.
+flutter build web --release --dart-define=USE_EMULATORS=true \
+  --dart-define=APP_CHECK_DEBUG="${APP_CHECK_DEBUG:-false}" \
+  --dart-define=APP_CHECK_SITE_KEY="${APP_CHECK_SITE_KEY:-}" \
+  --dart-define=FCM_VAPID_KEY="${FCM_VAPID_KEY:-}" \
+  --output "$OUT"
 mkdir -p "$OUT/test_uploads"
 
 echo "▶ Serving $OUT on http://localhost:$PORT (SPA fallback on)"

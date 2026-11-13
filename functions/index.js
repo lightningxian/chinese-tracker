@@ -2,12 +2,14 @@ const crypto = require("crypto");
 const {initializeApp} = require("firebase-admin/app");
 const {getAuth} = require("firebase-admin/auth");
 const {getFirestore, FieldValue, Timestamp} = require("firebase-admin/firestore");
+const {getMessaging} = require("firebase-admin/messaging");
 const {onCall, onRequest, HttpsError} = require("firebase-functions/v2/https");
 const {onDocumentCreated} = require("firebase-functions/v2/firestore");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
 const {defineSecret} = require("firebase-functions/params");
 const logger = require("firebase-functions/logger");
 const play = require("./exercise_play");
+const reminders = require("./reminders");
 
 initializeApp();
 const db = getFirestore();
@@ -25,6 +27,8 @@ const AUDIT_LOGS = "audit_logs";
 const QUESTION_BANK = "question_bank";
 const EXERCISE_ASSIGNMENTS = "exercise_assignments";
 const STUDENT_PROGRESS = "student_progress";
+const PUSH_TOKENS = "push_tokens";
+const APP_URL = "https://chinese-tracker.web.app";
 
 // Midtrans Server Key lives ONLY here (never in the Flutter app or git).
 // Set with: firebase functions:secrets:set MIDTRANS_SERVER_KEY
@@ -335,6 +339,143 @@ exports.onExerciseResultCreated = onDocumentCreated(
 /**
  * Purge expired teacher link codes (they are only deleted on rotation otherwise).
  */
+/**
+ * Push every notification addressed to one user (`userId` set) to the
+ * devices that opted in on the profile tab (`push_tokens`, uid == userId).
+ * Broadcasts (`userId === ""`, e.g. "new student registered" for all
+ * admins) are not pushed yet: that needs a per-role token lookup and a cap,
+ * and the in-app bell already shows them. Dead tokens are deleted.
+ */
+exports.onNotificationCreated = onDocumentCreated(
+  `${NOTIFICATIONS}/{notificationId}`,
+  async (event) => {
+    const snap = event.data;
+    if (!snap) return;
+    const n = snap.data() || {};
+    const uid = typeof n.userId === "string" ? n.userId : "";
+    if (!uid) return;
+
+    const tokensSnap = await db.collection(PUSH_TOKENS)
+        .where("uid", "==", uid).limit(50).get();
+    if (tokensSnap.empty) return;
+    const tokens = tokensSnap.docs.map((d) => d.id);
+    const route = typeof n.targetRoute === "string" && n.targetRoute.startsWith("/") ?
+      n.targetRoute : "/";
+    const link = `${APP_URL}${route}`;
+
+    let result;
+    try {
+      result = await getMessaging().sendEachForMulticast({
+        tokens,
+        notification: {
+          title: String(n.title || "Easy Study"),
+          body: String(n.body || ""),
+        },
+        data: {
+          kind: String(n.kind || ""),
+          link,
+          notificationId: event.params.notificationId,
+        },
+        webpush: {fcmOptions: {link}},
+      });
+    } catch (err) {
+      logger.warn("onNotificationCreated: send failed", err);
+      return;
+    }
+
+    const dead = new Set([
+      "messaging/registration-token-not-registered",
+      "messaging/invalid-registration-token",
+      "messaging/invalid-argument",
+    ]);
+    const batch = db.batch();
+    let removed = 0;
+    result.responses.forEach((r, i) => {
+      if (!r.success && r.error && dead.has(r.error.code)) {
+        batch.delete(tokensSnap.docs[i].ref);
+        removed++;
+      }
+    });
+    if (removed) await batch.commit();
+    logger.info(
+        `onNotificationCreated: ${result.successCount} sent, ` +
+        `${result.failureCount} failed, ${removed} tokens removed`,
+    );
+  },
+);
+
+/**
+ * 07:00 Jakarta: one reminder per assignment that is due within the next
+ * 24 hours and has no result yet. The reminder is a `notifications` doc
+ * (so it shows in the bell too); onNotificationCreated pushes it. The
+ * assignment remembers the day it was reminded (`reminderSentOn`) so a
+ * re-run never sends twice.
+ */
+exports.dailyReminders = onSchedule(
+  {schedule: "every day 07:00", timeZone: "Asia/Jakarta"},
+  async () => {
+    const now = Date.now();
+    const windowMs = 24 * 60 * 60 * 1000;
+    const todayKey = reminders.jakartaDateKey(now);
+    const snap = await db.collection(EXERCISE_ASSIGNMENTS)
+        .where("dueDate", ">=", Timestamp.fromMillis(now))
+        .where("dueDate", "<=", Timestamp.fromMillis(now + windowMs))
+        .limit(500)
+        .get();
+    const candidates = reminders.dueSoon(
+        snap.docs.map((d) => {
+          const a = d.data() || {};
+          return {
+            id: d.id,
+            ref: d.ref,
+            studentId: String(a.studentId || ""),
+            exerciseId: String(a.exerciseId || ""),
+            dueMillis: a.dueDate && typeof a.dueDate.toMillis === "function" ?
+              a.dueDate.toMillis() : NaN,
+            reminderSentOn: a.reminderSentOn,
+          };
+        }),
+        now, windowMs, todayKey,
+    );
+    if (!candidates.length) {
+      logger.info("dailyReminders: nothing due");
+      return;
+    }
+
+    const titles = new Map();
+    let sent = 0;
+    const batch = db.batch();
+    for (const a of candidates) {
+      if (!a.studentId || !a.exerciseId) continue;
+      const done = await db.collection(EXERCISE_RESULTS)
+          .where("studentId", "==", a.studentId)
+          .where("exerciseId", "==", a.exerciseId)
+          .limit(1).get();
+      if (!done.empty) continue;
+      if (!titles.has(a.exerciseId)) {
+        const ex = await db.collection(EXERCISES).doc(a.exerciseId).get();
+        titles.set(a.exerciseId, ex.exists ? (ex.data() || {}).title || "" : "");
+      }
+      const text = reminders.reminderText(titles.get(a.exerciseId), a.dueMillis, now);
+      batch.set(db.collection(NOTIFICATIONS).doc(), {
+        kind: "reminder",
+        title: text.title,
+        body: text.body,
+        forRole: "student",
+        userId: a.studentId,
+        targetRoute: "/student",
+        read: false,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+      batch.update(a.ref, {reminderSentOn: todayKey});
+      sent++;
+      if (sent >= 200) break; // batch limit headroom; the rest tomorrow
+    }
+    if (sent) await batch.commit();
+    logger.info(`dailyReminders: ${sent} reminders written`);
+  },
+);
+
 exports.cleanupExpiredLinkCodes = onSchedule("every 60 minutes", async () => {
   const now = Timestamp.now();
   const snap = await db

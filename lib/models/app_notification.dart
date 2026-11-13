@@ -3,7 +3,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 enum NotificationKind {
   registration('registration'),
   session('session'),
-  grading('grading');
+  grading('grading'),
+
+  /// "Due today" reminders written by the `dailyReminders` function.
+  reminder('reminder');
 
   const NotificationKind(this.value);
 

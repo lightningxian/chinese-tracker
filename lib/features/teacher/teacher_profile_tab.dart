@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/language_toggle.dart';
+import '../../core/widgets/push_setting_card.dart';
 import '../../core/widgets/profile_widgets.dart';
 import '../../core/widgets/theme_toggle.dart';
 import '../../core/widgets/teacher_student_link_card.dart';
@@ -141,6 +142,7 @@ class _TeacherProfileTabState extends State<TeacherProfileTab> {
           const SizedBox(height: 16),
           TeacherStudentLinkCard(teacherId: user.uid),
           const SizedBox(height: 16),
+          PushSettingCard(uid: user.uid),
           const AppCard(child: LanguageSettingRow()),
           const SizedBox(height: 16),
           const AppCard(child: ThemeSettingRow()),

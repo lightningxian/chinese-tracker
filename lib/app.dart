@@ -16,6 +16,7 @@ import 'services/cohort_report_service.dart';
 import 'services/admin_report_export_service.dart';
 import 'services/notification_service.dart';
 import 'services/payment_service.dart';
+import 'services/push_service.dart';
 import 'services/materials_storage_service.dart';
 import 'services/question_bank_media_service.dart';
 import 'services/locale_controller.dart';
@@ -38,11 +39,34 @@ class _ChineseTrackerAppState extends State<ChineseTrackerApp> {
   late final AdminReportExportService _adminReportExportService;
   late final NotificationService _notificationService;
   late final PaymentService _paymentService;
+  late final PushService _pushService;
   late final MaterialsStorageService _materialsStorageService;
   late final QuestionBankMediaService _questionBankMediaService;
   late final WorksheetAiImportService _worksheetAiImportService;
   late final LocaleController _localeController;
   late final ThemeController _themeController;
+
+  /// Lets a push message that arrives while the app is in front show as a
+  /// SnackBar from outside the widget tree.
+  final _messengerKey = GlobalKey<ScaffoldMessengerState>();
+
+  void _showForegroundPush() {
+    final notification = _pushService.foregroundMessage.value?.notification;
+    if (notification == null) return;
+    final title = notification.title ?? '';
+    final body = notification.body ?? '';
+    final text = [title, body].where((s) => s.trim().isNotEmpty).join('\n');
+    if (text.isEmpty) return;
+    _messengerKey.currentState?.showSnackBar(
+      SnackBar(content: Text(text), duration: const Duration(seconds: 6)),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pushService.foregroundMessage.removeListener(_showForegroundPush);
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -57,6 +81,9 @@ class _ChineseTrackerAppState extends State<ChineseTrackerApp> {
         AdminReportExportService(firestore: _firestoreService);
     _notificationService = NotificationService(firestore: _firestoreService);
     _paymentService = PaymentService();
+    _pushService = PushService();
+    _pushService.foregroundMessage.addListener(_showForegroundPush);
+    _pushService.init();
     _materialsStorageService = MaterialsStorageService();
     _questionBankMediaService = QuestionBankMediaService();
     _worksheetAiImportService = WorksheetAiImportService();
@@ -93,6 +120,7 @@ class _ChineseTrackerAppState extends State<ChineseTrackerApp> {
         ),
         Provider<NotificationService>.value(value: _notificationService),
         Provider<PaymentService>.value(value: _paymentService),
+        ChangeNotifierProvider<PushService>.value(value: _pushService),
         Provider<MaterialsStorageService>.value(
           value: _materialsStorageService,
         ),
@@ -109,6 +137,7 @@ class _ChineseTrackerAppState extends State<ChineseTrackerApp> {
             builder: (context, localeController, themeController, _) =>
                 MaterialApp.router(
               title: AppConstants.appName,
+              scaffoldMessengerKey: _messengerKey,
               // Light / Dark / Device (ThemeController). The palette behind
               // `AppColors` is swapped by the controller before this rebuild.
               theme: AppTheme.light(),

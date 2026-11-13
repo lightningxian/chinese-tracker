@@ -87,6 +87,20 @@ class AppLocalizationsId extends AppLocalizations {
   String get commonParent => 'Orang tua';
 
   @override
+  String get pushRowLabel => 'Notifikasi push';
+
+  @override
+  String get pushRowHint =>
+      'Pengingat di perangkat ini saat ada tugas jatuh tempo atau nilai keluar.';
+
+  @override
+  String get pushRowBlocked =>
+      'Notifikasi diblokir di pengaturan browser atau HP.';
+
+  @override
+  String get pushEnableFailed => 'Notifikasi tidak bisa diaktifkan. Coba lagi.';
+
+  @override
   String get languageRowLabel => 'Bahasa / Language';
 
   @override
