@@ -18,6 +18,7 @@ import '../../models/question_bank_item.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../core/widgets/exercise_category_chip.dart';
+import 'question_bank_ai_import.dart';
 import 'question_bank_bulk_import.dart';
 import 'question_bank_editor.dart';
 import 'question_bank_filters.dart';
@@ -355,6 +356,8 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
                   ownerId: ownerId,
                   existingBank: all,
                 );
+              case 'scan_local':
+                await runQuestionBankWorksheetImport(context, ownerId: ownerId);
               case 'paste':
                 await showQuestionBankPasteImport(context, ownerId: ownerId);
               case 'harvest':
@@ -369,6 +372,10 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
           },
           itemBuilder: (_) => [
             PopupMenuItem(
+              value: 'scan_local',
+              child: Text(l.bankScanWithoutAi),
+            ),
+            PopupMenuItem(
               value: 'samples',
               child: Text(l.bankLoadSamples),
             ),
@@ -380,16 +387,17 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
           ],
         ),
       ],
-      // Scanner first: upload a worksheet, the app detects each question's
-      // type and answer, and the admin checks the list before it is added.
+      // Scanner first: upload a paper, the AI reader types and keys each
+      // question (pictures cut out), and the admin checks the list before it
+      // is added. The on-device scanner (text PDFs, OCR) stays in the menu.
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => runQuestionBankWorksheetImport(
+        onPressed: () => runQuestionBankAiImport(
           context,
           ownerId: ownerId,
         ),
         backgroundColor: AppColors.navy,
-        icon: const Icon(Icons.document_scanner_outlined),
-        label: Text(l.bankScanWorksheet),
+        icon: const Icon(Icons.auto_awesome_outlined),
+        label: Text(l.bankAiScanWorksheet),
       ),
       child: StreamBuilder<List<QuestionBankItem>>(
         stream: firestore.watchQuestionBank(ownerId),

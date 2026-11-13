@@ -14,11 +14,16 @@ class ExerciseQuestion {
     this.audioUrl = '',
     this.blankNumber,
     this.explanation = '',
+    this.optionImageUrls = const [],
   });
 
   final String prompt;
   final List<String> options;
   final int correctIndex;
+
+  /// Picture choices (HSK listening part 1): one image per entry of
+  /// [options], in the same order. Empty for text choices.
+  final List<String> optionImageUrls;
 
   /// Ordered parts of the sentence (compose sentences type).
   final List<String> segments;
@@ -45,6 +50,8 @@ class ExerciseQuestion {
     Map<String, dynamic> map, {
     required ExerciseType exerciseType,
   }) {
+    final optionImages =
+        List<String>.from(map['optionImageUrls'] as List? ?? const []);
     switch (exerciseType) {
       case ExerciseType.composeSentences:
         return ExerciseQuestion(
@@ -64,6 +71,7 @@ class ExerciseQuestion {
           imageUrl: map['imageUrl'] as String? ?? '',
           explanation: map['explanation'] as String? ?? '',
           audioUrl: map['audioUrl'] as String? ?? '',
+          optionImageUrls: optionImages,
         );
       case ExerciseType.pictureSentence:
         return ExerciseQuestion(
@@ -91,6 +99,7 @@ class ExerciseQuestion {
           imageUrl: map['imageUrl'] as String? ?? '',
           explanation: map['explanation'] as String? ?? '',
           audioUrl: map['audioUrl'] as String? ?? '',
+          optionImageUrls: optionImages,
         );
       case ExerciseType.multipleChoice:
       case ExerciseType.listening:
@@ -101,6 +110,7 @@ class ExerciseQuestion {
           imageUrl: map['imageUrl'] as String? ?? '',
           explanation: map['explanation'] as String? ?? '',
           audioUrl: map['audioUrl'] as String? ?? '',
+          optionImageUrls: optionImages,
         );
     }
   }
@@ -110,6 +120,7 @@ class ExerciseQuestion {
           if (imageUrl.isNotEmpty) 'imageUrl': imageUrl,
           if (audioUrl.isNotEmpty) 'audioUrl': audioUrl,
           if (explanation.isNotEmpty) 'explanation': explanation,
+          if (optionImageUrls.isNotEmpty) 'optionImageUrls': optionImageUrls,
         };
 
     switch (exerciseType) {

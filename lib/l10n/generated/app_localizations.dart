@@ -8461,6 +8461,193 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Late'**
   String get resultLate;
+
+  /// No description provided for @bankAiScanWorksheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan paper with AI'**
+  String get bankAiScanWorksheet;
+
+  /// No description provided for @bankScanWithoutAi.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan without AI (on this device)'**
+  String get bankScanWithoutAi;
+
+  /// No description provided for @aiImportSending.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending the file to the AI reader…'**
+  String get aiImportSending;
+
+  /// No description provided for @aiImportReading.
+  ///
+  /// In en, this message translates to:
+  /// **'The AI is reading the paper (about a minute)…'**
+  String get aiImportReading;
+
+  /// No description provided for @aiImportCropping.
+  ///
+  /// In en, this message translates to:
+  /// **'Cutting out picture {n} of {total}…'**
+  String aiImportCropping(int n, int total);
+
+  /// No description provided for @aiImportSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'AI reading · {level} · {questions} questions in {sections} parts · {pictures} pictures · {missing} without an answer key (listening: add it later with Answer key on the worksheet)'**
+  String aiImportSummary(
+      String level, int questions, int sections, int pictures, int missing);
+
+  /// No description provided for @aiImportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'AI reading failed: {error}'**
+  String aiImportFailed(String error);
+
+  /// No description provided for @aiImportNothingFound.
+  ///
+  /// In en, this message translates to:
+  /// **'The AI reader found no questions in this file.'**
+  String get aiImportNothingFound;
+
+  /// No description provided for @bankSheetListeningAudio.
+  ///
+  /// In en, this message translates to:
+  /// **'Listening recording'**
+  String get bankSheetListeningAudio;
+
+  /// No description provided for @bankSheetListeningAudioHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'One recording for the whole listening part. Students hear it while they answer those questions.'**
+  String get bankSheetListeningAudioHelp;
+
+  /// No description provided for @bankSheetUploadAudio.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload recording'**
+  String get bankSheetUploadAudio;
+
+  /// No description provided for @bankSheetReplaceAudio.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace'**
+  String get bankSheetReplaceAudio;
+
+  /// No description provided for @bankSheetRemoveAudio.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove recording'**
+  String get bankSheetRemoveAudio;
+
+  /// No description provided for @bankSheetAudioAttached.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording attached. Students get one player for the listening questions.'**
+  String get bankSheetAudioAttached;
+
+  /// No description provided for @bankSheetAnswerKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Answer key'**
+  String get bankSheetAnswerKey;
+
+  /// No description provided for @bankSheetAnswerKeyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Type the key as printed: 1 D 2 A 3 C · 11 √ 12 × · 41-45 ECBAD. Numbers follow the order on this worksheet.'**
+  String get bankSheetAnswerKeyHint;
+
+  /// No description provided for @bankSheetAnswerKeyApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply key'**
+  String get bankSheetAnswerKeyApply;
+
+  /// No description provided for @bankSheetAnswerKeyApplied.
+  ///
+  /// In en, this message translates to:
+  /// **'Answer key applied to {n} questions.'**
+  String bankSheetAnswerKeyApplied(int n);
+
+  /// No description provided for @bankSheetAnswerKeyNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No answers found in the text.'**
+  String get bankSheetAnswerKeyNone;
+
+  /// No description provided for @bankSheetParts.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} parts'**
+  String bankSheetParts(int n);
+
+  /// No description provided for @bankEditorChoicePicture.
+  ///
+  /// In en, this message translates to:
+  /// **'Picture for this choice'**
+  String get bankEditorChoicePicture;
+
+  /// No description provided for @exercisePlayListeningRecording.
+  ///
+  /// In en, this message translates to:
+  /// **'Listening recording'**
+  String get exercisePlayListeningRecording;
+
+  /// No description provided for @exercisePlayQuestionAudio.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio for this question'**
+  String get exercisePlayQuestionAudio;
+
+  /// No description provided for @exercisePlayPickPicture.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the picture'**
+  String get exercisePlayPickPicture;
+
+  /// No description provided for @exercisePlayHskMarks.
+  ///
+  /// In en, this message translates to:
+  /// **'HSK marks'**
+  String get exercisePlayHskMarks;
+
+  /// No description provided for @exercisePlayHskListening.
+  ///
+  /// In en, this message translates to:
+  /// **'Listening'**
+  String get exercisePlayHskListening;
+
+  /// No description provided for @exercisePlayHskReading.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading'**
+  String get exercisePlayHskReading;
+
+  /// No description provided for @exercisePlayHskWriting.
+  ///
+  /// In en, this message translates to:
+  /// **'Writing'**
+  String get exercisePlayHskWriting;
+
+  /// No description provided for @exercisePlayHskTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total {total} of {max} · pass mark {pass}'**
+  String exercisePlayHskTotal(int total, int max, int pass);
+
+  /// No description provided for @exercisePlayHskPassed.
+  ///
+  /// In en, this message translates to:
+  /// **'Passed'**
+  String get exercisePlayHskPassed;
+
+  /// No description provided for @exercisePlayHskNotPassed.
+  ///
+  /// In en, this message translates to:
+  /// **'Not passed yet'**
+  String get exercisePlayHskNotPassed;
 }
 
 class _AppLocalizationsDelegate

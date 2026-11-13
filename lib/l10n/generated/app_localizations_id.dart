@@ -5231,4 +5231,114 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get resultLate => 'Terlambat';
+
+  @override
+  String get bankAiScanWorksheet => 'Pindai soal dengan AI';
+
+  @override
+  String get bankScanWithoutAi => 'Pindai tanpa AI (di perangkat ini)';
+
+  @override
+  String get aiImportSending => 'Mengirim berkas ke pembaca AI…';
+
+  @override
+  String get aiImportReading => 'AI sedang membaca soal (sekitar satu menit)…';
+
+  @override
+  String aiImportCropping(int n, int total) {
+    return 'Memotong gambar $n dari $total…';
+  }
+
+  @override
+  String aiImportSummary(
+      String level, int questions, int sections, int pictures, int missing) {
+    return 'Pembacaan AI · $level · $questions soal dalam $sections bagian · $pictures gambar · $missing belum ada kunci jawaban (mendengarkan: tambahkan nanti lewat Kunci jawaban di lembar soal)';
+  }
+
+  @override
+  String aiImportFailed(String error) {
+    return 'Pembacaan AI gagal: $error';
+  }
+
+  @override
+  String get aiImportNothingFound =>
+      'Pembaca AI tidak menemukan soal di berkas ini.';
+
+  @override
+  String get bankSheetListeningAudio => 'Rekaman mendengarkan';
+
+  @override
+  String get bankSheetListeningAudioHelp =>
+      'Satu rekaman untuk seluruh bagian mendengarkan. Murid mendengarnya saat menjawab soal-soal itu.';
+
+  @override
+  String get bankSheetUploadAudio => 'Unggah rekaman';
+
+  @override
+  String get bankSheetReplaceAudio => 'Ganti';
+
+  @override
+  String get bankSheetRemoveAudio => 'Hapus rekaman';
+
+  @override
+  String get bankSheetAudioAttached =>
+      'Rekaman terpasang. Murid mendapat satu pemutar untuk soal mendengarkan.';
+
+  @override
+  String get bankSheetAnswerKey => 'Kunci jawaban';
+
+  @override
+  String get bankSheetAnswerKeyHint =>
+      'Ketik kunci seperti tercetak: 1 D 2 A 3 C · 11 √ 12 × · 41-45 ECBAD. Nomor mengikuti urutan di lembar ini.';
+
+  @override
+  String get bankSheetAnswerKeyApply => 'Terapkan kunci';
+
+  @override
+  String bankSheetAnswerKeyApplied(int n) {
+    return 'Kunci jawaban diterapkan ke $n soal.';
+  }
+
+  @override
+  String get bankSheetAnswerKeyNone => 'Tidak ada jawaban yang terbaca.';
+
+  @override
+  String bankSheetParts(int n) {
+    return '$n bagian';
+  }
+
+  @override
+  String get bankEditorChoicePicture => 'Gambar untuk pilihan ini';
+
+  @override
+  String get exercisePlayListeningRecording => 'Rekaman mendengarkan';
+
+  @override
+  String get exercisePlayQuestionAudio => 'Audio soal ini';
+
+  @override
+  String get exercisePlayPickPicture => 'Pilih gambar';
+
+  @override
+  String get exercisePlayHskMarks => 'Nilai HSK';
+
+  @override
+  String get exercisePlayHskListening => 'Mendengarkan';
+
+  @override
+  String get exercisePlayHskReading => 'Membaca';
+
+  @override
+  String get exercisePlayHskWriting => 'Menulis';
+
+  @override
+  String exercisePlayHskTotal(int total, int max, int pass) {
+    return 'Total $total dari $max · batas lulus $pass';
+  }
+
+  @override
+  String get exercisePlayHskPassed => 'Lulus';
+
+  @override
+  String get exercisePlayHskNotPassed => 'Belum lulus';
 }

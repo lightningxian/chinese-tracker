@@ -471,6 +471,43 @@ class FirestoreService {
   }
 
   /// New order of a worksheet's questions: `sheetIndex` = position in [ids].
+  /// Stores the listening recording of a worksheet on every question in
+  /// [ids]; null removes it.
+  Future<void> setQuestionBankSectionAudio(
+    Iterable<String> ids,
+    String? url,
+  ) async {
+    final batch = _db.batch();
+    for (final id in ids) {
+      batch.update(
+        _db.collection(AppConstants.questionBankCollection).doc(id),
+        {
+          'sectionAudioUrl':
+              url == null || url.isEmpty ? FieldValue.delete() : url,
+          'updatedAt': FieldValue.serverTimestamp(),
+        },
+      );
+    }
+    await batch.commit();
+  }
+
+  /// Answer keys typed by the admin: question id → index of the right
+  /// choice (choice-style questions only).
+  Future<void> updateQuestionBankAnswers(Map<String, int> correctById) async {
+    if (correctById.isEmpty) return;
+    final batch = _db.batch();
+    for (final entry in correctById.entries) {
+      batch.update(
+        _db.collection(AppConstants.questionBankCollection).doc(entry.key),
+        {
+          'question.correctIndex': entry.value,
+          'updatedAt': FieldValue.serverTimestamp(),
+        },
+      );
+    }
+    await batch.commit();
+  }
+
   Future<void> reorderQuestionBankSheet(List<String> ids) async {
     final batch = _db.batch();
     for (final (i, id) in ids.indexed) {

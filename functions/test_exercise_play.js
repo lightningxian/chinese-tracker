@@ -58,7 +58,26 @@ assert.deepStrictEqual(scored.review.map((r) => r.correct), [true, false, true, 
 assert.deepStrictEqual(scored.review[1].correctAnswer, {order: ["经理的", "办公室在", "二楼"]});
 assert.strictEqual(scored.review[0].explanation, "很 + verb of feeling, no 是.");
 assert.strictEqual(scored.review[1].explanation, "", "no explanation -> empty string");
-assert.deepStrictEqual(play.scoreAttempt([], null), {score: 0, correct: 0, total: 0, review: []});
+assert.deepStrictEqual(play.scoreAttempt([], null),
+    {score: 0, correct: 0, total: 0, review: [], bySkill: {}});
+
+// Marks per skill (HSK parts): missing skill counts as reading.
+const listening = {id: "l1", type: "listening", skillCategory: "listening",
+  section: "一、听力 · 第一部分", sectionAudioUrl: "https://a/x.mp3",
+  question: {prompt: "", options: ["A", "B", "C"], correctIndex: 2,
+    optionImageUrls: ["https://i/a.png", "https://i/b.png", "https://i/c.png"]}};
+const skilled = play.scoreAttempt([listening, mc, compose], {l1: {index: 2}, q1: {index: 0}});
+assert.deepStrictEqual(skilled.bySkill,
+    {listening: {correct: 1, total: 1}, reading: {correct: 1, total: 2}});
+// Picture choices, the heading and the recording travel with the question;
+// the key still does not.
+const sl = play.stripQuestion(listening);
+assert.deepStrictEqual(sl.optionImageUrls, listening.question.optionImageUrls);
+assert.strictEqual(sl.section, "一、听力 · 第一部分");
+assert.strictEqual(sl.sectionAudioUrl, "https://a/x.mp3");
+assert.strictEqual(sl.skill, "listening");
+assert.ok(!("correctIndex" in sl));
+assert.ok(!("optionImageUrls" in play.stripQuestion(mc)), "no images -> no field");
 
 // Exams and HSK simulations are one attempt; the category follows the first
 // worksheet that has one.

@@ -1252,7 +1252,11 @@ exports.finishExercise = onCall(async (request) => {
   // Answers that arrive after the clock (plus grace) are not counted; the
   // review is still returned so the student sees the keys.
   const result = late ?
-    {score: 0, correct: 0, total: scored.total, review: scored.review} :
+    {
+      score: 0, correct: 0, total: scored.total, review: scored.review,
+      bySkill: Object.fromEntries(Object.entries(scored.bySkill).map(
+          ([skill, b]) => [skill, {correct: 0, total: b.total}])),
+    } :
     scored;
   // Seconds the student spent, as measured by the app (shown in the
   // student's exercise history; the time limit is enforced above).
@@ -1267,6 +1271,7 @@ exports.finishExercise = onCall(async (request) => {
     score: result.score,
     correct: result.correct,
     total: result.total,
+    bySkill: result.bySkill,
     ...(durationSeconds === null ? {} : {durationSeconds}),
     ...(late ? {late: true} : {}),
     scoredBy: "server",

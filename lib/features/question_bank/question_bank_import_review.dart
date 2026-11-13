@@ -7,6 +7,7 @@ import '../../l10n/l10n.dart';
 import '../../l10n/labels_exercises.dart';
 import '../../models/exercise_category.dart';
 import '../../models/question_bank_item.dart';
+import 'question_bank_pictures.dart';
 import 'question_bank_text.dart';
 
 /// What the admin decided on the review screen: the questions to add and,
@@ -235,9 +236,27 @@ class _QuestionBankImportReviewScreenState
               itemCount: widget.items.length,
               itemBuilder: (context, i) {
                 final item = widget.items[i];
+                final section = item.section?.trim() ?? '';
+                final newSection = section.isNotEmpty &&
+                    (i == 0 || widget.items[i - 1].section?.trim() != section);
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 10),
-                  child: AppCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (newSection)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(4, 6, 4, 8),
+                          child: Text(
+                            section,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.navy,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ),
+                      AppCard(
                     padding: const EdgeInsets.fromLTRB(8, 12, 20, 14),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -294,11 +313,20 @@ class _QuestionBankImportReviewScreenState
                                 QuestionBankText.answerLine(l, item),
                                 style: AppTextStyles.questionDetail,
                               ),
+                              if (item.question.optionImageUrls.isNotEmpty ||
+                                  item.question.imageUrl.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8),
+                                  child: QuestionPictures(
+                                      question: item.question),
+                                ),
                             ],
                           ),
                         ),
                       ],
                     ),
+                  ),
+                    ],
                   ),
                 );
               },

@@ -9,6 +9,7 @@ import 'l10n/l10n.dart';
 import 'services/auth_service.dart';
 import 'services/firestore_service.dart';
 import 'services/worksheet_import_service.dart';
+import 'services/worksheet_ai_import_service.dart';
 import 'services/saved_accounts_service.dart';
 import 'services/student_report_service.dart';
 import 'services/cohort_report_service.dart';
@@ -39,6 +40,7 @@ class _ChineseTrackerAppState extends State<ChineseTrackerApp> {
   late final PaymentService _paymentService;
   late final MaterialsStorageService _materialsStorageService;
   late final QuestionBankMediaService _questionBankMediaService;
+  late final WorksheetAiImportService _worksheetAiImportService;
   late final LocaleController _localeController;
   late final ThemeController _themeController;
 
@@ -57,6 +59,7 @@ class _ChineseTrackerAppState extends State<ChineseTrackerApp> {
     _paymentService = PaymentService();
     _materialsStorageService = MaterialsStorageService();
     _questionBankMediaService = QuestionBankMediaService();
+    _worksheetAiImportService = WorksheetAiImportService();
     _localeController = LocaleController();
     _themeController = ThemeController();
     _authService.init();
@@ -81,6 +84,8 @@ class _ChineseTrackerAppState extends State<ChineseTrackerApp> {
         ),
         Provider<FirestoreService>.value(value: _firestoreService),
         Provider<WorksheetImportService>.value(value: _worksheetImportService),
+        Provider<WorksheetAiImportService>.value(
+            value: _worksheetAiImportService),
         Provider<StudentReportService>.value(value: _studentReportService),
         Provider<CohortReportService>.value(value: _cohortReportService),
         Provider<AdminReportExportService>.value(

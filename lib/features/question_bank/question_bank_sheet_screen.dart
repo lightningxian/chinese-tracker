@@ -5,6 +5,7 @@ import '../../core/constants/exercise_authoring_platform.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/utils/answer_key_parser.dart';
 import '../../l10n/l10n.dart';
 import '../../l10n/labels_exercises.dart';
 import '../../models/exercise_category.dart';
@@ -13,8 +14,10 @@ import '../../models/exercise_type.dart';
 import '../../models/question_bank_item.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
+import '../../services/question_bank_media_service.dart';
 import '../teacher/exercise_assign_dialog.dart';
 import 'question_bank_editor.dart';
+import 'question_bank_pictures.dart';
 import 'question_bank_text.dart';
 
 /// One worksheet in the bank: its questions in sheet order with the stored
@@ -67,6 +70,11 @@ class QuestionBankSheetScreen extends StatelessWidget {
                   ),
                 const SizedBox(width: 8),
                 IconButton(
+                  onPressed: () => _answerKey(context, sheet),
+                  icon: const Icon(Icons.key_outlined),
+                  tooltip: l.bankSheetAnswerKey,
+                ),
+                IconButton(
                   onPressed: () => _editSheet(context, sheet),
                   icon: const Icon(Icons.tune),
                   tooltip: l.bankSheetEditTooltip,
@@ -92,11 +100,18 @@ class QuestionBankSheetScreen extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
                   children: [
                     _SheetHeader(sheet: sheet),
+                    const SizedBox(height: 12),
+                    _ListeningAudioCard(
+                      sheet: sheet,
+                      onUpload: () => _uploadAudio(context, sheet),
+                      onRemove: () => _setAudio(context, sheet, null),
+                    ),
                     const SizedBox(height: 16),
                     for (final (i, item) in sheet.items.indexed)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 10),
                         child: _QuestionRow(
+                          sectionHeading: _headingFor(sheet, i),
                           index: i,
                           item: item,
                           onTap: () => _edit(context, item, sheet),
@@ -122,6 +137,121 @@ class QuestionBankSheetScreen extends StatelessWidget {
                 ),
         );
       },
+    );
+  }
+
+  /// The part heading, on the first question of each part only.
+  static String? _headingFor(QuestionBankSheet sheet, int i) {
+    final section = sheet.items[i].section?.trim() ?? '';
+    if (section.isEmpty) return null;
+    if (i > 0 && sheet.items[i - 1].section?.trim() == section) return null;
+    return section;
+  }
+
+  Future<void> _uploadAudio(BuildContext context, QuestionBankSheet sheet) async {
+    final l = context.l10n;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final url = await context
+          .read<QuestionBankMediaService>()
+          .pickAndUploadAudio(ownerId);
+      if (!context.mounted) return;
+      await _setAudio(context, sheet, url);
+    } on QuestionBankMediaCancelledException {
+      // nothing picked
+    } catch (e) {
+      messenger.showSnackBar(
+          SnackBar(content: Text(l.bankEditorUploadFailed('$e'))));
+    }
+  }
+
+  /// Stores (or clears) the recording on the listening questions of the
+  /// sheet, and clears it from any other question that still carries it.
+  Future<void> _setAudio(
+    BuildContext context,
+    QuestionBankSheet sheet,
+    String? url,
+  ) async {
+    final firestore = context.read<FirestoreService>();
+    final targets = sheet.listeningItems.map((i) => i.id).toSet();
+    final others = [
+      for (final i in sheet.items)
+        if (!targets.contains(i.id) &&
+            (i.sectionAudioUrl?.isNotEmpty ?? false))
+          i.id,
+    ];
+    if (others.isNotEmpty) {
+      await firestore.setQuestionBankSectionAudio(others, null);
+    }
+    await firestore.setQuestionBankSectionAudio(targets, url);
+  }
+
+  /// The admin types or pastes the printed key; numbers follow the sheet
+  /// order. Only choice-style questions take a key.
+  Future<void> _answerKey(BuildContext context, QuestionBankSheet sheet) async {
+    final l = context.l10n;
+    final controller = TextEditingController();
+    final text = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l.bankSheetAnswerKey),
+        content: SizedBox(
+          width: 440,
+          child: TextField(
+            controller: controller,
+            autofocus: true,
+            minLines: 3,
+            maxLines: 8,
+            decoration: InputDecoration(
+              hintText: '1 D 2 A 3 C\n11 √ 12 ×\n41-45 ECBAD',
+              helperText: l.bankSheetAnswerKeyHint,
+              helperMaxLines: 3,
+              border: const OutlineInputBorder(),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l.commonCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, controller.text),
+            child: Text(l.bankSheetAnswerKeyApply),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (text == null || !context.mounted) return;
+    final key = AnswerKeyParser.parse(text);
+    final updates = <String, int>{};
+    for (final entry in key.entries) {
+      final index = entry.key - 1;
+      if (index < 0 || index >= sheet.items.length) continue;
+      final item = sheet.items[index];
+      final options = item.question.options;
+      final usesIndex = switch (item.type) {
+        ExerciseType.multipleChoice ||
+        ExerciseType.listening ||
+        ExerciseType.matching ||
+        ExerciseType.readingCloze =>
+          true,
+        _ => false,
+      };
+      if (!usesIndex || entry.value >= options.length) continue;
+      if (item.question.correctIndex != entry.value) {
+        updates[item.id] = entry.value;
+      }
+    }
+    final messenger = ScaffoldMessenger.of(context);
+    if (key.isEmpty) {
+      messenger.showSnackBar(SnackBar(content: Text(l.bankSheetAnswerKeyNone)));
+      return;
+    }
+    await context.read<FirestoreService>().updateQuestionBankAnswers(updates);
+    messenger.showSnackBar(
+      SnackBar(content: Text(l.bankSheetAnswerKeyApplied(updates.length))),
     );
   }
 
@@ -283,6 +413,7 @@ class _SheetHeader extends StatelessWidget {
       sheet.type.localized(l),
       if (sheet.level != null && sheet.level!.isNotEmpty) sheet.level!,
       QuestionBankText.questionCount(l, sheet.count),
+      if (sheet.sections.isNotEmpty) l.bankSheetParts(sheet.sections.length),
       if (sheet.usageCount > 0) l.bankSheetUsedTimes(sheet.usageCount),
     ];
     return AppCard(
@@ -334,6 +465,7 @@ class _QuestionRow extends StatelessWidget {
   const _QuestionRow({
     required this.index,
     required this.item,
+    this.sectionHeading,
     required this.onTap,
     required this.onMoveUp,
     required this.onMoveDown,
@@ -342,6 +474,9 @@ class _QuestionRow extends StatelessWidget {
 
   final int index;
   final QuestionBankItem item;
+
+  /// Shown above the row when this question opens a new part of the paper.
+  final String? sectionHeading;
   final VoidCallback onTap;
   final VoidCallback? onMoveUp;
   final VoidCallback? onMoveDown;
@@ -350,7 +485,7 @@ class _QuestionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    return AppCard(
+    final card = AppCard(
       onTap: onTap,
       padding: const EdgeInsets.fromLTRB(18, 14, 8, 14),
       child: Row(
@@ -386,18 +521,11 @@ class _QuestionRow extends StatelessWidget {
                   QuestionBankText.answerLine(l, item),
                   style: AppTextStyles.questionDetail,
                 ),
-                if (item.question.imageUrl.isNotEmpty)
+                if (item.question.imageUrl.isNotEmpty ||
+                    item.question.optionImageUrls.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(top: 10),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        item.question.imageUrl,
-                        height: 120,
-                        fit: BoxFit.contain,
-                        alignment: Alignment.centerLeft,
-                      ),
-                    ),
+                    child: QuestionPictures(question: item.question, height: 96),
                   ),
               ],
             ),
@@ -429,6 +557,92 @@ class _QuestionRow extends StatelessWidget {
             tooltip: l.bankSheetRemoveFromSheet,
             onPressed: onDelete,
           ),
+        ],
+      ),
+    );
+    final heading = sectionHeading;
+    if (heading == null) return card;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(4, 10, 4, 8),
+          child: Text(
+            heading,
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              color: AppColors.navy,
+              fontSize: 15,
+            ),
+          ),
+        ),
+        card,
+      ],
+    );
+  }
+}
+
+/// The recording of the listening part: upload, replace or remove. Shown
+/// for every sheet (a plain worksheet can carry one too).
+class _ListeningAudioCard extends StatelessWidget {
+  const _ListeningAudioCard({
+    required this.sheet,
+    required this.onUpload,
+    required this.onRemove,
+  });
+
+  final QuestionBankSheet sheet;
+  final VoidCallback onUpload;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final url = sheet.sectionAudioUrl;
+    return AppCard(
+      padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
+      child: Row(
+        children: [
+          Icon(Icons.headphones_outlined, color: AppColors.navy),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l.bankSheetListeningAudio,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.navy,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  url == null
+                      ? l.bankSheetListeningAudioHelp
+                      : l.bankSheetAudioAttached,
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          OutlinedButton.icon(
+            onPressed: onUpload,
+            icon: const Icon(Icons.upload_file_outlined, size: 18),
+            label: Text(
+                url == null ? l.bankSheetUploadAudio : l.bankSheetReplaceAudio),
+          ),
+          if (url != null)
+            IconButton(
+              tooltip: l.bankSheetRemoveAudio,
+              onPressed: onRemove,
+              icon: Icon(Icons.close, color: AppColors.error),
+            ),
         ],
       ),
     );

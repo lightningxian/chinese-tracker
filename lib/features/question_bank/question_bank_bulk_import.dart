@@ -108,7 +108,7 @@ Future<void> showQuestionBankPasteImport(
     return;
   }
 
-  await _confirmAndInsert(context, ownerId: ownerId, items: items);
+  await confirmAndInsertQuestionBankItems(context, ownerId: ownerId, items: items);
 }
 
 /// The centre's ten sample sheets (CONTOH LATIHAN SOAL), scanned and keyed,
@@ -132,7 +132,7 @@ Future<void> runQuestionBankSampleSetImport(
     );
     return;
   }
-  await _confirmAndInsert(
+  await confirmAndInsertQuestionBankItems(
     context,
     ownerId: ownerId,
     items: deduped.novel,
@@ -171,7 +171,7 @@ Future<List<String>?> runQuestionBankWorksheetImport(
   final existing =
       await context.read<FirestoreService>().watchQuestionBank(ownerId).first;
   if (!context.mounted) return null;
-  final added = await _confirmAndInsert(
+  final added = await confirmAndInsertQuestionBankItems(
     context,
     ownerId: ownerId,
     items: items,
@@ -186,7 +186,7 @@ Future<List<String>?> runQuestionBankWorksheetImport(
 }
 
 /// Returns the questions that were written, or null when cancelled/failed.
-Future<List<QuestionBankItem>?> _confirmAndInsert(
+Future<List<QuestionBankItem>?> confirmAndInsertQuestionBankItems(
   BuildContext context, {
   required String ownerId,
   required List<QuestionBankItem> items,

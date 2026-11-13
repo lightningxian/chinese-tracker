@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
@@ -50,14 +52,32 @@ class QuestionBankMediaService {
       throw StateError('Unsupported file type.');
     }
 
-    final safeName = file.name.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
+    return uploadBytes(
+      ownerId,
+      bytes,
+      fileName: '${kind}_${file.name}',
+      contentType: _contentType(extension),
+    );
+  }
+
+  /// Stores [bytes] under the owner's media folder and returns the download
+  /// URL. Used for picked files and for pictures cropped out of a scanned
+  /// paper by the AI import.
+  Future<String> uploadBytes(
+    String ownerId,
+    Uint8List bytes, {
+    required String fileName,
+    required String contentType,
+  }) async {
+    if (bytes.isEmpty) throw StateError('Could not read the file.');
+    if (bytes.length > _maxBytes) {
+      throw StateError('File must be smaller than 10 MB.');
+    }
+    final safeName = fileName.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
     final path =
-        'question_bank_media/$ownerId/${DateTime.now().millisecondsSinceEpoch}_${kind}_$safeName';
+        'question_bank_media/$ownerId/${DateTime.now().millisecondsSinceEpoch}_$safeName';
     final ref = _storage.ref(path);
-
-    await ref.putData(
-        bytes, SettableMetadata(contentType: _contentType(extension)));
-
+    await ref.putData(bytes, SettableMetadata(contentType: contentType));
     return ref.getDownloadURL();
   }
 

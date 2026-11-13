@@ -4,6 +4,7 @@ import 'dart:math' show max;
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_theme.dart';
@@ -14,6 +15,7 @@ import '../../core/widgets/exercise_category_chip.dart';
 import '../../core/widgets/score_summary.dart';
 import '../../l10n/l10n.dart';
 import '../../models/exercise.dart';
+import '../../models/exercise_category.dart';
 import '../../models/exercise_type.dart';
 import '../../services/auth_service.dart';
 import '../../services/exercise_play_service.dart';
@@ -58,6 +60,14 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
 
   /// Typed answers: hanzi for a pinyin hint, or a sentence with a keyword.
   final _typedController = TextEditingController();
+
+  /// Listening: one player for the recording of the whole part (it keeps
+  /// playing while the student moves between its questions) and one for a
+  /// question's own clip.
+  final _sectionPlayer = AudioPlayer();
+  final _questionPlayer = AudioPlayer();
+  String _sectionAudioLoaded = '';
+  String _questionAudioLoaded = '';
 
   final _clock = Stopwatch();
   Timer? _ticker;
@@ -173,6 +183,32 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
       _loadQuestionState();
     });
     if (session.questions.isNotEmpty) _startClock();
+    unawaited(_syncAudio());
+  }
+
+  /// Points the two players at the current question's recording(s). The
+  /// part recording is left alone while the URL stays the same, so it keeps
+  /// playing across the questions of that part.
+  Future<void> _syncAudio() async {
+    if (_questions.isEmpty) return;
+    final q = _question;
+    if (q.sectionAudioUrl != _sectionAudioLoaded) {
+      _sectionAudioLoaded = q.sectionAudioUrl;
+      await _loadInto(_sectionPlayer, q.sectionAudioUrl);
+    }
+    if (q.audioUrl != _questionAudioLoaded) {
+      _questionAudioLoaded = q.audioUrl;
+      await _loadInto(_questionPlayer, q.audioUrl);
+    }
+  }
+
+  Future<void> _loadInto(AudioPlayer player, String url) async {
+    try {
+      await player.stop();
+      if (url.isNotEmpty) await player.setUrl(url);
+    } catch (e) {
+      debugPrint('exercise audio: $e');
+    }
   }
 
   /// Start button of the exam start screen.
@@ -291,6 +327,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
       _currentIndex = index;
       _loadQuestionState();
     });
+    unawaited(_syncAudio());
   }
 
   void _back() {
@@ -337,6 +374,8 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     _storeAnswer();
     _ticker?.cancel();
     _clock.stop();
+    unawaited(_sectionPlayer.stop());
+    unawaited(_questionPlayer.stop());
     setState(() {
       _finished = true;
       _submitting = true;
@@ -369,6 +408,8 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   void dispose() {
     _ticker?.cancel();
     _typedController.dispose();
+    _sectionPlayer.dispose();
+    _questionPlayer.dispose();
     super.dispose();
   }
 
@@ -552,8 +593,9 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
       onPrimaryPressed: () => context.pop(),
       // No review when the server did not send one (older function build).
       details: result.review.isEmpty
-          ? const []
+          ? _hskMarks(result)
           : [
+              ..._hskMarks(result),
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
@@ -618,6 +660,31 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
             ),
           ),
           const SizedBox(height: 16),
+        ],
+        if (question.section.isNotEmpty) ...[
+          Text(
+            question.section,
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              color: AppColors.navy,
+              fontSize: 15,
+            ),
+          ),
+          const SizedBox(height: 10),
+        ],
+        if (question.sectionAudioUrl.isNotEmpty) ...[
+          _AudioBar(
+            player: _sectionPlayer,
+            label: l.exercisePlayListeningRecording,
+          ),
+          const SizedBox(height: 12),
+        ],
+        if (question.audioUrl.isNotEmpty) ...[
+          _AudioBar(
+            player: _questionPlayer,
+            label: l.exercisePlayQuestionAudio,
+          ),
+          const SizedBox(height: 12),
         ],
         LinearProgressIndicator(
           value: progress,
@@ -700,6 +767,9 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                 ),
           ),
           const SizedBox(height: 20),
+          if (question.hasPictureOptions)
+            _buildPictureOptions(question)
+          else
           ...List.generate(options.length, (i) {
             final selected = _selectedIndex == i;
             return Padding(
@@ -903,6 +973,9 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                 ),
               ),
               const SizedBox(height: 12),
+              if (question.hasPictureOptions)
+                _buildPictureOptions(question)
+              else
               ...List.generate(options.length, (index) {
                 final selected = _selectedIndex == index;
                 return Padding(
@@ -959,6 +1032,157 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
         answersCard(),
       ],
     );
+  }
+
+  /// Picture choices (HSK listening part 1): lettered pictures, tap one.
+  Widget _buildPictureOptions(PlayQuestion question) {
+    final l = context.l10n;
+    final urls = question.optionImageUrls;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l.exercisePlayPickPicture,
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: List.generate(question.options.length, (i) {
+            final selected = _selectedIndex == i;
+            final url = i < urls.length ? urls[i] : '';
+            return SizedBox(
+              width: 168,
+              child: AppCard(
+                onTap: () => _selectAnswer(i),
+                padding: const EdgeInsets.all(8),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: selected ? AppColors.teal : Colors.transparent,
+                      width: 2,
+                    ),
+                  ),
+                  padding: const EdgeInsets.all(6),
+                  child: Column(
+                    children: [
+                      if (url.isNotEmpty)
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: Image.network(
+                            url,
+                            height: 120,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) => SizedBox(
+                              height: 120,
+                              child: Icon(Icons.broken_image_outlined,
+                                  color: AppColors.textSecondary),
+                            ),
+                          ),
+                        )
+                      else
+                        const SizedBox(height: 120),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _OptionLetter(
+                              index: i, selected: selected, size: 28),
+                          if (selected) ...[
+                            const SizedBox(width: 8),
+                            Icon(Icons.check_circle,
+                                color: AppColors.teal, size: 20),
+                          ],
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+      ],
+    );
+  }
+
+  /// HSK marks per part (listening / reading / writing, each 0–100, pass
+  /// at 60% of the total), for an HSK simulation only.
+  List<Widget> _hskMarks(PlayResult result) {
+    final l = context.l10n;
+    if (_session?.category != ExerciseCategory.hskSimulation ||
+        result.bySkill.isEmpty) {
+      return const [];
+    }
+    final parts = <(String, SkillScore)>[
+      if (result.bySkill['listening'] case final s?)
+        (l.exercisePlayHskListening, s),
+      if (result.bySkill['reading'] case final s?)
+        (l.exercisePlayHskReading, s),
+      if (result.bySkill['typing'] case final s?)
+        (l.exercisePlayHskWriting, s),
+    ];
+    if (parts.isEmpty) return const [];
+    final total = parts.fold<int>(0, (n, p) => n + p.$2.scaled);
+    final maxTotal = parts.length * 100;
+    final pass = (maxTotal * 0.6).round();
+    final passed = total >= pass;
+    return [
+      AppCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l.exercisePlayHskMarks,
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: AppColors.navy,
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(height: 8),
+            for (final (name, s) in parts)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  children: [
+                    Expanded(child: Text(name)),
+                    Text(
+                      '${s.scaled}',
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    Text(
+                      '  (${s.correct}/${s.total})',
+                      style: TextStyle(color: AppColors.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+            const Divider(),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l.exercisePlayHskTotal(total, maxTotal, pass),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+                Text(
+                  passed ? l.exercisePlayHskPassed : l.exercisePlayHskNotPassed,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: passed ? AppColors.success : AppColors.error,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+      const SizedBox(height: 8),
+    ];
   }
 
   Widget _buildComposeList() {
@@ -1163,6 +1387,7 @@ class _ReviewTile extends StatelessWidget {
   String _option(int index) {
     final options = question.options;
     final letter = String.fromCharCode(65 + index);
+    if (question.hasPictureOptions) return letter;
     return index >= 0 && index < options.length
         ? '$letter. ${options[index]}'
         : letter;
@@ -1252,6 +1477,94 @@ class _ReviewTile extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Play / pause and the time of one recording.
+class _AudioBar extends StatelessWidget {
+  const _AudioBar({required this.player, required this.label});
+
+  final AudioPlayer player;
+  final String label;
+
+  static String _clock(Duration? d) {
+    if (d == null) return '--:--';
+    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$m:$s';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: StreamBuilder<PlayerState>(
+        stream: player.playerStateStream,
+        builder: (context, snap) {
+          final state = snap.data;
+          final playing = state?.playing == true &&
+              state?.processingState != ProcessingState.completed;
+          final loading = state?.processingState == ProcessingState.loading ||
+              state?.processingState == ProcessingState.buffering;
+          return Row(
+            children: [
+              IconButton.filled(
+                onPressed: loading
+                    ? null
+                    : () async {
+                        if (playing) {
+                          await player.pause();
+                        } else {
+                          if (state?.processingState ==
+                              ProcessingState.completed) {
+                            await player.seek(Duration.zero);
+                          }
+                          await player.play();
+                        }
+                      },
+                icon: loading
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Icon(playing ? Icons.pause : Icons.play_arrow),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.navy,
+                      ),
+                    ),
+                    StreamBuilder<Duration>(
+                      stream: player.positionStream,
+                      builder: (context, pos) => Text(
+                        '${_clock(pos.data)} / ${_clock(player.duration)}',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                tooltip: '0:00',
+                onPressed: () => player.seek(Duration.zero),
+                icon: const Icon(Icons.replay),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

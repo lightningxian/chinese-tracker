@@ -94,7 +94,15 @@ function stripQuestion(item) {
     prompt: String(q.prompt || ""),
     imageUrl: String(q.imageUrl || ""),
     audioUrl: String(q.audioUrl || ""),
+    // HSK papers: which skill the question counts for, the heading of its
+    // part and the recording of the listening part (none of these is a key).
+    skill: String(item.skillCategory || ""),
+    section: String(item.section || ""),
+    sectionAudioUrl: String(item.sectionAudioUrl || ""),
   };
+  const optionImages = Array.isArray(q.optionImageUrls) ?
+    q.optionImageUrls.map(String) : [];
+  const withImages = optionImages.length ? {optionImageUrls: optionImages} : {};
   switch (type) {
     case "compose_sentences":
       return {...base, segments: seededShuffle(q.segments || [], item.id)};
@@ -108,9 +116,10 @@ function stripQuestion(item) {
         ...base,
         options: (q.options || []).map(String),
         blankNumber: Number.isInteger(q.blankNumber) ? q.blankNumber : null,
+        ...withImages,
       };
     default:
-      return {...base, options: (q.options || []).map(String)};
+      return {...base, options: (q.options || []).map(String), ...withImages};
   }
 }
 
@@ -168,16 +177,25 @@ function checkAnswer(item, answer) {
  * by stripQuestion.
  * @param {Array<Object>} items ordered bank items
  * @param {Object<string, Object>} answers questionId → answer
+ * `bySkill` counts per skill (listening / reading / typing / speaking, as
+ * stored on the bank items; missing = reading) so an HSK simulation can show
+ * a mark per part.
  * @return {{score: number, correct: number, total: number,
  *   review: Array<{questionId: string, answered: boolean,
- *   correct: boolean, correctAnswer: Object, explanation: string}>}}
+ *   correct: boolean, correctAnswer: Object, explanation: string}>,
+ *   bySkill: Object<string, {correct: number, total: number}>}}
  */
 function scoreAttempt(items, answers) {
   const given = answers && typeof answers === "object" ? answers : {};
+  const bySkill = {};
   const review = items.map((it) => {
     const answered = Object.prototype.hasOwnProperty.call(given, it.id);
     const check = checkAnswer(it, given[it.id]);
     const q = it.question || {};
+    const skill = String(it.skillCategory || "reading");
+    const bucket = bySkill[skill] || (bySkill[skill] = {correct: 0, total: 0});
+    bucket.total += 1;
+    if (check.correct) bucket.correct += 1;
     return {
       questionId: it.id,
       answered,
@@ -189,7 +207,7 @@ function scoreAttempt(items, answers) {
   const correct = review.filter((r) => r.correct).length;
   const total = items.length;
   const score = total === 0 ? 0 : Math.round((correct / total) * 100);
-  return {score, correct, total, review};
+  return {score, correct, total, review, bySkill};
 }
 
 /** Categories that allow a single attempt with a server-side clock. */

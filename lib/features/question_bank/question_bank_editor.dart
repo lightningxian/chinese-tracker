@@ -75,6 +75,10 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
   /// Multiple choice / listening: one controller per choice.
   final List<TextEditingController> _optionControllers = [];
 
+  /// Picture of each choice (HSK listening part 1), '' when the choice is
+  /// text only. Kept the same length as [_optionControllers].
+  final List<String> _optionImageUrls = [];
+
   /// One entry per line: word bank (matching, fill in the blank), accepted
   /// answers (type the hanzi) or sentence parts (compose).
   final _linesController = TextEditingController();
@@ -137,8 +141,10 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
         _linesController.text = e.question.options.join('\n');
       case ExerciseType.multipleChoice:
       case ExerciseType.listening:
-        for (final o in e.question.options) {
+        for (final (i, o) in e.question.options.indexed) {
           _optionControllers.add(TextEditingController(text: o));
+          final images = e.question.optionImageUrls;
+          _optionImageUrls.add(i < images.length ? images[i] : '');
         }
       case ExerciseType.pictureSentence:
         break;
@@ -150,6 +156,9 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
     final target = _optionControllers.isEmpty ? 4 : 2;
     while (_optionControllers.length < target) {
       _optionControllers.add(TextEditingController());
+    }
+    while (_optionImageUrls.length < _optionControllers.length) {
+      _optionImageUrls.add('');
     }
   }
 
@@ -228,14 +237,21 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
         );
       case ExerciseType.multipleChoice:
       case ExerciseType.listening:
-        final options = _optionControllers
-            .map((c) => c.text.trim())
-            .where((o) => o.isNotEmpty)
-            .toList();
+        final options = <String>[];
+        final images = <String>[];
+        for (final (i, c) in _optionControllers.indexed) {
+          final text = c.text.trim();
+          final image = i < _optionImageUrls.length ? _optionImageUrls[i] : '';
+          // A picture choice may have no text: it is the letter.
+          if (text.isEmpty && image.isEmpty) continue;
+          options.add(text.isEmpty ? String.fromCharCode(65 + options.length) : text);
+          images.add(image);
+        }
         return ExerciseQuestion(
           prompt: prompt,
           explanation: explanation,
           options: options,
+          optionImageUrls: images.every((u) => u.isEmpty) ? const [] : images,
           correctIndex:
               options.isEmpty ? 0 : _correctIndex.clamp(0, options.length - 1),
           imageUrl: _imageUrl,
@@ -262,11 +278,31 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
       case ExerciseType.listening:
         if (q.prompt.isEmpty) return l.bankEditorEnterQuestion;
         if (q.options.length < 2) return l.bankEditorNeedTwoChoices;
-        if (_optionControllers[_correctIndex].text.trim().isEmpty) {
+        if (_optionControllers[_correctIndex].text.trim().isEmpty &&
+            _optionImageUrls[_correctIndex].isEmpty) {
           return l.bankEditorCorrectEmpty;
         }
     }
     return null;
+  }
+
+  Future<void> _uploadChoicePicture(int i) async {
+    setState(() => _uploadingMedia = true);
+    try {
+      final url = await context
+          .read<QuestionBankMediaService>()
+          .pickAndUploadImage(widget.ownerId);
+      setState(() => _optionImageUrls[i] = url);
+    } on QuestionBankMediaCancelledException {
+      // user cancelled
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.bankEditorUploadFailed('$e'))),
+      );
+    } finally {
+      if (mounted) setState(() => _uploadingMedia = false);
+    }
   }
 
   Future<void> _uploadMedia({required bool image}) async {
@@ -691,6 +727,31 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
                   ),
                 ),
               ),
+              if (_optionImageUrls[i].isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: Image.network(
+                      _optionImageUrls[i],
+                      height: 44,
+                      width: 56,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) => const SizedBox(width: 56),
+                    ),
+                  ),
+                ),
+              IconButton(
+                tooltip: l.bankEditorChoicePicture,
+                icon: Icon(
+                  _optionImageUrls[i].isEmpty
+                      ? Icons.add_photo_alternate_outlined
+                      : Icons.photo_outlined,
+                  size: 20,
+                ),
+                onPressed:
+                    _uploadingMedia ? null : () => _uploadChoicePicture(i),
+              ),
               IconButton(
                 tooltip: l.bankEditorRemoveChoice,
                 icon: const Icon(Icons.close, size: 18),
@@ -698,6 +759,7 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
                     ? null
                     : () => setState(() {
                           _optionControllers.removeAt(i).dispose();
+                          _optionImageUrls.removeAt(i);
                           if (_correctIndex >= _optionControllers.length) {
                             _correctIndex = _optionControllers.length - 1;
                           }
@@ -710,8 +772,10 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
         Align(
           alignment: Alignment.centerLeft,
           child: TextButton.icon(
-            onPressed: () =>
-                setState(() => _optionControllers.add(TextEditingController())),
+            onPressed: () => setState(() {
+              _optionControllers.add(TextEditingController());
+              _optionImageUrls.add('');
+            }),
             icon: const Icon(Icons.add, size: 18),
             label: Text(l.bankEditorAddChoice),
           ),

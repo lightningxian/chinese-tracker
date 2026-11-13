@@ -26,6 +26,8 @@ class QuestionBankItem {
     this.sheetCode,
     this.sheetTitle,
     this.sheetIndex,
+    this.section,
+    this.sectionAudioUrl,
     this.usageCount = 0,
     this.lastUsedAt,
     this.updatedAt,
@@ -54,6 +56,16 @@ class QuestionBankItem {
 
   /// Position of the question on the sheet (0-based), keeps the sheet order.
   final int? sheetIndex;
+
+  /// Heading of the part of the paper this question belongs to, e.g.
+  /// `一、听力 · 第一部分 · 第1-5题` on an HSK paper. The player shows it
+  /// above the first question of each part. Null for plain worksheets.
+  final String? section;
+
+  /// Audio of the listening part (one recording for the whole part, as the
+  /// real HSK plays it). Stored on every listening question of the sheet;
+  /// the player shows one player while those questions are open.
+  final String? sectionAudioUrl;
 
   final int usageCount;
   final DateTime? lastUsedAt;
@@ -114,6 +126,8 @@ class QuestionBankItem {
       sheetCode: data['sheetCode'] as String?,
       sheetTitle: data['sheetTitle'] as String?,
       sheetIndex: (data['sheetIndex'] as num?)?.toInt(),
+      section: data['section'] as String?,
+      sectionAudioUrl: data['sectionAudioUrl'] as String?,
       usageCount: data['usageCount'] as int? ?? 0,
       lastUsedAt: (data['lastUsedAt'] as Timestamp?)?.toDate(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
@@ -136,6 +150,9 @@ class QuestionBankItem {
         if (sheetTitle != null && sheetTitle!.isNotEmpty)
           'sheetTitle': sheetTitle,
         if (sheetIndex != null) 'sheetIndex': sheetIndex,
+        if (section != null && section!.isNotEmpty) 'section': section,
+        if (sectionAudioUrl != null && sectionAudioUrl!.isNotEmpty)
+          'sectionAudioUrl': sectionAudioUrl,
         'usageCount': usageCount,
         if (sourceExerciseId != null && sourceExerciseId!.isNotEmpty)
           'sourceExerciseId': sourceExerciseId,
@@ -153,6 +170,8 @@ class QuestionBankItem {
     String? sheetCode,
     String? sheetTitle,
     int? sheetIndex,
+    String? section,
+    String? sectionAudioUrl,
     int? usageCount,
     DateTime? lastUsedAt,
     DateTime? updatedAt,
@@ -172,6 +191,8 @@ class QuestionBankItem {
       sheetCode: sheetCode ?? this.sheetCode,
       sheetTitle: sheetTitle ?? this.sheetTitle,
       sheetIndex: sheetIndex ?? this.sheetIndex,
+      section: section ?? this.section,
+      sectionAudioUrl: sectionAudioUrl ?? this.sectionAudioUrl,
       usageCount: usageCount ?? this.usageCount,
       lastUsedAt: lastUsedAt ?? this.lastUsedAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -216,6 +237,31 @@ class QuestionBankSheet {
   ExerciseType get type => first.type;
   String? get level => first.level;
   ExerciseCategory get category => first.category;
+
+  /// Part headings in sheet order, without repeats.
+  List<String> get sections => [
+        for (final item in items)
+          if (item.section != null && item.section!.trim().isNotEmpty)
+            item.section!.trim(),
+      ].fold<List<String>>([], (acc, s) => acc.contains(s) ? acc : (acc..add(s)));
+
+  /// The questions a listening recording belongs to: the listening-skill
+  /// ones, or every question when the sheet has no skill split.
+  List<QuestionBankItem> get listeningItems {
+    final listening = items
+        .where((i) => i.skillCategory == ExerciseSkillCategory.listening)
+        .toList();
+    return listening.isEmpty ? items : listening;
+  }
+
+  /// The listening recording attached to the sheet, if any.
+  String? get sectionAudioUrl {
+    for (final item in items) {
+      final url = item.sectionAudioUrl;
+      if (url != null && url.isNotEmpty) return url;
+    }
+    return null;
+  }
 
   /// Tags shared by the sheet, without the code itself.
   List<String> get tags => {

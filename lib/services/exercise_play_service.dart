@@ -26,11 +26,31 @@ class PlayQuestion {
     this.imageUrl = '',
     this.audioUrl = '',
     this.blankNumber,
+    this.optionImageUrls = const [],
+    this.skill = '',
+    this.section = '',
+    this.sectionAudioUrl = '',
   });
 
   final String id;
   final ExerciseType type;
   final String prompt;
+
+  /// Picture choices: one image per entry of [options] (HSK listening
+  /// part 1). Empty for text choices.
+  final List<String> optionImageUrls;
+
+  /// Skill the question counts for (`listening`, `reading`, `typing`), as
+  /// stored in the bank; used for the marks per part of an HSK paper.
+  final String skill;
+
+  /// Heading of the part of the paper (`一、听力 · 第一部分 · 第1-5题`),
+  /// empty for plain worksheets.
+  final String section;
+
+  /// One recording for the whole listening part; the same URL on every
+  /// question of that part.
+  final String sectionAudioUrl;
 
   /// Choices (multiple choice, listening) or the shared word bank
   /// (matching, fill in the blank).
@@ -50,6 +70,7 @@ class PlayQuestion {
   bool get usesWordBank =>
       type == ExerciseType.matching || type == ExerciseType.readingCloze;
   bool get isCompose => type == ExerciseType.composeSentences;
+  bool get hasPictureOptions => optionImageUrls.isNotEmpty;
 
   factory PlayQuestion.fromServer(Map<String, dynamic> m) => PlayQuestion(
         id: m['id'] as String? ?? '',
@@ -61,6 +82,11 @@ class PlayQuestion {
         imageUrl: m['imageUrl'] as String? ?? '',
         audioUrl: m['audioUrl'] as String? ?? '',
         blankNumber: (m['blankNumber'] as num?)?.toInt(),
+        optionImageUrls:
+            List<String>.from(m['optionImageUrls'] as List? ?? const []),
+        skill: m['skill'] as String? ?? '',
+        section: m['section'] as String? ?? '',
+        sectionAudioUrl: m['sectionAudioUrl'] as String? ?? '',
       );
 }
 
@@ -161,6 +187,16 @@ class ExercisePeek {
       );
 }
 
+/// Right answers out of the questions of one skill (HSK part).
+class SkillScore {
+  const SkillScore({required this.correct, required this.total});
+  final int correct;
+  final int total;
+
+  /// 0–100, the way HSK reports each part.
+  int get scaled => total == 0 ? 0 : ((correct / total) * 100).round();
+}
+
 class PlayResult {
   const PlayResult({
     required this.score,
@@ -169,7 +205,12 @@ class PlayResult {
     this.durationSeconds,
     this.review = const {},
     this.late = false,
+    this.bySkill = const {},
   });
+
+  /// Marks per skill (`listening`, `reading`, `typing`…), when the server
+  /// sent them.
+  final Map<String, SkillScore> bySkill;
 
   final int score;
   final int correct;
@@ -190,6 +231,9 @@ abstract class ExercisePlaySession {
   Exercise get exercise;
   List<PlayQuestion> get questions;
   String get passage;
+
+  /// Type of exercise of the package (its first worksheet's).
+  ExerciseCategory get category;
 
   /// Seconds left on the server clock of a one-attempt exam, else null (the
   /// player then uses the package's own time limit from the start).
@@ -242,6 +286,7 @@ class ExercisePlayService {
       exercise: exercise,
       questions: questions,
       remainingSeconds: (data['remainingSeconds'] as num?)?.toInt(),
+      category: ExerciseCategory.fromValue(data['category'] as String?),
       functions: _functions,
     );
   }
@@ -271,6 +316,7 @@ class _ServerSession extends _AnswerStore {
     required this.exercise,
     required this.questions,
     required this.remainingSeconds,
+    required this.category,
     required FirebaseFunctions functions,
   }) : _functions = functions;
 
@@ -280,6 +326,8 @@ class _ServerSession extends _AnswerStore {
   final List<PlayQuestion> questions;
   @override
   final int? remainingSeconds;
+  @override
+  final ExerciseCategory category;
   @override
   String get passage => exercise.passage;
 
@@ -301,6 +349,19 @@ class _ServerSession extends _AnswerStore {
       final id = entry['questionId'] as String? ?? '';
       if (id.isNotEmpty) review[id] = AnswerCheck.fromServer(entry);
     }
+    final bySkill = <String, SkillScore>{};
+    final rawSkills = m['bySkill'];
+    if (rawSkills is Map) {
+      for (final entry in rawSkills.entries) {
+        final v = entry.value;
+        if (v is Map) {
+          bySkill['${entry.key}'] = SkillScore(
+            correct: (v['correct'] as num?)?.toInt() ?? 0,
+            total: (v['total'] as num?)?.toInt() ?? 0,
+          );
+        }
+      }
+    }
     return PlayResult(
       score: (m['score'] as num?)?.toInt() ?? 0,
       correct: (m['correct'] as num?)?.toInt() ?? 0,
@@ -308,6 +369,7 @@ class _ServerSession extends _AnswerStore {
       durationSeconds: durationSeconds,
       review: review,
       late: m['late'] == true,
+      bySkill: bySkill,
     );
   }
 }

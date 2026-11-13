@@ -5252,4 +5252,114 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get resultLate => 'Late';
+
+  @override
+  String get bankAiScanWorksheet => 'Scan paper with AI';
+
+  @override
+  String get bankScanWithoutAi => 'Scan without AI (on this device)';
+
+  @override
+  String get aiImportSending => 'Sending the file to the AI reader…';
+
+  @override
+  String get aiImportReading => 'The AI is reading the paper (about a minute)…';
+
+  @override
+  String aiImportCropping(int n, int total) {
+    return 'Cutting out picture $n of $total…';
+  }
+
+  @override
+  String aiImportSummary(
+      String level, int questions, int sections, int pictures, int missing) {
+    return 'AI reading · $level · $questions questions in $sections parts · $pictures pictures · $missing without an answer key (listening: add it later with Answer key on the worksheet)';
+  }
+
+  @override
+  String aiImportFailed(String error) {
+    return 'AI reading failed: $error';
+  }
+
+  @override
+  String get aiImportNothingFound =>
+      'The AI reader found no questions in this file.';
+
+  @override
+  String get bankSheetListeningAudio => 'Listening recording';
+
+  @override
+  String get bankSheetListeningAudioHelp =>
+      'One recording for the whole listening part. Students hear it while they answer those questions.';
+
+  @override
+  String get bankSheetUploadAudio => 'Upload recording';
+
+  @override
+  String get bankSheetReplaceAudio => 'Replace';
+
+  @override
+  String get bankSheetRemoveAudio => 'Remove recording';
+
+  @override
+  String get bankSheetAudioAttached =>
+      'Recording attached. Students get one player for the listening questions.';
+
+  @override
+  String get bankSheetAnswerKey => 'Answer key';
+
+  @override
+  String get bankSheetAnswerKeyHint =>
+      'Type the key as printed: 1 D 2 A 3 C · 11 √ 12 × · 41-45 ECBAD. Numbers follow the order on this worksheet.';
+
+  @override
+  String get bankSheetAnswerKeyApply => 'Apply key';
+
+  @override
+  String bankSheetAnswerKeyApplied(int n) {
+    return 'Answer key applied to $n questions.';
+  }
+
+  @override
+  String get bankSheetAnswerKeyNone => 'No answers found in the text.';
+
+  @override
+  String bankSheetParts(int n) {
+    return '$n parts';
+  }
+
+  @override
+  String get bankEditorChoicePicture => 'Picture for this choice';
+
+  @override
+  String get exercisePlayListeningRecording => 'Listening recording';
+
+  @override
+  String get exercisePlayQuestionAudio => 'Audio for this question';
+
+  @override
+  String get exercisePlayPickPicture => 'Choose the picture';
+
+  @override
+  String get exercisePlayHskMarks => 'HSK marks';
+
+  @override
+  String get exercisePlayHskListening => 'Listening';
+
+  @override
+  String get exercisePlayHskReading => 'Reading';
+
+  @override
+  String get exercisePlayHskWriting => 'Writing';
+
+  @override
+  String exercisePlayHskTotal(int total, int max, int pass) {
+    return 'Total $total of $max · pass mark $pass';
+  }
+
+  @override
+  String get exercisePlayHskPassed => 'Passed';
+
+  @override
+  String get exercisePlayHskNotPassed => 'Not passed yet';
 }
