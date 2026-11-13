@@ -48,7 +48,7 @@ flutter pub get
 | Stack | Flutter web (primary) · Firestore · Cloud Functions v2 · Hosting · Storage · Midtrans sandbox |
 | Roles | admin · teacher · student · parent |
 
-### Cloud Functions (16; 14 deployed 2026-11-13, onNotificationCreated + dailyReminders after the next functions deploy)
+### Cloud Functions (16, all deployed 2026-11-13 with the current rules)
 
 | Export | Role |
 |--------|------|

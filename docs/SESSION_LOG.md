@@ -29,9 +29,12 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   1 skipped, function tests, emulator walk (HSK-style sheet seeded by REST).
 - **Owner to do** (plain steps in the change log and
   `docs/OWNER_PROCEDURES.md`): Firebase console → AI Logic *Get started* +
-  App Check web key (`deploy.env`); Cloud Messaging web push key;
-  `firebase deploy --only firestore:rules,functions`; the Midtrans sandbox
-  test; the one-command Firestore backup schedule.
+  App Check web key (`deploy.env`); Cloud Messaging web push key; the
+  Midtrans sandbox test; the one-command Firestore backup schedule.
+- Owner ran `firebase deploy --only firestore:rules,functions`: rules
+  released, 14 functions updated, `dailyReminders` and
+  `onNotificationCreated` created. Teacher packages, marks per part and
+  push triggers are live.
 - Not possible from here: the nightly backup command and a live Firestore
   read (item 2, old-format exercises) were refused by the sandbox.
 
