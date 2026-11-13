@@ -2112,11 +2112,15 @@ class FirestoreService {
 
   /// Bank questions owned by [ownerId] (a content-owner teacher/admin id),
   /// newest first. Uses the composite index on (ownerId, createdAt DESC).
+  /// The centre's question bank. One shared pool: admins fill it (under
+  /// `CONTENT_OWNER_ID`, or their own uid), every teacher reads the same
+  /// sheets to build packages (2026-11-13), so [ownerId] no longer filters
+  /// the query; it is kept so callers need no change and an empty id still
+  /// means "no bank".
   Stream<List<QuestionBankItem>> watchQuestionBank(String ownerId) {
     if (ownerId.isEmpty) return Stream.value(const []);
     return _db
         .collection(AppConstants.questionBankCollection)
-        .where('ownerId', isEqualTo: ownerId)
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snap) => snap.docs.map(QuestionBankItem.fromFirestore).toList());

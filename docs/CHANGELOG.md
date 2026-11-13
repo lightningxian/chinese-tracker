@@ -68,6 +68,15 @@ edge cases, and any manual/deploy steps still required).
 - Emulator walk: see the session log.
 - `docs/OWNER_PROCEDURES.md` (new): Midtrans sandbox test and the nightly
   backup, step by step.
+- Emulator walk found that `watchQuestionBank` filtered by owner uid, so a
+  teacher who is not the content owner saw an empty bank and could not build
+  a package. The bank is one shared pool now (query without the owner
+  filter; rules already allow staff reads). Verified as teacher: sheets
+  visible, read-only, *Assign this worksheet* available.
+- The Flutter web build cache (`.dart_tool/flutter_build`) kept a stale
+  plugin registrant, so `just_audio` and App Check had no web
+  implementation in the first bundle. Cleared; `scripts/deploy_web.sh`
+  builds fresh.
 
 ## 2026-11-13 — Claude: App Check wired, web push reminders
 
