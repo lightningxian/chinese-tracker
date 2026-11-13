@@ -1107,15 +1107,6 @@ async function notifyInvoicePaid(invoice, packageSize) {
   }
 }
 
-/**
- * Nightly Firestore export to the backup bucket (docs/NAS_BACKUP_SETUP.md).
- * The NAS pulls that bucket with rclone at ~03:00; keep this schedule earlier.
- * Requires the runtime SA to have datastore.importExportAdmin and storage.admin
- * on gs://chinese-tracker-backups (IAM commands are in the setup doc).
- */
-const {v1: firestoreAdminV1} = require("@google-cloud/firestore");
-const exportClient = new firestoreAdminV1.FirestoreAdminClient();
-
 // ---------------------------------------------------------------------------
 // Bank-based exercises ("packages"): the answer keys never reach the student.
 // A package names worksheets (`bankSheets`) and single questions
@@ -1473,17 +1464,7 @@ exports.deleteUserAccount = onCall(async (request) => {
   return {deleted: true};
 });
 
-exports.scheduledFirestoreExport = onSchedule(
-  {schedule: "every day 02:00", timeZone: "Asia/Jakarta"},
-  async () => {
-    const projectId = process.env.GCLOUD_PROJECT;
-    const name = exportClient.databasePath(projectId, "(default)");
-    const day = new Date().toISOString().slice(0, 10);
-    await exportClient.exportDocuments({
-      name,
-      outputUriPrefix: `gs://chinese-tracker-backups/firestore/${day}`,
-      collectionIds: [], // empty = all collections
-    });
-    return null;
-  },
-);
+// Nightly backups: Firestore's own scheduled backups (daily, 7-day retention,
+// created by the owner on 2026-11-13 with
+// `firebase firestore:backups:schedules:create`). The former
+// `scheduledFirestoreExport` function was removed the same day.

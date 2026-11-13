@@ -6,6 +6,33 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-13 — Claude: nightly backup moved to Firestore scheduled backups, export function removed
+
+**What changed**
+- `functions/index.js`: removed `scheduledFirestoreExport` (daily 02:00
+  Jakarta export to `gs://chinese-tracker-backups`) and the
+  `@google-cloud/firestore` admin client it used; `functions/package.json`
+  drops that direct dependency (firebase-admin still brings its own copy).
+- Docs: `CLAUDE.md` blocker closed, `docs/OWNER_PROCEDURES.md` §B is now the
+  list / restore runbook, handoff functions table (15), thesis audit,
+  `docs/NAS_BACKUP_SETUP.md` and `docs/GO_LIVE_CHECKLIST.md` notes.
+
+**Why**
+- The export function failed every night since 2026-10-13 with
+  `PERMISSION_DENIED` (IAM). The owner created a Firestore scheduled backup
+  on 2026-11-13 (daily, 7-day retention, schedule
+  `c3d18000-952e-4759-8aa6-aaf1df6fa48c`), which needs no bucket, no IAM and
+  no function.
+
+**For review**
+- Owner: `firebase deploy --only functions --project chinese-tracker` and
+  answer **yes** when the CLI asks to delete `scheduledFirestoreExport`.
+  Until then the dead function keeps failing at 02:00 (harmless).
+- Checks: `node --check functions/index.js`, `node functions/test_exercise_play.js`,
+  `node functions/test_reminders.js` pass. No web change, hosting untouched.
+
+---
+
 ## 2026-11-13 — Claude: HSK simulation (AI paper reader, pictures, listening recording, marks per part)
 
 **What changed**

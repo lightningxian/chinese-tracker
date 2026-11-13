@@ -176,7 +176,7 @@ Status per spec item. Evidence is `file:line` in this repo.
 | **P2** Teacher weekly availability + unavailable dates | Missing | Not found | — |
 | P2 Admin repeating schedule (level/weekdays/time/room/teacher/quota/valid period) | Missing | One-off sessions only (`firestore_service.dart:781-845`); admin sessions get `CONTENT_OWNER_ID` as teacher (`app_router.dart:225-231`) | class_sessions |
 | P2 Conflict check function with suggestions | Missing | Not found | — |
-| P2 Scheduled generateSessions | Missing | Only `cleanupExpiredLinkCodes` and `scheduledFirestoreExport` are scheduled | — |
+| P2 Scheduled generateSessions | Missing | Only `cleanupExpiredLinkCodes` and `dailyReminders` are scheduled | — |
 | P2 Teacher schedule screen with confirm + request change | Missing | Calendar and list only (`class_calendar_screen.dart`) | class calendar |
 | P2 Schedule confirmation status | Missing | `registrationState` is about student registration | — |
 | P2 Substitute teacher picker | Missing | `updateClassSession` never changes teacherId | — |

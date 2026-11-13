@@ -1,5 +1,11 @@
 # NAS backup setup — Firestore + Storage → UGREEN NAS
 
+> **2026-11-13:** the nightly Firestore export function described here was
+> removed. Firestore is backed up by its own scheduled backups instead
+> (`docs/OWNER_PROCEDURES.md` §B). Part A below is kept for reference only; a
+> NAS copy of Firestore would now need a manual `gcloud firestore export` into
+> the bucket. Part B (rclone pull) still works for the Storage bucket.
+
 Two parts: (A) GCP exports your data to a Cloud Storage bucket on a schedule;
 (B) the NAS pulls that bucket (and the Storage bucket) on a schedule with rclone.
 The NAS is never in the live path — it's a recovery copy on hardware you control.

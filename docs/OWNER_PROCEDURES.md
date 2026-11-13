@@ -65,20 +65,15 @@ log lines and marks the Midtrans item done. After that, production keys:
 
 ---
 
-## B. Nightly backup
+## B. Nightly backup — done 2026-11-13
 
-The Cloud Function export (`scheduledFirestoreExport`) keeps failing with
-`PERMISSION_DENIED`. Two ways out.
+Firestore's own scheduled backup is on: daily, 7-day retention (schedule
+`c3d18000-952e-4759-8aa6-aaf1df6fa48c`, created with
+`firebase firestore:backups:schedules:create`). The old export function
+`scheduledFirestoreExport` is gone from the code; the next
+`firebase deploy --only functions` asks to delete it on live (answer **yes**).
 
-### Option 1 (recommended): Firestore's own scheduled backups
-
-One command, no bucket, no IAM, costs cents per month for this database:
-
-```bash
-firebase firestore:backups:schedules:create --database '(default)' --recurrence DAILY --retention 7d --project chinese-tracker
-```
-
-Check it exists:
+Check the schedule:
 
 ```bash
 firebase firestore:backups:schedules:list --database '(default)' --project chinese-tracker
@@ -97,24 +92,7 @@ one, it never overwrites):
 firebase firestore:databases:restore --backup <backup name from the list> --database restored-copy --project chinese-tracker
 ```
 
-Then tell Claude "backups are on": Claude removes the old export function from
-the code and the next `firebase deploy --only functions` asks to delete
-`scheduledFirestoreExport` (answer **yes**).
-
-### Option 2: keep the export function and fix IAM in the Google Cloud console
-
-1. https://console.cloud.google.com → project **chinese-tracker** →
-   **IAM & Admin → IAM** → find
-   `345172802163-compute@developer.gserviceaccount.com` → pencil icon →
-   **Add another role** → **Cloud Datastore Import Export Admin** → **Save**.
-2. **Cloud Storage → Buckets**: if `chinese-tracker-backups` does not exist,
-   **Create** it (name `chinese-tracker-backups`, region `asia-southeast2`,
-   everything else default).
-3. Open the bucket → **Permissions** → **Grant access** → principal
-   `345172802163-compute@developer.gserviceaccount.com` → role
-   **Storage Object Admin** → **Save**.
-4. Force a run instead of waiting for 02:00: **Cloud Scheduler** → the job
-   named like `firebase-schedule-scheduledFirestoreExport-us-central1` →
-   **Force run**.
-5. Check: `firebase functions:log --only scheduledFirestoreExport --project chinese-tracker`
-   shows no error, and the bucket has a folder `firestore/<today>`.
+Storage files (photos, worksheets, recordings) are not in this backup; they
+live in the Storage bucket, which Google keeps. The NAS copy in
+`docs/NAS_BACKUP_SETUP.md` is optional and, for Firestore, would now need a
+manual `gcloud firestore export`.

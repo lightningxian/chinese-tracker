@@ -94,9 +94,10 @@ Firebase project: `chinese-tracker`. Roles: admin · teacher · student · paren
 ## 7. Back up to your UGREEN NAS — [you]
 Goal: you own a recovery copy of all data on hardware you control, without the
 NAS being in the live path.
-- [ ] Enable a scheduled **Firestore export** to a Cloud Storage bucket
-  (e.g. `gs://chinese-tracker-backups`): use **Cloud Scheduler + the Firestore
-  export API** (daily). Storage files already live in a GCS bucket.
+- [x] Daily Firestore backup: done 2026-11-13 with Firestore's own scheduled
+  backups (7-day retention, `docs/OWNER_PROCEDURES.md` §B). A bucket export
+  for the NAS is optional (manual `gcloud firestore export`). Storage files
+  already live in a GCS bucket.
 - [ ] Create a **least-privilege GCP service account** with read-only access to
   the backup bucket(s); download its JSON key.
 - [ ] On the NAS (UGOS): if it supports **Docker**, run **`rclone`** in a

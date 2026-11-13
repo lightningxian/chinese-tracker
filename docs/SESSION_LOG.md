@@ -35,8 +35,11 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   released, 14 functions updated, `dailyReminders` and
   `onNotificationCreated` created. Teacher packages, marks per part and
   push triggers are live.
-- Not possible from here: the nightly backup command and a live Firestore
-  read (item 2, old-format exercises) were refused by the sandbox.
+- Owner ran the backup command: Firestore scheduled backup created (daily,
+  7-day retention). `scheduledFirestoreExport` removed from the code; the
+  owner deletes it on live at the next `firebase deploy --only functions`.
+- Not possible from here: a live Firestore read (item 2, old-format
+  exercises) was refused by the sandbox.
 
 ### 2026-11-13 — Claude: exam mode, rate limits
 

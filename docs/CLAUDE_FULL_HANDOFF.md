@@ -48,7 +48,7 @@ flutter pub get
 | Stack | Flutter web (primary) · Firestore · Cloud Functions v2 · Hosting · Storage · Midtrans sandbox |
 | Roles | admin · teacher · student · parent |
 
-### Cloud Functions (16, all deployed 2026-11-13 with the current rules)
+### Cloud Functions (15, all deployed 2026-11-13 with the current rules; `scheduledFirestoreExport` removed from the code 2026-11-13, delete on live at the next functions deploy)
 
 | Export | Role |
 |--------|------|
@@ -65,9 +65,8 @@ flutter pub get
 | `onUserCreated` | Trigger — welcome / setup on user doc create |
 | `onExerciseResultCreated` | Trigger — notifications on exercise result |
 | `cleanupExpiredLinkCodes` | Schedule — every 60 minutes (also clears old `rate_limits`) |
-| `scheduledFirestoreExport` | Schedule — Firestore backup export (fails: IAM, see CLAUDE.md) |
-| `onNotificationCreated` | Trigger — pushes a notification addressed to one user to their `push_tokens` devices (added 2026-11-13, deploy pending) |
-| `dailyReminders` | Schedule — 07:00 Jakarta, "due today" reminder per unfinished assignment (added 2026-11-13, deploy pending) |
+| `onNotificationCreated` | Trigger — pushes a notification addressed to one user to their `push_tokens` devices (added 2026-11-13) |
+| `dailyReminders` | Schedule — 07:00 Jakarta, "due today" reminder per unfinished assignment (added 2026-11-13) |
 
 **Webhook URL (registered in Midtrans):**  
 `https://us-central1-chinese-tracker.cloudfunctions.net/midtransNotification`
