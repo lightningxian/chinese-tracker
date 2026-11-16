@@ -26,6 +26,14 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   decisions (§2), the test-track design (§3), Build 0 and **Build 1 marked
   NEXT** in full, Builds 2–8 as outlines, open questions (§5), thesis needs
   (§7). The BUILD chat will run on the PC.
+- Evening: BUILD chat is up on the PC (Build 0 passed, Build 1 running) and
+  the message link works both ways. Owner's second answers and documents
+  (revised proposal, decree, campus templates, HSKK and HSK 3.0 papers) went
+  into `docs/PLAN.md`: decisions 11–16, exact formats, the proposal's
+  scenario IDs per build, differences between the proposal and the newer
+  wishes, Build 1 changes (Enterprise App Check provider, part clocks on or
+  off, review after the session, HSK Simulation only through test codes),
+  Build 2 with the typing matcher, Tugas Akhir facts and calendar.
 
 ### 2026-11-13 (day) — Claude: HSK simulation, AI paper reader, teachers' packages, App Check + push
 

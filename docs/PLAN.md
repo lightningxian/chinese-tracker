@@ -54,8 +54,9 @@ Everything else about the project is in `CLAUDE.md` and
 - The BUILD chat runs on the PC with **Remote Control** switched on. PC
   sessions then show up in the PLAN chat's `ListAgents` list on the Mac, and
   the PLAN chat sends the build order with `SendMessage` (it arrives as a user
-  turn labelled "From Easy Study · PLAN (Fable)"). The first time, the PLAN
-  chat sends a test message to prove the link.
+  turn labelled "From Easy Study · PLAN (Fable)"). Proven in both directions
+  on 2026-11-16: the BUILD chat answers with `SendMessage` to the `from`
+  address of the message it received.
 - A session truly nested inside the PLAN chat can only be created on the
   machine the PLAN chat runs on (the Mac). With the BUILD chat on the PC,
   "nested" means: the PLAN chat gives the orders and reads the reports.
@@ -99,12 +100,19 @@ Firestore scheduled backups run nightly (3 backups READY on 2026-11-16).
 **Owner tasks still open** (steps in `docs/OWNER_PROCEDURES.md`,
 `docs/WORKSHEET_IMPORT.md`, `docs/CLAUDE_FULL_HANDOFF.md`)
 
-| Task | State on 2026-11-16 |
+| Task | State on 2026-11-16 (evening) |
 |---|---|
-| AI Logic "Get started", App Check web key, web push key, `deploy.env` | not done; this is why **Scan paper with AI** fails |
-| Midtrans sandbox payment end to end | not run |
-| Old-format exercises on live | owner believes none are left |
+| AI Logic "Get started" | done |
+| App Check web key | blocked: the console now asks for a **reCAPTCHA Enterprise ("Fraud Defense")** site key, not a v3 key. The owner creates it in the Google Cloud console (Security → reCAPTCHA → Create key: Website, score-based, domains `chinese-tracker.web.app` and `chinese-tracker.firebaseapp.com`, **not** `localhost`), pastes it into App Check, and gives the key to either chat. Build 1 switches the app to the Enterprise provider. |
+| Web push key | created in the console; the Mac's `deploy.env` holds only the placeholder text, so the real key (starts with `B`) is still to be given |
+| Both public keys | the BUILD chat stores them as defaults in `scripts/deploy_web.sh`; no file to copy between machines |
+| `firebase login` on the PC | to do (needed for deploys from the PC) |
+| Midtrans sandbox payment end to end | not run; owner will report |
+| Old-format exercises on live | none left (owner checked) |
 | Exam mode and APK on live | owner is testing |
+
+**Build status:** Build 0 passed on the PC (Windows 11, notes in `CLAUDE.md`).
+Build 1 is in progress.
 
 **PLAN chat backlog:** refresh the status table in
 `docs/THESIS_FEATURE_AUDIT.md` §7 (several rows say "Missing" for things that
@@ -145,6 +153,26 @@ are done).
     writing, total, pass or fail below). The owner has papers for HSK 1–6,
     HSKK, YCT and HSK 3.0 and wants a format template for each, so papers can
     be uploaded at once.
+
+**Second round, same day**
+
+11. **Result card:** the line reads "Simulation by Easy Study". No nationality
+    and no gender.
+12. **HSK tests need the teacher:** an HSK test starts only with the code a
+    teacher gives in the room, every test is taken once, and there is no
+    retake. After the test it becomes **learning material**: the student may
+    open it again to read the questions, their answers, the keys and the
+    explanations. Before the test starts the teacher decides whether the
+    **clock per part** is on or off.
+13. **Chinese names:** every student should have one; when it is missing, the
+    first name is shown.
+14. **Leaderboard:** a student sees it only for the codes they finished.
+15. **Placement:** not settled. Both ways are to be prepared: the proposal's
+    (a registered student sits one test code after approval) and the public
+    one on the landing page; full papers and short ones.
+16. **Additions accepted:** QR code for the token and the placement link,
+    item analysis per test code, black-box tables for the book, the flyer's
+    terms with a tick box at purchase, automatic checks on GitHub.
 
 ---
 
@@ -206,15 +234,52 @@ answer sheet" minutes; the admin corrects a code against its cover page)
 | YCT 2 | listening 20, reading 20; 45 minutes in all | 200 | 120 |
 | YCT 3 | listening 35, reading 25; 55 minutes in all | 200 | 120 |
 | YCT 4 | listening 40, reading 30, writing 10; 80 minutes in all | 300 | 180 |
-| HSKK basic / intermediate / advanced | speaking: 27 / 14 / 6 items, about 20 / 23 / 25 minutes | 100 | 60 |
-| YCT oral basic / intermediate | speaking | 100 | 60 |
-| HSK 3.0 levels 1–6 and 7–9 | drafts, `provisional` | – | – |
+| HSKK basic (paper H726119Z) | speaking: repeat 15 items / 6 min, answer 10 / 4, respond 2 / 3, plus 7 min preparation; about 20 minutes | 100 | 60 |
+| HSKK intermediate / advanced | speaking: 14 / 6 items, about 23 / 25 minutes (provisional) | 100 | 60 |
+| YCT oral basic / intermediate | speaking (provisional) | 100 | 60 |
+| HSK 3.0 level 1 | listening 20 / 15, reading 20 / 20 | 200 | 120 (provisional) |
+| HSK 3.0 level 2 | listening 25 / 20, reading 25 / 25, writing 10 / 10 | 300 | 180 (provisional) |
+| HSK 3.0 level 3 | listening 30 / 28, reading 30 / 30, writing 10 / 20 | 300 | 180 (provisional) |
+| HSK 3.0 level 4 | listening 32 / 25, reading 32 / 30, writing 6 / 25 | 300 | 180 (provisional) |
+| HSK 3.0 levels 5, 6, 7–9 | empty drafts until the owner sends those papers | – | – |
 
-YCT part minutes, HSKK timings and every HSK 3.0 number are provisional:
-public sources disagree, and HSK 3.0 is reported to start worldwide on
-2026-12-13. They ship as editable drafts and are fixed from the owner's own
-papers. Speaking formats can be created in Build 1 but cannot be played
-before Build 8.
+The HSK 3.0 and HSKK basic rows come from the cover pages of the owner's own
+papers (2026-11-16); those papers do not print marks, so 100 per part and a
+pass at 60 percent are provisional. YCT part minutes and the other speaking
+formats are provisional too. Speaking formats can be created in Build 1 but
+not played.
+
+**The thesis covers HSK 1 to 6 only** (proposal, section L: no speaking test,
+six HSK levels). YCT, HSKK and HSK 3.0 are extras for the centre: they get a
+format so papers can be uploaded, and nothing else until the thesis builds
+are done.
+
+**The approved proposal is the contract.** The revised Tugas Akhir proposal
+(defended 2026-10-07, approved 2026-10-22) is summarised in
+`docs/THESIS_FEATURE_BACKLOG.md`; its section 13 lists the validation
+scenarios the book must report. Each build proves its share and names the ID
+in the test that proves it:
+
+| Build | Scenario IDs |
+|---|---|
+| 1 | TS-01, TS-02, PN-04, PN-05, LV-02 |
+| 2 | PN-01, PN-02, PN-03, LV-01, LV-03, LB-01 |
+| 3 | PL-01, PL-02 |
+| 5 | MT-01 … MT-05 |
+| 6 | JD-01, JD-02, VC-04 |
+| 7 | VC-01, VC-02, VC-03, VC-05 |
+
+Where the owner's newer wishes differ from the proposal, the plan is:
+
+| Topic | Proposal | Owner, November | Plan |
+|---|---|---|---|
+| Names on the leaderboard | students see first name + initial (LB-01) | students see the Chinese name | Chinese name; the book states it. **Owner to confirm with the supervisor** (§5) |
+| Placement | registered student, after approval, one code of the level below the target, teacher token | public page, no login, teacher code | build both on the same token and player (Build 3) |
+| Schedule level | every weekly schedule has one HSK level; students see sessions of their level | semi-private, mixed levels | level on a schedule becomes optional ("all levels"); settle at Build 6 |
+| Who edits the question bank | admin and teachers | admin only (2026-11-13) | teachers add and edit **their own** questions; scanning stays with the admin (Build 2, owner to confirm) |
+| Platforms | Android, iOS and web | no native iOS app | iOS through Safari "add to home screen"; a risk to raise with the supervisor |
+| Test audio | at most two plays | – | a question's clip: two plays; a whole-part recording: once (it reads each item twice) |
+| Speaking, YCT, HSK 3.0 | out of scope | wanted by the centre | formats now, the rest after the thesis builds |
 
 **Names.** One helper on `AppUser`: the staff label is
 `nameChinese (Latin name)`, or the Latin name alone when there is no Chinese
@@ -243,7 +308,34 @@ first word of the Latin name when there is none. The Latin name is
 6. Add a guard to `scripts/deploy_web.sh`: stop with a clear message when
    `APP_CHECK_SITE_KEY` is empty, unless the flag `--no-keys` is given.
 
-### Build 1 — Test formats, test codes, supervised test, result card — **NEXT**
+### Build 1 — Test formats, test codes, supervised test, result card — **NEXT** (in progress since 2026-11-16)
+
+**Changes after the first version of this build (sent to the BUILD chat on
+2026-11-16; they override the lists below where they differ)**
+
+1. App Check on web uses `ReCaptchaEnterpriseProvider` (the console no longer
+   offers v3). Owner steps in the docs: Google Cloud console → Security →
+   reCAPTCHA → Create key, Website, score-based, domains
+   `chinese-tracker.web.app` and `chinese-tracker.firebaseapp.com`. No
+   `localhost` on this key: local runs use the debug provider.
+2. The two public keys (App Check site key, web push key) become defaults in
+   `scripts/deploy_web.sh`; `deploy.env` is an optional override.
+3. `openTestSession` takes `partClocks` (default on), chosen by the teacher
+   when opening the session. Off = one clock for the whole paper, free
+   movement between parts, recording may be replayed, one submit.
+4. Review as learning material: when the session is closed, the student can
+   open their finished test with answers, keys, explanations and audio
+   (`getTestReview`, refused while the session is open). Never a retake.
+5. HSK Simulation worksheets are played only through test codes: the package
+   form stops offering them and `startExercise` refuses packages of category
+   `hsk_simulation`, pointing to Tests. Exam packages are unchanged.
+6. Result card line: "Simulation by Easy Study". No nationality, no gender.
+7. `test_results` stores `durationSeconds` (server time).
+8. A question's own clip plays at most twice in a test, with a counter.
+9. Tests that prove TS-01, TS-02, PN-04, PN-05 and LV-02 carry the ID in
+   their name; the report lists the five.
+10. Formats: the table in §3, including the exact HSKK basic and HSK 3.0
+    level 1 to 4 rows.
 
 **Goal.** An admin turns a scanned paper into a test code. A teacher opens a
 supervised session and shows a token. A student types the token, sits the
@@ -355,27 +447,41 @@ tests, placement tests, changes to how packages are timed.
 loads the formats on live, creates a code from a scanned paper, and runs one
 real session with a test student.
 
-### Build 2 — Marking, leaderboard, promotion, names
+### Build 2 — Typing matcher, marking, leaderboard, promotion, names
 
-- **Marking by hand:** questions a machine cannot mark (a sentence written
-  with a given word, an essay; new bank type `essay` with a character
-  counter) are worth 10 points by default; the result is `pending_marking`
-  until a teacher enters points per answer on a marking screen
-  (`markTestAnswers`), then it becomes final. HSK 6: the source article is
-  shown for 10 minutes, then hidden.
+Proves PN-01, PN-02, PN-03, LV-01, LV-03, LB-01
+(`docs/THESIS_FEATURE_BACKLOG.md` sections 7, 8 and 13 give the exact rules).
+
+- **Typing matcher** inside the server scoring, used by packages and tests:
+  normalise (spaces, full-width punctuation, ending punctuation, traditional
+  to simplified with `opencc-js`, pinyin tone marks to numbers, `ü` = `v`),
+  exact match against every accepted key, Levenshtein tolerance, half marks
+  for the cases the spec names, no partial credit for sentence building.
+  Every half-mark answer is flagged for review. Unit tests with the spec's
+  six cases; a script that scores a file of 200 answers for PN-01.
+- **Marking by hand:** a review queue for flagged typing answers and for
+  free writing (T5, new bank type `essay`, 10 points, character counter,
+  required keywords found or missing, rubric grammar 40 / vocabulary 30 /
+  content 30). A result with open items is `pending_marking`; `markTestAnswers`
+  makes it final. HSK 6: the source text is shown for 10 minutes, then hidden.
 - **Leaderboard per code** (`leaderboards/{codeId}/entries/{uid}`, written by
-  functions): final and valid results only, highest total first, earlier
-  finish wins a tie. Students see peer labels with their own row highlighted,
-  for the codes they have finished; staff see staff labels.
-- **Promotion:** `settings/promotion.minCodes` (3, editable). A student is
-  eligible with that many different codes passed and valid at their current
-  level. Admin **Promotion** screen lists eligible students with the codes
-  and marks; **Verify** sets the next level, writes `level_history`, a
-  notification and an audit log. `users.level` becomes admin-only in the
+  a trigger on final, valid, non-placement results): highest total first,
+  shorter time wins a tie. Students see peer labels, own row highlighted,
+  only for codes they finished; staff see staff labels.
+- **Promotion:** a trigger counts the different codes passed and valid at the
+  student's level; at `settings/promotion.minCodes` (3, editable, with the
+  pass marks) it creates a recommendation in `level_promotions`. Admin
+  **Promotion** screen: verify → next level, `level_history`, notification,
+  audit log; the count starts again. `users.level` becomes admin-only in the
   rules and leaves the student profile form.
 - **Student Tests place:** "2 dari 3 kode lulus", history with rank.
-- **Names:** the two labels of §3 applied to every student list, table and
-  picker; search matches both names.
+- **Names:** the two labels of §3 on every student list, table and picker;
+  search matches both names; the Chinese name becomes required on the
+  register and profile forms.
+- **Teachers and the bank** (if the owner confirms): a teacher may type,
+  paste and edit their own bank questions; scanning and other people's
+  questions stay with the admin.
+- **Item analysis** per test code: percent correct per question.
 - Screenshots 04, 06, 07, 10, 13 of the proposal list.
 
 ### Build 3 — Registration approval, placement tests, rooms
@@ -384,13 +490,19 @@ real session with a test student.
   page; admins get an **Approval** screen (name, teacher, placement result,
   starting level) with approve and reject (reason). Register form: "Mulai
   dari HSK 1" or "Sudah ikut tes penempatan" with the result code.
-- **Placement tests:** up to six test codes flagged `placement`, listed on a
-  public page linked from the landing page. The visitor types a teacher code
-  (the same invite code used at registration, checked by `resolveLinkCode`),
-  name and WhatsApp number, sits the test in the same player through
-  functions that need no login (rate-limited per address, attempt protected
-  by a secret), and gets marks per part and a result code. No answer review
-  is shown, because the six papers are reused. The result is stored in
+- **Placement, the proposal's way (PL-01, PL-02):** a registered and approved
+  student who chose "tes penempatan" with a target level sits one test code
+  of the level below the target, with a teacher token. Passed: the target
+  level is recommended; failed: the tested level. The admin confirms the
+  starting level. The code counts as taken; the result stays off the
+  leaderboard.
+- **Placement, the public way:** test codes flagged `placement` (full papers
+  or short ones, each with its own timing) listed on a public page linked
+  from the landing page. A teacher opens a placement session; the visitor
+  types that token, a name and a WhatsApp number, sits the test in the same
+  player through functions that need no login (rate-limited, attempt
+  protected by a secret) and gets marks per part and a result code. No
+  review is shown, because these papers are reused. The result is stored in
   `placement_results` and shows on the Approval screen.
 - **Rooms:** `settings/rooms` with `Main` and `Sub Room`; the class form
   uses a picker. Teacher profile: levels the teacher can teach.
@@ -410,8 +522,9 @@ Chinese names on the price list (proposal: 报名费, 8次课程, 16次课程,
 HSK教材费); the student's voucher screen gets **Beli**: choose a package,
 tick the flyer terms, pay through Midtrans (`createInvoice` opened to the
 student for their own account); a daily job expires vouchers after their 2
-months and sends low-balance and expiry reminders. Needs the Midtrans sandbox
-test to have passed. Screenshot 05.
+months and sends low-balance and expiry reminders. Proves MT-01 to MT-05
+(function tests for signature, repeat and status mapping; MT-05 is the
+owner's comparison with the Midtrans dashboard). Screenshot 05.
 
 ### Build 6 — Weekly timetable and booking
 
@@ -420,7 +533,8 @@ period, no level); teacher availability and days off; a conflict check with
 free-slot suggestions; a job that creates the coming weeks' sessions;
 `bookSession` / `cancelBooking` functions that reserve a voucher session and
 check seats, overlap and a cancel cut-off; a voucher's class day books its
-student automatically. Screenshots 02 and 11.
+student automatically. Vouchers get `sessionsBooked`. Proves JD-01, JD-02
+and VC-04. Screenshots 02 and 11.
 
 ### Build 7 — The teaching day
 
@@ -428,16 +542,23 @@ Teacher **Schedule** with tabs on one screen (today, week, availability):
 confirm, request a change, check in with server time, attendance, close the
 session in one transaction with a ledger (ends the double-charge risk);
 substitute teacher; cancelling a session returns the bookings; reminder one
-hour before; late check-in and unclosed-session flags; monthly recap.
-Screenshot 09.
+hour before; late check-in and unclosed-session flags; monthly recap; the
+reconciliation script. Proves VC-01, VC-02, VC-03 and VC-05. Screenshot 09.
 
-### Build 8 — Speaking tests, HSK 3.0, dashboard, screenshot pass
+### Build 8 — Dashboard, trial kit, screenshot pass
 
-HSKK and YCT oral (answers recorded in the browser, marked by a teacher on
-the Build 2 marking screen); final HSK 3.0 formats; admin dashboard of the
-spec and the monthly report job; a GitHub Action running analyze and tests;
-one pass that produces all 15 proposal screenshots from seeded data.
-Screenshots 14 and 15.
+Admin dashboard of the spec and the monthly report job; a GitHub Action
+running analyze and tests; the trial kit: seed of 1 admin, 4 teachers and 30
+students (12 beginner, 10 intermediate, 8 advanced), a checklist of the 731
+questions the trial needs (one practice package of 15 per level, one test
+code per level, two more HSK 3 codes), the task sheets of the proposal's
+Table 20 and the SUS questionnaire; one pass that produces all 15 proposal
+screenshots from seeded data. Screenshots 14 and 15.
+
+### After the thesis builds — extras for the centre
+
+Speaking tests (HSKK, YCT oral: answers recorded in the browser, marked by a
+teacher), final HSK 3.0 formats for levels 5 to 9, YCT timing.
 
 Builds 2 to 8 are outlines. The PLAN chat writes each one out in full (Must,
 Then, Not, acceptance walk) after reading the report of the build before it.
@@ -446,39 +567,37 @@ Then, Not, acceptance walk) after reading the report of the build before it.
 
 ## 5. Questions still open
 
-Needed before Build 2:
+For the owner, before Build 2:
 
-1. May the result card carry the line "Simulasi Easy Study, bukan sertifikat
-   resmi"? Nationality and gender are on the official report but not in the
-   app: leave them out (assumed) or add both fields to the profile?
-2. Home practice: assigned HSK Simulation packages keep one clock for the
-   whole paper (assumed), and only the supervised test has a clock per part.
-   Or should home practice also run part by part?
-3. A student with no Chinese name appears to other students by first name
-   (assumed). Acceptable?
-4. Does a student see the leaderboard only for codes they finished
-   (assumed), or for every code?
+1. The proposal says students see other students on the leaderboard as
+   "first name + initial" (scenario LB-01). The new rule is "Chinese name
+   only". Tell the supervisor, or keep the proposal's rule?
+2. The proposal lets teachers add and edit questions in the bank. The app
+   keeps the bank admin-only since 2026-11-13. Plan: teachers add and edit
+   their own questions. Agreed?
+3. Reading of decision 12, to confirm: "teacher code" is the 6-character
+   token of the session a teacher opens (new every time, valid 15 minutes),
+   not the teacher's permanent invite code; the token in the room is enough
+   and no test is assigned to named students beforehand; the review opens
+   when the teacher closes the session, so answers cannot travel during it.
 
-Needed before Build 3:
+Before Build 3:
 
-5. Placement: does the visitor type name and WhatsApp before the test
-   (assumed yes, so the admin sees who it was)? Are marks shown to the
-   visitor at once (assumed yes, without the answer review)? Is the "teacher
-   code" the same invite code students use to register (assumed yes)? Are
-   the six tests full-length papers or shorter ones?
+4. Public placement: does the visitor type name and WhatsApp before the test
+   (assumed yes), and see marks at once without the review (assumed yes)?
 
-Needed before Build 5 and 6:
+Before Build 6:
 
-6. Are the Chinese package names in Build 5 right?
-7. Does every student have one fixed weekly slot, or may they pick a
-   different slot each week?
+5. The proposal gives every weekly schedule one HSK level; the flyer says
+   classes mix levels. Plan: level optional ("all levels"). Does every
+   student have one fixed weekly slot, or pick a slot each week?
 
-Needed before Build 8:
+Any time:
 
-8. One HSK 3.0 paper per level (or its cover page) and one HSKK paper, so
-   the formats can be exact. Who marks speaking answers?
-
----
+6. HSK 3.0 papers for levels 5, 6 and 7–9, and the marks per part if a paper
+   or its answer sheet prints them.
+7. iOS: the proposal promises Android, iOS and web. Today iOS means Safari
+   with "add to home screen". Ask the supervisor whether that is accepted.
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
@@ -497,44 +616,70 @@ _None yet._
 
 ---
 
-## 7. Thesis track (PLAN chat)
+## 7. Tugas Akhir track (PLAN chat)
 
-The owner writes the thesis in the PLAN chat. Institut Sains dan Teknologi
-Terpadu Surabaya; the BAA guide "Petunjuk Pembuatan File PDF Buku Tugas Akhir
-/ Tesis" (2024) asks for:
+**Facts (from the owner's documents, 2026-11-16)**
 
-- three PDFs for yudisium: the thesis book, the abstract (Indonesian and
-  English, on the official abstract template) and the scientific article
-  (for S2: the article already published in a journal);
-- the book written in **Microsoft Word 2013 or newer** on the official
-  template (not Google Docs or WPS), one file per part (title page, approval
-  page, statement of originality, abstracts, preface, tables of contents,
-  figures, tables, program segments, algorithms, formulas, chapters,
-  bibliography, curriculum vitae, appendices);
-- A4 pages, PDF properties in upper case (title, author, subject `TESIS`,
-  keywords; file name = the 9-digit NRP), bookmarks that mirror the table of
-  contents, made in Adobe Acrobat.
+- Institut Sains dan Teknologi Terpadu Surabaya, PROG PROF S1 INFORMATIKA.
+  A **Tugas Akhir** (bachelor), so the "TUGAS AKHIR" templates and dividers
+  apply, not "TESIS".
+- Wilsin, NRP 221310660. Title: "Aplikasi Multiplatform Sistem Kursus Bahasa
+  Mandarin Easy Study menggunakan Flutter".
+- Supervisor: Ong, Hansel Santoso, S.SI., M.Kom. Co-supervisor: Prof. Dr. Ir.
+  Esther Irawati Setiawan, S.Kom., M.Kom.
+- Proposal defended 2026-10-07, revised, decree 710/23/ISTTS/SKEP/X/2026 of
+  2026-10-22. **Registration for the Tugas Akhir seminar is possible from
+  2027-02-22 to 2027-10-22.**
+- Examiners' conditions, all answered in the revised proposal and therefore
+  owed by the app: scoring on the server (done); voucher deduction in one
+  transaction, idempotent (Build 7); the typing matcher with tolerance and
+  teacher review (Build 2); functional validation besides SUS (the scenario
+  IDs in §3); teacher scheduling with conflict checks (Build 6); a progress
+  report (Build 4); the difference between schedule and session; HSK 1 to 6.
+- Trial promised: 35 respondents (30 students: 12 beginner, 10 intermediate,
+  8 advanced; 4 teachers; 1 admin) at the centre; black-box tests,
+  functional validation, task scenarios per role, SUS with a mean above 70;
+  731 questions in the bank; Midtrans in sandbox mode.
+- Proposal limits: Indonesian UI; three roles; no learning materials; no
+  speaking test; no online classes; tests only at the centre with a token.
+  The app's extras (English switch, parent role, materials, HSK 3.0, YCT)
+  stay outside the book.
 
-How the builds feed the thesis: each build's acceptance walk becomes a
-black-box test table; `docs/screenshots/` supplies the figures; the
-collections in §3 and the functions supply the data model and the program
-segments.
+**Format rules received** (`CEK BUKU MANDIRI V4`: book, abstract, article and
+appendix templates, the self-check criteria, binding dividers; plus the BAA
+guide for the final PDFs): Microsoft Word 2013 or newer, one file per
+chapter; A4, margins 4 / 4 / 3 / 3 cm; Times New Roman 12, spacing 1.5;
+chapter titles 16 bold upper case with Roman numbers; program segments in
+Courier New 10; formulas as equations; captions bold, figure below and table
+above; three PDFs for yudisium (book named by NRP, abstract, article) with
+upper-case properties and bookmarks made in Adobe Acrobat. Word and Acrobat
+are on the PC.
 
-What the PLAN chat needs from the owner:
+**How the builds feed the book:** each build's acceptance walk becomes a
+black-box table; the scenario IDs become the functional validation chapter;
+`docs/screenshots/` supplies the figures; the collections and functions
+supply the data model and the program segments.
 
-1. The official template folder (TEMPLATE BUKU, with the abstract and
-   article templates) and the thesis writing guide (chapter structure,
-   citation style).
-2. Full name as registered, NRP, study programme, supervisor and
-   co-supervisor, the approved title in Indonesian and English.
-3. The proposal as it stands (Word file), anything already written, and the
-   examiners' notes from the proposal seminar.
-4. Dates: next seminar, defence, yudisium.
-5. The article: target journal and its template; whether it must be
-   published before yudisium.
-6. The evaluation the supervisor expects (black-box tests, user acceptance
-   test, a questionnaire such as SUS) and how many students and teachers can
-   take part.
-7. Facts about the centre for chapter 1: number of students and teachers,
-   how tests, schedules and payments are handled today.
-8. Whether Word and Adobe Acrobat are available on the Mac or the PC.
+**Suggested calendar:** thesis builds 1 to 8 finished by mid-January 2027;
+trial with the 35 respondents in the second half of January; book written
+from December, finished in February; seminar registration when the window
+opens on 2027-02-22.
+
+**Still needed from the owner**
+
+1. The campus guide book for writing a Tugas Akhir (the criteria file says it
+   is being revised; the current PDF is enough) and, if possible, one
+   finished Tugas Akhir book from the campus as a model for the chapters.
+2. The Word file of the revised proposal (the PDF is here; the Word file
+   keeps figures and tables editable).
+3. The centre today, for chapter 1 and the "old system" section: number of
+   active students per level group; the four teachers and the levels each
+   teaches; classes per week and students per class; payments and simulation
+   tests per month; photos or screenshots of the tools used now (schedule
+   spreadsheet, paper attendance sheet, a WhatsApp registration chat with
+   names hidden, the old "Nilai Simulasi HSK" page).
+4. The trial: when 30 students can come, which devices they will use, who
+   acts as admin.
+5. Dates as soon as they are known: guidance meetings, seminar, defence.
+6. Whether the supervisor wants the article sent to a journal or on the
+   campus template.
