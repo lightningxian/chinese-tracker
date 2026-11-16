@@ -82,6 +82,18 @@ scripts/deploy_web.sh --web-only # until billing is enabled (free plan refuses .
 scripts/deploy_web.sh            # web + APK, reuse last APK build (needs Blaze)
 scripts/deploy_web.sh --apk      # rebuild the APK too (~6 min, needs JDK 21)
 ```
+**PC note (Windows 11, BUILD chat, checked 2026-11-16).** Repo at
+`D:\Wilsin Private Stuff\S1 Informatika Professional ISTTS\11. Semester 8 ()(OFFLINE)\TA\PROJECT EASY STUDY`.
+Shell: Git Bash for the `.sh` scripts. Flutter 3.44.9 lives in
+`C:\Users\Wilsin Karimun\flutter_windows_3.16.9-stable\flutter` (the folder name is old).
+- `flutter test` fails through that path ("'C:\Users\Wilsin' is not recognized", native-assets
+  hook of `objective_c`): the space in the user folder breaks the hook. Run it through the
+  8.3 short path instead: `C:\Users\WILSIN~1\FLUTTE~1.9-S\flutter\bin\flutter.bat test`.
+- Python: use `py -I scripts/seed_emulator.py` (`python3` is only the Microsoft Store stub).
+- Java: JDK 23 at `C:\Program Files\Java\jdk-23` (the Mac uses 21).
+- `deploy_web.sh` refuses to deploy when `APP_CHECK_SITE_KEY` is empty; `--no-keys` overrides.
+- Windows desktop builds need Developer Mode (symlinks); web and tests do not.
+
 Android: `flutter config --jdk-dir=/opt/homebrew/opt/openjdk@21` is set on this Mac; the
 release keystore is referenced by `android/key.properties` (never commit the keystore).
 iOS: no native app; Xcode is incomplete on this Mac and there is no Apple Developer

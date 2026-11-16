@@ -6,6 +6,30 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-16 — Claude (BUILD chat): Build 0 on the PC, deploy key guard
+
+**What changed**
+- `scripts/deploy_web.sh`: stops with a clear message when
+  `APP_CHECK_SITE_KEY` is empty (no `deploy.env`, or a blank key). The new
+  flag `--no-keys` (any position) deploys anyway, on purpose.
+- `CLAUDE.md` Commands: a PC note (repo path, Flutter short path for
+  `flutter test`, `py` for Python, JDK 23, the new guard).
+
+**Why**
+- PLAN.md Build 0 step 6: a deploy from a machine without `deploy.env`
+  silently switched the AI paper scan and push off for every user.
+- `flutter test` on the PC fails through the SDK path with a space in it
+  (native-assets hook); the 8.3 short path works (74 pass).
+
+**For review**
+- Checked: `bash -n`, and `scripts/deploy_web.sh --web-only` without
+  `deploy.env` exits 1 before any build.
+- Build 0 is not finished on the PC: Node 22, the Firebase CLI and
+  `deploy.env` are missing (see the Build 1 report in `docs/PLAN.md` §6 once
+  written).
+
+---
+
 ## 2026-11-13 — Claude: nightly backup moved to Firestore scheduled backups, export function removed
 
 **What changed**
