@@ -22,6 +22,10 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   "Read first" and conventions point to it.
 - Not done by the owner yet: `deploy.env` keys (AI Logic / App Check / push),
   Midtrans sandbox test, live tests of exam mode and the APK.
+- Owner answered the 16 questions the same day. `docs/PLAN.md` rewritten:
+  decisions (§2), the test-track design (§3), Build 0 and **Build 1 marked
+  NEXT** in full, Builds 2–8 as outlines, open questions (§5), thesis needs
+  (§7). The BUILD chat will run on the PC.
 
 ### 2026-11-13 (day) — Claude: HSK simulation, AI paper reader, teachers' packages, App Check + push
 
