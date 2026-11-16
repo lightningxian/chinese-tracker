@@ -8,6 +8,7 @@ so keep them current. Explain steps in simple English and ask before big or hard
 decisions. This app is also the owner's thesis project (see the thesis docs below).
 
 ## Read first
+0. `docs/PLAN.md`: current state, the build queue (item marked **NEXT**) and the two-chat workflow (PLAN chat = Fable, docs only; BUILD chat = Opus, code). A build chat starts here.
 1. `docs/CLAUDE_FULL_HANDOFF.md`: live config, what's built, architecture map.
 2. `docs/THESIS_FEATURE_AUDIT.md`: the thesis spec (`docs/THESIS_FEATURE_BACKLOG.md`, v2) compared with the code, open questions, suggested order. `docs/THESIS_PROPOSAL_ASSETS.md` lists the screenshots the proposal needs.
 3. `docs/SESSION_LOG.md` (newest session first) and the top of `docs/CHANGELOG.md`.
@@ -50,6 +51,7 @@ decisions. This app is also the owner's thesis project (see the thesis docs belo
 - **Scoped invariants:** `.claude/rules/*.md` (auth and link codes, exercise authoring admin/web-only, worksheet import web-only). Read the matching file before editing those areas.
 - **Auto deploy (owner decision 2026-11-11):** after a change is committed and pushed, run `scripts/deploy_web.sh --web-only` without asking and report the result. The owner tests on the live site afterwards. Still ask before anything hard to undo on live data (rules, functions, deletes).
 - There is **no staging**: a local `flutter run` talks to the live database. Use the emulator (below) for anything that writes test data.
+- **Two chats (owner decision 2026-11-16):** planning in a Fable session titled "Easy Study · PLAN" (edits docs only, commits at once), building in an Opus session titled "Easy Study · BUILD" (the only chat that edits code; builds the §3 item marked NEXT in `docs/PLAN.md`, writes its report in §5). Both `git pull` before editing. Same Mac: the chats message each other with `ListAgents` / `SendMessage`.
 
 ## Commands
 ```bash

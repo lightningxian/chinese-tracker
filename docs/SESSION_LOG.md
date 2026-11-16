@@ -13,6 +13,16 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-16 — Claude (PLAN chat): rundown, two-chat workflow, questions
+
+- Backups confirmed on live: 3 nightly Firestore backups READY (13–15 Nov).
+- Owner decision: plan in a Fable chat, build in an Opus chat. New
+  `docs/PLAN.md` holds the state rundown, the build queue (nothing marked
+  NEXT yet), 16 questions for the owner, and the report template. CLAUDE.md
+  "Read first" and conventions point to it.
+- Not done by the owner yet: `deploy.env` keys (AI Logic / App Check / push),
+  Midtrans sandbox test, live tests of exam mode and the APK.
+
 ### 2026-11-13 (day) — Claude: HSK simulation, AI paper reader, teachers' packages, App Check + push
 
 - Owner: items 6 and 7 "go for it"; a scanned HSK 3 paper (H326202Z, 16
