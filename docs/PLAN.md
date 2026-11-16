@@ -104,20 +104,22 @@ Firestore scheduled backups run nightly (3 backups READY on 2026-11-16).
 |---|---|
 | AI Logic "Get started" | done |
 | App Check web key | blocked: the console now asks for a **reCAPTCHA Enterprise ("Fraud Defense")** site key, not a v3 key. The owner creates it in the Google Cloud console (Security → reCAPTCHA → Create key: Website, score-based, domains `chinese-tracker.web.app` and `chinese-tracker.firebaseapp.com`, **not** `localhost`), pastes it into App Check, and gives the key to either chat. Build 1 switches the app to the Enterprise provider. |
-| Web push key | created in the console; the Mac's `deploy.env` holds only the placeholder text, so the real key (starts with `B`) is still to be given |
+| Web push key | created in the console; the real key (starts with `B`) is still to be given. The Mac's `deploy.env` held only placeholder text and was removed on 2026-11-16 |
 | Both public keys | the BUILD chat stores them as defaults in `scripts/deploy_web.sh`; no file to copy between machines |
 | `firebase login` on the PC | to do (needed for deploys from the PC) |
 | Midtrans sandbox payment end to end | not run; owner will report |
 | Old-format exercises on live | none left (owner checked) |
-| Exam mode and APK on live | owner is testing |
+| Exam mode on live | owner is testing |
+| Android APK on live | **off.** Every `--web-only` deploy publishes the site without the APK, and the landing page then hides the download button. The last APK build is from 2026-11-12 (before HSK simulation and Build 1). The keystore is on the Mac only, so the APK is built there. Owner decides: rebuild and publish it now, or with the Build 2A deploy |
 
 **Build status:** Build 0 passed on the PC (Windows 11, notes in `CLAUDE.md`).
 **Build 1 is built** (release v0.1.16, report in §6) and reviewed by the PLAN
 chat on the Mac: analyzer baseline, 83 Flutter tests, node tests pass; the
 seven functions check role, ownership and clocks in transactions; no key
-reaches a student before the session is closed. **Not deployed yet:** the
-owner runs the rules and functions deploy, then hosting follows.
-Build 2A is NEXT.
+reaches a student before the session is closed. **Live since 2026-11-16
+(night):** the owner deployed rules and functions (22 functions on live), the
+PLAN chat published hosting from the Mac with `--no-keys`. The owner's live
+test of one real session is still to run. Build 2A is NEXT.
 
 **PLAN chat backlog:** refresh the status table in
 `docs/THESIS_FEATURE_AUDIT.md` §7 (several rows say "Missing" for things that
@@ -700,7 +702,7 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
-### 2026-11-16 — Build 1 Test formats, test codes, supervised test, result card — d539d7e..029c9d8, release v0.1.16 (code only, not deployed)
+### 2026-11-16 — Build 1 Test formats, test codes, supervised test, result card — d539d7e..029c9d8, release v0.1.16 (deployed the same night, see the last line)
 - Built: 7 callables (`openTestSession`, `startTest`, `submitTestPart`,
   `reportTestEvent`, `closeTestSession`, `setTestResultValidity`,
   `getTestReview`) with pure logic in `functions/supervised_test.js`; rules
@@ -738,6 +740,12 @@ Any time:
   a test student types the token and sits the paper; check the result card
   and its PDF.
 - Left out and why: Then list (time). English/light walk of the new screens.
+- PLAN chat note, 2026-11-16 night: **deployed.** The owner ran the rules
+  and functions deploy on the Mac (7 functions created, 15 updated, 22 on
+  live). The PLAN chat then ran `scripts/deploy_web.sh --web-only --no-keys`
+  from the Mac; the live page serves the new build. AI paper scan and push
+  stay off until the two public keys exist. The Android APK is not on live
+  (see §1).
 - Notes for the PLAN chat:
   - **Live sign-in incident (2026-11-16, emulator walk):** after a reload,
     the emulator bundle left Firebase Auth on the LIVE project, and a

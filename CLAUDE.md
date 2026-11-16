@@ -46,7 +46,7 @@ decisions. This app is also the owner's thesis project (see the thesis docs belo
 ## Conventions
 - **Commit author:** `GIT_AUTHOR_NAME="Wilsin Kuonadi" GIT_AUTHOR_EMAIL=wilsinkarimunwkk@gmail.com`
   (and matching `GIT_COMMITTER_*`) per commit. Don't change global git config.
-- **Push notes:** each commit body has a 2–6 bullet plain-language summary. For milestones and deploys, also `gh release create vX.Y.Z` with the same summary (latest: v0.1.15).
+- **Push notes:** each commit body has a 2–6 bullet plain-language summary. For milestones and deploys, also `gh release create vX.Y.Z` with the same summary (latest: v0.1.16).
 - **Change log:** after any code, rules, functions or config change, add an entry at the **top** of `docs/CHANGELOG.md` (What changed / Why / For review).
 - **Session log:** when a session ships something, add a dated entry at the top of `docs/SESSION_LOG.md`. Update `docs/THESIS_FEATURE_AUDIT.md` status when a spec item is finished.
 - **Scoped invariants:** `.claude/rules/*.md` (auth and link codes, exercise authoring admin/web-only, worksheet import web-only). Read the matching file before editing those areas.
@@ -120,7 +120,7 @@ account on record. Users add the web app to the home screen from Safari.
 ## Known blockers (update when resolved)
 - Cloud Functions run on **Node 22** since 2026-11-05 (Node 20 was retired 2026-10-30); `functions/package.json` engines = 22, firebase-functions 7, firebase-admin 14.
 - Billing was off 2026-10-13 → 2026-10-20. Owner upgraded to **Blaze on 2026-10-20**; all 9 functions and the APK were redeployed and work (owner re-test PUB-09 passed).
-- **Nightly backup: resolved 2026-11-13.** The owner created a Firestore scheduled backup (daily, 7-day retention, `firebase firestore:backups:schedules:create`, schedule id `c3d18000-…`). The failing `scheduledFirestoreExport` function was removed from the code and deleted on live the same day (15 functions remain; Build 1 adds 7 test callables, 22 after its deploy). List / restore commands: `docs/OWNER_PROCEDURES.md` §B. The NAS pull in `docs/NAS_BACKUP_SETUP.md` no longer receives Firestore exports.
+- **Nightly backup: resolved 2026-11-13.** The owner created a Firestore scheduled backup (daily, 7-day retention, `firebase firestore:backups:schedules:create`, schedule id `c3d18000-…`). The failing `scheduledFirestoreExport` function was removed from the code and deleted on live the same day (15 functions remained; Build 1 added 7 test callables, **22 on live since its deploy on 2026-11-16**). List / restore commands: `docs/OWNER_PROCEDURES.md` §B. The NAS pull in `docs/NAS_BACKUP_SETUP.md` no longer receives Firestore exports.
 - Test accounts on the live project: `admin@`, `teacher@`, `student1-3@test.chinesetracker`, password in `docs/CLAUDE_FULL_HANDOFF.md`. No test parent yet.
 
 ## Tools on the owner's Mac

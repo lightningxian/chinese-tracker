@@ -13,6 +13,23 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-16 (night) — Claude (PLAN chat): Build 1 is live
+
+- The owner ran `firebase deploy --only firestore:rules,functions` on the
+  Mac: 7 test functions created, 15 updated, 22 on live.
+- PLAN chat published hosting from the Mac
+  (`scripts/deploy_web.sh --web-only --no-keys`). The Mac's `deploy.env`
+  (placeholder text only) was removed first.
+- Still off on live: AI paper scan and push (no App Check key, no web push
+  key yet).
+- Found: the Android APK is not on live. Web-only deploys publish without
+  it and the landing page hides the download button. The last APK build is
+  from 2026-11-12. Owner to decide when to rebuild and publish it.
+- Next: the owner tests one real session on live, then says "go" in the
+  BUILD chat for Build 2A.
+
+---
+
 ### 2026-11-16 — Claude (BUILD chat, PC): Build 0 and Build 1
 
 - Build 0 on the PC: Node 22 and firebase-tools installed (owner approved),
