@@ -601,7 +601,62 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
-_None yet._
+### 2026-11-16 — Build 1 Test formats, test codes, supervised test, result card — d539d7e..029c9d8, release v0.1.16 (code only, not deployed)
+- Built: 7 callables (`openTestSession`, `startTest`, `submitTestPart`,
+  `reportTestEvent`, `closeTestSession`, `setTestResultValidity`,
+  `getTestReview`) with pure logic in `functions/supervised_test.js`; rules
+  for the 5 collections; admin Test formats / Test codes; staff Tests place,
+  supervision, results; student Tests place, start screen, player, result
+  card (screen + PDF), review; shared `QuestionAnswerView`; seed for the walk.
+  All 10 changes of the PLAN chat are in (partClocks option, review,
+  HSK Simulation only via codes, "Simulation by Easy Study", durationSeconds,
+  clip played at most twice, exact HSKK basic / HSK 3.0 1–4 formats, thesis
+  IDs, reCAPTCHA Enterprise, key defaults in `deploy_web.sh`).
+- Must list: 1 formats pass · 2 codes pass (duplicate refused, counts warning,
+  worksheet action) · 3 functions pass · 4 student pass · 5 result card pass
+  (PDF with Chinese checked by rendering it) · 6 teacher/admin pass · 7 rules
+  and tests pass · 8 seed pass · 9 regression pass (practice + exam package
+  in the flow test).
+- Thesis IDs: TS-01 pass, TS-02 pass, PN-04 pass, PN-05 pass, LV-02 pass
+  (`functions/test_supervised_flow.mjs` step names, `test_supervised_test.js`,
+  rules tests "PN-04 …" / "TS-02 …").
+- Then list: not done (Reset attempt, QR code, cleanup job).
+- Proof: analyzer 0 errors / 0 warnings / 17 infos; `flutter test` 83 pass
+  (+9); rules tests 48 pass, 1 skipped (+7); node tests pass; flow test 24/24
+  on the emulators; emulator walk in Indonesian, dark mode: walk lines 1–6
+  and 8 by hand, 7 and 9 by the flow test, 10 partly (Indonesian, dark,
+  360 px checked; English and light mode not walked on the new screens).
+  Screenshots: `docs/screenshots/build1/` (14). Deploy: **not done** — the
+  Firebase CLI on the PC is not signed in, so `scripts/deploy_web.sh` cannot
+  run; rules and functions wait for the owner anyway.
+- Owner must: (1) `firebase login` on the PC; (2) give the App Check site key
+  and the web push key (they become defaults in `deploy_web.sh`); (3) run
+  `firebase deploy --only firestore:rules,functions --project chinese-tracker`
+  (adds 7 functions, changes `startExercise` / `finishExercise`); (4) then
+  hosting: `scripts/deploy_web.sh --web-only` (or `--no-keys` until the keys
+  exist). Tonight on live after (3)+(4): Tests → Format tes → Muat format
+  standar; Bank soal → a scanned HSK paper → Buat kode tes; Tes → Buka sesi;
+  a test student types the token and sits the paper; check the result card
+  and its PDF.
+- Left out and why: Then list (time). English/light walk of the new screens.
+- Notes for the PLAN chat:
+  - **Live sign-in incident (2026-11-16, emulator walk):** after a reload,
+    the emulator bundle left Firebase Auth on the LIVE project, and a
+    saved-account tap signed `admin@test.chinesetracker` in to live Auth with
+    the emulator password, which is the same on live. Firestore stayed on
+    the emulator, so no live data was read or written; the browser session
+    was cleared at once. Cause: Auth starts before `useAuthEmulator` when a
+    user is persisted. Fixed with `lib/core/utils/emulator_guard*.dart`
+    (signs out locally, reloads once, else refuses to start). Suggest the
+    owner changes the live test accounts' password so it differs from the
+    emulator's `testpass123`.
+  - Wrong-token limit is per student uid (8 per 10 minutes), not per address.
+  - A reload with a token in the URL fails once the teacher gives a new
+    token; the student uses **Lanjutkan tes** on the Tests page instead.
+  - Clip "at most twice" is counted on the device (kept across reloads, not
+    across devices).
+  - HSKK basic marks per part (30/30/40) are a draft; the paper prints none.
+  - On the PC the emulators need `JAVA_TOOL_OPTIONS` (CLAUDE.md PC note).
 
 ```
 ### <date> — Build <N> <name> — <first commit>..<last commit>, release <tag>

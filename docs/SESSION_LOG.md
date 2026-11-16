@@ -13,6 +13,21 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-16 — Claude (BUILD chat, PC): Build 0 and Build 1
+
+- Build 0 on the PC: Node 22 and firebase-tools installed (owner approved),
+  analyzer / tests / rules / emulators / seed all run; PC quirks in
+  CLAUDE.md (Flutter short path, JDK socket folder, `py`).
+- Build 1 committed (029c9d8): supervised tests with test codes, part
+  clocks, supervision, result card + PDF, review; 7 new functions, rules
+  for 5 collections. Report in `docs/PLAN.md` §6.
+- Not deployed: the Firebase CLI on the PC is not signed in; rules and
+  functions wait for the owner's deploy command.
+- Incident: an emulator reload signed the test admin in to live Auth
+  (no data touched). Guarded now; details in PLAN.md §6.
+
+---
+
 ### 2026-11-16 — Claude (PLAN chat): rundown, two-chat workflow, questions
 
 - Backups confirmed on live: 3 nightly Firestore backups READY (13–15 Nov).
