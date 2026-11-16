@@ -112,7 +112,12 @@ Firestore scheduled backups run nightly (3 backups READY on 2026-11-16).
 | Exam mode and APK on live | owner is testing |
 
 **Build status:** Build 0 passed on the PC (Windows 11, notes in `CLAUDE.md`).
-Build 1 is in progress.
+**Build 1 is built** (release v0.1.16, report in §6) and reviewed by the PLAN
+chat on the Mac: analyzer baseline, 83 Flutter tests, node tests pass; the
+seven functions check role, ownership and clocks in transactions; no key
+reaches a student before the session is closed. **Not deployed yet:** the
+owner runs the rules and functions deploy, then hosting follows.
+Build 2A is NEXT.
 
 **PLAN chat backlog:** refresh the status table in
 `docs/THESIS_FEATURE_AUDIT.md` §7 (several rows say "Missing" for things that
@@ -262,8 +267,9 @@ in the test that proves it:
 
 | Build | Scenario IDs |
 |---|---|
-| 1 | TS-01, TS-02, PN-04, PN-05, LV-02 |
-| 2 | PN-01, PN-02, PN-03, LV-01, LV-03, LB-01 |
+| 1 (done) | TS-01, TS-02, PN-04, PN-05, LV-02 |
+| 2A | PN-01, PN-02, PN-03 |
+| 2B | LV-01, LV-03, LB-01 |
 | 3 | PL-01, PL-02 |
 | 5 | MT-01 … MT-05 |
 | 6 | JD-01, JD-02, VC-04 |
@@ -308,7 +314,7 @@ first word of the Latin name when there is none. The Latin name is
 6. Add a guard to `scripts/deploy_web.sh`: stop with a clear message when
    `APP_CHECK_SITE_KEY` is empty, unless the flag `--no-keys` is given.
 
-### Build 1 — Test formats, test codes, supervised test, result card — **NEXT** (in progress since 2026-11-16)
+### Build 1 — Test formats, test codes, supervised test, result card — done 2026-11-16 (v0.1.16, report in §6)
 
 **Changes after the first version of this build (sent to the BUILD chat on
 2026-11-16; they override the lists below where they differ)**
@@ -447,23 +453,117 @@ tests, placement tests, changes to how packages are timed.
 loads the formats on live, creates a code from a scanned paper, and runs one
 real session with a test student.
 
-### Build 2 — Typing matcher, marking, leaderboard, promotion, names
+### Build 2A — Typing matcher and marking — **NEXT**
 
-Proves PN-01, PN-02, PN-03, LV-01, LV-03, LB-01
-(`docs/THESIS_FEATURE_BACKLOG.md` sections 7, 8 and 13 give the exact rules).
+**Goal.** Typed answers are scored the way the approved proposal promises
+(tolerant of writing variants, half marks for near misses, a teacher reviews
+the doubtful ones), free writing is marked by a teacher with the rubric, and
+the loose ends of Build 1 are tied. Rules and cases:
+`docs/THESIS_FEATURE_BACKLOG.md` section 7 ("Typing answer-matching
+algorithm", "T5 essay grading screen") and section 13 (PN-01 to PN-03).
 
-- **Typing matcher** inside the server scoring, used by packages and tests:
-  normalise (spaces, full-width punctuation, ending punctuation, traditional
-  to simplified with `opencc-js`, pinyin tone marks to numbers, `ü` = `v`),
-  exact match against every accepted key, Levenshtein tolerance, half marks
-  for the cases the spec names, no partial credit for sentence building.
-  Every half-mark answer is flagged for review. Unit tests with the spec's
-  six cases; a script that scores a file of 200 answers for PN-01.
-- **Marking by hand:** a review queue for flagged typing answers and for
-  free writing (T5, new bank type `essay`, 10 points, character counter,
-  required keywords found or missing, rubric grammar 40 / vocabulary 30 /
-  content 30). A result with open items is `pending_marking`; `markTestAnswers`
-  makes it final. HSK 6: the source text is shown for 10 minutes, then hidden.
+**Must**
+
+1. *Build 1 follow-ups, first.*
+   - The emulator seed and the flow test use a password that is **not** the
+     live test accounts' password, so a saved emulator sign-in can never
+     work on live. Keep the guard of Build 1.
+   - **Ending a session keeps typed work.** "End test for everyone" first
+     asks every sitting student's player to submit the open part (a flag on
+     the attempt that the player listens to), then finishes the attempts
+     about 15 seconds later. A student who was typing keeps those answers.
+   - **A forgotten session closes itself.** The hourly job closes sessions
+     whose last possible end (join window + paper time + grace) passed more
+     than 10 minutes ago, with the same routine as the button. Only then can
+     the students open their review.
+   - Admin **Reset attempt** on a result (deletes attempt and result, audit
+     log), for power cuts.
+   - **QR code** of the token on the supervision screen; scanning opens the
+     token page with the token filled in.
+   - Walk the Build 1 screens in English and in light mode; fix overflow.
+2. *Typing matcher* as a pure module with a node test, called by the scoring
+   that packages and tests share (`functions/exercise_play.js`):
+   - normalise answer and keys: trim, full-width to half-width punctuation,
+     drop ending punctuation, traditional to simplified hanzi (`opencc-js`,
+     the dependency the proposal names), and for pinyin lower case,
+     `ü` = `v` = `u:`, tone marks to tone numbers, split into syllables;
+   - exact match against every accepted key: full points;
+   - Levenshtein distance `d` (character for hanzi, syllable for pinyin),
+     similarity `S = 1 − d ÷ n`;
+   - half points: pinyin with every syllable right and tones wrong or
+     missing; typed hanzi with `d = 1` and `S ≥ 0.75`; never for sentence
+     building; everything else zero;
+   - every half-point answer is flagged for review.
+   Repo types: `type_hanzi` covers the proposal's T2 and T3,
+   `compose_sentences` is T4, a new **`type_pinyin`** is T1 (editor, player,
+   importers). Scores become points (0, 0.5, 1 × the question's points);
+   part marks and package scores are computed from points; old results keep
+   reading correctly.
+3. *Free writing (T5).* `picture_sentence` and a new bank type **`essay`**
+   (prompt, optional picture, required keywords, optional source text shown
+   for a set time and then hidden, as HSK 6 needs) are worth 10 points and
+   are never scored by the machine.
+4. *Marking.* One queue for both kinds of open item (flagged typing answers,
+   free writing), from tests and from packages: collection written by the
+   scoring functions, one document per answer (student, source, question,
+   answer, keys, machine points, maximum, reason, status). A result with
+   open items has status `pending_marking`: the card and the package result
+   say "Menunggu penilaian", and `passed` is decided only when it is final.
+   Teacher **Marking** tab in the Tests place: the queue (own students and
+   own sessions; admins see all), and per item the question, the answer, the
+   keys, the character count, required keywords found or missing, then
+   either "keep / full / zero" for a flagged answer or the rubric for free
+   writing (grammar 40, vocabulary 30, content 30 → points). A callable
+   stores the mark, recomputes the result, makes it final when nothing is
+   open, and notifies the student.
+5. *PN-01 tool.* A script that reads a CSV of answers (type, keys, answer,
+   the teacher's mark) and prints the system's mark per row and the
+   agreement in percent; a small fixture with the spec's six cases. The 200
+   real answers come from the trial.
+6. *Tests.* Node tests named PN-02 and PN-03 with the spec's cases; rules
+   tests for the marking collection (students never read keys or write
+   marks; a teacher marks only their own queue); the Build 1 flow test still
+   passes; choice questions score exactly as before.
+
+**Then (if time is left)**
+
+- The hourly job also finishes single attempts whose last clock ended more
+  than 10 minutes ago in a session that is still running.
+- Item analysis per test code (percent correct per question) on the results
+  screen.
+
+**Not in this build:** leaderboard, promotion, the names rule, teachers
+editing the bank, placement, speaking.
+
+**Acceptance walk (emulator)**
+
+1. A package question "type the hanzi": the same answer with a full-width
+   comma, with a trailing "！" and in traditional characters gets full
+   marks; one wrong homophone gets half and appears in the teacher's queue.
+2. A pinyin question: `ni3 hao3` and `nǐ hǎo` are full marks, `ni hao` is
+   half and flagged.
+3. Sentence building with two words swapped: zero, not flagged.
+4. The teacher opens the queue, turns the half into full: the student's
+   result changes and a notification arrives.
+5. A test code with a free-writing question: after the last part the card
+   says "Menunggu penilaian" with no pass or fail; the teacher marks with
+   the rubric; the card becomes final with total and 合格 or 不合格.
+6. The PN-01 script on the fixture prints 100 percent agreement.
+7. Teacher presses "End test for everyone" while a student is typing in a
+   part: those answers are in the result.
+8. A session left open is closed by the job; the review opens.
+9. Admin resets an attempt: the student can sit the code again; the audit
+   log shows it.
+10. The QR code opens the token page with the token filled.
+11. English and light mode on the test screens, 360 px: no overflow.
+
+**After the build, the owner:** deploys rules and functions (the BUILD chat
+gives the command), then tests a typed-answer package and the marking tab.
+
+### Build 2B — Leaderboard, promotion, names
+
+Proves LV-01, LV-03, LB-01.
+
 - **Leaderboard per code** (`leaderboards/{codeId}/entries/{uid}`, written by
   a trigger on final, valid, non-placement results): highest total first,
   shorter time wins a tie. Students see peer labels, own row highlighted,
@@ -478,10 +578,9 @@ Proves PN-01, PN-02, PN-03, LV-01, LV-03, LB-01
 - **Names:** the two labels of §3 on every student list, table and picker;
   search matches both names; the Chinese name becomes required on the
   register and profile forms.
-- **Teachers and the bank** (if the owner confirms): a teacher may type,
-  paste and edit their own bank questions; scanning and other people's
-  questions stay with the admin.
-- **Item analysis** per test code: percent correct per question.
+- **Teachers and the bank** (only if the owner confirms, §5): a teacher may
+  type, paste and edit their own bank questions; scanning and other
+  people's questions stay with the admin.
 - Screenshots 04, 06, 07, 10, 13 of the proposal list.
 
 ### Build 3 — Registration approval, placement tests, rooms
@@ -560,14 +659,14 @@ screenshots from seeded data. Screenshots 14 and 15.
 Speaking tests (HSKK, YCT oral: answers recorded in the browser, marked by a
 teacher), final HSK 3.0 formats for levels 5 to 9, YCT timing.
 
-Builds 2 to 8 are outlines. The PLAN chat writes each one out in full (Must,
+Builds 2B to 8 are outlines. The PLAN chat writes each one out in full (Must,
 Then, Not, acceptance walk) after reading the report of the build before it.
 
 ---
 
 ## 5. Questions still open
 
-For the owner, before Build 2:
+For the owner, before Build 2B:
 
 1. The proposal says students see other students on the leaderboard as
    "first name + initial" (scenario LB-01). The new rule is "Chinese name

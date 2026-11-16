@@ -49,6 +49,13 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   wishes, Build 1 changes (Enterprise App Check provider, part clocks on or
   off, review after the session, HSK Simulation only through test codes),
   Build 2 with the typing matcher, Tugas Akhir facts and calendar.
+- Night: Build 1 arrived (v0.1.16, not deployed). PLAN chat reviewed it on
+  the Mac (analyzer baseline, 83 tests, node tests, the functions and rules
+  read line by line) and wrote **Build 2A** (typing matcher, marking,
+  Build 1 follow-ups) in full as NEXT; Build 2B holds leaderboard,
+  promotion and names. BUILD reported signing the live test admin in by
+  accident from an emulator bundle (no data touched, guard added); Build 2A
+  separates the emulator password from the live one.
 
 ### 2026-11-13 (day) — Claude: HSK simulation, AI paper reader, teachers' packages, App Check + push
 
