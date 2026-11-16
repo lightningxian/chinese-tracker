@@ -10,6 +10,7 @@ import '../../core/widgets/shell_nested_page.dart';
 import '../../l10n/l10n.dart';
 import '../../l10n/labels_exercises.dart';
 import '../../models/exercise.dart';
+import '../../models/exercise_category.dart';
 import '../../models/exercise_skill_category.dart';
 import '../../models/question_bank_item.dart';
 import '../../services/auth_service.dart';
@@ -578,7 +579,12 @@ class _BankPickerState extends State<_BankPicker> {
           final bank = snap.hasData
               ? QuestionBankSheet.group(snap.data!)
               : widget.initialBank;
-          final rows = bank.where(_filter.matches).toList();
+          // HSK simulations run only through test codes (owner decision
+          // 2026-11-16): their worksheets are not offered for packages.
+          final rows = bank
+              .where((s) => s.category != ExerciseCategory.hskSimulation)
+              .where(_filter.matches)
+              .toList();
           return Column(
             children: [
               Padding(

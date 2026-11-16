@@ -5379,4 +5379,499 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get exercisePlayHskNotPassed => 'Not passed yet';
+
+  @override
+  String get testsTitle => 'Tests';
+
+  @override
+  String get testsSkillListening => 'Listening';
+
+  @override
+  String get testsSkillReading => 'Reading';
+
+  @override
+  String get testsSkillWriting => 'Writing';
+
+  @override
+  String get testsSkillSpeaking => 'Speaking';
+
+  @override
+  String get testsErrorBadToken =>
+      'This token is not valid. Check it with your teacher.';
+
+  @override
+  String get testsErrorTokenBlocked =>
+      'Too many wrong tokens. Wait a few minutes and try again.';
+
+  @override
+  String get testsErrorJoinClosed =>
+      'The time to join has ended. Ask your teacher for a new token.';
+
+  @override
+  String get testsErrorAlreadyAttempted =>
+      'You have already sat this test. Each code can be taken once.';
+
+  @override
+  String get testsErrorPartClosed => 'This part is already closed.';
+
+  @override
+  String get testsErrorReviewSessionOpen =>
+      'The review opens when your teacher ends the session.';
+
+  @override
+  String get testsErrorReviewNotFinished => 'Finish the test first.';
+
+  @override
+  String get testsErrorReasonRequired => 'Write a reason.';
+
+  @override
+  String get testsErrorGeneric => 'Something went wrong. Try again.';
+
+  @override
+  String get testsHskSimulationInTests =>
+      'HSK simulations are taken in Tests: ask your teacher for a token.';
+
+  @override
+  String get testsAddPart => 'Add part';
+
+  @override
+  String get testsRemovePart => 'Remove part';
+
+  @override
+  String get testsPassMark => 'Pass mark';
+
+  @override
+  String testsTotalsLine(int max, int minutes) {
+    return 'Max $max · $minutes minutes';
+  }
+
+  @override
+  String testsPartNumber(int n) {
+    return 'Part $n';
+  }
+
+  @override
+  String get testsQuestions => 'Questions';
+
+  @override
+  String get testsMinutes => 'Minutes';
+
+  @override
+  String get testsMaxMark => 'Marks';
+
+  @override
+  String testsFoundMatch(int found) {
+    return 'The worksheet has $found questions for this part.';
+  }
+
+  @override
+  String testsFoundMismatch(int expected, int found) {
+    return 'Expected $expected, the worksheet has $found.';
+  }
+
+  @override
+  String get testsFormatsTitle => 'Test formats';
+
+  @override
+  String get testsLoadStandardFormats => 'Load standard formats';
+
+  @override
+  String testsFormatsAdded(int count) {
+    return '$count formats added.';
+  }
+
+  @override
+  String get testsFormatsNothingAdded =>
+      'Every standard format is already there. Nothing changed.';
+
+  @override
+  String get testsFormatsEmptyTitle => 'No formats yet';
+
+  @override
+  String get testsFormatsEmptySubtitle =>
+      'Load the standard formats, then edit them against your papers.';
+
+  @override
+  String get testsDraft => 'draft';
+
+  @override
+  String testsMaxPassLine(int max, int pass) {
+    return 'Max $max · pass $pass';
+  }
+
+  @override
+  String get testsDraftSwitch => 'Draft (not confirmed from a paper)';
+
+  @override
+  String get testsDraftSwitchHint =>
+      'Switch off once the timing matches a real paper.';
+
+  @override
+  String get testsSave => 'Save';
+
+  @override
+  String get testsCodesTitle => 'Test codes';
+
+  @override
+  String get testsNewCode => 'New test code';
+
+  @override
+  String get testsEditCode => 'Edit test code';
+
+  @override
+  String get testsCreateCode => 'Create test code';
+
+  @override
+  String get testsCodesEmptyTitle => 'No test codes yet';
+
+  @override
+  String get testsCodesEmptySubtitle =>
+      'Scan a paper into the question bank, then make a code from the worksheet.';
+
+  @override
+  String testsMinutesTotal(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String get testsInactive => 'Inactive';
+
+  @override
+  String get testsCodeSaved => 'Test code saved.';
+
+  @override
+  String testsCodeDuplicate(String code) {
+    return 'The code $code already exists.';
+  }
+
+  @override
+  String get testsWorksheet => 'Worksheet (question bank)';
+
+  @override
+  String get testsCode => 'Test code';
+
+  @override
+  String get testsCodeHint =>
+      'Letters and digits as printed on the paper, e.g. H31005';
+
+  @override
+  String get testsFormat => 'Format';
+
+  @override
+  String get testsReleaseYear => 'Release year';
+
+  @override
+  String get testsNoFormatsYet =>
+      'No formats yet: load the standard formats first (Tests → Test formats).';
+
+  @override
+  String get testsTimingTitle => 'Timing and marks of this code';
+
+  @override
+  String get testsTimingHint =>
+      'Copied from the format. Correct it against the paper\'s cover page.';
+
+  @override
+  String get testsCountWarning =>
+      'The worksheet and the format do not have the same number of questions in every part. You can still save.';
+
+  @override
+  String get testsActive => 'Active (can be opened in a session)';
+
+  @override
+  String get testsCountsForPromotion => 'Counts for promotion';
+
+  @override
+  String get testsOpenSession => 'Open session';
+
+  @override
+  String get testsResultsTitle => 'Test results';
+
+  @override
+  String get testsSessionsTitle => 'Sessions';
+
+  @override
+  String get testsSessionsEmptyTitle => 'No sessions yet';
+
+  @override
+  String get testsSessionsEmptySubtitle =>
+      'Open a session to give your students a token.';
+
+  @override
+  String get testsSessionOpen => 'open';
+
+  @override
+  String get testsSessionClosed => 'Session closed';
+
+  @override
+  String get testsNoActiveCodes =>
+      'There is no active test code yet. An admin creates codes in Tests → Test codes.';
+
+  @override
+  String get testsPartClocks => 'A clock per part';
+
+  @override
+  String get testsPartClocksOn =>
+      'Each part has its own clock; the recording plays once; no way back to a closed part.';
+
+  @override
+  String get testsPartClocksOff =>
+      'One clock for the whole paper; students move freely between parts and may replay the recording; one submit at the end.';
+
+  @override
+  String get testsOpen => 'Open';
+
+  @override
+  String get testsSupervisionTitle => 'Supervision';
+
+  @override
+  String get testsEndForEveryone => 'End test for everyone';
+
+  @override
+  String get testsEndForEveryoneConfirm =>
+      'Every student still sitting is finished now. Parts not submitted count as empty. This cannot be undone.';
+
+  @override
+  String testsEnded(int count) {
+    return 'Session closed · $count tests finished.';
+  }
+
+  @override
+  String testsJoinCountdown(String time) {
+    return 'Students can join for $time';
+  }
+
+  @override
+  String get testsJoinClosed =>
+      'Joining is closed. Give a new token to let someone in.';
+
+  @override
+  String get testsNewToken => 'New token';
+
+  @override
+  String testsStudentsCount(int count) {
+    return 'Students ($count)';
+  }
+
+  @override
+  String get testsNoStudentsYetTitle => 'Nobody has joined yet';
+
+  @override
+  String get testsNoStudentsYetSubtitle =>
+      'Students type the token in their Tests page.';
+
+  @override
+  String get testsStatusFinished => 'finished';
+
+  @override
+  String get testsStatusSitting => 'sitting';
+
+  @override
+  String testsPartOf(int n, int total) {
+    return 'Part $n of $total';
+  }
+
+  @override
+  String get testsWholePaper => 'Whole paper';
+
+  @override
+  String testsLeftPageCount(int count) {
+    return 'Left the page: $count';
+  }
+
+  @override
+  String get testsCardTitle => 'Result card';
+
+  @override
+  String get testsCardName => 'Name';
+
+  @override
+  String get testsCardChineseName => 'Chinese name';
+
+  @override
+  String get testsCardExamType => 'Test';
+
+  @override
+  String get testsCardTestCode => 'Test code';
+
+  @override
+  String get testsCardResultNumber => 'Result number';
+
+  @override
+  String get testsCardDate => 'Date';
+
+  @override
+  String get testsCardSupervisor => 'Supervising teacher';
+
+  @override
+  String get testsCardTotal => 'Total';
+
+  @override
+  String get testsCardOutcome => 'Result';
+
+  @override
+  String testsCardPassMark(int pass) {
+    return 'Pass mark $pass';
+  }
+
+  @override
+  String get testsPassed => 'Passed';
+
+  @override
+  String get testsNotPassed => 'Not passed';
+
+  @override
+  String get testsInvalid => 'Not valid';
+
+  @override
+  String get testsAllCodes => 'All codes';
+
+  @override
+  String get testsResultsEmptyTitle => 'No results yet';
+
+  @override
+  String get testsResultsEmptySubtitle =>
+      'Results appear when students finish a supervised test.';
+
+  @override
+  String get testsMarkInvalid => 'Mark invalid';
+
+  @override
+  String get testsMarkValid => 'Mark valid';
+
+  @override
+  String get testsInvalidReason => 'Reason';
+
+  @override
+  String get testsPrintPdf => 'Print / PDF';
+
+  @override
+  String get testsResultNotFound => 'Result not found.';
+
+  @override
+  String get testsOpenReview => 'Review answers';
+
+  @override
+  String get testsCouldNotOpen => 'The test could not be opened';
+
+  @override
+  String get testsFinishTitle => 'Finish the test?';
+
+  @override
+  String get testsFinishBody =>
+      'Your answers are sent and the test is closed. You cannot change them afterwards.';
+
+  @override
+  String get testsNextPartTitle => 'Go to the next part?';
+
+  @override
+  String get testsNextPartBody =>
+      'This part is closed and sent. There is no way back to it.';
+
+  @override
+  String get testsFinish => 'Finish test';
+
+  @override
+  String get testsNextPart => 'Next part';
+
+  @override
+  String testsQuestionsCount(int count) {
+    return '$count questions';
+  }
+
+  @override
+  String get testsRulesTitle => 'Rules';
+
+  @override
+  String get testsRulePartClocks =>
+      'Each part has its own clock. When it reaches zero, the part is sent by itself.';
+
+  @override
+  String get testsRuleOneClock =>
+      'One clock for the whole paper. When it reaches zero, your answers are sent.';
+
+  @override
+  String get testsRuleRecording =>
+      'The listening recording starts with the part and plays once. It cannot be paused or replayed.';
+
+  @override
+  String get testsRuleNoBack => 'A part you have sent cannot be opened again.';
+
+  @override
+  String get testsRuleLeaving =>
+      'Leaving this page or window is recorded and shown to your teacher.';
+
+  @override
+  String get testsRuleOnce => 'Each test code can be taken once.';
+
+  @override
+  String get testsStart => 'Start the test';
+
+  @override
+  String get testsLeftNotice =>
+      'You left the test page. This was recorded and your teacher can see it.';
+
+  @override
+  String get testsPartEmptyTitle => 'No questions in this part';
+
+  @override
+  String get testsPartEmptySubtitle => 'Go on to the next part.';
+
+  @override
+  String get testsWaitForRecording => 'Wait until the recording has finished.';
+
+  @override
+  String get testsRecordingDone => 'Recording finished';
+
+  @override
+  String get testsContinueRecording => 'Continue recording';
+
+  @override
+  String testsClipPlaysLeft(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count plays left',
+      one: '1 play left',
+      zero: 'No plays left',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get testsEnterToken => 'Enter token';
+
+  @override
+  String get testsEnterTokenHint =>
+      'Type the 6-character token your teacher shows.';
+
+  @override
+  String get testsGo => 'Go';
+
+  @override
+  String testsContinueTest(String code) {
+    return 'Continue test $code';
+  }
+
+  @override
+  String get testsMyResults => 'My results';
+
+  @override
+  String get testsMyResultsEmptyTitle => 'No results yet';
+
+  @override
+  String get testsMyResultsEmptySubtitle =>
+      'Your supervised tests appear here.';
+
+  @override
+  String get testsReviewTitle => 'Review';
+
+  @override
+  String get testsReviewNotYet => 'Review not open yet';
+
+  @override
+  String get testsYourAnswer => 'Your answer';
+
+  @override
+  String get testsKey => 'Answer';
 }

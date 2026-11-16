@@ -30,20 +30,25 @@ MIDTRANS_CLIENT_KEY="Mid-client-kQ_Bo0DQepeH8IhU"   # sandbox
 APK_SRC="build/app/outputs/flutter-apk/app-release.apk"
 APK_URL="https://chinese-tracker.web.app/downloads/easy-study.apk"
 
-# App Check site key and Web Push (VAPID) key: created by the owner in the
-# Firebase console, kept out of git. Put them in deploy.env (git-ignored via
-# *.env) as `APP_CHECK_SITE_KEY=...` / `FCM_VAPID_KEY=...`, or export them
-# before running. Empty values leave both features off.
+# App Check site key (reCAPTCHA Enterprise) and Web Push (VAPID) key:
+# created by the owner in the consoles. Both are public (they ship in the
+# page), so their defaults live here, next to MIDTRANS_CLIENT_KEY, and every
+# machine deploys with them (owner decision 2026-11-16). deploy.env
+# (git-ignored via *.env) or exported variables still override them.
+DEFAULT_APP_CHECK_SITE_KEY=""   # owner: paste the reCAPTCHA Enterprise key
+DEFAULT_FCM_VAPID_KEY=""        # owner: paste the Web Push certificate key
 if [[ -f deploy.env ]]; then
   # shellcheck disable=SC1091
   source deploy.env
 fi
+APP_CHECK_SITE_KEY="${APP_CHECK_SITE_KEY:-$DEFAULT_APP_CHECK_SITE_KEY}"
+FCM_VAPID_KEY="${FCM_VAPID_KEY:-$DEFAULT_FCM_VAPID_KEY}"
 # A deploy without the keys switches the AI paper scan and push off for
 # every user, so refuse unless the caller says so on purpose.
 if [[ -z "${APP_CHECK_SITE_KEY:-}" && "$NO_KEYS" != 1 ]]; then
-  echo "✖ APP_CHECK_SITE_KEY is empty (no deploy.env in $(pwd), or the key is blank)." >&2
+  echo "✖ APP_CHECK_SITE_KEY is empty (no default in this script, no deploy.env)." >&2
   echo "  Deploying now would switch Scan paper with AI and push off for everyone." >&2
-  echo "  Copy deploy.env from the other machine, or re-run with --no-keys on purpose." >&2
+  echo "  Set DEFAULT_APP_CHECK_SITE_KEY here, or re-run with --no-keys on purpose." >&2
   exit 1
 fi
 KEY_DEFINES=(

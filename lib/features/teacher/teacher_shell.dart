@@ -11,6 +11,7 @@ import '../../l10n/l10n.dart';
 import '../../models/app_notification.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
+import '../tests/staff_tests_tab.dart';
 import 'teacher_attendance_tab.dart';
 import 'teacher_dashboard_tab.dart';
 import 'teacher_exercises_tab.dart';
@@ -55,6 +56,11 @@ class _TeacherShellState extends State<TeacherShell> {
           label: l.teacherShellNavGrades,
           icon: Icons.grading_outlined,
           selectedIcon: Icons.grading,
+        ),
+        AppShellDestination(
+          label: l.testsTitle,
+          icon: Icons.timer_outlined,
+          selectedIcon: Icons.timer,
         ),
         AppShellDestination(
           label: l.navProfile,
@@ -127,6 +133,7 @@ class _TeacherShellState extends State<TeacherShell> {
       const TeacherExercisesTab(),
       const TeacherAttendanceTab(),
       const TeacherGradesTab(),
+      StaffTestsTab(user: user),
       TeacherProfileTab(user: user),
     ];
 

@@ -14,8 +14,8 @@ Two scanners, both admin-only on web, both ending on the same *Check before addi
 ## AI reader: one-time setup (owner, Firebase console)
 
 1. **AI Services → AI Logic → Get started.** Choose the **Gemini Developer API** (free tier, no card). The wizard enables the API and turns on App Check enforcement for AI Logic (required by Google since 2026-11-02).
-2. **Build & Release → App Check → Apps → Web app → Register** with **reCAPTCHA v3** (create the key at the link the console shows; domain `chinese-tracker.web.app`). Copy the **site key**.
-3. On the Mac: create `deploy.env` in the repo (git-ignored) with `APP_CHECK_SITE_KEY=<site key>` and run `scripts/deploy_web.sh --web-only`.
+2. **Create a reCAPTCHA Enterprise key** (the Firebase console no longer offers v3, 2026-11-16): **Google Cloud console → Security → reCAPTCHA → Create key**, platform **Website**, **score-based** (no checkbox), domains `chinese-tracker.web.app` and `chinese-tracker.firebaseapp.com` only (never `localhost` on a production key; local runs use the debug provider, step 4). Copy the key. Then **Firebase → Build & Release → App Check → Apps → Web app → Register → reCAPTCHA Enterprise** and paste it.
+3. Give the key to Claude: it is public and becomes the default `APP_CHECK_SITE_KEY` in `scripts/deploy_web.sh` (a `deploy.env` in the repo, git-ignored, can still override it). Then `scripts/deploy_web.sh --web-only`.
 4. For local runs, App Check → Apps → ⋮ → **Manage debug tokens**: add the token the browser console prints when the app runs with `--dart-define=APP_CHECK_DEBUG=true`.
 5. Leave **Firestore, Functions and Storage unenforced** (the Android APK is sideloaded and has no Play Integrity).
 

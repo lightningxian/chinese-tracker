@@ -8678,6 +8678,852 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Not passed yet'**
   String get exercisePlayHskNotPassed;
+
+  /// No description provided for @testsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tests'**
+  String get testsTitle;
+
+  /// No description provided for @testsSkillListening.
+  ///
+  /// In en, this message translates to:
+  /// **'Listening'**
+  String get testsSkillListening;
+
+  /// No description provided for @testsSkillReading.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading'**
+  String get testsSkillReading;
+
+  /// No description provided for @testsSkillWriting.
+  ///
+  /// In en, this message translates to:
+  /// **'Writing'**
+  String get testsSkillWriting;
+
+  /// No description provided for @testsSkillSpeaking.
+  ///
+  /// In en, this message translates to:
+  /// **'Speaking'**
+  String get testsSkillSpeaking;
+
+  /// No description provided for @testsErrorBadToken.
+  ///
+  /// In en, this message translates to:
+  /// **'This token is not valid. Check it with your teacher.'**
+  String get testsErrorBadToken;
+
+  /// No description provided for @testsErrorTokenBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many wrong tokens. Wait a few minutes and try again.'**
+  String get testsErrorTokenBlocked;
+
+  /// No description provided for @testsErrorJoinClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'The time to join has ended. Ask your teacher for a new token.'**
+  String get testsErrorJoinClosed;
+
+  /// No description provided for @testsErrorAlreadyAttempted.
+  ///
+  /// In en, this message translates to:
+  /// **'You have already sat this test. Each code can be taken once.'**
+  String get testsErrorAlreadyAttempted;
+
+  /// No description provided for @testsErrorPartClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'This part is already closed.'**
+  String get testsErrorPartClosed;
+
+  /// No description provided for @testsErrorReviewSessionOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'The review opens when your teacher ends the session.'**
+  String get testsErrorReviewSessionOpen;
+
+  /// No description provided for @testsErrorReviewNotFinished.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish the test first.'**
+  String get testsErrorReviewNotFinished;
+
+  /// No description provided for @testsErrorReasonRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Write a reason.'**
+  String get testsErrorReasonRequired;
+
+  /// No description provided for @testsErrorGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Try again.'**
+  String get testsErrorGeneric;
+
+  /// No description provided for @testsHskSimulationInTests.
+  ///
+  /// In en, this message translates to:
+  /// **'HSK simulations are taken in Tests: ask your teacher for a token.'**
+  String get testsHskSimulationInTests;
+
+  /// No description provided for @testsAddPart.
+  ///
+  /// In en, this message translates to:
+  /// **'Add part'**
+  String get testsAddPart;
+
+  /// No description provided for @testsRemovePart.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove part'**
+  String get testsRemovePart;
+
+  /// No description provided for @testsPassMark.
+  ///
+  /// In en, this message translates to:
+  /// **'Pass mark'**
+  String get testsPassMark;
+
+  /// No description provided for @testsTotalsLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Max {max} · {minutes} minutes'**
+  String testsTotalsLine(int max, int minutes);
+
+  /// No description provided for @testsPartNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Part {n}'**
+  String testsPartNumber(int n);
+
+  /// No description provided for @testsQuestions.
+  ///
+  /// In en, this message translates to:
+  /// **'Questions'**
+  String get testsQuestions;
+
+  /// No description provided for @testsMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'Minutes'**
+  String get testsMinutes;
+
+  /// No description provided for @testsMaxMark.
+  ///
+  /// In en, this message translates to:
+  /// **'Marks'**
+  String get testsMaxMark;
+
+  /// No description provided for @testsFoundMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'The worksheet has {found} questions for this part.'**
+  String testsFoundMatch(int found);
+
+  /// No description provided for @testsFoundMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected {expected}, the worksheet has {found}.'**
+  String testsFoundMismatch(int expected, int found);
+
+  /// No description provided for @testsFormatsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Test formats'**
+  String get testsFormatsTitle;
+
+  /// No description provided for @testsLoadStandardFormats.
+  ///
+  /// In en, this message translates to:
+  /// **'Load standard formats'**
+  String get testsLoadStandardFormats;
+
+  /// No description provided for @testsFormatsAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} formats added.'**
+  String testsFormatsAdded(int count);
+
+  /// No description provided for @testsFormatsNothingAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Every standard format is already there. Nothing changed.'**
+  String get testsFormatsNothingAdded;
+
+  /// No description provided for @testsFormatsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No formats yet'**
+  String get testsFormatsEmptyTitle;
+
+  /// No description provided for @testsFormatsEmptySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Load the standard formats, then edit them against your papers.'**
+  String get testsFormatsEmptySubtitle;
+
+  /// No description provided for @testsDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'draft'**
+  String get testsDraft;
+
+  /// No description provided for @testsMaxPassLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Max {max} · pass {pass}'**
+  String testsMaxPassLine(int max, int pass);
+
+  /// No description provided for @testsDraftSwitch.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft (not confirmed from a paper)'**
+  String get testsDraftSwitch;
+
+  /// No description provided for @testsDraftSwitchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch off once the timing matches a real paper.'**
+  String get testsDraftSwitchHint;
+
+  /// No description provided for @testsSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get testsSave;
+
+  /// No description provided for @testsCodesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Test codes'**
+  String get testsCodesTitle;
+
+  /// No description provided for @testsNewCode.
+  ///
+  /// In en, this message translates to:
+  /// **'New test code'**
+  String get testsNewCode;
+
+  /// No description provided for @testsEditCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit test code'**
+  String get testsEditCode;
+
+  /// No description provided for @testsCreateCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Create test code'**
+  String get testsCreateCode;
+
+  /// No description provided for @testsCodesEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No test codes yet'**
+  String get testsCodesEmptyTitle;
+
+  /// No description provided for @testsCodesEmptySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan a paper into the question bank, then make a code from the worksheet.'**
+  String get testsCodesEmptySubtitle;
+
+  /// No description provided for @testsMinutesTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min'**
+  String testsMinutesTotal(int minutes);
+
+  /// No description provided for @testsInactive.
+  ///
+  /// In en, this message translates to:
+  /// **'Inactive'**
+  String get testsInactive;
+
+  /// No description provided for @testsCodeSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Test code saved.'**
+  String get testsCodeSaved;
+
+  /// No description provided for @testsCodeDuplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'The code {code} already exists.'**
+  String testsCodeDuplicate(String code);
+
+  /// No description provided for @testsWorksheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Worksheet (question bank)'**
+  String get testsWorksheet;
+
+  /// No description provided for @testsCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Test code'**
+  String get testsCode;
+
+  /// No description provided for @testsCodeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Letters and digits as printed on the paper, e.g. H31005'**
+  String get testsCodeHint;
+
+  /// No description provided for @testsFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Format'**
+  String get testsFormat;
+
+  /// No description provided for @testsReleaseYear.
+  ///
+  /// In en, this message translates to:
+  /// **'Release year'**
+  String get testsReleaseYear;
+
+  /// No description provided for @testsNoFormatsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No formats yet: load the standard formats first (Tests → Test formats).'**
+  String get testsNoFormatsYet;
+
+  /// No description provided for @testsTimingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Timing and marks of this code'**
+  String get testsTimingTitle;
+
+  /// No description provided for @testsTimingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied from the format. Correct it against the paper\'s cover page.'**
+  String get testsTimingHint;
+
+  /// No description provided for @testsCountWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'The worksheet and the format do not have the same number of questions in every part. You can still save.'**
+  String get testsCountWarning;
+
+  /// No description provided for @testsActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active (can be opened in a session)'**
+  String get testsActive;
+
+  /// No description provided for @testsCountsForPromotion.
+  ///
+  /// In en, this message translates to:
+  /// **'Counts for promotion'**
+  String get testsCountsForPromotion;
+
+  /// No description provided for @testsOpenSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Open session'**
+  String get testsOpenSession;
+
+  /// No description provided for @testsResultsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Test results'**
+  String get testsResultsTitle;
+
+  /// No description provided for @testsSessionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sessions'**
+  String get testsSessionsTitle;
+
+  /// No description provided for @testsSessionsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No sessions yet'**
+  String get testsSessionsEmptyTitle;
+
+  /// No description provided for @testsSessionsEmptySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Open a session to give your students a token.'**
+  String get testsSessionsEmptySubtitle;
+
+  /// No description provided for @testsSessionOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'open'**
+  String get testsSessionOpen;
+
+  /// No description provided for @testsSessionClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Session closed'**
+  String get testsSessionClosed;
+
+  /// No description provided for @testsNoActiveCodes.
+  ///
+  /// In en, this message translates to:
+  /// **'There is no active test code yet. An admin creates codes in Tests → Test codes.'**
+  String get testsNoActiveCodes;
+
+  /// No description provided for @testsPartClocks.
+  ///
+  /// In en, this message translates to:
+  /// **'A clock per part'**
+  String get testsPartClocks;
+
+  /// No description provided for @testsPartClocksOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Each part has its own clock; the recording plays once; no way back to a closed part.'**
+  String get testsPartClocksOn;
+
+  /// No description provided for @testsPartClocksOff.
+  ///
+  /// In en, this message translates to:
+  /// **'One clock for the whole paper; students move freely between parts and may replay the recording; one submit at the end.'**
+  String get testsPartClocksOff;
+
+  /// No description provided for @testsOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get testsOpen;
+
+  /// No description provided for @testsSupervisionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Supervision'**
+  String get testsSupervisionTitle;
+
+  /// No description provided for @testsEndForEveryone.
+  ///
+  /// In en, this message translates to:
+  /// **'End test for everyone'**
+  String get testsEndForEveryone;
+
+  /// No description provided for @testsEndForEveryoneConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Every student still sitting is finished now. Parts not submitted count as empty. This cannot be undone.'**
+  String get testsEndForEveryoneConfirm;
+
+  /// No description provided for @testsEnded.
+  ///
+  /// In en, this message translates to:
+  /// **'Session closed · {count} tests finished.'**
+  String testsEnded(int count);
+
+  /// No description provided for @testsJoinCountdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Students can join for {time}'**
+  String testsJoinCountdown(String time);
+
+  /// No description provided for @testsJoinClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Joining is closed. Give a new token to let someone in.'**
+  String get testsJoinClosed;
+
+  /// No description provided for @testsNewToken.
+  ///
+  /// In en, this message translates to:
+  /// **'New token'**
+  String get testsNewToken;
+
+  /// No description provided for @testsStudentsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Students ({count})'**
+  String testsStudentsCount(int count);
+
+  /// No description provided for @testsNoStudentsYetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nobody has joined yet'**
+  String get testsNoStudentsYetTitle;
+
+  /// No description provided for @testsNoStudentsYetSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Students type the token in their Tests page.'**
+  String get testsNoStudentsYetSubtitle;
+
+  /// No description provided for @testsStatusFinished.
+  ///
+  /// In en, this message translates to:
+  /// **'finished'**
+  String get testsStatusFinished;
+
+  /// No description provided for @testsStatusSitting.
+  ///
+  /// In en, this message translates to:
+  /// **'sitting'**
+  String get testsStatusSitting;
+
+  /// No description provided for @testsPartOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Part {n} of {total}'**
+  String testsPartOf(int n, int total);
+
+  /// No description provided for @testsWholePaper.
+  ///
+  /// In en, this message translates to:
+  /// **'Whole paper'**
+  String get testsWholePaper;
+
+  /// No description provided for @testsLeftPageCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Left the page: {count}'**
+  String testsLeftPageCount(int count);
+
+  /// No description provided for @testsCardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Result card'**
+  String get testsCardTitle;
+
+  /// No description provided for @testsCardName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get testsCardName;
+
+  /// No description provided for @testsCardChineseName.
+  ///
+  /// In en, this message translates to:
+  /// **'Chinese name'**
+  String get testsCardChineseName;
+
+  /// No description provided for @testsCardExamType.
+  ///
+  /// In en, this message translates to:
+  /// **'Test'**
+  String get testsCardExamType;
+
+  /// No description provided for @testsCardTestCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Test code'**
+  String get testsCardTestCode;
+
+  /// No description provided for @testsCardResultNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Result number'**
+  String get testsCardResultNumber;
+
+  /// No description provided for @testsCardDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get testsCardDate;
+
+  /// No description provided for @testsCardSupervisor.
+  ///
+  /// In en, this message translates to:
+  /// **'Supervising teacher'**
+  String get testsCardSupervisor;
+
+  /// No description provided for @testsCardTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get testsCardTotal;
+
+  /// No description provided for @testsCardOutcome.
+  ///
+  /// In en, this message translates to:
+  /// **'Result'**
+  String get testsCardOutcome;
+
+  /// No description provided for @testsCardPassMark.
+  ///
+  /// In en, this message translates to:
+  /// **'Pass mark {pass}'**
+  String testsCardPassMark(int pass);
+
+  /// No description provided for @testsPassed.
+  ///
+  /// In en, this message translates to:
+  /// **'Passed'**
+  String get testsPassed;
+
+  /// No description provided for @testsNotPassed.
+  ///
+  /// In en, this message translates to:
+  /// **'Not passed'**
+  String get testsNotPassed;
+
+  /// No description provided for @testsInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Not valid'**
+  String get testsInvalid;
+
+  /// No description provided for @testsAllCodes.
+  ///
+  /// In en, this message translates to:
+  /// **'All codes'**
+  String get testsAllCodes;
+
+  /// No description provided for @testsResultsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No results yet'**
+  String get testsResultsEmptyTitle;
+
+  /// No description provided for @testsResultsEmptySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Results appear when students finish a supervised test.'**
+  String get testsResultsEmptySubtitle;
+
+  /// No description provided for @testsMarkInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark invalid'**
+  String get testsMarkInvalid;
+
+  /// No description provided for @testsMarkValid.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark valid'**
+  String get testsMarkValid;
+
+  /// No description provided for @testsInvalidReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason'**
+  String get testsInvalidReason;
+
+  /// No description provided for @testsPrintPdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Print / PDF'**
+  String get testsPrintPdf;
+
+  /// No description provided for @testsResultNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Result not found.'**
+  String get testsResultNotFound;
+
+  /// No description provided for @testsOpenReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Review answers'**
+  String get testsOpenReview;
+
+  /// No description provided for @testsCouldNotOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'The test could not be opened'**
+  String get testsCouldNotOpen;
+
+  /// No description provided for @testsFinishTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish the test?'**
+  String get testsFinishTitle;
+
+  /// No description provided for @testsFinishBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your answers are sent and the test is closed. You cannot change them afterwards.'**
+  String get testsFinishBody;
+
+  /// No description provided for @testsNextPartTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to the next part?'**
+  String get testsNextPartTitle;
+
+  /// No description provided for @testsNextPartBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This part is closed and sent. There is no way back to it.'**
+  String get testsNextPartBody;
+
+  /// No description provided for @testsFinish.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish test'**
+  String get testsFinish;
+
+  /// No description provided for @testsNextPart.
+  ///
+  /// In en, this message translates to:
+  /// **'Next part'**
+  String get testsNextPart;
+
+  /// No description provided for @testsQuestionsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} questions'**
+  String testsQuestionsCount(int count);
+
+  /// No description provided for @testsRulesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rules'**
+  String get testsRulesTitle;
+
+  /// No description provided for @testsRulePartClocks.
+  ///
+  /// In en, this message translates to:
+  /// **'Each part has its own clock. When it reaches zero, the part is sent by itself.'**
+  String get testsRulePartClocks;
+
+  /// No description provided for @testsRuleOneClock.
+  ///
+  /// In en, this message translates to:
+  /// **'One clock for the whole paper. When it reaches zero, your answers are sent.'**
+  String get testsRuleOneClock;
+
+  /// No description provided for @testsRuleRecording.
+  ///
+  /// In en, this message translates to:
+  /// **'The listening recording starts with the part and plays once. It cannot be paused or replayed.'**
+  String get testsRuleRecording;
+
+  /// No description provided for @testsRuleNoBack.
+  ///
+  /// In en, this message translates to:
+  /// **'A part you have sent cannot be opened again.'**
+  String get testsRuleNoBack;
+
+  /// No description provided for @testsRuleLeaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Leaving this page or window is recorded and shown to your teacher.'**
+  String get testsRuleLeaving;
+
+  /// No description provided for @testsRuleOnce.
+  ///
+  /// In en, this message translates to:
+  /// **'Each test code can be taken once.'**
+  String get testsRuleOnce;
+
+  /// No description provided for @testsStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start the test'**
+  String get testsStart;
+
+  /// No description provided for @testsLeftNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'You left the test page. This was recorded and your teacher can see it.'**
+  String get testsLeftNotice;
+
+  /// No description provided for @testsPartEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No questions in this part'**
+  String get testsPartEmptyTitle;
+
+  /// No description provided for @testsPartEmptySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Go on to the next part.'**
+  String get testsPartEmptySubtitle;
+
+  /// No description provided for @testsWaitForRecording.
+  ///
+  /// In en, this message translates to:
+  /// **'Wait until the recording has finished.'**
+  String get testsWaitForRecording;
+
+  /// No description provided for @testsRecordingDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording finished'**
+  String get testsRecordingDone;
+
+  /// No description provided for @testsContinueRecording.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue recording'**
+  String get testsContinueRecording;
+
+  /// No description provided for @testsClipPlaysLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No plays left} =1{1 play left} other{{count} plays left}}'**
+  String testsClipPlaysLeft(int count);
+
+  /// No description provided for @testsEnterToken.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter token'**
+  String get testsEnterToken;
+
+  /// No description provided for @testsEnterTokenHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Type the 6-character token your teacher shows.'**
+  String get testsEnterTokenHint;
+
+  /// No description provided for @testsGo.
+  ///
+  /// In en, this message translates to:
+  /// **'Go'**
+  String get testsGo;
+
+  /// No description provided for @testsContinueTest.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue test {code}'**
+  String testsContinueTest(String code);
+
+  /// No description provided for @testsMyResults.
+  ///
+  /// In en, this message translates to:
+  /// **'My results'**
+  String get testsMyResults;
+
+  /// No description provided for @testsMyResultsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No results yet'**
+  String get testsMyResultsEmptyTitle;
+
+  /// No description provided for @testsMyResultsEmptySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your supervised tests appear here.'**
+  String get testsMyResultsEmptySubtitle;
+
+  /// No description provided for @testsReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review'**
+  String get testsReviewTitle;
+
+  /// No description provided for @testsReviewNotYet.
+  ///
+  /// In en, this message translates to:
+  /// **'Review not open yet'**
+  String get testsReviewNotYet;
+
+  /// No description provided for @testsYourAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'Your answer'**
+  String get testsYourAnswer;
+
+  /// No description provided for @testsKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Answer'**
+  String get testsKey;
 }
 
 class _AppLocalizationsDelegate

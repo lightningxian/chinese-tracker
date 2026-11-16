@@ -84,6 +84,34 @@ class AppUser {
     return value;
   }
 
+  /// Latin name (PLAN.md §3): [nameIndonesian], falling back to [name].
+  String get latinName => displayNameIndonesian;
+
+  /// What admins and teachers see: `Chinese name (Latin name)`, or the
+  /// Latin name alone when there is no Chinese name.
+  String get staffLabel => staffLabelOf(displayNameChinese, latinName);
+
+  /// What another student sees: the Chinese name, or the first word of the
+  /// Latin name when there is none.
+  String get peerLabel => peerLabelOf(displayNameChinese, latinName);
+
+  /// [staffLabel] for names stored outside a profile (attempts, results).
+  static String staffLabelOf(String? chinese, String latin) {
+    final c = chinese?.trim() ?? '';
+    final l = latin.trim();
+    if (c.isEmpty) return l;
+    if (l.isEmpty) return c;
+    return '$c ($l)';
+  }
+
+  /// [peerLabel] for names stored outside a profile.
+  static String peerLabelOf(String? chinese, String latin) {
+    final c = chinese?.trim() ?? '';
+    if (c.isNotEmpty) return c;
+    final words = latin.trim().split(RegExp(r'\s+'));
+    return words.isEmpty ? '' : words.first;
+  }
+
   /// WhatsApp number with fallback to legacy [phone].
   String? get displayWhatsapp {
     final value = whatsapp?.trim();

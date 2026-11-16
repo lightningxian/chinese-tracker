@@ -6,6 +6,76 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-16 — Claude (BUILD chat): Build 1 — test formats, test codes, supervised test, result card
+
+**What changed**
+- **Functions** (`functions/index.js`, pure logic in `functions/supervised_test.js`):
+  `openTestSession` (code → 6-character token, 15-minute join window; a new
+  token extends it; option `partClocks`, default on), `startTest` (peek /
+  join by token / resume by code; questions of the open part without keys,
+  seconds left, recording position), `submitTestPart` (one part at a time,
+  closed parts refused, late submits stored empty, scores the last part into
+  `test_results` with `durationSeconds`), `reportTestEvent` (left / back,
+  throttled), `closeTestSession` (finishes everyone; unsent parts empty),
+  `setTestResultValidity` (invalid needs a reason), `getTestReview` (answers,
+  keys, explanations once the session is closed). Wrong tokens are limited
+  per student uid (a class shares one Wi-Fi). `startExercise` /
+  `finishExercise` refuse HSK Simulation packages (they run as test codes).
+- **Rules**: `test_formats` / `test_codes` admin write, staff read (students
+  never read codes); `test_sessions` staff read; `test_attempts` /
+  `test_results` own + staff read (results also the parent); no client
+  writes. 7 new rules tests.
+- **App**: admin **Test formats** (Load standard formats, edit), **Test
+  codes** (create from a bank worksheet with expected/found counts per part,
+  edit timing, deactivate; **Create test code** on the worksheet screen);
+  staff **Tests** place (Open session with the clock option, sessions,
+  supervision screen, results with Mark invalid / valid); student **Tests**
+  place (Enter token, continue, own results), start screen, part-by-part
+  player (server clock, recording once with no pause, one tap to continue
+  after a reload, a question's own clip at most twice, answers kept on the
+  device, left-page notice), result card (HSK score-report style, Chinese
+  labels, PDF), review. ViewModels for the new screens. ~140 new keys in
+  both languages. `AppUser.staffLabel` / `peerLabel`.
+- **Shared player widgets**: the answer area of `exercise_screen.dart` moved
+  to `lib/features/student/widgets/question_answer_view.dart`, used by both
+  players. Package play is unchanged (flow test regression steps).
+- **Package form** stops offering HSK Simulation worksheets; the worksheet
+  screen hides **Assign this** for them.
+- **App Check** on web uses `ReCaptchaEnterpriseProvider` (owner steps in
+  `docs/CLAUDE_FULL_HANDOFF.md` and `docs/WORKSHEET_IMPORT.md`; no
+  `localhost` on the key). `scripts/deploy_web.sh` has
+  `DEFAULT_APP_CHECK_SITE_KEY` / `DEFAULT_FCM_VAPID_KEY` (public, still
+  empty until the owner gives them; `deploy.env` overrides).
+- **Emulator guard** (`lib/core/utils/emulator_guard*.dart`, `lib/main.dart`):
+  an emulator build whose Auth did not attach to the emulator signs out
+  locally and reloads once, else refuses to start.
+- **Seed** (`scripts/seed_emulator.py`): 127.0.0.1 instead of localhost
+  (minutes → 5 s on Windows); HSK 3-style worksheet `310901-KK` with a
+  generated recording and picture choices, formats HSK 1–6, test code
+  `H3DEMO1` (2-minute parts), practice and exam packages.
+- **Tests**: `functions/test_supervised_test.js`,
+  `functions/test_supervised_flow.mjs` (24 steps on the emulators),
+  `test/test_track_test.dart`, `test/test_result_card_pdf_test.dart`.
+
+**Why**
+- docs/PLAN.md §4 Build 1 plus the PLAN chat's changes of 2026-11-16
+  (session clock option, review, HSK Simulation only via codes, "Simulation
+  by Easy Study", durationSeconds, clip limit, exact formats, thesis IDs).
+- The emulator guard: during the walk a reload of the emulator bundle left
+  Firebase Auth on the LIVE project and a saved-account tap signed the test
+  admin in to live Auth (no live data was read or written: Firestore stayed
+  on the emulator). See the Build 1 report in docs/PLAN.md §6.
+
+**For review**
+- Not deployed: rules and functions need the owner
+  (`firebase deploy --only firestore:rules,functions --project chinese-tracker`),
+  and hosting needs `firebase login` on the PC.
+- Proof: analyzer 17 infos (baseline), `flutter test` 83 pass, rules tests 48
+  pass + 1 skipped, node tests pass, flow test 24/24, emulator walk with
+  screenshots in `docs/screenshots/build1/`.
+
+---
+
 ## 2026-11-16 — Claude (BUILD chat): Build 0 on the PC, deploy key guard
 
 **What changed**

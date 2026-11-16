@@ -518,5 +518,60 @@ service cloud.firestore {
     match /teacher_link_state/{teacherId} {
       allow read, write: if isTeacher() && request.auth.uid == teacherId;
     }
+
+    // ---- Supervised tests (PLAN.md §3, Build 1) ----
+    // Formats and codes: admins write, staff read. Students never read them;
+    // the startTest function sends what the start screen needs.
+    match /test_formats/{formatId} {
+      allow read: if isStaff();
+      allow create, update: if isAdmin() &&
+        request.resource.data.get('parts', []) is list &&
+        request.resource.data.get('passMark', 0) is number;
+      allow delete: if isAdmin();
+    }
+
+    // The doc id is the code itself (upper case), so a duplicate code is a
+    // write to an existing doc, which the app refuses in a transaction and
+    // the rules refuse by keeping `code` equal to the id. Codes are never
+    // deleted (results point at them); admins deactivate them instead.
+    match /test_codes/{codeId} {
+      allow read: if isStaff();
+      allow create: if isAdmin() &&
+        request.resource.data.get('code', '') == codeId &&
+        request.resource.data.get('sheetKey', '') is string &&
+        request.resource.data.get('sheetKey', '').size() > 0 &&
+        request.resource.data.get('format', null) is map;
+      allow update: if isAdmin() &&
+        request.resource.data.get('code', '') == codeId &&
+        request.resource.data.get('sheetKey', '') == resource.data.get('sheetKey', '');
+      allow delete: if false;
+    }
+
+    // Sessions, attempts and results are written only by the functions
+    // (openTestSession, startTest, submitTestPart, reportTestEvent,
+    // closeTestSession, setTestResultValidity).
+    match /test_sessions/{sessionId} {
+      allow read: if isStaff();
+      allow write: if false;
+    }
+
+    match /test_attempts/{attemptId} {
+      allow read: if isSignedIn() && (
+        resource == null ||
+        resource.data.studentId == request.auth.uid ||
+        isStaff()
+      );
+      allow write: if false;
+    }
+
+    match /test_results/{resultId} {
+      allow read: if isSignedIn() && (
+        resource == null ||
+        resource.data.studentId == request.auth.uid ||
+        isStaff() ||
+        isParentOf(resource.data.get('studentId', ''))
+      );
+      allow write: if false;
+    }
   }
 }

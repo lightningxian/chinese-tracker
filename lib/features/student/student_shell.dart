@@ -8,6 +8,7 @@ import '../../l10n/l10n.dart';
 import '../../models/app_notification.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
+import '../tests/student_tests_tab.dart';
 import 'student_home_tab.dart';
 import 'student_lessons_tab.dart';
 import 'student_my_classes_tab.dart';
@@ -46,6 +47,11 @@ class _StudentShellState extends State<StudentShell> {
           label: l.studentNavProgress,
           icon: Icons.trending_up_outlined,
           selectedIcon: Icons.trending_up,
+        ),
+        AppShellDestination(
+          label: l.testsTitle,
+          icon: Icons.timer_outlined,
+          selectedIcon: Icons.timer,
         ),
         AppShellDestination(
           label: l.navPayments,
@@ -98,6 +104,7 @@ class _StudentShellState extends State<StudentShell> {
       StudentMyClassesTab(student: user),
       StudentLessonsTab(contentOwnerId: contentOwnerId, student: user),
       StudentProgressTab(studentId: user.uid),
+      StudentTestsTab(student: user),
       StudentPaymentsTab(student: user),
       StudentProfileTab(user: user),
     ];

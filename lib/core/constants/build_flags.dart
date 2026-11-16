@@ -6,9 +6,10 @@ abstract final class BuildFlags {
   static const useEmulators = bool.fromEnvironment('USE_EMULATORS');
 
   /// `--dart-define=APP_CHECK_SITE_KEY=<reCAPTCHA v3 site key>`: turns on
-  /// Firebase App Check (web: reCAPTCHA v3, Android: Play Integrity). The key
-  /// is public (it ships in the page); it is read from the environment by
-  /// `scripts/deploy_web.sh`. Empty: App Check stays off.
+  /// Firebase App Check (web: reCAPTCHA Enterprise score-based key, Android:
+  /// Play Integrity). The key is public (it ships in the page); it comes
+  /// from `scripts/deploy_web.sh` (its default, or `deploy.env`). Empty: App
+  /// Check stays off.
   static const appCheckSiteKey = String.fromEnvironment('APP_CHECK_SITE_KEY');
 
   /// `--dart-define=APP_CHECK_DEBUG=true`: web only. App Check uses the debug

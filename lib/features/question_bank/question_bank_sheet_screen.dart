@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/constants/exercise_authoring_platform.dart';
@@ -62,7 +63,20 @@ class QuestionBankSheetScreen extends StatelessWidget {
             title: Text(sheet?.title ?? sheetKey),
             actions: [
               if (sheet != null) ...[
-                if (ExerciseAuthoringPlatform.canManageExercises(user))
+                // Supervised tests (Build 1): a scanned paper becomes a test
+                // code; the form opens with this worksheet filled in.
+                if (canManageBank && sheet.isSheet) ...[
+                  OutlinedButton.icon(
+                    onPressed: () => context.push(
+                        '/admin/tests/codes/new?sheet=${Uri.encodeComponent(sheet.key!)}'),
+                    icon: const Icon(Icons.qr_code_2_outlined, size: 18),
+                    label: Text(l.testsCreateCode),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                // HSK simulations run only through test codes (2026-11-16).
+                if (ExerciseAuthoringPlatform.canManageExercises(user) &&
+                    sheet.category != ExerciseCategory.hskSimulation)
                   FilledButton.icon(
                     onPressed: () => _assignSheet(context, sheet),
                     icon: const Icon(Icons.assignment_ind_outlined, size: 18),

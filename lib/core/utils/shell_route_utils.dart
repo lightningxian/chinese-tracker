@@ -15,7 +15,13 @@ abstract final class ShellRouteUtils {
   static bool isTeacherNested(String location) =>
       location.startsWith('/teacher/') && location != '/teacher';
 
+  /// Sidebar position of **Tests** (before Account / Profile).
+  static const adminTestsTab = 8;
+  static const teacherTestsTab = 5;
+
   static int? adminTabIndexForLocation(String location) {
+    // First: test routes contain words other tabs match on.
+    if (location.contains('/tests')) return adminTestsTab;
     if (location.contains('/dashboard/')) return 0;
     if (location.contains('/users')) return 1;
     if (location.contains('/exercise')) return 2;
@@ -28,6 +34,7 @@ abstract final class ShellRouteUtils {
   }
 
   static int? teacherTabIndexForLocation(String location) {
+    if (location.contains('/tests')) return teacherTestsTab;
     if (location.contains('/dashboard/')) return 0;
     if (location.contains('/student/')) return 1;
     if (location.contains('/exercise')) return 2;
@@ -39,7 +46,24 @@ abstract final class ShellRouteUtils {
     return null;
   }
 
+  /// Titles of the test routes, shared by admin and teacher.
+  static String? testsTitleForLocation(AppLocalizations l, String location) {
+    if (!location.contains('/tests/')) return null;
+    if (location.contains('/tests/formats')) return l.testsFormatsTitle;
+    if (location.endsWith('/tests/codes/new')) return l.testsNewCode;
+    if (location.contains('/tests/codes/') && location.endsWith('/edit')) {
+      return l.testsEditCode;
+    }
+    if (location.contains('/tests/codes')) return l.testsCodesTitle;
+    if (location.contains('/tests/supervise/')) return l.testsSupervisionTitle;
+    if (location.contains('/tests/results')) return l.testsResultsTitle;
+    if (location.contains('/tests/result/')) return l.testsCardTitle;
+    return l.testsTitle;
+  }
+
   static String adminTitleForLocation(AppLocalizations l, String location) {
+    final tests = testsTitleForLocation(l, location);
+    if (tests != null) return tests;
     if (location.contains('/dashboard/stat/')) {
       final slug = location.split('/dashboard/stat/').last;
       final adminKind = AdminDashboardStatKind.fromRouteSlug(slug);
@@ -82,6 +106,8 @@ abstract final class ShellRouteUtils {
   }
 
   static String teacherTitleForLocation(AppLocalizations l, String location) {
+    final tests = testsTitleForLocation(l, location);
+    if (tests != null) return tests;
     if (location.contains('/dashboard/stat/')) {
       final slug = location.split('/dashboard/stat/').last;
       final kind = TeacherDashboardStatKind.fromRouteSlug(slug);

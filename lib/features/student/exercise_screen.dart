@@ -20,6 +20,7 @@ import '../../models/exercise_type.dart';
 import '../../services/auth_service.dart';
 import '../../services/exercise_play_service.dart';
 import '../../services/firestore_service.dart';
+import 'widgets/question_answer_view.dart';
 
 /// Plays one exercise. Questions come from an [ExercisePlaySession]: for a
 /// package the server sends them without answer keys; for an older exercise
@@ -54,12 +55,6 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   Exercise? _pendingExercise;
 
   int _currentIndex = 0;
-  int? _selectedIndex;
-  List<String> _composeOrder = [];
-  List<String> _composeBank = [];
-
-  /// Typed answers: hanzi for a pinyin hint, or a sentence with a keyword.
-  final _typedController = TextEditingController();
 
   /// Listening: one player for the recording of the whole part (it keeps
   /// playing while the student moves between its questions) and one for a
@@ -180,7 +175,6 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
       _peek = null;
       _loading = false;
       _currentIndex = 0;
-      _loadQuestionState();
     });
     if (session.questions.isNotEmpty) _startClock();
     unawaited(_syncAudio());
@@ -233,11 +227,18 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   void _showLoadFailure(FirebaseFunctionsException e) {
     final details = e.details;
     final used = details is Map && details['reason'] == 'already-attempted';
+    // HSK simulations are taken in Tests with a token (2026-11-16).
+    final inTests =
+        details is Map && details['reason'] == 'hsk-simulation-in-tests';
     setState(() {
       _loading = false;
       _attemptUsed = used;
       _notAssigned = e.code == 'permission-denied';
-      _loadError = used ? null : e.message;
+      _loadError = used
+          ? null
+          : inTests
+              ? context.l10n.testsHskSimulationInTests
+              : e.message;
     });
   }
 
@@ -259,74 +260,15 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     if (limit != null && elapsed >= limit) _submit(timeUp: true);
   }
 
-  /// Shows the answer already given to the current question, if any.
-  void _loadQuestionState() {
-    if (_questions.isEmpty) return;
-    final q = _question;
-    final given = _session!.answers[q.id];
-    if (q.isCompose) {
-      _composeOrder = List<String>.from(given?.order ?? const []);
-      final bank = List<String>.from(q.segments);
-      for (final segment in _composeOrder) {
-        bank.remove(segment);
-      }
-      _composeBank = bank;
-    } else if (q.isTyped) {
-      _typedController.text = given?.text ?? '';
-    } else {
-      _selectedIndex = given?.index;
-    }
-  }
-
-  PlayAnswer? _currentAnswer() {
-    final q = _question;
-    if (q.isCompose) {
-      return _composeOrder.isEmpty ? null : PlayAnswer.order(_composeOrder);
-    }
-    if (q.isTyped) {
-      final typed = _typedController.text.trim();
-      return typed.isEmpty ? null : PlayAnswer.text(typed);
-    }
-    return _selectedIndex == null ? null : PlayAnswer.index(_selectedIndex!);
-  }
-
-  void _storeAnswer() {
+  /// Every change in the answer area is stored at once (the shared
+  /// [QuestionAnswerView] holds no answer of its own).
+  void _onAnswer(PlayAnswer? answer) {
     if (_questions.isEmpty || _finished) return;
-    _session!.answer(_question, _currentAnswer());
-  }
-
-  void _selectAnswer(int index) {
-    if (_finished) return;
-    setState(() {
-      _selectedIndex = index;
-      _storeAnswer();
-    });
-  }
-
-  void _addComposeSegment(String segment) {
-    if (_finished) return;
-    setState(() {
-      _composeBank.remove(segment);
-      _composeOrder.add(segment);
-      _storeAnswer();
-    });
-  }
-
-  void _removeComposeSegment(int index) {
-    if (_finished) return;
-    setState(() {
-      final segment = _composeOrder.removeAt(index);
-      _composeBank.add(segment);
-      _storeAnswer();
-    });
+    setState(() => _session!.answer(_question, answer));
   }
 
   void _goTo(int index) {
-    _storeAnswer();
-    setState(() {
-      _currentIndex = index;
-      _loadQuestionState();
-    });
+    setState(() => _currentIndex = index);
     unawaited(_syncAudio());
   }
 
@@ -343,7 +285,6 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   }
 
   Future<void> _confirmSubmit() async {
-    _storeAnswer();
     final missing = _questions.length - _answeredCount;
     if (missing > 0) {
       final l = context.l10n;
@@ -371,7 +312,6 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
 
   Future<void> _submit({bool timeUp = false}) async {
     if (_submitting || _result != null) return;
-    _storeAnswer();
     _ticker?.cancel();
     _clock.stop();
     unawaited(_sectionPlayer.stop());
@@ -407,7 +347,6 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   @override
   void dispose() {
     _ticker?.cancel();
-    _typedController.dispose();
     _sectionPlayer.dispose();
     _questionPlayer.dispose();
     super.dispose();
@@ -632,10 +571,8 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     final progress = (_currentIndex + 1) / _questions.length;
     final isCompose = question.isCompose;
     final isCloze = question.type == ExerciseType.readingCloze;
-    final isTyped = question.isTyped;
     // Fill in the blank plays like matching: one shared bank, pick a letter.
     final isMatching = question.usesWordBank;
-    final options = question.options;
     final isLast = _currentIndex + 1 >= _questions.length;
     final passage = _session!.passage;
     final answered = _answeredCount;
@@ -725,90 +662,14 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
           ],
         ),
         const SizedBox(height: 24),
-        if (isMatching) ...[
-          _buildMatchingQuestion(question, options),
-        ] else if (isCompose) ...[
-          Text(
-            question.prompt.isNotEmpty
-                ? question.prompt
-                : l.exercisePlayComposePrompt,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.navy,
-                ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            l.exercisePlayComposeHint,
-            style: TextStyle(color: AppColors.textSecondary),
-          ),
-          const SizedBox(height: 16),
-          _buildComposeList(),
-        ] else if (isTyped) ...[
-          _buildTypedQuestion(question),
-        ] else ...[
-          if (question.imageUrl.isNotEmpty) ...[
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                question.imageUrl,
-                height: 220,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
-          Text(
-            question.prompt,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.navy,
-                ),
-          ),
-          const SizedBox(height: 20),
-          if (question.hasPictureOptions)
-            _buildPictureOptions(question)
-          else
-          ...List.generate(options.length, (i) {
-            final selected = _selectedIndex == i;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: AppCard(
-                onTap: () => _selectAnswer(i),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: selected
-                        ? AppColors.teal.withValues(alpha: 0.08)
-                        : null,
-                    borderRadius: BorderRadius.circular(8),
-                    border: selected
-                        ? Border.all(color: AppColors.teal, width: 2)
-                        : null,
-                  ),
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                  child: Row(
-                    children: [
-                      _OptionLetter(index: i, selected: selected, size: 32),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          options[i],
-                          style: AppTextStyles.question.copyWith(fontSize: 20),
-                        ),
-                      ),
-                      if (selected) ...[
-                        const SizedBox(width: 8),
-                        Icon(Icons.check_circle, color: AppColors.teal),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-            );
-          }),
-        ],
+        QuestionAnswerView(
+          key: ValueKey(question.id),
+          question: question,
+          answer: _session!.answers[question.id],
+          onChanged: _onAnswer,
+          onSubmitted: _next,
+          enabled: !_finished,
+        ),
         const SizedBox(height: 24),
         Row(
           children: [
@@ -858,252 +719,6 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
             ),
           ),
         ],
-      ],
-    );
-  }
-
-  /// Type the hanzi: the sentence with a gap and its pinyin hint. Picture
-  /// sentence: the picture (if any) and the keyword to use.
-  Widget _buildTypedQuestion(PlayQuestion question) {
-    final l = context.l10n;
-    final isPicture = question.type == ExerciseType.pictureSentence;
-    final hint = question.keyword;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (isPicture && question.imageUrl.isNotEmpty) ...[
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.network(
-              question.imageUrl,
-              height: 220,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-            ),
-          ),
-          const SizedBox(height: 16),
-        ],
-        Text(
-          isPicture ? l.exercisePlayPictureSentencePrompt : question.prompt,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: AppColors.navy,
-                height: 1.5,
-              ),
-        ),
-        if (hint.isNotEmpty) ...[
-          const SizedBox(height: 10),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: AppColors.teal.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                hint,
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.teal,
-                ),
-              ),
-            ),
-          ),
-        ],
-        const SizedBox(height: 16),
-        TextField(
-          controller: _typedController,
-          autofocus: true,
-          maxLines: isPicture ? 3 : 1,
-          style: AppTextStyles.question.copyWith(fontSize: 22),
-          onChanged: (_) => setState(_storeAnswer),
-          onSubmitted: (_) => _next(),
-          decoration: InputDecoration(
-            hintText: isPicture ? '用这个词写一个句子…' : '写汉字…',
-            border: const OutlineInputBorder(),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMatchingQuestion(PlayQuestion question, List<String> options) {
-    final l = context.l10n;
-    final isWide = MediaQuery.sizeOf(context).width >= 640;
-
-    Widget promptCard() => AppCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                question.type == ExerciseType.readingCloze
-                    ? l.exercisePlayClozeLabel
-                    : l.exercisePlayPromptLabel,
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
-                  fontSize: 12,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                question.prompt,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.navy,
-                      height: 1.4,
-                    ),
-              ),
-            ],
-          ),
-        );
-
-    Widget answersCard() => AppCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                l.exercisePlayChooseResponse,
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
-                  fontSize: 12,
-                ),
-              ),
-              const SizedBox(height: 12),
-              if (question.hasPictureOptions)
-                _buildPictureOptions(question)
-              else
-              ...List.generate(options.length, (index) {
-                final selected = _selectedIndex == index;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: AppCard(
-                    onTap: () => _selectAnswer(index),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        border: selected
-                            ? Border.all(color: AppColors.teal, width: 2)
-                            : null,
-                      ),
-                      child: Row(
-                        children: [
-                          _OptionLetter(
-                            index: index,
-                            selected: selected,
-                            size: 28,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              options[index],
-                              style: AppTextStyles.question,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              }),
-            ],
-          ),
-        );
-
-    if (isWide) {
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(child: promptCard()),
-          const SizedBox(width: 16),
-          Expanded(child: answersCard()),
-        ],
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        promptCard(),
-        const SizedBox(height: 16),
-        answersCard(),
-      ],
-    );
-  }
-
-  /// Picture choices (HSK listening part 1): lettered pictures, tap one.
-  Widget _buildPictureOptions(PlayQuestion question) {
-    final l = context.l10n;
-    final urls = question.optionImageUrls;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          l.exercisePlayPickPicture,
-          style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
-        ),
-        const SizedBox(height: 10),
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: List.generate(question.options.length, (i) {
-            final selected = _selectedIndex == i;
-            final url = i < urls.length ? urls[i] : '';
-            return SizedBox(
-              width: 168,
-              child: AppCard(
-                onTap: () => _selectAnswer(i),
-                padding: const EdgeInsets.all(8),
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: selected ? AppColors.teal : Colors.transparent,
-                      width: 2,
-                    ),
-                  ),
-                  padding: const EdgeInsets.all(6),
-                  child: Column(
-                    children: [
-                      if (url.isNotEmpty)
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: Image.network(
-                            url,
-                            height: 120,
-                            fit: BoxFit.contain,
-                            errorBuilder: (_, __, ___) => SizedBox(
-                              height: 120,
-                              child: Icon(Icons.broken_image_outlined,
-                                  color: AppColors.textSecondary),
-                            ),
-                          ),
-                        )
-                      else
-                        const SizedBox(height: 120),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          _OptionLetter(
-                              index: i, selected: selected, size: 28),
-                          if (selected) ...[
-                            const SizedBox(width: 8),
-                            Icon(Icons.check_circle,
-                                color: AppColors.teal, size: 20),
-                          ],
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          }),
-        ),
       ],
     );
   }
@@ -1185,106 +800,6 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     ];
   }
 
-  Widget _buildComposeList() {
-    final l = context.l10n;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Container(
-          width: double.infinity,
-          constraints: const BoxConstraints(minHeight: 72),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.card,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.border, width: 1.5),
-          ),
-          child: _composeOrder.isEmpty
-              ? Text(
-                  l.exercisePlayComposeEmpty,
-                  style: TextStyle(color: AppColors.textSecondary),
-                )
-              : Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: List.generate(_composeOrder.length, (index) {
-                    return InputChip(
-                      label: Text(_composeOrder[index]),
-                      labelStyle: AppTextStyles.question,
-                      onPressed: () => _removeComposeSegment(index),
-                      onDeleted: () => _removeComposeSegment(index),
-                      deleteIconColor: AppColors.teal,
-                      backgroundColor: AppColors.teal.withValues(alpha: 0.08),
-                      side: BorderSide(color: AppColors.border),
-                    );
-                  }),
-                ),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          l.exercisePlayWordBank,
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            color: AppColors.navy,
-            fontSize: 13,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: _composeBank.map((segment) {
-            return ActionChip(
-              label: Text(segment),
-              labelStyle: AppTextStyles.question,
-              onPressed: () => _addComposeSegment(segment),
-              backgroundColor: AppColors.surface,
-              side: BorderSide(color: AppColors.border),
-            );
-          }).toList(),
-        ),
-      ],
-    );
-  }
-}
-
-/// "A", "B"… box in front of a choice.
-class _OptionLetter extends StatelessWidget {
-  const _OptionLetter({
-    required this.index,
-    required this.selected,
-    required this.size,
-  });
-
-  final int index;
-  final bool selected;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: selected
-            ? AppColors.teal.withValues(alpha: 0.15)
-            : AppColors.surface,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(
-          color: selected ? AppColors.teal : AppColors.border,
-        ),
-      ),
-      child: Text(
-        String.fromCharCode(65 + index),
-        style: TextStyle(
-          fontWeight: FontWeight.w700,
-          color: selected ? AppColors.teal : AppColors.textSecondary,
-          fontSize: size >= 32 ? 15 : 14,
-        ),
-      ),
-    );
-  }
 }
 
 /// Elapsed time, or the time left when the exercise has a limit (red in the

@@ -38,6 +38,12 @@ import '../../features/teacher/teacher_exercise_form_screen.dart';
 import '../../features/teacher/student_detail_screen.dart';
 import '../../features/teacher/teacher_session_detail_screen.dart';
 import '../../features/teacher/teacher_session_form_screen.dart';
+import '../../features/tests/test_codes_screen.dart';
+import '../../features/tests/test_formats_screen.dart';
+import '../../features/tests/test_player_screen.dart';
+import '../../features/tests/test_results_screen.dart';
+import '../../features/tests/test_review_screen.dart';
+import '../../features/tests/test_supervision_screen.dart';
 import '../../models/admin_dashboard_stat_kind.dart';
 import '../../models/class_session.dart';
 import '../../models/dashboard_stat_routes.dart';
@@ -327,6 +333,54 @@ class AppRouter {
                   path: 'audit-logs',
                   builder: (_, __) => const AuditLogsScreen(embedded: true),
                 ),
+                // Supervised tests (Build 1).
+                GoRoute(
+                  path: 'tests/formats',
+                  builder: (_, __) =>
+                      const TestFormatsScreen(embedded: true),
+                ),
+                GoRoute(
+                  path: 'tests/codes',
+                  builder: (_, __) => const TestCodesScreen(embedded: true),
+                ),
+                GoRoute(
+                  path: 'tests/codes/new',
+                  builder: (_, state) => TestCodeFormScreen(
+                    initialSheet: state.uri.queryParameters['sheet'],
+                    embedded: true,
+                  ),
+                ),
+                GoRoute(
+                  path: 'tests/codes/:id/edit',
+                  builder: (_, state) => TestCodeFormScreen(
+                    editId: state.pathParameters['id']!,
+                    embedded: true,
+                  ),
+                ),
+                GoRoute(
+                  path: 'tests/supervise/:id',
+                  builder: (_, state) => TestSupervisionScreen(
+                    sessionId: state.pathParameters['id']!,
+                    basePath: '/admin/tests',
+                    embedded: true,
+                  ),
+                ),
+                GoRoute(
+                  path: 'tests/results',
+                  builder: (_, state) => TestResultsScreen(
+                    basePath: '/admin/tests',
+                    codeId: state.uri.queryParameters['code'],
+                    embedded: true,
+                  ),
+                ),
+                GoRoute(
+                  path: 'tests/result/:id',
+                  builder: (_, state) => TestResultScreen(
+                    resultId: state.pathParameters['id']!,
+                    staff: true,
+                    embedded: true,
+                  ),
+                ),
                 GoRoute(
                   path: 'materials',
                   builder: (context, _) {
@@ -491,6 +545,31 @@ class AppRouter {
                     );
                   },
                 ),
+                // Supervised tests (Build 1).
+                GoRoute(
+                  path: 'tests/supervise/:id',
+                  builder: (_, state) => TestSupervisionScreen(
+                    sessionId: state.pathParameters['id']!,
+                    basePath: '/teacher/tests',
+                    embedded: true,
+                  ),
+                ),
+                GoRoute(
+                  path: 'tests/results',
+                  builder: (_, state) => TestResultsScreen(
+                    basePath: '/teacher/tests',
+                    codeId: state.uri.queryParameters['code'],
+                    embedded: true,
+                  ),
+                ),
+                GoRoute(
+                  path: 'tests/result/:id',
+                  builder: (_, state) => TestResultScreen(
+                    resultId: state.pathParameters['id']!,
+                    staff: true,
+                    embedded: true,
+                  ),
+                ),
               ],
             ),
           ],
@@ -510,6 +589,26 @@ class AppRouter {
               path: 'exercise/:id',
               builder: (_, state) => ExerciseScreen(
                 exerciseId: state.pathParameters['id']!,
+              ),
+            ),
+            // Supervised tests (Build 1).
+            GoRoute(
+              path: 'test',
+              builder: (_, state) => TestPlayerScreen(
+                token: state.uri.queryParameters['token'],
+                codeId: state.uri.queryParameters['code'],
+              ),
+            ),
+            GoRoute(
+              path: 'test-result/:id',
+              builder: (_, state) => TestResultScreen(
+                resultId: state.pathParameters['id']!,
+              ),
+            ),
+            GoRoute(
+              path: 'test-review/:codeId',
+              builder: (_, state) => TestReviewScreen(
+                codeId: state.pathParameters['codeId']!,
               ),
             ),
             GoRoute(

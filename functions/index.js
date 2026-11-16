@@ -1254,6 +1254,13 @@ exports.startExercise = onCall(async (request) => {
   const exercise = await loadAssignedPackage(exerciseId, uid);
   const items = await loadPackageItems(exercise);
   const category = play.packageCategory(items);
+  // Owner decision 2026-11-16: HSK simulations run only through test codes
+  // (the supervised test track); exam packages stay as they are.
+  if (category === "hsk_simulation") {
+    throw new HttpsError("failed-precondition",
+        "HSK simulations are taken in Tests: ask your teacher for a token.",
+        {reason: "hsk-simulation-in-tests"});
+  }
   const oneAttempt = play.isOneAttempt(category);
   const limitSeconds = timeLimitSeconds(exercise);
   const attemptRef = db.collection(EXERCISE_ATTEMPTS).doc(`${exerciseId}_${uid}`);
@@ -1349,6 +1356,11 @@ exports.finishExercise = onCall(async (request) => {
     data.answers : {};
   // Type of exercise follows the first worksheet of the package.
   const category = play.packageCategory(items);
+  if (category === "hsk_simulation") {
+    throw new HttpsError("failed-precondition",
+        "HSK simulations are taken in Tests: ask your teacher for a token.",
+        {reason: "hsk-simulation-in-tests"});
+  }
   const oneAttempt = play.isOneAttempt(category);
   const limitSeconds = timeLimitSeconds(exercise);
 
@@ -1468,3 +1480,656 @@ exports.deleteUserAccount = onCall(async (request) => {
 // created by the owner on 2026-11-13 with
 // `firebase firestore:backups:schedules:create`). The former
 // `scheduledFirestoreExport` function was removed the same day.
+
+// ---------------------------------------------------------------------------
+// Supervised tests (PLAN.md §3, Build 1). Admins write `test_formats` and
+// `test_codes` from the app; everything below is written only here.
+// A teacher opens a session for a code and shows its token; a student types
+// the token and sits the test part by part, each part on its own server
+// clock. Answer keys never leave the server. Pure logic: supervised_test.js.
+// ---------------------------------------------------------------------------
+const tests = require("./supervised_test");
+
+const TEST_CODES = "test_codes";
+const TEST_SESSIONS = "test_sessions";
+const TEST_ATTEMPTS = "test_attempts";
+const TEST_RESULTS = "test_results";
+
+/** Signed-in, active teacher or admin. */
+async function requireStaff(request) {
+  const caller = await requireCaller(request);
+  const role = caller.profile.role;
+  if (role !== "teacher" && role !== "admin") {
+    throw new HttpsError("permission-denied", "Only teachers and admins can do this.");
+  }
+  return caller;
+}
+
+/** Signed-in, active student. */
+async function requireStudent(request) {
+  const caller = await requireCaller(request);
+  if ((caller.profile.role || "student") !== "student") {
+    throw new HttpsError("permission-denied", "Only students sit tests.");
+  }
+  return caller;
+}
+
+/** Latin name: nameIndonesian, falling back to name (PLAN.md §3 Names). */
+function latinName(profile) {
+  const v = String(profile.nameIndonesian || "").trim();
+  return v || String(profile.name || "").trim();
+}
+
+function millisOf(ts) {
+  return ts && typeof ts.toMillis === "function" ? ts.toMillis() : 0;
+}
+
+async function loadTestCode(codeId) {
+  const id = tests.normalizeTestCode(codeId);
+  if (!id) throw new HttpsError("invalid-argument", "codeId is required.");
+  const snap = await db.collection(TEST_CODES).doc(id).get();
+  if (!snap.exists) throw new HttpsError("not-found", "Test code not found.");
+  const code = snap.data() || {};
+  return {id, code, format: tests.cleanFormat(code.format)};
+}
+
+/** Worksheet items of a code, split into its parts. */
+async function loadTestParts(code, format) {
+  const items = await loadPackageItems({bankSheets: [String(code.sheetKey || "")]});
+  return tests.splitIntoParts(items, format.parts);
+}
+
+/** What the start screen shows (no questions). */
+function testFacts(codeId, code, format, partClocks) {
+  return {
+    codeId,
+    code: code.code || codeId,
+    family: code.family || "",
+    level: code.level || "",
+    levelKey: code.levelKey || "",
+    releaseYear: code.releaseYear || null,
+    parts: format.parts.map((p) => ({
+      skill: p.skill, minutes: p.minutes, questions: p.questions, maxScore: p.maxScore,
+    })),
+    passMark: format.passMark,
+    partClocks: partClocks !== false,
+  };
+}
+
+/** The listening recording of a set of items (one per worksheet). */
+function recordingOf(items) {
+  const it = items.find((x) => x.sectionAudioUrl && partSkillIsListening(x));
+  return it ? String(it.sectionAudioUrl) : "";
+}
+function partSkillIsListening(item) {
+  return tests.partSkillOf(item) === "listening";
+}
+
+/**
+ * The open part as the player needs it: its questions without keys, the
+ * seconds left on its clock and, for listening, how far the recording is.
+ * With one clock for the whole paper (`partClocks` false) the only "part"
+ * is the whole paper: every question, in part order.
+ */
+function partPayload(split, format, attempt, nowMs) {
+  const partClocks = attempt.partClocks !== false;
+  const clock = tests.clockFormat(format, partClocks);
+  const index = attempt.partIndex;
+  const items = partClocks ? split[index] || [] : split.flat();
+  const startedMs = millisOf((attempt.partStartedAt || [])[index]);
+  const seconds = tests.partSeconds(clock, index);
+  const part = partClocks ? format.parts[index] : null;
+  const recording = !partClocks || (part && part.skill === "listening") ?
+    recordingOf(items) : "";
+  return {
+    partIndex: index,
+    partCount: clock.parts.length,
+    skill: part ? part.skill : "reading",
+    questions: items.map(play.stripQuestion),
+    secondsLeft: tests.secondsLeft(startedMs, seconds, nowMs),
+    partSeconds: seconds,
+    elapsedSeconds: tests.elapsedSeconds(startedMs, nowMs),
+    recordingUrl: recording,
+  };
+}
+
+/** Wrong tokens per student (not per address: a class shares one Wi-Fi). */
+const WRONG_TOKEN_MAX = 8;
+const WRONG_TOKEN_WINDOW_MS = 10 * 60 * 1000;
+function wrongTokenRef(uid) {
+  const key = crypto.createHash("sha256").update(`test-token:${uid}`)
+      .digest("hex").slice(0, 24);
+  return db.collection(RATE_LIMITS).doc(key);
+}
+async function assertNotTokenBlocked(uid) {
+  const snap = await wrongTokenRef(uid).get();
+  const d = snap.exists ? snap.data() || {} : {};
+  const inWindow = Date.now() - (Number(d.windowStart) || 0) < WRONG_TOKEN_WINDOW_MS;
+  if (inWindow && (Number(d.count) || 0) >= WRONG_TOKEN_MAX) {
+    throw new HttpsError(
+        "resource-exhausted", "Too many wrong tokens. Try again in a few minutes.",
+        {reason: "token-blocked"},
+    );
+  }
+}
+async function recordWrongToken(uid) {
+  const ref = wrongTokenRef(uid);
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const d = snap.exists ? snap.data() || {} : {};
+    const now = Date.now();
+    const start = Number(d.windowStart) || 0;
+    const inWindow = now - start < WRONG_TOKEN_WINDOW_MS;
+    tx.set(ref, {
+      bucket: "test-token",
+      count: (inWindow ? Number(d.count) || 0 : 0) + 1,
+      windowStart: inWindow ? start : now,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+  });
+}
+
+/** The open session a token belongs to, or null. */
+async function sessionForToken(token) {
+  const snap = await db.collection(TEST_SESSIONS)
+      .where("token", "==", token).where("status", "==", "open").limit(1).get();
+  if (snap.empty) return null;
+  return {id: snap.docs[0].id, session: snap.docs[0].data() || {}};
+}
+
+/**
+ * Parts whose clock (plus grace) ran out without a submit count as empty
+ * and the next part opens now (a reload after a power cut). Returns the new
+ * part index and start times; `finished` when no part is left.
+ */
+function advanceExpiredParts(attempt, testFormat, nowMs) {
+  const format = tests.clockFormat(testFormat, attempt.partClocks !== false);
+  const startedAt = [...(attempt.partStartedAt || [])];
+  let index = attempt.partIndex;
+  let changed = false;
+  while (index < format.parts.length) {
+    const startedMs = millisOf(startedAt[index]);
+    if (!tests.isPartLate(startedMs, tests.partSeconds(format, index),
+        LATE_GRACE_SECONDS, nowMs)) {
+      break;
+    }
+    index += 1;
+    changed = true;
+    if (index < format.parts.length) startedAt[index] = Timestamp.fromMillis(nowMs);
+  }
+  return {changed, partIndex: index, partStartedAt: startedAt,
+    finished: index >= format.parts.length};
+}
+
+function partEndsAt(format, index, startedTs, partClocks) {
+  const clock = tests.clockFormat(format, partClocks !== false);
+  return Timestamp.fromMillis(millisOf(startedTs) + tests.partSeconds(clock, index) * 1000);
+}
+
+/**
+ * Scores an attempt and writes its result (in the caller's transaction).
+ * Parts never submitted count as empty.
+ */
+function writeTestResult(writer, {attemptId, attempt, codeId, code, format, split,
+  session}) {
+  const scored = tests.scoreTest(split, format, attempt.answers || {}, true);
+  const nowMs = Date.now();
+  writer.set(db.collection(TEST_RESULTS).doc(attemptId), {
+    codeId,
+    code: code.code || codeId,
+    family: code.family || "",
+    level: code.level || "",
+    levelKey: code.levelKey || "",
+    releaseYear: code.releaseYear || null,
+    studentId: attempt.studentId,
+    studentName: attempt.studentName || "",
+    studentNameChinese: attempt.studentNameChinese || "",
+    sessionId: attempt.sessionId || "",
+    openedBy: (session && session.openedBy) || attempt.openedBy || "",
+    supervisorName: (session && session.openedByName) || attempt.supervisorName || "",
+    parts: scored.parts,
+    total: scored.total,
+    max: scored.max,
+    passMark: scored.passMark,
+    passed: scored.passed,
+    valid: true,
+    invalidReason: "",
+    status: "final",
+    resultNumber: tests.resultNumber(attemptId, nowMs),
+    leftCount: Number(attempt.leftCount) || 0,
+    // Server time from start to the last submit: Build 2's leaderboard
+    // breaks ties by the shorter time.
+    durationSeconds: tests.durationSeconds(millisOf(attempt.startedAt), nowMs),
+    finishedAt: Timestamp.fromMillis(nowMs),
+    createdAt: FieldValue.serverTimestamp(),
+  });
+  return scored;
+}
+
+/**
+ * Staff: open a supervised session for a test code (→ token, 15-minute
+ * join window), or with `sessionId` give an open session a new token, which
+ * also extends its join window.
+ */
+exports.openTestSession = onCall(async (request) => {
+  const {uid, profile} = await requireStaff(request);
+  const data = request.data || {};
+  const sessionId = String(data.sessionId || "").trim();
+  const now = Date.now();
+  const joinUntil = Timestamp.fromMillis(now + tests.JOIN_WINDOW_SECONDS * 1000);
+
+  const freshToken = async () => {
+    for (let i = 0; i < 8; i++) {
+      const token = tests.makeToken((max) => crypto.randomInt(max));
+      if (!(await sessionForToken(token))) return token;
+    }
+    throw new HttpsError("unavailable", "Could not make a token. Try again.");
+  };
+
+  if (sessionId) {
+    const ref = db.collection(TEST_SESSIONS).doc(sessionId);
+    const snap = await ref.get();
+    if (!snap.exists) throw new HttpsError("not-found", "Session not found.");
+    const s = snap.data() || {};
+    if (profile.role !== "admin" && s.openedBy !== uid) {
+      throw new HttpsError("permission-denied", "This is another teacher's session.");
+    }
+    if (s.status !== "open") {
+      throw new HttpsError("failed-precondition", "This session is closed.");
+    }
+    const token = await freshToken();
+    await ref.update({token, joinUntil, tokenCount: FieldValue.increment(1)});
+    return {sessionId, token, joinUntilMillis: joinUntil.toMillis()};
+  }
+
+  const {id: codeId, code, format} = await loadTestCode(data.codeId);
+  if (code.active === false) {
+    throw new HttpsError("failed-precondition", "This test code is not active.");
+  }
+  if (!format.parts.length) {
+    throw new HttpsError("failed-precondition", "This test code has no parts.");
+  }
+  // Owner decision 2026-11-16: the teacher chooses per session. true = a
+  // clock per part (as planned); false = one clock for the whole paper.
+  const partClocks = data.partClocks !== false;
+  const token = await freshToken();
+  const ref = db.collection(TEST_SESSIONS).doc();
+  await ref.set({
+    codeId,
+    code: code.code || codeId,
+    family: code.family || "",
+    level: code.level || "",
+    levelKey: code.levelKey || "",
+    partClocks,
+    token,
+    joinUntil,
+    openedBy: uid,
+    openedByName: latinName(profile),
+    status: "open",
+    tokenCount: 1,
+    createdAt: FieldValue.serverTimestamp(),
+  });
+  await writeAudit({action: "test.session.open", actorId: uid,
+    actorName: latinName(profile), targetType: "test_session", targetId: ref.id,
+    detail: codeId});
+  return {sessionId: ref.id, token, joinUntilMillis: joinUntil.toMillis()};
+});
+
+/**
+ * Student: start (or resume) a supervised test.
+ * - `{token, peek: true}`: the start-screen facts only.
+ * - `{token}`: joins within the join window, creates the attempt and opens
+ *   part 1 (an unfinished attempt for the same code resumes instead).
+ * - `{codeId}`: resumes the student's own unfinished attempt (after a
+ *   reload), without a token.
+ * Returns the open part's questions without keys, the seconds left in the
+ * part and the elapsed seconds of the recording.
+ */
+exports.startTest = onCall(async (request) => {
+  const {uid, profile} = await requireStudent(request);
+  const data = request.data || {};
+  const nowMs = Date.now();
+
+  let codeId;
+  let sessionRef = null;
+  let session = null;
+  if (data.codeId && !data.token) {
+    codeId = tests.normalizeTestCode(data.codeId);
+  } else {
+    await assertNotTokenBlocked(uid);
+    const token = tests.normalizeToken(data.token);
+    const found = token ? await sessionForToken(token) : null;
+    if (!found) {
+      await recordWrongToken(uid);
+      throw new HttpsError("not-found", "This token is not valid.", {reason: "bad-token"});
+    }
+    codeId = found.session.codeId;
+    sessionRef = db.collection(TEST_SESSIONS).doc(found.id);
+    session = found.session;
+  }
+
+  const {code, format} = await loadTestCode(codeId);
+  const attemptId = `${codeId}_${uid}`;
+  const attemptRef = db.collection(TEST_ATTEMPTS).doc(attemptId);
+  const existingSnap = await attemptRef.get();
+  const existing = existingSnap.exists ? existingSnap.data() || {} : null;
+  if (existing && existing.finishedAt) {
+    throw new HttpsError("failed-precondition", "You have already sat this test.",
+        {reason: "already-attempted", codeId});
+  }
+  if (!existing && !session) {
+    throw new HttpsError("not-found", "Type the token from your teacher.",
+        {reason: "no-attempt"});
+  }
+  if (!existing && millisOf(session.joinUntil) < nowMs) {
+    throw new HttpsError("deadline-exceeded",
+        "The time to join has ended. Ask for a new token.", {reason: "join-closed"});
+  }
+  if (!existing && code.active === false) {
+    throw new HttpsError("failed-precondition", "This test code is not active.");
+  }
+
+  const partClocks = existing ?
+    existing.partClocks !== false : session.partClocks !== false;
+  const facts = testFacts(codeId, code, format, partClocks);
+  if (data.peek === true) {
+    return {...facts, started: !!existing, finished: false};
+  }
+
+  const split = await loadTestParts(code, format);
+  const out = await db.runTransaction(async (tx) => {
+    const snap = await tx.get(attemptRef);
+    let attempt = snap.exists ? snap.data() || {} : null;
+    if (attempt && attempt.finishedAt) {
+      throw new HttpsError("failed-precondition", "You have already sat this test.",
+          {reason: "already-attempted", codeId});
+    }
+    if (!attempt) {
+      const startedTs = Timestamp.fromMillis(nowMs);
+      attempt = {
+        codeId,
+        studentId: uid,
+        studentName: latinName(profile),
+        studentNameChinese: String(profile.nameChinese || "").trim(),
+        sessionId: sessionRef.id,
+        openedBy: session.openedBy || "",
+        supervisorName: session.openedByName || "",
+        partClocks,
+        partIndex: 0,
+        partCount: tests.clockFormat(format, partClocks).parts.length,
+        partStartedAt: [startedTs],
+        partEndsAt: partEndsAt(format, 0, startedTs, partClocks),
+        answers: {},
+        leftCount: 0,
+        events: [],
+        status: "in_progress",
+        startedAt: startedTs,
+      };
+      tx.set(attemptRef, attempt);
+      return {attempt, finished: false};
+    }
+    const adv = advanceExpiredParts(attempt, format, nowMs);
+    if (adv.finished) {
+      const sSnap = attempt.sessionId ?
+        await tx.get(db.collection(TEST_SESSIONS).doc(attempt.sessionId)) : null;
+      const closed = {...attempt, partIndex: adv.partIndex};
+      tx.update(attemptRef, {
+        partIndex: adv.partIndex, partStartedAt: adv.partStartedAt,
+        status: "finished", finishedAt: Timestamp.fromMillis(nowMs),
+      });
+      writeTestResult(tx, {attemptId, attempt: closed, codeId, code, format, split,
+        session: sSnap && sSnap.exists ? sSnap.data() : null});
+      return {attempt: closed, finished: true};
+    }
+    if (adv.changed) {
+      const startedTs = adv.partStartedAt[adv.partIndex];
+      tx.update(attemptRef, {
+        partIndex: adv.partIndex, partStartedAt: adv.partStartedAt,
+        partEndsAt: partEndsAt(format, adv.partIndex, startedTs, attempt.partClocks),
+      });
+      attempt = {...attempt, partIndex: adv.partIndex, partStartedAt: adv.partStartedAt};
+    }
+    return {attempt, finished: false};
+  });
+
+  if (out.finished) return {...facts, finished: true, resultId: attemptId};
+  return {...facts, finished: false, attemptId,
+    ...partPayload(split, format, out.attempt, Date.now())};
+});
+
+/**
+ * Student: submit the open part. A part that is already closed is refused;
+ * a submit later than the part clock plus the grace is stored as empty.
+ * Opens the next part and returns it, or after the last part scores the
+ * attempt and writes `test_results`.
+ */
+exports.submitTestPart = onCall(async (request) => {
+  const {uid} = await requireStudent(request);
+  const data = request.data || {};
+  const {id: codeId, code, format} = await loadTestCode(data.codeId);
+  const partIndex = Number(data.partIndex);
+  if (!Number.isInteger(partIndex) || partIndex < 0) {
+    throw new HttpsError("invalid-argument", "partIndex is required.");
+  }
+  const split = await loadTestParts(code, format);
+  const attemptId = `${codeId}_${uid}`;
+  const attemptRef = db.collection(TEST_ATTEMPTS).doc(attemptId);
+
+  const out = await db.runTransaction(async (tx) => {
+    const snap = await tx.get(attemptRef);
+    if (!snap.exists) {
+      throw new HttpsError("failed-precondition", "Start the test first.",
+          {reason: "not-started"});
+    }
+    const attempt = snap.data() || {};
+    if (attempt.finishedAt) {
+      return {finished: true};
+    }
+    if (partIndex !== attempt.partIndex) {
+      throw new HttpsError("failed-precondition", "This part is already closed.",
+          {reason: "part-closed", partIndex: attempt.partIndex});
+    }
+    const sSnap = attempt.sessionId ?
+      await tx.get(db.collection(TEST_SESSIONS).doc(attempt.sessionId)) : null;
+    const partClocks = attempt.partClocks !== false;
+    const clock = tests.clockFormat(format, partClocks);
+    const nowMs = Date.now();
+    const startedMs = millisOf((attempt.partStartedAt || [])[partIndex]);
+    const late = tests.isPartLate(startedMs, tests.partSeconds(clock, partIndex),
+        LATE_GRACE_SECONDS, nowMs);
+    const answers = {...(attempt.answers || {})};
+    if (partClocks) {
+      answers[String(partIndex)] = late ? {} :
+        tests.answersForPart(split[partIndex] || [], data.answers);
+    } else {
+      // One clock, one submit: the answers go to the part of each question.
+      split.forEach((items, i) => {
+        answers[String(i)] = late ? {} : tests.answersForPart(items, data.answers);
+      });
+    }
+    const lateParts = late ?
+      [...(attempt.lateParts || []), partIndex] : attempt.lateParts || [];
+    const next = partIndex + 1;
+    if (next >= clock.parts.length) {
+      const closed = {...attempt, answers, partIndex: next};
+      tx.update(attemptRef, {
+        answers, partIndex: next, lateParts, status: "finished",
+        finishedAt: Timestamp.fromMillis(nowMs),
+      });
+      writeTestResult(tx, {attemptId, attempt: closed, codeId, code, format, split,
+        session: sSnap && sSnap.exists ? sSnap.data() : null});
+      return {finished: true};
+    }
+    const startedTs = Timestamp.fromMillis(nowMs);
+    const partStartedAt = [...(attempt.partStartedAt || [])];
+    partStartedAt[next] = startedTs;
+    tx.update(attemptRef, {
+      answers, partIndex: next, partStartedAt, lateParts,
+      partEndsAt: partEndsAt(format, next, startedTs, partClocks),
+    });
+    return {finished: false, attempt: {...attempt, answers, partIndex: next, partStartedAt}};
+  });
+
+  if (out.finished) return {finished: true, resultId: attemptId};
+  return {
+    ...testFacts(codeId, code, format, out.attempt.partClocks),
+    finished: false,
+    attemptId,
+    ...partPayload(split, format, out.attempt, Date.now()),
+  };
+});
+
+/** Student: "left the page" / "came back", throttled to one per 2 seconds. */
+exports.reportTestEvent = onCall(async (request) => {
+  const {uid} = await requireStudent(request);
+  const data = request.data || {};
+  const type = data.type === "back" ? "back" : "left";
+  const codeId = tests.normalizeTestCode(data.codeId);
+  if (!codeId) throw new HttpsError("invalid-argument", "codeId is required.");
+  const ref = db.collection(TEST_ATTEMPTS).doc(`${codeId}_${uid}`);
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) return {recorded: false};
+    const a = snap.data() || {};
+    if (a.finishedAt) return {recorded: false};
+    const now = Date.now();
+    const events = Array.isArray(a.events) ? a.events : [];
+    const last = events[events.length - 1];
+    if (last && last.type === type && now - Number(last.at || 0) < 2000) {
+      return {recorded: false};
+    }
+    tx.update(ref, {
+      events: tests.appendEvent(events, {type, at: now, part: a.partIndex}),
+      ...(type === "left" ? {leftCount: FieldValue.increment(1)} : {}),
+      lastEventAt: Timestamp.fromMillis(now),
+    });
+    return {recorded: true};
+  });
+});
+
+/**
+ * Staff: end the session for everyone. Every open attempt of the session
+ * is finished and scored; parts never submitted count as empty.
+ */
+exports.closeTestSession = onCall(async (request) => {
+  const {uid, profile} = await requireStaff(request);
+  const sessionId = String((request.data || {}).sessionId || "").trim();
+  if (!sessionId) throw new HttpsError("invalid-argument", "sessionId is required.");
+  const sessionRef = db.collection(TEST_SESSIONS).doc(sessionId);
+  const sSnap = await sessionRef.get();
+  if (!sSnap.exists) throw new HttpsError("not-found", "Session not found.");
+  const session = sSnap.data() || {};
+  if (profile.role !== "admin" && session.openedBy !== uid) {
+    throw new HttpsError("permission-denied", "This is another teacher's session.");
+  }
+  const {id: codeId, code, format} = await loadTestCode(session.codeId);
+  const split = await loadTestParts(code, format);
+  // Stop new joins first, then finish whoever is still sitting.
+  await sessionRef.update({
+    status: "closed", closedAt: FieldValue.serverTimestamp(), closedBy: uid,
+    joinUntil: Timestamp.fromMillis(Date.now()),
+  });
+  const attempts = await db.collection(TEST_ATTEMPTS)
+      .where("sessionId", "==", sessionId).get();
+  let finished = 0;
+  for (const doc of attempts.docs) {
+    const did = await db.runTransaction(async (tx) => {
+      const snap = await tx.get(doc.ref);
+      const attempt = snap.data() || {};
+      if (attempt.finishedAt) return false;
+      const closed = {...attempt, partIndex: format.parts.length};
+      tx.update(doc.ref, {
+        partIndex: format.parts.length, status: "finished", closedBySession: true,
+        finishedAt: FieldValue.serverTimestamp(),
+      });
+      writeTestResult(tx, {attemptId: doc.id, attempt: closed, codeId, code, format,
+        split, session});
+      return true;
+    });
+    if (did) finished += 1;
+  }
+  await writeAudit({action: "test.session.close", actorId: uid,
+    actorName: latinName(profile), targetType: "test_session", targetId: sessionId,
+    detail: `${codeId}: ${finished} attempts finished`});
+  return {closed: true, finished};
+});
+
+/** Staff: mark a result invalid (with a reason) or valid again. */
+exports.setTestResultValidity = onCall(async (request) => {
+  const {uid, profile} = await requireStaff(request);
+  const data = request.data || {};
+  const resultId = String(data.resultId || "").trim();
+  const valid = data.valid === true;
+  const reason = String(data.reason || "").trim().slice(0, 500);
+  if (!resultId) throw new HttpsError("invalid-argument", "resultId is required.");
+  if (!valid && !reason) {
+    throw new HttpsError("invalid-argument", "Give a reason.", {reason: "reason-required"});
+  }
+  const ref = db.collection(TEST_RESULTS).doc(resultId);
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) throw new HttpsError("not-found", "Result not found.");
+    const r = snap.data() || {};
+    if (profile.role !== "admin" && r.openedBy !== uid) {
+      throw new HttpsError("permission-denied",
+          "This result is from another teacher's session.");
+    }
+    tx.update(ref, {
+      valid,
+      invalidReason: valid ? "" : reason,
+      passed: tests.isPassed(r.total, r.passMark, valid),
+      validityBy: uid,
+      validityByName: latinName(profile),
+      validityAt: FieldValue.serverTimestamp(),
+    });
+  });
+  await writeAudit({action: valid ? "test.result.valid" : "test.result.invalid",
+    actorId: uid, actorName: latinName(profile), targetType: "test_result",
+    targetId: resultId, detail: reason});
+  return {valid};
+});
+
+/**
+ * Student: the review of their finished test as learning material (owner
+ * decision 2026-11-16): every question, their answer, the key, the
+ * explanation and the recordings. Refused while the session is still open
+ * (others may still be sitting the same paper). There is never a retake.
+ */
+exports.getTestReview = onCall(async (request) => {
+  const {uid} = await requireStudent(request);
+  const {id: codeId, code, format} = await loadTestCode((request.data || {}).codeId);
+  const attemptSnap = await db.collection(TEST_ATTEMPTS).doc(`${codeId}_${uid}`).get();
+  const attempt = attemptSnap.exists ? attemptSnap.data() || {} : null;
+  if (!attempt || !attempt.finishedAt) {
+    throw new HttpsError("failed-precondition", "Finish the test first.",
+        {reason: "not-finished"});
+  }
+  if (attempt.sessionId) {
+    const s = await db.collection(TEST_SESSIONS).doc(attempt.sessionId).get();
+    if (s.exists && (s.data() || {}).status === "open") {
+      throw new HttpsError("failed-precondition",
+          "The review opens when your teacher ends the session.",
+          {reason: "session-open"});
+    }
+  }
+  const split = await loadTestParts(code, format);
+  const answers = attempt.answers || {};
+  const items = [];
+  const recordings = {};
+  split.forEach((partItems, partIndex) => {
+    const given = answers[String(partIndex)] || {};
+    const scored = play.scoreAttempt(partItems, given);
+    const rec = format.parts[partIndex] && format.parts[partIndex].skill === "listening" ?
+      recordingOf(partItems) : "";
+    if (rec) recordings[String(partIndex)] = rec;
+    partItems.forEach((it, i) => {
+      items.push({
+        partIndex,
+        question: play.stripQuestion(it),
+        answer: Object.prototype.hasOwnProperty.call(given, it.id) ? given[it.id] : null,
+        review: scored.review[i],
+      });
+    });
+  });
+  return {codeId, items, recordings};
+});

@@ -13,14 +13,17 @@ every request goes to localhost. Names are invented demo data.
 """
 import datetime as dt
 import json
+import os
 import random
 import sys
 import urllib.error
 import urllib.request
 
 PROJECT = "chinese-tracker"
-AUTH = "http://localhost:9099/identitytoolkit.googleapis.com/v1"
-FS = f"http://localhost:8080/v1/projects/{PROJECT}/databases/(default)/documents"
+# 127.0.0.1, not localhost: on Windows "localhost" tries IPv6 first and every
+# request waits for that to fail (the seed took minutes instead of seconds).
+AUTH = "http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1"
+FS = f"http://127.0.0.1:8080/v1/projects/{PROJECT}/databases/(default)/documents"
 PASSWORD = "testpass123"
 TODAY = dt.date.today()
 random.seed(7)
@@ -238,6 +241,8 @@ def main():
             "createdBy": admin_uid, "createdAt": ts(-10 - k),
             **({"paidAt": ts(-9)} if status == "paid" else {})})
 
+    seed_tests(admin_uid, student_uids)
+
     # Notifications and settings
     put("notifications", "n_1", {"kind": "registration", "title": "New student registered",
         "body": f"{student_names[29]} registered in Easy Study.", "forRole": "admin", "userId": "",
@@ -264,6 +269,178 @@ def main():
     print("Seeded: 1 admin, 4 teachers, 30 students, 1 parent, terms, sessions, lessons, exercises, invoices.")
     print(f"Password for every account: {PASSWORD}")
     print("Logins: admin@ · teacher@ (and andrea@, budi@, clara@) · student1..30@ · parent@  (all @test.chinesetracker)")
+
+
+# ---------------------------------------------------------------- Build 1
+# Supervised tests: an HSK 3-style worksheet (all three skills, a recording,
+# picture choices), the HSK 1-6 formats, one test code with short part
+# clocks for the walk, and a practice and an exam package for the
+# regression check. Media are generated here (no binaries in git) and
+# written next to the emulator web bundle, served at /test_uploads/.
+MEDIA_DIR = os.path.join(os.path.dirname(__file__), "..", "build", "web-emulator",
+                         "test_uploads")
+MEDIA_URL = "http://localhost:5181/test_uploads"
+SHEET = "310901-KK"
+TEST_CODE = "H3DEMO1"
+
+
+def _wav(path, seconds=45, rate=8000):
+    """A plain beep pattern: one tone per 'item', silence between."""
+    import math
+    import wave
+    frames = bytearray()
+    for i in range(seconds * rate):
+        t = i / rate
+        on = (t % 3) < 0.6
+        freq = 440 + 110 * (int(t // 3) % 4)
+        v = 128 + (int(60 * math.sin(2 * math.pi * freq * t)) if on else 0)
+        frames.append(max(0, min(255, v)))
+    with wave.open(path, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(1)
+        w.setframerate(rate)
+        w.writeframes(bytes(frames))
+
+
+def _png(path, rgb, size=96):
+    """A solid square PNG without PIL."""
+    import struct
+    import zlib
+    row = b"\x00" + bytes(rgb) * size
+    raw = row * size
+
+    def chunk(tag, data):
+        c = struct.pack(">I", len(data)) + tag + data
+        return c + struct.pack(">I", zlib.crc32(tag + data) & 0xFFFFFFFF)
+    png = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", size, size, 8, 2, 0, 0, 0)) \
+        + chunk(b"IDAT", zlib.compress(raw)) + chunk(b"IEND", b"")
+    with open(path, "wb") as f:
+        f.write(png)
+
+
+def seed_media():
+    os.makedirs(MEDIA_DIR, exist_ok=True)
+    _wav(os.path.join(MEDIA_DIR, "hsk3_listening.wav"))
+    for name, rgb in [("red", (220, 70, 70)), ("green", (60, 170, 90)),
+                      ("blue", (70, 110, 220))]:
+        _png(os.path.join(MEDIA_DIR, f"pic_{name}.png"), rgb)
+
+
+def bank_item(doc_id, index, skill, type_, question, section, owner, **extra):
+    put("question_bank", doc_id, {
+        "ownerId": owner, "type": type_, "prompt": question.get("prompt", ""),
+        "question": question, "skillCategory": skill, "level": "HSK 3",
+        "category": extra.pop("category", "hsk_simulation"),
+        "tags": [extra.get("sheet", SHEET)], "sheetCode": extra.pop("sheet", SHEET),
+        "sheetTitle": extra.pop("title", "HSK 3 · H3DEMO1 (seed)"), "sheetIndex": index,
+        "section": section, "usageCount": 0, "createdBy": owner,
+        "createdAt": ts(-4), **extra})
+
+
+def seed_tests(admin_uid, student_uids):
+    seed_media()
+    rec = f"{MEDIA_URL}/hsk3_listening.wav"
+    pics = [f"{MEDIA_URL}/pic_{c}.png" for c in ("red", "green", "blue")]
+    L1 = "一、听力 · 第一部分 · 看图选择"
+    L2 = "一、听力 · 第二部分"
+    R1 = "二、阅读 · 选词填空"
+    W1 = "三、书写"
+    i = 0
+
+    def nxt():
+        nonlocal i
+        i += 1
+        return i
+    # Listening: picture choices first, then text choices; one recording.
+    for n, key in enumerate([0, 2]):
+        bank_item(f"tq_l{n + 1}", nxt(), "listening", "multiple_choice",
+                  {"prompt": f"第{n + 1}题：听录音，选择图片。", "options": ["A", "B", "C"],
+                   "optionImageUrls": pics, "correctIndex": key,
+                   "explanation": "录音里说的是这张图片。"},
+                  L1, admin_uid, sectionAudioUrl=rec)
+    for n, (q, opts, key) in enumerate([
+            ("他们明天去哪儿？", ["图书馆", "医院", "火车站"], 0),
+            ("女的想喝什么？", ["咖啡", "茶", "牛奶"], 1)]):
+        bank_item(f"tq_l{n + 3}", nxt(), "listening", "multiple_choice",
+                  {"prompt": q, "options": opts, "correctIndex": key,
+                   "explanation": "听第二遍时注意关键词。"},
+                  L2, admin_uid, sectionAudioUrl=rec)
+    # Reading.
+    for n, (q, opts, key) in enumerate([
+            ("我（ ）喜欢喝茶。", ["很", "是", "的"], 0),
+            ("这本书我已经看（ ）了。", ["完", "到", "着"], 0),
+            ("他每天骑自行车（ ）学校。", ["去", "在", "从"], 0),
+            ("今天比昨天（ ）。", ["冷", "冷了", "很冷"], 0)]):
+        bank_item(f"tq_r{n + 1}", nxt(), "reading", "multiple_choice",
+                  {"prompt": q, "options": opts, "correctIndex": key,
+                   "explanation": "看句子的结构。"}, R1, admin_uid)
+    # Writing: type the hanzi, and build a sentence.
+    for n, (q, kw, acc) in enumerate([("我（ ）到家。", "gāng", ["刚"]),
+                                      ("请（ ）一下。", "děng", ["等"])]):
+        bank_item(f"tq_w{n + 1}", nxt(), "typing", "type_hanzi",
+                  {"prompt": q, "keyword": kw, "options": acc}, W1, admin_uid)
+    bank_item("tq_w3", nxt(), "typing", "compose_sentences",
+              {"prompt": "", "segments": ["经理的", "办公室在", "二楼"]}, W1, admin_uid)
+
+    # Formats HSK 1-6 (thesis scope). The rest come from "Load standard
+    # formats" in the app, so loading twice can be walked.
+    def part(skill, q, m):
+        return {"skill": skill, "questions": q, "minutes": m, "maxScore": 100}
+    hsk = {
+        "1": [part("listening", 20, 18), part("reading", 20, 17)],
+        "2": [part("listening", 35, 28), part("reading", 25, 22)],
+        "3": [part("listening", 40, 40), part("reading", 30, 30), part("writing", 10, 15)],
+        "4": [part("listening", 45, 35), part("reading", 40, 40), part("writing", 15, 25)],
+        "5": [part("listening", 45, 35), part("reading", 45, 45), part("writing", 10, 40)],
+        "6": [part("listening", 50, 40), part("reading", 50, 50), part("writing", 1, 45)],
+    }
+    for n, (key, parts) in enumerate(hsk.items()):
+        put("test_formats", f"hsk-{key}", {
+            "family": "hsk", "level": f"HSK {key}", "levelKey": key, "parts": parts,
+            "passMark": 120 if len(parts) == 2 else 180, "provisional": False,
+            "order": n + 1, "createdAt": ts(-4), "updatedAt": ts(-4)})
+
+    # The walk's code: the seeded worksheet, HSK 3, short clocks (2 minutes
+    # per part) so a part can be left to run out.
+    put("test_codes", TEST_CODE, {
+        "code": TEST_CODE, "family": "hsk", "level": "HSK 3", "levelKey": "3",
+        "sheetKey": SHEET, "formatId": "hsk-3", "releaseYear": 2021,
+        "format": {"parts": [part("listening", 4, 2), part("reading", 4, 2),
+                             part("writing", 3, 2)], "passMark": 180},
+        "active": True, "countsForPromotion": True, "createdBy": admin_uid,
+        "createdAt": ts(-3)})
+
+    # Regression: one practice package and one exam package from the bank.
+    bank_item("pq_1", 1, "reading", "multiple_choice",
+              {"prompt": "你好 artinya?", "options": ["Halo", "Terima kasih", "Maaf"],
+               "correctIndex": 0}, "", admin_uid, sheet="310902-RDG",
+              title="Latihan HSK 1 (seed)", category="exercise")
+    bank_item("pq_2", 2, "reading", "multiple_choice",
+              {"prompt": "谢谢 artinya?", "options": ["Maaf", "Terima kasih", "Halo"],
+               "correctIndex": 1}, "", admin_uid, sheet="310902-RDG",
+              title="Latihan HSK 1 (seed)", category="exercise")
+    bank_item("eq_1", 1, "reading", "multiple_choice",
+              {"prompt": "他是我（ ）朋友。", "options": ["的", "了", "吗"],
+               "correctIndex": 0}, "", admin_uid, sheet="310903-RDG",
+              title="Ujian HSK 1 (seed)", category="exam")
+    bank_item("eq_2", 2, "reading", "multiple_choice",
+              {"prompt": "你叫什么（ ）？", "options": ["名字", "朋友", "老师"],
+               "correctIndex": 0}, "", admin_uid, sheet="310903-RDG",
+              title="Ujian HSK 1 (seed)", category="exam")
+    for ex_id, title, sheet, limit in [("pkg_practice", "Latihan HSK 1 (paket)", "310902-RDG", None),
+                                       ("pkg_exam", "Ujian HSK 1 (paket)", "310903-RDG", 10)]:
+        put("exercises", ex_id, {
+            "title": title, "instructions": "Pilih jawaban yang benar.",
+            "teacherId": admin_uid, "order": 3, "type": "multiple_choice",
+            "skillCategory": "reading", "level": "HSK 1", "termNumber": 1,
+            "isPublished": True, "createdAt": ts(-2), "bankSheets": [sheet],
+            "bankQuestionIds": [], **({"timeLimitMinutes": limit} if limit else {})})
+        for u in student_uids[:3]:
+            put("exercise_assignments", f"{ex_id}_{u}", {
+                "exerciseId": ex_id, "studentId": u, "teacherId": admin_uid,
+                "assignedAt": ts(-1), "dueDate": ts(5)})
+    print(f"Build 1: worksheet {SHEET}, formats HSK 1-6, test code {TEST_CODE}, "
+          f"packages pkg_practice / pkg_exam, media in {os.path.abspath(MEDIA_DIR)}")
 
 
 if __name__ == "__main__":

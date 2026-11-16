@@ -97,14 +97,17 @@ firebase deploy --only hosting
 The code is wired; both features stay off until these keys exist. Do them
 once, on the Mac, in this order.
 
-1. **App Check site key (web).** Firebase console → **Build → App Check**
-   (under Security) → **Apps** tab → find the **Web** app → **Register** →
-   choose **reCAPTCHA v3** → the console sends you to the reCAPTCHA admin
-   page: create a key of type **v3**, domain `chinese-tracker.web.app`
-   (add `localhost` too) → copy the **site key** (public, long string
-   starting with `6L`) and paste it into the Firebase App Check dialog; the
-   **secret key** goes into the same dialog (Firebase keeps it, never the
-   app). Save.
+1. **App Check site key (web), reCAPTCHA Enterprise.** The Firebase
+   console no longer offers reCAPTCHA v3 (2026-11-16); the app uses the
+   reCAPTCHA Enterprise provider. First create the key: **Google Cloud
+   console** (project `chinese-tracker`) → **Security → reCAPTCHA** →
+   **Create key** → platform **Website**, **score-based** (no checkbox
+   challenge), domains `chinese-tracker.web.app` and
+   `chinese-tracker.firebaseapp.com` only (never `localhost` on a
+   production key; local runs use the debug provider) → copy the **key
+   ID** (public). Then Firebase console → **Build → App Check** → **Apps** tab →
+   **Web** app → **Register** → **reCAPTCHA Enterprise** → paste the key →
+   Save.
 2. **Keep App Check unenforced** for Firestore, Cloud Functions and
    Storage (App Check → **APIs** tab: leave them "Unenforced"). The Android
    APK is installed from our download link, not from Google Play, so Play
@@ -113,14 +116,17 @@ once, on the Mac, in this order.
 3. **Web Push key.** Firebase console → **Project settings** (gear) →
    **Cloud Messaging** tab → section **Web configuration → Web Push
    certificates** → **Generate key pair** → copy the key (starts with `B`).
-4. **Put both keys on the Mac.** Create the file `deploy.env` in the repo
-   root (it is git-ignored) with two lines:
+4. **Give both keys to Claude** (either chat). Both are public (they ship
+   in the page), so Claude stores them as defaults in
+   `scripts/deploy_web.sh` next to `MIDTRANS_CLIENT_KEY`, and every machine
+   deploys with them. `deploy.env` (git-ignored) stays as an optional
+   override:
    ```bash
-   APP_CHECK_SITE_KEY=6L...your site key...
+   APP_CHECK_SITE_KEY=...your site key...
    FCM_VAPID_KEY=B...your web push key...
    ```
-   `scripts/deploy_web.sh` reads this file on every deploy. Copy the same
-   file to the PC when you deploy from there.
+   The script refuses to deploy with an empty App Check key unless
+   `--no-keys` is given.
 5. **Deploy.** `scripts/deploy_web.sh --web-only` (hosting, picks up the
    keys), then `firebase deploy --only firestore:rules,functions --project
    chinese-tracker` (the `push_tokens` rules and the two new functions

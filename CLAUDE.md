@@ -58,16 +58,22 @@ decisions. This app is also the owner's thesis project (see the thesis docs belo
 ```bash
 flutter pub get
 flutter run -d chrome                 # no CONTENT_OWNER_ID needed locally; talks to LIVE Firebase
-flutter analyze                       # baseline: 0 errors, 0 warnings, ~18 infos
-flutter test                          # 65 pass
+flutter analyze                       # baseline: 0 errors, 0 warnings, 17 infos
+flutter test                          # 83 pass (2026-11-16, Build 1)
 node --check functions/index.js
+node functions/test_exercise_play.js && node functions/test_reminders.js
+node functions/test_supervised_test.js          # Build 1 pure logic (TS-01, PN-05)
 
 # Firestore rules tests (needs Java 21: brew install openjdk@21)
 export PATH="/opt/homebrew/opt/openjdk@21/bin:$PATH"
-npm --prefix rules-tests run test:emulator      # 37 pass, 1 skipped (emulator limitation)
+npm --prefix rules-tests run test:emulator      # 48 pass, 1 skipped (emulator limitation)
 
-# Full emulator suite (auth 9099, firestore 8080, functions 5001, storage 9199, UI 4000)
-firebase emulators:start --project demo-chinese-tracker
+# Full emulator suite (auth 9099, firestore 8080, functions 5001, storage 9199, UI 4000).
+# The app and the seed use project id chinese-tracker (callables are routed by it).
+firebase emulators:start --project chinese-tracker
+python3 -I scripts/seed_emulator.py            # ~5 s; Build 1 data: code H3DEMO1
+node functions/test_supervised_flow.mjs        # end-to-end on the emulators, 24 steps
+                                               # (TS-01, TS-02, PN-04, PN-05, LV-02)
 # Web app against the emulators: ALWAYS this script (builds to build/web-emulator,
 # serves on :5181). Never serve build/web for emulator work: deploy_web.sh rebuilds
 # build/web with the LIVE config, and a dev server pointing there silently switches
@@ -90,9 +96,21 @@ Shell: Git Bash for the `.sh` scripts. Flutter 3.44.9 lives in
   hook of `objective_c`): the space in the user folder breaks the hook. Run it through the
   8.3 short path instead: `C:\Users\WILSIN~1\FLUTTE~1.9-S\flutter\bin\flutter.bat test`.
 - Python: use `py -I scripts/seed_emulator.py` (`python3` is only the Microsoft Store stub).
-- Java: JDK 23 at `C:\Program Files\Java\jdk-23` (the Mac uses 21).
+- Java: JDK 23 at `C:\Program Files\Java\jdk-23` (the Mac uses 21). The emulators crash
+  ("Unable to establish loopback connection") unless the JDK gets a short socket folder:
+  `export JAVA_TOOL_OPTIONS="-Djdk.net.unixdomain.tmpdir=C:\\Users\\Public\\jtmp"` (folder exists).
+- Node 22 at `C:\Program Files\nodejs`, firebase-tools in `%APPDATA%\npm`; Git Bash may need
+  `export PATH="/c/Program Files/nodejs:/c/Users/Wilsin Karimun/AppData/Roaming/npm:$PATH"`.
+- `scripts/run_emulator_web.sh` calls `flutter`; in Git Bash define it first:
+  `flutter() { cmd //c 'C:\Users\WILSIN~1\FLUTTE~1.9-S\flutter\bin\flutter.bat' "$@"; }; export -f flutter`.
 - `deploy_web.sh` refuses to deploy when `APP_CHECK_SITE_KEY` is empty; `--no-keys` overrides.
 - Windows desktop builds need Developer Mode (symlinks); web and tests do not.
+- **Emulator bundle and live Auth (found 2026-11-16):** reloading the emulator web app while
+  signed in started Firebase Auth before `useAuthEmulator`, so Auth silently stayed on the
+  LIVE project (a saved-account sign-in then reached live Auth; Firestore stayed on the
+  emulator). `lib/core/utils/emulator_guard*.dart` now checks this at start-up: it signs out
+  locally and reloads once, or refuses to start. In the emulator you sign in again after a
+  reload.
 
 Android: `flutter config --jdk-dir=/opt/homebrew/opt/openjdk@21` is set on this Mac; the
 release keystore is referenced by `android/key.properties` (never commit the keystore).
@@ -102,7 +120,7 @@ account on record. Users add the web app to the home screen from Safari.
 ## Known blockers (update when resolved)
 - Cloud Functions run on **Node 22** since 2026-11-05 (Node 20 was retired 2026-10-30); `functions/package.json` engines = 22, firebase-functions 7, firebase-admin 14.
 - Billing was off 2026-10-13 → 2026-10-20. Owner upgraded to **Blaze on 2026-10-20**; all 9 functions and the APK were redeployed and work (owner re-test PUB-09 passed).
-- **Nightly backup: resolved 2026-11-13.** The owner created a Firestore scheduled backup (daily, 7-day retention, `firebase firestore:backups:schedules:create`, schedule id `c3d18000-…`). The failing `scheduledFirestoreExport` function was removed from the code and deleted on live the same day (15 functions remain). List / restore commands: `docs/OWNER_PROCEDURES.md` §B. The NAS pull in `docs/NAS_BACKUP_SETUP.md` no longer receives Firestore exports.
+- **Nightly backup: resolved 2026-11-13.** The owner created a Firestore scheduled backup (daily, 7-day retention, `firebase firestore:backups:schedules:create`, schedule id `c3d18000-…`). The failing `scheduledFirestoreExport` function was removed from the code and deleted on live the same day (15 functions remain; Build 1 adds 7 test callables, 22 after its deploy). List / restore commands: `docs/OWNER_PROCEDURES.md` §B. The NAS pull in `docs/NAS_BACKUP_SETUP.md` no longer receives Firestore exports.
 - Test accounts on the live project: `admin@`, `teacher@`, `student1-3@test.chinesetracker`, password in `docs/CLAUDE_FULL_HANDOFF.md`. No test parent yet.
 
 ## Tools on the owner's Mac

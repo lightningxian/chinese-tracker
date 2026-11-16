@@ -376,3 +376,108 @@ describe("push tokens 2026-11-13", () => {
     await assertFails(setDoc(doc(as("student1"), "push_tokens", "tok4"), token("student1", { role: "admin" })));
   });
 });
+
+describe("supervised tests (Build 1, 2026-11-16)", () => {
+  const FORMAT = { family: "hsk", level: "HSK 3", passMark: 180, provisional: false,
+    parts: [{ skill: "listening", questions: 40, minutes: 40, maxScore: 100 }] };
+  const CODE = { code: "H31005", family: "hsk", level: "HSK 3", releaseYear: 2021,
+    sheetKey: "310001-RDG", format: { parts: FORMAT.parts, passMark: 180 },
+    active: true, countsForPromotion: true };
+  const seed = async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, "test_formats", "hsk-3"), FORMAT);
+      await setDoc(doc(db, "test_codes", "H31005"), CODE);
+      await setDoc(doc(db, "test_sessions", "ts1"), { codeId: "H31005", token: "ABC234",
+        openedBy: "teacher1", status: "open" });
+      await setDoc(doc(db, "test_attempts", "H31005_student1"), { codeId: "H31005",
+        studentId: "student1", sessionId: "ts1", partIndex: 0, answers: {} });
+      await setDoc(doc(db, "test_attempts", "H31005_student9"), { codeId: "H31005",
+        studentId: "student9", sessionId: "ts1", partIndex: 1, answers: {} });
+      await setDoc(doc(db, "test_results", "H31005_student1"), { codeId: "H31005",
+        studentId: "student1", total: 200, passMark: 180, passed: true, valid: true });
+      await setDoc(doc(db, "test_results", "H31005_student9"), { codeId: "H31005",
+        studentId: "student9", total: 100, passMark: 180, passed: false, valid: true });
+    });
+  };
+
+  it("only admins write formats; staff read them; students cannot", async () => {
+    await seed();
+    await assertSucceeds(setDoc(doc(as("admin1"), "test_formats", "hsk-4"), FORMAT));
+    await assertSucceeds(updateDoc(doc(as("admin1"), "test_formats", "hsk-3"), { passMark: 170 }));
+    await assertFails(setDoc(doc(as("teacher1"), "test_formats", "hsk-5"), FORMAT));
+    await assertFails(updateDoc(doc(as("teacher1"), "test_formats", "hsk-3"), { passMark: 1 }));
+    await assertSucceeds(getDoc(doc(as("teacher1"), "test_formats", "hsk-3")));
+    await assertFails(getDoc(doc(as("student1"), "test_formats", "hsk-3")));
+    await assertFails(setDoc(doc(as("student1"), "test_formats", "x"), FORMAT));
+  });
+
+  it("only admins write codes; the id is the code; codes are never deleted", async () => {
+    await seed();
+    await assertSucceeds(setDoc(doc(as("admin1"), "test_codes", "H40001"), { ...CODE, code: "H40001" }));
+    await assertFails(setDoc(doc(as("admin1"), "test_codes", "H40002"), { ...CODE, code: "OTHER" }));
+    await assertFails(setDoc(doc(as("admin1"), "test_codes", "H40003"), { ...CODE, code: "H40003", sheetKey: "" }));
+    await assertSucceeds(updateDoc(doc(as("admin1"), "test_codes", "H31005"), { active: false }));
+    await assertFails(updateDoc(doc(as("admin1"), "test_codes", "H31005"), { sheetKey: "other" }));
+    await assertFails(deleteDoc(doc(as("admin1"), "test_codes", "H31005")));
+    await assertFails(setDoc(doc(as("teacher1"), "test_codes", "T1"), { ...CODE, code: "T1" }));
+    await assertFails(updateDoc(doc(as("teacher1"), "test_codes", "H31005"), { active: false }));
+  });
+
+  it("PN-04 students cannot read codes (keys and worksheet stay out of reach); staff can", async () => {
+    await seed();
+    await assertFails(getDoc(doc(as("student1"), "test_codes", "H31005")));
+    await assertFails(getDocs(collection(as("student1"), "test_codes")));
+    await assertFails(getDoc(doc(as("parent1"), "test_codes", "H31005")));
+    await assertSucceeds(getDoc(doc(as("teacher1"), "test_codes", "H31005")));
+    await assertSucceeds(getDocs(collection(as("teacher1"), "test_codes")));
+  });
+
+  it("sessions: staff read; nobody writes from the app (tokens stay with staff)", async () => {
+    await seed();
+    await assertSucceeds(getDoc(doc(as("teacher1"), "test_sessions", "ts1")));
+    await assertSucceeds(getDoc(doc(as("admin1"), "test_sessions", "ts1")));
+    await assertFails(getDoc(doc(as("student1"), "test_sessions", "ts1")));
+    await assertFails(getDocs(query(collection(as("student1"), "test_sessions"), where("token", "==", "ABC234"))));
+    await assertFails(setDoc(doc(as("teacher1"), "test_sessions", "ts2"), { codeId: "H31005", token: "ZZZ999" }));
+    await assertFails(updateDoc(doc(as("admin1"), "test_sessions", "ts1"), { status: "closed" }));
+    await assertFails(setDoc(doc(as("student1"), "test_sessions", "ts3"), { codeId: "H31005" }));
+  });
+
+  it("TS-02 attempts: a student reads only their own; staff read all; nobody writes (left-page count is server-only)", async () => {
+    await seed();
+    await assertSucceeds(getDoc(doc(as("student1"), "test_attempts", "H31005_student1")));
+    await assertFails(getDoc(doc(as("student1"), "test_attempts", "H31005_student9")));
+    await assertSucceeds(getDocs(query(collection(as("student1"), "test_attempts"),
+      where("studentId", "==", "student1"))));
+    await assertFails(getDocs(collection(as("student1"), "test_attempts")));
+    await assertSucceeds(getDocs(query(collection(as("teacher1"), "test_attempts"),
+      where("sessionId", "==", "ts1"))));
+    await assertFails(updateDoc(doc(as("student1"), "test_attempts", "H31005_student1"), { partIndex: 0 }));
+    await assertFails(setDoc(doc(as("student1"), "test_attempts", "H40001_student1"),
+      { codeId: "H40001", studentId: "student1" }));
+    await assertFails(updateDoc(doc(as("teacher1"), "test_attempts", "H31005_student1"), { leftCount: 0 }));
+  });
+
+  it("PN-04 results: own, parent and staff read; another student cannot; nobody writes a score", async () => {
+    await seed();
+    await assertSucceeds(getDoc(doc(as("student1"), "test_results", "H31005_student1")));
+    await assertSucceeds(getDoc(doc(as("parent1"), "test_results", "H31005_student1")));
+    await assertSucceeds(getDoc(doc(as("teacher1"), "test_results", "H31005_student9")));
+    await assertFails(getDoc(doc(as("student1"), "test_results", "H31005_student9")));
+    await assertFails(getDoc(doc(as("parent1"), "test_results", "H31005_student9")));
+    await assertSucceeds(getDocs(query(collection(as("student1"), "test_results"),
+      where("studentId", "==", "student1"))));
+    await assertFails(updateDoc(doc(as("student1"), "test_results", "H31005_student1"), { total: 300 }));
+    await assertFails(setDoc(doc(as("student1"), "test_results", "H40001_student1"),
+      { studentId: "student1", total: 300, passed: true }));
+    await assertFails(updateDoc(doc(as("teacher1"), "test_results", "H31005_student9"), { valid: false }));
+    await assertFails(updateDoc(doc(as("admin1"), "test_results", "H31005_student9"), { valid: false }));
+  });
+
+  it("a deactivated teacher loses staff reads", async () => {
+    await seed();
+    await assertFails(getDoc(doc(as("teacher2"), "test_sessions", "ts1")));
+    await assertFails(getDoc(doc(as("teacher2"), "test_attempts", "H31005_student1")));
+  });
+});

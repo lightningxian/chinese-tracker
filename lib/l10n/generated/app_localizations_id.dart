@@ -5358,4 +5358,499 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get exercisePlayHskNotPassed => 'Belum lulus';
+
+  @override
+  String get testsTitle => 'Tes';
+
+  @override
+  String get testsSkillListening => 'Mendengar';
+
+  @override
+  String get testsSkillReading => 'Membaca';
+
+  @override
+  String get testsSkillWriting => 'Menulis';
+
+  @override
+  String get testsSkillSpeaking => 'Berbicara';
+
+  @override
+  String get testsErrorBadToken =>
+      'Token ini tidak berlaku. Periksa lagi dengan gurumu.';
+
+  @override
+  String get testsErrorTokenBlocked =>
+      'Terlalu banyak token salah. Tunggu beberapa menit lalu coba lagi.';
+
+  @override
+  String get testsErrorJoinClosed =>
+      'Waktu untuk bergabung sudah habis. Minta token baru ke gurumu.';
+
+  @override
+  String get testsErrorAlreadyAttempted =>
+      'Kamu sudah mengerjakan tes ini. Setiap kode hanya bisa dikerjakan sekali.';
+
+  @override
+  String get testsErrorPartClosed => 'Bagian ini sudah ditutup.';
+
+  @override
+  String get testsErrorReviewSessionOpen =>
+      'Pembahasan terbuka setelah guru mengakhiri sesi.';
+
+  @override
+  String get testsErrorReviewNotFinished => 'Selesaikan tes dulu.';
+
+  @override
+  String get testsErrorReasonRequired => 'Tulis alasannya.';
+
+  @override
+  String get testsErrorGeneric => 'Terjadi kesalahan. Coba lagi.';
+
+  @override
+  String get testsHskSimulationInTests =>
+      'Simulasi HSK dikerjakan di menu Tes: minta token ke gurumu.';
+
+  @override
+  String get testsAddPart => 'Tambah bagian';
+
+  @override
+  String get testsRemovePart => 'Hapus bagian';
+
+  @override
+  String get testsPassMark => 'Nilai lulus';
+
+  @override
+  String testsTotalsLine(int max, int minutes) {
+    return 'Maks $max · $minutes menit';
+  }
+
+  @override
+  String testsPartNumber(int n) {
+    return 'Bagian $n';
+  }
+
+  @override
+  String get testsQuestions => 'Soal';
+
+  @override
+  String get testsMinutes => 'Menit';
+
+  @override
+  String get testsMaxMark => 'Nilai';
+
+  @override
+  String testsFoundMatch(int found) {
+    return 'Lembar soal punya $found soal untuk bagian ini.';
+  }
+
+  @override
+  String testsFoundMismatch(int expected, int found) {
+    return 'Seharusnya $expected, lembar soal punya $found.';
+  }
+
+  @override
+  String get testsFormatsTitle => 'Format tes';
+
+  @override
+  String get testsLoadStandardFormats => 'Muat format standar';
+
+  @override
+  String testsFormatsAdded(int count) {
+    return '$count format ditambahkan.';
+  }
+
+  @override
+  String get testsFormatsNothingAdded =>
+      'Semua format standar sudah ada. Tidak ada yang berubah.';
+
+  @override
+  String get testsFormatsEmptyTitle => 'Belum ada format';
+
+  @override
+  String get testsFormatsEmptySubtitle =>
+      'Muat format standar, lalu sesuaikan dengan kertas soalmu.';
+
+  @override
+  String get testsDraft => 'draf';
+
+  @override
+  String testsMaxPassLine(int max, int pass) {
+    return 'Maks $max · lulus $pass';
+  }
+
+  @override
+  String get testsDraftSwitch => 'Draf (belum dicek dari kertas soal)';
+
+  @override
+  String get testsDraftSwitchHint =>
+      'Matikan setelah waktunya sesuai kertas soal asli.';
+
+  @override
+  String get testsSave => 'Simpan';
+
+  @override
+  String get testsCodesTitle => 'Kode tes';
+
+  @override
+  String get testsNewCode => 'Kode tes baru';
+
+  @override
+  String get testsEditCode => 'Ubah kode tes';
+
+  @override
+  String get testsCreateCode => 'Buat kode tes';
+
+  @override
+  String get testsCodesEmptyTitle => 'Belum ada kode tes';
+
+  @override
+  String get testsCodesEmptySubtitle =>
+      'Pindai kertas soal ke bank soal, lalu buat kode dari lembar soal itu.';
+
+  @override
+  String testsMinutesTotal(int minutes) {
+    return '$minutes menit';
+  }
+
+  @override
+  String get testsInactive => 'Nonaktif';
+
+  @override
+  String get testsCodeSaved => 'Kode tes disimpan.';
+
+  @override
+  String testsCodeDuplicate(String code) {
+    return 'Kode $code sudah ada.';
+  }
+
+  @override
+  String get testsWorksheet => 'Lembar soal (bank soal)';
+
+  @override
+  String get testsCode => 'Kode tes';
+
+  @override
+  String get testsCodeHint =>
+      'Huruf dan angka seperti di kertas soal, mis. H31005';
+
+  @override
+  String get testsFormat => 'Format';
+
+  @override
+  String get testsReleaseYear => 'Tahun terbit';
+
+  @override
+  String get testsNoFormatsYet =>
+      'Belum ada format: muat format standar dulu (Tes → Format tes).';
+
+  @override
+  String get testsTimingTitle => 'Waktu dan nilai kode ini';
+
+  @override
+  String get testsTimingHint =>
+      'Disalin dari format. Sesuaikan dengan halaman depan kertas soal.';
+
+  @override
+  String get testsCountWarning =>
+      'Jumlah soal di lembar soal dan format tidak sama di setiap bagian. Tetap bisa disimpan.';
+
+  @override
+  String get testsActive => 'Aktif (bisa dibuka di sesi)';
+
+  @override
+  String get testsCountsForPromotion => 'Dihitung untuk naik level';
+
+  @override
+  String get testsOpenSession => 'Buka sesi';
+
+  @override
+  String get testsResultsTitle => 'Hasil tes';
+
+  @override
+  String get testsSessionsTitle => 'Sesi';
+
+  @override
+  String get testsSessionsEmptyTitle => 'Belum ada sesi';
+
+  @override
+  String get testsSessionsEmptySubtitle =>
+      'Buka sesi untuk memberi token ke murid.';
+
+  @override
+  String get testsSessionOpen => 'terbuka';
+
+  @override
+  String get testsSessionClosed => 'Sesi ditutup';
+
+  @override
+  String get testsNoActiveCodes =>
+      'Belum ada kode tes aktif. Admin membuat kode di Tes → Kode tes.';
+
+  @override
+  String get testsPartClocks => 'Waktu per bagian';
+
+  @override
+  String get testsPartClocksOn =>
+      'Setiap bagian punya waktu sendiri; rekaman diputar sekali; tidak bisa kembali ke bagian yang sudah ditutup.';
+
+  @override
+  String get testsPartClocksOff =>
+      'Satu waktu untuk seluruh kertas soal; murid bebas pindah bagian dan boleh memutar ulang rekaman; kirim sekali di akhir.';
+
+  @override
+  String get testsOpen => 'Buka';
+
+  @override
+  String get testsSupervisionTitle => 'Pengawasan';
+
+  @override
+  String get testsEndForEveryone => 'Akhiri tes untuk semua';
+
+  @override
+  String get testsEndForEveryoneConfirm =>
+      'Semua murid yang masih mengerjakan diselesaikan sekarang. Bagian yang belum dikirim dihitung kosong. Tidak bisa dibatalkan.';
+
+  @override
+  String testsEnded(int count) {
+    return 'Sesi ditutup · $count tes diselesaikan.';
+  }
+
+  @override
+  String testsJoinCountdown(String time) {
+    return 'Murid bisa bergabung selama $time';
+  }
+
+  @override
+  String get testsJoinClosed =>
+      'Waktu bergabung habis. Beri token baru agar murid bisa masuk.';
+
+  @override
+  String get testsNewToken => 'Token baru';
+
+  @override
+  String testsStudentsCount(int count) {
+    return 'Murid ($count)';
+  }
+
+  @override
+  String get testsNoStudentsYetTitle => 'Belum ada yang bergabung';
+
+  @override
+  String get testsNoStudentsYetSubtitle =>
+      'Murid mengetik token di halaman Tes mereka.';
+
+  @override
+  String get testsStatusFinished => 'selesai';
+
+  @override
+  String get testsStatusSitting => 'mengerjakan';
+
+  @override
+  String testsPartOf(int n, int total) {
+    return 'Bagian $n dari $total';
+  }
+
+  @override
+  String get testsWholePaper => 'Seluruh soal';
+
+  @override
+  String testsLeftPageCount(int count) {
+    return 'Keluar halaman: $count';
+  }
+
+  @override
+  String get testsCardTitle => 'Kartu hasil';
+
+  @override
+  String get testsCardName => 'Nama';
+
+  @override
+  String get testsCardChineseName => 'Nama Mandarin';
+
+  @override
+  String get testsCardExamType => 'Jenis tes';
+
+  @override
+  String get testsCardTestCode => 'Kode tes';
+
+  @override
+  String get testsCardResultNumber => 'Nomor hasil';
+
+  @override
+  String get testsCardDate => 'Tanggal';
+
+  @override
+  String get testsCardSupervisor => 'Guru pengawas';
+
+  @override
+  String get testsCardTotal => 'Total';
+
+  @override
+  String get testsCardOutcome => 'Hasil';
+
+  @override
+  String testsCardPassMark(int pass) {
+    return 'Nilai lulus $pass';
+  }
+
+  @override
+  String get testsPassed => 'Lulus';
+
+  @override
+  String get testsNotPassed => 'Tidak lulus';
+
+  @override
+  String get testsInvalid => 'Tidak sah';
+
+  @override
+  String get testsAllCodes => 'Semua kode';
+
+  @override
+  String get testsResultsEmptyTitle => 'Belum ada hasil';
+
+  @override
+  String get testsResultsEmptySubtitle =>
+      'Hasil muncul setelah murid menyelesaikan tes yang diawasi.';
+
+  @override
+  String get testsMarkInvalid => 'Tandai tidak sah';
+
+  @override
+  String get testsMarkValid => 'Tandai sah';
+
+  @override
+  String get testsInvalidReason => 'Alasan';
+
+  @override
+  String get testsPrintPdf => 'Cetak / PDF';
+
+  @override
+  String get testsResultNotFound => 'Hasil tidak ditemukan.';
+
+  @override
+  String get testsOpenReview => 'Lihat pembahasan';
+
+  @override
+  String get testsCouldNotOpen => 'Tes tidak bisa dibuka';
+
+  @override
+  String get testsFinishTitle => 'Selesaikan tes?';
+
+  @override
+  String get testsFinishBody =>
+      'Jawabanmu dikirim dan tes ditutup. Jawaban tidak bisa diubah lagi.';
+
+  @override
+  String get testsNextPartTitle => 'Lanjut ke bagian berikutnya?';
+
+  @override
+  String get testsNextPartBody =>
+      'Bagian ini ditutup dan dikirim. Tidak bisa kembali ke bagian ini.';
+
+  @override
+  String get testsFinish => 'Selesaikan tes';
+
+  @override
+  String get testsNextPart => 'Bagian berikutnya';
+
+  @override
+  String testsQuestionsCount(int count) {
+    return '$count soal';
+  }
+
+  @override
+  String get testsRulesTitle => 'Aturan';
+
+  @override
+  String get testsRulePartClocks =>
+      'Setiap bagian punya waktu sendiri. Saat waktu habis, bagian itu terkirim otomatis.';
+
+  @override
+  String get testsRuleOneClock =>
+      'Satu waktu untuk seluruh soal. Saat waktu habis, jawabanmu terkirim.';
+
+  @override
+  String get testsRuleRecording =>
+      'Rekaman mendengar mulai bersama bagiannya dan diputar sekali. Tidak bisa dijeda atau diulang.';
+
+  @override
+  String get testsRuleNoBack =>
+      'Bagian yang sudah dikirim tidak bisa dibuka lagi.';
+
+  @override
+  String get testsRuleLeaving =>
+      'Keluar dari halaman atau jendela ini dicatat dan terlihat oleh guru.';
+
+  @override
+  String get testsRuleOnce => 'Setiap kode tes hanya bisa dikerjakan sekali.';
+
+  @override
+  String get testsStart => 'Mulai tes';
+
+  @override
+  String get testsLeftNotice =>
+      'Kamu keluar dari halaman tes. Ini sudah dicatat dan terlihat oleh guru.';
+
+  @override
+  String get testsPartEmptyTitle => 'Tidak ada soal di bagian ini';
+
+  @override
+  String get testsPartEmptySubtitle => 'Lanjut ke bagian berikutnya.';
+
+  @override
+  String get testsWaitForRecording => 'Tunggu sampai rekaman selesai.';
+
+  @override
+  String get testsRecordingDone => 'Rekaman selesai';
+
+  @override
+  String get testsContinueRecording => 'Lanjutkan rekaman';
+
+  @override
+  String testsClipPlaysLeft(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Sisa $count kali putar',
+      zero: 'Tidak bisa diputar lagi',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get testsEnterToken => 'Masukkan token';
+
+  @override
+  String get testsEnterTokenHint =>
+      'Ketik token 6 karakter yang ditunjukkan guru.';
+
+  @override
+  String get testsGo => 'Masuk';
+
+  @override
+  String testsContinueTest(String code) {
+    return 'Lanjutkan tes $code';
+  }
+
+  @override
+  String get testsMyResults => 'Hasil saya';
+
+  @override
+  String get testsMyResultsEmptyTitle => 'Belum ada hasil';
+
+  @override
+  String get testsMyResultsEmptySubtitle =>
+      'Tes yang diawasi akan muncul di sini.';
+
+  @override
+  String get testsReviewTitle => 'Pembahasan';
+
+  @override
+  String get testsReviewNotYet => 'Pembahasan belum terbuka';
+
+  @override
+  String get testsYourAnswer => 'Jawabanmu';
+
+  @override
+  String get testsKey => 'Kunci';
 }

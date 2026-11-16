@@ -15,6 +15,7 @@ import '../../services/firestore_service.dart';
 import '../teacher/teacher_attendance_tab.dart';
 import '../teacher/teacher_exercises_tab.dart';
 import '../question_bank/question_bank_bulk_import.dart';
+import '../tests/staff_tests_tab.dart';
 import 'admin_profile_tab.dart';
 import 'admin_dashboard_tab.dart';
 import 'admin_invoices_tab.dart';
@@ -75,6 +76,11 @@ class _AdminShellState extends State<AdminShell> {
           label: l.adminShellNavReports,
           icon: Icons.bar_chart_outlined,
           selectedIcon: Icons.bar_chart,
+        ),
+        AppShellDestination(
+          label: l.testsTitle,
+          icon: Icons.timer_outlined,
+          selectedIcon: Icons.timer,
         ),
         AppShellDestination(
           label: l.adminShellNavAccount,
@@ -203,6 +209,7 @@ class _AdminShellState extends State<AdminShell> {
           const AdminVouchersTab(),
           const AdminInvoicesTab(),
           const AdminReportsTab(),
+          StaffTestsTab(user: user),
           AdminProfileTab(user: user),
         ];
 
