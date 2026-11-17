@@ -103,7 +103,7 @@ Firestore scheduled backups run nightly (3 backups READY on 2026-11-16).
 | Task | State on 2026-11-16 (evening) |
 |---|---|
 | AI Logic "Get started" | done |
-| App Check web key | **the one thing that blocks Scan paper with AI** (proven 2026-11-17: AI Logic answers `401 Firebase App Check token is invalid` to a call without a token, and the live site is built without a key). Steps for the owner: Build 1B part A in §4. |
+| App Check web key | optional since 2026-11-17: papers are read by the built-in reader (Build 1B). Only **Scan paper with AI** needs the key (steps in `docs/WORKSHEET_IMPORT.md`). |
 | Web push key | created in the console; the real key (starts with `B`) is still to be given. The Mac's `deploy.env` held only placeholder text and was removed on 2026-11-16 |
 | Both public keys | the BUILD chat stores them as defaults in `scripts/deploy_web.sh`; no file to copy between machines |
 | `firebase login` on the PC | to do (needed for deploys from the PC) |
@@ -119,8 +119,9 @@ seven functions check role, ownership and clocks in transactions; no key
 reaches a student before the session is closed. **Live since 2026-11-16
 (night):** the owner deployed rules and functions (22 functions on live), the
 PLAN chat published hosting from the Mac with `--no-keys`. The owner's live
-test of one real session is still to run; it waits for a scanned HSK paper,
-so **Build 1B is NEXT**, Build 2A follows in the same session.
+test of one real session is still to run; it waits for a real HSK paper in
+the bank, so **Build 1B (built-in paper reader) is NEXT**, Build 2A follows
+in the same session.
 
 **PLAN chat backlog:** refresh the status table in
 `docs/THESIS_FEATURE_AUDIT.md` §7 (several rows say "Missing" for things that
@@ -181,6 +182,11 @@ are done).
 16. **Additions accepted:** QR code for the token and the placement link,
     item analysis per test code, black-box tables for the book, the flyer's
     terms with a tick box at purchase, automatic checks on GitHub.
+
+17. **Paper reader (2026-11-17):** papers are read inside the app, on the
+    admin's computer, with no outside API and no key. The AI scan stays as
+    an extra. Every paper has its official recording and gets a transcript,
+    shown to students only in the review after the session.
 
 ---
 
@@ -456,117 +462,133 @@ tests, placement tests, changes to how packages are timed.
 loads the formats on live, creates a code from a scanned paper, and runs one
 real session with a test student.
 
-### Build 1B — An HSK paper from PDF to a playable test — **NEXT**
+### Build 1B — Built-in HSK paper reader, no outside service — **NEXT**
 
-**Why.** The owner cannot use Build 1 until a real HSK paper is in the bank,
-and **Scan paper with AI** fails on live (owner, 2026-11-17, paper
-`H326202Z`).
+**Owner decision (2026-11-17).** A paper is read **inside the app, on the
+admin's computer, with no outside API and no key**: "the job is only to read
+the PDF and build the questions". Every paper has its official recording,
+and the centre wants a transcript of it. **Scan paper with AI** (Gemini)
+stays in the code as an extra and is not part of this build; it is switched
+off on live until an App Check key exists (cause proven 2026-11-17: AI Logic
+answers `401 Firebase App Check token is invalid`; steps in
+`docs/WORKSHEET_IMPORT.md`). The PLAN chat does not type official exam
+papers out itself: the reading is done by the app on the owner's own file.
 
-**What the PLAN chat found (2026-11-17, on the Mac)**
+**Measured by the PLAN chat on paper `H326202Z`** (HSK 3, 16 scanned pages,
+no text layer, the centre's coloured watermark across every page), with the
+engine the app already ships (`tesseract.js` 5, `chi_sim+eng`), pages
+rendered at 3× (1738 × 2442 px), 1 to 3 seconds per page on the Mac:
 
-- **Cause, proven.** A text-only call to the project's AI Logic endpoint
-  without an App Check token is answered with
-  `401 Firebase App Check token is invalid`. App Check is enforced for AI
-  Logic, the live site is built with no site key (`--no-keys`), so every
-  scan is refused before the model sees the file. The app then shows "AI
-  reading is not set up for this project yet".
-- The model name `gemini-3.8-flash` is on Firebase's list of supported
-  models. Whether the Gemini Developer API is switched on can only be seen
-  once a token is accepted.
-- **The paper** (16 pages): every page is a scan with no text layer and the
-  centre's watermark across it. 80 questions: listening 1–40 (1–10 choose a
-  picture, six pictures A–F for 1–5 and five A–E for 6–10, no printed text;
-  11–20 ★ statements; 21–40 three text choices), reading 41–70 (41–50
-  match a sentence, 51–60 word bank, 61–70 passage and question), writing
-  71–80 (71–75 order the words, 76–80 write the character for the pinyin).
-  No answer key and no transcript are printed. The reader's prompt and
-  schema already describe all of these forms; nobody has seen its real
-  output on this paper yet.
-- **Second blocker, proven in code.** The listening recording of a
-  worksheet is limited to 10 MB (`QuestionBankMediaService._maxBytes` and
-  `storage.rules`, `question_bank_media`). An HSK recording is 30 to 35
-  minutes: 30 MB or more as a normal MP3.
-- **Third, by reading the code.** `QuestionBankAiImportUtils._build` drops
-  a writing question that has no keyword, and any question it cannot
-  build, without telling the admin (HSK 5 question 100, HSK 6 question
-  101: the test code then shows a count mismatch with no reason).
+| Page kind | As scanned | After removing the watermark, page mode 6 |
+|---|---|---|
+| Dense text (passages 61–70) | good, about 97 to 98 of 100 characters right by eye, order kept, one choice lost | not needed; check that mode 6 keeps it as good |
+| ★ statements (11–20) | text good; ★ and the brackets come out as noise | — |
+| Word bank (51–55), word order (71–75), pinyin gaps (76–80) | bad: lines lost or mixed | **good: every question line is there**, a few wrong characters (伞, 裙) |
+| Picture page (1–10) | no text to read | pictures must be found by image analysis |
 
-**Part A — the owner (about 10 minutes, nothing else can replace it)**
+- Watermark removal that worked: a pixel is watermark when
+  `max(r,g,b) − min(r,g,b) > 28` and `max > 150` → white; luminance above
+  205 → white; everything else keeps its grey value. A hard black/white
+  threshold made the text worse.
+- Page mode 6 (`tessedit_pageseg_mode: 6`) keeps each numbered line
+  together; the default mode separated the numbers from their sentences on
+  cleaned pages.
+- Pinyin tone marks are **not** read (`guān` comes out as `guan`, `cháng`
+  as `chdng`): the admin types the pinyin of 76–80.
+- The paper has 80 questions: listening 1–40 (1–10 pictures A–F and A–E
+  with no printed text, 11–20 ★ statements, 21–40 three text choices),
+  reading 41–70 (41–50 match a sentence, 51–60 word bank, 61–70 passage and
+  question), writing 71–80 (71–75 order the words, 76–80 character for the
+  pinyin). No key and no transcript are printed in it.
+- Today's on-device scanner stops at 8 scanned pages
+  (`PdfTextReader._maxOcrPages`) and the recording upload at 10 MB
+  (`QuestionBankMediaService._maxBytes`, `storage.rules`).
 
-1. Open `https://console.cloud.google.com/security/recaptcha?project=chinese-tracker`.
-   If the page asks, press **Enable**.
-2. Press **Create key**. Name `easy-study-web`. Platform **Website** (Web).
-   Domains: `chinese-tracker.web.app` and `chinese-tracker.firebaseapp.com`
-   (no `localhost`). Leave the checkbox challenge **off**. Press **Create**.
-3. Copy the key ID (about 40 characters, starts with `6L`).
-4. Firebase console → **App Check** → **Apps** → the web app → choose
-   **reCAPTCHA Enterprise** (the console may call it Fraud Defense) → paste
-   the key → **Save**.
-5. Paste the same key in the PLAN chat. It is public (it ships in the web
-   page). The **secret** key of any reCAPTCHA is never pasted anywhere.
+**The owner puts the test paper on the PC** at
+`local_papers/H326202Z.pdf` inside the repo folder. Official papers are
+never committed: the first commit of this build adds `local_papers/` to
+`.gitignore`.
 
-The owner may instead sign in to Google in the PLAN chat's browser pane and
-tell the PLAN chat to do steps 1 to 4 there.
+**Must**
 
-**Part B — the PLAN chat, on the Mac, the same hour**
+1. *Measure first.* Run the reader steps below on the real paper in the
+   browser on the PC and write the numbers in §6 before building the rest:
+   seconds per page, and per page kind how many question lines came out
+   whole. If the result is clearly worse than the table above, stop and
+   tell the PLAN chat.
+2. *Reading.* Question bank → **Scan paper** (the main button; **Scan paper
+   with AI** moves into the ⋮ menu): render every page (`pdfrx`, about 3×),
+   remove the watermark, read with page mode 6, progress "page n of m", no
+   8-page limit on this path (up to 30 pages). Everything runs in the
+   browser; no file leaves the computer.
+3. *Structure.* Build parts and questions from the page texts: the
+   headings (`一、听力`, `二、阅读`, `三、书写`, `第一部分`, `第 1-5 题`),
+   the printed numbers, examples (`例如`) skipped, cover and "下面是…部分"
+   pages skipped. The level comes from the cover and the paper code
+   (`H3…` = HSK 3) and picks the standard test format: **every number the
+   format expects gets a question slot**, also when the reader missed the
+   line (the slot is empty and flagged "type this one"). Forms: picture
+   choice without text, ★ true/false, three or four text choices, a shared
+   list of lettered sentences, a shared word bank, passage and question,
+   word order, character for a pinyin. Extend `QuestionImportUtils` and the
+   normaliser that exist; do not write a second parser. Characters are
+   joined (the engine puts spaces between hanzi).
+4. *Pictures.* Find picture boxes on a cleaned page by image analysis
+   (large non-text regions), in reading order, and make them the choices
+   A–F of that range. The admin can redraw a box on the page picture.
+   Cropping and upload: `WorksheetPageImages` and the media service that
+   exist.
+5. *Proofreading screen.* Page by page: the page picture on one side, the
+   questions read from it on the other, every field editable in place,
+   flagged slots first, the counts against the format on top ("Listening
+   40 of 40", "missing: 12, 27"). Nothing the reader returned may vanish
+   without a line on this screen. Saving makes one worksheet, as today.
+6. *Answer key.* The **Answer key** dialog keeps working for choice
+   questions and is offered right after saving. It also takes the writing
+   answers: `71 …the sentence…` reorders that question's words into the
+   sentence, `76 长` sets the accepted character.
+7. *Recording and transcript.* Audio files up to 60 MB in
+   `question_bank_media` (`storage.rules`, `QuestionBankMediaService`),
+   pictures stay at 10 MB, upload progress, a rules test for both limits.
+   A worksheet gets a **Transcript** of its recording: typed or pasted, or
+   read from the official listening script (PDF or image) with the same
+   reader. It is stored with the worksheet in the bank, which students
+   cannot read; a student receives it only from `getTestReview` after the
+   session is closed, and the review shows it under the recording. Teachers
+   see it on the worksheet screen.
+8. *Tests.* Unit tests for the watermark removal, the page-mode call, the
+   structure builder (with short texts written for the test, not copied
+   from a real paper) and the answer key lines; the Build 1 flow test still
+   passes; analyzer baseline.
 
-1. Write the key to the Mac's `deploy.env` (git-ignored) and run
-   `scripts/deploy_web.sh --web-only`.
-2. The owner scans `H326202Z.pdf` on live (Question bank → Scan paper with
-   AI) and sends a screenshot of the result. Expected on the review screen:
-   HSK 3, 80 questions, 11 pictures, 40 without a key (listening).
-3. What the next message means:
-   - "not set up … not enabled" → AI Logic → Get started again, choose the
-     **Gemini Developer API**.
-   - "App Check token is invalid" again → the key's domain list or the
-     registration in App Check is wrong; hard-refresh once first.
-   - "unreadable answer" or a wrong count → the reader needs tuning: item 5
-     below.
-4. Until item 2 below is live, the PLAN chat shrinks a recording for the
-   owner to a voice-quality `.m4a` under 10 MB (`afconvert`, mono, 32 kbps).
+**Then (if time is left)**
 
-**Part C — the BUILD chat (Must; about one hour)**
+- A list of pinyin syllables with tone marks to pick from for 76–80.
+- Remember the admin's corrections of one paper as hints for the next one
+  of the same level.
 
-This item and Build 2A are one session: finish part C, push, write the
-report in §6, then build 2A. Parts A and B do not wait for part C.
+**Not in this build:** speech-to-text from the recording (needs a speech
+model; the owner decides after seeing the transcript field), any change to
+the AI scan, the App Check key, HSKK papers.
 
-1. The key becomes `DEFAULT_APP_CHECK_SITE_KEY` in `scripts/deploy_web.sh`
-   (and the web push key when the owner gives it); the Mac's `deploy.env`
-   goes away.
-2. **Recording up to 60 MB.** Audio files (`audio/*`) up to 60 MB in
-   `question_bank_media` (`storage.rules`) and in
-   `QuestionBankMediaService`; pictures stay at 10 MB. Upload progress on
-   the worksheet screen. A rules test for both limits. The owner deploys the
-   storage rules.
-3. **Nothing disappears silently.** A question the reader returned and the
-   app cannot store is listed by number on the review screen. A writing
-   question without a keyword is kept as free writing (`picture_sentence`
-   with an empty keyword now; Build 2A's `essay` type afterwards).
-4. **Counts the admin can check.** The review summary shows questions per
-   skill and, when the paper's level has a standard format, the expected
-   count ("Listening 40 of 40"), plus the printed numbers that are missing
-   from 1 to the last number.
-5. Only if part B shows a reading problem: the owner adds one App Check
-   **debug token** (App Check → Apps → ⋮ → Manage debug tokens) so the PC
-   can run the reader with `--dart-define=APP_CHECK_DEBUG=true`; then tune
-   the prompt, or read the paper skill by skill in three calls when the
-   answer is cut off (`finishReason` MAX_TOKENS).
+**Acceptance (emulator on the PC, with `local_papers/H326202Z.pdf`)**
 
-**Acceptance (live, by the owner, with `H326202Z`)**
+1. Scan: under 2 minutes; HSK 3 and the code `H326202Z` are detected.
+2. The proofreading screen shows 80 slots in listening / reading / writing
+   = 40 / 30 / 10, and 11 pictures as the choices of 1–10.
+3. The report states how many of the 80 questions needed no correction and
+   how long proofreading took.
+4. Answer key typed once for 1–80; the recording (a file above 10 MB)
+   uploads and plays; the transcript is saved.
+5. **Create test code** with format HSK 3: every part says its count
+   matches. A session with a test student runs to the result card; after
+   the session closes, the review shows the transcript.
+6. Indonesian and English, dark mode, 1280 px and 360 px: no overflow.
 
-1. Scan: 80 questions in listening / reading / writing = 40 / 30 / 10;
-   questions 1–10 show their pictures as choices.
-2. **Answer key** dialog: the official key for 1–70 typed once
-   (`1-5 …`, `11 √ 12 ×`, `41-45 …`); 71–80 checked in the editor.
-3. The recording uploads and plays.
-4. **Create test code** with format HSK 3: every part says its count
-   matches.
-5. A session with a test student: pictures, recording, three parts, result
-   card with listening / reading / writing out of 100 and the total out of
-   300.
-
-**Per paper the owner needs three files:** the paper (PDF), the official
-answer key, the listening recording.
+**After the build, the owner:** deploys storage rules and functions (the
+BUILD chat gives the command), then scans one paper on live. **Per paper
+the owner needs:** the paper (PDF), the official answer key, the recording,
+and the official listening script if there is one.
 
 ### Build 2A — Typing matcher and marking — after Build 1B, same session
 

@@ -19,7 +19,7 @@ Two scanners, both admin-only on web, both ending on the same *Check before addi
 4. For local runs, App Check → Apps → ⋮ → **Manage debug tokens**: add the token the browser console prints when the app runs with `--dart-define=APP_CHECK_DEBUG=true`.
 5. Leave **Firestore, Functions and Storage unenforced** (the Android APK is sideloaded and has no Play Integrity).
 
-Until step 3 is live, **Scan paper with AI** says "AI reading is not set up for this project yet". Checked on 2026-11-17: a call without an App Check token gets `401 Firebase App Check token is invalid` from AI Logic, so the site key is the only thing that switches the scan on; the model name is on Firebase's supported list. The fix plan and the follow-up work are Build 1B in `docs/PLAN.md` §4. Cost: Gemini 3.8 Flash has a free tier; one 16-page paper is a fraction of a cent beyond it.
+Until step 3 is live, **Scan paper with AI** says "AI reading is not set up for this project yet". Checked on 2026-11-17: a call without an App Check token gets `401 Firebase App Check token is invalid` from AI Logic, so the site key is the only thing that switches the scan on; the model name is on Firebase's supported list. Since the owner's decision of 2026-11-17 the AI scan is an extra: papers are read by the built-in reader (Build 1B in `docs/PLAN.md` §4), which needs no key. Cost: Gemini 3.8 Flash has a free tier; one 16-page paper is a fraction of a cent beyond it.
 
 ## After an AI scan of an HSK paper
 

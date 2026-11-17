@@ -24,9 +24,17 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 - Also found: the listening recording is limited to 10 MB (too small for an
   HSK recording), and the importer drops questions it cannot build without
   saying so.
-- `docs/PLAN.md` §4: new **Build 1B** (NEXT) with the owner's steps, the
-  proof scan and one hour of BUILD work; Build 2A follows in the same
+- `docs/PLAN.md` §4: new **Build 1B** (NEXT); Build 2A follows in the same
   session.
+- Later the same day the owner decided: papers are read **inside the app,
+  no outside API**, and each recording gets a transcript. Build 1B was
+  rewritten as the built-in paper reader. Measured on the Mac with the
+  app's own engine (tesseract.js 5): dense pages read well as scanned;
+  sparse pages (word bank, word order, pinyin gaps) read well only after
+  removing the coloured watermark and with page mode 6; pinyin tone marks
+  are not read; pictures need image analysis. Numbers in the plan.
+- The owner puts `H326202Z.pdf` on the PC in `local_papers/` (never
+  committed).
 
 ---
 
