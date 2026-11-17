@@ -506,14 +506,22 @@ class TestReviewItem {
 }
 
 class TestReview {
-  const TestReview({required this.items, required this.recordings});
+  const TestReview({
+    required this.items,
+    required this.recordings,
+    this.transcript = '',
+  });
 
   final List<TestReviewItem> items;
 
   /// Recording per part index (listening parts only).
   final Map<int, String> recordings;
 
+  /// What the recording says (Build 1B); empty when the paper has none.
+  final String transcript;
+
   factory TestReview.fromServer(Map<String, dynamic> m) => TestReview(
+        transcript: (m['transcript'] as String? ?? '').trim(),
         items: (m['items'] as List? ?? const []).map((raw) {
           final it = Map<String, dynamic>.from(raw as Map);
           final ans = it['answer'];

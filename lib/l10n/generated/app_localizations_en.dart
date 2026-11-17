@@ -5874,4 +5874,227 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get testsKey => 'Answer';
+
+  @override
+  String get paperScan => 'Scan paper';
+
+  @override
+  String get paperOpening => 'Opening the paper…';
+
+  @override
+  String paperReadingPage(int page, int count) {
+    return 'Reading page $page of $count';
+  }
+
+  @override
+  String paperReadFailed(String error) {
+    return 'The paper could not be read: $error';
+  }
+
+  @override
+  String get paperNothingFound => 'No questions were found in this file.';
+
+  @override
+  String paperProofreadTitle(String code) {
+    return 'Check the reading · $code';
+  }
+
+  @override
+  String get paperSaveWorksheet => 'Save worksheet';
+
+  @override
+  String get paperUnsavableTitle => 'Some questions cannot be saved yet';
+
+  @override
+  String paperUnsavableBody(String numbers) {
+    return 'These numbers are not complete and would be left out: $numbers. Check them first, or save without them.';
+  }
+
+  @override
+  String get paperKeepChecking => 'Keep checking';
+
+  @override
+  String get paperSaveAnyway => 'Save anyway';
+
+  @override
+  String paperUploadingPicture(int done, int total) {
+    return 'Picture $done of $total';
+  }
+
+  @override
+  String paperUnplaced(String numbers) {
+    return 'Not found on any page: $numbers. Use Only to check to see them.';
+  }
+
+  @override
+  String get paperNothingOnPage => 'No questions were read from this page.';
+
+  @override
+  String paperCountOf(String skill, int count, int expected) {
+    return '$skill $count of $expected';
+  }
+
+  @override
+  String paperToCheck(int count) {
+    return 'To check: $count';
+  }
+
+  @override
+  String paperNotRead(String numbers) {
+    return 'Not read: $numbers';
+  }
+
+  @override
+  String paperPageShort(int page) {
+    return 'p. $page';
+  }
+
+  @override
+  String get paperFormPicture => 'Picture choice';
+
+  @override
+  String get paperFormTrueFalse => '★ true / false';
+
+  @override
+  String get paperFormChoice => 'Choices';
+
+  @override
+  String get paperFormMatching => 'Match a sentence';
+
+  @override
+  String get paperFormWordBank => 'Word bank';
+
+  @override
+  String get paperFormReorder => 'Word order';
+
+  @override
+  String get paperFormPinyinChar => 'Character for pinyin';
+
+  @override
+  String get paperFormSentenceWithWord => 'Sentence with a word';
+
+  @override
+  String get paperFlagMissing => 'not read: type it';
+
+  @override
+  String get paperFlagUnsure => 'number misread';
+
+  @override
+  String get paperFlagOptions => 'a choice is missing';
+
+  @override
+  String get paperFlagIncomplete => 'incomplete';
+
+  @override
+  String get paperLooksRight => 'Looks right';
+
+  @override
+  String paperPictures(int count, int page) {
+    return '$count pictures (page $page)';
+  }
+
+  @override
+  String get paperEditBoxes => 'Picture boxes';
+
+  @override
+  String paperEditBoxesTitle(int page) {
+    return 'Picture boxes · page $page';
+  }
+
+  @override
+  String get paperEditBoxesHint =>
+      'Drag on the page to draw a box. Tap a box to select it; drawing then replaces it. Letters follow the reading order.';
+
+  @override
+  String get paperDeleteBox => 'Delete box';
+
+  @override
+  String paperUseBoxes(int count) {
+    return 'Use $count boxes';
+  }
+
+  @override
+  String get paperPrompt => 'Question';
+
+  @override
+  String get paperOptions => 'Choices';
+
+  @override
+  String get paperOptionsHint => 'One per line, in letter order (A, B, C…).';
+
+  @override
+  String get paperSegments => 'Words to order';
+
+  @override
+  String get paperSegmentsHint => 'Separate the words with /';
+
+  @override
+  String get paperPinyin => 'Pinyin';
+
+  @override
+  String get paperPinyinHint =>
+      'The reader drops tone marks: type them (e.g. cháng).';
+
+  @override
+  String get paperKeyword => 'Word to use';
+
+  @override
+  String paperSaved(
+      int count, int untouched, int total, int minutes, int seconds) {
+    return '$count questions saved · $untouched of $total needed no correction · checked in $minutes min · read in $seconds s';
+  }
+
+  @override
+  String get paperKeyNowTitle => 'Enter the answer key now?';
+
+  @override
+  String get paperKeyNowBody =>
+      'The paper prints no key. Type it once (choices and the writing answers) and the worksheet is ready for a test code.';
+
+  @override
+  String get paperLater => 'Later';
+
+  @override
+  String get paperAnswerKeyWrittenHint =>
+      'Writing: “71 the sentence” orders that question\'s words; “76 长” sets the character.';
+
+  @override
+  String paperAnswerKeyNotMatched(String numbers) {
+    return 'These sentences do not use exactly the question\'s words: $numbers.';
+  }
+
+  @override
+  String get paperUploadingRecording => 'Uploading the recording…';
+
+  @override
+  String get paperTranscript => 'Transcript';
+
+  @override
+  String get paperTranscriptAdd => 'Add transcript';
+
+  @override
+  String get paperTranscriptEdit => 'Edit transcript';
+
+  @override
+  String get paperTranscriptNone =>
+      'No transcript yet. Students see it in their review after the session.';
+
+  @override
+  String get paperTranscriptHint =>
+      'Type or paste what the recording says, or read the official listening script (PDF or picture). Students see it only in their review after the session.';
+
+  @override
+  String get paperTranscriptReadFile => 'Read from a file';
+
+  @override
+  String get paperTranscriptSaved => 'Transcript saved.';
+
+  @override
+  String get paperFlagGarbled => 'a choice looks misread';
+
+  @override
+  String get paperFlagTones => 'type the tone marks';
+
+  @override
+  String get paperFlagSplit => 'check the word split';
 }

@@ -6,7 +6,6 @@ import '../../core/constants/exercise_authoring_platform.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/constants/app_constants.dart';
-import '../../core/utils/answer_key_parser.dart';
 import '../../l10n/l10n.dart';
 import '../../l10n/labels_exercises.dart';
 import '../../models/exercise_category.dart';
@@ -20,6 +19,8 @@ import '../teacher/exercise_assign_dialog.dart';
 import 'question_bank_editor.dart';
 import 'question_bank_pictures.dart';
 import 'question_bank_text.dart';
+import 'sheet_answer_key.dart';
+import 'sheet_transcript.dart';
 
 /// One worksheet in the bank: its questions in sheet order with the stored
 /// answer. Tap a question to edit it, the arrows move it, the trash icon
@@ -125,6 +126,11 @@ class QuestionBankSheetScreen extends StatelessWidget {
                       onUpload: () => _uploadAudio(context, sheet),
                       onRemove: () => _setAudio(context, sheet, null),
                     ),
+                    const SizedBox(height: 12),
+                    SheetTranscriptCard(
+                      sheet: sheet,
+                      readOnly: !canManageBank,
+                    ),
                     const SizedBox(height: 16),
                     for (final (i, item) in sheet.items.indexed)
                       Padding(
@@ -172,17 +178,48 @@ class QuestionBankSheetScreen extends StatelessWidget {
   Future<void> _uploadAudio(BuildContext context, QuestionBankSheet sheet) async {
     final l = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context, rootNavigator: true);
+    // A paper's recording can be large (up to 60 MB): show the upload.
+    final progress = ValueNotifier<double>(0);
+    var dialogOpen = false;
     try {
-      final url = await context
-          .read<QuestionBankMediaService>()
-          .pickAndUploadAudio(ownerId);
+      final url = await context.read<QuestionBankMediaService>().pickAndUploadAudio(
+        ownerId,
+        onPicked: () {
+          dialogOpen = true;
+          showDialog<void>(
+            context: context,
+            barrierDismissible: false,
+            builder: (_) => AlertDialog(
+              title: Text(l.paperUploadingRecording),
+              content: ValueListenableBuilder<double>(
+                valueListenable: progress,
+                builder: (_, v, __) => Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    LinearProgressIndicator(value: v),
+                    const SizedBox(height: 8),
+                    Text('${(v * 100).round()}%'),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+        onProgress: (v) => progress.value = v,
+      );
+      if (dialogOpen) navigator.pop();
+      dialogOpen = false;
       if (!context.mounted) return;
       await _setAudio(context, sheet, url);
     } on QuestionBankMediaCancelledException {
       // nothing picked
     } catch (e) {
+      if (dialogOpen) navigator.pop();
       messenger.showSnackBar(
           SnackBar(content: Text(l.bankEditorUploadFailed('$e'))));
+    } finally {
+      progress.dispose();
     }
   }
 
@@ -207,74 +244,10 @@ class QuestionBankSheetScreen extends StatelessWidget {
     await firestore.setQuestionBankSectionAudio(targets, url);
   }
 
-  /// The admin types or pastes the printed key; numbers follow the sheet
-  /// order. Only choice-style questions take a key.
-  Future<void> _answerKey(BuildContext context, QuestionBankSheet sheet) async {
-    final l = context.l10n;
-    final controller = TextEditingController();
-    final text = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l.bankSheetAnswerKey),
-        content: SizedBox(
-          width: 440,
-          child: TextField(
-            controller: controller,
-            autofocus: true,
-            minLines: 3,
-            maxLines: 8,
-            decoration: InputDecoration(
-              hintText: '1 D 2 A 3 C\n11 √ 12 ×\n41-45 ECBAD',
-              helperText: l.bankSheetAnswerKeyHint,
-              helperMaxLines: 3,
-              border: const OutlineInputBorder(),
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(l.commonCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, controller.text),
-            child: Text(l.bankSheetAnswerKeyApply),
-          ),
-        ],
-      ),
-    );
-    controller.dispose();
-    if (text == null || !context.mounted) return;
-    final key = AnswerKeyParser.parse(text);
-    final updates = <String, int>{};
-    for (final entry in key.entries) {
-      final index = entry.key - 1;
-      if (index < 0 || index >= sheet.items.length) continue;
-      final item = sheet.items[index];
-      final options = item.question.options;
-      final usesIndex = switch (item.type) {
-        ExerciseType.multipleChoice ||
-        ExerciseType.listening ||
-        ExerciseType.matching ||
-        ExerciseType.readingCloze =>
-          true,
-        _ => false,
-      };
-      if (!usesIndex || entry.value >= options.length) continue;
-      if (item.question.correctIndex != entry.value) {
-        updates[item.id] = entry.value;
-      }
-    }
-    final messenger = ScaffoldMessenger.of(context);
-    if (key.isEmpty) {
-      messenger.showSnackBar(SnackBar(content: Text(l.bankSheetAnswerKeyNone)));
-      return;
-    }
-    await context.read<FirestoreService>().updateQuestionBankAnswers(updates);
-    messenger.showSnackBar(
-      SnackBar(content: Text(l.bankSheetAnswerKeyApplied(updates.length))),
-    );
-  }
+  /// The admin types or pastes the printed key (choices, and since Build
+  /// 1B the writing answers); see [showSheetAnswerKeyDialog].
+  Future<void> _answerKey(BuildContext context, QuestionBankSheet sheet) =>
+      showSheetAnswerKeyDialog(context, sheet);
 
   Future<void> _edit(
     BuildContext context,

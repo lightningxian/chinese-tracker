@@ -75,6 +75,21 @@ abstract final class QuestionBankAiImportUtils {
     return out;
   }
 
+  /// Printed numbers [toBankItems] would leave out (too few choices, no
+  /// words to order, no pinyin): the built-in reader's proofreading screen
+  /// lists them before saving, so nothing vanishes silently. Pictures count
+  /// as present when a box exists ([imageUrls] filled with placeholders).
+  static List<int> unsavable(AiWorksheet worksheet) {
+    final placeholders = {for (final k in worksheet.boxes.keys) k: 'x'};
+    return [
+      for (final section in worksheet.sections)
+        for (final q in section.questions)
+          if (_build(q, skill: skillFor(section.skill), imageUrls: placeholders) ==
+              null)
+            q.number,
+    ];
+  }
+
   static AiImportSummary summarize(
     AiWorksheet worksheet, {
     required int pictures,

@@ -229,7 +229,7 @@ Status per spec item. Evidence is `file:line` in this repo.
 | Rules pembayaran read-own | Partly | Own/parent OK; teachers can read all invoices | invoices |
 | Rules counters only by functions | Missing | Staff update terms/attendance from app | — |
 | **Testing** seed script | Partly | `scripts/seed_test_accounts.sh`, `seed_report_demo_data.py`, run against live | seed scripts |
-| Testing question import (CSV/JSON + audio) | Partly | AI paper reader (PDF/photo → typed, keyed questions with pictures) + paste + on-device OCR; one recording per worksheet; no CSV/JSON | Worksheet import |
+| Testing question import (CSV/JSON + audio) | Partly | Built-in HSK paper reader (2026-11-17, Build 1B: scanned PDF → 80 slots by the HSK format, pictures, proofreading screen, answer key incl. writing, no outside service) + AI paper reader (off on live) + paste + on-device OCR; one recording per worksheet up to 60 MB with a transcript; no CSV/JSON | Worksheet import |
 | Testing emulator rules tests | Done | `rules-tests/firestore.rules.test.mjs`, 30 pass (`npm --prefix rules-tests run test:emulator`) | rules-tests |
 | Testing reconciliation script | Missing | Not found | — |
 | Testing unit tests NA formula / typing matcher | Missing | Tests cover constants and worksheet parser only | — |

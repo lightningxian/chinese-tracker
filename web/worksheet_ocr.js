@@ -79,4 +79,67 @@
   };
 
   window.chineseTrackerOcrRelease = releaseWorker;
+
+  // ---- Built-in HSK paper reader (Build 1B) --------------------------------
+  // Its own worker, so the page mode below never changes the scanner above.
+  // `pageMode` is Tesseract's page segmentation mode: 6 = one uniform block,
+  // which keeps each numbered question line together on a cleaned page.
+  var paperWorker = null;
+  var paperMode = null;
+  var paperIdle = null;
+  var paperListener = null;
+
+  function releasePaperWorker() {
+    if (paperIdle) {
+      clearTimeout(paperIdle);
+      paperIdle = null;
+    }
+    if (!paperWorker) return;
+    var pending = paperWorker;
+    paperWorker = null;
+    paperMode = null;
+    pending.then(function (w) { return w.terminate(); }).catch(function () {});
+  }
+
+  window.chineseTrackerPaperOcr = async function (imageBytes, pageMode, onProgress) {
+    if (!window.Tesseract) {
+      throw new Error('OCR engine failed to load. Refresh the page and try again.');
+    }
+    if (paperIdle) {
+      clearTimeout(paperIdle);
+      paperIdle = null;
+    }
+    paperListener = typeof onProgress === 'function' ? onProgress : null;
+    try {
+      if (!paperWorker) {
+        paperWorker = Tesseract.createWorker('chi_sim+eng', 1, {
+          logger: function (m) {
+            if (!paperListener || !m || typeof m.status !== 'string') return;
+            try {
+              paperListener(m.status, typeof m.progress === 'number' ? m.progress : 0);
+            } catch (e) {}
+          },
+        }).catch(function (err) {
+          paperWorker = null;
+          throw err;
+        });
+      }
+      var worker = await paperWorker;
+      var mode = String(pageMode || 6);
+      if (paperMode !== mode) {
+        await worker.setParameters({ tessedit_pageseg_mode: mode });
+        paperMode = mode;
+      }
+      var result = await worker.recognize(imageBytes);
+      return result && result.data ? result.data.text || '' : '';
+    } catch (err) {
+      releasePaperWorker();
+      throw err;
+    } finally {
+      paperListener = null;
+      if (paperWorker) paperIdle = setTimeout(releasePaperWorker, IDLE_MS);
+    }
+  };
+
+  window.chineseTrackerPaperOcrRelease = releasePaperWorker;
 })();

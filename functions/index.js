@@ -2113,6 +2113,12 @@ exports.getTestReview = onCall(async (request) => {
     }
   }
   const split = await loadTestParts(code, format);
+  // The transcript of the recording (Build 1B), stored on the worksheet's
+  // bank questions, which students cannot read: sent only here, after the
+  // session is closed.
+  const transcriptItem = split.flat().find((it) =>
+    typeof it.transcript === "string" && it.transcript.trim());
+  const transcript = transcriptItem ? transcriptItem.transcript.trim() : "";
   const answers = attempt.answers || {};
   const items = [];
   const recordings = {};
@@ -2131,5 +2137,5 @@ exports.getTestReview = onCall(async (request) => {
       });
     });
   });
-  return {codeId, items, recordings};
+  return {codeId, items, recordings, transcript};
 });

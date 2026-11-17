@@ -19,6 +19,7 @@ import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../core/widgets/exercise_category_chip.dart';
 import 'question_bank_ai_import.dart';
+import 'hsk_paper_scan.dart';
 import 'question_bank_bulk_import.dart';
 import 'question_bank_editor.dart';
 import 'question_bank_filters.dart';
@@ -363,6 +364,8 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
                     ownerId: ownerId,
                     existingBank: all,
                   );
+                case 'scan_ai':
+                  await runQuestionBankAiImport(context, ownerId: ownerId);
                 case 'scan_local':
                   await runQuestionBankWorksheetImport(context,
                       ownerId: ownerId);
@@ -379,6 +382,11 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
               }
             },
             itemBuilder: (_) => [
+              // The AI reader stays as an extra (needs App Check on live).
+              PopupMenuItem(
+                value: 'scan_ai',
+                child: Text(l.bankAiScanWorksheet),
+              ),
               PopupMenuItem(
                 value: 'scan_local',
                 child: Text(l.bankScanWithoutAi),
@@ -396,19 +404,20 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
           ),
         ],
       ],
-      // Scanner first: upload a paper, the AI reader types and keys each
-      // question (pictures cut out), and the admin checks the list before it
-      // is added. The on-device scanner (text PDFs, OCR) stays in the menu.
+      // Scanner first (Build 1B): the built-in reader reads a whole HSK
+      // paper in the browser, no outside service; the admin proofreads it
+      // page by page before it is added. The AI reader and the older
+      // on-device scanner stay in the menu.
       floatingActionButton: !canManageBank
           ? null
           : FloatingActionButton.extended(
-              onPressed: () => runQuestionBankAiImport(
+              onPressed: () => runHskPaperScan(
                 context,
                 ownerId: ownerId,
               ),
               backgroundColor: AppColors.navy,
-              icon: const Icon(Icons.auto_awesome_outlined),
-              label: Text(l.bankAiScanWorksheet),
+              icon: const Icon(Icons.document_scanner_outlined),
+              label: Text(l.paperScan),
             ),
       child: StreamBuilder<List<QuestionBankItem>>(
         stream: firestore.watchQuestionBank(ownerId),

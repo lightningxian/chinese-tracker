@@ -837,6 +837,80 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
+### 2026-11-17 — Build 1B Built-in HSK paper reader — d3b27b9..(this commit), release v0.1.17 (not deployed)
+- Built: **Scan paper** (main button; AI scan in the ⋮ menu) → render,
+  watermark removal, page mode 6, up to 30 pages, all in the browser →
+  structure builder in `QuestionImportUtils` (part file
+  `question_import_hsk_paper.dart`) → picture boxes by connected regions →
+  proofreading screen with a ViewModel → one worksheet. Answer key dialog
+  shared and extended for writing. Audio to 60 MB with progress. Transcript
+  card on the worksheet screen; `getTestReview` returns it after the session
+  closes; the review shows it under the recording.
+- Must list: 1 measure pass (entry below) · 2 reading pass · 3 structure
+  pass · 4 pictures pass (cut with a new `ColourPageCutter` that redraws the
+  colour page at the reader's width, not `WorksheetPageImages`; upload
+  through the media service) · 5 proofreading pass · 6 answer key pass ·
+  7 recording + transcript pass (teachers see the transcript read-only on
+  the worksheet screen) · 8 tests pass.
+- Then list: not done (pinyin picker for 76–80, remembering corrections).
+- **Acceptance on the emulators with `local_papers/H326202Z.pdf`:**
+  1. Scan: 16 pages read in **30–32 s** (open to proofreading screen about
+     40 s). HSK 3 and `H326202Z` detected. Pass.
+  2. 80 slots, Listening 40 of 40, Reading 30 of 30, Writing 10 of 10;
+     page 2 gives 6 boxes (A–F) and page 3 gives 5 (A–E): 11 pictures for
+     1–10, cut in colour. Pass.
+  3. **Needed no correction:** the first walk flagged 14 slots (46–50 lost
+     choice E, 51 not read, 56–60 word bank misread, 61 lost choice B, 77 and
+     80 lost pinyin); I fixed them in **2 min 27 s** (my clicks, typing
+     placeholders such as `(E)` because I do not copy the paper; an admin
+     reading the paper will take longer), and the app reported "66 of 80
+     untouched". Reading the saved text showed that number was too kind:
+     garbled choices (`H#EXLT`, `BARER`), a missing choice C on 70, pinyin
+     without tones on all of 76–80, word order split into single
+     characters, stray `Kk` / `CC` / `(`. The reader now flags those and
+     cleans the marks: a fresh scan flags **25 of 80**. Of the 55 not
+     flagged, about 18 still carry a wrong character inside a sentence
+     (`符爷` for `爷爷`, `荣慢点儿`, `提和高`, `上而`), which no check can see.
+     **So about 37 of 80 questions are right as read; the admin should read
+     every question against the page, the flags only order the work.**
+     The owner's own proofreading time is still to be measured on live.
+  4. Answer key typed once for 1–80 (**test answers, not an official key**:
+     the paper prints none); writing 71–75 as sentences, 76–80 as
+     characters; all 80 matched. A 12,480,044-byte WAV uploaded under the new
+     rule and was served to the student as the part 1 recording (playback
+     not pressed). Transcript saved. Pass.
+  5. Test code `H326B1` with format HSK 3: each part says its count matches.
+     A session (script on the callables, student2, every fifth answer
+     wrong) → result card 80/80/80 = 240/300, 合格; the review was refused
+     while the session was open and showed the transcript after it closed.
+     Pass.
+  6. Indonesian dark at 1280 px (admin walk, result card, review), English
+     light at 1280 px (result card, review), 360 px (review, proofreading
+     screen): no overflow seen. Pass.
+- Proof: analyzer 0 errors / 0 warnings / 17 infos; `flutter test` 100 pass
+  (+17); rules tests 53 pass, 1 skipped (+5 Storage); node tests pass; flow
+  test 24/24 on the emulators after a re-seed. Screenshots:
+  `docs/screenshots/build1b/` (5, none showing the paper itself).
+- Owner must: (1) deploy storage rules and the changed function:
+  `firebase deploy --only storage,functions:getTestReview --project chinese-tracker`;
+  (2) then hosting `scripts/deploy_web.sh --web-only --no-keys` (the PC has
+  no `firebase login`, so from the Mac); (3) on live: Bank soal → Pindai
+  kertas soal → `H326202Z.pdf`, check every question against the page
+  (note the minutes), save, type the official key, upload the recording,
+  add the transcript, Buat kode tes.
+- Left out and why: the Then list (time); playing the long recording in
+  the player (the upload and the URL were checked).
+- Notes for the PLAN chat:
+  - The "untouched" count in the save message counts slots the admin did
+    not edit; it is not a correctness measure. The thesis number should
+    come from the owner checking each question against the paper.
+  - Word order (71–75): the engine spaces most characters, so the words to
+    order often come out as single characters and need regrouping by hand.
+  - The worksheet's skill label in the bank list is the first item's
+    ("Menyimak") for a full paper.
+  - The browser pane must be visible for a UI walk; hidden, its frames
+    freeze.
+
 ### 2026-11-17 — Build 1B Must 1: measurement on the PC (before building)
 Paper `H326202Z` (16 scanned pages), in the browser on the PC (Chrome in the
 Claude app), pdf.js render at 1738 px wide, the watermark rule of §4 Build 1B,

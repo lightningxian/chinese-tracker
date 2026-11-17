@@ -13,6 +13,23 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-17 — Claude (BUILD chat, PC): Build 1B built-in HSK paper reader
+
+- Built Build 1B (`docs/PLAN.md` §4, report in §6): **Scan paper** reads a
+  scanned HSK PDF in the browser (watermark removed, page mode 6, picture
+  boxes by image analysis), builds 80 slots from the HSK format, and opens a
+  proofreading screen; the answer key takes writing answers; recordings up
+  to 60 MB; a transcript per worksheet shown in the review after the
+  session.
+- Walked on the emulators with the owner's paper `H326202Z` (kept in
+  `local_papers/`, git-ignored): read in 30–32 s, 40/30/10, 11 pictures,
+  saved, key, 12 MB recording, transcript, test code HSK 3, a session to the
+  result card and the review.
+- Proof: analyzer 17 infos; `flutter test` 100; rules tests 53 + 1 skipped;
+  node tests; flow test 24/24.
+- Not deployed: the owner deploys storage rules and `getTestReview` (command
+  in the changelog), then hosting.
+
 ### 2026-11-17 — Claude (PLAN chat): why the AI scan fails, Build 1B
 
 - Owner: nothing of Build 1 can be used without scanning a real HSK paper

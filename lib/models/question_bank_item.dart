@@ -28,6 +28,7 @@ class QuestionBankItem {
     this.sheetIndex,
     this.section,
     this.sectionAudioUrl,
+    this.transcript,
     this.usageCount = 0,
     this.lastUsedAt,
     this.updatedAt,
@@ -66,6 +67,12 @@ class QuestionBankItem {
   /// real HSK plays it). Stored on every listening question of the sheet;
   /// the player shows one player while those questions are open.
   final String? sectionAudioUrl;
+
+  /// What the recording says (Build 1B), typed, pasted or read from the
+  /// official listening script. Kept on every question of the sheet; set
+  /// with `FirestoreService.setQuestionBankTranscript`, never by [toMap].
+  /// Students only receive it from `getTestReview` after the session.
+  final String? transcript;
 
   final int usageCount;
   final DateTime? lastUsedAt;
@@ -128,6 +135,7 @@ class QuestionBankItem {
       sheetIndex: (data['sheetIndex'] as num?)?.toInt(),
       section: data['section'] as String?,
       sectionAudioUrl: data['sectionAudioUrl'] as String?,
+      transcript: data['transcript'] as String?,
       usageCount: data['usageCount'] as int? ?? 0,
       lastUsedAt: (data['lastUsedAt'] as Timestamp?)?.toDate(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
@@ -252,6 +260,15 @@ class QuestionBankSheet {
         .where((i) => i.skillCategory == ExerciseSkillCategory.listening)
         .toList();
     return listening.isEmpty ? items : listening;
+  }
+
+  /// The transcript of the sheet's recording, if any.
+  String? get transcript {
+    for (final item in items) {
+      final t = item.transcript;
+      if (t != null && t.trim().isNotEmpty) return t;
+    }
+    return null;
   }
 
   /// The listening recording attached to the sheet, if any.

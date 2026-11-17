@@ -1,6 +1,11 @@
 import '../../models/exercise_skill_category.dart';
 import '../../models/exercise_type.dart';
+import '../../models/hsk_paper_draft.dart';
+import '../../models/test_track.dart';
 import 'worksheet_text_normalizer.dart';
+
+// Whole HSK papers read by the built-in reader (Build 1B).
+part 'question_import_hsk_paper.dart';
 
 class ParsedMcQuestion {
   const ParsedMcQuestion({
@@ -145,6 +150,21 @@ class WorksheetParseResult {
 }
 
 abstract final class QuestionImportUtils {
+  /// A whole HSK paper from the text of its pages (one string per page, as
+  /// the built-in reader returns them): parts, numbers, forms. Every number
+  /// the level's standard format expects gets a slot, also when the reader
+  /// missed its line. See `question_import_hsk_paper.dart`.
+  static HskPaperDraft parseHskPaper(List<String> pageTexts) =>
+      _HskPaperParser(pageTexts).build();
+
+  /// Removes the spaces the OCR engine puts between Chinese characters
+  /// (and around Chinese punctuation); Latin words keep theirs.
+  static String joinCjkSpaces(String text) => text.replaceAllMapped(
+        RegExp(r'(?<=[　-〿一-鿿＀-￯])\s+'
+            r'(?=[　-〿一-鿿＀-￯])'),
+        (_) => '',
+      );
+
   static final _numberedLine = RegExp(
     r'^\s*(?:\d+|[Qq]uestion\s*\d+)\s*[\.\)、:：\-]\s*(.*)$',
   );

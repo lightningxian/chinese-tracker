@@ -6,6 +6,72 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-17 — Claude (BUILD chat): Build 1B — built-in HSK paper reader, answer key for writing, long recordings, transcript
+
+**What changed**
+- **Scan paper** is now the main button of the question bank (Scan paper
+  with AI moved into the ⋮ menu, unchanged). It reads a scanned PDF in the
+  browser with no outside service: every page drawn at 1738 px
+  (`pdfrx`), the coloured watermark removed
+  (`lib/services/hsk_paper/paper_image_ops.dart`), read by tesseract.js with
+  page mode 6 (`web/worksheet_ocr.js` `chineseTrackerPaperOcr`,
+  `paper_ocr*.dart`), up to 30 pages, progress "page n of m".
+- **Structure builder** (`lib/core/utils/question_import_hsk_paper.dart`, a
+  part of `QuestionImportUtils`): level and paper code from the cover, the
+  standard test format gives one slot per expected number; headings,
+  ranges, examples and "下面是…部分" pages; numbers placed by order when a
+  digit is misread; forms picture / ★ true-false / choices / matching /
+  word bank / word order / character for pinyin; reader marks cleaned; a
+  slot is flagged when it was not read, its number was misread, a choice is
+  missing or looks misread, the pinyin has no tone marks, or the words to
+  order came out as single characters.
+- **Picture choices** found by image analysis (connected regions) and cut
+  from the colour page; a box editor on the page picture.
+- **Proofreading screen** (`hsk_paper_proofread_screen.dart`, ViewModel):
+  page picture beside the questions, counts against the format on top,
+  "To check" filter, "Looks right", nothing the reader found is dropped
+  (slots with no page are listed). Saving makes one worksheet and reports
+  how many questions were saved untouched and how long checking took.
+- **Answer key** dialog (`sheet_answer_key.dart`) now also takes writing
+  answers: `71 sentence` orders that question's words, `76 长` sets the
+  character. Offered right after saving.
+- **Recordings up to 60 MB** (`storage.rules`: audio under 60 MB, pictures
+  stay under 10 MB; `QuestionBankMediaService` limits and upload progress);
+  5 Storage rules tests (`rules-tests/storage.rules.test.mjs`; the test
+  script now starts Firestore and Storage emulators and runs files one at
+  a time).
+- **Transcript** per worksheet (`sheet_transcript.dart`): typed, pasted, or
+  read from the listening script (PDF or picture) with the same reader;
+  stored on the bank items (students cannot read the bank).
+  `getTestReview` returns it after the session is closed; the review shows
+  it under the recording. Teachers see it read-only on the worksheet
+  screen.
+- Review: a picture choice is shown as its letter once ("B", not "B · B").
+- 62 new keys in both languages. 17 new unit tests
+  (`test/hsk_paper_reader_test.dart`).
+
+**Why**
+- Owner decision 2026-11-17: papers are read inside the app with no outside
+  API; the AI scan stays off on live until an App Check key exists. An HSK
+  recording is larger than 10 MB, and the centre wants a transcript.
+
+**For review**
+- **Deploy needed (owner):** `storage.rules` (60 MB audio) and the
+  `getTestReview` function (transcript):
+  `firebase deploy --only storage,functions:getTestReview --project chinese-tracker`.
+  Hosting after that. Firestore rules did not change.
+- The transcript is read from the sheet's items only inside
+  `getTestReview` and only after the session is closed; `stripQuestion`
+  never sends it during a test.
+- Measured on `H326202Z`: 16 pages read in 30–32 s; 80 of 80 slots,
+  40/30/10, 11 pictures. Character misreads inside a sentence (`符爷` for
+  `爷爷`) are not detectable and stay the proofreader's job; see
+  `docs/PLAN.md` §6.
+- Official papers stay out of git (`local_papers/` ignored); screenshots
+  that show paper content were not committed.
+
+---
+
 ## 2026-11-16 — Claude (BUILD chat): Build 1 — test formats, test codes, supervised test, result card
 
 **What changed**

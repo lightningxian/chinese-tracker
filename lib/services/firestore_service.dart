@@ -552,6 +552,45 @@ class FirestoreService {
     await batch.commit();
   }
 
+  /// Written answers from the answer key (Build 1B): question id → the
+  /// fields to set, `question.segments` (word order in the right order) or
+  /// `question.options` (accepted characters).
+  Future<void> updateQuestionBankWrittenKeys(
+      Map<String, Map<String, Object>> fieldsById) async {
+    if (fieldsById.isEmpty) return;
+    final batch = _db.batch();
+    for (final entry in fieldsById.entries) {
+      batch.update(
+        _db.collection(AppConstants.questionBankCollection).doc(entry.key),
+        {...entry.value, 'updatedAt': FieldValue.serverTimestamp()},
+      );
+    }
+    await batch.commit();
+  }
+
+  /// The transcript of a worksheet's recording (Build 1B), on every
+  /// question of the sheet; null removes it. Students never read the bank;
+  /// they get it from `getTestReview` after the session.
+  Future<void> setQuestionBankTranscript(
+      Iterable<String> ids, String? transcript) async {
+    final list = ids.toList();
+    for (var i = 0; i < list.length; i += 400) {
+      final batch = _db.batch();
+      for (final id in list.skip(i).take(400)) {
+        batch.update(
+          _db.collection(AppConstants.questionBankCollection).doc(id),
+          {
+            'transcript': transcript == null || transcript.trim().isEmpty
+                ? FieldValue.delete()
+                : transcript.trim(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          },
+        );
+      }
+      await batch.commit();
+    }
+  }
+
   Future<void> reorderQuestionBankSheet(List<String> ids) async {
     final batch = _db.batch();
     for (final (i, id) in ids.indexed) {

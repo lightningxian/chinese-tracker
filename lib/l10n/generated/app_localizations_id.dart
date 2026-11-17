@@ -5853,4 +5853,228 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get testsKey => 'Kunci';
+
+  @override
+  String get paperScan => 'Pindai kertas soal';
+
+  @override
+  String get paperOpening => 'Membuka kertas soal…';
+
+  @override
+  String paperReadingPage(int page, int count) {
+    return 'Membaca halaman $page dari $count';
+  }
+
+  @override
+  String paperReadFailed(String error) {
+    return 'Kertas soal tidak bisa dibaca: $error';
+  }
+
+  @override
+  String get paperNothingFound => 'Tidak ada soal yang ditemukan di file ini.';
+
+  @override
+  String paperProofreadTitle(String code) {
+    return 'Periksa hasil baca · $code';
+  }
+
+  @override
+  String get paperSaveWorksheet => 'Simpan lembar soal';
+
+  @override
+  String get paperUnsavableTitle => 'Beberapa soal belum bisa disimpan';
+
+  @override
+  String paperUnsavableBody(String numbers) {
+    return 'Nomor berikut belum lengkap dan tidak akan ikut tersimpan: $numbers. Periksa dulu, atau simpan tanpa nomor itu.';
+  }
+
+  @override
+  String get paperKeepChecking => 'Lanjut periksa';
+
+  @override
+  String get paperSaveAnyway => 'Tetap simpan';
+
+  @override
+  String paperUploadingPicture(int done, int total) {
+    return 'Gambar $done dari $total';
+  }
+
+  @override
+  String paperUnplaced(String numbers) {
+    return 'Tidak ditemukan di halaman mana pun: $numbers. Pakai Perlu dicek untuk melihatnya.';
+  }
+
+  @override
+  String get paperNothingOnPage =>
+      'Tidak ada soal yang terbaca dari halaman ini.';
+
+  @override
+  String paperCountOf(String skill, int count, int expected) {
+    return '$skill $count dari $expected';
+  }
+
+  @override
+  String paperToCheck(int count) {
+    return 'Perlu dicek: $count';
+  }
+
+  @override
+  String paperNotRead(String numbers) {
+    return 'Tidak terbaca: $numbers';
+  }
+
+  @override
+  String paperPageShort(int page) {
+    return 'hlm. $page';
+  }
+
+  @override
+  String get paperFormPicture => 'Pilih gambar';
+
+  @override
+  String get paperFormTrueFalse => '★ benar / salah';
+
+  @override
+  String get paperFormChoice => 'Pilihan ganda';
+
+  @override
+  String get paperFormMatching => 'Pasangkan kalimat';
+
+  @override
+  String get paperFormWordBank => 'Bank kata';
+
+  @override
+  String get paperFormReorder => 'Susun kata';
+
+  @override
+  String get paperFormPinyinChar => 'Hanzi dari pinyin';
+
+  @override
+  String get paperFormSentenceWithWord => 'Kalimat dengan kata';
+
+  @override
+  String get paperFlagMissing => 'tidak terbaca: ketik';
+
+  @override
+  String get paperFlagUnsure => 'nomor salah baca';
+
+  @override
+  String get paperFlagOptions => 'ada pilihan hilang';
+
+  @override
+  String get paperFlagIncomplete => 'belum lengkap';
+
+  @override
+  String get paperLooksRight => 'Sudah benar';
+
+  @override
+  String paperPictures(int count, int page) {
+    return '$count gambar (halaman $page)';
+  }
+
+  @override
+  String get paperEditBoxes => 'Kotak gambar';
+
+  @override
+  String paperEditBoxesTitle(int page) {
+    return 'Kotak gambar · halaman $page';
+  }
+
+  @override
+  String get paperEditBoxesHint =>
+      'Tarik di halaman untuk menggambar kotak. Ketuk kotak untuk memilihnya; gambar baru menggantikannya. Huruf mengikuti urutan baca.';
+
+  @override
+  String get paperDeleteBox => 'Hapus kotak';
+
+  @override
+  String paperUseBoxes(int count) {
+    return 'Pakai $count kotak';
+  }
+
+  @override
+  String get paperPrompt => 'Soal';
+
+  @override
+  String get paperOptions => 'Pilihan';
+
+  @override
+  String get paperOptionsHint => 'Satu per baris, urut huruf (A, B, C…).';
+
+  @override
+  String get paperSegments => 'Kata yang disusun';
+
+  @override
+  String get paperSegmentsHint => 'Pisahkan kata dengan /';
+
+  @override
+  String get paperPinyin => 'Pinyin';
+
+  @override
+  String get paperPinyinHint =>
+      'Pembaca tidak membaca tanda nada: ketik (mis. cháng).';
+
+  @override
+  String get paperKeyword => 'Kata yang dipakai';
+
+  @override
+  String paperSaved(
+      int count, int untouched, int total, int minutes, int seconds) {
+    return '$count soal disimpan · $untouched dari $total tanpa koreksi · diperiksa $minutes menit · dibaca $seconds detik';
+  }
+
+  @override
+  String get paperKeyNowTitle => 'Isi kunci jawaban sekarang?';
+
+  @override
+  String get paperKeyNowBody =>
+      'Kertas soal tidak mencetak kunci. Ketik sekali (pilihan dan jawaban menulis), lalu lembar soal siap dibuat kode tes.';
+
+  @override
+  String get paperLater => 'Nanti';
+
+  @override
+  String get paperAnswerKeyWrittenHint =>
+      'Menulis: “71 kalimatnya” menyusun kata soal itu; “76 长” mengisi hanzi-nya.';
+
+  @override
+  String paperAnswerKeyNotMatched(String numbers) {
+    return 'Kalimat berikut tidak memakai tepat kata-kata soalnya: $numbers.';
+  }
+
+  @override
+  String get paperUploadingRecording => 'Mengunggah rekaman…';
+
+  @override
+  String get paperTranscript => 'Transkrip';
+
+  @override
+  String get paperTranscriptAdd => 'Tambah transkrip';
+
+  @override
+  String get paperTranscriptEdit => 'Ubah transkrip';
+
+  @override
+  String get paperTranscriptNone =>
+      'Belum ada transkrip. Murid melihatnya di pembahasan setelah sesi selesai.';
+
+  @override
+  String get paperTranscriptHint =>
+      'Ketik atau tempel isi rekaman, atau baca naskah resmi bagian mendengar (PDF atau gambar). Murid hanya melihatnya di pembahasan setelah sesi.';
+
+  @override
+  String get paperTranscriptReadFile => 'Baca dari file';
+
+  @override
+  String get paperTranscriptSaved => 'Transkrip disimpan.';
+
+  @override
+  String get paperFlagGarbled => 'pilihan tampak salah baca';
+
+  @override
+  String get paperFlagTones => 'ketik tanda nada';
+
+  @override
+  String get paperFlagSplit => 'cek pemisahan kata';
 }

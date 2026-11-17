@@ -9524,6 +9524,379 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Answer'**
   String get testsKey;
+
+  /// No description provided for @paperScan.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan paper'**
+  String get paperScan;
+
+  /// No description provided for @paperOpening.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening the paper…'**
+  String get paperOpening;
+
+  /// No description provided for @paperReadingPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading page {page} of {count}'**
+  String paperReadingPage(int page, int count);
+
+  /// No description provided for @paperReadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The paper could not be read: {error}'**
+  String paperReadFailed(String error);
+
+  /// No description provided for @paperNothingFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No questions were found in this file.'**
+  String get paperNothingFound;
+
+  /// No description provided for @paperProofreadTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the reading · {code}'**
+  String paperProofreadTitle(String code);
+
+  /// No description provided for @paperSaveWorksheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Save worksheet'**
+  String get paperSaveWorksheet;
+
+  /// No description provided for @paperUnsavableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Some questions cannot be saved yet'**
+  String get paperUnsavableTitle;
+
+  /// No description provided for @paperUnsavableBody.
+  ///
+  /// In en, this message translates to:
+  /// **'These numbers are not complete and would be left out: {numbers}. Check them first, or save without them.'**
+  String paperUnsavableBody(String numbers);
+
+  /// No description provided for @paperKeepChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep checking'**
+  String get paperKeepChecking;
+
+  /// No description provided for @paperSaveAnyway.
+  ///
+  /// In en, this message translates to:
+  /// **'Save anyway'**
+  String get paperSaveAnyway;
+
+  /// No description provided for @paperUploadingPicture.
+  ///
+  /// In en, this message translates to:
+  /// **'Picture {done} of {total}'**
+  String paperUploadingPicture(int done, int total);
+
+  /// No description provided for @paperUnplaced.
+  ///
+  /// In en, this message translates to:
+  /// **'Not found on any page: {numbers}. Use Only to check to see them.'**
+  String paperUnplaced(String numbers);
+
+  /// No description provided for @paperNothingOnPage.
+  ///
+  /// In en, this message translates to:
+  /// **'No questions were read from this page.'**
+  String get paperNothingOnPage;
+
+  /// No description provided for @paperCountOf.
+  ///
+  /// In en, this message translates to:
+  /// **'{skill} {count} of {expected}'**
+  String paperCountOf(String skill, int count, int expected);
+
+  /// No description provided for @paperToCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'To check: {count}'**
+  String paperToCheck(int count);
+
+  /// No description provided for @paperNotRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Not read: {numbers}'**
+  String paperNotRead(String numbers);
+
+  /// No description provided for @paperPageShort.
+  ///
+  /// In en, this message translates to:
+  /// **'p. {page}'**
+  String paperPageShort(int page);
+
+  /// No description provided for @paperFormPicture.
+  ///
+  /// In en, this message translates to:
+  /// **'Picture choice'**
+  String get paperFormPicture;
+
+  /// No description provided for @paperFormTrueFalse.
+  ///
+  /// In en, this message translates to:
+  /// **'★ true / false'**
+  String get paperFormTrueFalse;
+
+  /// No description provided for @paperFormChoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Choices'**
+  String get paperFormChoice;
+
+  /// No description provided for @paperFormMatching.
+  ///
+  /// In en, this message translates to:
+  /// **'Match a sentence'**
+  String get paperFormMatching;
+
+  /// No description provided for @paperFormWordBank.
+  ///
+  /// In en, this message translates to:
+  /// **'Word bank'**
+  String get paperFormWordBank;
+
+  /// No description provided for @paperFormReorder.
+  ///
+  /// In en, this message translates to:
+  /// **'Word order'**
+  String get paperFormReorder;
+
+  /// No description provided for @paperFormPinyinChar.
+  ///
+  /// In en, this message translates to:
+  /// **'Character for pinyin'**
+  String get paperFormPinyinChar;
+
+  /// No description provided for @paperFormSentenceWithWord.
+  ///
+  /// In en, this message translates to:
+  /// **'Sentence with a word'**
+  String get paperFormSentenceWithWord;
+
+  /// No description provided for @paperFlagMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'not read: type it'**
+  String get paperFlagMissing;
+
+  /// No description provided for @paperFlagUnsure.
+  ///
+  /// In en, this message translates to:
+  /// **'number misread'**
+  String get paperFlagUnsure;
+
+  /// No description provided for @paperFlagOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'a choice is missing'**
+  String get paperFlagOptions;
+
+  /// No description provided for @paperFlagIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'incomplete'**
+  String get paperFlagIncomplete;
+
+  /// No description provided for @paperLooksRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Looks right'**
+  String get paperLooksRight;
+
+  /// No description provided for @paperPictures.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} pictures (page {page})'**
+  String paperPictures(int count, int page);
+
+  /// No description provided for @paperEditBoxes.
+  ///
+  /// In en, this message translates to:
+  /// **'Picture boxes'**
+  String get paperEditBoxes;
+
+  /// No description provided for @paperEditBoxesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Picture boxes · page {page}'**
+  String paperEditBoxesTitle(int page);
+
+  /// No description provided for @paperEditBoxesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag on the page to draw a box. Tap a box to select it; drawing then replaces it. Letters follow the reading order.'**
+  String get paperEditBoxesHint;
+
+  /// No description provided for @paperDeleteBox.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete box'**
+  String get paperDeleteBox;
+
+  /// No description provided for @paperUseBoxes.
+  ///
+  /// In en, this message translates to:
+  /// **'Use {count} boxes'**
+  String paperUseBoxes(int count);
+
+  /// No description provided for @paperPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Question'**
+  String get paperPrompt;
+
+  /// No description provided for @paperOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Choices'**
+  String get paperOptions;
+
+  /// No description provided for @paperOptionsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'One per line, in letter order (A, B, C…).'**
+  String get paperOptionsHint;
+
+  /// No description provided for @paperSegments.
+  ///
+  /// In en, this message translates to:
+  /// **'Words to order'**
+  String get paperSegments;
+
+  /// No description provided for @paperSegmentsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Separate the words with /'**
+  String get paperSegmentsHint;
+
+  /// No description provided for @paperPinyin.
+  ///
+  /// In en, this message translates to:
+  /// **'Pinyin'**
+  String get paperPinyin;
+
+  /// No description provided for @paperPinyinHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The reader drops tone marks: type them (e.g. cháng).'**
+  String get paperPinyinHint;
+
+  /// No description provided for @paperKeyword.
+  ///
+  /// In en, this message translates to:
+  /// **'Word to use'**
+  String get paperKeyword;
+
+  /// No description provided for @paperSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} questions saved · {untouched} of {total} needed no correction · checked in {minutes} min · read in {seconds} s'**
+  String paperSaved(
+      int count, int untouched, int total, int minutes, int seconds);
+
+  /// No description provided for @paperKeyNowTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the answer key now?'**
+  String get paperKeyNowTitle;
+
+  /// No description provided for @paperKeyNowBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The paper prints no key. Type it once (choices and the writing answers) and the worksheet is ready for a test code.'**
+  String get paperKeyNowBody;
+
+  /// No description provided for @paperLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get paperLater;
+
+  /// No description provided for @paperAnswerKeyWrittenHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Writing: “71 the sentence” orders that question\'s words; “76 长” sets the character.'**
+  String get paperAnswerKeyWrittenHint;
+
+  /// No description provided for @paperAnswerKeyNotMatched.
+  ///
+  /// In en, this message translates to:
+  /// **'These sentences do not use exactly the question\'s words: {numbers}.'**
+  String paperAnswerKeyNotMatched(String numbers);
+
+  /// No description provided for @paperUploadingRecording.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading the recording…'**
+  String get paperUploadingRecording;
+
+  /// No description provided for @paperTranscript.
+  ///
+  /// In en, this message translates to:
+  /// **'Transcript'**
+  String get paperTranscript;
+
+  /// No description provided for @paperTranscriptAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add transcript'**
+  String get paperTranscriptAdd;
+
+  /// No description provided for @paperTranscriptEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit transcript'**
+  String get paperTranscriptEdit;
+
+  /// No description provided for @paperTranscriptNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No transcript yet. Students see it in their review after the session.'**
+  String get paperTranscriptNone;
+
+  /// No description provided for @paperTranscriptHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Type or paste what the recording says, or read the official listening script (PDF or picture). Students see it only in their review after the session.'**
+  String get paperTranscriptHint;
+
+  /// No description provided for @paperTranscriptReadFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Read from a file'**
+  String get paperTranscriptReadFile;
+
+  /// No description provided for @paperTranscriptSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Transcript saved.'**
+  String get paperTranscriptSaved;
+
+  /// No description provided for @paperFlagGarbled.
+  ///
+  /// In en, this message translates to:
+  /// **'a choice looks misread'**
+  String get paperFlagGarbled;
+
+  /// No description provided for @paperFlagTones.
+  ///
+  /// In en, this message translates to:
+  /// **'type the tone marks'**
+  String get paperFlagTones;
+
+  /// No description provided for @paperFlagSplit.
+  ///
+  /// In en, this message translates to:
+  /// **'check the word split'**
+  String get paperFlagSplit;
 }
 
 class _AppLocalizationsDelegate

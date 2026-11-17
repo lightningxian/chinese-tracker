@@ -52,7 +52,10 @@ class _TestReviewScreenState extends State<TestReviewScreen> {
     if (a.index != null) {
       final i = a.index!;
       final letter = String.fromCharCode(65 + i);
-      return i < q.options.length && q.options[i].isNotEmpty
+      // A picture choice is stored as its own letter: show it once.
+      return i < q.options.length &&
+              q.options[i].isNotEmpty &&
+              q.options[i] != letter
           ? '$letter · ${q.options[i]}'
           : letter;
     }
@@ -64,7 +67,10 @@ class _TestReviewScreenState extends State<TestReviewScreen> {
     if (c.correctIndex != null) {
       final i = c.correctIndex!;
       final letter = String.fromCharCode(65 + i);
-      return i < q.options.length && q.options[i].isNotEmpty
+      // A picture choice is stored as its own letter: show it once.
+      return i < q.options.length &&
+              q.options[i].isNotEmpty &&
+              q.options[i] != letter
           ? '$letter · ${q.options[i]}'
           : letter;
     }
@@ -127,6 +133,36 @@ class _TestReviewScreenState extends State<TestReviewScreen> {
                   ],
                 ),
               ));
+              // The transcript under the (first) recording (Build 1B).
+              if (rec != null &&
+                  review.transcript.isNotEmpty &&
+                  review.recordings.keys.reduce((a, b) => a < b ? a : b) ==
+                      it.partIndex) {
+                children.add(Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: AppCard(
+                    child: ExpansionTile(
+                      tilePadding: EdgeInsets.zero,
+                      title: Text(
+                        l.paperTranscript,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.navy,
+                        ),
+                      ),
+                      children: [
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: SelectableText(
+                            review.transcript,
+                            style: const TextStyle(height: 1.6),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ));
+              }
             }
             final q = it.question;
             final ok = it.check.correct;
