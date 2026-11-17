@@ -1031,7 +1031,7 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
-### 2026-11-17 — Build 2A Typing matcher and marking — bc6057a, release v0.1.18 (hosting live 2026-11-17; rules, indexes and functions wait for the owner)
+### 2026-11-17 — Build 2A Typing matcher and marking — bc6057a, release v0.1.18 (hosting live 2026-11-17; Storage rules, Firestore rules, indexes and functions deployed from the PC on 2026-11-17 at the owner's request, 25 functions)
 - Built: typing matcher (`functions/typing_matcher.js`, `functions/pinyin.js`)
   used by the scoring that packages and tests share; types `type_pinyin`
   and `essay`; points instead of right/wrong; the `marking_items` queue,

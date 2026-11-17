@@ -13,6 +13,22 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-17 — Claude (BUILD chat, PC): Builds 1B and 2A backend deployed
+
+- The owner signed in to the Firebase CLI on the PC and asked the BUILD chat
+  to deploy. Ran
+  `firebase deploy --only storage,firestore:rules,firestore:indexes,functions --project chinese-tracker`:
+  Storage rules (60 MB audio), Firestore rules (`marking_items`), the 2
+  marking indexes, 25 functions (3 created: `markAnswer`,
+  `resetTestAttempt`, `closeForgottenTestSessions`). Exit 0.
+- Checked: the site answers 200; `markAnswer` and `resetTestAttempt` answer
+  "Sign in first." without a sign-in.
+- The deploy said 3 indexes on live are not in `firestore.indexes.json`;
+  they were left alone (no `--force`).
+- PC note: the Firebase CLI was installed inside the Claude app, so a
+  normal terminal finds it only by its full path (CLAUDE.md, Known
+  blockers).
+
 ### 2026-11-17 — Claude (PLAN chat, Mac): Build 2A reviewed, hosting live, Build 1C is NEXT
 
 - Pulled Build 2A (v0.1.18) and checked it on the Mac: analyzer 17 infos,
