@@ -13,6 +13,23 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-17 — Claude (PLAN chat, Mac): Build 1B reviewed, hosting live
+
+- Pulled Build 1B (v0.1.17) and checked it on the Mac: analyzer 17 infos,
+  `flutter test` 100, node tests, rules tests 53 pass and 1 skipped.
+- Read the backend changes: the transcript is stored on bank questions
+  (staff-only read), the player gets questions through `stripQuestion` (a
+  fixed list of fields), so students receive the transcript only from
+  `getTestReview` after the session is closed. Storage rule: `audio/*` under
+  60 MB, every other file under 10 MB, staff only.
+- Published hosting from the Mac (`scripts/deploy_web.sh --web-only
+  --no-keys`); **Scan paper** is on live. Still open for the owner:
+  `firebase deploy --only storage,functions:getTestReview --project chinese-tracker`.
+- The reader's measured quality (about 37 of 80 questions right as read) is
+  written into `docs/PLAN.md` as **Build 1C — Reader accuracy**, after Build
+  2A. A quick check showed that reading without the English model changes
+  nothing but the speed.
+
 ### 2026-11-17 — Claude (BUILD chat, PC): Build 1B built-in HSK paper reader
 
 - Built Build 1B (`docs/PLAN.md` §4, report in §6): **Scan paper** reads a

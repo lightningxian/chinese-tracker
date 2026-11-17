@@ -71,12 +71,13 @@ Read docs/PLAN.md. You are the BUILD chat. Follow section 0, run Build 0 if this
 
 ---
 
-## 1. Where the project stands (2026-11-16)
+## 1. Where the project stands (2026-11-17)
 
-**Live:** https://chinese-tracker.web.app, release v0.1.15 (2026-11-13).
-Firebase project `chinese-tracker`, Blaze plan, 15 Cloud Functions on Node 22,
-rules current. Android APK at `/downloads/easy-study.apk` (built 2026-11-13).
-Firestore scheduled backups run nightly (3 backups READY on 2026-11-16).
+**Live:** https://chinese-tracker.web.app, hosting at release v0.1.17
+(Build 1B, published 2026-11-17). Firebase project `chinese-tracker`, Blaze
+plan, 22 Cloud Functions on Node 22. Firestore rules current; **Storage
+rules and `getTestReview` wait for the owner's deploy** (table below). The
+Android APK is off (table below). Firestore scheduled backups run nightly.
 
 **Built and verified on the emulator**
 
@@ -110,6 +111,8 @@ Firestore scheduled backups run nightly (3 backups READY on 2026-11-16).
 | Midtrans sandbox payment end to end | not run; owner will report |
 | Old-format exercises on live | none left (owner checked) |
 | Exam mode on live | owner is testing |
+| Storage rules and `getTestReview` (Build 1B) | **to run:** `firebase deploy --only storage,functions:getTestReview --project chinese-tracker`. Until then a recording above 10 MB is refused and the review shows no transcript; scanning, proofreading and saving a paper already work on live |
+| Proofread `H326202Z` on live | to do: Question bank, **Scan paper**, check every question against the page, note the minutes, save, type the official key, upload the recording, add the transcript, **Create test code**. The saved worksheet is the truth text for Build 1C |
 | Android APK on live | **off.** Every `--web-only` deploy publishes the site without the APK, and the landing page then hides the download button. The last APK build is from 2026-11-12 (before HSK simulation and Build 1). The keystore is on the Mac only, so the APK is built there. Owner decides: rebuild and publish it now, or with the Build 2A deploy |
 
 **Build status:** Build 0 passed on the PC (Windows 11, notes in `CLAUDE.md`).
@@ -120,8 +123,26 @@ reaches a student before the session is closed. **Live since 2026-11-16
 (night):** the owner deployed rules and functions (22 functions on live), the
 PLAN chat published hosting from the Mac with `--no-keys`. The owner's live
 test of one real session is still to run; it waits for a real HSK paper in
-the bank, so **Build 1B (built-in paper reader) is NEXT**, Build 2A follows
-in the same session.
+the bank.
+
+**Build 1B is built** (release v0.1.17, report in §6) and reviewed by the
+PLAN chat on the Mac on 2026-11-17: analyzer baseline (17 infos), 100
+Flutter tests, node tests, rules tests 53 pass and 1 skipped. The transcript
+sits on the bank questions, which only staff can read; the player's
+questions pass through `stripQuestion`, a fixed list of fields, so the
+transcript reaches a student only through `getTestReview` after the session
+is closed. The committed screenshots show test text, not the paper. Hosting
+is published; the owner's deploy of Storage rules and `getTestReview` is
+open. **What the reader can do today:** all 80 slots and the 11 pictures in
+about 30 seconds, but only about 37 of 80 questions are right as read (25
+flagged, about 18 with a wrong character that no check sees). The admin
+reads every question against the page. Making the reader better is
+**Build 1C**. **Build 2A is NEXT**; the BUILD chat started it in the same
+session.
+
+One small finding for the BUILD chat: the scan checks admin + web only in
+the UI (`hsk_paper_scan.dart`); `.claude/rules/worksheet-import-web-only.md`
+also asks for the check in the service (`hsk_paper_import.dart`).
 
 **PLAN chat backlog:** refresh the status table in
 `docs/THESIS_FEATURE_AUDIT.md` §7 (several rows say "Missing" for things that
@@ -462,7 +483,7 @@ tests, placement tests, changes to how packages are timed.
 loads the formats on live, creates a code from a scanned paper, and runs one
 real session with a test student.
 
-### Build 1B — Built-in HSK paper reader, no outside service — **NEXT**
+### Build 1B — Built-in HSK paper reader, no outside service — done 2026-11-17 (v0.1.17, report in §6)
 
 **Owner decision (2026-11-17).** A paper is read **inside the app, on the
 admin's computer, with no outside API and no key**: "the job is only to read
@@ -590,7 +611,7 @@ BUILD chat gives the command), then scans one paper on live. **Per paper
 the owner needs:** the paper (PDF), the official answer key, the recording,
 and the official listening script if there is one.
 
-### Build 2A — Typing matcher and marking — after Build 1B, same session
+### Build 2A — Typing matcher and marking — **NEXT** (started 2026-11-17, same session as Build 1B)
 
 **Goal.** Typed answers are scored the way the approved proposal promises
 (tolerant of writing variants, half marks for near misses, a teacher reviews
@@ -696,6 +717,74 @@ editing the bank, placement, speaking.
 
 **After the build, the owner:** deploys rules and functions (the BUILD chat
 gives the command), then tests a typed-answer package and the marking tab.
+
+### Build 1C — Reader accuracy — after Build 2A
+
+**Why.** Build 1B measured the built-in reader on `H326202Z` (report in §6):
+every slot and picture is found in about 30 seconds, but only about 37 of 80
+questions are right as read. 25 are flagged; about 18 more carry a wrong
+character that no check sees. So today the admin reads all 80 questions
+against the page. The goal: most questions right as read, and every doubtful
+one flagged, with still no outside API.
+
+**What is known**
+
+- Engine: tesseract.js 5 with `chi_sim+eng` (a 2.5 MB model), page mode 6.
+  Only the text is used; the positions of lines and words are thrown away.
+- Kinds of error in the report: lost choices (E on 46–50, B on 61, C on 70),
+  word bank lines misread (51–60), short choices read as Latin letters,
+  single wrong characters inside sentences, pinyin without tone marks
+  (76–80), word-order pieces split into single characters (71–75).
+- PLAN chat check on the Mac, four cleaned pages, page mode 6: `chi_sim`
+  alone reads the same as `chi_sim+eng` (hanzi counts 104/421/73/79 against
+  104/413/71/79, the same five pinyin misreads) and is about 40% faster. So
+  dropping `eng` saves time but does not fix the errors.
+- The truth text does not come from Claude: it is the worksheet the owner
+  proofreads on live (§1 owner tasks). A fresh scan of the same PDF gives
+  the raw reading at any time.
+
+**Must**
+
+1. **Truth file.** On a worksheet screen, admin only: **Download text** saves
+   the worksheet's questions as one JSON file. The owner puts it on the PC as
+   `local_papers/H326202Z.truth.json` (never committed). A measure page or
+   script on the emulator bundle scans the PDF and compares with the truth:
+   questions right as read, flagged, wrong and not flagged, seconds.
+2. **Measure before building** (numbers in §6). Candidates:
+   a. the engine of today, using positions: word boxes from Tesseract, the
+      choices and the word bank built from columns, word-order pieces
+      regrouped by the gaps between them;
+   b. each line cut out and read on its own (page mode 7);
+   c. a stronger Chinese reading model that still runs in the browser: the
+      PP-OCR models (PaddleOCR, detection + recognition) through ONNX
+      Runtime Web, files served from our own hosting and loaded only when
+      **Scan paper** opens. Look up the current docs and model files, do not
+      work from memory; check the licence, the download size (aim under
+      25 MB) and the time (16 pages under 2 minutes on the PC).
+   If no candidate reaches 60 of 80 right as read, write the numbers in §6
+   and stop.
+3. **Build the winner** behind `PaperOcrEngine`; the engine of today stays
+   as the fallback when the model cannot load.
+4. **Flag by level.** A character outside the level's character list (HSK 1
+   to 3 for an HSK 3 paper; a data file with its source named) flags the
+   question. Names and places will flag too: that is accepted.
+5. **Pinyin for 76–80** (left over from Build 1B): the admin picks the tone
+   on each syllable or types `guan1`; the field shows `guān`.
+6. **Proofreading record** saved with the worksheet: slots, flagged, changed
+   by the admin, minutes on the proofreading screen. The admin sees it on
+   the worksheet screen. This is the number for the thesis test chapter.
+7. The service check from the PLAN chat's review of Build 1B (admin + web in
+   `hsk_paper_import.dart`), if Build 2A did not add it.
+
+**Not in this build:** an outside API, speech-to-text, changes to the AI
+scan.
+
+**Acceptance** (emulator, `H326202Z` against the truth file): at least 60 of
+80 right as read; at most 5 wrong and not flagged; scan under 2 minutes; the
+pinyin of 76–80 saved with tone marks; the proofreading record shown;
+Indonesian and English, dark, 1280 px and 360 px. These targets are the PLAN
+chat's; if the measurement of Must 2 shows they are out of reach, say so in
+the report.
 
 ### Build 2B — Leaderboard, promotion, names
 
@@ -832,12 +921,16 @@ Any time:
 
 6. HSK 3.0 papers for levels 5, 6 and 7–9, and the marks per part if a paper
    or its answer sheet prints them.
-7. iOS: the proposal promises Android, iOS and web. Today iOS means Safari
+7. Do the papers come with an official listening script? With it the
+   transcript is pasted or scanned; without it someone types it from the
+   recording.
+8. Android APK: rebuild and publish it now, or with the Build 2A deploy?
+9. iOS: the proposal promises Android, iOS and web. Today iOS means Safari
    with "add to home screen". Ask the supervisor whether that is accepted.
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
-### 2026-11-17 — Build 1B Built-in HSK paper reader — d3b27b9..b2d4a30, release v0.1.17 (not deployed)
+### 2026-11-17 — Build 1B Built-in HSK paper reader — d3b27b9..b2d4a30, release v0.1.17 (hosting live 2026-11-17; Storage rules and `getTestReview` wait for the owner)
 - Built: **Scan paper** (main button; AI scan in the ⋮ menu) → render,
   watermark removal, page mode 6, up to 30 pages, all in the browser →
   structure builder in `QuestionImportUtils` (part file
