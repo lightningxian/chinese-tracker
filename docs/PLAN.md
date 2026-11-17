@@ -73,10 +73,11 @@ Read docs/PLAN.md. You are the BUILD chat. Follow section 0, run Build 0 if this
 
 ## 1. Where the project stands (2026-11-17)
 
-**Live:** https://chinese-tracker.web.app, hosting at release v0.1.17
-(Build 1B, published 2026-11-17). Firebase project `chinese-tracker`, Blaze
-plan, 22 Cloud Functions on Node 22. Firestore rules current; **Storage
-rules and `getTestReview` wait for the owner's deploy** (table below). The
+**Live:** https://chinese-tracker.web.app, hosting at release v0.1.18
+(Builds 1B and 2A, published 2026-11-17). Firebase project
+`chinese-tracker`, Blaze plan, 22 Cloud Functions on Node 22 (25 after the
+owner's deploy). **Rules, indexes and functions of Builds 1B and 2A wait
+for the owner's deploy** (table below). The
 Android APK is off (table below). Firestore scheduled backups run nightly.
 
 **Built and verified on the emulator**
@@ -111,7 +112,8 @@ Android APK is off (table below). Firestore scheduled backups run nightly.
 | Midtrans sandbox payment end to end | not run; owner will report |
 | Old-format exercises on live | none left (owner checked) |
 | Exam mode on live | owner is testing |
-| Storage rules and `getTestReview` (Build 1B) | **to run:** `firebase deploy --only storage,functions:getTestReview --project chinese-tracker`. Until then a recording above 10 MB is refused and the review shows no transcript; scanning, proofreading and saving a paper already work on live |
+| Backend of Builds 1B and 2A | **to run, one command for both builds:** `firebase deploy --only storage,firestore:rules,firestore:indexes,functions --project chinese-tracker` (25 functions after it; safe to run even if the Build 1B command was already run). Until then: a recording above 10 MB is refused, the review shows no transcript, typed answers are scored the old way (right or wrong), and the **Marking** page shows an error. Scanning, proofreading and saving a paper already work on live |
+| Try Build 2A on live (after the deploy) | make a small package with one "type the hanzi" and one "type the pinyin" question, play it as `student1@`, mark it as `teacher@` in Tests, **Marking** |
 | Proofread `H326202Z` on live | to do: Question bank, **Scan paper**, check every question against the page, note the minutes, save, type the official key, upload the recording, add the transcript, **Create test code**. The saved worksheet is the truth text for Build 1C |
 | Android APK on live | **off.** Every `--web-only` deploy publishes the site without the APK, and the landing page then hides the download button. The last APK build is from 2026-11-12 (before HSK simulation and Build 1). The keystore is on the Mac only, so the APK is built there. Owner decides: rebuild and publish it now, or with the Build 2A deploy |
 
@@ -137,12 +139,25 @@ open. **What the reader can do today:** all 80 slots and the 11 pictures in
 about 30 seconds, but only about 37 of 80 questions are right as read (25
 flagged, about 18 with a wrong character that no check sees). The admin
 reads every question against the page. Making the reader better is
-**Build 1C**. **Build 2A is NEXT**; the BUILD chat started it in the same
-session.
+**Build 1C**.
 
-One small finding for the BUILD chat: the scan checks admin + web only in
-the UI (`hsk_paper_scan.dart`); `.claude/rules/worksheet-import-web-only.md`
-also asks for the check in the service (`hsk_paper_import.dart`).
+**Build 2A is built** (release v0.1.18, report in §6) and reviewed by the
+PLAN chat on the Mac on 2026-11-17: analyzer baseline, 105 Flutter tests,
+node tests (typing matcher 15 checks, marking, PN-01 sample 6 of 6), rules
+tests 56 pass and 1 skipped. `markAnswer` checks the role and the queue
+owner, clamps every rubric part and re-scores inside one transaction;
+`marking_items` (they hold the accepted keys) are read only by the admin and
+the teachers named on the item, and written only by functions; the new
+question types reach the player without their keys; `resetTestAttempt` is
+admin-only and writes the audit log. The service check asked for in the
+Build 1B review is in (`hsk_paper_import.dart`). Hosting is published; the
+client reads an older server without breaking, so the order of the two
+deploys does not matter. **Build 1C is NEXT.**
+
+**PLAN chat decision 2026-11-17** (the BUILD chat asked): an answer from a
+supervised test that needs marking goes to the teacher who opened the
+session **and** to the student's own teacher, the same as packages. The
+owner may change this; it is a small follow-up in Build 1C.
 
 **PLAN chat backlog:** refresh the status table in
 `docs/THESIS_FEATURE_AUDIT.md` §7 (several rows say "Missing" for things that
@@ -611,7 +626,7 @@ BUILD chat gives the command), then scans one paper on live. **Per paper
 the owner needs:** the paper (PDF), the official answer key, the recording,
 and the official listening script if there is one.
 
-### Build 2A — Typing matcher and marking — **NEXT** (started 2026-11-17, same session as Build 1B)
+### Build 2A — Typing matcher and marking — done 2026-11-17 (v0.1.18, report in §6)
 
 **Goal.** Typed answers are scored the way the approved proposal promises
 (tolerant of writing variants, half marks for near misses, a teacher reviews
@@ -718,7 +733,7 @@ editing the bank, placement, speaking.
 **After the build, the owner:** deploys rules and functions (the BUILD chat
 gives the command), then tests a typed-answer package and the marking tab.
 
-### Build 1C — Reader accuracy — after Build 2A
+### Build 1C — Reader accuracy — **NEXT**
 
 **Why.** Build 1B measured the built-in reader on `H326202Z` (report in §6):
 every slot and picture is found in about 30 seconds, but only about 37 of 80
@@ -739,17 +754,31 @@ one flagged, with still no outside API.
   alone reads the same as `chi_sim+eng` (hanzi counts 104/421/73/79 against
   104/413/71/79, the same five pinyin misreads) and is about 40% faster. So
   dropping `eng` saves time but does not fix the errors.
-- The truth text does not come from Claude: it is the worksheet the owner
-  proofreads on live (§1 owner tasks). A fresh scan of the same PDF gives
-  the raw reading at any time.
+- Truth text never comes from Claude typing out a real paper. There are two
+  sources: a **practice paper made for the test** (Must 1, can be built at
+  once) and the worksheet the **owner proofreads on live** (§1 owner tasks;
+  it gives the real number when it exists). The build does not wait for the
+  owner.
 
 **Must**
 
-1. **Truth file.** On a worksheet screen, admin only: **Download text** saves
-   the worksheet's questions as one JSON file. The owner puts it on the PC as
-   `local_papers/H326202Z.truth.json` (never committed). A measure page or
-   script on the emulator bundle scans the PDF and compares with the truth:
-   questions right as read, flagged, wrong and not flagged, seconds.
+1. **Two truths.**
+   a. **A practice paper made for the test:** a script writes an HSK 3
+      paper in the real layout from sentences made up for it (80 questions:
+      picture pages with drawn shapes, ★ statements, three choices, match a
+      sentence, word bank, passage and question, word order, pinyin with
+      tone marks above a gap), a pastel watermark on every page, then turns
+      each page into a picture of scan quality (the resolution of the real
+      scan, a little blur and noise) and saves the PDF with its truth JSON
+      under `test/fixtures/` (committed: it is our own text).
+   b. **The real paper:** on a worksheet screen, admin only, **Download
+      text** saves the worksheet's questions as one JSON file. When the
+      owner has proofread `H326202Z` on live he puts that file on the PC as
+      `local_papers/H326202Z.truth.json` (never committed).
+   A measure page or script on the emulator bundle scans a PDF and compares
+   with its truth: questions right as read, flagged, wrong and not flagged,
+   seconds. Report the practice paper always, the real paper when its truth
+   file is there; without it give the real paper's flag counts only.
 2. **Measure before building** (numbers in §6). Candidates:
    a. the engine of today, using positions: word boxes from Tesseract, the
       choices and the word bank built from columns, word-order pieces
@@ -773,41 +802,112 @@ one flagged, with still no outside API.
 6. **Proofreading record** saved with the worksheet: slots, flagged, changed
    by the admin, minutes on the proofreading screen. The admin sees it on
    the worksheet screen. This is the number for the thesis test chapter.
-7. The service check from the PLAN chat's review of Build 1B (admin + web in
-   `hsk_paper_import.dart`), if Build 2A did not add it.
+7. **Follow-up of Build 2A:** a marking item from a supervised test also
+   names the student's own teacher in `teacherIds` (today only the teacher
+   who opened the session), the same as packages. A node test and a rules
+   test prove it.
 
 **Not in this build:** an outside API, speech-to-text, changes to the AI
 scan.
 
-**Acceptance** (emulator, `H326202Z` against the truth file): at least 60 of
-80 right as read; at most 5 wrong and not flagged; scan under 2 minutes; the
+**Acceptance** (emulator; the practice paper, and `H326202Z` when its truth
+file exists): at least 60 of 80 right as read; at most 5 wrong and not
+flagged; scan under 2 minutes; the
 pinyin of 76–80 saved with tone marks; the proofreading record shown;
 Indonesian and English, dark, 1280 px and 360 px. These targets are the PLAN
 chat's; if the measurement of Must 2 shows they are out of reach, say so in
 the report.
 
-### Build 2B — Leaderboard, promotion, names
+### Build 2B — Leaderboard, promotion, names — after Build 1C
 
-Proves LV-01, LV-03, LB-01.
+**Goal.** A final, valid test result puts the student on the leaderboard of
+its code and counts toward promotion: three different codes passed at the
+student's level, and the admin gets a recommendation to move the student
+up. Everyone sees student names by the two labels of §3. Proves LV-01,
+LV-03 and LB-01. Spec: `docs/THESIS_FEATURE_BACKLOG.md` section 8.
 
-- **Leaderboard per code** (`leaderboards/{codeId}/entries/{uid}`, written by
-  a trigger on final, valid, non-placement results): highest total first,
-  shorter time wins a tie. Students see peer labels, own row highlighted,
-  only for codes they finished; staff see staff labels.
-- **Promotion:** a trigger counts the different codes passed and valid at the
-  student's level; at `settings/promotion.minCodes` (3, editable, with the
-  pass marks) it creates a recommendation in `level_promotions`. Admin
-  **Promotion** screen: verify → next level, `level_history`, notification,
-  audit log; the count starts again. `users.level` becomes admin-only in the
-  rules and leaves the student profile form.
-- **Student Tests place:** "2 dari 3 kode lulus", history with rank.
-- **Names:** the two labels of §3 on every student list, table and picker;
-  search matches both names; the Chinese name becomes required on the
-  register and profile forms.
-- **Teachers and the bank** (only if the owner confirms, §5): a teacher may
-  type, paste and edit their own bank questions; scanning and other
-  people's questions stay with the admin.
-- Screenshots 04, 06, 07, 10, 13 of the proposal list.
+**What exists.** `test_results/{codeId_uid}` (parts, `total`, `max`,
+`passed`, `valid`, `status` `final` or `pending_marking`, time taken),
+`countsForPromotion` on a code, `markAnswer` (pending becomes final),
+`setTestResultValidity`, `resetTestAttempt` (deletes the result),
+`users.level`.
+
+**Defaults taken for the open questions of §5** (the owner may change them
+before the build starts): students see other students by the Chinese name
+(the book says so, the owner tells the supervisor); teachers add and edit
+their own bank questions.
+
+**Must**
+
+1. **One trigger on `test_results`** (create, update, delete) keeps both the
+   leaderboard and the promotion count right after every change: a new
+   final result, pending marking that becomes final, a result switched to
+   invalid or back, an attempt reset. Pure logic in its own module with a
+   node test.
+2. **Leaderboard** `leaderboards/{codeId}/entries/{uid}`: an entry exists
+   only while the result is final, valid and not a placement result. It
+   holds the peer label (never the Latin full name), the mark of each part,
+   total, max, passed, seconds taken, finished time. Order: total high to
+   low, then fewer seconds, then earlier finish. Rules: staff read all; a
+   student reads the entries of a code only when their own result for that
+   code exists; nobody writes from the app; a student still cannot read
+   another student's `test_results`.
+3. **Leaderboard screens.** Student: My results, a code, **Leaderboard**:
+   rank, name, part marks, total, passed or not, own row highlighted.
+   Staff: Test results of a code, **Leaderboard**, with the staff label
+   (read from `users`).
+4. **Promotion count.** `settings/promotion` holds `minCodes` (3, the admin
+   edits it). Counted: different codes at the student's current level whose
+   result is final, valid, passed, counts for promotion and is not a
+   placement. At `minCodes` the trigger writes one recommendation
+   `level_promotions/{uid_level}` (waiting, from, to, the codes) and
+   notifies the admins. If a result later turns invalid or is reset and the
+   count falls below, a waiting recommendation is withdrawn. HSK 6 has no
+   next level: no recommendation.
+5. **Admin Promotion screen** (Tests, **Promotion**, with a badge): the
+   waiting list with the codes and marks. **Approve** (callable, admin
+   only): `users.level` goes up one level, `users/{uid}/level_history` gets
+   date, from, to and the codes, the student and a linked parent are told,
+   audit log. **Decline** with a reason. The group shown with a level:
+   Beginner (HSK 1 and 2), Intermediate (3 and 4), Advance (5 and 6).
+6. **`users.level` is set by the admin only:** rules refuse a student's own
+   change, and the field leaves the student profile form. Rules tests.
+7. **Student Tests tab:** "2 of 3 codes passed" for the current level, and
+   the history with the rank on each code.
+8. **Names.** The two labels of §3 on every student list, table and picker;
+   search matches both names; the Chinese name becomes required on the
+   register and profile forms.
+9. **Teachers and the bank.** A teacher types, pastes and edits their own
+   bank questions (`createdBy` = their uid) and deletes only those; rules
+   say the same; scanning and other people's questions stay with the admin.
+   Update `.claude/rules/exercise-authoring-web-only.md`.
+10. **Tests.** The spec's example (code A 170 fails, B 195, C 200, D 205:
+    three passes, recommend HSK 4) for LV-01; two passes and one fail for
+    LV-03; LB-01 with 15 seeded results against a ranking written by hand
+    in the test; the flow test walks marking, invalid and reset and checks
+    the board and the count after each.
+
+**Then:** the Build 2A leftovers (the hourly job that closes forgotten
+single attempts of packages, item analysis per question); a CSV of a
+leaderboard.
+
+**Not in this build:** placement tests (Build 3), parents on the
+leaderboard, import of old results (no access to the old project),
+speaking.
+
+**Acceptance** (emulator): a third passed code creates the recommendation
+and the admin badge; approve moves the level and writes the history; two
+passes and one fail show "2 of 3" and no recommendation; a result marked
+invalid leaves the board and the count at once and comes back when set
+valid; a pending result is on no board until it is marked; a student opens
+the board of a finished code and is refused for a code they have not sat;
+names follow the two labels as student, teacher and admin; a teacher edits
+their own question and is refused on another's; Indonesian and English,
+dark, 1280 px and 360 px. Screenshots 04, 06, 07, 10 and 13 of the
+proposal list.
+
+**After the build, the owner:** deploys rules, indexes and functions (the
+BUILD chat gives the command).
 
 ### Build 3 — Registration approval, placement tests, rooms
 
@@ -896,10 +996,11 @@ For the owner, before Build 2B:
 
 1. The proposal says students see other students on the leaderboard as
    "first name + initial" (scenario LB-01). The new rule is "Chinese name
-   only". Tell the supervisor, or keep the proposal's rule?
+   only". Tell the supervisor, or keep the proposal's rule? **Build 2B is
+   written with the Chinese name**; say so if the proposal's rule stays.
 2. The proposal lets teachers add and edit questions in the bank. The app
    keeps the bank admin-only since 2026-11-13. Plan: teachers add and edit
-   their own questions. Agreed?
+   their own questions. Agreed? **Build 2B is written this way.**
 3. Reading of decision 12, to confirm: "teacher code" is the 6-character
    token of the session a teacher opens (new every time, valid 15 minutes),
    not the teacher's permanent invite code; the token in the room is enough
@@ -930,7 +1031,7 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
-### 2026-11-17 — Build 2A Typing matcher and marking — bc6057a, release v0.1.18 (not deployed; rules, indexes and functions wait for the owner)
+### 2026-11-17 — Build 2A Typing matcher and marking — bc6057a, release v0.1.18 (hosting live 2026-11-17; rules, indexes and functions wait for the owner)
 - Built: typing matcher (`functions/typing_matcher.js`, `functions/pinyin.js`)
   used by the scoring that packages and tests share; types `type_pinyin`
   and `essay`; points instead of right/wrong; the `marking_items` queue,

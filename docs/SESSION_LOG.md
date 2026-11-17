@@ -13,6 +13,23 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-17 — Claude (PLAN chat, Mac): Build 2A reviewed, hosting live, Build 1C is NEXT
+
+- Pulled Build 2A (v0.1.18) and checked it on the Mac: analyzer 17 infos,
+  `flutter test` 105, node tests (typing matcher, marking, PN-01 sample
+  6 of 6), rules tests 56 pass and 1 skipped.
+- Read the backend: `markAnswer` (role, queue owner, clamped rubric, one
+  transaction), `marking_items` rules (admin and the named teachers read,
+  functions write), the new question types reach the player without keys,
+  `resetTestAttempt` admin-only with audit.
+- Published hosting from the Mac (`--web-only --no-keys`). Open for the
+  owner, one command for Builds 1B and 2A:
+  `firebase deploy --only storage,firestore:rules,firestore:indexes,functions --project chinese-tracker`.
+- Plan: Build 1C (reader accuracy) is NEXT and no longer waits for the
+  owner (a practice paper made for the test gives a truth file); marking
+  items of a test also go to the student's own teacher; Build 2B
+  (leaderboard, promotion, names) is written in full.
+
 ### 2026-11-17 — Claude (BUILD chat, PC): Build 2A typing matcher and marking
 
 - Built Build 2A (`docs/PLAN.md` §4, report in §6): typed hanzi and pinyin
