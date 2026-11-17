@@ -13,6 +13,23 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-17 — Claude (PLAN chat): why the AI scan fails, Build 1B
+
+- Owner: nothing of Build 1 can be used without scanning a real HSK paper
+  (`H326202Z`, 16 scanned pages) and the AI scan fails on live.
+- Proven on the Mac: AI Logic answers `401 Firebase App Check token is
+  invalid` without a token; the live site has no App Check key. The model
+  name is valid. Fix: the owner creates the reCAPTCHA Enterprise key and
+  registers it (10 minutes), the PLAN chat deploys with it.
+- Also found: the listening recording is limited to 10 MB (too small for an
+  HSK recording), and the importer drops questions it cannot build without
+  saying so.
+- `docs/PLAN.md` §4: new **Build 1B** (NEXT) with the owner's steps, the
+  proof scan and one hour of BUILD work; Build 2A follows in the same
+  session.
+
+---
+
 ### 2026-11-16 (night) — Claude (PLAN chat): Build 1 is live
 
 - The owner ran `firebase deploy --only firestore:rules,functions` on the

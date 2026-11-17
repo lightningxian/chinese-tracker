@@ -19,13 +19,13 @@ Two scanners, both admin-only on web, both ending on the same *Check before addi
 4. For local runs, App Check → Apps → ⋮ → **Manage debug tokens**: add the token the browser console prints when the app runs with `--dart-define=APP_CHECK_DEBUG=true`.
 5. Leave **Firestore, Functions and Storage unenforced** (the Android APK is sideloaded and has no Play Integrity).
 
-Until step 3 is live, **Scan paper with AI** says "AI reading is not set up for this project yet". Cost: Gemini 3.8 Flash has a free tier; one 16-page paper is a fraction of a cent beyond it.
+Until step 3 is live, **Scan paper with AI** says "AI reading is not set up for this project yet". Checked on 2026-11-17: a call without an App Check token gets `401 Firebase App Check token is invalid` from AI Logic, so the site key is the only thing that switches the scan on; the model name is on Firebase's supported list. The fix plan and the follow-up work are Build 1B in `docs/PLAN.md` §4. Cost: Gemini 3.8 Flash has a free tier; one 16-page paper is a fraction of a cent beyond it.
 
 ## After an AI scan of an HSK paper
 
 - The sheet is one worksheet (the paper code, e.g. `H326202Z`) with part headings (`一、听力 · 第一部分 · 第1-5题`), category **HSK Simulation**, level from the paper.
-- Listening keys are unknown (the reader has no audio): open the worksheet → **Answer key** (key icon) and type the printed key (`1 D 2 A …`, `11 √ 12 ×`, `41-45 ECBAD`).
-- Upload the **Listening recording** on the worksheet screen (one MP3 for the whole listening part; students get one player while answering those questions). A question's own clip goes in the editor's *Add audio*.
+- Listening keys are unknown (the reader has no audio): open the worksheet → **Answer key** (key icon) and type the printed key (`1 D 2 A …`, `11 √ 12 ×`, `41-45 ECBAD`). The reader solves reading and writing itself when the paper prints no key, so type the official key for those numbers too, and check the writing answers (ordering, characters) in the editor: the dialog reads letters and √ × only.
+- Upload the **Listening recording** on the worksheet screen (one MP3 for the whole listening part; students get one player while answering those questions). **Limit today: 10 MB**, less than a normal 30-minute HSK recording; Build 1B raises it to 60 MB. Until then shrink the file to a mono 32 kbps `.m4a`. A question's own clip goes in the editor's *Add audio*.
 - Pictures the reader cut out appear on the questions (a picture per choice for part 1). Wrong crop → open the question in the editor and replace the choice's picture.
 - Build the package: Exercises → New → pick the worksheet, set the time limit (HSK 3: 85 minutes), publish, assign. The player gives one attempt with a server clock and shows HSK marks per part at the end.
 

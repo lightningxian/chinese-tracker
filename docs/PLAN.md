@@ -103,7 +103,7 @@ Firestore scheduled backups run nightly (3 backups READY on 2026-11-16).
 | Task | State on 2026-11-16 (evening) |
 |---|---|
 | AI Logic "Get started" | done |
-| App Check web key | blocked: the console now asks for a **reCAPTCHA Enterprise ("Fraud Defense")** site key, not a v3 key. The owner creates it in the Google Cloud console (Security → reCAPTCHA → Create key: Website, score-based, domains `chinese-tracker.web.app` and `chinese-tracker.firebaseapp.com`, **not** `localhost`), pastes it into App Check, and gives the key to either chat. Build 1 switches the app to the Enterprise provider. |
+| App Check web key | **the one thing that blocks Scan paper with AI** (proven 2026-11-17: AI Logic answers `401 Firebase App Check token is invalid` to a call without a token, and the live site is built without a key). Steps for the owner: Build 1B part A in §4. |
 | Web push key | created in the console; the real key (starts with `B`) is still to be given. The Mac's `deploy.env` held only placeholder text and was removed on 2026-11-16 |
 | Both public keys | the BUILD chat stores them as defaults in `scripts/deploy_web.sh`; no file to copy between machines |
 | `firebase login` on the PC | to do (needed for deploys from the PC) |
@@ -119,7 +119,8 @@ seven functions check role, ownership and clocks in transactions; no key
 reaches a student before the session is closed. **Live since 2026-11-16
 (night):** the owner deployed rules and functions (22 functions on live), the
 PLAN chat published hosting from the Mac with `--no-keys`. The owner's live
-test of one real session is still to run. Build 2A is NEXT.
+test of one real session is still to run; it waits for a scanned HSK paper,
+so **Build 1B is NEXT**, Build 2A follows in the same session.
 
 **PLAN chat backlog:** refresh the status table in
 `docs/THESIS_FEATURE_AUDIT.md` §7 (several rows say "Missing" for things that
@@ -455,7 +456,119 @@ tests, placement tests, changes to how packages are timed.
 loads the formats on live, creates a code from a scanned paper, and runs one
 real session with a test student.
 
-### Build 2A — Typing matcher and marking — **NEXT**
+### Build 1B — An HSK paper from PDF to a playable test — **NEXT**
+
+**Why.** The owner cannot use Build 1 until a real HSK paper is in the bank,
+and **Scan paper with AI** fails on live (owner, 2026-11-17, paper
+`H326202Z`).
+
+**What the PLAN chat found (2026-11-17, on the Mac)**
+
+- **Cause, proven.** A text-only call to the project's AI Logic endpoint
+  without an App Check token is answered with
+  `401 Firebase App Check token is invalid`. App Check is enforced for AI
+  Logic, the live site is built with no site key (`--no-keys`), so every
+  scan is refused before the model sees the file. The app then shows "AI
+  reading is not set up for this project yet".
+- The model name `gemini-3.8-flash` is on Firebase's list of supported
+  models. Whether the Gemini Developer API is switched on can only be seen
+  once a token is accepted.
+- **The paper** (16 pages): every page is a scan with no text layer and the
+  centre's watermark across it. 80 questions: listening 1–40 (1–10 choose a
+  picture, six pictures A–F for 1–5 and five A–E for 6–10, no printed text;
+  11–20 ★ statements; 21–40 three text choices), reading 41–70 (41–50
+  match a sentence, 51–60 word bank, 61–70 passage and question), writing
+  71–80 (71–75 order the words, 76–80 write the character for the pinyin).
+  No answer key and no transcript are printed. The reader's prompt and
+  schema already describe all of these forms; nobody has seen its real
+  output on this paper yet.
+- **Second blocker, proven in code.** The listening recording of a
+  worksheet is limited to 10 MB (`QuestionBankMediaService._maxBytes` and
+  `storage.rules`, `question_bank_media`). An HSK recording is 30 to 35
+  minutes: 30 MB or more as a normal MP3.
+- **Third, by reading the code.** `QuestionBankAiImportUtils._build` drops
+  a writing question that has no keyword, and any question it cannot
+  build, without telling the admin (HSK 5 question 100, HSK 6 question
+  101: the test code then shows a count mismatch with no reason).
+
+**Part A — the owner (about 10 minutes, nothing else can replace it)**
+
+1. Open `https://console.cloud.google.com/security/recaptcha?project=chinese-tracker`.
+   If the page asks, press **Enable**.
+2. Press **Create key**. Name `easy-study-web`. Platform **Website** (Web).
+   Domains: `chinese-tracker.web.app` and `chinese-tracker.firebaseapp.com`
+   (no `localhost`). Leave the checkbox challenge **off**. Press **Create**.
+3. Copy the key ID (about 40 characters, starts with `6L`).
+4. Firebase console → **App Check** → **Apps** → the web app → choose
+   **reCAPTCHA Enterprise** (the console may call it Fraud Defense) → paste
+   the key → **Save**.
+5. Paste the same key in the PLAN chat. It is public (it ships in the web
+   page). The **secret** key of any reCAPTCHA is never pasted anywhere.
+
+The owner may instead sign in to Google in the PLAN chat's browser pane and
+tell the PLAN chat to do steps 1 to 4 there.
+
+**Part B — the PLAN chat, on the Mac, the same hour**
+
+1. Write the key to the Mac's `deploy.env` (git-ignored) and run
+   `scripts/deploy_web.sh --web-only`.
+2. The owner scans `H326202Z.pdf` on live (Question bank → Scan paper with
+   AI) and sends a screenshot of the result. Expected on the review screen:
+   HSK 3, 80 questions, 11 pictures, 40 without a key (listening).
+3. What the next message means:
+   - "not set up … not enabled" → AI Logic → Get started again, choose the
+     **Gemini Developer API**.
+   - "App Check token is invalid" again → the key's domain list or the
+     registration in App Check is wrong; hard-refresh once first.
+   - "unreadable answer" or a wrong count → the reader needs tuning: item 5
+     below.
+4. Until item 2 below is live, the PLAN chat shrinks a recording for the
+   owner to a voice-quality `.m4a` under 10 MB (`afconvert`, mono, 32 kbps).
+
+**Part C — the BUILD chat (Must; about one hour)**
+
+This item and Build 2A are one session: finish part C, push, write the
+report in §6, then build 2A. Parts A and B do not wait for part C.
+
+1. The key becomes `DEFAULT_APP_CHECK_SITE_KEY` in `scripts/deploy_web.sh`
+   (and the web push key when the owner gives it); the Mac's `deploy.env`
+   goes away.
+2. **Recording up to 60 MB.** Audio files (`audio/*`) up to 60 MB in
+   `question_bank_media` (`storage.rules`) and in
+   `QuestionBankMediaService`; pictures stay at 10 MB. Upload progress on
+   the worksheet screen. A rules test for both limits. The owner deploys the
+   storage rules.
+3. **Nothing disappears silently.** A question the reader returned and the
+   app cannot store is listed by number on the review screen. A writing
+   question without a keyword is kept as free writing (`picture_sentence`
+   with an empty keyword now; Build 2A's `essay` type afterwards).
+4. **Counts the admin can check.** The review summary shows questions per
+   skill and, when the paper's level has a standard format, the expected
+   count ("Listening 40 of 40"), plus the printed numbers that are missing
+   from 1 to the last number.
+5. Only if part B shows a reading problem: the owner adds one App Check
+   **debug token** (App Check → Apps → ⋮ → Manage debug tokens) so the PC
+   can run the reader with `--dart-define=APP_CHECK_DEBUG=true`; then tune
+   the prompt, or read the paper skill by skill in three calls when the
+   answer is cut off (`finishReason` MAX_TOKENS).
+
+**Acceptance (live, by the owner, with `H326202Z`)**
+
+1. Scan: 80 questions in listening / reading / writing = 40 / 30 / 10;
+   questions 1–10 show their pictures as choices.
+2. **Answer key** dialog: the official key for 1–70 typed once
+   (`1-5 …`, `11 √ 12 ×`, `41-45 …`); 71–80 checked in the editor.
+3. The recording uploads and plays.
+4. **Create test code** with format HSK 3: every part says its count
+   matches.
+5. A session with a test student: pictures, recording, three parts, result
+   card with listening / reading / writing out of 100 and the total out of
+   300.
+
+**Per paper the owner needs three files:** the paper (PDF), the official
+answer key, the listening recording.
+
+### Build 2A — Typing matcher and marking — after Build 1B, same session
 
 **Goal.** Typed answers are scored the way the approved proposal promises
 (tolerant of writing variants, half marks for near misses, a teacher reviews
