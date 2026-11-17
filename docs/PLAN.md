@@ -837,7 +837,7 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
-### 2026-11-17 — Build 1B Built-in HSK paper reader — d3b27b9..(this commit), release v0.1.17 (not deployed)
+### 2026-11-17 — Build 1B Built-in HSK paper reader — d3b27b9..b2d4a30, release v0.1.17 (not deployed)
 - Built: **Scan paper** (main button; AI scan in the ⋮ menu) → render,
   watermark removal, page mode 6, up to 30 pages, all in the browser →
   structure builder in `QuestionImportUtils` (part file
