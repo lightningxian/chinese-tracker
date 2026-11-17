@@ -75,9 +75,12 @@ Read docs/PLAN.md. You are the BUILD chat. Follow section 0, run Build 0 if this
 
 **Live:** https://chinese-tracker.web.app, hosting at release v0.1.18
 (Builds 1B and 2A, published 2026-11-17). Firebase project
-`chinese-tracker`, Blaze plan, 22 Cloud Functions on Node 22 (25 after the
-owner's deploy). **Rules, indexes and functions of Builds 1B and 2A wait
-for the owner's deploy** (table below). The
+`chinese-tracker`, Blaze plan, **25 Cloud Functions** on Node 22. The
+backend of Builds 1B and 2A (Storage rules, Firestore rules, two marking
+indexes, functions) is live since 2026-11-17: the owner signed in to the
+Firebase CLI on the PC and had the BUILD chat run the deploy. The PLAN chat
+checked from the Mac that `markAnswer`, `resetTestAttempt` and
+`getTestReview` answer on live. The
 Android APK is off (table below). Firestore scheduled backups run nightly.
 
 **Built and verified on the emulator**
@@ -108,12 +111,12 @@ Android APK is off (table below). Firestore scheduled backups run nightly.
 | App Check web key | optional since 2026-11-17: papers are read by the built-in reader (Build 1B). Only **Scan paper with AI** needs the key (steps in `docs/WORKSHEET_IMPORT.md`). |
 | Web push key | created in the console; the real key (starts with `B`) is still to be given. The Mac's `deploy.env` held only placeholder text and was removed on 2026-11-16 |
 | Both public keys | the BUILD chat stores them as defaults in `scripts/deploy_web.sh`; no file to copy between machines |
-| `firebase login` on the PC | to do (needed for deploys from the PC) |
+| `firebase login` on the PC | done 2026-11-17 |
 | Midtrans sandbox payment end to end | not run; owner will report |
 | Old-format exercises on live | none left (owner checked) |
 | Exam mode on live | owner is testing |
-| Backend of Builds 1B and 2A | **to run, one command for both builds:** `firebase deploy --only storage,firestore:rules,firestore:indexes,functions --project chinese-tracker` (25 functions after it; safe to run even if the Build 1B command was already run). Until then: a recording above 10 MB is refused, the review shows no transcript, typed answers are scored the old way (right or wrong), and the **Marking** page shows an error. Scanning, proofreading and saving a paper already work on live |
-| Try Build 2A on live (after the deploy) | make a small package with one "type the hanzi" and one "type the pinyin" question, play it as `student1@`, mark it as `teacher@` in Tests, **Marking** |
+| Backend of Builds 1B and 2A | done 2026-11-17 (deployed from the PC) |
+| Try Build 2A on live | make a small package with one "type the hanzi" and one "type the pinyin" question, play it as `student1@`, mark it as `teacher@` in Tests, **Marking** |
 | Proofread `H326202Z` on live | to do: Question bank, **Scan paper**, check every question against the page, note the minutes, save, type the official key, upload the recording, add the transcript, **Create test code**. The saved worksheet is the truth text for Build 1C |
 | Android APK on live | **off.** Every `--web-only` deploy publishes the site without the APK, and the landing page then hides the download button. The last APK build is from 2026-11-12 (before HSK simulation and Build 1). The keystore is on the Mac only, so the APK is built there. Owner decides: rebuild and publish it now, or with the Build 2A deploy |
 
@@ -802,7 +805,12 @@ one flagged, with still no outside API.
 6. **Proofreading record** saved with the worksheet: slots, flagged, changed
    by the admin, minutes on the proofreading screen. The admin sees it on
    the worksheet screen. This is the number for the thesis test chapter.
-7. **Follow-up of Build 2A:** a marking item from a supervised test also
+7. **Indexes file.** The deploy of 2026-11-17 reported three indexes that
+   exist on live but not in `firestore.indexes.json`. Add them to the file
+   (`firebase firestore:indexes --project chinese-tracker` prints them), so
+   a later deploy can never remove them. Never deploy indexes with
+   `--force` before that.
+8. **Follow-up of Build 2A:** a marking item from a supervised test also
    names the student's own teacher in `teacherIds` (today only the teacher
    who opened the session), the same as packages. A node test and a rules
    test prove it.
