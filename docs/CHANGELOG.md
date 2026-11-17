@@ -6,6 +6,76 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-17 — Claude (BUILD chat): Build 2A — typing matcher, free writing, marking queue, Build 1 follow-ups
+
+**What changed**
+- **Typing matcher** (`functions/typing_matcher.js`, `functions/pinyin.js`,
+  pure, node test `test_typing_matcher.js`): typed hanzi are compared after
+  half-width conversion, dropping spaces and ending punctuation and
+  traditional → simplified (`opencc-js` 1.0.5); one wrong character with
+  `S = 1 − d/n ≥ 0.75` gives half. Pinyin accepts tone marks, tone numbers,
+  `ü` / `v` / `u:`; all syllables right with wrong or missing tones gives
+  half. Sentence building has no half. Every half is flagged for a teacher.
+- **New question types** `type_pinyin` (T1) and `essay` (T5: required
+  words, optional source text shown for a set time then hidden). Editor,
+  importers, answer key, players and labels know them. Free writing
+  (`picture_sentence`, `essay`) is 10 points and never machine-scored.
+- **Scores are points** (`exercise_play.js` `checkAnswer` → credit,
+  `scoreAttempt` → earned / possible / open, `supervised_test.js` part marks
+  from points). Choice questions score exactly as before; old results read
+  as before.
+- **Marking queue** `marking_items` (written only by functions; teachers read
+  items that list them in `teacherIds`, admins all; 2 indexes):
+  `finishExercise` and the test result writer add one item per flagged or
+  free-writing answer; the result is `pending_marking` with no pass or fail.
+  New callable **`markAnswer`** (keep / full / zero, or the rubric grammar
+  40 · vocabulary 30 · content 30) recomputes the result, makes it final
+  when nothing is open and notifies the student ("Marked").
+  `getTestReview` returns the teacher's mark per question.
+- **Teacher/admin screen** **Penilaian / Marking** in the Tests place
+  (`marking_screen.dart`, ViewModel; badge with the open count): question,
+  answer, keys, character count, required words found or missing, buttons
+  or rubric sliders. Student side: "Menunggu penilaian" on the result card
+  and test list, half marks and waiting answers in the package review, the
+  teacher's points in the test review.
+- **Build 1 follow-ups:** emulator seed, flow test and app use the password
+  `emulator-only-7` (live keeps its own); **End test for everyone** now asks
+  each sitting player to send the open part (`submitRequested`), waits 15 s,
+  then finishes the rest (the count in the message now includes students
+  whose app sent during the wait); hourly **`closeForgottenTestSessions`**
+  closes a session 10 minutes after its last possible end (pubsub emulator
+  on 8085 for local runs); admin **`resetTestAttempt`** (Reset attempt on the
+  result card, audit `test.attempt.reset`); QR code of the token on the
+  supervision screen (`qr_flutter` 4.1.0); the paper import service checks
+  admin + web itself.
+- **PN-01 script** `functions/pn01_agreement.js` + fixture
+  `functions/fixtures/pn01_sample.csv` (6 of 6 = 100%).
+- Seed: package `pkg_typing` (sheet `310904-WRT`) and code `H3ESSAY` with free
+  writing. Flow test: 32 steps (+8). 52 new keys in both languages.
+
+**Why**
+- Build 2A in `docs/PLAN.md` §4: the approved proposal's typing rules
+  (`docs/THESIS_FEATURE_BACKLOG.md` §7, PN-01 to PN-03) and the loose ends of
+  Build 1.
+
+**For review**
+- **Deploy needed (owner):** Firestore rules (`marking_items`), the 2 new
+  indexes and the functions (3 new: `markAnswer`, `resetTestAttempt`,
+  `closeForgottenTestSessions`; changed: `finishExercise`, `startTest`,
+  `submitTestPart`, `closeTestSession`, `getTestReview`, the exercise
+  result trigger):
+  `firebase deploy --only firestore:rules,firestore:indexes,functions --project chinese-tracker`.
+  Then hosting. Storage rules did not change.
+- `marking_items` carry the accepted keys; students cannot read them (rules
+  test). A teacher can mark only items that list them; `markAnswer` checks
+  this again on the server.
+- Test items go to the teacher who opened the session; package items to the
+  package owner and the student's own teacher.
+- Rules tests 56 pass + 1 skipped; flow 32/32; `flutter test` 105; analyzer
+  17 infos.
+
+---
+
 ## 2026-11-17 — Claude (BUILD chat): Build 1B — built-in HSK paper reader, answer key for writing, long recordings, transcript
 
 **What changed**

@@ -13,6 +13,26 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-17 — Claude (BUILD chat, PC): Build 2A typing matcher and marking
+
+- Built Build 2A (`docs/PLAN.md` §4, report in §6): typed hanzi and pinyin
+  are matched with the proposal's rules (variants count, near misses get
+  half and go to the teacher), new types `type_pinyin` and `essay`, free
+  writing is 10 points and marked by a teacher with the rubric, one
+  **Penilaian / Marking** queue for tests and packages, results wait as
+  "Menunggu penilaian" until marked.
+- Build 1 follow-ups: emulator password `emulator-only-7`, End test keeps
+  typed answers, an hourly job closes forgotten sessions, admin Reset
+  attempt, QR code of the token.
+- Walked on the emulators in the browser pane (student, teacher, admin;
+  English light and dark, Indonesian, 360 px). Fixed what the walk found:
+  the end-test message count, the dialog text, the Marking page title, a
+  wrapped rubric label.
+- Proof: analyzer 17 infos; `flutter test` 105; rules tests 56 + 1 skipped;
+  node tests; PN-01 fixture 6 of 6; flow test 32/32.
+- Not deployed: the owner deploys rules, indexes and functions (command in
+  the changelog), then hosting from the Mac.
+
 ### 2026-11-17 — Claude (PLAN chat, Mac): Build 1B reviewed, hosting live
 
 - Pulled Build 1B (v0.1.17) and checked it on the Mac: analyzer 17 infos,

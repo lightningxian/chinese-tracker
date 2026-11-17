@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
@@ -220,6 +221,28 @@ class _SupervisionView extends StatelessWidget {
                           : AppColors.textSecondary,
                     ),
                   ),
+                  if (joinLeft > 0) ...[
+                    const SizedBox(height: 12),
+                    // Build 2A: scanning opens the token page with the
+                    // token filled in. White behind the code so phones read
+                    // it in dark mode too.
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: QrImageView(
+                        data: tokenLink(session.token),
+                        size: 180,
+                        backgroundColor: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(l.testsScanToJoin,
+                        style: TextStyle(
+                            color: AppColors.textSecondary, fontSize: 12)),
+                  ],
                   const SizedBox(height: 14),
                   Wrap(
                     spacing: 10,
@@ -358,3 +381,8 @@ class _AttemptRow extends StatelessWidget {
     );
   }
 }
+
+/// The address a phone opens from the token's QR code: the student's test
+/// page with the token filled in (the same page the Tests tab opens).
+String tokenLink(String token) =>
+    '${Uri.base.origin}/student/test?token=${Uri.encodeComponent(token)}';

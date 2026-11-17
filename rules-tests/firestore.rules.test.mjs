@@ -481,3 +481,46 @@ describe("supervised tests (Build 1, 2026-11-16)", () => {
     await assertFails(getDoc(doc(as("teacher2"), "test_attempts", "H31005_student1")));
   });
 });
+
+describe("marking queue (Build 2A)", () => {
+  const item = (teacherIds) => ({
+    source: "test", resultId: "H31005_student1", studentId: "student1",
+    teacherIds, questionId: "q1", accepted: ["key"], status: "open",
+  });
+  const seed = async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, "marking_items", "m_t1"), item(["teacher1"]));
+      await setDoc(doc(db, "marking_items", "m_other"), item(["someone_else"]));
+    });
+  };
+
+  it("PN-04 students and parents never read the queue (it holds the keys)", async () => {
+    await seed();
+    await assertFails(getDoc(doc(as("student1"), "marking_items", "m_t1")));
+    await assertFails(getDoc(doc(as("parent1"), "marking_items", "m_t1")));
+    await assertFails(getDocs(query(collection(as("student1"), "marking_items"),
+      where("studentId", "==", "student1"))));
+  });
+
+  it("a teacher reads only their own queue; an admin reads all", async () => {
+    await seed();
+    await assertSucceeds(getDoc(doc(as("teacher1"), "marking_items", "m_t1")));
+    await assertFails(getDoc(doc(as("teacher1"), "marking_items", "m_other")));
+    await assertSucceeds(getDocs(query(collection(as("teacher1"), "marking_items"),
+      where("teacherIds", "array-contains", "teacher1"), where("status", "==", "open"))));
+    await assertFails(getDocs(query(collection(as("teacher1"), "marking_items"),
+      where("status", "==", "open"))));
+    await assertSucceeds(getDoc(doc(as("admin1"), "marking_items", "m_other")));
+    await assertFails(getDoc(doc(as("teacher2"), "marking_items", "m_t1")));
+  });
+
+  it("nobody writes a mark from the app (markAnswer does)", async () => {
+    await seed();
+    await assertFails(updateDoc(doc(as("teacher1"), "marking_items", "m_t1"),
+      { status: "marked", mark: 1 }));
+    await assertFails(updateDoc(doc(as("admin1"), "marking_items", "m_t1"),
+      { status: "marked", mark: 1 }));
+    await assertFails(setDoc(doc(as("student1"), "marking_items", "m_new"), item(["teacher1"])));
+  });
+});

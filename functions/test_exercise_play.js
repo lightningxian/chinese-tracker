@@ -43,13 +43,45 @@ assert.strictEqual(play.checkAnswer(compose, {order: ["经理的", "办公室在
 assert.strictEqual(play.checkAnswer(compose, {order: ["办公室在", "经理的", "二楼"]}).correct, false);
 assert.strictEqual(play.checkAnswer(hanzi, {text: " 刚 "}).correct, true);
 assert.strictEqual(play.checkAnswer(hanzi, {text: "钢"}).correct, false);
-assert.strictEqual(play.checkAnswer(picture, {text: "我每天跑步。"}).correct, true);
-assert.strictEqual(play.checkAnswer(picture, {text: "跑步"}).correct, false);
+// Build 2A: free writing is never scored by the machine; anything written
+// waits for the teacher, nothing written is zero.
+const written = play.checkAnswer(picture, {text: "我每天跑步。"});
+assert.strictEqual(written.credit, 0);
+assert.strictEqual(written.review, true);
+assert.strictEqual(play.checkAnswer(picture, {text: "  "}).review, false);
+// A wrong homophone in typed hanzi is half and flagged (PN-03 shape).
+const near = {id: "h2", type: "type_hanzi", question: {prompt: "", options: ["我很喜欢喝茶"]}};
+assert.deepStrictEqual(
+    [play.checkAnswer(near, {text: "我很喜欢和茶"}).credit,
+      play.checkAnswer(near, {text: "我很喜欢和茶"}).review], [0.5, true]);
+// Typed pinyin (T1): keys stay on the server.
+const py = {id: "y1", type: "type_pinyin", question: {prompt: "你好", options: ["nǐ hǎo"]}};
+assert.ok(!("options" in play.stripQuestion(py)));
+assert.strictEqual(play.checkAnswer(py, {text: "ni3 hao3"}).credit, 1);
+assert.strictEqual(play.checkAnswer(py, {text: "ni hao"}).credit, 0.5);
+// Essay (T5): 10 points, the words to use and the source text travel, no key.
+const essay = {id: "e1", type: "essay", question: {prompt: "写一写", keywords: ["周末", "公园"],
+  sourceText: "原文", sourceSeconds: 600}};
+assert.strictEqual(play.pointsOf(essay), 10);
+assert.deepStrictEqual(play.stripQuestion(essay).keywords, ["周末", "公园"]);
+assert.strictEqual(play.stripQuestion(essay).sourceSeconds, 600);
 
-// Scoring: unanswered counts as wrong; the review carries every key.
+// Scoring: unanswered counts as wrong; the review carries every key. Points:
+// 1 each, free writing 10, so 2 of 13 points.
 const scored = play.scoreAttempt(
     [mc, compose, hanzi, picture], {q1: {index: 0}, h1: {text: "刚"}});
-assert.strictEqual(scored.score, 50);
+assert.strictEqual(scored.score, 15);
+assert.strictEqual(scored.earned, 2);
+assert.strictEqual(scored.possible, 13);
+assert.strictEqual(scored.open, 0, "nothing written: nothing to mark");
+// Choice questions only: the score is correct ÷ total × 100, as before.
+assert.strictEqual(play.scoreAttempt([mc, mc0, single],
+    {q1: {index: 0}, q0: {index: 1}}).score, 67);
+// A teacher's marks replace the machine's points.
+const withHalf = play.scoreAttempt([near, mc], {h2: {text: "我很喜欢和茶"}, q1: {index: 0}});
+assert.deepStrictEqual([withHalf.earned, withHalf.open], [1.5, 1]);
+assert.deepStrictEqual(play.totalsOf(withHalf.points, {h2: 1}),
+    {earned: 2, possible: 2, score: 100, open: 0});
 assert.strictEqual(scored.correct, 2);
 assert.strictEqual(scored.total, 4);
 assert.deepStrictEqual(scored.review.map((r) => r.questionId), ["q1", "c1", "h1", "p1"]);
@@ -59,7 +91,8 @@ assert.deepStrictEqual(scored.review[1].correctAnswer, {order: ["经理的", "�
 assert.strictEqual(scored.review[0].explanation, "很 + verb of feeling, no 是.");
 assert.strictEqual(scored.review[1].explanation, "", "no explanation -> empty string");
 assert.deepStrictEqual(play.scoreAttempt([], null),
-    {score: 0, correct: 0, total: 0, review: [], bySkill: {}});
+    {score: 0, correct: 0, total: 0, earned: 0, possible: 0, open: 0, review: [],
+      bySkill: {}, points: {}});
 
 // Marks per skill (HSK parts): missing skill counts as reading.
 const listening = {id: "l1", type: "listening", skillCategory: "listening",

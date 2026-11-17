@@ -5629,7 +5629,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get testsEndForEveryoneConfirm =>
-      'Every student still sitting is finished now. Parts not submitted count as empty. This cannot be undone.';
+      'Every student still sitting is finished now. Their app first sends what they have typed (about 15 seconds); anything not sent counts as empty. This cannot be undone.';
 
   @override
   String testsEnded(int count) {
@@ -5776,7 +5776,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String testsQuestionsCount(int count) {
-    return '$count questions';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count questions',
+      one: '1 question',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -6097,4 +6103,190 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get paperFlagSplit => 'check the word split';
+
+  @override
+  String get exerciseTypeTypePinyin => 'Type the pinyin (写拼音)';
+
+  @override
+  String get exerciseTypeEssay => 'Free writing (写作)';
+
+  @override
+  String bankTextPinyinKeys(String answers) {
+    return 'Pinyin: $answers';
+  }
+
+  @override
+  String bankTextKeywords(String words) {
+    return 'Words to use: $words';
+  }
+
+  @override
+  String get bankEditorPinyinWord => 'Hanzi to write in pinyin';
+
+  @override
+  String get bankEditorPinyinWordHelper =>
+      'The student sees this and types its pinyin.';
+
+  @override
+  String get bankEditorAcceptedPinyin => 'Accepted pinyin';
+
+  @override
+  String get bankEditorAcceptedPinyinHelper =>
+      'One per line, with tone marks or numbers (nǐ hǎo or ni3 hao3). Right letters with a wrong or missing tone get half and go to the teacher.';
+
+  @override
+  String get bankEditorEssayTask => 'Writing task';
+
+  @override
+  String get bankEditorEssayKeywords => 'Words to use';
+
+  @override
+  String get bankEditorEssayKeywordsHelper =>
+      'Separate with commas. The teacher sees which ones the answer uses.';
+
+  @override
+  String get bankEditorEssaySource => 'Text to read first (optional)';
+
+  @override
+  String get bankEditorEssaySourceHelper =>
+      'Shown at the start for the minutes below, then hidden (HSK 6).';
+
+  @override
+  String get bankEditorEssaySourceMinutes => 'Minutes the text is shown';
+
+  @override
+  String get playEssayUseWords => 'Use these words:';
+
+  @override
+  String get playEssaySourceShown =>
+      'Read this text. It hides after the set time.';
+
+  @override
+  String get playEssaySourceHidden =>
+      'The text is hidden now. Write from memory.';
+
+  @override
+  String get playEssayHint => 'Write here…';
+
+  @override
+  String playEssayCount(int count) {
+    return '$count characters';
+  }
+
+  @override
+  String get playPinyinPrompt => 'Write the pinyin of:';
+
+  @override
+  String get playPinyinHelper =>
+      'Tone marks or tone numbers both count. Without tones you get half.';
+
+  @override
+  String get playWaitingForTeacher => 'Waiting for your teacher\'s marking';
+
+  @override
+  String get playHalfWaiting =>
+      'Half marks for now; your teacher will check it';
+
+  @override
+  String get playPendingSubtitle =>
+      'Some answers wait for your teacher. The score can still change.';
+
+  @override
+  String get testsPendingMarking => 'Waiting for marking';
+
+  @override
+  String get markingTitle => 'Marking';
+
+  @override
+  String get markingEmptyTitle => 'Nothing to mark';
+
+  @override
+  String get markingEmptySubtitle =>
+      'Typed answers that are nearly right and free writing appear here.';
+
+  @override
+  String get markingIntro =>
+      'Open an answer to mark it. The student\'s score is updated and they are told when nothing is left to mark.';
+
+  @override
+  String get markingReasonOneCharacter => 'one character off';
+
+  @override
+  String get markingReasonTone => 'tone wrong or missing';
+
+  @override
+  String get markingReasonFreeWriting => 'free writing';
+
+  @override
+  String get markingQuestion => 'Question';
+
+  @override
+  String get markingAnswer => 'Student\'s answer';
+
+  @override
+  String markingKeys(String keys) {
+    return 'Key: $keys';
+  }
+
+  @override
+  String markingKeywordsFound(int found, int total) {
+    return '$found of $total required words used';
+  }
+
+  @override
+  String markingMachineGave(String points, String max) {
+    return 'The machine gave $points / $max.';
+  }
+
+  @override
+  String get markingFull => 'Full marks';
+
+  @override
+  String get markingKeepHalf => 'Keep half';
+
+  @override
+  String get markingZero => 'Zero';
+
+  @override
+  String get markingGrammar => 'Grammar';
+
+  @override
+  String get markingVocabulary => 'Vocabulary';
+
+  @override
+  String get markingContent => 'Content';
+
+  @override
+  String markingRubricTotal(int total, String points, String max) {
+    return 'Rubric $total / 100 = $points of $max points';
+  }
+
+  @override
+  String get markingSave => 'Save mark';
+
+  @override
+  String get markingSaved => 'Mark saved.';
+
+  @override
+  String get testsScanToJoin => 'Students can scan this to join';
+
+  @override
+  String get testsResetAttempt => 'Reset attempt';
+
+  @override
+  String testsResetAttemptBody(String student, String code) {
+    return 'This deletes $student\'s answers and result of $code, so they can sit it again. Use it after a power cut or a broken device. The audit log keeps a record.';
+  }
+
+  @override
+  String get testsResetReason => 'Reason';
+
+  @override
+  String get testsResetDone =>
+      'Attempt reset. The student can sit the code again.';
+
+  @override
+  String testsMarkedPoints(String points, String max) {
+    return 'Your teacher gave $points of $max points';
+  }
 }

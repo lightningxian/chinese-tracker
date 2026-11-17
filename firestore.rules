@@ -573,5 +573,17 @@ service cloud.firestore {
       );
       allow write: if false;
     }
+
+    // Build 2A: answers waiting for a teacher's mark. They carry the
+    // accepted keys, so students and parents never read them; a teacher
+    // reads only their own queue, admins all. Only Cloud Functions write
+    // (markAnswer stores marks).
+    match /marking_items/{itemId} {
+      allow read: if isSignedIn() && (
+        isAdmin() ||
+        (isTeacher() && request.auth.uid in resource.data.get('teacherIds', []))
+      );
+      allow write: if false;
+    }
   }
 }

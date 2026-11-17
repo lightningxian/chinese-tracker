@@ -145,6 +145,11 @@ class TestPlayerViewModel extends ChangeNotifier {
       leftCount = a.leftCount;
       if (a.finished && phase != TestPlayerPhase.finished) {
         _finish(_attemptId);
+      } else if (a.submitRequested && phase == TestPlayerPhase.playing) {
+        // Build 2A: the teacher ended the test for everyone; send what is
+        // typed now (the server finishes the attempt after this part).
+        endedByTeacher = true;
+        unawaited(submitPart(timeUp: true));
       } else {
         notifyListeners();
       }
@@ -152,6 +157,9 @@ class TestPlayerViewModel extends ChangeNotifier {
   }
 
   String? _attemptId;
+
+  /// The teacher ended the session while this student was sitting.
+  bool endedByTeacher = false;
 
   Future<void> _apply(TestStep s, {required bool fresh}) async {
     step = s;

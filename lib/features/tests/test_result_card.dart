@@ -65,8 +65,15 @@ class TestResultCard extends StatelessWidget {
         );
     Widget centred(Widget w) => Center(child: w);
 
-    final passedText = r.passed ? '合格' : '不合格';
-    final passedLocal = r.passed ? l.testsPassed : l.testsNotPassed;
+    // Build 2A: while a teacher still marks an answer there is no pass or
+    // fail yet (待评分 = waiting to be marked).
+    final pending = r.isPendingMarking;
+    final passedText = pending ? '待评分' : r.passed ? '合格' : '不合格';
+    final passedLocal = pending
+        ? l.testsPendingMarking
+        : r.passed
+            ? l.testsPassed
+            : l.testsNotPassed;
 
     return Container(
       constraints: const BoxConstraints(maxWidth: 760),
@@ -170,9 +177,11 @@ class TestResultCard extends StatelessWidget {
                               fontWeight: FontWeight.w800,
                               color: !r.valid
                                   ? AppColors.error
-                                  : r.passed
-                                      ? AppColors.success
-                                      : AppColors.error,
+                                  : pending
+                                      ? AppColors.chipAmberFg
+                                      : r.passed
+                                          ? AppColors.success
+                                          : AppColors.error,
                             ),
                           ),
                           Text(
@@ -334,7 +343,9 @@ Future<Uint8List> buildTestResultCardPdf(
               c(value(
                   !r.valid
                       ? '无效 · ${l.testsInvalid}'
-                      : r.passed
+                      : r.isPendingMarking
+                          ? '待评分 · ${l.testsPendingMarking}'
+                          : r.passed
                           ? '合格 · ${l.testsPassed}'
                           : '不合格 · ${l.testsNotPassed}',
                   big: true)),

@@ -525,7 +525,9 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
       primaryLabel: l.exercisePlayDone,
       subtitle: result.late
           ? l.exercisePlayLateSubtitle
-          : _timeUp
+          : result.pendingMarking
+              ? l.playPendingSubtitle
+              : _timeUp
               ? l.exercisePlayTimeUpSubtitle
               : _exercise!.title,
       timeLabel: ExerciseUtils.formatClock(result.durationSeconds),
@@ -555,7 +557,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                 ),
             ],
     );
-    if (result.score < 70) return summary;
+    if (result.score < 70 || result.pendingMarking) return summary;
     return Stack(
       children: [
         summary,
@@ -914,11 +916,16 @@ class _ReviewTile extends StatelessWidget {
     final c = check;
     final correct = c?.correct == true;
     final skipped = given == null;
+    // Build 2A: half credit, or waiting for the teacher (free writing).
+    final waiting = c?.needsMarking == true;
+    final half = c?.isHalf == true;
     final color = correct
         ? AppColors.success
         : skipped
             ? AppColors.textSecondary
-            : AppColors.error;
+            : (waiting || half)
+                ? AppColors.chipAmberFg
+                : AppColors.error;
     final yours = _yourAnswer;
     final key = correct ? null : _correctAnswer(l);
     final explanation = c?.explanation.trim() ?? '';
@@ -941,7 +948,11 @@ class _ReviewTile extends StatelessWidget {
                   ? Icons.check
                   : skipped
                       ? Icons.remove
-                      : Icons.close,
+                      : waiting
+                          ? Icons.hourglass_top
+                          : half
+                              ? Icons.star_half
+                              : Icons.close,
               size: 18,
               color: color,
             ),
@@ -967,6 +978,18 @@ class _ReviewTile extends StatelessWidget {
                       : l.exercisePlayYourAnswer(yours),
                   style: TextStyle(color: color, fontSize: 14),
                 ),
+                if (waiting || half)
+                  Text(
+                    waiting && !half
+                        ? l.playWaitingForTeacher
+                        : l.playHalfWaiting,
+                    style: TextStyle(color: AppColors.chipAmberFg, fontSize: 13),
+                  ),
+                if ((c?.keywords ?? const []).isNotEmpty)
+                  Text(
+                    l.bankTextKeywords(c!.keywords.join(', ')),
+                    style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                  ),
                 if (key != null)
                   Text(
                     l.exercisePlayCorrectAnswer(key),

@@ -439,7 +439,12 @@ class TestAttempt {
     this.finishedAt,
     this.startedAt,
     this.partClocks = true,
+    this.submitRequested = false,
   });
+
+  /// Build 2A: the teacher pressed "End test for everyone"; the player
+  /// sends the open part at once so typed answers are kept.
+  final bool submitRequested;
 
   final String id;
   final String codeId;
@@ -483,6 +488,7 @@ class TestAttempt {
       finishedAt: (m['finishedAt'] as Timestamp?)?.toDate(),
       startedAt: (m['startedAt'] as Timestamp?)?.toDate(),
       partClocks: m['partClocks'] != false,
+      submitRequested: m['submitRequested'] == true,
     );
   }
 }
@@ -567,6 +573,10 @@ class TestResult {
   final DateTime? finishedAt;
 
   String get examTypeChinese => chineseExamType(family, levelKey);
+
+  /// Build 2A: an answer waits for a teacher (free writing, half-credit
+  /// typing); there is no pass or fail yet.
+  bool get isPendingMarking => status == 'pending_marking';
 
   factory TestResult.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final m = doc.data() ?? const <String, dynamic>{};

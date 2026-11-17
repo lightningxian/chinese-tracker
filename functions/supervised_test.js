@@ -116,36 +116,38 @@ function partCounts(items, format) {
   }));
 }
 
-/** Points a question is worth (1 unless it says otherwise). */
-function pointsOf(item) {
-  const n = Number(item.points);
-  return Number.isFinite(n) && n > 0 ? n : 1;
-}
+/** Points a question is worth (shared with packages: 1, free writing 10). */
+const pointsOf = play.pointsOf;
 
 /**
- * Marks of one part: earned ÷ possible × maxScore, rounded.
+ * Marks of one part: earned ÷ possible × maxScore, rounded. Earned is
+ * credit × points (half credit for nearly right typing, Build 2A); a
+ * teacher's mark replaces the machine's points for that question.
  * @param {Array<Object>} items the part's bank items
  * @param {Object<string, Object>} answers questionId → answer
  * @param {number} maxScore
+ * @param {Object<string, number>} marks questionId → points a teacher gave
  * @return {{earned: number, possible: number, mark: number,
- *   correct: number, total: number}}
+ *   correct: number, total: number, open: number, points: Object}}
  */
-function scorePart(items, answers, maxScore) {
+function scorePart(items, answers, maxScore, marks = {}) {
   const given = answers && typeof answers === "object" ? answers : {};
-  let earned = 0;
-  let possible = 0;
   let correct = 0;
+  const points = {};
   for (const it of items) {
-    const pts = pointsOf(it);
-    possible += pts;
-    if (Object.prototype.hasOwnProperty.call(given, it.id) &&
-        play.checkAnswer(it, given[it.id]).correct) {
-      earned += pts;
-      correct += 1;
-    }
+    const max = pointsOf(it);
+    const answered = Object.prototype.hasOwnProperty.call(given, it.id);
+    const check = answered ? play.checkAnswer(it, given[it.id]) :
+      {credit: 0, review: false, reason: "wrong", correct: false};
+    if (check.correct) correct += 1;
+    points[it.id] = {earned: check.credit * max, max, review: check.review,
+      reason: check.reason};
   }
-  const mark = possible === 0 ? 0 : Math.round((earned / possible) * maxScore);
-  return {earned, possible, mark, correct, total: items.length};
+  const totals = play.totalsOf(points, marks);
+  const mark = totals.possible === 0 ? 0 :
+    Math.round((totals.earned / totals.possible) * maxScore);
+  return {earned: totals.earned, possible: totals.possible, mark, correct,
+    total: items.length, open: totals.open, points};
 }
 
 /**
@@ -155,20 +157,66 @@ function scorePart(items, answers, maxScore) {
  * @param {Object<string, Object<string, Object>>} answersByPart
  *   part index (as string) → questionId → answer
  * @param {boolean} valid
+ * @param {Object<string, number>} marks questionId → points a teacher gave
  * @return {{parts: Array<Object>, total: number, max: number,
- *   passMark: number, passed: boolean}}
+ *   passMark: number, passed: boolean, open: number, status: string}}
+ *   `status` is `pending_marking` while an answer waits for a teacher;
+ *   `passed` is then false and decided when the result is final.
  */
-function scoreTest(split, format, answersByPart, valid = true) {
+function scoreTest(split, format, answersByPart, valid = true, marks = {}) {
   const {parts, passMark} = cleanFormat(format);
   const by = answersByPart && typeof answersByPart === "object" ? answersByPart : {};
   const scored = parts.map((p, i) => ({
     skill: p.skill,
     maxScore: p.maxScore,
-    ...scorePart(split[i] || [], by[String(i)] || {}, p.maxScore),
+    ...scorePart(split[i] || [], by[String(i)] || {}, p.maxScore, marks),
   }));
   const total = scored.reduce((s, p) => s + p.mark, 0);
   const max = parts.reduce((s, p) => s + p.maxScore, 0);
-  return {parts: scored, total, max, passMark, passed: isPassed(total, passMark, valid)};
+  const open = scored.reduce((s, p) => s + p.open, 0);
+  const status = open > 0 ? "pending_marking" : "final";
+  return {parts: scored, total, max, passMark, open, status,
+    passed: status === "final" && isPassed(total, passMark, valid)};
+}
+
+/**
+ * Points of every question of a scored test in one map, each with its part
+ * index, as stored on the result (so a teacher's mark can re-score it
+ * without loading the worksheet again).
+ * @param {{parts: Array<{points: Object}>}} scored from scoreTest
+ * @return {Object<string, Object>}
+ */
+function pointsByQuestion(scored) {
+  const out = {};
+  scored.parts.forEach((p, part) => {
+    for (const [id, v] of Object.entries(p.points || {})) out[id] = {...v, part};
+  });
+  return out;
+}
+
+/**
+ * Re-scores a stored result with the teacher's marks.
+ * @param {{parts: Array<{maxScore: number}>, points: Object, passMark: number,
+ *   valid: boolean}} result
+ * @param {Object<string, number>} marks questionId → points
+ * @return {{parts: Array<Object>, total: number, open: number,
+ *   status: string, passed: boolean}}
+ */
+function rescore(result, marks) {
+  const points = result.points || {};
+  const parts = (result.parts || []).map((p, i) => {
+    const mine = Object.fromEntries(
+        Object.entries(points).filter(([, v]) => v.part === i));
+    const t = play.totalsOf(mine, marks);
+    const mark = t.possible === 0 ? 0 :
+      Math.round((t.earned / t.possible) * (Number(p.maxScore) || 0));
+    return {...p, earned: t.earned, possible: t.possible, mark, open: t.open};
+  });
+  const total = parts.reduce((s, p) => s + p.mark, 0);
+  const open = parts.reduce((s, p) => s + p.open, 0);
+  const status = open > 0 ? "pending_marking" : "final";
+  return {parts, total, open, status,
+    passed: status === "final" && isPassed(total, result.passMark, result.valid !== false)};
 }
 
 function isPassed(total, passMark, valid) {
@@ -281,6 +329,8 @@ module.exports = {
   pointsOf,
   scorePart,
   scoreTest,
+  pointsByQuestion,
+  rescore,
   isPassed,
   partSeconds,
   secondsLeft,

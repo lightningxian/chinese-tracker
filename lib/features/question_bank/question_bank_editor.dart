@@ -72,6 +72,10 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
   final _blankController = TextEditingController();
   final _explanationController = TextEditingController();
 
+  /// Free writing (essay): a text shown for a set time, then hidden (HSK 6).
+  final _sourceController = TextEditingController();
+  final _sourceMinutesController = TextEditingController();
+
   /// Multiple choice / listening: one controller per choice.
   final List<TextEditingController> _optionControllers = [];
 
@@ -138,7 +142,14 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
       case ExerciseType.matching:
       case ExerciseType.readingCloze:
       case ExerciseType.typeHanzi:
+      case ExerciseType.typePinyin:
         _linesController.text = e.question.options.join('\n');
+      case ExerciseType.essay:
+        _keywordController.text = e.question.keywords.join(', ');
+        _sourceController.text = e.question.sourceText;
+        _sourceMinutesController.text = e.question.sourceSeconds > 0
+            ? '${e.question.sourceSeconds ~/ 60}'
+            : '';
       case ExerciseType.multipleChoice:
       case ExerciseType.listening:
         for (final (i, o) in e.question.options.indexed) {
@@ -169,6 +180,8 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
     _keywordController.dispose();
     _blankController.dispose();
     _explanationController.dispose();
+    _sourceController.dispose();
+    _sourceMinutesController.dispose();
     _linesController.dispose();
     for (final c in _optionControllers) {
       c.dispose();
@@ -235,6 +248,28 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
           imageUrl: _imageUrl,
           audioUrl: _audioUrl,
         );
+      case ExerciseType.typePinyin:
+        return ExerciseQuestion(
+          prompt: prompt,
+          explanation: explanation,
+          options: _lines,
+          imageUrl: _imageUrl,
+          audioUrl: _audioUrl,
+        );
+      case ExerciseType.essay:
+        final minutes = int.tryParse(_sourceMinutesController.text.trim()) ?? 0;
+        return ExerciseQuestion(
+          prompt: prompt,
+          explanation: explanation,
+          keywords: keyword
+              .split(RegExp(r'[,，、;；/\s]+'))
+              .map((s) => s.trim())
+              .where((s) => s.isNotEmpty)
+              .toList(),
+          sourceText: _sourceController.text.trim(),
+          sourceSeconds: minutes > 0 ? minutes * 60 : 0,
+          imageUrl: _imageUrl,
+        );
       case ExerciseType.multipleChoice:
       case ExerciseType.listening:
         final options = <String>[];
@@ -274,6 +309,11 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
         if (q.acceptedAnswers.isEmpty) return l.bankEditorNeedAccepted;
       case ExerciseType.pictureSentence:
         if (q.keyword.isEmpty) return l.bankEditorEnterKeyword;
+      case ExerciseType.typePinyin:
+        if (q.prompt.isEmpty) return l.bankEditorEnterQuestion;
+        if (q.acceptedAnswers.isEmpty) return l.bankEditorNeedAccepted;
+      case ExerciseType.essay:
+        if (q.prompt.isEmpty) return l.bankEditorEnterQuestion;
       case ExerciseType.multipleChoice:
       case ExerciseType.listening:
         if (q.prompt.isEmpty) return l.bankEditorEnterQuestion;
@@ -700,6 +740,53 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
           ),
           const SizedBox(height: 12),
           _prompt(label: l.bankEditorInstruction, optional: true),
+        ];
+      case ExerciseType.typePinyin:
+        return [
+          _prompt(
+            label: l.bankEditorPinyinWord,
+            helper: l.bankEditorPinyinWordHelper,
+          ),
+          const SizedBox(height: 12),
+          _linesField(
+            label: l.bankEditorAcceptedPinyin,
+            helper: l.bankEditorAcceptedPinyinHelper,
+          ),
+        ];
+      case ExerciseType.essay:
+        return [
+          _prompt(label: l.bankEditorEssayTask),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _keywordController,
+            style: AppTextStyles.question,
+            decoration: InputDecoration(
+              labelText: l.bankEditorEssayKeywords,
+              helperText: l.bankEditorEssayKeywordsHelper,
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _sourceController,
+            minLines: 2,
+            maxLines: 8,
+            style: AppTextStyles.question,
+            decoration: InputDecoration(
+              labelText: l.bankEditorEssaySource,
+              helperText: l.bankEditorEssaySourceHelper,
+              alignLabelWithHint: true,
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: 220,
+            child: TextFormField(
+              controller: _sourceMinutesController,
+              keyboardType: TextInputType.number,
+              decoration:
+                  InputDecoration(labelText: l.bankEditorEssaySourceMinutes),
+            ),
+          ),
         ];
     }
   }

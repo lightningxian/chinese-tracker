@@ -15,7 +15,17 @@ class ExerciseQuestion {
     this.blankNumber,
     this.explanation = '',
     this.optionImageUrls = const [],
+    this.keywords = const [],
+    this.sourceText = '',
+    this.sourceSeconds = 0,
   });
+
+  /// Free writing (essay): the words the answer must use.
+  final List<String> keywords;
+
+  /// Free writing (HSK 6): a text shown for [sourceSeconds], then hidden.
+  final String sourceText;
+  final int sourceSeconds;
 
   final String prompt;
   final List<String> options;
@@ -82,6 +92,7 @@ class ExerciseQuestion {
           audioUrl: map['audioUrl'] as String? ?? '',
         );
       case ExerciseType.typeHanzi:
+      case ExerciseType.typePinyin:
         return ExerciseQuestion(
           prompt: map['prompt'] as String? ?? '',
           keyword: map['keyword'] as String? ?? '',
@@ -89,6 +100,15 @@ class ExerciseQuestion {
           imageUrl: map['imageUrl'] as String? ?? '',
           explanation: map['explanation'] as String? ?? '',
           audioUrl: map['audioUrl'] as String? ?? '',
+        );
+      case ExerciseType.essay:
+        return ExerciseQuestion(
+          prompt: map['prompt'] as String? ?? '',
+          keywords: List<String>.from(map['keywords'] as List? ?? []),
+          sourceText: map['sourceText'] as String? ?? '',
+          sourceSeconds: (map['sourceSeconds'] as num?)?.toInt() ?? 0,
+          imageUrl: map['imageUrl'] as String? ?? '',
+          explanation: map['explanation'] as String? ?? '',
         );
       case ExerciseType.readingCloze:
         return ExerciseQuestion(
@@ -148,6 +168,21 @@ class ExerciseQuestion {
           'prompt': prompt,
           'keyword': keyword,
           'options': options,
+          ...sharedFields(),
+        };
+      case ExerciseType.typePinyin:
+        return {
+          'prompt': prompt,
+          'options': options,
+          ...sharedFields(),
+        };
+      case ExerciseType.essay:
+        return {
+          'prompt': prompt,
+          'keywords': keywords,
+          if (sourceText.isNotEmpty) 'sourceText': sourceText,
+          if (sourceText.isNotEmpty && sourceSeconds > 0)
+            'sourceSeconds': sourceSeconds,
           ...sharedFields(),
         };
       case ExerciseType.readingCloze:

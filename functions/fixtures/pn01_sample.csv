@@ -1,0 +1,9 @@
+# PN-01 sample: the six cases of the thesis spec, section 7. The teacher
+# column is the mark a teacher gives by hand (1, 0.5 or 0).
+type,keys,answer,teacher
+type_hanzi,你好,你好！,1
+type_hanzi,谢谢,謝謝,1
+type_pinyin,nǐ hǎo,ni3 hao3,1
+type_pinyin,nǐ hǎo,ni hao,0.5
+type_hanzi,我很喜欢喝茶,我很喜欢和茶,0.5
+compose_sentences,把书/放在/桌子上,书把/放在/桌子上,0

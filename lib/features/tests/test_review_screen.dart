@@ -165,7 +165,14 @@ class _TestReviewScreenState extends State<TestReviewScreen> {
               }
             }
             final q = it.question;
-            final ok = it.check.correct;
+            final c = it.check;
+            // Build 2A: the teacher's mark, else the machine's credit.
+            final marked = c.markedPoints;
+            final ok = marked != null
+                ? marked >= (c.maxPoints ?? 1)
+                : c.correct;
+            final partial = !ok &&
+                ((marked != null && marked > 0) || c.isHalf || c.needsMarking);
             children.add(Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: AppCard(
@@ -176,8 +183,18 @@ class _TestReviewScreenState extends State<TestReviewScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Icon(
-                          ok ? Icons.check_circle : Icons.cancel,
-                          color: ok ? AppColors.success : AppColors.error,
+                          ok
+                              ? Icons.check_circle
+                              : c.needsMarking
+                                  ? Icons.hourglass_top
+                                  : partial
+                                      ? Icons.star_half
+                                      : Icons.cancel,
+                          color: ok
+                              ? AppColors.success
+                              : partial
+                                  ? AppColors.chipAmberFg
+                                  : AppColors.error,
                         ),
                         const SizedBox(width: 8),
                         Expanded(
@@ -195,6 +212,21 @@ class _TestReviewScreenState extends State<TestReviewScreen> {
                     ),
                     const SizedBox(height: 6),
                     Text('${l.testsYourAnswer}: ${_answerText(q, it.answer)}'),
+                    if (marked != null)
+                      Text(
+                        l.testsMarkedPoints(_pts(marked), _pts(c.maxPoints ?? 1)),
+                        style: TextStyle(color: AppColors.chipAmberFg),
+                      )
+                    else if (c.needsMarking)
+                      Text(
+                        c.isHalf ? l.playHalfWaiting : l.playWaitingForTeacher,
+                        style: TextStyle(color: AppColors.chipAmberFg),
+                      ),
+                    if (c.keywords.isNotEmpty)
+                      Text(l.bankTextKeywords(c.keywords.join(', ')),
+                          style: TextStyle(color: AppColors.textSecondary)),
+                    // Free writing has no key (a teacher marks it).
+                    if (_keyText(q, it.check).isNotEmpty)
                     Text(
                       '${l.testsKey}: ${_keyText(q, it.check)}',
                       style: TextStyle(
@@ -227,3 +259,6 @@ class _TestReviewScreenState extends State<TestReviewScreen> {
 /// Keeps the [TestSkill] import used for the part headings' skill names.
 String reviewPartLabel(AppLocalizations l, TestSkill skill) =>
     skill.localized(l);
+
+String _pts(double v) =>
+    v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(1);

@@ -11,7 +11,7 @@ const PROJECT = "chinese-tracker";
 const AUTH = "http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1";
 const FS = `http://127.0.0.1:8080/v1/projects/${PROJECT}/databases/(default)/documents`;
 const FN = `http://127.0.0.1:5001/${PROJECT}/us-central1`;
-const PASSWORD = "testpass123";
+const PASSWORD = "emulator-only-7"; // scripts/seed_emulator.py (not the live one)
 const CODE = "H3DEMO1";
 
 let passed = 0;
@@ -344,6 +344,184 @@ await step("regression: an exam package is still one attempt with a server clock
   assert.equal(fin.data.score, 50);
   const again = await call(s2, "startExercise", {exerciseId: "pkg_exam"});
   assert.equal(reasonOf(again), "already-attempted");
+});
+
+// ---------------------------------------------------------------------------
+// Build 2A: typing matcher, marking queue, end-session keeps typed work,
+// the hourly job, Reset attempt. Seed: package pkg_typing, code H3ESSAY.
+// ---------------------------------------------------------------------------
+const ESSAY = "H3ESSAY";
+
+/** Docs of a collection where field == value (rules bypassed). */
+async function queryDocs(collection, field, value) {
+  const r = await fetch(`${FS}:runQuery`, {
+    method: "POST",
+    headers: {"Content-Type": "application/json", Authorization: "Bearer owner"},
+    body: JSON.stringify({structuredQuery: {from: [{collectionId: collection}],
+      where: {fieldFilter: {field: {fieldPath: field}, op: "EQUAL",
+        value: {stringValue: value}}}}}),
+  });
+  const rows = await r.json();
+  return rows.filter((x) => x.document).map((x) => ({
+    id: x.document.name.split("/").pop(),
+    fields: x.document.fields || {},
+  }));
+}
+const str = (f, k) => (f[k] && f[k].stringValue) || "";
+
+const s5 = await signIn("student5@test.chinesetracker");
+const s6 = await signIn("student6@test.chinesetracker");
+for (const s of [s5, s6]) {
+  await deleteDoc(`test_attempts/${ESSAY}_${s.uid}`);
+  await deleteDoc(`test_results/${ESSAY}_${s.uid}`);
+}
+
+let typingResultId;
+await step("PN-02/PN-03 package typing: pinyin with tone numbers is full, a homophone is half and queued, word order swapped is zero", async () => {
+  const st = await call(s1, "startExercise", {exerciseId: "pkg_typing"});
+  assert.ok(st.data, JSON.stringify(st.error));
+  const py = st.data.questions.find((q) => q.id === "ty_2");
+  assert.equal(py.type, "type_pinyin");
+  assert.ok(!("options" in py), "pinyin keys stay on the server");
+  const fin = await call(s1, "finishExercise", {exerciseId: "pkg_typing", answers: {
+    ty_1: {text: "我很喜欢和茶"}, ty_2: {text: "ni3 hao3"},
+    ty_3: {order: ["放在", "把书", "桌子上"]},
+  }});
+  assert.ok(fin.data, JSON.stringify(fin.error));
+  assert.equal(fin.data.status, "pending_marking");
+  assert.deepEqual(fin.data.review.map((r) => r.credit), [0.5, 1, 0]);
+  assert.deepEqual(fin.data.review.map((r) => r.needsMarking), [true, false, false]);
+  assert.equal(fin.data.score, 50, "1.5 of 3 points");
+  typingResultId = fin.data.resultId;
+  const item = await readDoc(`marking_items/${typingResultId}_ty_1`);
+  assert.equal(item.status, "open");
+  assert.equal(item.reason, "one_character");
+  assert.equal(item.machinePoints, 0.5);
+  assert.ok(item.teacherIds.includes(teacher.uid), "the package's teacher sees it");
+  assert.equal(await readDoc(`marking_items/${typingResultId}_ty_3`), null,
+      "word order is never queued");
+});
+
+await step("only the queue's teacher or an admin can mark; a student cannot", async () => {
+  const other = await signIn("andrea@test.chinesetracker");
+  const byOther = await call(other, "markAnswer",
+      {itemId: `${typingResultId}_ty_1`, decision: "full"});
+  assert.equal(byOther.error.status, "PERMISSION_DENIED");
+  const byStudent = await call(s1, "markAnswer",
+      {itemId: `${typingResultId}_ty_1`, decision: "full"});
+  assert.equal(byStudent.error.status, "PERMISSION_DENIED");
+});
+
+await step("the teacher turns the half into full: the score changes, the result is final, the student is told", async () => {
+  const r = await call(teacher, "markAnswer", {itemId: `${typingResultId}_ty_1`, decision: "full"});
+  assert.ok(r.data, JSON.stringify(r.error));
+  assert.equal(r.data.final, true);
+  const res = await readDoc(`exercise_results/${typingResultId}`);
+  assert.equal(res.status, "final");
+  assert.equal(res.score, 67, "2 of 3 points");
+  const notes = await queryDocs("notifications", "userId", s1.uid);
+  assert.ok(notes.some((n) => str(n.fields, "title") === "Marked"), "a notification arrived");
+});
+
+let essaySession;
+await step("free writing in a test: pending with no pass or fail, then the rubric makes it final", async () => {
+  essaySession = (await call(teacher, "openTestSession", {codeId: ESSAY})).data;
+  let part = (await call(s5, "startTest", {token: essaySession.token})).data;
+  part = (await call(s5, "submitTestPart", {codeId: ESSAY, partIndex: 0,
+    answers: {es_l1: {index: 0}}})).data;
+  part = (await call(s5, "submitTestPart", {codeId: ESSAY, partIndex: 1,
+    answers: {es_r1: {index: 0}}})).data;
+  const essayQ = part.questions.find((q) => q.id === "es_w2");
+  assert.deepEqual(essayQ.keywords, ["周末", "公园"]);
+  const fin = await call(s5, "submitTestPart", {codeId: ESSAY, partIndex: 2, answers: {
+    es_w1: {text: "刚"}, es_w2: {text: "这个周末我和朋友去公园散步。"}}});
+  assert.equal(fin.data.finished, true);
+  let res = await readDoc(`test_results/${ESSAY}_${s5.uid}`);
+  assert.equal(res.status, "pending_marking");
+  assert.equal(res.passed, false, "no pass or fail while pending");
+  assert.equal(res.openMarking, 1);
+  const item = await readDoc(`marking_items/${ESSAY}_${s5.uid}_es_w2`);
+  assert.equal(item.reason, "free_writing");
+  assert.equal(item.maxPoints, 10);
+  const m = await call(teacher, "markAnswer", {itemId: `${ESSAY}_${s5.uid}_es_w2`,
+    rubric: {grammar: 40, vocabulary: 30, content: 30}});
+  assert.ok(m.data, JSON.stringify(m.error));
+  res = await readDoc(`test_results/${ESSAY}_${s5.uid}`);
+  assert.equal(res.status, "final");
+  assert.deepEqual(res.parts.map((p) => p.mark), [100, 100, 100]);
+  assert.equal(res.total, 300);
+  assert.equal(res.passed, true);
+});
+
+await step("End test for everyone keeps what a student was typing", async () => {
+  const st = await call(s6, "startTest", {token: essaySession.token});
+  assert.ok(st.data, JSON.stringify(st.error));
+  const closing = call(teacher, "closeTestSession", {sessionId: essaySession.sessionId});
+  // The player listens to its attempt and sends the open part when asked.
+  let asked = false;
+  for (let i = 0; i < 40 && !asked; i++) {
+    await new Promise((r) => setTimeout(r, 250));
+    asked = (await readDoc(`test_attempts/${ESSAY}_${s6.uid}`)).submitRequested === true;
+  }
+  assert.ok(asked, "the attempt is asked to submit");
+  const sent = await call(s6, "submitTestPart", {codeId: ESSAY, partIndex: 0,
+    answers: {es_l1: {index: 0}}});
+  assert.equal(sent.data.finished, true, "no next part opens");
+  const closed = await closing;
+  assert.ok(closed.data, JSON.stringify(closed.error));
+  const res = await readDoc(`test_results/${ESSAY}_${s6.uid}`);
+  assert.deepEqual(res.parts.map((p) => p.mark), [100, 0, 0], "the typed part counts");
+});
+
+await step("the review shows the teacher's mark", async () => {
+  const r = await call(s5, "getTestReview", {codeId: ESSAY});
+  assert.ok(r.data, JSON.stringify(r.error));
+  const essayItem = r.data.items.find((x) => x.question.id === "es_w2");
+  assert.deepEqual(essayItem.review.marking, {status: "marked", points: 10});
+});
+
+await step("a forgotten session is closed by the hourly job, then the review opens", async () => {
+  const s7 = await signIn("student7@test.chinesetracker");
+  await deleteDoc(`test_attempts/${ESSAY}_${s7.uid}`);
+  await deleteDoc(`test_results/${ESSAY}_${s7.uid}`);
+  const open = (await call(teacher, "openTestSession", {codeId: ESSAY})).data;
+  await call(s7, "startTest", {token: open.token});
+  // Its last possible end (join + 9 minutes + grace) was long ago.
+  await patchDoc(`test_sessions/${open.sessionId}`, {joinUntil: ts(Date.now() - 2 * 3600 * 1000)});
+  const refused = await call(s7, "getTestReview", {codeId: ESSAY});
+  assert.equal(reasonOf(refused), "not-finished");
+  // The emulator registers a scheduled function only when the Pub/Sub
+  // emulator runs (firebase.json, port 8085), under the id `<name>-0`; a
+  // POST there runs it once.
+  const job = await fetch(`${FN}/closeForgottenTestSessions-0`, {
+    method: "POST", headers: {"Content-Type": "application/json"}, body: "{}",
+  });
+  assert.ok(job.ok, `job trigger: ${job.status}`);
+  let sess;
+  for (let i = 0; i < 40; i++) {
+    await new Promise((r) => setTimeout(r, 250));
+    sess = await readDoc(`test_sessions/${open.sessionId}`);
+    if (sess.status === "closed") break;
+  }
+  assert.equal(sess.status, "closed");
+  const r = await call(s7, "getTestReview", {codeId: ESSAY});
+  assert.ok(r.data, JSON.stringify(r.error));
+});
+
+await step("admin resets an attempt: audit-logged, the student can sit the code again", async () => {
+  const id = `${ESSAY}_${s6.uid}`;
+  const byTeacher = await call(teacher, "resetTestAttempt", {resultId: id});
+  assert.equal(byTeacher.error.status, "PERMISSION_DENIED");
+  const r = await call(admin, "resetTestAttempt", {resultId: id, reason: "listrik mati"});
+  assert.ok(r.data, JSON.stringify(r.error));
+  assert.equal(await readDoc(`test_results/${id}`), null);
+  assert.equal(await readDoc(`test_attempts/${id}`), null);
+  const logs = await queryDocs("audit_logs", "targetId", id);
+  assert.ok(logs.some((l) => str(l.fields, "action") === "test.attempt.reset"));
+  const again = (await call(teacher, "openTestSession", {codeId: ESSAY})).data;
+  const st = await call(s6, "startTest", {token: again.token});
+  assert.ok(st.data, JSON.stringify(st.error));
+  await call(teacher, "closeTestSession", {sessionId: again.sessionId});
 });
 
 console.log(`supervised flow: ${passed} steps passed`);

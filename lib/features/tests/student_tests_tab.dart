@@ -204,14 +204,18 @@ class _StudentTestsTabState extends State<StudentTestsTab> {
                           Text(
                             !r.valid
                                 ? l.testsInvalid
-                                : r.passed
-                                    ? '合格'
-                                    : '不合格',
+                                : r.isPendingMarking
+                                    ? l.testsPendingMarking
+                                    : r.passed
+                                        ? '合格'
+                                        : '不合格',
                             style: TextStyle(
                               fontWeight: FontWeight.w700,
-                              color: r.valid && r.passed
-                                  ? AppColors.success
-                                  : AppColors.error,
+                              color: r.isPendingMarking
+                                  ? AppColors.chipAmberFg
+                                  : r.valid && r.passed
+                                      ? AppColors.success
+                                      : AppColors.error,
                             ),
                           ),
                         ],

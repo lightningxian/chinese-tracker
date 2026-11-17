@@ -43,6 +43,7 @@ artifacts/
 firestore-debug.log
 firebase-debug.log
 ui-debug.log
+pubsub-debug.log
 
 # Claude Code agent worktrees
 .claude/worktrees/

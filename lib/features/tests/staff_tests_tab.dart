@@ -7,8 +7,10 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../l10n/l10n.dart';
 import '../../models/app_user.dart';
+import '../../models/marking_item.dart';
 import '../../models/test_track.dart';
 import '../../services/auth_service.dart';
+import '../../services/marking_service.dart';
 import '../../services/test_service.dart';
 import 'test_labels.dart';
 
@@ -74,6 +76,22 @@ class StaffTestsTab extends StatelessWidget {
               onPressed: () => context.push('$_base/results'),
               icon: const Icon(Icons.fact_check_outlined),
               label: Text(l.testsResultsTitle),
+            ),
+            // Build 2A: answers waiting for this teacher's mark.
+            StreamBuilder<List<MarkingItem>>(
+              stream: MarkingService().watchOpen(user),
+              builder: (context, snap) {
+                final open = snap.data?.length ?? 0;
+                return OutlinedButton.icon(
+                  onPressed: () => context.push('$_base/marking'),
+                  icon: Badge(
+                    isLabelVisible: open > 0,
+                    label: Text('$open'),
+                    child: const Icon(Icons.rate_review_outlined),
+                  ),
+                  label: Text(l.markingTitle),
+                );
+              },
             ),
             if (user.isAdmin) ...[
               OutlinedButton.icon(

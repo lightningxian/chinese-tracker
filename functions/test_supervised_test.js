@@ -68,7 +68,11 @@ assert.deepStrictEqual(t.cleanFormat({parts: [{skill: "x", questions: "4", minut
 assert.strictEqual(t.pointsOf(items[0]), 1);
 assert.strictEqual(t.pointsOf(items[5]), 2);
 const p0 = t.scorePart(split[0], {L1: {index: 0}, L2: {index: 2}, L3: {index: 1}}, 100);
-assert.deepStrictEqual(p0, {earned: 2, possible: 3, mark: 67, correct: 2, total: 3});
+assert.deepStrictEqual(
+    {earned: p0.earned, possible: p0.possible, mark: p0.mark, correct: p0.correct,
+      total: p0.total, open: p0.open},
+    {earned: 2, possible: 3, mark: 67, correct: 2, total: 3, open: 0});
+assert.deepStrictEqual(p0.points.L2, {earned: 0, max: 1, review: false, reason: "wrong"});
 assert.strictEqual(t.scorePart([], {}, 100).mark, 0, "empty part = 0, no division by 0");
 
 const full = t.scoreTest(split, format, {
@@ -86,6 +90,32 @@ assert.strictEqual(full.passed, true);
 const stopped = t.scoreTest(split, format, {"0": {L1: {index: 0}}}, true);
 assert.deepStrictEqual(stopped.parts.map((p) => p.mark), [33, 0, 0]);
 assert.strictEqual(stopped.passed, false);
+
+// Build 2A: free writing waits for the teacher. The result is pending and
+// does not pass or fail until every open answer has a mark.
+const essayItem = {id: "E1", type: "essay", skillCategory: "typing",
+  question: {prompt: "写", keywords: ["周末"]}};
+const withEssay = [split[0], split[1], [...split[2], essayItem]];
+const allRight = {"0": {L1: {index: 0}, L2: {index: 0}, L3: {index: 1}},
+  "1": {R1: {index: 0}, R2: {index: 1}}, "2": {W1: {index: 2}, E1: {text: "周末我去公园。"}}};
+const pending = t.scoreTest(withEssay, format, allRight, true);
+assert.strictEqual(pending.status, "pending_marking");
+assert.strictEqual(pending.open, 1);
+assert.strictEqual(pending.passed, false, "no pass while pending");
+const marked = t.scoreTest(withEssay, format, allRight, true, {E1: 8});
+assert.strictEqual(marked.status, "final");
+assert.strictEqual(marked.parts[2].mark, Math.round((2 + 8) / 12 * 100));
+assert.strictEqual(marked.passed, true);
+// A stored result re-scores from its points map with the teacher's marks,
+// the same as scoring again.
+const stored = {parts: pending.parts.map(({points, ...p}) => p),
+  points: t.pointsByQuestion(pending), passMark: 180, valid: true};
+assert.strictEqual(stored.points.E1.part, 2);
+const again = t.rescore(stored, {E1: 8});
+assert.deepStrictEqual(again.parts.map((p) => p.mark), marked.parts.map((p) => p.mark));
+assert.deepStrictEqual([again.total, again.status, again.passed],
+    [marked.total, "final", true]);
+assert.strictEqual(t.rescore(stored, {}).status, "pending_marking");
 
 // Invalid results never pass.
 assert.strictEqual(t.isPassed(250, 180, false), false);

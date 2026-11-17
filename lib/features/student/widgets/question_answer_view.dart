@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
@@ -56,6 +58,7 @@ class _QuestionAnswerViewState extends State<QuestionAnswerView> {
 
   @override
   void dispose() {
+    _sourceTimer?.cancel();
     _typedController.dispose();
     super.dispose();
   }
@@ -182,10 +185,121 @@ class _QuestionAnswerViewState extends State<QuestionAnswerView> {
     );
   }
 
-  /// Type the hanzi: the sentence with a gap and its pinyin hint. Picture
-  /// sentence: the picture (if any) and the keyword to use.
+  /// When each essay's source text hides (by question id), so going back to
+  /// the question does not show it again.
+  static final Map<String, DateTime> _sourceHidesAt = {};
+  Timer? _sourceTimer;
+
+  /// Free writing (T5): the task, the words to use, a text shown for a set
+  /// time (HSK 6), a large field and the character count. A teacher marks it.
+  Widget _buildEssayQuestion(PlayQuestion question) {
+    final l = context.l10n;
+    var showSource = false;
+    if (question.sourceText.isNotEmpty) {
+      final hidesAt = _sourceHidesAt.putIfAbsent(
+        question.id,
+        () => DateTime.now().add(Duration(
+            seconds: question.sourceSeconds > 0 ? question.sourceSeconds : 600)),
+      );
+      final left = hidesAt.difference(DateTime.now());
+      showSource = !left.isNegative;
+      _sourceTimer ??= showSource
+          ? Timer(left, () {
+              if (mounted) setState(() {});
+            })
+          : null;
+    }
+    final count = _typedController.text.replaceAll(RegExp(r'\s'), '').runes.length;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (question.imageUrl.isNotEmpty) ...[
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.network(
+              question.imageUrl,
+              height: 220,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+        Text(
+          question.prompt,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: AppColors.navy,
+                height: 1.5,
+              ),
+        ),
+        if (question.keywords.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Text(l.playEssayUseWords,
+              style: TextStyle(color: AppColors.textSecondary)),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: [
+              for (final k in question.keywords)
+                Chip(
+                  label: Text(k, style: AppTextStyles.question),
+                  backgroundColor: AppColors.teal.withValues(alpha: 0.12),
+                ),
+            ],
+          ),
+        ],
+        if (question.sourceText.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          AppCard(
+            child: showSource
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(l.playEssaySourceShown,
+                          style: TextStyle(color: AppColors.textSecondary)),
+                      const SizedBox(height: 8),
+                      Text(question.sourceText,
+                          style: AppTextStyles.question.copyWith(height: 1.6)),
+                    ],
+                  )
+                : Text(l.playEssaySourceHidden,
+                    style: TextStyle(color: AppColors.textSecondary)),
+          ),
+        ],
+        const SizedBox(height: 16),
+        TextField(
+          controller: _typedController,
+          enabled: widget.enabled,
+          minLines: 6,
+          maxLines: 14,
+          style: AppTextStyles.question.copyWith(fontSize: 20, height: 1.6),
+          onChanged: (v) {
+            _typed(v);
+            setState(() {});
+          },
+          decoration: InputDecoration(
+            hintText: l.playEssayHint,
+            border: const OutlineInputBorder(),
+            alignLabelWithHint: true,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(l.playEssayCount(count),
+            textAlign: TextAlign.end,
+            style: TextStyle(color: AppColors.textSecondary)),
+      ],
+    );
+  }
+
+  /// Type the hanzi: the sentence with a gap and its pinyin hint. Type the
+  /// pinyin: the hanzi to write. Picture sentence: the picture (if any) and
+  /// the keyword to use.
   Widget _buildTypedQuestion(PlayQuestion question) {
     final l = context.l10n;
+    if (question.type == ExerciseType.essay) return _buildEssayQuestion(question);
+    final isPinyin = question.type == ExerciseType.typePinyin;
     final isPicture = question.type == ExerciseType.pictureSentence;
     final hint = question.keyword;
     return Column(
@@ -203,12 +317,18 @@ class _QuestionAnswerViewState extends State<QuestionAnswerView> {
           ),
           const SizedBox(height: 16),
         ],
+        if (isPinyin) ...[
+          Text(l.playPinyinPrompt,
+              style: TextStyle(color: AppColors.textSecondary)),
+          const SizedBox(height: 6),
+        ],
         Text(
           isPicture ? l.exercisePlayPictureSentencePrompt : question.prompt,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w700,
                 color: AppColors.navy,
                 height: 1.5,
+                fontSize: isPinyin ? 34 : null,
               ),
         ),
         if (hint.isNotEmpty) ...[
@@ -242,7 +362,12 @@ class _QuestionAnswerViewState extends State<QuestionAnswerView> {
           onChanged: _typed,
           onSubmitted: (_) => widget.onSubmitted?.call(),
           decoration: InputDecoration(
-            hintText: isPicture ? '用这个词写一个句子…' : '写汉字…',
+            hintText: isPinyin
+                ? 'nǐ hǎo / ni3 hao3'
+                : isPicture
+                    ? '用这个词写一个句子…'
+                    : '写汉字…',
+            helperText: isPinyin ? l.playPinyinHelper : null,
             border: const OutlineInputBorder(),
           ),
         ),

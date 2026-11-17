@@ -124,6 +124,8 @@ class WorksheetParseResult {
         return bank;
       case ExerciseType.pictureSentence:
       case ExerciseType.typeHanzi:
+      case ExerciseType.typePinyin:
+      case ExerciseType.essay:
       case ExerciseType.multipleChoice:
       case ExerciseType.listening:
         return mc;
@@ -415,6 +417,8 @@ abstract final class QuestionImportUtils {
         ExerciseType.readingCloze => 'R1 fill in the blank (选词填空)',
         ExerciseType.pictureSentence => 'picture + keyword sentence',
         ExerciseType.typeHanzi => 'T2 type the hanzi (写汉字)',
+        ExerciseType.typePinyin => 'T1 type the pinyin (写拼音)',
+        ExerciseType.essay => 'T5 free writing (写作)',
         ExerciseType.listening => 'L3 listening',
         ExerciseType.multipleChoice => 'multiple choice',
       };
@@ -1112,6 +1116,12 @@ abstract final class QuestionImportUtils {
           '${n(r.mcQuestions.length, 'sentence')} with a pinyin hint. Type '
           'the hanzi answer for each in the editor.',
         );
+      case ExerciseType.typePinyin:
+        notes.insert(0,
+            '${n(r.mcQuestions.length, 'word')}: type the pinyin key in the editor.');
+      case ExerciseType.essay:
+        notes.insert(0,
+            '${n(r.mcQuestions.length, 'writing task')}, marked by a teacher.');
     }
     return 'Detected $form$level — ${notes.join(' ')}';
   }

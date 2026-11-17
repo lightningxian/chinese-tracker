@@ -276,6 +276,8 @@ exports.onExerciseResultCreated = onDocumentCreated(
     const studentId = result.studentId;
     if (!studentId) return;
     const score = typeof result.score === "number" ? result.score : 0;
+    // Build 2A: some answers wait for a teacher; the score is not final yet.
+    const pending = result.status === "pending_marking";
 
     let studentName = "A student";
     let teacherId = null;
@@ -309,7 +311,9 @@ exports.onExerciseResultCreated = onDocumentCreated(
     const teacherNotification = {
       kind: "grading",
       title: "Practice submitted",
-      body: `${studentName} scored ${score}% on ${exerciseTitle}.`,
+      body: pending ?
+        `${studentName} finished ${exerciseTitle}; answers wait for your marking.` :
+        `${studentName} scored ${score}% on ${exerciseTitle}.`,
       forRole: "teacher",
       userId: "",
       targetRoute: "/teacher",
@@ -323,8 +327,10 @@ exports.onExerciseResultCreated = onDocumentCreated(
 
     batch.set(db.collection(NOTIFICATIONS).doc(), {
       kind: "grading",
-      title: "Score recorded",
-      body: `You scored ${score}% on ${exerciseTitle}.`,
+      title: pending ? "Waiting for marking" : "Score recorded",
+      body: pending ?
+        `Your teacher will mark some answers of ${exerciseTitle}.` :
+        `You scored ${score}% on ${exerciseTitle}.`,
       forRole: "student",
       userId: studentId,
       targetRoute: "/student",
@@ -1347,7 +1353,7 @@ exports.checkExerciseAnswer = onCall(async (request) => {
 });
 
 exports.finishExercise = onCall(async (request) => {
-  const {uid} = await requireCaller(request);
+  const {uid, profile} = await requireCaller(request);
   const data = request.data || {};
   const exerciseId = String(data.exerciseId || "").trim();
   const exercise = await loadAssignedPackage(exerciseId, uid);
@@ -1398,6 +1404,9 @@ exports.finishExercise = onCall(async (request) => {
   const result = late ?
     {
       score: 0, correct: 0, total: scored.total, review: scored.review,
+      earned: 0, possible: scored.possible, open: 0,
+      points: Object.fromEntries(Object.entries(scored.points).map(
+          ([id, p]) => [id, {...p, earned: 0, review: false}])),
       bySkill: Object.fromEntries(Object.entries(scored.bySkill).map(
           ([skill, b]) => [skill, {correct: 0, total: b.total}])),
     } :
@@ -1407,7 +1416,13 @@ exports.finishExercise = onCall(async (request) => {
   const duration = Number(data.durationSeconds);
   const durationSeconds = Number.isFinite(duration) && duration > 0 ?
     Math.min(Math.round(duration), 24 * 3600) : null;
-  await db.collection(EXERCISE_RESULTS).add({
+  // Build 2A: answers a teacher must look at go to the marking queue (the
+  // package's teacher and the student's teacher see them); the result
+  // stays "pending_marking" until they are marked.
+  const status = result.open > 0 ? "pending_marking" : "final";
+  const resultRef = db.collection(EXERCISE_RESULTS).doc();
+  const batch = db.batch();
+  batch.set(resultRef, {
     studentId: uid,
     exerciseId,
     exerciseTitle: exercise.title || "",
@@ -1415,13 +1430,36 @@ exports.finishExercise = onCall(async (request) => {
     score: result.score,
     correct: result.correct,
     total: result.total,
+    earned: result.earned,
+    possible: result.possible,
+    points: result.points,
+    status,
+    openMarking: result.open,
     bySkill: result.bySkill,
     ...(durationSeconds === null ? {} : {durationSeconds}),
     ...(late ? {late: true} : {}),
     scoredBy: "server",
     submittedAt: FieldValue.serverTimestamp(),
   });
-  return {...result, late};
+  if (!late) {
+    const teacherIds = [...new Set([exercise.teacherId, profile.teacherId]
+        .map((x) => String(x || "")).filter((x) => x))];
+    const queue = marking.queueItems(items, answers, result.points, {
+      source: "package",
+      resultId: resultRef.id,
+      exerciseId,
+      title: exercise.title || "",
+      studentId: uid,
+      studentName: latinName(profile),
+      teacherIds,
+      createdAt: FieldValue.serverTimestamp(),
+    });
+    for (const q of queue) {
+      batch.set(db.collection(MARKING_ITEMS).doc(`${resultRef.id}_${q.questionId}`), q.data);
+    }
+  }
+  await batch.commit();
+  return {...result, late, status, resultId: resultRef.id};
 });
 
 /**
@@ -1489,11 +1527,14 @@ exports.deleteUserAccount = onCall(async (request) => {
 // clock. Answer keys never leave the server. Pure logic: supervised_test.js.
 // ---------------------------------------------------------------------------
 const tests = require("./supervised_test");
+const marking = require("./marking");
 
 const TEST_CODES = "test_codes";
 const TEST_SESSIONS = "test_sessions";
 const TEST_ATTEMPTS = "test_attempts";
 const TEST_RESULTS = "test_results";
+// Build 2A: answers waiting for a teacher (functions write, staff read).
+const MARKING_ITEMS = "marking_items";
 
 /** Signed-in, active teacher or admin. */
 async function requireStaff(request) {
@@ -1674,6 +1715,27 @@ function writeTestResult(writer, {attemptId, attempt, codeId, code, format, spli
   session}) {
   const scored = tests.scoreTest(split, format, attempt.answers || {}, true);
   const nowMs = Date.now();
+  // Build 2A: answers a teacher must look at (half credit, free writing)
+  // go to the marking queue; the result stays pending until they are done.
+  const teacherId = (session && session.openedBy) || attempt.openedBy || "";
+  const context = {
+    source: "test",
+    resultId: attemptId,
+    codeId,
+    title: code.code || codeId,
+    studentId: attempt.studentId,
+    studentName: attempt.studentName || "",
+    teacherIds: teacherId ? [teacherId] : [],
+    createdAt: FieldValue.serverTimestamp(),
+  };
+  split.forEach((items, i) => {
+    const partOf = Object.fromEntries(items.map((it) => [it.id, i]));
+    const queue = marking.queueItems(items, (attempt.answers || {})[String(i)] || {},
+        scored.parts[i].points, context, partOf);
+    for (const q of queue) {
+      writer.set(db.collection(MARKING_ITEMS).doc(`${attemptId}_${q.questionId}`), q.data);
+    }
+  });
   writer.set(db.collection(TEST_RESULTS).doc(attemptId), {
     codeId,
     code: code.code || codeId,
@@ -1687,14 +1749,16 @@ function writeTestResult(writer, {attemptId, attempt, codeId, code, format, spli
     sessionId: attempt.sessionId || "",
     openedBy: (session && session.openedBy) || attempt.openedBy || "",
     supervisorName: (session && session.openedByName) || attempt.supervisorName || "",
-    parts: scored.parts,
+    parts: scored.parts.map(({points, ...p}) => p),
+    points: tests.pointsByQuestion(scored),
     total: scored.total,
     max: scored.max,
     passMark: scored.passMark,
     passed: scored.passed,
     valid: true,
     invalidReason: "",
-    status: "final",
+    status: scored.status,
+    openMarking: scored.open,
     resultNumber: tests.resultNumber(attemptId, nowMs),
     leftCount: Number(attempt.leftCount) || 0,
     // Server time from start to the last submit: Build 2's leaderboard
@@ -1950,7 +2014,9 @@ exports.submitTestPart = onCall(async (request) => {
     const lateParts = late ?
       [...(attempt.lateParts || []), partIndex] : attempt.lateParts || [];
     const next = partIndex + 1;
-    if (next >= clock.parts.length) {
+    // The teacher ended the session (Build 2A): this part is kept and the
+    // attempt finishes here, no next part opens.
+    if (next >= clock.parts.length || attempt.submitRequested === true) {
       const closed = {...attempt, answers, partIndex: next};
       tx.update(attemptRef, {
         answers, partIndex: next, lateParts, status: "finished",
@@ -2011,27 +2077,64 @@ exports.reportTestEvent = onCall(async (request) => {
  * Staff: end the session for everyone. Every open attempt of the session
  * is finished and scored; parts never submitted count as empty.
  */
-exports.closeTestSession = onCall(async (request) => {
+exports.closeTestSession = onCall({timeoutSeconds: 120}, async (request) => {
   const {uid, profile} = await requireStaff(request);
   const sessionId = String((request.data || {}).sessionId || "").trim();
   if (!sessionId) throw new HttpsError("invalid-argument", "sessionId is required.");
-  const sessionRef = db.collection(TEST_SESSIONS).doc(sessionId);
-  const sSnap = await sessionRef.get();
+  const sSnap = await db.collection(TEST_SESSIONS).doc(sessionId).get();
   if (!sSnap.exists) throw new HttpsError("not-found", "Session not found.");
   const session = sSnap.data() || {};
   if (profile.role !== "admin" && session.openedBy !== uid) {
     throw new HttpsError("permission-denied", "This is another teacher's session.");
   }
+  return finishSession(sessionId, {actorId: uid, actorName: latinName(profile),
+    waitMs: SUBMIT_WAIT_MS});
+});
+
+/** How long "End test for everyone" waits for the players to send their part. */
+const SUBMIT_WAIT_MS = 15 * 1000;
+
+/**
+ * Ends a session (the button, or the hourly job for a forgotten one).
+ * Build 2A: first stops new joins and asks every sitting student's player
+ * to send the open part (`submitRequested` on the attempt, which the player
+ * listens to), waits [waitMs], then finishes whoever is still sitting;
+ * parts never sent count as empty.
+ */
+async function finishSession(sessionId, {actorId, actorName, waitMs}) {
+  const sessionRef = db.collection(TEST_SESSIONS).doc(sessionId);
+  const sSnap = await sessionRef.get();
+  const session = sSnap.exists ? sSnap.data() || {} : null;
+  if (!session) throw new HttpsError("not-found", "Session not found.");
+  if (session.status === "closed") return {closed: true, finished: 0};
   const {id: codeId, code, format} = await loadTestCode(session.codeId);
   const split = await loadTestParts(code, format);
-  // Stop new joins first, then finish whoever is still sitting.
   await sessionRef.update({
-    status: "closed", closedAt: FieldValue.serverTimestamp(), closedBy: uid,
+    status: "closing", closingAt: FieldValue.serverTimestamp(),
     joinUntil: Timestamp.fromMillis(Date.now()),
+  });
+  const sitting = (await db.collection(TEST_ATTEMPTS)
+      .where("sessionId", "==", sessionId).get()).docs
+      .filter((d) => !(d.data() || {}).finishedAt);
+  if (sitting.length && waitMs > 0) {
+    const batch = db.batch();
+    for (const d of sitting) {
+      batch.update(d.ref, {submitRequested: true,
+        submitRequestedAt: FieldValue.serverTimestamp()});
+    }
+    await batch.commit();
+    await new Promise((resolve) => setTimeout(resolve, waitMs));
+  }
+  await sessionRef.update({
+    status: "closed", closedAt: FieldValue.serverTimestamp(), closedBy: actorId,
   });
   const attempts = await db.collection(TEST_ATTEMPTS)
       .where("sessionId", "==", sessionId).get();
-  let finished = 0;
+  // Everyone sitting at the start is finished now: by their own player
+  // during the wait, or by the loop below.
+  const sittingIds = new Set(sitting.map((d) => d.id));
+  let byServer = 0;
+  let finished = sittingIds.size;
   for (const doc of attempts.docs) {
     const did = await db.runTransaction(async (tx) => {
       const snap = await tx.get(doc.ref);
@@ -2046,12 +2149,43 @@ exports.closeTestSession = onCall(async (request) => {
         split, session});
       return true;
     });
-    if (did) finished += 1;
+    if (did) {
+      byServer += 1;
+      if (!sittingIds.has(doc.id)) finished += 1;
+    }
   }
-  await writeAudit({action: "test.session.close", actorId: uid,
-    actorName: latinName(profile), targetType: "test_session", targetId: sessionId,
-    detail: `${codeId}: ${finished} attempts finished`});
-  return {closed: true, finished};
+  await writeAudit({action: "test.session.close", actorId, actorName,
+    targetType: "test_session", targetId: sessionId,
+    detail: `${codeId}: ${finished} attempts finished (${byServer} by the server)`});
+  return {closed: true, finished, byServer};
+}
+
+/**
+ * Build 2A: a session the teacher forgot to end closes itself once its last
+ * possible end (join window + the paper's minutes + grace) is more than
+ * 10 minutes past. Only then can the students open their review.
+ */
+exports.closeForgottenTestSessions = onSchedule("every 60 minutes", async () => {
+  const snap = await db.collection(TEST_SESSIONS)
+      .where("status", "in", ["open", "closing"]).get();
+  const now = Date.now();
+  let closed = 0;
+  for (const doc of snap.docs) {
+    const s = doc.data() || {};
+    try {
+      const {format} = await loadTestCode(s.codeId);
+      const minutes = format.parts.reduce((sum, p) => sum + p.minutes, 0);
+      const lastEnd = millisOf(s.joinUntil) +
+        (minutes * 60 + LATE_GRACE_SECONDS) * 1000;
+      if (now - lastEnd < 10 * 60 * 1000) continue;
+      await finishSession(doc.id, {actorId: "system",
+        actorName: "Hourly job", waitMs: 0});
+      closed += 1;
+    } catch (err) {
+      logger.error(`closeForgottenTestSessions: ${doc.id}`, err);
+    }
+  }
+  if (closed) logger.info(`closeForgottenTestSessions: closed ${closed}`);
 });
 
 /** Staff: mark a result invalid (with a reason) or valid again. */
@@ -2106,7 +2240,8 @@ exports.getTestReview = onCall(async (request) => {
   }
   if (attempt.sessionId) {
     const s = await db.collection(TEST_SESSIONS).doc(attempt.sessionId).get();
-    if (s.exists && (s.data() || {}).status === "open") {
+    const status = s.exists ? (s.data() || {}).status : "closed";
+    if (status === "open" || status === "closing") {
       throw new HttpsError("failed-precondition",
           "The review opens when your teacher ends the session.",
           {reason: "session-open"});
@@ -2120,6 +2255,15 @@ exports.getTestReview = onCall(async (request) => {
     typeof it.transcript === "string" && it.transcript.trim());
   const transcript = transcriptItem ? transcriptItem.transcript.trim() : "";
   const answers = attempt.answers || {};
+  // Build 2A: the teacher's marks replace the machine's points.
+  const marks = {};
+  const queue = await db.collection(MARKING_ITEMS)
+      .where("resultId", "==", `${codeId}_${uid}`).get();
+  for (const d of queue.docs) {
+    const m = d.data() || {};
+    marks[m.questionId] = m.status === "marked" ?
+      {status: "marked", points: Number(m.mark) || 0} : {status: "open"};
+  }
   const items = [];
   const recordings = {};
   split.forEach((partItems, partIndex) => {
@@ -2133,9 +2277,119 @@ exports.getTestReview = onCall(async (request) => {
         partIndex,
         question: play.stripQuestion(it),
         answer: Object.prototype.hasOwnProperty.call(given, it.id) ? given[it.id] : null,
-        review: scored.review[i],
+        review: {...scored.review[i], marking: marks[it.id] || null},
       });
     });
   });
   return {codeId, items, recordings, transcript};
+});
+
+// ---------------------------------------------------------------------------
+// Marking (Build 2A). The scoring functions put answers a teacher must look
+// at into `marking_items` (half-credit typing, free writing). A teacher
+// marks them here; the result is re-scored and becomes final when nothing
+// is open, and the student is told.
+// ---------------------------------------------------------------------------
+
+/** Staff: mark one queue item. `{itemId, decision}` or `{itemId, rubric}`. */
+exports.markAnswer = onCall(async (request) => {
+  const {uid, profile} = await requireStaff(request);
+  const data = request.data || {};
+  const itemId = String(data.itemId || "").trim();
+  if (!itemId) throw new HttpsError("invalid-argument", "itemId is required.");
+  const itemRef = db.collection(MARKING_ITEMS).doc(itemId);
+
+  const out = await db.runTransaction(async (tx) => {
+    const snap = await tx.get(itemRef);
+    if (!snap.exists) throw new HttpsError("not-found", "Item not found.");
+    const item = snap.data() || {};
+    if (profile.role !== "admin" &&
+        !(Array.isArray(item.teacherIds) && item.teacherIds.includes(uid))) {
+      throw new HttpsError("permission-denied", "This answer is not in your queue.");
+    }
+    const isTest = item.source === "test";
+    const resultRef = db.collection(isTest ? TEST_RESULTS : EXERCISE_RESULTS)
+        .doc(String(item.resultId || ""));
+    const [resultSnap, siblings] = await Promise.all([
+      tx.get(resultRef),
+      tx.get(db.collection(MARKING_ITEMS).where("resultId", "==", item.resultId)),
+    ]);
+    if (!resultSnap.exists) throw new HttpsError("not-found", "Result not found.");
+    const result = resultSnap.data() || {};
+    const {points, rubric} = marking.markPoints(item, data);
+
+    const marks = {};
+    for (const d of siblings.docs) {
+      const m = d.data() || {};
+      if (d.id === itemId) marks[m.questionId] = points;
+      else if (m.status === "marked") marks[m.questionId] = Number(m.mark) || 0;
+    }
+    let update;
+    if (isTest) {
+      const r = tests.rescore(result, marks);
+      update = {parts: r.parts, total: r.total, status: r.status,
+        openMarking: r.open, passed: r.passed};
+    } else {
+      const r = play.totalsOf(result.points || {}, marks);
+      update = {score: r.score, earned: r.earned, status: r.open ? "pending_marking" : "final",
+        openMarking: r.open};
+    }
+    tx.update(itemRef, {
+      status: "marked", mark: points, rubric: rubric || null,
+      decision: rubric ? "rubric" : String(data.decision || "keep"),
+      markedBy: uid, markedByName: latinName(profile),
+      markedAt: FieldValue.serverTimestamp(),
+    });
+    tx.update(resultRef, {...update, markedAt: FieldValue.serverTimestamp()});
+    const becameFinal = result.status === "pending_marking" && update.status === "final";
+    if (becameFinal) {
+      const scoreText = isTest ? `${update.total} / ${result.max}` : `${update.score}%`;
+      tx.set(db.collection(NOTIFICATIONS).doc(), {
+        kind: "grading",
+        title: "Marked",
+        body: `Your teacher has marked ${item.title || "your answers"}: ${scoreText}.`,
+        forRole: "student",
+        userId: item.studentId,
+        targetRoute: isTest ? "/student/tests" : "/student",
+        read: false,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+    }
+    return {points, status: update.status, final: update.status === "final"};
+  });
+  return out;
+});
+
+/**
+ * Admin: delete a student's attempt and result of a test code so they can
+ * sit it again (a power cut, a broken device). Audit-logged.
+ */
+exports.resetTestAttempt = onCall(async (request) => {
+  const {uid, profile} = await requireCaller(request);
+  if (profile.role !== "admin") {
+    throw new HttpsError("permission-denied", "Only admins can reset an attempt.");
+  }
+  const resultId = String((request.data || {}).resultId || "").trim();
+  const reason = String((request.data || {}).reason || "").trim().slice(0, 500);
+  if (!resultId) throw new HttpsError("invalid-argument", "resultId is required.");
+  const resultRef = db.collection(TEST_RESULTS).doc(resultId);
+  const attemptRef = db.collection(TEST_ATTEMPTS).doc(resultId);
+  const [resultSnap, attemptSnap, queue] = await Promise.all([
+    resultRef.get(), attemptRef.get(),
+    db.collection(MARKING_ITEMS).where("resultId", "==", resultId).get(),
+  ]);
+  if (!resultSnap.exists && !attemptSnap.exists) {
+    throw new HttpsError("not-found", "Nothing to reset.");
+  }
+  const r = resultSnap.exists ? resultSnap.data() || {} : {};
+  const batch = db.batch();
+  batch.delete(resultRef);
+  batch.delete(attemptRef);
+  queue.docs.forEach((d) => batch.delete(d.ref));
+  await batch.commit();
+  await writeAudit({action: "test.attempt.reset", actorId: uid,
+    actorName: latinName(profile), targetType: "test_result", targetId: resultId,
+    detail: `${r.studentName || ""} · ${r.code || ""} · total ${r.total ?? "-"}` +
+      (reason ? ` · ${reason}` : "")});
+  return {reset: true};
 });

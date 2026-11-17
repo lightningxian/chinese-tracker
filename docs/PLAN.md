@@ -930,6 +930,80 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
+### 2026-11-17 — Build 2A Typing matcher and marking — one commit after bf0abbc (hash in the commit message of the docs follow-up), release v0.1.18 (not deployed; rules, indexes and functions wait for the owner)
+- Built: typing matcher (`functions/typing_matcher.js`, `functions/pinyin.js`)
+  used by the scoring that packages and tests share; types `type_pinyin`
+  and `essay`; points instead of right/wrong; the `marking_items` queue,
+  `markAnswer`, the **Penilaian / Marking** screen; pending results; the
+  Build 1 follow-ups; the PN-01 script.
+- Must list: 1 follow-ups pass (password `emulator-only-7` in seed, flow
+  test and app; End test sends the open part and waits 15 s; hourly
+  `closeForgottenTestSessions`; Reset attempt with audit; QR on the
+  supervision screen; Build 1 screens walked, see below) · 2 matcher pass ·
+  3 free writing pass (10 points, required words, source text with a timer
+  in the player) · 4 marking pass · 5 PN-01 tool pass · 6 tests pass.
+- Then list: not done (hourly job for single attempts, item analysis).
+- **Acceptance on the emulators:**
+  1. Package: full-width comma, trailing "！" and traditional characters are
+     full marks (node test PN-02 and flow step); in the browser, one
+     homophone (`和` for `喝`) showed "half marks for now; your teacher will
+     check it" and appeared in the teacher's queue. Pass.
+  2. `ni3 hao3` and `nǐ hǎo` full (node test PN-03, flow); `ni hao` typed in
+     the browser: half, flagged. Pass.
+  3. Two words swapped in sentence building: zero, not in the queue (browser
+     and flow). Pass.
+  4. Teacher: kept the half on one, full marks on the other; the package
+     result went from 33% to 50% and the student got "Marked … 50%". Pass.
+  5. `H3ESSAY` in a supervised session: card 100 / 100 / 9, 209, 待评分
+     "Waiting for marking", no pass or fail; rubric 30 / 20 / 20 = 7 of 10;
+     the card turned into 273 / 300, 合格, live on the student's screen;
+     "Marked H3ESSAY: 273 / 300" arrived. Pass.
+  6. `node functions/pn01_agreement.js functions/fixtures/pn01_sample.csv`
+     prints 6 of 6 = 100%. Pass.
+  7. The student was typing the essay and had not pressed Finish; the
+     teacher pressed End test for everyone; the student's app sent the part
+     and the essay was in the marking queue word for word. Pass.
+  8. The hourly job closed a forgotten session and the review opened (flow
+     step; run by hand on the emulator). Pass.
+  9. Admin Reset attempt with a reason: "The student can sit the code
+     again"; the result left the list; audit `test.attempt.reset` (flow).
+     Pass.
+  10. The QR code shows on the supervision screen and encodes
+      `<site>/student/test?token=…`, a route that already fills the token.
+      Opening it was not tried on the emulator (the local file server has no
+      page rewrites); hosting has them. Pass with that gap.
+  11. English light (teacher, admin), English dark (student: start screen,
+      player, essay, result card, review), Indonesian light (teacher Tests
+      and Marking), 360 px (Tests tab, Test results): no overflow after the
+      fixes below. Pass.
+- Fixed during the walk: "Session closed · 0 tests finished" when the
+  students' apps had sent during the wait (now counts them); the End test
+  dialog said unsent parts count as empty without mentioning that typed work
+  is sent first; the Marking page showed the title "Tests"; the rubric label
+  "30 / 40" wrapped; "0.5 of 1 points" now reads "0.5 / 1"; the test start
+  screen said "1 questions" (Build 1 text).
+- Proof: analyzer 0 errors / 0 warnings / 17 infos; `flutter test` 105 pass
+  (+5); rules tests 56 pass, 1 skipped (+3 marking queue); node tests pass
+  (+ `test_typing_matcher.js` 15 checks, `test_marking.js`); flow test 32/32
+  (+8) after a re-seed.
+- Owner must: (1) deploy rules, indexes and functions:
+  `firebase deploy --only firestore:rules,firestore:indexes,functions --project chinese-tracker`
+  (25 functions after it, 3 new); (2) hosting from the Mac,
+  `scripts/deploy_web.sh --web-only --no-keys`; (3) on live: make a small
+  package with one "type the hanzi" and one "type the pinyin" question,
+  play it as `student1@`, mark it as `teacher@` in Tes → Penilaian.
+- Left out and why: the Then list (time); opening the QR link on the
+  emulator (no page rewrites on the local server).
+- Notes for the PLAN chat:
+  - Test items go to the teacher who opened the session, not also to the
+    student's own teacher (packages go to both). Say if tests should go to
+    both.
+  - Saved accounts on the sign-in page remember the old emulator password,
+    so on the emulator they now fail with Firebase's own English message;
+    sign in by email. Live is not affected.
+  - `pubsub` emulator (port 8085) is needed for the hourly job to exist
+    locally; it starts with the others.
+
 ### 2026-11-17 — Build 1B Built-in HSK paper reader — d3b27b9..b2d4a30, release v0.1.17 (hosting live 2026-11-17; Storage rules and `getTestReview` wait for the owner)
 - Built: **Scan paper** (main button; AI scan in the ⋮ menu) → render,
   watermark removal, page mode 6, up to 30 pages, all in the browser →

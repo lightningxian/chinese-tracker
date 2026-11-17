@@ -34,6 +34,7 @@ decisions. This app is also the owner's thesis project (see the thesis docs belo
 - **HSK simulation (2026-11-13):** a paper is scanned with **Scan paper with AI** (Gemini `gemini-3.8-flash` via Firebase AI Logic, `lib/services/worksheet_ai_import_service.dart`; needs the console setup in `docs/WORKSHEET_IMPORT.md`), reviewed, and saved as one worksheet with part headings (`section`), a picture per choice (`optionImageUrls`) and, later, one listening recording for the sheet (`sectionAudioUrl`, uploaded on the worksheet screen). Keys the reader cannot know (listening) are typed with the worksheet's **Answer key** dialog. The player shows the part, the recording, picture choices, and HSK marks per part (listening / reading / writing out of 100, pass at 60%). The on-device scanner stays as **Scan without AI**. App Check is activated when `APP_CHECK_SITE_KEY` is set (`deploy.env`), enforcement only for AI Logic.
 - **Owner answers 2026-11-16** (full list in `docs/PLAN.md` §2): staff see students as `Chinese name (Latin name)`, students see other students by Chinese name only; rooms are `Main` and `Sub Room`; class slots have no HSK level (semi-private teaching, 6–8 seats); placement tests are public on the landing page behind a teacher code; supervised tests run through test codes with a clock per part and an HSK-style result card; teacher schedule = tabs on one screen; builds are 3–4 hour sessions in the BUILD chat on the PC.
 - **Paper reader (2026-11-17):** HSK papers are read **inside the app with no outside API** (owner: "the job is only to read the PDF and build the questions"): on-device OCR with watermark removal, a structure builder that follows the test format, a proofreading screen, pictures cut by image analysis (Build 1B in `docs/PLAN.md`). **Scan paper with AI** stays as an extra, off on live until an App Check key exists. Official exam papers are never committed (`local_papers/` is git-ignored) and Claude does not type them out by hand. Each worksheet may carry a transcript of its recording, sent to students only with the review.
+- **Typing matcher and marking (Build 2A, 2026-11-17, from the proposal):** typed hanzi and pinyin are matched in `functions/typing_matcher.js` (full-width, ending punctuation, traditional characters and tone numbers all count; one wrong character or wrong tones = half, flagged; sentence order never half). Free writing (`picture_sentence`, `essay`) is 10 points and only a teacher marks it. Open items go to `marking_items` (written by functions only); a result with open items is `pending_marking` with no pass or fail; `markAnswer` makes it final and notifies the student. Teachers see their own queue, admins all.
 - **Dark mode (2026-11-10):** `AppColors.*` are getters over the palette that is on (`AppPalette.light` / `.dark` in `lib/core/theme/app_theme.dart`, switched by `ThemeController`). Never write `const` in front of a widget or style that uses an `AppColors` value (the analyzer will refuse). A new colour goes into **both** palettes. The landing page keeps its own light `LandingBrand` tokens.
 
 ## Never
@@ -60,21 +61,28 @@ decisions. This app is also the owner's thesis project (see the thesis docs belo
 flutter pub get
 flutter run -d chrome                 # no CONTENT_OWNER_ID needed locally; talks to LIVE Firebase
 flutter analyze                       # baseline: 0 errors, 0 warnings, 17 infos
-flutter test                          # 100 pass (2026-11-17, Build 1B)
+flutter test                          # 105 pass (2026-11-17, Build 2A)
 node --check functions/index.js
 node functions/test_exercise_play.js && node functions/test_reminders.js
 node functions/test_supervised_test.js          # Build 1 pure logic (TS-01, PN-05)
+node functions/test_typing_matcher.js           # Build 2A matcher (PN-02, PN-03)
+node functions/test_marking.js                  # Build 2A queue + rubric
+node functions/pn01_agreement.js functions/fixtures/pn01_sample.csv   # PN-01: 6 of 6
 
 # Firestore rules tests (needs Java 21: brew install openjdk@21)
 export PATH="/opt/homebrew/opt/openjdk@21/bin:$PATH"
-npm --prefix rules-tests run test:emulator      # 53 pass, 1 skipped (Firestore + Storage)
+npm --prefix rules-tests run test:emulator      # 56 pass, 1 skipped (Firestore + Storage)
 
-# Full emulator suite (auth 9099, firestore 8080, functions 5001, storage 9199, UI 4000).
+# Full emulator suite (auth 9099, firestore 8080, functions 5001, storage 9199,
+# pubsub 8085 for the hourly job, UI 4000).
 # The app and the seed use project id chinese-tracker (callables are routed by it).
+# Emulator accounts use the password `emulator-only-7` (never the live one).
 firebase emulators:start --project chinese-tracker
-python3 -I scripts/seed_emulator.py            # ~5 s; Build 1 data: code H3DEMO1
-node functions/test_supervised_flow.mjs        # end-to-end on the emulators, 24 steps
-                                               # (TS-01, TS-02, PN-04, PN-05, LV-02)
+python3 -I scripts/seed_emulator.py            # ~5 s; codes H3DEMO1, H3ESSAY; package pkg_typing
+node functions/test_supervised_flow.mjs        # end-to-end on the emulators, 32 steps
+                                               # (TS-01, TS-02, PN-02..05, LV-02)
+# Run the hourly job by hand on the emulator:
+# curl -X POST http://127.0.0.1:5001/chinese-tracker/us-central1/closeForgottenTestSessions-0
 # Web app against the emulators: ALWAYS this script (builds to build/web-emulator,
 # serves on :5181). Never serve build/web for emulator work: deploy_web.sh rebuilds
 # build/web with the LIVE config, and a dev server pointing there silently switches
@@ -121,7 +129,7 @@ account on record. Users add the web app to the home screen from Safari.
 ## Known blockers (update when resolved)
 - Cloud Functions run on **Node 22** since 2026-11-05 (Node 20 was retired 2026-10-30); `functions/package.json` engines = 22, firebase-functions 7, firebase-admin 14.
 - Billing was off 2026-10-13 → 2026-10-20. Owner upgraded to **Blaze on 2026-10-20**; all 9 functions and the APK were redeployed and work (owner re-test PUB-09 passed).
-- **Nightly backup: resolved 2026-11-13.** The owner created a Firestore scheduled backup (daily, 7-day retention, `firebase firestore:backups:schedules:create`, schedule id `c3d18000-…`). The failing `scheduledFirestoreExport` function was removed from the code and deleted on live the same day (15 functions remained; Build 1 added 7 test callables, **22 on live since its deploy on 2026-11-16**). List / restore commands: `docs/OWNER_PROCEDURES.md` §B. The NAS pull in `docs/NAS_BACKUP_SETUP.md` no longer receives Firestore exports.
+- **Nightly backup: resolved 2026-11-13.** The owner created a Firestore scheduled backup (daily, 7-day retention, `firebase firestore:backups:schedules:create`, schedule id `c3d18000-…`). The failing `scheduledFirestoreExport` function was removed from the code and deleted on live the same day (15 functions remained; Build 1 added 7 test callables, **22 on live since its deploy on 2026-11-16**; Build 2A adds `markAnswer`, `resetTestAttempt` and the hourly `closeForgottenTestSessions`: 25 once its deploy runs). List / restore commands: `docs/OWNER_PROCEDURES.md` §B. The NAS pull in `docs/NAS_BACKUP_SETUP.md` no longer receives Firestore exports.
 - Test accounts on the live project: `admin@`, `teacher@`, `student1-3@test.chinesetracker`, password in `docs/CLAUDE_FULL_HANDOFF.md`. No test parent yet.
 
 ## Tools on the owner's Mac

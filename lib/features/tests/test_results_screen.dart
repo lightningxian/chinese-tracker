@@ -146,12 +146,18 @@ class _ResultRow extends StatelessWidget {
           Text(
             !r.valid
                 ? l.testsInvalid
-                : r.passed
-                    ? '合格 · ${l.testsPassed}'
-                    : '不合格 · ${l.testsNotPassed}',
+                : r.isPendingMarking
+                    ? '待评分 · ${l.testsPendingMarking}'
+                    : r.passed
+                        ? '合格 · ${l.testsPassed}'
+                        : '不合格 · ${l.testsNotPassed}',
             style: TextStyle(
               fontWeight: FontWeight.w700,
-              color: r.valid && r.passed ? AppColors.success : AppColors.error,
+              color: r.isPendingMarking
+                  ? AppColors.chipAmberFg
+                  : r.valid && r.passed
+                      ? AppColors.success
+                      : AppColors.error,
             ),
           ),
           if (r.leftCount > 0)
@@ -235,6 +241,76 @@ class ValidityButton extends StatelessWidget {
   }
 }
 
+/// Admin: **Reset attempt** (a power cut, a broken device). Deletes the
+/// attempt and the result so the student can sit the code again; the
+/// function writes the audit log.
+class ResetAttemptButton extends StatelessWidget {
+  const ResetAttemptButton({super.key, required this.result});
+
+  final TestResult result;
+
+  Future<void> _reset(BuildContext context) async {
+    final l = context.l10n;
+    final messenger = ScaffoldMessenger.of(context);
+    final router = GoRouter.of(context);
+    final controller = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l.testsResetAttempt),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l.testsResetAttemptBody(result.studentName, result.code)),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              autofocus: true,
+              decoration: InputDecoration(
+                labelText: l.testsResetReason,
+                border: const OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l.commonCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+            child: Text(l.testsResetAttempt),
+          ),
+        ],
+      ),
+    );
+    final reason = controller.text.trim();
+    controller.dispose();
+    if (ok != true) return;
+    try {
+      await TestService().resetAttempt(result.id, reason: reason);
+      messenger.showSnackBar(SnackBar(content: Text(l.testsResetDone)));
+      if (router.canPop()) router.pop();
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(testErrorMessage(l, e))));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    return OutlinedButton.icon(
+      onPressed: () => _reset(context),
+      style: OutlinedButton.styleFrom(foregroundColor: AppColors.error),
+      icon: const Icon(Icons.restart_alt, size: 18),
+      label: Text(l.testsResetAttempt),
+    );
+  }
+}
+
 /// One result card on screen with **Print / PDF**; staff also get the
 /// validity button, the student a **Review** link once allowed.
 class TestResultScreen extends StatelessWidget {
@@ -285,6 +361,10 @@ class TestResultScreen extends StatelessWidget {
                         alignment: WrapAlignment.center,
                         children: [
                           if (staff) ValidityButton(result: r),
+                          if (staff &&
+                              context.read<AuthService>().appUser?.isAdmin ==
+                                  true)
+                            ResetAttemptButton(result: r),
                           if (!staff)
                             OutlinedButton.icon(
                               onPressed: () => context.push(

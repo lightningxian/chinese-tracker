@@ -2,9 +2,13 @@ import 'package:flutter/material.dart' show IconData, Icons;
 
 /// Temporary test logins — replace with real login/register when done testing.
 abstract final class TestAccounts {
+  static const _useEmulators = bool.fromEnvironment('USE_EMULATORS');
+
+  /// Build 2A: the emulator seed (`scripts/seed_emulator.py`) has its own
+  /// password, so a sign-in saved in the emulator bundle never works on live.
   static const password = String.fromEnvironment(
     'TEST_PASSWORD',
-    defaultValue: 'testpass123',
+    defaultValue: _useEmulators ? 'emulator-only-7' : 'testpass123',
   );
 
   static const adminEmail = String.fromEnvironment(

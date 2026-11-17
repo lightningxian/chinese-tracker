@@ -9108,7 +9108,7 @@ abstract class AppLocalizations {
   /// No description provided for @testsEndForEveryoneConfirm.
   ///
   /// In en, this message translates to:
-  /// **'Every student still sitting is finished now. Parts not submitted count as empty. This cannot be undone.'**
+  /// **'Every student still sitting is finished now. Their app first sends what they have typed (about 15 seconds); anything not sent counts as empty. This cannot be undone.'**
   String get testsEndForEveryoneConfirm;
 
   /// No description provided for @testsEnded.
@@ -9366,7 +9366,7 @@ abstract class AppLocalizations {
   /// No description provided for @testsQuestionsCount.
   ///
   /// In en, this message translates to:
-  /// **'{count} questions'**
+  /// **'{count, plural, =1{1 question} other{{count} questions}}'**
   String testsQuestionsCount(int count);
 
   /// No description provided for @testsRulesTitle.
@@ -9897,6 +9897,318 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'check the word split'**
   String get paperFlagSplit;
+
+  /// No description provided for @exerciseTypeTypePinyin.
+  ///
+  /// In en, this message translates to:
+  /// **'Type the pinyin (写拼音)'**
+  String get exerciseTypeTypePinyin;
+
+  /// No description provided for @exerciseTypeEssay.
+  ///
+  /// In en, this message translates to:
+  /// **'Free writing (写作)'**
+  String get exerciseTypeEssay;
+
+  /// No description provided for @bankTextPinyinKeys.
+  ///
+  /// In en, this message translates to:
+  /// **'Pinyin: {answers}'**
+  String bankTextPinyinKeys(String answers);
+
+  /// No description provided for @bankTextKeywords.
+  ///
+  /// In en, this message translates to:
+  /// **'Words to use: {words}'**
+  String bankTextKeywords(String words);
+
+  /// No description provided for @bankEditorPinyinWord.
+  ///
+  /// In en, this message translates to:
+  /// **'Hanzi to write in pinyin'**
+  String get bankEditorPinyinWord;
+
+  /// No description provided for @bankEditorPinyinWordHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'The student sees this and types its pinyin.'**
+  String get bankEditorPinyinWordHelper;
+
+  /// No description provided for @bankEditorAcceptedPinyin.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepted pinyin'**
+  String get bankEditorAcceptedPinyin;
+
+  /// No description provided for @bankEditorAcceptedPinyinHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'One per line, with tone marks or numbers (nǐ hǎo or ni3 hao3). Right letters with a wrong or missing tone get half and go to the teacher.'**
+  String get bankEditorAcceptedPinyinHelper;
+
+  /// No description provided for @bankEditorEssayTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Writing task'**
+  String get bankEditorEssayTask;
+
+  /// No description provided for @bankEditorEssayKeywords.
+  ///
+  /// In en, this message translates to:
+  /// **'Words to use'**
+  String get bankEditorEssayKeywords;
+
+  /// No description provided for @bankEditorEssayKeywordsHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Separate with commas. The teacher sees which ones the answer uses.'**
+  String get bankEditorEssayKeywordsHelper;
+
+  /// No description provided for @bankEditorEssaySource.
+  ///
+  /// In en, this message translates to:
+  /// **'Text to read first (optional)'**
+  String get bankEditorEssaySource;
+
+  /// No description provided for @bankEditorEssaySourceHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Shown at the start for the minutes below, then hidden (HSK 6).'**
+  String get bankEditorEssaySourceHelper;
+
+  /// No description provided for @bankEditorEssaySourceMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'Minutes the text is shown'**
+  String get bankEditorEssaySourceMinutes;
+
+  /// No description provided for @playEssayUseWords.
+  ///
+  /// In en, this message translates to:
+  /// **'Use these words:'**
+  String get playEssayUseWords;
+
+  /// No description provided for @playEssaySourceShown.
+  ///
+  /// In en, this message translates to:
+  /// **'Read this text. It hides after the set time.'**
+  String get playEssaySourceShown;
+
+  /// No description provided for @playEssaySourceHidden.
+  ///
+  /// In en, this message translates to:
+  /// **'The text is hidden now. Write from memory.'**
+  String get playEssaySourceHidden;
+
+  /// No description provided for @playEssayHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Write here…'**
+  String get playEssayHint;
+
+  /// No description provided for @playEssayCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} characters'**
+  String playEssayCount(int count);
+
+  /// No description provided for @playPinyinPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Write the pinyin of:'**
+  String get playPinyinPrompt;
+
+  /// No description provided for @playPinyinHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Tone marks or tone numbers both count. Without tones you get half.'**
+  String get playPinyinHelper;
+
+  /// No description provided for @playWaitingForTeacher.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for your teacher\'s marking'**
+  String get playWaitingForTeacher;
+
+  /// No description provided for @playHalfWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Half marks for now; your teacher will check it'**
+  String get playHalfWaiting;
+
+  /// No description provided for @playPendingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Some answers wait for your teacher. The score can still change.'**
+  String get playPendingSubtitle;
+
+  /// No description provided for @testsPendingMarking.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for marking'**
+  String get testsPendingMarking;
+
+  /// No description provided for @markingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Marking'**
+  String get markingTitle;
+
+  /// No description provided for @markingEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to mark'**
+  String get markingEmptyTitle;
+
+  /// No description provided for @markingEmptySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Typed answers that are nearly right and free writing appear here.'**
+  String get markingEmptySubtitle;
+
+  /// No description provided for @markingIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Open an answer to mark it. The student\'s score is updated and they are told when nothing is left to mark.'**
+  String get markingIntro;
+
+  /// No description provided for @markingReasonOneCharacter.
+  ///
+  /// In en, this message translates to:
+  /// **'one character off'**
+  String get markingReasonOneCharacter;
+
+  /// No description provided for @markingReasonTone.
+  ///
+  /// In en, this message translates to:
+  /// **'tone wrong or missing'**
+  String get markingReasonTone;
+
+  /// No description provided for @markingReasonFreeWriting.
+  ///
+  /// In en, this message translates to:
+  /// **'free writing'**
+  String get markingReasonFreeWriting;
+
+  /// No description provided for @markingQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Question'**
+  String get markingQuestion;
+
+  /// No description provided for @markingAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'Student\'s answer'**
+  String get markingAnswer;
+
+  /// No description provided for @markingKeys.
+  ///
+  /// In en, this message translates to:
+  /// **'Key: {keys}'**
+  String markingKeys(String keys);
+
+  /// No description provided for @markingKeywordsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'{found} of {total} required words used'**
+  String markingKeywordsFound(int found, int total);
+
+  /// No description provided for @markingMachineGave.
+  ///
+  /// In en, this message translates to:
+  /// **'The machine gave {points} / {max}.'**
+  String markingMachineGave(String points, String max);
+
+  /// No description provided for @markingFull.
+  ///
+  /// In en, this message translates to:
+  /// **'Full marks'**
+  String get markingFull;
+
+  /// No description provided for @markingKeepHalf.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep half'**
+  String get markingKeepHalf;
+
+  /// No description provided for @markingZero.
+  ///
+  /// In en, this message translates to:
+  /// **'Zero'**
+  String get markingZero;
+
+  /// No description provided for @markingGrammar.
+  ///
+  /// In en, this message translates to:
+  /// **'Grammar'**
+  String get markingGrammar;
+
+  /// No description provided for @markingVocabulary.
+  ///
+  /// In en, this message translates to:
+  /// **'Vocabulary'**
+  String get markingVocabulary;
+
+  /// No description provided for @markingContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Content'**
+  String get markingContent;
+
+  /// No description provided for @markingRubricTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Rubric {total} / 100 = {points} of {max} points'**
+  String markingRubricTotal(int total, String points, String max);
+
+  /// No description provided for @markingSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save mark'**
+  String get markingSave;
+
+  /// No description provided for @markingSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark saved.'**
+  String get markingSaved;
+
+  /// No description provided for @testsScanToJoin.
+  ///
+  /// In en, this message translates to:
+  /// **'Students can scan this to join'**
+  String get testsScanToJoin;
+
+  /// No description provided for @testsResetAttempt.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset attempt'**
+  String get testsResetAttempt;
+
+  /// No description provided for @testsResetAttemptBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This deletes {student}\'s answers and result of {code}, so they can sit it again. Use it after a power cut or a broken device. The audit log keeps a record.'**
+  String testsResetAttemptBody(String student, String code);
+
+  /// No description provided for @testsResetReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason'**
+  String get testsResetReason;
+
+  /// No description provided for @testsResetDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Attempt reset. The student can sit the code again.'**
+  String get testsResetDone;
+
+  /// No description provided for @testsMarkedPoints.
+  ///
+  /// In en, this message translates to:
+  /// **'Your teacher gave {points} of {max} points'**
+  String testsMarkedPoints(String points, String max);
 }
 
 class _AppLocalizationsDelegate

@@ -39,6 +39,7 @@ dependencies:
   just_audio: ^0.10.6
   firebase_app_check: ^0.4.9
   firebase_messaging: ^16.7.1
+  qr_flutter: 4.1.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

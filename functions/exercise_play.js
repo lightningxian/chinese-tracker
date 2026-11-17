@@ -11,6 +11,18 @@
  * ({@link stripQuestion}); answers are checked by {@link checkAnswer}.
  */
 
+const matcher = require("./typing_matcher");
+
+/** Types a teacher marks by hand (T5); the machine never scores them. */
+const TEACHER_MARKED = new Set(["picture_sentence", "essay"]);
+
+/** Points of a question: its own `points`, else 10 for free writing, else 1. */
+function pointsOf(item) {
+  const n = Number(item && item.points);
+  if (Number.isFinite(n) && n > 0) return n;
+  return TEACHER_MARKED.has(String(item && item.type)) ? 10 : 1;
+}
+
 /** Chinese sheet codes sort as plain strings; the number inside is enough. */
 function bySheetOrder(a, b) {
   const ai = Number.isInteger(a.sheetIndex) ? a.sheetIndex : Number.MAX_SAFE_INTEGER;
@@ -108,8 +120,20 @@ function stripQuestion(item) {
       return {...base, segments: seededShuffle(q.segments || [], item.id)};
     case "type_hanzi":
       return {...base, keyword: String(q.keyword || "")};
+    case "type_pinyin":
+      // The hanzi to write in pinyin is the prompt; the keys stay here.
+      return base;
     case "picture_sentence":
       return {...base, keyword: String(q.keyword || "")};
+    case "essay":
+      // Free writing (T5): the words to use and, for HSK 6, a text shown
+      // for a set time and then hidden. None of these is a key.
+      return {
+        ...base,
+        keywords: (q.keywords || []).map(String),
+        sourceText: String(q.sourceText || ""),
+        sourceSeconds: Number.isInteger(q.sourceSeconds) ? q.sourceSeconds : 0,
+      };
     case "matching":
     case "reading_cloze":
       return {
@@ -123,48 +147,59 @@ function stripQuestion(item) {
   }
 }
 
-const PUNCT = /[\s。．.，,！!？?、：:；;「」『』“”"()（）]/g;
-const clean = (s) => String(s || "").replace(PUNCT, "").trim();
-
 /**
  * Checks one answer against the bank item. The answer shape depends on the
  * type: `{index}` for choices and the word bank, `{order: [...]}` for
- * compose, `{text}` for typed hanzi and picture sentences.
+ * compose, `{text}` for typed hanzi, typed pinyin and free writing.
+ *
+ * `credit` is 1, 0.5 (a typed answer that is nearly right, thesis spec
+ * section 7) or 0. `review` says a teacher must look at it: half credit,
+ * or free writing, which the machine never scores. `correct` is
+ * `credit === 1`.
  *
  * @param {Object} item bank doc data
  * @param {Object} answer
- * @return {{correct: boolean, correctAnswer: Object}}
+ * @return {{correct: boolean, credit: number, review: boolean,
+ *   reason: string, correctAnswer: Object}}
  */
 function checkAnswer(item, answer) {
   const q = item.question || {};
   const type = String(item.type || "multiple_choice");
   const a = answer || {};
+  const out = (credit, review, reason, correctAnswer) =>
+    ({correct: credit === 1, credit, review, reason, correctAnswer});
   switch (type) {
     case "compose_sentences": {
+      // T4: the word order is what is tested, so no half credit.
       const want = (q.segments || []).map(String);
       const got = Array.isArray(a.order) ? a.order.map(String) : [];
-      const correct = got.length === want.length &&
-        want.every((s, i) => s === got[i]);
-      return {correct, correctAnswer: {order: want}};
+      const ok = got.length === want.length && want.every((s, i) => s === got[i]);
+      return out(ok ? 1 : 0, false, ok ? "exact" : "wrong", {order: want});
     }
     case "type_hanzi": {
       const accepted = (q.options || []).map(String);
-      const typed = clean(a.text);
-      const correct = typed.length > 0 && accepted.some((x) => clean(x) === typed);
-      return {correct, correctAnswer: {accepted}};
+      const m = matcher.matchHanzi(a.text, accepted);
+      return out(m.credit, m.review, m.reason, {accepted});
     }
-    case "picture_sentence": {
-      const k = clean(q.keyword);
-      const typed = clean(a.text);
-      const correct = k ?
-        typed.includes(k) && typed.length > k.length :
-        typed.length >= 2;
-      return {correct, correctAnswer: {keyword: String(q.keyword || "")}};
+    case "type_pinyin": {
+      const accepted = (q.options || []).map(String);
+      const m = matcher.matchPinyin(a.text, accepted);
+      return out(m.credit, m.review, m.reason, {accepted});
+    }
+    case "picture_sentence":
+    case "essay": {
+      const keywords = type === "essay" ?
+        (q.keywords || []).map(String) :
+        [String(q.keyword || "")].filter((k) => k);
+      const written = String(a.text || "").trim();
+      // Nothing written is zero; anything written waits for the teacher.
+      return out(0, written.length > 0, written ? "free_writing" : "wrong",
+          {keywords, keyword: String(q.keyword || "")});
     }
     default: {
       const want = Number.isInteger(q.correctIndex) ? q.correctIndex : 0;
-      const correct = Number.isInteger(a.index) && a.index === want;
-      return {correct, correctAnswer: {index: want}};
+      const ok = Number.isInteger(a.index) && a.index === want;
+      return out(ok ? 1 : 0, false, ok ? "exact" : "wrong", {index: want});
     }
   }
 }
@@ -188,11 +223,17 @@ function checkAnswer(item, answer) {
 function scoreAttempt(items, answers) {
   const given = answers && typeof answers === "object" ? answers : {};
   const bySkill = {};
+  // Build 2A: points per question (credit × points). With 1-point choice
+  // questions only, the score is the same as correct ÷ total × 100.
+  const points = {};
   const review = items.map((it) => {
     const answered = Object.prototype.hasOwnProperty.call(given, it.id);
     const check = checkAnswer(it, given[it.id]);
     const q = it.question || {};
     const skill = String(it.skillCategory || "reading");
+    const max = pointsOf(it);
+    const earned = check.credit * max;
+    points[it.id] = {earned, max, skill, review: check.review, reason: check.reason};
     const bucket = bySkill[skill] || (bySkill[skill] = {correct: 0, total: 0});
     bucket.total += 1;
     if (check.correct) bucket.correct += 1;
@@ -200,14 +241,51 @@ function scoreAttempt(items, answers) {
       questionId: it.id,
       answered,
       correct: check.correct,
+      credit: check.credit,
+      needsMarking: check.review,
+      points: earned,
+      maxPoints: max,
       correctAnswer: check.correctAnswer,
       explanation: String(q.explanation || ""),
     };
   });
-  const correct = review.filter((r) => r.correct).length;
-  const total = items.length;
-  const score = total === 0 ? 0 : Math.round((correct / total) * 100);
-  return {score, correct, total, review, bySkill};
+  const totals = totalsOf(points);
+  return {
+    score: totals.score,
+    correct: review.filter((r) => r.correct).length,
+    total: items.length,
+    earned: totals.earned,
+    possible: totals.possible,
+    open: totals.open,
+    review,
+    bySkill,
+    points,
+  };
+}
+
+/**
+ * Totals of a points map, with the teacher's marks in place of the
+ * machine's where there is one. `open` counts answers still waiting for a
+ * teacher.
+ * @param {Object<string, {earned: number, max: number, review: boolean}>} points
+ * @param {Object<string, number>} marks questionId → points the teacher gave
+ * @return {{earned: number, possible: number, score: number, open: number}}
+ */
+function totalsOf(points, marks = {}) {
+  let earned = 0;
+  let possible = 0;
+  let open = 0;
+  for (const [id, p] of Object.entries(points || {})) {
+    possible += Number(p.max) || 0;
+    if (Object.prototype.hasOwnProperty.call(marks, id)) {
+      earned += Number(marks[id]) || 0;
+    } else {
+      earned += Number(p.earned) || 0;
+      if (p.review) open += 1;
+    }
+  }
+  const score = possible === 0 ? 0 : Math.round((earned / possible) * 100);
+  return {earned, possible, score, open};
 }
 
 /** Categories that allow a single attempt with a server-side clock. */
@@ -224,6 +302,9 @@ function isOneAttempt(category) {
 }
 
 module.exports = {
+  TEACHER_MARKED,
+  pointsOf,
+  totalsOf,
   packageCategory,
   isOneAttempt,
   orderPackageItems,

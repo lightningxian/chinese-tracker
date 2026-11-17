@@ -73,6 +73,8 @@ class WorksheetAnswerKeys {
       case ExerciseType.multipleChoice:
       case ExerciseType.listening:
       case ExerciseType.typeHanzi:
+      case ExerciseType.typePinyin:
+      case ExerciseType.essay:
       case ExerciseType.pictureSentence:
         final (items, applied) = _applyChoices(parsed.mcQuestions, key);
         return (

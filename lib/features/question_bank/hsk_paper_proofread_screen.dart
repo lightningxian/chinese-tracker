@@ -6,8 +6,10 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../l10n/l10n.dart';
+import '../../models/app_user.dart';
 import '../../models/hsk_paper_draft.dart';
 import '../../models/question_bank_item.dart';
+import '../../services/auth_service.dart';
 import '../../services/hsk_paper/hsk_paper_import.dart';
 import '../../services/hsk_paper/hsk_paper_reader.dart';
 import '../../services/hsk_paper/paper_image_ops.dart';
@@ -98,6 +100,7 @@ class HskPaperProofreadViewModel extends ChangeNotifier {
   }
 
   Future<List<QuestionBankItem>> buildItems({
+    required AppUser? user,
     required String ownerId,
     required Future<String> Function(Uint8List png, String name) upload,
     required String Function(int done, int total) pictureLabel,
@@ -108,6 +111,7 @@ class HskPaperProofreadViewModel extends ChangeNotifier {
       return await HskPaperImport.toBankItems(
         draft,
         pages,
+        user: user,
         pdfBytes: pdfBytes,
         ownerId: ownerId,
         fileName: fileName,
@@ -201,6 +205,7 @@ class _ProofreadView extends StatelessWidget {
     final messenger = ScaffoldMessenger.of(context);
     try {
       final items = await vm.buildItems(
+        user: context.read<AuthService>().appUser,
         ownerId: ownerId,
         upload: upload,
         pictureLabel: l.paperUploadingPicture,

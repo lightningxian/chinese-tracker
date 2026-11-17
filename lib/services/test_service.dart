@@ -181,6 +181,13 @@ class TestService {
     return OpenedSession.fromServer(Map<String, dynamic>.from(r.data as Map));
   }
 
+  /// Admin (Build 2A): delete a student's attempt and result of a code so
+  /// they can sit it again. The function writes the audit log.
+  Future<void> resetAttempt(String resultId, {String reason = ''}) =>
+      _functions
+          .httpsCallable('resetTestAttempt')
+          .call({'resultId': resultId, 'reason': reason});
+
   Future<int> closeSession(String sessionId) async {
     final r = await _functions
         .httpsCallable('closeTestSession')

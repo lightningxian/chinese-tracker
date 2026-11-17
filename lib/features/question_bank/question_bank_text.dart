@@ -26,6 +26,14 @@ abstract final class QuestionBankText {
         );
       case ExerciseType.pictureSentence:
         return l.bankTextKeyword(q.keyword);
+      case ExerciseType.typePinyin:
+        return l.bankTextPinyinKeys(
+          q.options.isEmpty
+              ? l.bankTextTypeHanziInEditor
+              : q.options.join(' / '),
+        );
+      case ExerciseType.essay:
+        return l.bankTextKeywords(q.keywords.join(', '));
       case ExerciseType.multipleChoice:
       case ExerciseType.listening:
         if (q.options.isEmpty) return l.bankTextNoOptionsYet;

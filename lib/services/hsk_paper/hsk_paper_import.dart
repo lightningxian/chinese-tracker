@@ -3,9 +3,11 @@ import 'dart:typed_data';
 import 'package:image/image.dart' as img;
 import 'package:pdfrx/pdfrx.dart';
 
+import '../../core/constants/worksheet_import_platform.dart';
 import '../../core/utils/question_import_utils.dart';
 import '../../features/question_bank/question_bank_ai_import_utils.dart';
 import '../../models/ai_worksheet.dart';
+import '../../models/app_user.dart';
 import '../../models/hsk_paper_draft.dart';
 import '../../models/question_bank_item.dart';
 import 'hsk_paper_reader.dart';
@@ -72,16 +74,20 @@ abstract final class HskPaperImport {
 
   /// Bank items of the draft. [upload] stores one picture (PNG) and
   /// returns its URL; pictures are cut from the page drawn again in colour
-  /// (the cleaned page has the colours removed).
+  /// (the cleaned page has the colours removed). Admin on web only: the
+  /// check is here too, not only in the UI
+  /// (`.claude/rules/worksheet-import-web-only.md`).
   static Future<List<QuestionBankItem>> toBankItems(
     HskPaperDraft draft,
     List<PaperPage> pages, {
+    required AppUser? user,
     required Uint8List pdfBytes,
     required String ownerId,
     required String fileName,
     required Future<String> Function(Uint8List png, String name) upload,
     void Function(int done, int total)? onPicture,
   }) async {
+    WorksheetImportPlatform.ensureSupportedFor(user);
     final worksheet = draft.toAiWorksheet(pageSizes(pages));
     final boxes = worksheet.boxes;
     final urls = <String, String>{};

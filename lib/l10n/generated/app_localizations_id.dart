@@ -5608,7 +5608,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get testsEndForEveryoneConfirm =>
-      'Semua murid yang masih mengerjakan diselesaikan sekarang. Bagian yang belum dikirim dihitung kosong. Tidak bisa dibatalkan.';
+      'Semua murid yang masih mengerjakan diselesaikan sekarang. Aplikasi mereka mengirim dulu apa yang sudah diketik (sekitar 15 detik); yang tidak terkirim dihitung kosong. Tidak bisa dibatalkan.';
 
   @override
   String testsEnded(int count) {
@@ -6077,4 +6077,190 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get paperFlagSplit => 'cek pemisahan kata';
+
+  @override
+  String get exerciseTypeTypePinyin => 'Ketik pinyin (写拼音)';
+
+  @override
+  String get exerciseTypeEssay => 'Menulis bebas (写作)';
+
+  @override
+  String bankTextPinyinKeys(String answers) {
+    return 'Pinyin: $answers';
+  }
+
+  @override
+  String bankTextKeywords(String words) {
+    return 'Kata yang dipakai: $words';
+  }
+
+  @override
+  String get bankEditorPinyinWord => 'Hanzi yang ditulis pinyinnya';
+
+  @override
+  String get bankEditorPinyinWordHelper =>
+      'Murid melihat ini lalu mengetik pinyinnya.';
+
+  @override
+  String get bankEditorAcceptedPinyin => 'Pinyin yang diterima';
+
+  @override
+  String get bankEditorAcceptedPinyinHelper =>
+      'Satu per baris, dengan tanda nada atau angka (nǐ hǎo atau ni3 hao3). Huruf benar tetapi nada salah atau tidak ada dapat setengah dan masuk ke guru.';
+
+  @override
+  String get bankEditorEssayTask => 'Tugas menulis';
+
+  @override
+  String get bankEditorEssayKeywords => 'Kata yang harus dipakai';
+
+  @override
+  String get bankEditorEssayKeywordsHelper =>
+      'Pisahkan dengan koma. Guru melihat kata mana yang dipakai.';
+
+  @override
+  String get bankEditorEssaySource => 'Teks yang dibaca dulu (opsional)';
+
+  @override
+  String get bankEditorEssaySourceHelper =>
+      'Ditampilkan di awal selama menit di bawah, lalu disembunyikan (HSK 6).';
+
+  @override
+  String get bankEditorEssaySourceMinutes => 'Menit teks ditampilkan';
+
+  @override
+  String get playEssayUseWords => 'Pakai kata-kata ini:';
+
+  @override
+  String get playEssaySourceShown =>
+      'Baca teks ini. Teks akan disembunyikan setelah waktunya habis.';
+
+  @override
+  String get playEssaySourceHidden =>
+      'Teks sudah disembunyikan. Tulis dari ingatan.';
+
+  @override
+  String get playEssayHint => 'Tulis di sini…';
+
+  @override
+  String playEssayCount(int count) {
+    return '$count karakter';
+  }
+
+  @override
+  String get playPinyinPrompt => 'Tulis pinyin dari:';
+
+  @override
+  String get playPinyinHelper =>
+      'Tanda nada atau angka nada sama-sama boleh. Tanpa nada dapat setengah.';
+
+  @override
+  String get playWaitingForTeacher => 'Menunggu penilaian guru';
+
+  @override
+  String get playHalfWaiting =>
+      'Setengah nilai untuk sementara; guru akan memeriksanya';
+
+  @override
+  String get playPendingSubtitle =>
+      'Beberapa jawaban menunggu guru. Nilai masih bisa berubah.';
+
+  @override
+  String get testsPendingMarking => 'Menunggu penilaian';
+
+  @override
+  String get markingTitle => 'Penilaian';
+
+  @override
+  String get markingEmptyTitle => 'Tidak ada yang perlu dinilai';
+
+  @override
+  String get markingEmptySubtitle =>
+      'Jawaban ketik yang hampir benar dan tulisan bebas muncul di sini.';
+
+  @override
+  String get markingIntro =>
+      'Buka jawaban untuk menilainya. Nilai murid diperbarui dan murid diberi tahu jika tidak ada lagi yang perlu dinilai.';
+
+  @override
+  String get markingReasonOneCharacter => 'beda satu karakter';
+
+  @override
+  String get markingReasonTone => 'nada salah atau tidak ada';
+
+  @override
+  String get markingReasonFreeWriting => 'menulis bebas';
+
+  @override
+  String get markingQuestion => 'Soal';
+
+  @override
+  String get markingAnswer => 'Jawaban murid';
+
+  @override
+  String markingKeys(String keys) {
+    return 'Kunci: $keys';
+  }
+
+  @override
+  String markingKeywordsFound(int found, int total) {
+    return '$found dari $total kata wajib dipakai';
+  }
+
+  @override
+  String markingMachineGave(String points, String max) {
+    return 'Mesin memberi $points / $max.';
+  }
+
+  @override
+  String get markingFull => 'Nilai penuh';
+
+  @override
+  String get markingKeepHalf => 'Tetap setengah';
+
+  @override
+  String get markingZero => 'Nol';
+
+  @override
+  String get markingGrammar => 'Tata bahasa';
+
+  @override
+  String get markingVocabulary => 'Kosakata';
+
+  @override
+  String get markingContent => 'Isi';
+
+  @override
+  String markingRubricTotal(int total, String points, String max) {
+    return 'Rubrik $total / 100 = $points dari $max poin';
+  }
+
+  @override
+  String get markingSave => 'Simpan nilai';
+
+  @override
+  String get markingSaved => 'Nilai disimpan.';
+
+  @override
+  String get testsScanToJoin => 'Murid bisa memindai ini untuk masuk';
+
+  @override
+  String get testsResetAttempt => 'Ulang percobaan';
+
+  @override
+  String testsResetAttemptBody(String student, String code) {
+    return 'Ini menghapus jawaban dan hasil $student untuk $code, sehingga murid bisa mengerjakannya lagi. Pakai setelah listrik mati atau perangkat rusak. Log audit mencatatnya.';
+  }
+
+  @override
+  String get testsResetReason => 'Alasan';
+
+  @override
+  String get testsResetDone =>
+      'Percobaan diulang. Murid bisa mengerjakan kode ini lagi.';
+
+  @override
+  String testsMarkedPoints(String points, String max) {
+    return 'Guru memberi $points dari $max poin';
+  }
 }

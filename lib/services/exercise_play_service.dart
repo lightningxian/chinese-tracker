@@ -30,7 +30,16 @@ class PlayQuestion {
     this.skill = '',
     this.section = '',
     this.sectionAudioUrl = '',
+    this.keywords = const [],
+    this.sourceText = '',
+    this.sourceSeconds = 0,
   });
+
+  /// Free writing (essay): words to use, and a text shown for
+  /// [sourceSeconds] before it is hidden (HSK 6). None of these is a key.
+  final List<String> keywords;
+  final String sourceText;
+  final int sourceSeconds;
 
   final String id;
   final ExerciseType type;
@@ -65,8 +74,7 @@ class PlayQuestion {
   final String audioUrl;
   final int? blankNumber;
 
-  bool get isTyped =>
-      type == ExerciseType.typeHanzi || type == ExerciseType.pictureSentence;
+  bool get isTyped => type.isTyped;
   bool get usesWordBank =>
       type == ExerciseType.matching || type == ExerciseType.readingCloze;
   bool get isCompose => type == ExerciseType.composeSentences;
@@ -85,6 +93,9 @@ class PlayQuestion {
         optionImageUrls:
             List<String>.from(m['optionImageUrls'] as List? ?? const []),
         skill: m['skill'] as String? ?? '',
+        keywords: List<String>.from(m['keywords'] as List? ?? const []),
+        sourceText: m['sourceText'] as String? ?? '',
+        sourceSeconds: (m['sourceSeconds'] as num?)?.toInt() ?? 0,
         section: m['section'] as String? ?? '',
         sectionAudioUrl: m['sectionAudioUrl'] as String? ?? '',
       );
@@ -123,9 +134,30 @@ class AnswerCheck {
     this.accepted = const [],
     this.keyword = '',
     this.explanation = '',
+    this.credit,
+    this.needsMarking = false,
+    this.keywords = const [],
+    this.markedPoints,
+    this.maxPoints,
   });
 
   final bool correct;
+
+  /// Build 2A: 1, 0.5 (a typed answer that is nearly right) or 0; null from
+  /// older servers.
+  final double? credit;
+
+  /// A teacher still has to look at this answer (half credit, free writing).
+  final bool needsMarking;
+
+  /// Free writing: the words the answer had to use.
+  final List<String> keywords;
+
+  /// Points the teacher gave (test review), when marked.
+  final double? markedPoints;
+  final double? maxPoints;
+
+  bool get isHalf => credit != null && credit! > 0 && credit! < 1;
 
   /// False when the student skipped the question (counted as wrong).
   final bool answered;
@@ -148,6 +180,14 @@ class AnswerCheck {
       accepted: List<String>.from(key['accepted'] as List? ?? const []),
       keyword: key['keyword'] as String? ?? '',
       explanation: m['explanation'] as String? ?? '',
+      credit: (m['credit'] as num?)?.toDouble(),
+      needsMarking: m['needsMarking'] == true &&
+          (m['marking'] as Map?)?['status'] != 'marked',
+      keywords: List<String>.from(key['keywords'] as List? ?? const []),
+      markedPoints: (m['marking'] as Map?)?['status'] == 'marked'
+          ? ((m['marking'] as Map)['points'] as num?)?.toDouble()
+          : null,
+      maxPoints: (m['maxPoints'] as num?)?.toDouble(),
     );
   }
 }
@@ -206,7 +246,11 @@ class PlayResult {
     this.review = const {},
     this.late = false,
     this.bySkill = const {},
+    this.pendingMarking = false,
   });
+
+  /// Build 2A: some answers wait for a teacher; the score is not final.
+  final bool pendingMarking;
 
   /// Marks per skill (`listening`, `reading`, `typing`…), when the server
   /// sent them.
@@ -370,6 +414,7 @@ class _ServerSession extends _AnswerStore {
       review: review,
       late: m['late'] == true,
       bySkill: bySkill,
+      pendingMarking: m['status'] == 'pending_marking',
     );
   }
 }

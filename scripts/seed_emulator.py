@@ -24,7 +24,9 @@ PROJECT = "chinese-tracker"
 # request waits for that to fail (the seed took minutes instead of seconds).
 AUTH = "http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1"
 FS = f"http://127.0.0.1:8080/v1/projects/{PROJECT}/databases/(default)/documents"
-PASSWORD = "testpass123"
+# Build 2A: not the live test accounts' password, so a sign-in saved in the
+# emulator bundle can never work on the live project.
+PASSWORD = "emulator-only-7"
 TODAY = dt.date.today()
 random.seed(7)
 
@@ -242,6 +244,7 @@ def main():
             **({"paidAt": ts(-9)} if status == "paid" else {})})
 
     seed_tests(admin_uid, student_uids)
+    seed_marking(admin_uid, teacher_uids[0], student_uids)
 
     # Notifications and settings
     put("notifications", "n_1", {"kind": "registration", "title": "New student registered",
@@ -441,6 +444,62 @@ def seed_tests(admin_uid, student_uids):
                 "assignedAt": ts(-1), "dueDate": ts(5)})
     print(f"Build 1: worksheet {SHEET}, formats HSK 1-6, test code {TEST_CODE}, "
           f"packages pkg_practice / pkg_exam, media in {os.path.abspath(MEDIA_DIR)}")
+
+
+TYPING_SHEET = "310904-WRT"
+ESSAY_SHEET = "310905-WRT"
+ESSAY_CODE = "H3ESSAY"
+
+
+def seed_marking(admin_uid, teacher_uid, student_uids):
+    """Build 2A: a typing package (half credit goes to the teacher's queue)
+    and a short test code with free writing (pending until marked)."""
+    W = "三、书写"
+    typing = dict(sheet=TYPING_SHEET, title="Mengetik HSK 3 (seed)", category="exercise")
+    bank_item("ty_1", 1, "typing", "type_hanzi",
+              {"prompt": "Ketik dengan hanzi: wǒ hěn xǐhuan hē chá",
+               "keyword": "wǒ hěn xǐhuan hē chá", "options": ["我很喜欢喝茶"]},
+              W, admin_uid, **typing)
+    bank_item("ty_2", 2, "typing", "type_pinyin",
+              {"prompt": "你好", "options": ["nǐ hǎo"]}, W, admin_uid, **typing)
+    bank_item("ty_3", 3, "typing", "compose_sentences",
+              {"prompt": "", "segments": ["把书", "放在", "桌子上"]}, W, admin_uid, **typing)
+    put("exercises", "pkg_typing", {
+        "title": "Mengetik HSK 3 (paket)", "instructions": "Ketik jawabannya.",
+        "teacherId": teacher_uid, "order": 4, "type": "type_hanzi",
+        "skillCategory": "typing", "level": "HSK 3", "termNumber": 1,
+        "isPublished": True, "createdAt": ts(-2), "bankSheets": [TYPING_SHEET],
+        "bankQuestionIds": []})
+    for u in student_uids[:3]:
+        put("exercise_assignments", f"pkg_typing_{u}", {
+            "exerciseId": "pkg_typing", "studentId": u, "teacherId": teacher_uid,
+            "assignedAt": ts(-1), "dueDate": ts(5)})
+
+    essay = dict(sheet=ESSAY_SHEET, title="HSK 3 · H3ESSAY (seed)")
+    bank_item("es_l1", 1, "listening", "multiple_choice",
+              {"prompt": "他们明天去哪儿？", "options": ["图书馆", "医院", "火车站"],
+               "correctIndex": 0}, "一、听力", admin_uid, **essay)
+    bank_item("es_r1", 2, "reading", "multiple_choice",
+              {"prompt": "我（ ）喜欢喝茶。", "options": ["很", "是", "的"],
+               "correctIndex": 0}, "二、阅读", admin_uid, **essay)
+    bank_item("es_w1", 3, "typing", "type_hanzi",
+              {"prompt": "我（ ）到家。", "keyword": "gāng", "options": ["刚"]},
+              W, admin_uid, **essay)
+    bank_item("es_w2", 4, "typing", "essay",
+              {"prompt": "用下面的词写一段话（80字左右）。", "keywords": ["周末", "公园"]},
+              W, admin_uid, **essay)
+
+    def part(skill, q, m):
+        return {"skill": skill, "questions": q, "minutes": m, "maxScore": 100}
+    put("test_codes", ESSAY_CODE, {
+        "code": ESSAY_CODE, "family": "hsk", "level": "HSK 3", "levelKey": "3",
+        "sheetKey": ESSAY_SHEET, "formatId": "hsk-3", "releaseYear": 2021,
+        "format": {"parts": [part("listening", 1, 2), part("reading", 1, 2),
+                             part("writing", 2, 5)], "passMark": 180},
+        "active": True, "countsForPromotion": True, "createdBy": admin_uid,
+        "createdAt": ts(-3)})
+    print(f"Build 2A: package pkg_typing ({TYPING_SHEET}), test code {ESSAY_CODE} "
+          f"({ESSAY_SHEET}) with free writing; emulator password {PASSWORD}")
 
 
 if __name__ == "__main__":

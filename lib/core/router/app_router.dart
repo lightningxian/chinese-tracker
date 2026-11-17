@@ -38,6 +38,7 @@ import '../../features/teacher/teacher_exercise_form_screen.dart';
 import '../../features/teacher/student_detail_screen.dart';
 import '../../features/teacher/teacher_session_detail_screen.dart';
 import '../../features/teacher/teacher_session_form_screen.dart';
+import '../../features/tests/marking_screen.dart';
 import '../../features/tests/test_codes_screen.dart';
 import '../../features/tests/test_formats_screen.dart';
 import '../../features/tests/test_player_screen.dart';
@@ -366,6 +367,11 @@ class AppRouter {
                   ),
                 ),
                 GoRoute(
+                  path: 'tests/marking',
+                  builder: (context, _) =>
+                      MarkingScreen(user: auth.appUser!, embedded: true),
+                ),
+                GoRoute(
                   path: 'tests/results',
                   builder: (_, state) => TestResultsScreen(
                     basePath: '/admin/tests',
@@ -553,6 +559,11 @@ class AppRouter {
                     basePath: '/teacher/tests',
                     embedded: true,
                   ),
+                ),
+                GoRoute(
+                  path: 'tests/marking',
+                  builder: (context, _) =>
+                      MarkingScreen(user: auth.appUser!, embedded: true),
                 ),
                 GoRoute(
                   path: 'tests/results',
