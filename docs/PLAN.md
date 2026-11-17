@@ -837,6 +837,39 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
+### 2026-11-17 — Build 1B Must 1: measurement on the PC (before building)
+Paper `H326202Z` (16 scanned pages), in the browser on the PC (Chrome in the
+Claude app), pdf.js render at 1738 px wide, the watermark rule of §4 Build 1B,
+tesseract.js 5 `chi_sim+eng`, page mode 6. A question line counts as whole
+when its printed number starts a line followed by its text.
+
+- **Time:** render 0.9 s per page on average, reading 1.8 s (0.8–3.5 s), so
+  about 2.8 s per page and about 45 s for the 16 pages. Unprocessed default
+  mode would be 1.1 s per page, but it misses far more lines (below).
+- **Question lines whole, cleaned + mode 6** (unprocessed default mode in
+  brackets):
+  - 1–10 pictures: no printed text, as expected; only the number marks show
+    (pictures must come from image analysis).
+  - 11–20 ★ statements: 10 of 10 (10).
+  - 21–40 three text choices: 20 of 20 (17).
+  - 41–50 match a sentence: 10 of 10 (5).
+  - 51–55 word bank: 5 of 5 sentence lines present; the numbers 51 and 52
+    are misread (`S1.`, `32，`) (2 of 5).
+  - 56–60 word bank: 5 of 5 (5).
+  - 61–70 passage and question: 10 of 10 passages present; 65 is misread as
+    `63.` (unprocessed: 4 of 10).
+  - 71–75 word order: 5 of 5 (0).
+  - 76–80 pinyin gaps: 5 of 5 (0); the pinyin above them has no tone marks
+    (`chdng`, `zhdng`, `yudn`), as the PLAN chat found.
+- **Total:** 73 of 80 numbers found as line starts (unprocessed: 45). The
+  7 not found are 6, 8, 9, 10 (picture page, no text), 51, 52 and 65
+  (misread digits). So the structure builder must assign numbers by the
+  expected sequence of each range, not trust every printed digit.
+- **Noise to handle:** spaces between hanzi; `，` or `、` instead of `.`
+  after a number; `〈 )` for `( )`; the page footer code is sometimes
+  misread (`13262027 - 8` for `H326202Z - 8`) but read right on most pages.
+- Result is not worse than the PLAN chat's table: the build goes on.
+
 ### 2026-11-16 — Build 1 Test formats, test codes, supervised test, result card — d539d7e..029c9d8, release v0.1.16 (deployed the same night, see the last line)
 - Built: 7 callables (`openTestSession`, `startTest`, `submitTestPart`,
   `reportTestEvent`, `closeTestSession`, `setTestResultValidity`,
