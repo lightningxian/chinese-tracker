@@ -1039,7 +1039,7 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
-### 2026-11-18 — Build 1C Reader accuracy — (commit below), release v0.1.19
+### 2026-11-18 — Build 1C Reader accuracy — b38a4f9, release v0.1.19
 - Built: PP-OCRv5 mobile recognition in the browser (`web/paper_ocr_paddle.js`,
   model files fetched into `web/ocr/` by `scripts/fetch_paper_ocr.mjs`, not
   in git) behind `BrowserPaperOcrEngine`, Tesseract as fallback; practice
