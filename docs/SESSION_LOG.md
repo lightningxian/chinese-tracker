@@ -13,6 +13,20 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-18 — Claude (PLAN chat, Mac): Build 1C reviewed, Build 2B is NEXT
+
+- Pulled Build 1C (v0.1.19) and checked it on the Mac: analyzer 17 infos,
+  `flutter test` 118, node tests, rules tests 57 pass and 1 skipped;
+  `scripts/fetch_paper_ocr.mjs` downloads and verifies the same files on
+  the Mac (SHA-256 pins hold), so a hosting deploy from the Mac still works.
+- Read: the reader loads the model from our own hosting (`ocr/`), the
+  practice paper is made-up text, `Download text` is admin + web, the only
+  function change is `teacherIdsFor` (functions deploy open for the owner).
+- Hosting at v0.1.19 was published from the PC; the PLAN chat checked the
+  live site serves `paper_ocr_paddle.js` and the model.
+- Plan: Build 1C done, Build 2B (leaderboard, promotion, names) is NEXT.
+  The public-repository security item stays open for the owner.
+
 ### 2026-11-18 — Claude (BUILD chat, PC): Build 1C reader accuracy
 
 - Wrote `docs/LIVE_TEST_BUILD_2A.md` (26 steps for the owner on live).
