@@ -6,14 +6,17 @@ import '../../core/constants/exercise_authoring_platform.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/utils/file_download.dart' as file_download;
 import '../../l10n/l10n.dart';
 import '../../l10n/labels_exercises.dart';
 import '../../models/exercise_category.dart';
 import '../../models/exercise_skill_category.dart';
 import '../../models/exercise_type.dart';
+import '../../models/paper_proof_record.dart';
 import '../../models/question_bank_item.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
+import '../../services/hsk_paper/paper_truth.dart';
 import '../../services/question_bank_media_service.dart';
 import '../teacher/exercise_assign_dialog.dart';
 import 'question_bank_editor.dart';
@@ -87,6 +90,14 @@ class QuestionBankSheetScreen extends StatelessWidget {
                   ),
                 const SizedBox(width: 8),
                 if (canManageBank) ...[
+                  // Build 1C: the proofread worksheet as a truth file for
+                  // measuring the paper reader (docs/PLAN.md §4, Must 1b).
+                  if (sheet.isSheet)
+                    IconButton(
+                      onPressed: () => _downloadText(context, sheet),
+                      icon: const Icon(Icons.file_download_outlined),
+                      tooltip: l.bankSheetDownloadText,
+                    ),
                   IconButton(
                     onPressed: () => _answerKey(context, sheet),
                     icon: const Icon(Icons.key_outlined),
@@ -131,6 +142,10 @@ class QuestionBankSheetScreen extends StatelessWidget {
                       sheet: sheet,
                       readOnly: !canManageBank,
                     ),
+                    if (canManageBank && sheet.paperRecord != null) ...[
+                      const SizedBox(height: 12),
+                      _PaperRecordCard(record: sheet.paperRecord!),
+                    ],
                     const SizedBox(height: 16),
                     for (final (i, item) in sheet.items.indexed)
                       Padding(
@@ -246,6 +261,19 @@ class QuestionBankSheetScreen extends StatelessWidget {
 
   /// The admin types or pastes the printed key (choices, and since Build
   /// 1B the writing answers); see [showSheetAnswerKeyDialog].
+  /// **Download text** (admin, web): the worksheet's questions as one JSON
+  /// file in the reader's shape, `<code>.truth.json`.
+  void _downloadText(BuildContext context, QuestionBankSheet sheet) {
+    final l = context.l10n;
+    final level = int.tryParse(
+        RegExp(r'\d').firstMatch(sheet.first.level ?? '')?.group(0) ?? '');
+    final truth = PaperTruth.fromWorksheet(sheet.items,
+        code: sheet.code, level: level);
+    file_download.downloadTextFile('${sheet.code}.truth.json', truth.encode());
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(l.bankSheetTextDownloaded(truth.questions.length))));
+  }
+
   Future<void> _answerKey(BuildContext context, QuestionBankSheet sheet) =>
       showSheetAnswerKeyDialog(context, sheet);
 
@@ -820,6 +848,51 @@ class _SheetEditDialogState extends State<_SheetEditDialog> {
           child: Text(l.bankEditorSave),
         ),
       ],
+    );
+  }
+}
+
+/// How the paper was read and proofread (Build 1C, Must 6): the number for
+/// the thesis test chapter. Admins only.
+class _PaperRecordCard extends StatelessWidget {
+  const _PaperRecordCard({required this.record});
+
+  final PaperProofRecord record;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final r = record;
+    final engine = switch (r.engine) {
+      'paddle' => 'PaddleOCR',
+      'tesseract' => 'Tesseract',
+      _ => r.engine,
+    };
+    final minutes = (r.proofSeconds / 60).toStringAsFixed(1);
+    return AppCard(
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.fact_check_outlined, color: AppColors.navy),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l.paperRecordTitle,
+                    style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.navy)),
+                const SizedBox(height: 4),
+                Text(l.paperRecordLine(r.slots, r.flagged, r.changed, r.untouched, minutes)),
+                Text(
+                  l.paperRecordRead(engine.isEmpty ? '—' : engine, r.readSeconds),
+                  style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

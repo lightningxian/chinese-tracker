@@ -1039,6 +1039,78 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
+### 2026-11-18 — Build 1C Reader accuracy — (commit below), release v0.1.19
+- Built: PP-OCRv5 mobile recognition in the browser (`web/paper_ocr_paddle.js`,
+  model files fetched into `web/ocr/` by `scripts/fetch_paper_ocr.mjs`, not
+  in git) behind `BrowserPaperOcrEngine`, Tesseract as fallback; practice
+  paper `H399001P` + truth; measuring tools; Download text; level and mark
+  flags; tone buttons; proofreading record; a picture-box fix; test
+  marking items for the student's own teacher; indexes file = live.
+- **Must 2, measured before building** (Tesseract finds the lines in a, b
+  and c; the structure builder of Build 1B reads the texts; "right as read"
+  = form, text, choices, pieces and pinyin equal to the truth, spaces and
+  Western punctuation ignored; picture questions count by form in this
+  text-only run):
+
+  | Engine on the practice paper `H399001P` (13 pages) | Right as read | Flagged | Wrong, not flagged | Time |
+  |---|---|---|---|---|
+  | Build 1B (Tesseract `chi_sim+eng`, page mode 6) | 37 | 36 | 17 | 13 s |
+  | Tesseract `chi_sim` only | 28 | 39 | 23 | 10 s |
+  | a. Tesseract + character positions | 41 | 33 | 17 | 14 s |
+  | b. each line read alone (page mode 7) | 52 | 17 | 22 | 25 s |
+  | c. PP-OCRv5 mobile (first try) | 51 | 16 | 24 | 29 s |
+  | c. + answer brackets and lone punctuation by shape (the winner) | **79** | 24 | **1** | 28 s |
+
+  The practice paper is a fair stand-in: Build 1B read it as badly as the
+  real paper (37 of 80 both). Candidate c's files: model 16.5 MB + runtime
+  14.8 MB (over the 25 MB aim; the owner approved shipping it 2026-11-18).
+  On the real paper `H326202Z` (no truth file yet: flag counts only):
+  Build 1B 3 missing, 46 text questions flagged; c **0 missing, 20 flagged**
+  (the 10 picture questions not counted), 41 s. My own reading of c's
+  result (not a measure): about 64 of 80 right as read; every error a rule
+  can see is flagged; 2 are not (a lost 一, and 已 for 己).
+- Must list: 1a practice paper + truth pass · 1b Download text pass ·
+  1 measure page (`tool/paper_measure`, `test/paper_measure_test.dart`;
+  Compare with a truth file in the emulator bundle) pass · 2 measure pass ·
+  3 winner built pass · 4 flag by level pass (old HSK 1-3 lists; papers above
+  HSK 3 are not checked, there is no list) · 5 pinyin tones pass · 6 record
+  pass · 7 indexes file pass · 8 marking items pass (node + rules + flow).
+- **Acceptance on the emulators (in the app, Scan paper):**
+  1. Practice paper: **78 of 80 right as read, 1 wrong and not flagged**,
+     read in **52 s** (13 pages, first model load included). Pass.
+  2. Real paper: 16 pages in **70-75 s**, 40/30/10, 0 missing, 6 + 5
+     pictures, 19 to check. Pass on time; right-as-read waits for the
+     owner's truth file.
+  3. Pinyin of 76-80 read with tone marks; the saved practice worksheet
+     exported `guān`; tone buttons and `chang2` → `cháng` work. Pass.
+  4. Proofreading record on the worksheet screen ("80 soal · 15 ditandai
+     pembaca · 0 diubah admin … Dibaca oleh PaddleOCR dalam 52 dtk"). Pass.
+  5. Indonesian and English, dark, 1280 px and 360 px (proofreading screen,
+     worksheet screen): no overflow after the helper text fix. Pass.
+- Fixed during the walk: the picture finder took three closely set text
+  lines for a picture (now a picture needs a shape taller than a line);
+  "form differs from its block" on a picture question (the block check now
+  runs after the pictures are known); the pinyin helper text was cut.
+- Proof: analyzer 0 errors / 0 warnings / 17 infos; `flutter test` 118 pass
+  (+13) and 2 measuring tests that run with files; rules tests 57 pass, 1
+  skipped (+1); node tests pass; flow test 32/32.
+- Owner must: (1) functions deploy for Must 8:
+  `firebase deploy --only functions --project chinese-tracker`; (2) hosting
+  (the BUILD chat runs it from the PC: `scripts/deploy_web.sh --web-only
+  --no-keys`); (3) on live: Scan paper with `H326202Z`, proofread, save,
+  then **Download text** on the worksheet and put the file on the PC as
+  `local_papers/H326202Z.truth.json`: that gives the real right-as-read.
+- Left out and why: nothing of the Must list. Not measured: a weak laptop
+  or a phone (only this PC).
+- Notes for the PLAN chat:
+  - PaddleOCR reads the characters very well; the remaining work was the
+    layout (brackets, lone punctuation). New paper layouts may need the
+    same kind of shape rules.
+  - The level list flags names, places and some everyday words outside the
+    old HSK 3 list (留, 窗户): expected, the admin presses Looks right.
+  - The scan dialog's time note now says about 5 s per page for Scan paper
+    and about 45 MB for its first download.
+
 ### 2026-11-17 — Build 2A Typing matcher and marking — bc6057a, release v0.1.18 (hosting live 2026-11-17; Storage rules, Firestore rules, indexes and functions deployed from the PC on 2026-11-17 at the owner's request, 25 functions)
 - Built: typing matcher (`functions/typing_matcher.js`, `functions/pinyin.js`)
   used by the scoring that packages and tests share; types `type_pinyin`

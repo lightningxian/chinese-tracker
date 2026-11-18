@@ -7367,7 +7367,7 @@ abstract class AppLocalizations {
   /// No description provided for @worksheetTimingNote.
   ///
   /// In en, this message translates to:
-  /// **'Text PDFs and Word files take a few seconds. Scanned pages and photos take 20–40 seconds each; the first scan also downloads the Chinese OCR data (about 15 MB).'**
+  /// **'Text PDFs and Word files take a few seconds. Scanned pages and photos take 20–40 seconds each (Scan paper: about 5); the first scan also downloads the Chinese OCR data (about 15 MB; about 45 MB for Scan paper).'**
   String get worksheetTimingNote;
 
   /// No description provided for @worksheetElapsed.
@@ -9786,7 +9786,7 @@ abstract class AppLocalizations {
   /// No description provided for @paperPinyinHint.
   ///
   /// In en, this message translates to:
-  /// **'The reader drops tone marks: type them (e.g. cháng).'**
+  /// **'Tap the tone of each syllable, or type the number after it (guan1 becomes guān).'**
   String get paperPinyinHint;
 
   /// No description provided for @paperKeyword.
@@ -9885,6 +9885,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'a choice looks misread'**
   String get paperFlagGarbled;
+
+  /// No description provided for @paperFlagGap.
+  ///
+  /// In en, this message translates to:
+  /// **'no gap for the pinyin'**
+  String get paperFlagGap;
+
+  /// No description provided for @paperFlagForm.
+  ///
+  /// In en, this message translates to:
+  /// **'form differs from its block'**
+  String get paperFlagForm;
+
+  /// No description provided for @paperFlagMarks.
+  ///
+  /// In en, this message translates to:
+  /// **'stray marks'**
+  String get paperFlagMarks;
+
+  /// No description provided for @paperFlagLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'above HSK {level}: {characters}'**
+  String paperFlagLevel(int level, String characters);
 
   /// No description provided for @paperFlagTones.
   ///
@@ -10209,6 +10233,62 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your teacher gave {points} of {max} points'**
   String testsMarkedPoints(String points, String max);
+
+  /// No description provided for @bankSheetDownloadText.
+  ///
+  /// In en, this message translates to:
+  /// **'Download text'**
+  String get bankSheetDownloadText;
+
+  /// No description provided for @bankSheetTextDownloaded.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 question saved as a truth file.} other{{count} questions saved as a truth file.}}'**
+  String bankSheetTextDownloaded(int count);
+
+  /// No description provided for @paperRecordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Proofreading record'**
+  String get paperRecordTitle;
+
+  /// No description provided for @paperRecordLine.
+  ///
+  /// In en, this message translates to:
+  /// **'{slots} questions · {flagged} flagged by the reader · {changed} changed by the admin ({untouched} kept as read) · {minutes} min proofreading'**
+  String paperRecordLine(
+      int slots, int flagged, int changed, int untouched, String minutes);
+
+  /// No description provided for @paperRecordRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Read by {engine} in {seconds} s'**
+  String paperRecordRead(String engine, int seconds);
+
+  /// No description provided for @paperCompareTruth.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare with a truth file'**
+  String get paperCompareTruth;
+
+  /// No description provided for @paperCompareSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{right} of {total} right as read · {flagged} flagged · {wrongNotFlagged} wrong and not flagged · read in {seconds} s'**
+  String paperCompareSummary(
+      int right, int total, int flagged, int wrongNotFlagged, int seconds);
+
+  /// No description provided for @paperCompareWrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Not right as read (! = not flagged): {numbers}'**
+  String paperCompareWrong(String numbers);
+
+  /// No description provided for @paperCompareFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not compare: {error}'**
+  String paperCompareFailed(String error);
 }
 
 class _AppLocalizationsDelegate

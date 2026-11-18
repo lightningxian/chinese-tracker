@@ -4,6 +4,7 @@ import 'exercise.dart';
 import 'exercise_category.dart';
 import 'exercise_skill_category.dart';
 import 'exercise_type.dart';
+import 'paper_proof_record.dart';
 
 /// A reusable question in the shared question bank. Wraps an
 /// [ExerciseQuestion] (using the same serialization) so a bank question drops
@@ -29,6 +30,7 @@ class QuestionBankItem {
     this.section,
     this.sectionAudioUrl,
     this.transcript,
+    this.paperRecord,
     this.usageCount = 0,
     this.lastUsedAt,
     this.updatedAt,
@@ -73,6 +75,10 @@ class QuestionBankItem {
   /// with `FirestoreService.setQuestionBankTranscript`, never by [toMap].
   /// Students only receive it from `getTestReview` after the session.
   final String? transcript;
+
+  /// How the scanned paper was read and proofread (Build 1C), on every
+  /// question of a worksheet made with **Scan paper**.
+  final PaperProofRecord? paperRecord;
 
   final int usageCount;
   final DateTime? lastUsedAt;
@@ -136,6 +142,10 @@ class QuestionBankItem {
       section: data['section'] as String?,
       sectionAudioUrl: data['sectionAudioUrl'] as String?,
       transcript: data['transcript'] as String?,
+      paperRecord: data['paperRecord'] is Map
+          ? PaperProofRecord.fromMap(
+              Map<String, dynamic>.from(data['paperRecord'] as Map))
+          : null,
       usageCount: data['usageCount'] as int? ?? 0,
       lastUsedAt: (data['lastUsedAt'] as Timestamp?)?.toDate(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
@@ -161,6 +171,7 @@ class QuestionBankItem {
         if (section != null && section!.isNotEmpty) 'section': section,
         if (sectionAudioUrl != null && sectionAudioUrl!.isNotEmpty)
           'sectionAudioUrl': sectionAudioUrl,
+        if (paperRecord != null) 'paperRecord': paperRecord!.toMap(),
         'usageCount': usageCount,
         if (sourceExerciseId != null && sourceExerciseId!.isNotEmpty)
           'sourceExerciseId': sourceExerciseId,
@@ -180,6 +191,7 @@ class QuestionBankItem {
     int? sheetIndex,
     String? section,
     String? sectionAudioUrl,
+    PaperProofRecord? paperRecord,
     int? usageCount,
     DateTime? lastUsedAt,
     DateTime? updatedAt,
@@ -201,6 +213,8 @@ class QuestionBankItem {
       sheetIndex: sheetIndex ?? this.sheetIndex,
       section: section ?? this.section,
       sectionAudioUrl: sectionAudioUrl ?? this.sectionAudioUrl,
+      transcript: transcript,
+      paperRecord: paperRecord ?? this.paperRecord,
       usageCount: usageCount ?? this.usageCount,
       lastUsedAt: lastUsedAt ?? this.lastUsedAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -260,6 +274,14 @@ class QuestionBankSheet {
         .where((i) => i.skillCategory == ExerciseSkillCategory.listening)
         .toList();
     return listening.isEmpty ? items : listening;
+  }
+
+  /// How the paper was read and proofread (Build 1C), if it was scanned.
+  PaperProofRecord? get paperRecord {
+    for (final item in items) {
+      if (item.paperRecord != null) return item.paperRecord;
+    }
+    return null;
   }
 
   /// The transcript of the sheet's recording, if any.

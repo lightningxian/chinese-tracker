@@ -15,6 +15,9 @@ cd "$(dirname "$0")/.."
 OUT=build/web-emulator
 PORT="${PORT:-5181}"
 
+# The paper reader's PaddleOCR files (web/ocr/, not in git; Build 1C).
+echo "▶ Paper reader files…"
+node scripts/fetch_paper_ocr.mjs
 echo "▶ Building emulator web bundle → $OUT"
 rm -rf "$OUT"
 # APP_CHECK_DEBUG=true turns on App Check with the debug provider (the

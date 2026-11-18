@@ -1,18 +1,25 @@
+import 'dart:convert';
 import 'dart:typed_data';
+
+import 'package:file_picker/file_picker.dart';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/constants/build_flags.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/pinyin_tones.dart';
 import '../../core/widgets/app_card.dart';
 import '../../l10n/l10n.dart';
 import '../../models/app_user.dart';
 import '../../models/hsk_paper_draft.dart';
+import '../../models/paper_proof_record.dart';
 import '../../models/question_bank_item.dart';
 import '../../services/auth_service.dart';
 import '../../services/hsk_paper/hsk_paper_import.dart';
 import '../../services/hsk_paper/hsk_paper_reader.dart';
 import '../../services/hsk_paper/paper_image_ops.dart';
+import '../../services/hsk_paper/paper_truth.dart';
 
 /// ViewModel of the proofreading screen: the pages the reader saw, the
 /// draft being corrected, the page on show and the save.
@@ -22,7 +29,10 @@ class HskPaperProofreadViewModel extends ChangeNotifier {
     required this.draft,
     required this.pdfBytes,
     required this.fileName,
-  }) : startedAt = DateTime.now() {
+    this.readSeconds = 0,
+    this.engine = '',
+  })  : startedAt = DateTime.now(),
+        flaggedAtStart = draft.flagged.length {
     // Open on the first page that has something to check.
     final first = draft.flagged.where((s) => s.page >= 1).firstOrNull;
     if (first != null) selectedPage = first.page;
@@ -35,6 +45,21 @@ class HskPaperProofreadViewModel extends ChangeNotifier {
 
   /// When proofreading started (the report states how long it took).
   final DateTime startedAt;
+
+  /// Build 1C (Must 6): what the proofreading record keeps.
+  final int flaggedAtStart;
+  final int readSeconds;
+  final String engine;
+
+  PaperProofRecord record() => PaperProofRecord(
+        slots: draft.slots.length,
+        flagged: flaggedAtStart,
+        changed: edited.length,
+        proofSeconds: DateTime.now().difference(startedAt).inSeconds,
+        readSeconds: readSeconds,
+        engine: engine,
+        savedAt: DateTime.now(),
+      );
 
   int selectedPage = 1;
   bool onlyFlagged = false;
@@ -177,6 +202,51 @@ class _ProofreadView extends StatelessWidget {
   final String ownerId;
   final Future<String> Function(Uint8List png, String name) upload;
 
+  Future<void> _compare(BuildContext context) async {
+    final l = context.l10n;
+    final vm = context.read<HskPaperProofreadViewModel>();
+    final picked = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['json'],
+      withData: true,
+    );
+    final bytes = picked?.files.firstOrNull?.bytes;
+    if (bytes == null || !context.mounted) return;
+    PaperMeasure measure;
+    try {
+      measure = PaperMeasure.compare(
+        vm.draft,
+        PaperTruth.parse(utf8.decode(bytes)),
+        seconds: vm.readSeconds.toDouble(),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l.paperCompareFailed('$e'))));
+      return;
+    }
+    debugPrint('paper reader measure: ${measure.summary()}');
+    final wrong = [
+      for (final c in measure.checks)
+        if (!c.right) '${c.flagged ? '' : '!'}${c.number} (${c.wrong.join(', ')})',
+    ];
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l.paperCompareTruth),
+        content: SingleChildScrollView(
+          child: Text([
+            l.paperCompareSummary(measure.right, measure.total, measure.flagged,
+                measure.wrongNotFlagged, vm.readSeconds),
+            if (wrong.isNotEmpty) l.paperCompareWrong(wrong.join(' · ')),
+          ].join('\n\n')),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l.commonOk)),
+        ],
+      ),
+    );
+  }
+
   Future<void> _save(BuildContext context) async {
     final l = context.l10n;
     final vm = context.read<HskPaperProofreadViewModel>();
@@ -210,8 +280,9 @@ class _ProofreadView extends StatelessWidget {
         upload: upload,
         pictureLabel: l.paperUploadingPicture,
       );
+      final record = vm.record();
       navigator.pop(HskProofreadResult(
-        items: items,
+        items: [for (final i in items) i.copyWith(paperRecord: record)],
         untouched: vm.draft.slots.length - vm.edited.length,
         total: vm.draft.slots.length,
         duration: DateTime.now().difference(vm.startedAt),
@@ -269,6 +340,15 @@ class _ProofreadView extends StatelessWidget {
         title: Text(l.paperProofreadTitle(
             draft.code.isEmpty ? '—' : draft.code)),
         actions: [
+          // Emulator builds only (Build 1C, Must 1): the reader measured
+          // against a truth file (the practice paper's, or a proofread
+          // worksheet saved with Download text).
+          if (BuildFlags.useEmulators)
+            IconButton(
+              onPressed: () => _compare(context),
+              icon: const Icon(Icons.rule_outlined),
+              tooltip: l.paperCompareTruth,
+            ),
           Padding(
             padding: const EdgeInsets.only(right: 12),
             child: FilledButton.icon(
@@ -543,6 +623,11 @@ class _SlotEditorState extends State<_SlotEditor> {
   String _doubtName(AppLocalizations l, String doubt) => switch (doubt) {
         HskSlot.doubtTones => l.paperFlagTones,
         HskSlot.doubtSplit => l.paperFlagSplit,
+        HskSlot.doubtGap => l.paperFlagGap,
+        HskSlot.doubtForm => l.paperFlagForm,
+        HskSlot.doubtMarks => l.paperFlagMarks,
+        HskSlot.doubtLevel => l.paperFlagLevel(
+            widget.slot.paperLevel ?? 0, widget.slot.unknownCharacters.join(' ')),
         _ => l.paperFlagGarbled,
       };
 
@@ -579,6 +664,7 @@ class _SlotEditorState extends State<_SlotEditor> {
     InputDecoration deco(String label, {String? helper}) => InputDecoration(
           labelText: label,
           helperText: helper,
+          helperMaxLines: 3,
           border: const OutlineInputBorder(),
           isDense: true,
         );
@@ -609,7 +695,10 @@ class _SlotEditorState extends State<_SlotEditor> {
                 ],
                 onChanged: (f) {
                   if (f == null) return;
-                  setState(() => s.form = f);
+                  setState(() {
+                    s.form = f;
+                    s.oddForm = false;
+                  });
                   _changed();
                 },
               ),
@@ -709,14 +798,84 @@ class _SlotEditorState extends State<_SlotEditor> {
                   helper: s.form == HskForm.pinyinChar ? l.paperPinyinHint : null,
                 ),
                 onChanged: (v) {
-                  s.keyword = v;
+                  // `guan1` → `guān` (Build 1C, Must 5).
+                  if (s.form == HskForm.pinyinChar &&
+                      RegExp(r'[a-zA-Zü:][0-5]').hasMatch(v)) {
+                    final marked = PinyinTones.fromNumbers(v);
+                    _keyword.value = TextEditingValue(
+                      text: marked,
+                      selection: TextSelection.collapsed(offset: marked.length),
+                    );
+                    v = marked;
+                  }
+                  setState(() => s.keyword = v);
                   _changed();
                 },
               ),
+              if (s.form == HskForm.pinyinChar &&
+                  PinyinTones.syllables(s.keyword).isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 6,
+                  children: [
+                    for (final (i, syl) in PinyinTones.syllables(s.keyword).indexed)
+                      _ToneButtons(
+                        syllable: syl,
+                        onTone: (tone) {
+                          final next = PinyinTones.setTone(s.keyword, i, tone);
+                          _keyword.text = next;
+                          setState(() => s.keyword = next);
+                          _changed();
+                        },
+                      ),
+                  ],
+                ),
+              ],
             ],
           ],
         ],
       ),
+    );
+  }
+}
+
+/// The four tones of one syllable as buttons (`ā á ǎ à`); the one in use is
+/// filled.
+class _ToneButtons extends StatelessWidget {
+  const _ToneButtons({required this.syllable, required this.onTone});
+
+  final String syllable;
+  final ValueChanged<int> onTone;
+
+  @override
+  Widget build(BuildContext context) {
+    final (base, current) = PinyinTones.split(syllable);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var t = 1; t <= 4; t++)
+          Padding(
+            padding: const EdgeInsets.only(right: 4),
+            child: t == current
+                ? FilledButton(
+                    onPressed: () => onTone(t),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(44, 36),
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                    ),
+                    child: Text(PinyinTones.mark(base, t)),
+                  )
+                : OutlinedButton(
+                    onPressed: () => onTone(t),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(44, 36),
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                    ),
+                    child: Text(PinyinTones.mark(base, t)),
+                  ),
+          ),
+      ],
     );
   }
 }

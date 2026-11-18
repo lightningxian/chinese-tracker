@@ -62,6 +62,8 @@ abstract final class HskPaperImport {
         slot.unsure = false;
       }
     }
+    // The block check again, now that the picture questions are known.
+    draft.markOddForms();
   }
 
   static Map<int, (int, int)> pageSizes(List<PaperPage> pages) =>

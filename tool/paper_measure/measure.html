@@ -1,0 +1,149 @@
+<!doctype html>
+<!--
+  Reads a paper PDF page by page with one engine and leaves the page texts
+  in window.results (docs/PLAN.md, Build 1C, Must 2). Driven by run.mjs in
+  headless Chrome: measure.html?engine=tess6&pdf=paper.pdf
+  The page drawing and the watermark rule are the reader's own
+  (1738 px wide, PaperImageOps.cleanToGray).
+-->
+<html><head><meta charset="utf-8"><title>paper measure</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+</head><body><pre id="log">starting</pre><canvas id="c" style="max-width:500px"></canvas>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const log = (s) => { document.getElementById('log').textContent += '\n' + s; };
+window.results = [];
+window.done = false;
+const RENDER_WIDTH = 1738;
+
+function cleanToGray(img) {
+  const d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const r = d[i], g = d[i + 1], b = d[i + 2];
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+    let v;
+    if (mx - mn > 28 && mx > 150) v = 255;
+    else {
+      const lum = Math.floor((299 * r + 587 * g + 114 * b) / 1000);
+      v = lum > 205 ? 255 : lum;
+    }
+    d[i] = d[i + 1] = d[i + 2] = v;
+  }
+}
+
+const isCjk = (s) => /[㐀-鿿　-〿＀-￯]/.test(s);
+
+// Candidate a: a line rebuilt from the positions of its characters. A gap
+// wider than a third of the line's character height, or a change between
+// Chinese and Latin, becomes a space; everything else is joined. So
+// `A 在家   B 在学校` keeps its letters apart and `桌 子    小 猫` becomes
+// `桌子 小猫`.
+function lineFromSymbols(symbols) {
+  const sy = symbols.filter((s) => s.text && s.text.trim());
+  if (!sy.length) return '';
+  const hs = sy.map((s) => s.bbox.y1 - s.bbox.y0).sort((a, b) => a - b);
+  const h = hs[Math.floor(hs.length / 2)] || 30;
+  let out = sy[0].text;
+  for (let i = 1; i < sy.length; i++) {
+    const a = sy[i - 1], b = sy[i];
+    const gap = b.bbox.x0 - a.bbox.x1;
+    const scriptChange = isCjk(a.text) !== isCjk(b.text);
+    out += (gap > h * 0.34 || (scriptChange && gap > h * 0.12)) ? ' ' + b.text : b.text;
+  }
+  return out;
+}
+
+function textFromBlocks(blocks) {
+  const lines = [];
+  for (const block of blocks || []) {
+    for (const par of block.paragraphs || []) {
+      for (const line of par.lines || []) {
+        const symbols = [];
+        for (const w of line.words || []) for (const s of w.symbols || []) symbols.push(s);
+        const t = lineFromSymbols(symbols);
+        if (t.trim()) lines.push({text: t, bbox: line.bbox});
+      }
+    }
+  }
+  return lines;
+}
+
+// Candidate c (the winner, Build 1C): the app's own engine file,
+// web/paper_ocr_paddle.js, with the model files of web/ocr/.
+async function loadPaddle() {
+  if (window.chineseTrackerPaperOcrPaddleCanvas) return;
+  window.chineseTrackerPaperOcrPaddleBase = new URL('/web/ocr/', location.href).href;
+  await new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = '/web/paper_ocr_paddle.js';
+    s.onload = resolve; s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+async function run() {
+  const params = new URLSearchParams(location.search);
+  const engine = params.get('engine') || 'tess6';
+  const lang = engine === 'tess6sim' ? 'chi_sim' : 'chi_sim+eng';
+  const doc = await pdfjsLib.getDocument(params.get('pdf') || 'paper.pdf').promise;
+  log(`engine ${engine}, pages ${doc.numPages}`);
+  const t00 = performance.now();
+  const worker = await Tesseract.createWorker(lang, 1);
+  const loadMs = Math.round(performance.now() - t00);
+  for (let p = 1; p <= doc.numPages; p++) {
+    const t0 = performance.now();
+    const page = await doc.getPage(p);
+    const vp0 = page.getViewport({scale: 1});
+    const vp = page.getViewport({scale: RENDER_WIDTH / vp0.width});
+    const c = document.getElementById('c');
+    c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+    const ctx = c.getContext('2d', {willReadFrequently: true});
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+    await page.render({canvasContext: ctx, viewport: vp}).promise;
+    const img = ctx.getImageData(0, 0, c.width, c.height);
+    cleanToGray(img);
+    ctx.putImageData(img, 0, 0);
+    let text = '';
+    if (engine === 'tess6' || engine === 'tess6sim') {
+      await worker.setParameters({tessedit_pageseg_mode: '6'});
+      text = (await worker.recognize(c)).data.text;
+    } else if (engine === 'boxes') {
+      await worker.setParameters({tessedit_pageseg_mode: '6'});
+      const r = await worker.recognize(c, {}, {blocks: true, text: true});
+      text = textFromBlocks(r.data.blocks).map((l) => l.text).join('\n');
+    } else if (engine === 'paddle') {
+      await loadPaddle();
+      text = await window.chineseTrackerPaperOcrPaddleCanvas(c);
+    } else if (engine === 'lines7') {
+      // Candidate b: the lines of a first pass, each cut out and read alone.
+      await worker.setParameters({tessedit_pageseg_mode: '6'});
+      const first = textFromBlocks((await worker.recognize(c, {}, {blocks: true})).data.blocks);
+      await worker.setParameters({tessedit_pageseg_mode: '7'});
+      const out = [];
+      const cut = document.createElement('canvas');
+      for (const l of first) {
+        const pad = 8;
+        const x0 = Math.max(0, l.bbox.x0 - pad), y0 = Math.max(0, l.bbox.y0 - pad);
+        const x1 = Math.min(c.width, l.bbox.x1 + pad), y1 = Math.min(c.height, l.bbox.y1 + pad);
+        cut.width = x1 - x0; cut.height = y1 - y0;
+        const g = cut.getContext('2d');
+        g.fillStyle = '#fff'; g.fillRect(0, 0, cut.width, cut.height);
+        g.drawImage(c, x0, y0, cut.width, cut.height, 0, 0, cut.width, cut.height);
+        const r = await worker.recognize(cut, {}, {blocks: true});
+        const t = textFromBlocks(r.data.blocks).map((x) => x.text).join(' ');
+        out.push(t.trim() ? t : l.text);
+      }
+      text = out.join('\n');
+    }
+    const ms = Math.round(performance.now() - t0);
+    window.results.push({page: p, ms, text});
+    log(`page ${p}: ${ms} ms`);
+  }
+  await worker.terminate();
+  window.meta = {engine, loadMs, totalMs: Math.round(performance.now() - t00)};
+  window.done = true;
+  log('done');
+}
+run().catch((e) => { log('ERR ' + e); window.done = 'error: ' + (e && e.stack || e); });
+</script></body></html>

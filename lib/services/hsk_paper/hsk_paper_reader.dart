@@ -57,9 +57,16 @@ class HskPaperReaderException implements Exception {
 /// mode 6 and the picture boxes found. Nothing leaves the computer.
 class HskPaperReader {
   HskPaperReader({PaperOcrEngine? engine})
-      : _engine = engine ?? const BrowserPaperOcrEngine();
+      : _engine = engine ?? BrowserPaperOcrEngine();
 
   final PaperOcrEngine _engine;
+
+  /// The engine that read the last page (`paddle`, `tesseract`), or empty
+  /// for a test engine (docs/PLAN.md, Build 1C).
+  String get engineUsed {
+    final e = _engine;
+    return e is BrowserPaperOcrEngine ? e.used : '';
+  }
 
   /// The page mode the reader always uses (one uniform block of text).
   static const pageMode = 6;

@@ -59,8 +59,9 @@ Future<String?> runHskPaperScan(
   ));
   final started = DateTime.now();
   List<PaperPage> pages;
+  final reader = HskPaperReader();
   try {
-    pages = await HskPaperReader().readPdf(
+    pages = await reader.readPdf(
       bytes,
       onProgress: (fraction, page, count) {
         progress.value = WorksheetImportStage.reading(
@@ -79,7 +80,8 @@ Future<String?> runHskPaperScan(
     return null;
   }
   final readSeconds = DateTime.now().difference(started).inSeconds;
-  debugPrint('HSK paper reader: ${pages.length} pages in $readSeconds s');
+  debugPrint('HSK paper reader: ${pages.length} pages in $readSeconds s '
+      '(${reader.engineUsed})');
   if (!context.mounted) return null;
   Navigator.of(context, rootNavigator: true).pop();
 
@@ -96,6 +98,8 @@ Future<String?> runHskPaperScan(
     draft: draft,
     pdfBytes: bytes,
     fileName: file.name,
+    readSeconds: readSeconds,
+    engine: reader.engineUsed,
   );
   final result = await Navigator.of(context).push<HskProofreadResult>(
     MaterialPageRoute(

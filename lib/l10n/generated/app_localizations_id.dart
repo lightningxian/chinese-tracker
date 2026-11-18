@@ -4513,7 +4513,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get worksheetTimingNote =>
-      'PDF teks dan file Word butuh beberapa detik. Halaman hasil pindai dan foto butuh 20–40 detik per halaman; pindaian pertama juga mengunduh data OCR Mandarin (sekitar 15 MB).';
+      'PDF teks dan file Word butuh beberapa detik. Halaman hasil pindai dan foto butuh 20–40 detik per halaman (Pindai kertas soal: sekitar 5); pindaian pertama juga mengunduh data OCR Mandarin (sekitar 15 MB; sekitar 45 MB untuk Pindai kertas soal).';
 
   @override
   String worksheetElapsed(String time) {
@@ -6013,7 +6013,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get paperPinyinHint =>
-      'Pembaca tidak membaca tanda nada: ketik (mis. cháng).';
+      'Ketuk nada setiap suku kata, atau ketik angkanya (guan1 menjadi guān).';
 
   @override
   String get paperKeyword => 'Kata yang dipakai';
@@ -6071,6 +6071,20 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get paperFlagGarbled => 'pilihan tampak salah baca';
+
+  @override
+  String get paperFlagGap => 'tidak ada tempat kosong untuk pinyin';
+
+  @override
+  String get paperFlagForm => 'bentuk berbeda dari bloknya';
+
+  @override
+  String get paperFlagMarks => 'tanda nyasar';
+
+  @override
+  String paperFlagLevel(int level, String characters) {
+    return 'di atas HSK $level: $characters';
+  }
 
   @override
   String get paperFlagTones => 'ketik tanda nada';
@@ -6262,5 +6276,51 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String testsMarkedPoints(String points, String max) {
     return 'Guru memberi $points dari $max poin';
+  }
+
+  @override
+  String get bankSheetDownloadText => 'Unduh teks';
+
+  @override
+  String bankSheetTextDownloaded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count soal disimpan sebagai file kebenaran.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get paperRecordTitle => 'Catatan pemeriksaan';
+
+  @override
+  String paperRecordLine(
+      int slots, int flagged, int changed, int untouched, String minutes) {
+    return '$slots soal · $flagged ditandai pembaca · $changed diubah admin ($untouched tetap seperti terbaca) · $minutes menit pemeriksaan';
+  }
+
+  @override
+  String paperRecordRead(String engine, int seconds) {
+    return 'Dibaca oleh $engine dalam $seconds dtk';
+  }
+
+  @override
+  String get paperCompareTruth => 'Bandingkan dengan file kebenaran';
+
+  @override
+  String paperCompareSummary(
+      int right, int total, int flagged, int wrongNotFlagged, int seconds) {
+    return '$right dari $total benar seperti terbaca · $flagged ditandai · $wrongNotFlagged salah tanpa tanda · dibaca dalam $seconds dtk';
+  }
+
+  @override
+  String paperCompareWrong(String numbers) {
+    return 'Tidak benar seperti terbaca (! = tanpa tanda): $numbers';
+  }
+
+  @override
+  String paperCompareFailed(String error) {
+    return 'Tidak dapat membandingkan: $error';
   }
 }

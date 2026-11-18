@@ -13,6 +13,22 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-18 — Claude (BUILD chat, PC): Build 1C reader accuracy
+
+- Wrote `docs/LIVE_TEST_BUILD_2A.md` (26 steps for the owner on live).
+- Built Build 1C (`docs/PLAN.md` §4, report in §6): a practice HSK 3 paper
+  from our own sentences with a truth file, measuring tools, and PaddleOCR
+  (PP-OCRv5) in the browser as the reader's engine: 79 of 80 right as read
+  on the practice paper in the measure, 78 in the app, against 37 before.
+  Owner approved the downloads (onnxruntime-web, the model, the HSK lists)
+  and shipping the model on hosting.
+- Also: level and stray-mark flags, tone buttons, proofreading record,
+  Download text, a picture-box fix, test marking items for the student's
+  own teacher, indexes file equal to live.
+- Proof: analyzer 17 infos; `flutter test` 118 (+2 with files); rules 57 + 1
+  skipped; node tests; flow 32/32.
+- Deploy: hosting from the PC; functions (Must 8) wait for the owner's go.
+
 ### 2026-11-17 — Claude (BUILD chat, PC): Builds 1B and 2A backend deployed
 
 - The owner signed in to the Firebase CLI on the PC and asked the BUILD chat

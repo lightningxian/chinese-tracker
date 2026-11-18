@@ -71,6 +71,9 @@ if [[ "$MODE" != "--web-only" ]]; then
   APK_DEFINE=(--dart-define=ANDROID_APK_URL="$APK_URL")
 fi
 
+# The paper reader's PaddleOCR files (web/ocr/, not in git; Build 1C).
+echo "▶ Paper reader files…"
+node scripts/fetch_paper_ocr.mjs
 echo "▶ Building web…"
 rm -rf build/web
 flutter build web --release \

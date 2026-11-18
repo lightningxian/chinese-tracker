@@ -29,6 +29,7 @@ const USERS = {
   admin1: { role: "admin", email: "admin@test", name: "Admin", active: true },
   teacher1: { role: "teacher", email: "t1@test", name: "Guru Satu", active: true },
   teacher2: { role: "teacher", email: "t2@test", name: "Guru Nonaktif", active: false },
+  teacher3: { role: "teacher", email: "t3@test", name: "Guru Tiga", active: true },
   student1: { role: "student", email: "s1@test", name: "Murid", active: true, teacherId: "teacher1", level: "HSK 1", termSize: 8 },
   parent1: { role: "parent", email: "p1@test", name: "Orang Tua", active: true, studentIds: ["student1"], teacherIds: ["teacher1"] },
 };
@@ -513,6 +514,20 @@ describe("marking queue (Build 2A)", () => {
       where("status", "==", "open"))));
     await assertSucceeds(getDoc(doc(as("admin1"), "marking_items", "m_other")));
     await assertFails(getDoc(doc(as("teacher2"), "marking_items", "m_t1")));
+  });
+
+  it("Build 1C: a test item is read by the session's teacher and the student's own teacher", async () => {
+    await seed();
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "marking_items", "m_both"),
+        item(["teacher3", "teacher1"]));
+    });
+    // teacher3 opened the session, teacher1 is the student's own teacher.
+    await assertSucceeds(getDoc(doc(as("teacher3"), "marking_items", "m_both")));
+    await assertSucceeds(getDoc(doc(as("teacher1"), "marking_items", "m_both")));
+    await assertSucceeds(getDocs(query(collection(as("teacher1"), "marking_items"),
+      where("teacherIds", "array-contains", "teacher1"), where("status", "==", "open"))));
+    await assertFails(getDoc(doc(as("teacher3"), "marking_items", "m_t1")));
   });
 
   it("nobody writes a mark from the app (markAnswer does)", async () => {

@@ -39,4 +39,12 @@ const r = mk.markPoints(queue[1].data, {rubric: {grammar: 30, vocabulary: 99, co
 assert.deepEqual(r.rubric, {grammar: 30, vocabulary: 30, content: 20});
 assert.equal(r.points, 8);
 
+// Build 1C Must 8: who sees an item. A test names the session's teacher
+// and the student's own teacher; a package its owner and the student's
+// teacher. Empty and repeated ids are dropped.
+assert.deepEqual(mk.teacherIdsFor("opener", "ownTeacher"), ["opener", "ownTeacher"]);
+assert.deepEqual(mk.teacherIdsFor("same", "same"), ["same"]);
+assert.deepEqual(mk.teacherIdsFor("opener", undefined), ["opener"]);
+assert.deepEqual(mk.teacherIdsFor("", null, " t2 "), ["t2"]);
+
 console.log("marking: all checks passed");

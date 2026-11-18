@@ -102,4 +102,16 @@ function markPoints(item, input) {
   return {points: Number(item.machinePoints) || 0, rubric: null};
 }
 
-module.exports = {RUBRIC, answerText, queueItems, keywordsIn, markPoints};
+/**
+ * The teachers who see a marking item: for a package its owner and the
+ * student's own teacher, for a test the teacher who opened the session and
+ * the student's own teacher (Build 1C Must 8). Empty and repeated ids are
+ * dropped; the order is kept.
+ * @param {...*} ids
+ * @return {Array<string>}
+ */
+function teacherIdsFor(...ids) {
+  return [...new Set(ids.map((x) => String(x || "").trim()).filter((x) => x))];
+}
+
+module.exports = {RUBRIC, answerText, queueItems, keywordsIn, markPoints, teacherIdsFor};

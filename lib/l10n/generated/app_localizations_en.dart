@@ -4526,7 +4526,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get worksheetTimingNote =>
-      'Text PDFs and Word files take a few seconds. Scanned pages and photos take 20–40 seconds each; the first scan also downloads the Chinese OCR data (about 15 MB).';
+      'Text PDFs and Word files take a few seconds. Scanned pages and photos take 20–40 seconds each (Scan paper: about 5); the first scan also downloads the Chinese OCR data (about 15 MB; about 45 MB for Scan paper).';
 
   @override
   String worksheetElapsed(String time) {
@@ -6039,7 +6039,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get paperPinyinHint =>
-      'The reader drops tone marks: type them (e.g. cháng).';
+      'Tap the tone of each syllable, or type the number after it (guan1 becomes guān).';
 
   @override
   String get paperKeyword => 'Word to use';
@@ -6097,6 +6097,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get paperFlagGarbled => 'a choice looks misread';
+
+  @override
+  String get paperFlagGap => 'no gap for the pinyin';
+
+  @override
+  String get paperFlagForm => 'form differs from its block';
+
+  @override
+  String get paperFlagMarks => 'stray marks';
+
+  @override
+  String paperFlagLevel(int level, String characters) {
+    return 'above HSK $level: $characters';
+  }
 
   @override
   String get paperFlagTones => 'type the tone marks';
@@ -6288,5 +6302,52 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String testsMarkedPoints(String points, String max) {
     return 'Your teacher gave $points of $max points';
+  }
+
+  @override
+  String get bankSheetDownloadText => 'Download text';
+
+  @override
+  String bankSheetTextDownloaded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count questions saved as a truth file.',
+      one: '1 question saved as a truth file.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get paperRecordTitle => 'Proofreading record';
+
+  @override
+  String paperRecordLine(
+      int slots, int flagged, int changed, int untouched, String minutes) {
+    return '$slots questions · $flagged flagged by the reader · $changed changed by the admin ($untouched kept as read) · $minutes min proofreading';
+  }
+
+  @override
+  String paperRecordRead(String engine, int seconds) {
+    return 'Read by $engine in $seconds s';
+  }
+
+  @override
+  String get paperCompareTruth => 'Compare with a truth file';
+
+  @override
+  String paperCompareSummary(
+      int right, int total, int flagged, int wrongNotFlagged, int seconds) {
+    return '$right of $total right as read · $flagged flagged · $wrongNotFlagged wrong and not flagged · read in $seconds s';
+  }
+
+  @override
+  String paperCompareWrong(String numbers) {
+    return 'Not right as read (! = not flagged): $numbers';
+  }
+
+  @override
+  String paperCompareFailed(String error) {
+    return 'Could not compare: $error';
   }
 }

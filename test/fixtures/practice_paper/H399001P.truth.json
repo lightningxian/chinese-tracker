@@ -1,0 +1,1096 @@
+{
+  "code": "H399001P",
+  "level": 3,
+  "source": "practice paper (tool/practice_paper)",
+  "questions": [
+    {
+      "prompt": "",
+      "options": [],
+      "segments": [],
+      "keyword": "",
+      "number": 1,
+      "skill": "listening",
+      "section": "一、听力 · 第一部分 · 第1-5题",
+      "form": "picture_choice",
+      "pictures": 6
+    },
+    {
+      "prompt": "",
+      "options": [],
+      "segments": [],
+      "keyword": "",
+      "number": 2,
+      "skill": "listening",
+      "section": "一、听力 · 第一部分 · 第1-5题",
+      "form": "picture_choice",
+      "pictures": 6
+    },
+    {
+      "prompt": "",
+      "options": [],
+      "segments": [],
+      "keyword": "",
+      "number": 3,
+      "skill": "listening",
+      "section": "一、听力 · 第一部分 · 第1-5题",
+      "form": "picture_choice",
+      "pictures": 6
+    },
+    {
+      "prompt": "",
+      "options": [],
+      "segments": [],
+      "keyword": "",
+      "number": 4,
+      "skill": "listening",
+      "section": "一、听力 · 第一部分 · 第1-5题",
+      "form": "picture_choice",
+      "pictures": 6
+    },
+    {
+      "prompt": "",
+      "options": [],
+      "segments": [],
+      "keyword": "",
+      "number": 5,
+      "skill": "listening",
+      "section": "一、听力 · 第一部分 · 第1-5题",
+      "form": "picture_choice",
+      "pictures": 6
+    },
+    {
+      "prompt": "",
+      "options": [],
+      "segments": [],
+      "keyword": "",
+      "number": 6,
+      "skill": "listening",
+      "section": "一、听力 · 第一部分 · 第6-10题",
+      "form": "picture_choice",
+      "pictures": 5
+    },
+    {
+      "prompt": "",
+      "options": [],
+      "segments": [],
+      "keyword": "",
+      "number": 7,
+      "skill": "listening",
+      "section": "一、听力 · 第一部分 · 第6-10题",
+      "form": "picture_choice",
+      "pictures": 5
+    },
+    {
+      "prompt": "",
+      "options": [],
+      "segments": [],
+      "keyword": "",
+      "number": 8,
+      "skill": "listening",
+      "section": "一、听力 · 第一部分 · 第6-10题",
+      "form": "picture_choice",
+      "pictures": 5
+    },
+    {
+      "prompt": "",
+      "options": [],
+      "segments": [],
+      "keyword": "",
+      "number": 9,
+      "skill": "listening",
+      "section": "一、听力 · 第一部分 · 第6-10题",
+      "form": "picture_choice",
+      "pictures": 5
+    },
+    {
+      "prompt": "",
+      "options": [],
+      "segments": [],
+      "keyword": "",
+      "number": 10,
+      "skill": "listening",
+      "section": "一、听力 · 第一部分 · 第6-10题",
+      "form": "picture_choice",
+      "pictures": 5
+    },
+    {
+      "prompt": "★ 他今天没去上班。",
+      "options": [],
+      "segments": [],
+      "keyword": "",
+      "number": 11,
+      "skill": "listening",
+      "section": "一、听力 · 第二部分 · 第11-20题",
+      "form": "true_false"
+    },
+    {
+      "prompt": "★ 那家饭馆的菜很便宜。",
+      "options": [],
+      "segments": [],
+      "keyword": "",
+      "number": 12,
+      "skill": "listening",
+      "section": "一、听力 · 第二部分 · 第11-20题",
+      "form": "true_false"
+    },
+    {
+      "prompt": "★ 妹妹喜欢画画儿。",
+      "options": [],
+      "segments": [],
+      "keyword": "",
+      "number": 13,
+      "skill": "listening",
+      "section": "一、听力 · 第二部分 · 第11-20题",
+      "form": "true_false"
+    },
+    {
+      "prompt": "★ 他们下个月去旅游。",
+      "options": [],
+      "segments": [],
+      "keyword": "",
+      "number": 14,
+      "skill": "listening",
+      "section": "一、听力 · 第二部分 · 第11-20题",
+      "form": "true_false"
+    },
+    {
+      "prompt": "★ 小王的电脑坏了。",
+      "options": [],
+      "segments": [],
+      "keyword": "",
+      "number": 15,
+      "skill": "listening",
+      "section": "一、听力 · 第二部分 · 第11-20题",
+      "form": "true_false"
+    },
+    {
+      "prompt": "★ 这本书是爸爸买的。",
+      "options": [],
+      "segments": [],
+      "keyword": "",
+      "number": 16,
+      "skill": "listening",
+      "section": "一、听力 · 第二部分 · 第11-20题",
+      "form": "true_false"
+    },
+    {
+      "prompt": "★ 今天的天气比昨天冷。",
+      "options": [],
+      "segments": [],
+      "keyword": "",
+      "number": 17,
+      "skill": "listening",
+      "section": "一、听力 · 第二部分 · 第11-20题",
+      "form": "true_false"
+    },
+    {
+      "prompt": "★ 她每天骑自行车上学。",
+      "options": [],
+      "segments": [],
+      "keyword": "",
+      "number": 18,
+      "skill": "listening",
+      "section": "一、听力 · 第二部分 · 第11-20题",
+      "form": "true_false"
+    },
+    {
+      "prompt": "★ 会议已经结束了。",
+      "options": [],
+      "segments": [],
+      "keyword": "",
+      "number": 19,
+      "skill": "listening",
+      "section": "一、听力 · 第二部分 · 第11-20题",
+      "form": "true_false"
+    },
+    {
+      "prompt": "★ 他打算明年学开车。",
+      "options": [],
+      "segments": [],
+      "keyword": "",
+      "number": 20,
+      "skill": "listening",
+      "section": "一、听力 · 第二部分 · 第11-20题",
+      "form": "true_false"
+    },
+    {
+      "prompt": "",
+      "options": [
+        "在家",
+        "在学校",
+        "在医院"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 21,
+      "skill": "listening",
+      "section": "一、听力 · 第三部分 · 第21-30题",
+      "form": "choice"
+    },
+    {
+      "prompt": "",
+      "options": [
+        "八点",
+        "九点半",
+        "十点"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 22,
+      "skill": "listening",
+      "section": "一、听力 · 第三部分 · 第21-30题",
+      "form": "choice"
+    },
+    {
+      "prompt": "",
+      "options": [
+        "很高兴",
+        "很生气",
+        "很累"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 23,
+      "skill": "listening",
+      "section": "一、听力 · 第三部分 · 第21-30题",
+      "form": "choice"
+    },
+    {
+      "prompt": "",
+      "options": [
+        "坐公共汽车",
+        "打车",
+        "走路"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 24,
+      "skill": "listening",
+      "section": "一、听力 · 第三部分 · 第21-30题",
+      "form": "choice"
+    },
+    {
+      "prompt": "",
+      "options": [
+        "一百块",
+        "两百块",
+        "三百块"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 25,
+      "skill": "listening",
+      "section": "一、听力 · 第三部分 · 第21-30题",
+      "form": "choice"
+    },
+    {
+      "prompt": "",
+      "options": [
+        "银行",
+        "超市",
+        "图书馆"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 26,
+      "skill": "listening",
+      "section": "一、听力 · 第三部分 · 第21-30题",
+      "form": "choice"
+    },
+    {
+      "prompt": "",
+      "options": [
+        "同学",
+        "邻居",
+        "老师"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 27,
+      "skill": "listening",
+      "section": "一、听力 · 第三部分 · 第21-30题",
+      "form": "choice"
+    },
+    {
+      "prompt": "",
+      "options": [
+        "喝咖啡",
+        "看电影",
+        "去游泳"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 28,
+      "skill": "listening",
+      "section": "一、听力 · 第三部分 · 第21-30题",
+      "form": "choice"
+    },
+    {
+      "prompt": "",
+      "options": [
+        "星期一",
+        "星期三",
+        "星期五"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 29,
+      "skill": "listening",
+      "section": "一、听力 · 第三部分 · 第21-30题",
+      "form": "choice"
+    },
+    {
+      "prompt": "",
+      "options": [
+        "头疼",
+        "发烧",
+        "感冒了"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 30,
+      "skill": "listening",
+      "section": "一、听力 · 第三部分 · 第21-30题",
+      "form": "choice"
+    },
+    {
+      "prompt": "",
+      "options": [
+        "买衣服",
+        "买水果",
+        "买鞋"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 31,
+      "skill": "listening",
+      "section": "一、听力 · 第四部分 · 第31-40题",
+      "form": "choice"
+    },
+    {
+      "prompt": "",
+      "options": [
+        "他太忙了",
+        "他生病了",
+        "他忘了"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 32,
+      "skill": "listening",
+      "section": "一、听力 · 第四部分 · 第31-40题",
+      "form": "choice"
+    },
+    {
+      "prompt": "",
+      "options": [
+        "公园",
+        "机场",
+        "火车站"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 33,
+      "skill": "listening",
+      "section": "一、听力 · 第四部分 · 第31-40题",
+      "form": "choice"
+    },
+    {
+      "prompt": "",
+      "options": [
+        "红色",
+        "蓝色",
+        "黄色"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 34,
+      "skill": "listening",
+      "section": "一、听力 · 第四部分 · 第31-40题",
+      "form": "choice"
+    },
+    {
+      "prompt": "",
+      "options": [
+        "妈妈",
+        "姐姐",
+        "奶奶"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 35,
+      "skill": "listening",
+      "section": "一、听力 · 第四部分 · 第31-40题",
+      "form": "choice"
+    },
+    {
+      "prompt": "",
+      "options": [
+        "去北京",
+        "去上海",
+        "回家"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 36,
+      "skill": "listening",
+      "section": "一、听力 · 第四部分 · 第31-40题",
+      "form": "choice"
+    },
+    {
+      "prompt": "",
+      "options": [
+        "太远了",
+        "太贵了",
+        "太小了"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 37,
+      "skill": "listening",
+      "section": "一、听力 · 第四部分 · 第31-40题",
+      "form": "choice"
+    },
+    {
+      "prompt": "",
+      "options": [
+        "跳舞",
+        "唱歌",
+        "踢足球"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 38,
+      "skill": "listening",
+      "section": "一、听力 · 第四部分 · 第31-40题",
+      "form": "choice"
+    },
+    {
+      "prompt": "",
+      "options": [
+        "半个小时",
+        "一个小时",
+        "两个小时"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 39,
+      "skill": "listening",
+      "section": "一、听力 · 第四部分 · 第31-40题",
+      "form": "choice"
+    },
+    {
+      "prompt": "",
+      "options": [
+        "洗衣服",
+        "做饭",
+        "打扫房间"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 40,
+      "skill": "listening",
+      "section": "一、听力 · 第四部分 · 第31-40题",
+      "form": "choice"
+    },
+    {
+      "prompt": "那你试试小一点儿的吧。",
+      "options": [
+        "你别着急，我们还有十分钟。",
+        "这个周末我想去爬山，你一起去吗？",
+        "我觉得这件衣服有点儿大。",
+        "他是我的中学同学，我们认识十年了。",
+        "当然可以，你先坐一下。",
+        "我已经吃过了，你们吃吧。"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 41,
+      "skill": "reading",
+      "section": "二、阅读 · 第一部分 · 第41-45题",
+      "form": "matching"
+    },
+    {
+      "prompt": "好啊，我们几点出发？",
+      "options": [
+        "你别着急，我们还有十分钟。",
+        "这个周末我想去爬山，你一起去吗？",
+        "我觉得这件衣服有点儿大。",
+        "他是我的中学同学，我们认识十年了。",
+        "当然可以，你先坐一下。",
+        "我已经吃过了，你们吃吧。"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 42,
+      "skill": "reading",
+      "section": "二、阅读 · 第一部分 · 第41-45题",
+      "form": "matching"
+    },
+    {
+      "prompt": "快点儿吧，电影马上就要开始了。",
+      "options": [
+        "你别着急，我们还有十分钟。",
+        "这个周末我想去爬山，你一起去吗？",
+        "我觉得这件衣服有点儿大。",
+        "他是我的中学同学，我们认识十年了。",
+        "当然可以，你先坐一下。",
+        "我已经吃过了，你们吃吧。"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 43,
+      "skill": "reading",
+      "section": "二、阅读 · 第一部分 · 第41-45题",
+      "form": "matching"
+    },
+    {
+      "prompt": "晚饭好了，快过来吃吧。",
+      "options": [
+        "你别着急，我们还有十分钟。",
+        "这个周末我想去爬山，你一起去吗？",
+        "我觉得这件衣服有点儿大。",
+        "他是我的中学同学，我们认识十年了。",
+        "当然可以，你先坐一下。",
+        "我已经吃过了，你们吃吧。"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 44,
+      "skill": "reading",
+      "section": "二、阅读 · 第一部分 · 第41-45题",
+      "form": "matching"
+    },
+    {
+      "prompt": "你们两个人是怎么认识的？",
+      "options": [
+        "你别着急，我们还有十分钟。",
+        "这个周末我想去爬山，你一起去吗？",
+        "我觉得这件衣服有点儿大。",
+        "他是我的中学同学，我们认识十年了。",
+        "当然可以，你先坐一下。",
+        "我已经吃过了，你们吃吧。"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 45,
+      "skill": "reading",
+      "section": "二、阅读 · 第一部分 · 第41-45题",
+      "form": "matching"
+    },
+    {
+      "prompt": "谢谢，我每天都练习。",
+      "options": [
+        "我的手机找不到了。",
+        "明天会下大雨。",
+        "这里的东西又好吃又便宜。",
+        "你的汉语说得越来越好了。",
+        "我们班有二十个学生。"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 46,
+      "skill": "reading",
+      "section": "二、阅读 · 第一部分 · 第46-50题",
+      "form": "matching"
+    },
+    {
+      "prompt": "那我们别去公园了。",
+      "options": [
+        "我的手机找不到了。",
+        "明天会下大雨。",
+        "这里的东西又好吃又便宜。",
+        "你的汉语说得越来越好了。",
+        "我们班有二十个学生。"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 47,
+      "skill": "reading",
+      "section": "二、阅读 · 第一部分 · 第46-50题",
+      "form": "matching"
+    },
+    {
+      "prompt": "你再找找，是不是在书包里？",
+      "options": [
+        "我的手机找不到了。",
+        "明天会下大雨。",
+        "这里的东西又好吃又便宜。",
+        "你的汉语说得越来越好了。",
+        "我们班有二十个学生。"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 48,
+      "skill": "reading",
+      "section": "二、阅读 · 第一部分 · 第46-50题",
+      "form": "matching"
+    },
+    {
+      "prompt": "难怪这家店的客人这么多。",
+      "options": [
+        "我的手机找不到了。",
+        "明天会下大雨。",
+        "这里的东西又好吃又便宜。",
+        "你的汉语说得越来越好了。",
+        "我们班有二十个学生。"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 49,
+      "skill": "reading",
+      "section": "二、阅读 · 第一部分 · 第46-50题",
+      "form": "matching"
+    },
+    {
+      "prompt": "其中有一半是女生。",
+      "options": [
+        "我的手机找不到了。",
+        "明天会下大雨。",
+        "这里的东西又好吃又便宜。",
+        "你的汉语说得越来越好了。",
+        "我们班有二十个学生。"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 50,
+      "skill": "reading",
+      "section": "二、阅读 · 第一部分 · 第46-50题",
+      "form": "matching"
+    },
+    {
+      "prompt": "这道题很（ ），我一分钟就做完了。",
+      "options": [
+        "地方",
+        "突然",
+        "认真",
+        "健康",
+        "声音",
+        "简单"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 51,
+      "skill": "reading",
+      "section": "二、阅读 · 第二部分 · 第51-55题",
+      "form": "cloze"
+    },
+    {
+      "prompt": "他学习非常（ ），每天都复习。",
+      "options": [
+        "地方",
+        "突然",
+        "认真",
+        "健康",
+        "声音",
+        "简单"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 52,
+      "skill": "reading",
+      "section": "二、阅读 · 第二部分 · 第51-55题",
+      "form": "cloze"
+    },
+    {
+      "prompt": "你知道附近有什么好玩的（ ）吗？",
+      "options": [
+        "地方",
+        "突然",
+        "认真",
+        "健康",
+        "声音",
+        "简单"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 53,
+      "skill": "reading",
+      "section": "二、阅读 · 第二部分 · 第51-55题",
+      "form": "cloze"
+    },
+    {
+      "prompt": "我正在看书，（ ）停电了。",
+      "options": [
+        "地方",
+        "突然",
+        "认真",
+        "健康",
+        "声音",
+        "简单"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 54,
+      "skill": "reading",
+      "section": "二、阅读 · 第二部分 · 第51-55题",
+      "form": "cloze"
+    },
+    {
+      "prompt": "多运动对（ ）有好处。",
+      "options": [
+        "地方",
+        "突然",
+        "认真",
+        "健康",
+        "声音",
+        "简单"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 55,
+      "skill": "reading",
+      "section": "二、阅读 · 第二部分 · 第51-55题",
+      "form": "cloze"
+    },
+    {
+      "prompt": "A：你听（ ）了吗？B：没有，请你再说一遍。",
+      "options": [
+        "留学",
+        "照顾",
+        "清楚",
+        "结婚",
+        "决定",
+        "方便"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 56,
+      "skill": "reading",
+      "section": "二、阅读 · 第二部分 · 第56-60题",
+      "form": "cloze"
+    },
+    {
+      "prompt": "A：我们坐地铁去吧，很（ ）。B：好的，我们走吧。",
+      "options": [
+        "留学",
+        "照顾",
+        "清楚",
+        "结婚",
+        "决定",
+        "方便"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 57,
+      "skill": "reading",
+      "section": "二、阅读 · 第二部分 · 第56-60题",
+      "form": "cloze"
+    },
+    {
+      "prompt": "A：你哥哥明年去哪儿（ ）？B：他想去中国。",
+      "options": [
+        "留学",
+        "照顾",
+        "清楚",
+        "结婚",
+        "决定",
+        "方便"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 58,
+      "skill": "reading",
+      "section": "二、阅读 · 第二部分 · 第56-60题",
+      "form": "cloze"
+    },
+    {
+      "prompt": "A：你出去玩的时候，谁（ ）你的小狗？B：我的邻居。",
+      "options": [
+        "留学",
+        "照顾",
+        "清楚",
+        "结婚",
+        "决定",
+        "方便"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 59,
+      "skill": "reading",
+      "section": "二、阅读 · 第二部分 · 第56-60题",
+      "form": "cloze"
+    },
+    {
+      "prompt": "A：他们什么时候（ ）？B：听说是十月。",
+      "options": [
+        "留学",
+        "照顾",
+        "清楚",
+        "结婚",
+        "决定",
+        "方便"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 60,
+      "skill": "reading",
+      "section": "二、阅读 · 第二部分 · 第56-60题",
+      "form": "cloze"
+    },
+    {
+      "prompt": "我家离公司不远，每天走路去上班，只要十五分钟。\n★ 他怎么去上班？",
+      "options": [
+        "走路",
+        "坐车",
+        "骑车"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 61,
+      "skill": "reading",
+      "section": "二、阅读 · 第三部分 · 第61-70题",
+      "form": "choice"
+    },
+    {
+      "prompt": "今天是妈妈的生日，我和姐姐准备给她做一个蛋糕。\n★ 他们要做什么？",
+      "options": [
+        "买花",
+        "做蛋糕",
+        "唱歌"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 62,
+      "skill": "reading",
+      "section": "二、阅读 · 第三部分 · 第61-70题",
+      "form": "choice"
+    },
+    {
+      "prompt": "小李上个星期感冒了，没来上课，今天他终于来了。\n★ 小李上个星期怎么了？",
+      "options": [
+        "去旅游了",
+        "感冒了",
+        "搬家了"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 63,
+      "skill": "reading",
+      "section": "二、阅读 · 第三部分 · 第61-70题",
+      "form": "choice"
+    },
+    {
+      "prompt": "这家商店周末人很多，所以我一般星期二去买东西。\n★ 他一般什么时候去买东西？",
+      "options": [
+        "星期二",
+        "星期六",
+        "星期天"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 64,
+      "skill": "reading",
+      "section": "二、阅读 · 第三部分 · 第61-70题",
+      "form": "choice"
+    },
+    {
+      "prompt": "我弟弟很喜欢动物，他家里有两只猫和一只狗。\n★ 弟弟家有几只猫？",
+      "options": [
+        "一只",
+        "两只",
+        "三只"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 65,
+      "skill": "reading",
+      "section": "二、阅读 · 第三部分 · 第61-70题",
+      "form": "choice"
+    },
+    {
+      "prompt": "学好一门外语需要时间，每天听一听、说一说，慢慢就会进步。\n★ 学外语要注意什么？",
+      "options": [
+        "每天练习",
+        "只看书",
+        "多休息"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 66,
+      "skill": "reading",
+      "section": "二、阅读 · 第三部分 · 第61-70题",
+      "form": "choice"
+    },
+    {
+      "prompt": "王老师教我们数学，她上课很有意思，同学们都很喜欢她。\n★ 王老师教什么？",
+      "options": [
+        "历史",
+        "数学",
+        "音乐"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 67,
+      "skill": "reading",
+      "section": "二、阅读 · 第三部分 · 第61-70题",
+      "form": "choice"
+    },
+    {
+      "prompt": "冬天快到了，天气越来越冷，出门的时候要多穿点儿衣服。\n★ 现在可能是什么季节？",
+      "options": [
+        "春天",
+        "夏天",
+        "秋天"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 68,
+      "skill": "reading",
+      "section": "二、阅读 · 第三部分 · 第61-70题",
+      "form": "choice"
+    },
+    {
+      "prompt": "我昨天晚上睡得太晚了，今天早上差点儿迟到。\n★ 他今天早上怎么了？",
+      "options": [
+        "迟到了",
+        "差点儿迟到",
+        "没起床"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 69,
+      "skill": "reading",
+      "section": "二、阅读 · 第三部分 · 第61-70题",
+      "form": "choice"
+    },
+    {
+      "prompt": "这个房间又干净又安静，离地铁站也很近，就是有点儿小。\n★ 这个房间有什么问题？",
+      "options": [
+        "不干净",
+        "太吵",
+        "有点儿小"
+      ],
+      "segments": [],
+      "keyword": "",
+      "number": 70,
+      "skill": "reading",
+      "section": "二、阅读 · 第三部分 · 第61-70题",
+      "form": "choice"
+    },
+    {
+      "prompt": "",
+      "options": [],
+      "segments": [
+        "桌子",
+        "小猫",
+        "下面",
+        "在"
+      ],
+      "keyword": "",
+      "number": 71,
+      "skill": "writing",
+      "section": "三、书写 · 第一部分 · 第71-75题",
+      "form": "reorder"
+    },
+    {
+      "prompt": "",
+      "options": [],
+      "segments": [
+        "作业",
+        "写完了",
+        "我",
+        "把"
+      ],
+      "keyword": "",
+      "number": 72,
+      "skill": "writing",
+      "section": "三、书写 · 第一部分 · 第71-75题",
+      "form": "reorder"
+    },
+    {
+      "prompt": "",
+      "options": [],
+      "segments": [
+        "一点儿",
+        "比",
+        "高",
+        "我",
+        "他"
+      ],
+      "keyword": "",
+      "number": 73,
+      "skill": "writing",
+      "section": "三、书写 · 第一部分 · 第71-75题",
+      "form": "reorder"
+    },
+    {
+      "prompt": "",
+      "options": [],
+      "segments": [
+        "有意思",
+        "这本书",
+        "非常"
+      ],
+      "keyword": "",
+      "number": 74,
+      "skill": "writing",
+      "section": "三、书写 · 第一部分 · 第71-75题",
+      "form": "reorder"
+    },
+    {
+      "prompt": "",
+      "options": [],
+      "segments": [
+        "窗户",
+        "关上",
+        "请你"
+      ],
+      "keyword": "",
+      "number": 75,
+      "skill": "writing",
+      "section": "三、书写 · 第一部分 · 第71-75题",
+      "form": "reorder"
+    },
+    {
+      "prompt": "请把门（ ）上。",
+      "options": [],
+      "segments": [],
+      "keyword": "guān",
+      "number": 76,
+      "skill": "writing",
+      "section": "三、书写 · 第二部分 · 第76-80题",
+      "form": "write_hanzi"
+    },
+    {
+      "prompt": "我每天早上喝一杯（ ）。",
+      "options": [],
+      "segments": [],
+      "keyword": "chá",
+      "number": 77,
+      "skill": "writing",
+      "section": "三、书写 · 第二部分 · 第76-80题",
+      "form": "write_hanzi"
+    },
+    {
+      "prompt": "他在大（ ）下看书。",
+      "options": [],
+      "segments": [],
+      "keyword": "shù",
+      "number": 78,
+      "skill": "writing",
+      "section": "三、书写 · 第二部分 · 第76-80题",
+      "form": "write_hanzi"
+    },
+    {
+      "prompt": "你想（ ）什么？",
+      "options": [],
+      "segments": [],
+      "keyword": "mǎi",
+      "number": 79,
+      "skill": "writing",
+      "section": "三、书写 · 第二部分 · 第76-80题",
+      "form": "write_hanzi"
+    },
+    {
+      "prompt": "我在（ ）校吃午饭。",
+      "options": [],
+      "segments": [],
+      "keyword": "xué",
+      "number": 80,
+      "skill": "writing",
+      "section": "三、书写 · 第二部分 · 第76-80题",
+      "form": "write_hanzi"
+    }
+  ]
+}

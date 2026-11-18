@@ -1442,8 +1442,7 @@ exports.finishExercise = onCall(async (request) => {
     submittedAt: FieldValue.serverTimestamp(),
   });
   if (!late) {
-    const teacherIds = [...new Set([exercise.teacherId, profile.teacherId]
-        .map((x) => String(x || "")).filter((x) => x))];
+    const teacherIds = marking.teacherIdsFor(exercise.teacherId, profile.teacherId);
     const queue = marking.queueItems(items, answers, result.points, {
       source: "package",
       resultId: resultRef.id,
@@ -1725,7 +1724,8 @@ function writeTestResult(writer, {attemptId, attempt, codeId, code, format, spli
     title: code.code || codeId,
     studentId: attempt.studentId,
     studentName: attempt.studentName || "",
-    teacherIds: teacherId ? [teacherId] : [],
+    // The session's teacher and the student's own teacher (Build 1C Must 8).
+    teacherIds: marking.teacherIdsFor(teacherId, attempt.studentTeacherId),
     createdAt: FieldValue.serverTimestamp(),
   };
   split.forEach((items, i) => {
@@ -1915,6 +1915,7 @@ exports.startTest = onCall(async (request) => {
         studentId: uid,
         studentName: latinName(profile),
         studentNameChinese: String(profile.nameChinese || "").trim(),
+        studentTeacherId: String(profile.teacherId || "").trim(),
         sessionId: sessionRef.id,
         openedBy: session.openedBy || "",
         supervisorName: session.openedByName || "",

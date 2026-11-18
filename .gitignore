@@ -50,3 +50,6 @@ pubsub-debug.log
 
 # Official exam papers for local testing: never commit (Build 1B).
 local_papers/
+
+# Build 1C: the paper reader's PaddleOCR files, fetched by scripts/fetch_paper_ocr.mjs
+web/ocr/

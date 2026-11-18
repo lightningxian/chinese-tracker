@@ -1,3 +1,4 @@
+import '../core/constants/hsk_characters.dart';
 import '../services/hsk_paper/paper_image_ops.dart';
 import 'ai_worksheet.dart';
 
@@ -108,12 +109,49 @@ class HskSlot {
       final singles = segments.where((s) => s.runes.length == 1).length;
       if (singles / segments.length >= 0.6) return doubtSplit;
     }
+    // Build 1C (docs/PLAN.md §4, Must 4 and the PaddleOCR measure): the
+    // new reader rarely garbles a line, but a single wrong character, a
+    // stray mark or a lost gap still slips through.
+    if (form == HskForm.pinyinChar && !prompt.contains(_gap)) return doubtGap;
+    if (oddForm) return doubtForm;
+    bool endsInComma(String s) => s.trim().endsWith('，') || s.trim().endsWith(',');
+    if (_strayMark.hasMatch(_allText) ||
+        endsInComma(prompt) ||
+        options.any(endsInComma)) {
+      return doubtMarks;
+    }
+    if (unknownCharacters.isNotEmpty) return doubtLevel;
     return null;
   }
 
   static const doubtOptions = 'options';
   static const doubtTones = 'tones';
   static const doubtSplit = 'split';
+  static const doubtGap = 'gap';
+  static const doubtForm = 'form';
+  static const doubtMarks = 'marks';
+  static const doubtLevel = 'level';
+
+  /// HSK level of the paper (for [unknownCharacters]); null = not checked.
+  int? paperLevel;
+
+  /// The other questions of its block have another form (one word-bank
+  /// sentence read without its gap becomes a matching one).
+  bool oddForm = false;
+
+  static final _gap = RegExp(r'[（(]\s*[)）]');
+  // Doubled punctuation, a dash between two characters, a sentence that
+  // ends in a comma, a bracket with something odd inside.
+  static final _strayMark = RegExp(
+      r'[，。、？！,.?!]{2,}|(?<=[㐀-鿿])\s*[-–_~]\s*(?=[㐀-鿿])|[（(]\s*[，。,.、]\s*[)）]');
+
+  String get _allText => [prompt, ...options, ...segments].join('\n');
+
+  /// Characters above the paper's level (HSK 1-3 lists): a look-alike the
+  /// reader picked, a traditional form, or a name or place.
+  List<String> get unknownCharacters => paperLevel == null
+      ? const []
+      : HskCharacters.outside([prompt, ...options, ...segments].join(), paperLevel!);
 
   /// Needs the admin's eye before saving.
   bool get flagged =>
@@ -154,6 +192,32 @@ class HskPaperDraft {
       [for (final s in slots) if (s.missing) s.number];
 
   List<HskSlot> get flagged => [for (final s in slots) if (s.flagged) s];
+
+  /// Marks the questions whose form differs from most of their block
+  /// ([HskSlot.oddForm]); run again once the picture questions are known.
+  void markOddForms() {
+    final blocks = <String, List<HskSlot>>{};
+    for (final s in slots) {
+      s.oddForm = false;
+      if (!s.missing && s.section.isNotEmpty) {
+        (blocks[s.section] ??= []).add(s);
+      }
+    }
+    for (final block in blocks.values) {
+      if (block.length < 3) continue;
+      final forms = <String, int>{};
+      for (final s in block) {
+        forms[s.form] = (forms[s.form] ?? 0) + 1;
+      }
+      final top = (forms.entries.toList()
+            ..sort((a, b) => b.value.compareTo(a.value)))
+          .first;
+      if (top.value * 2 <= block.length) continue;
+      for (final s in block) {
+        if (s.form != top.key) s.oddForm = true;
+      }
+    }
+  }
 
   /// The draft in the AI reader's shape, so saving reuses
   /// `QuestionBankAiImportUtils` (one worksheet, pictures cut from the

@@ -443,6 +443,11 @@ await step("free writing in a test: pending with no pass or fail, then the rubri
   const item = await readDoc(`marking_items/${ESSAY}_${s5.uid}_es_w2`);
   assert.equal(item.reason, "free_writing");
   assert.equal(item.maxPoints, 10);
+  // Build 1C Must 8: the session's teacher and the student's own teacher.
+  const s5Profile = await readDoc(`users/${s5.uid}`);
+  assert.ok(item.teacherIds.includes(teacher.uid), "the session's teacher");
+  assert.ok(s5Profile.teacherId, "the seed gives student5 a teacher");
+  assert.ok(item.teacherIds.includes(s5Profile.teacherId), "the student's own teacher");
   const m = await call(teacher, "markAnswer", {itemId: `${ESSAY}_${s5.uid}_es_w2`,
     rubric: {grammar: 40, vocabulary: 30, content: 30}});
   assert.ok(m.data, JSON.stringify(m.error));

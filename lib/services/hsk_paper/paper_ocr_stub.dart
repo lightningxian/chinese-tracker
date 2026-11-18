@@ -7,3 +7,12 @@ Future<String> readPaperPage(
 }) {
   throw UnsupportedError('The built-in paper reader runs in the browser only.');
 }
+
+bool get paddleAvailable => false;
+
+Future<String> readPaperPagePaddle(
+  Uint8List png, {
+  void Function(double progress)? onProgress,
+}) {
+  throw UnsupportedError('The built-in paper reader runs in the browser only.');
+}

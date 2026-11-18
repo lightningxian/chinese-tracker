@@ -100,6 +100,19 @@ void main() {
       expect(boxes.single.y1, greaterThanOrEqualTo(328));
     });
 
+    test('closely set lines of text are not a picture (Build 1C)', () {
+      const w = 1500, h = 800;
+      // Three lines of 12 character-sized marks, 28 px apart: they merge
+      // into one box, but no shape in it is taller than a character.
+      final rects = [
+        for (var row = 0; row < 3; row++)
+          for (var c = 0; c < 12; c++)
+            PixelBox(100 + c * 48, 100 + row * 68, 140 + c * 48, 140 + row * 68),
+      ];
+      final boxes = PaperImageOps.findPictureBoxes(_page(w, h, rects), w, h);
+      expect(boxes, isEmpty);
+    });
+
     test('a long thin strip (a line of text) is not a picture', () {
       const w = 1500, h = 600;
       final boxes = PaperImageOps.findPictureBoxes(

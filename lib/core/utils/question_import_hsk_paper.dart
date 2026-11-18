@@ -360,6 +360,7 @@ class _HskPaperParser {
         unsure: raw?.unsure ?? false,
       );
       _fill(slot, raw, range);
+      slot.paperLevel = level;
       slots.add(slot);
     }
     // A missing slot takes the form most of its block has.
@@ -415,6 +416,8 @@ class _HskPaperParser {
         }
       }
     }
+    // A question whose form differs from most of its block (a word-bank
+    // sentence read without its gap looks like a matching one).
     return HskPaperDraft(
       code: code,
       level: level,
@@ -422,7 +425,7 @@ class _HskPaperParser {
           .join(' · '),
       slots: slots,
       expected: expected,
-    );
+    )..markOddForms();
   }
 
   static String _skillFromSection(String section) {

@@ -101,6 +101,7 @@ abstract final class PaperImageOps {
     int minSide = 120,
     int gap = 30,
     double maxAspect = 4,
+    int minTall = 100,
   }) {
     final gw = (width + cell - 1) ~/ cell;
     final gh = (height + cell - 1) ~/ cell;
@@ -173,7 +174,16 @@ abstract final class PaperImageOps {
             b.width / b.height <= maxAspect &&
             b.height / b.width <= maxAspect &&
             // Not a frame around the whole page.
-            b.area < width * height * 0.5)
+            b.area < width * height * 0.5 &&
+            // Build 1C: a picture has a shape taller than a line of text;
+            // closely set text lines merge into a box too, but each of
+            // their shapes is at most a character high.
+            shapes.any((s) =>
+                s.height >= minTall &&
+                s.x0 >= b.x0 &&
+                s.x1 <= b.x1 &&
+                s.y0 >= b.y0 &&
+                s.y1 <= b.y1))
         .toList();
     return readingOrder(boxes);
   }

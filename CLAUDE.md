@@ -35,6 +35,7 @@ decisions. This app is also the owner's thesis project (see the thesis docs belo
 - **Owner answers 2026-11-16** (full list in `docs/PLAN.md` §2): staff see students as `Chinese name (Latin name)`, students see other students by Chinese name only; rooms are `Main` and `Sub Room`; class slots have no HSK level (semi-private teaching, 6–8 seats); placement tests are public on the landing page behind a teacher code; supervised tests run through test codes with a clock per part and an HSK-style result card; teacher schedule = tabs on one screen; builds are 3–4 hour sessions in the BUILD chat on the PC.
 - **Paper reader (2026-11-17):** HSK papers are read **inside the app with no outside API** (owner: "the job is only to read the PDF and build the questions"): on-device OCR with watermark removal, a structure builder that follows the test format, a proofreading screen, pictures cut by image analysis (Build 1B in `docs/PLAN.md`). **Scan paper with AI** stays as an extra, off on live until an App Check key exists. Official exam papers are never committed (`local_papers/` is git-ignored) and Claude does not type them out by hand. Each worksheet may carry a transcript of its recording, sent to students only with the review.
 - **Typing matcher and marking (Build 2A, 2026-11-17, from the proposal):** typed hanzi and pinyin are matched in `functions/typing_matcher.js` (full-width, ending punctuation, traditional characters and tone numbers all count; one wrong character or wrong tones = half, flagged; sentence order never half). Free writing (`picture_sentence`, `essay`) is 10 points and only a teacher marks it. Open items go to `marking_items` (written by functions only); a result with open items is `pending_marking` with no pass or fail; `markAnswer` makes it final and notifies the student. Teachers see their own queue, admins all.
+- **Paper reader engine (Build 1C, owner 2026-11-18):** Scan paper reads with PP-OCRv5 mobile (PaddlePaddle, Apache-2.0) through onnxruntime-web (MIT) in the browser (`web/paper_ocr_paddle.js`); Tesseract finds the lines and is the fallback. The ~31 MB of model files are served from our hosting, fetched at build time (`scripts/fetch_paper_ocr.mjs`), never committed. Flags by HSK level (`HskCharacters`, old HSK 1-3 lists) and stray marks; tone buttons for pinyin; a proofreading record per scanned worksheet; **Download text** gives a truth file for measuring.
 - **Dark mode (2026-11-10):** `AppColors.*` are getters over the palette that is on (`AppPalette.light` / `.dark` in `lib/core/theme/app_theme.dart`, switched by `ThemeController`). Never write `const` in front of a widget or style that uses an `AppColors` value (the analyzer will refuse). A new colour goes into **both** palettes. The landing page keeps its own light `LandingBrand` tokens.
 
 ## Never
@@ -61,7 +62,7 @@ decisions. This app is also the owner's thesis project (see the thesis docs belo
 flutter pub get
 flutter run -d chrome                 # no CONTENT_OWNER_ID needed locally; talks to LIVE Firebase
 flutter analyze                       # baseline: 0 errors, 0 warnings, 17 infos
-flutter test                          # 105 pass (2026-11-17, Build 2A)
+flutter test                          # 118 pass + 2 measuring tests skipped (2026-11-18, Build 1C)
 node --check functions/index.js
 node functions/test_exercise_play.js && node functions/test_reminders.js
 node functions/test_supervised_test.js          # Build 1 pure logic (TS-01, PN-05)
@@ -71,7 +72,7 @@ node functions/pn01_agreement.js functions/fixtures/pn01_sample.csv   # PN-01: 6
 
 # Firestore rules tests (needs Java 21: brew install openjdk@21)
 export PATH="/opt/homebrew/opt/openjdk@21/bin:$PATH"
-npm --prefix rules-tests run test:emulator      # 56 pass, 1 skipped (Firestore + Storage)
+npm --prefix rules-tests run test:emulator      # 57 pass, 1 skipped (Firestore + Storage)
 
 # Full emulator suite (auth 9099, firestore 8080, functions 5001, storage 9199,
 # pubsub 8085 for the hourly job, UI 4000).
@@ -89,6 +90,15 @@ node functions/test_supervised_flow.mjs        # end-to-end on the emulators, 32
 # to the live database (happened 2026-11-09). A local bundle on live shows a
 # "LIVE DATA" ribbon; the emulator bundle shows "EMULATOR".
 scripts/run_emulator_web.sh
+
+# Paper reader (Build 1C): PaddleOCR files into web/ocr/ (not in git, ~31 MB,
+# pinned + SHA-256; deploy_web.sh and run_emulator_web.sh run it first).
+node scripts/fetch_paper_ocr.mjs
+# Measure the reader: read a PDF with one engine in headless Chrome, then compare
+# with a truth file (practice paper H399001P is committed with its truth).
+node tool/paper_measure/run.mjs test/fixtures/practice_paper/H399001P.pdf paddle out.json
+PAPER_TEXTS=out.json PAPER_TRUTH=test/fixtures/practice_paper/H399001P.truth.json   flutter test test/paper_measure_test.dart      # paddle: 79 of 80 right as read
+node tool/practice_paper/build.mjs               # rebuild the practice paper + truth
 
 # Hosting deploy: ALWAYS via the script. It builds web with the live config,
 # copies the Android APK to /downloads/easy-study.apk (hosting deploys are
