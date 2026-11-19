@@ -71,11 +71,12 @@ Read docs/PLAN.md. You are the BUILD chat. Follow section 0, run Build 0 if this
 
 ---
 
-## 1. Where the project stands (2026-11-18)
+## 1. Where the project stands (2026-11-19)
 
 **Live:** https://chinese-tracker.web.app, hosting at release v0.1.19
 (Build 1C, published from the PC 2026-11-18). Firebase project
-`chinese-tracker`, Blaze plan, **25 Cloud Functions** on Node 22. The
+`chinese-tracker`, Blaze plan, **25 Cloud Functions** on Node 22 (Build 1C's
+functions live since 2026-11-19, deployed from the PC at the owner's go). The
 backend of Builds 1B and 2A (Storage rules, Firestore rules, two marking
 indexes, functions) is live since 2026-11-17: the owner signed in to the
 Firebase CLI on the PC and had the BUILD chat run the deploy. The PLAN chat
@@ -117,7 +118,7 @@ Android APK is off (table below). Firestore scheduled backups run nightly.
 | Exam mode on live | owner is testing |
 | Backend of Builds 1B and 2A | done 2026-11-17 (deployed from the PC) |
 | Try Build 2A on live | make a small package with one "type the hanzi" and one "type the pinyin" question, play it as `student1@`, mark it as `teacher@` in Tests, **Marking** |
-| Functions deploy for Build 1C | **to run:** `firebase deploy --only functions --project chinese-tracker` (marking items of a test also reach the student's own teacher). Everything else of Build 1C is live already |
+| Functions deploy for Build 1C | done 2026-11-19 (deployed from the PC at the owner's go; 25 functions updated, the PLAN chat listed them from the Mac). Marking items of a test now also reach the student's own teacher, for attempts started from that day on |
 | Proofread `H326202Z` on live | to do: Question bank, **Scan paper**, check every question against the page, note the minutes, save, type the official key, upload the recording, add the transcript, **Create test code**. Then **Download text** on the worksheet and put the file on the PC as `local_papers/H326202Z.truth.json` (never committed): that gives the reader's real right-as-read number for the thesis |
 | **Security: the GitHub repository is PUBLIC** (found by the PLAN chat 2026-11-17) | `docs/CLAUDE_FULL_HANDOFF.md` and `docs/FIREBASE_BACKEND.md` show the live test accounts' password. Owner: (1) reset the passwords of `admin@`, `teacher@`, `student1-3@test.chinesetracker` in Firebase Authentication; (2) decide whether the repository becomes private. The PLAN chat then removes the password from the docs |
 | Android APK on live | **off.** Every `--web-only` deploy publishes the site without the APK, and the landing page then hides the download button. The last APK build is from 2026-11-12 (before HSK simulation and Build 1). The keystore is on the Mac only, so the APK is built there. Owner decides: rebuild and publish it now, or with the Build 2A deploy |
@@ -166,7 +167,7 @@ node tests, rules tests 57 pass and 1 skipped; the fetch script's SHA-256
 pins were proven on the Mac (the same files download and verify there);
 the reader loads its model from our own hosting under `ocr/` and nothing
 leaves the computer; the practice paper is our own text; the only function
-change is `teacherIdsFor`. **The reader now reads 79 of 80 questions right
+change is `teacherIdsFor` (live since 2026-11-19). **The reader now reads 79 of 80 questions right
 on the practice paper** (37 before) and finds every slot of the real paper
 in about 70 seconds; the real paper's number waits for the owner's truth
 file. **Build 2B is NEXT.**

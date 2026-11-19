@@ -13,6 +13,14 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-19 — Claude (BUILD chat, PC): Build 1C functions deployed
+
+- At the owner's go, ran `firebase deploy --only functions --project
+  chinese-tracker` from the PC: exit 0, all 25 functions updated (Must 8:
+  marking items of a supervised test also name the student's own teacher;
+  only attempts started from now carry `studentTeacherId`).
+- Checked: `startTest` answers "Sign in first." without a sign-in.
+
 ### 2026-11-18 — Claude (PLAN chat, Mac): Build 1C reviewed, Build 2B is NEXT
 
 - Pulled Build 1C (v0.1.19) and checked it on the Mac: analyzer 17 infos,
@@ -26,14 +34,6 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   live site serves `paper_ocr_paddle.js` and the model.
 - Plan: Build 1C done, Build 2B (leaderboard, promotion, names) is NEXT.
   The public-repository security item stays open for the owner.
-
-### 2026-11-19 — Claude (BUILD chat, PC): Build 1C functions deployed
-
-- At the owner's go, ran `firebase deploy --only functions --project
-  chinese-tracker` from the PC: exit 0, all 25 functions updated (Must 8:
-  marking items of a supervised test also name the student's own teacher;
-  only attempts started from now carry `studentTeacherId`).
-- Checked: `startTest` answers "Sign in first." without a sign-in.
 
 ### 2026-11-18 — Claude (BUILD chat, PC): Build 1C reader accuracy
 
