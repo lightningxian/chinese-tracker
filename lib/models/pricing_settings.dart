@@ -26,10 +26,26 @@ class PriceItem {
     required this.price,
     required this.kind,
     this.sessions = 0,
+    this.nameChinese = '',
+    this.validDays = 0,
+    this.active = true,
   });
 
   final String id;
   final String name;
+
+  /// Build 5: the voucher's Chinese name (报名费, 8次课程, 16次课程, HSK教材费).
+  final String nameChinese;
+
+  /// Days a bought package stays valid; 0 = the Price list's fallback
+  /// (packages) or not a voucher (one-time items).
+  final int validDays;
+
+  /// Switched off = not sold in the app (staff may still invoice it).
+  final bool active;
+
+  /// Students and parents buy these in the app.
+  bool get buyable => active && creditsSessions;
 
   /// Whole rupiah.
   final int price;
@@ -57,6 +73,9 @@ class PriceItem {
       sessions: kind == PriceKind.sessions
           ? (m['sessions'] as num?)?.toInt() ?? 0
           : 0,
+      nameChinese: (m['nameChinese'] as String? ?? '').trim(),
+      validDays: (m['validDays'] as num?)?.toInt() ?? 0,
+      active: m['active'] != false,
     );
   }
 
@@ -66,6 +85,9 @@ class PriceItem {
         'price': price,
         'kind': kind.value,
         'sessions': sessions,
+        'nameChinese': nameChinese,
+        'validDays': validDays,
+        'active': active,
       };
 
   PriceItem copyWith({
@@ -73,6 +95,9 @@ class PriceItem {
     int? price,
     PriceKind? kind,
     int? sessions,
+    String? nameChinese,
+    int? validDays,
+    bool? active,
   }) =>
       PriceItem(
         id: id,
@@ -80,6 +105,9 @@ class PriceItem {
         price: price ?? this.price,
         kind: kind ?? this.kind,
         sessions: sessions ?? this.sessions,
+        nameChinese: nameChinese ?? this.nameChinese,
+        validDays: validDays ?? this.validDays,
+        active: active ?? this.active,
       );
 }
 
@@ -105,26 +133,32 @@ class PricingSettings {
     PriceItem(
       id: 'registration',
       name: 'Registration (one-time)',
+      nameChinese: '报名费',
       price: 100000,
       kind: PriceKind.registration,
     ),
     PriceItem(
       id: 'package8',
       name: '8 class sessions',
+      nameChinese: '8次课程',
       price: 2450000,
       kind: PriceKind.sessions,
       sessions: 8,
+      validDays: 60,
     ),
     PriceItem(
       id: 'package16',
       name: '16 class sessions',
+      nameChinese: '16次课程',
       price: 3950000,
       kind: PriceKind.sessions,
       sessions: 16,
+      validDays: 60,
     ),
     PriceItem(
       id: 'book',
       name: 'HSK materials & book',
+      nameChinese: 'HSK教材费',
       price: 250000,
       kind: PriceKind.book,
     ),

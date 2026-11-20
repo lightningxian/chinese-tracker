@@ -11,6 +11,7 @@ import '../../models/student_class_term.dart';
 import '../../services/firestore_service.dart';
 import '../../services/payment_service.dart';
 import '../admin/admin_invoices_tab.dart' show InvoiceCard;
+import '../payments/voucher_widgets.dart';
 
 /// Student view of their session quota + invoices, with a "Pay now" action.
 class StudentPaymentsTab extends StatelessWidget {
@@ -59,6 +60,9 @@ class StudentPaymentsTab extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               children: [
                 _QuotaCard(remaining: remaining),
+                const SizedBox(height: 16),
+                // Build 5: vouchers, history and Beli voucher.
+                VoucherSection(studentId: student.uid),
                 if (student.hasLinkedParent) ...[
                   const SizedBox(height: 12),
                   _ParentHandlesCard(

@@ -10,6 +10,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/app_data_table.dart';
 import '../../core/widgets/table_tools.dart';
+import '../../core/utils/money_format.dart';
 import '../../core/widgets/status_pill.dart';
 import '../../l10n/l10n.dart';
 import '../../l10n/labels_admin.dart';
@@ -45,6 +46,11 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
     return stored.isEmpty ? null : stored;
   }
   bool _sortAscending = true;
+
+  // Build 5: filters and the total of the filtered rows (screenshot 15).
+  InvoiceStatus? _statusFilter;
+  String? _itemFilter;
+  String? _monthFilter;
 
   void _onSort(String columnId) {
     setState(() {
@@ -196,10 +202,17 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
                       subtitle: l.adminInvoicesEmptySubtitle,
                     );
                   }
-                  _visible = _sorted(invoices);
+                  _visible = _sorted(filterInvoices(
+                    invoices,
+                    status: _statusFilter,
+                    priceItemId: _itemFilter,
+                    month: _monthFilter,
+                  ));
                   return ListView(
                     padding: const EdgeInsets.all(20),
                     children: [
+                      _filters(l, invoices),
+                      const SizedBox(height: 12),
                       AppDataTable<Invoice>(
                         rows: _visible,
                         columns: _buildColumns(l),
@@ -220,6 +233,59 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
               );
             },
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _filters(AppLocalizations l, List<Invoice> all) {
+    final items = <String, String>{};
+    for (final i in all) {
+      final id = i.priceItemId;
+      if (id == null || id.isEmpty) continue;
+      items[id] = i.nameChinese.isNotEmpty ? i.nameChinese : i.itemLocalized(l);
+    }
+    final months = {
+      for (final i in all)
+        if (i.createdAt != null)
+          '${i.createdAt!.year}-${i.createdAt!.month.toString().padLeft(2, '0')}',
+    }.toList()
+      ..sort((a, b) => b.compareTo(a));
+    Widget drop<T>(String label, T? value, Map<T, String> options,
+            ValueChanged<T?> onChanged) =>
+        SizedBox(
+          width: 200,
+          child: DropdownButtonFormField<T?>(
+            initialValue: value,
+            isExpanded: true,
+            decoration: InputDecoration(labelText: label, isDense: true),
+            items: [
+              DropdownMenuItem<T?>(value: null, child: Text(l.progressFilterAll)),
+              for (final e in options.entries)
+                DropdownMenuItem<T?>(value: e.key, child: Text(e.value)),
+            ],
+            onChanged: onChanged,
+          ),
+        );
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        drop<InvoiceStatus>(
+          l.profileWidgetStatus,
+          _statusFilter,
+          {for (final s in InvoiceStatus.values) s: s.localized(l)},
+          (v) => setState(() => _statusFilter = v),
+        ),
+        drop<String>(l.adminInvoicesColItem, _itemFilter, items,
+            (v) => setState(() => _itemFilter = v)),
+        drop<String>(l.invoicesFilterMonth, _monthFilter,
+            {for (final m in months) m: m},
+            (v) => setState(() => _monthFilter = v)),
+        Text(
+          l.invoicesFilteredTotal(_visible.length, formatRupiah(invoiceTotal(_visible))),
+          style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.navy),
         ),
       ],
     );
@@ -268,11 +334,26 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
         label: l.adminInvoicesColItem,
         sortable: true,
         width: 150,
-        cell: (invoice) => Text(
-          invoice.itemLocalized(l),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: metaStyle,
+        cell: (invoice) => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              invoice.nameChinese.isNotEmpty
+                  ? invoice.nameChinese
+                  : invoice.itemLocalized(l),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: metaStyle,
+            ),
+            // Build 5: bought in the app by the student or the parent.
+            if (invoice.selfPurchase)
+              Text(
+                l.invoicesBoughtInApp,
+                style: TextStyle(
+                    fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.teal),
+              ),
+          ],
         ),
       ),
       AppTableColumn<Invoice>(

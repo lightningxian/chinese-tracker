@@ -62,6 +62,32 @@ class PaymentService {
     }
   }
 
+  /// Build 5: a student (for themself) or a linked parent buys a voucher
+  /// package. [acceptedTerms] must be true (the flyer's terms). A second
+  /// call while one purchase is open returns that invoice again.
+  Future<CreatedInvoice> buyVoucher({
+    required String studentId,
+    required String priceItemId,
+  }) async {
+    try {
+      final result = await _functions.httpsCallable('createInvoice').call({
+        'studentId': studentId,
+        'priceItemId': priceItemId,
+        'acceptedTerms': true,
+      });
+      final data = (result.data as Map).cast<String, dynamic>();
+      return CreatedInvoice(
+        invoiceId: data['invoiceId'] as String? ?? '',
+        snapToken: data['snapToken'] as String?,
+        redirectUrl: data['redirectUrl'] as String?,
+      );
+    } on FirebaseFunctionsException catch (e) {
+      throw PaymentException(
+        e.message ?? 'Could not start the payment. Try again.',
+      );
+    }
+  }
+
   /// Admin records a cash or bank-transfer payment. The server flips the
   /// invoice to paid and credits the sessions (or marks the linked term paid).
   Future<void> markInvoicePaid({

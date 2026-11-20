@@ -44,17 +44,20 @@ const MIDTRANS_SNAP_URL =
 // the fallbacks (course flyer, Oct 2026). The invoice amount is always derived
 // server-side; a client value is ignored.
 const DEFAULT_PRICE_ITEMS = [
-  {id: "registration", name: "Registration (one-time)", price: 100000,
-    kind: "registration", sessions: 0},
-  {id: "package8", name: "8 class sessions", price: 2450000,
-    kind: "sessions", sessions: 8},
-  {id: "package16", name: "16 class sessions", price: 3950000,
-    kind: "sessions", sessions: 16},
-  {id: "book", name: "HSK materials & book", price: 250000,
-    kind: "book", sessions: 0},
+  {id: "registration", name: "Registration (one-time)", nameChinese: "报名费",
+    price: 100000, kind: "registration", sessions: 0, validDays: 0},
+  {id: "package8", name: "8 class sessions", nameChinese: "8次课程", price: 2450000,
+    kind: "sessions", sessions: 8, validDays: 60},
+  {id: "package16", name: "16 class sessions", nameChinese: "16次课程", price: 3950000,
+    kind: "sessions", sessions: 16, validDays: 60},
+  {id: "book", name: "HSK materials & book", nameChinese: "HSK教材费", price: 250000,
+    kind: "book", sessions: 0, validDays: 0},
 ];
 const DEFAULT_TERM_VALID_DAYS = 60;
 const SETTINGS = "settings";
+// Build 5: the voucher ledger (purchase and expiry entries).
+const VOUCHER_HISTORY = "voucher_history";
+const payments = require("./payments");
 
 async function loadPricing() {
   const snap = await db.collection(SETTINGS).doc("pricing").get();
@@ -64,13 +67,7 @@ async function loadPricing() {
   let items = Array.isArray(data.items) ?
     data.items
         .filter((it) => it && it.id && positiveInt(it.price, 0) > 0)
-        .map((it) => ({
-          id: String(it.id),
-          name: String(it.name || it.id),
-          price: Number(it.price),
-          kind: String(it.kind || "other"),
-          sessions: it.kind === "sessions" ? positiveInt(it.sessions, 0) : 0,
-        })) :
+        .map((it) => payments.cleanPriceItem(it)) :
     [];
   if (items.length === 0) {
     const legacy = {
@@ -663,24 +660,29 @@ exports.createInvoice = onCall(
       throw new HttpsError("unauthenticated", "Sign in to create invoices.");
     }
 
-    const callerSnap = await db.collection(USERS).doc(auth.uid).get();
-    const caller = callerSnap.exists ? callerSnap.data() : {};
+    // Build 5: a student buys for themself, a linked parent for the child;
+    // staff invoice as before. Pending students are refused here.
+    const {profile: caller} = await requireCaller(request);
     const callerRole = (caller && caller.role) || "";
-    const isStaff = callerRole === "admin" || callerRole === "teacher";
-    if (!isStaff || caller.active === false) {
-      throw new HttpsError(
-        "permission-denied",
-        "Only staff can create invoices.",
-      );
-    }
 
     const data = request.data || {};
-    const studentId = String(data.studentId || "").trim();
+    const studentId = String(data.studentId || "").trim() ||
+      (callerRole === "student" ? auth.uid : "");
     const dueDate = String(data.dueDate || "").trim();
     const classTermId = String(data.classTermId || "").trim() || null;
 
     if (!studentId) {
       throw new HttpsError("invalid-argument", "studentId is required.");
+    }
+    const buyer = payments.buyerRole(caller, auth.uid, studentId);
+    if (!buyer) {
+      throw new HttpsError("permission-denied",
+          "You can only buy for yourself or your own child.", {reason: "not-yours"});
+    }
+    const selfPurchase = buyer !== "staff";
+    if (selfPurchase && data.acceptedTerms !== true) {
+      throw new HttpsError("failed-precondition", "Tick the terms first.",
+          {reason: "terms"});
     }
 
     // Amount is authoritative on the server — derive from the Price list and
@@ -697,6 +699,11 @@ exports.createInvoice = onCall(
           "That item is not on the Price list.",
       );
     }
+    // Self-purchases are session packages that are switched on.
+    if (selfPurchase && (priceItem.kind !== "sessions" || priceItem.active === false)) {
+      throw new HttpsError("failed-precondition", "That package cannot be bought here.",
+          {reason: "not-buyable"});
+    }
     const amount = priceItem.price;
     const item = priceItem.kind === "book" ? BOOK_ITEM : "package";
     const packageSize = priceItem.sessions;
@@ -709,6 +716,19 @@ exports.createInvoice = onCall(
     const student = studentSnap.data() || {};
     const teacherId = student.teacherId || auth.uid;
     const studentName = student.nameIndonesian || student.name || "Student";
+
+    // One open self-purchase at a time: a second Buy reuses its payment link.
+    if (selfPurchase) {
+      const open = await db.collection(INVOICES)
+          .where("studentId", "==", studentId).where("status", "==", "pending").get();
+      const mine = open.docs.find((d) => (d.data() || {}).selfPurchase === true &&
+        (d.data() || {}).redirectUrl);
+      if (mine) {
+        const inv = mine.data() || {};
+        return {invoiceId: mine.id, snapToken: inv.snapToken || null,
+          redirectUrl: inv.redirectUrl || null, reused: true};
+      }
+    }
 
     // Teachers may only invoice their own students.
     if (callerRole === "teacher" && teacherId !== auth.uid) {
@@ -744,6 +764,9 @@ exports.createInvoice = onCall(
       priceItemId: priceItem.id,
       kind: priceItem.kind,
       sessions: priceItem.sessions,
+      // Build 5: the voucher's Chinese name and validity travel with it.
+      nameChinese: priceItem.nameChinese || "",
+      validDays: priceItem.validDays || 0,
       amount,
       currency: "IDR",
       status: "pending",
@@ -752,6 +775,9 @@ exports.createInvoice = onCall(
       midtransOrderId: orderId,
       ...(classTermId ? {classTermId} : {}),
       createdBy: auth.uid,
+      createdByRole: callerRole,
+      selfPurchase,
+      ...(selfPurchase ? {acceptedTerms: true, termsVersion: payments.TERMS_VERSION} : {}),
       createdAt: FieldValue.serverTimestamp(),
     });
 
@@ -763,7 +789,11 @@ exports.createInvoice = onCall(
     let snapToken = null;
     let redirectUrl = null;
     try {
-      const res = await fetch(MIDTRANS_SNAP_URL, {
+      // On the emulator the flow test answers Snap with a local stub.
+      const snapUrl = process.env.FUNCTIONS_EMULATOR === "true" &&
+        process.env.MIDTRANS_SNAP_URL_EMULATOR ?
+        process.env.MIDTRANS_SNAP_URL_EMULATOR : MIDTRANS_SNAP_URL;
+      const res = await fetch(snapUrl, {
         method: "POST",
         headers: {
           "Accept": "application/json",
@@ -821,7 +851,8 @@ exports.createInvoice = onCall(
       targetType: "invoice",
       targetId: invoiceRef.id,
       detail:
-        `${orderId} · ${description} · Rp ${amount} for ${studentName}`,
+        `${orderId} · ${description} · Rp ${amount} for ${studentName}` +
+        (selfPurchase ? ` (bought in the app by the ${buyer === "self" ? "student" : "parent"})` : ""),
     });
 
     return {invoiceId: invoiceRef.id, snapToken, redirectUrl};
@@ -858,23 +889,56 @@ function creditPaidInvoice(tx, invoiceRef, invoice, termValidDays, termSnap) {
     });
     return {invoice, packageSize, existingTerm: true};
   }
-  const now = new Date();
-  const deadline = new Date(now.getTime() + termValidDays * 86400000);
-  const fmt = (d) => d.toISOString().slice(0, 10);
-  tx.set(db.collection(CLASS_TERMS).doc(), {
+  const start = payments.jakartaDate(Date.now());
+  const validDays = Number(invoice.validDays) > 0 ? Number(invoice.validDays) : termValidDays;
+  const termRef = db.collection(CLASS_TERMS).doc();
+  tx.set(termRef, {
     studentId: invoice.studentId,
     packageSize,
     sessionsRemaining: packageSize,
     sessionsUsed: 0,
+    // Build 6 counts bookings here.
+    sessionsBooked: 0,
     status: "active",
-    startDate: fmt(now),
-    deadlineDate: fmt(deadline),
+    startDate: start,
+    deadlineDate: payments.termDeadline(start, validDays),
+    validDays,
+    nameChinese: invoice.nameChinese || "",
+    priceItemId: invoice.priceItemId || "",
+    source: invoice.selfPurchase === true ? "app" :
+      (invoice.paymentMethod === "midtrans" ? "midtrans" : invoice.paymentMethod || "admin"),
     sourceInvoiceId: invoiceRef.id,
     createdBy: invoice.paymentMethod === "midtrans" ? "midtrans" : "admin",
     purchasedAt: FieldValue.serverTimestamp(),
     createdAt: FieldValue.serverTimestamp(),
   });
+  // Build 5: the voucher ledger (one purchase entry per invoice).
+  tx.set(db.collection(VOUCHER_HISTORY).doc(`${invoiceRef.id}_purchase`), {
+    kind: "purchase",
+    studentId: invoice.studentId,
+    termId: termRef.id,
+    invoiceId: invoiceRef.id,
+    sessions: packageSize,
+    nameChinese: invoice.nameChinese || "",
+    amount: Number(invoice.amount) || 0,
+    method: invoice.paymentMethod || "",
+    date: FieldValue.serverTimestamp(),
+  });
   return {invoice, packageSize};
+}
+
+/**
+ * An invoice with its Price list row's Chinese name and validity filled in
+ * (invoices made by staff before Build 5 carry neither).
+ */
+function withPriceItem(invoice, pricing) {
+  const item = pricing.items.find((it) => it.id === invoice.priceItemId);
+  if (!item) return invoice;
+  return {
+    ...invoice,
+    nameChinese: invoice.nameChinese || item.nameChinese || "",
+    validDays: Number(invoice.validDays) > 0 ? invoice.validDays : item.validDays || 0,
+  };
 }
 
 /** The voucher an invoice is linked to, read inside the transaction. */
@@ -922,7 +986,8 @@ exports.markInvoicePaid = onCall(async (request) => {
   }
 
   const invoiceRef = db.collection(INVOICES).doc(invoiceId);
-  const {termValidDays} = await loadPricing();
+  const pricing = await loadPricing();
+  const {termValidDays} = pricing;
   let credited = null;
   await db.runTransaction(async (tx) => {
     const snap = await tx.get(invoiceRef);
@@ -945,8 +1010,8 @@ exports.markInvoicePaid = onCall(async (request) => {
       ...(note ? {note} : {}),
     });
     credited = creditPaidInvoice(
-        tx, invoiceRef, {...invoice, paymentMethod: method}, termValidDays,
-        termSnap,
+        tx, invoiceRef, withPriceItem({...invoice, paymentMethod: method}, pricing),
+        termValidDays, termSnap,
     );
   });
 
@@ -963,24 +1028,6 @@ exports.markInvoicePaid = onCall(async (request) => {
   }
   return {ok: true};
 });
-
-function midtransStatusToInvoice(transactionStatus, fraudStatus) {
-  if (
-    transactionStatus === "settlement" ||
-    (transactionStatus === "capture" && fraudStatus !== "challenge")
-  ) {
-    return "paid";
-  }
-  if (transactionStatus === "expire") return "expired";
-  if (
-    transactionStatus === "deny" ||
-    transactionStatus === "cancel" ||
-    transactionStatus === "failure"
-  ) {
-    return "failed";
-  }
-  return null; // pending / challenge — leave as-is
-}
 
 /**
  * Midtrans notification webhook. Verifies the signature, maps the transaction
@@ -1009,21 +1056,13 @@ exports.midtransNotification = onRequest(
     }
 
     const serverKey = MIDTRANS_SERVER_KEY.value();
-    const expected = crypto
-      .createHash("sha512")
-      .update(`${orderId}${statusCode}${grossAmount}${serverKey}`)
-      .digest("hex");
-
-    const expectedBuf = Buffer.from(expected, "utf8");
-    const givenBuf = Buffer.from(String(signatureKey), "utf8");
-    if (expectedBuf.length !== givenBuf.length ||
-        !crypto.timingSafeEqual(expectedBuf, givenBuf)) {
+    if (!payments.signatureOk(signatureKey, orderId, statusCode, grossAmount, serverKey)) {
       logger.warn("midtransNotification: bad signature", {orderId});
       res.status(403).send("Invalid signature");
       return;
     }
 
-    const newStatus = midtransStatusToInvoice(
+    const newStatus = payments.invoiceStatusFor(
       body.transaction_status,
       body.fraud_status,
     );
@@ -1052,16 +1091,17 @@ exports.midtransNotification = onRequest(
     // transaction that performs the flip returns the payload to notify.
     let credited = null;
     let amountMismatch = false;
-    const {termValidDays} = await loadPricing();
+    const pricing = await loadPricing();
+    const {termValidDays} = pricing;
     await db.runTransaction(async (tx) => {
       const snap = await tx.get(invoiceRef);
       const invoice = snap.data() || {};
-      // Idempotent — don't reprocess a final invoice.
-      if (invoice.status && invoice.status !== "pending") return;
+      const decision = payments.creditDecision(invoice, newStatus, grossAmount);
+      // Idempotent — don't reprocess a final invoice (MT-03).
+      if (decision === "ignore-final" || decision === "no-change") return;
       // A settlement for a different amount than the invoice is not
       // credited; it stays pending for the admin to look at.
-      if (newStatus === "paid" &&
-          Math.round(Number(grossAmount)) !== Math.round(Number(invoice.amount))) {
+      if (decision === "amount-mismatch") {
         amountMismatch = true;
         return;
       }
@@ -1073,7 +1113,7 @@ exports.midtransNotification = onRequest(
       });
       if (newStatus !== "paid") return;
       credited = creditPaidInvoice(
-          tx, invoiceRef, invoice, termValidDays, termSnap,
+          tx, invoiceRef, withPriceItem(invoice, pricing), termValidDays, termSnap,
       );
     });
     if (amountMismatch) {
@@ -1123,6 +1163,21 @@ async function notifyInvoicePaid(invoice, packageSize) {
       read: false,
       createdAt: now,
     });
+    try {
+      const s = await db.collection(USERS).doc(invoice.studentId).get();
+      const parentUid = s.exists ? (s.data() || {}).linkedParentUid : "";
+      if (parentUid) {
+        batch.set(db.collection(NOTIFICATIONS).doc(), {
+          kind: "session", title: "Payment received",
+          body: isBook ? `${invoice.studentName || "Your child"}: payment received.` :
+            `${packageSize} sessions were added for ${invoice.studentName || "your child"}.`,
+          forRole: "parent", userId: parentUid, targetRoute: "/parent",
+          read: false, createdAt: now,
+        });
+      }
+    } catch (err) {
+      logger.warn("notifyInvoicePaid: parent", err);
+    }
     if (invoice.teacherId) {
       batch.set(db.collection(NOTIFICATIONS).doc(), {
         kind: "session",
@@ -3463,3 +3518,71 @@ exports.rebuildProgressSummaries = onCall({timeoutSeconds: 540}, async (request)
     targetType: "progress_summary", targetId: "all", detail: `${done} of ${ids.length}`});
   return {students: ids.length, rebuilt: done};
 });
+
+// ---------------------------------------------------------------------------
+// Build 5 (docs/PLAN.md §4, Must 6): vouchers expire after their validity.
+// Active terms whose deadline has passed become `expired`; the remaining
+// sessions are forfeited, a ledger entry is written, and the student, a
+// linked parent and the admins are told. Idempotent: an expired term is
+// never active again.
+// ---------------------------------------------------------------------------
+async function expireVouchersNow(nowMs = Date.now()) {
+  const today = payments.jakartaDate(nowMs);
+  const snap = await db.collection(CLASS_TERMS).where("status", "==", "active").get();
+  const due = payments.expiredTerms(snap.docs.map((d) => ({id: d.id, ...(d.data() || {})})),
+      today);
+  let expired = 0;
+  for (const t of due) {
+    const ref = db.collection(CLASS_TERMS).doc(t.id);
+    try {
+      const done = await db.runTransaction(async (tx) => {
+        const cur = await tx.get(ref);
+        const term = cur.data() || {};
+        if ((term.status || "active") !== "active") return null;
+        const forfeited = Math.max(0, Number(term.sessionsRemaining) || 0);
+        tx.update(ref, {status: "expired", sessionsForfeited: forfeited,
+          expiredAt: FieldValue.serverTimestamp()});
+        tx.set(db.collection(VOUCHER_HISTORY).doc(`${t.id}_expiry`), {
+          kind: "expiry", studentId: term.studentId || "", termId: t.id,
+          sessions: -forfeited, nameChinese: term.nameChinese || "",
+          deadlineDate: term.deadlineDate || "", date: FieldValue.serverTimestamp(),
+        });
+        return {studentId: term.studentId || "", forfeited,
+          deadline: term.deadlineDate || "", name: term.nameChinese || ""};
+      });
+      if (!done) continue;
+      expired += 1;
+      const userSnap = done.studentId ?
+        await db.collection(USERS).doc(done.studentId).get() : null;
+      const user = userSnap && userSnap.exists ? userSnap.data() || {} : {};
+      const label = latinName(user) || "A student";
+      const body = `${done.name ? done.name + " · " : ""}voucher ended on ${done.deadline}` +
+        (done.forfeited ? `; ${done.forfeited} unused sessions expired.` : ".");
+      const batch = db.batch();
+      const base = {kind: "session", title: "Voucher expired", read: false,
+        createdAt: FieldValue.serverTimestamp()};
+      if (done.studentId) {
+        batch.set(db.collection(NOTIFICATIONS).doc(), {...base, body: `Your ${body}`,
+          forRole: "student", userId: done.studentId, targetRoute: "/student"});
+      }
+      if (user.linkedParentUid) {
+        batch.set(db.collection(NOTIFICATIONS).doc(), {...base, body: `${label}: ${body}`,
+          forRole: "parent", userId: user.linkedParentUid, targetRoute: "/parent"});
+      }
+      batch.set(db.collection(NOTIFICATIONS).doc(), {...base, body: `${label}: ${body}`,
+        forRole: "admin", userId: "", targetRoute: "/admin"});
+      await batch.commit();
+    } catch (err) {
+      logger.error(`expireVouchers: ${t.id}`, err);
+    }
+  }
+  logger.info(`expireVouchers: ${expired} expired`);
+  return {expired};
+}
+
+exports.expireVouchers = onSchedule(
+    {schedule: "every day 00:30", timeZone: "Asia/Jakarta"},
+    async () => {
+      await expireVouchersNow();
+    },
+);

@@ -2530,5 +2530,132 @@
         "type": "int"
       }
     }
+  },
+  "voucherNameChinese": "Chinese name",
+  "voucherValidDays": "Valid for (days)",
+  "voucherSoldInApp": "Sold in the app",
+  "voucherValidFor": "valid {days} days",
+  "@voucherValidFor": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "voucherNotSoldInApp": "not sold in the app",
+  "voucherTerm1": "Meetings not used within the validity (2 months) are forfeited.",
+  "voucherTerm2": "Remaining meetings cannot be moved to another student.",
+  "voucherTerm3": "Payment in full before the first class.",
+  "voucherTerm4": "No refunds.",
+  "voucherBuyTitle": "Buy a voucher",
+  "voucherBuyIntro": "Pick a package. One meeting is 1.5 hours; 6 to 8 students per class.",
+  "voucherNoPackages": "No package is on sale right now.",
+  "voucherTermsTitle": "Terms",
+  "voucherAgree": "I agree to the terms above",
+  "voucherPay": "Pay",
+  "voucherPayNote": "The payment page (Midtrans) opens in a new tab. The voucher appears here once the payment is confirmed.",
+  "voucherOfferLine": "{sessions} meetings · valid {days} days",
+  "@voucherOfferLine": {
+    "placeholders": {
+      "sessions": {
+        "type": "int"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "voucherMyVouchers": "Vouchers",
+  "voucherBuy": "Buy voucher",
+  "voucherNone": "No voucher yet.",
+  "voucherHistory": "Voucher history",
+  "voucherHistoryPurchase": "+{n} sessions bought",
+  "@voucherHistoryPurchase": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "voucherHistoryExpiry": "{n} sessions expired",
+  "@voucherHistoryExpiry": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "voucherStatusActive": "Active",
+  "voucherStatusUsedUp": "Used up",
+  "voucherStatusExpired": "Expired",
+  "voucherSessionsPackage": "{n} sessions",
+  "@voucherSessionsPackage": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "voucherLeft": "{left} of {total} left",
+  "@voucherLeft": {
+    "placeholders": {
+      "left": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "voucherBooked": "{n} booked",
+  "@voucherBooked": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "voucherUntil": "until {date} ({days} days)",
+  "@voucherUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "voucherEnded": "ended {date}",
+  "@voucherEnded": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "voucherForfeited": "{n} forfeited",
+  "@voucherForfeited": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "voucherSourceCash": "cash",
+  "voucherSourceTransfer": "transfer",
+  "voucherSourceOnline": "online",
+  "invoicesBoughtInApp": "bought in the app",
+  "invoicesFilterMonth": "Month",
+  "invoicesFilteredTotal": "{count} invoices · {total}",
+  "@invoicesFilteredTotal": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
   }
 }

@@ -1,5 +1,28 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+/// Build 5: the admin Invoices tab's filters (status, Price list item,
+/// month of creation `yyyy-MM`) and the Rupiah total of what is left.
+List<Invoice> filterInvoices(
+  List<Invoice> invoices, {
+  InvoiceStatus? status,
+  String? priceItemId,
+  String? month,
+}) =>
+    invoices.where((i) {
+      if (status != null && i.status != status) return false;
+      if (priceItemId != null && i.priceItemId != priceItemId) return false;
+      if (month != null) {
+        final c = i.createdAt;
+        if (c == null) return false;
+        final key = '${c.year}-${c.month.toString().padLeft(2, '0')}';
+        if (key != month) return false;
+      }
+      return true;
+    }).toList();
+
+int invoiceTotal(Iterable<Invoice> invoices) =>
+    invoices.fold(0, (total, i) => total + i.amount);
+
 /// Payment status for a session-package invoice.
 ///
 /// The transition to [paid]/[expired]/[failed] is written **only** by the
@@ -59,6 +82,9 @@ class Invoice {
     this.classTermId,
     this.paidBy,
     this.note,
+    this.selfPurchase = false,
+    this.nameChinese = '',
+    this.createdByRole = '',
   })  : kind = kind ?? (item == 'book' ? 'book' : 'sessions'),
         sessions = sessions ?? packageSize,
         paymentMethod =
@@ -106,6 +132,11 @@ class Invoice {
   final String? classTermId;
   final String? paidBy;
   final String? note;
+
+  /// Build 5: bought in the app by the student or the linked parent.
+  final bool selfPurchase;
+  final String nameChinese;
+  final String createdByRole;
 
   bool get creditsSessions => kind == 'sessions' && sessions > 0;
   bool get isOnline => (redirectUrl ?? '').isNotEmpty;
@@ -172,6 +203,9 @@ class Invoice {
       classTermId: data['classTermId'] as String?,
       paidBy: data['paidBy'] as String?,
       note: data['note'] as String?,
+      selfPurchase: data['selfPurchase'] == true,
+      nameChinese: data['nameChinese'] as String? ?? '',
+      createdByRole: data['createdByRole'] as String? ?? '',
     );
   }
 }

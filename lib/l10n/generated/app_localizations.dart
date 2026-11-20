@@ -11405,6 +11405,234 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{n} reports rebuilt.'**
   String progressRebuilt(int n);
+
+  /// No description provided for @voucherNameChinese.
+  ///
+  /// In en, this message translates to:
+  /// **'Chinese name'**
+  String get voucherNameChinese;
+
+  /// No description provided for @voucherValidDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Valid for (days)'**
+  String get voucherValidDays;
+
+  /// No description provided for @voucherSoldInApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Sold in the app'**
+  String get voucherSoldInApp;
+
+  /// No description provided for @voucherValidFor.
+  ///
+  /// In en, this message translates to:
+  /// **'valid {days} days'**
+  String voucherValidFor(int days);
+
+  /// No description provided for @voucherNotSoldInApp.
+  ///
+  /// In en, this message translates to:
+  /// **'not sold in the app'**
+  String get voucherNotSoldInApp;
+
+  /// No description provided for @voucherTerm1.
+  ///
+  /// In en, this message translates to:
+  /// **'Meetings not used within the validity (2 months) are forfeited.'**
+  String get voucherTerm1;
+
+  /// No description provided for @voucherTerm2.
+  ///
+  /// In en, this message translates to:
+  /// **'Remaining meetings cannot be moved to another student.'**
+  String get voucherTerm2;
+
+  /// No description provided for @voucherTerm3.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment in full before the first class.'**
+  String get voucherTerm3;
+
+  /// No description provided for @voucherTerm4.
+  ///
+  /// In en, this message translates to:
+  /// **'No refunds.'**
+  String get voucherTerm4;
+
+  /// No description provided for @voucherBuyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy a voucher'**
+  String get voucherBuyTitle;
+
+  /// No description provided for @voucherBuyIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a package. One meeting is 1.5 hours; 6 to 8 students per class.'**
+  String get voucherBuyIntro;
+
+  /// No description provided for @voucherNoPackages.
+  ///
+  /// In en, this message translates to:
+  /// **'No package is on sale right now.'**
+  String get voucherNoPackages;
+
+  /// No description provided for @voucherTermsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms'**
+  String get voucherTermsTitle;
+
+  /// No description provided for @voucherAgree.
+  ///
+  /// In en, this message translates to:
+  /// **'I agree to the terms above'**
+  String get voucherAgree;
+
+  /// No description provided for @voucherPay.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay'**
+  String get voucherPay;
+
+  /// No description provided for @voucherPayNote.
+  ///
+  /// In en, this message translates to:
+  /// **'The payment page (Midtrans) opens in a new tab. The voucher appears here once the payment is confirmed.'**
+  String get voucherPayNote;
+
+  /// No description provided for @voucherOfferLine.
+  ///
+  /// In en, this message translates to:
+  /// **'{sessions} meetings · valid {days} days'**
+  String voucherOfferLine(int sessions, int days);
+
+  /// No description provided for @voucherMyVouchers.
+  ///
+  /// In en, this message translates to:
+  /// **'Vouchers'**
+  String get voucherMyVouchers;
+
+  /// No description provided for @voucherBuy.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy voucher'**
+  String get voucherBuy;
+
+  /// No description provided for @voucherNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No voucher yet.'**
+  String get voucherNone;
+
+  /// No description provided for @voucherHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Voucher history'**
+  String get voucherHistory;
+
+  /// No description provided for @voucherHistoryPurchase.
+  ///
+  /// In en, this message translates to:
+  /// **'+{n} sessions bought'**
+  String voucherHistoryPurchase(int n);
+
+  /// No description provided for @voucherHistoryExpiry.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} sessions expired'**
+  String voucherHistoryExpiry(int n);
+
+  /// No description provided for @voucherStatusActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get voucherStatusActive;
+
+  /// No description provided for @voucherStatusUsedUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Used up'**
+  String get voucherStatusUsedUp;
+
+  /// No description provided for @voucherStatusExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get voucherStatusExpired;
+
+  /// No description provided for @voucherSessionsPackage.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} sessions'**
+  String voucherSessionsPackage(int n);
+
+  /// No description provided for @voucherLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{left} of {total} left'**
+  String voucherLeft(int left, int total);
+
+  /// No description provided for @voucherBooked.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} booked'**
+  String voucherBooked(int n);
+
+  /// No description provided for @voucherUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'until {date} ({days} days)'**
+  String voucherUntil(String date, int days);
+
+  /// No description provided for @voucherEnded.
+  ///
+  /// In en, this message translates to:
+  /// **'ended {date}'**
+  String voucherEnded(String date);
+
+  /// No description provided for @voucherForfeited.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} forfeited'**
+  String voucherForfeited(int n);
+
+  /// No description provided for @voucherSourceCash.
+  ///
+  /// In en, this message translates to:
+  /// **'cash'**
+  String get voucherSourceCash;
+
+  /// No description provided for @voucherSourceTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'transfer'**
+  String get voucherSourceTransfer;
+
+  /// No description provided for @voucherSourceOnline.
+  ///
+  /// In en, this message translates to:
+  /// **'online'**
+  String get voucherSourceOnline;
+
+  /// No description provided for @invoicesBoughtInApp.
+  ///
+  /// In en, this message translates to:
+  /// **'bought in the app'**
+  String get invoicesBoughtInApp;
+
+  /// No description provided for @invoicesFilterMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Month'**
+  String get invoicesFilterMonth;
+
+  /// No description provided for @invoicesFilteredTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} invoices · {total}'**
+  String invoicesFilteredTotal(int count, String total);
 }
 
 class _AppLocalizationsDelegate

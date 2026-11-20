@@ -7009,4 +7009,144 @@ class AppLocalizationsId extends AppLocalizations {
   String progressRebuilt(int n) {
     return '$n laporan dibangun ulang.';
   }
+
+  @override
+  String get voucherNameChinese => 'Nama Mandarin';
+
+  @override
+  String get voucherValidDays => 'Berlaku (hari)';
+
+  @override
+  String get voucherSoldInApp => 'Dijual di aplikasi';
+
+  @override
+  String voucherValidFor(int days) {
+    return 'berlaku $days hari';
+  }
+
+  @override
+  String get voucherNotSoldInApp => 'tidak dijual di aplikasi';
+
+  @override
+  String get voucherTerm1 =>
+      'Pertemuan yang tidak dipakai dalam masa berlaku (2 bulan) hangus.';
+
+  @override
+  String get voucherTerm2 =>
+      'Sisa pertemuan tidak bisa dipindahkan ke murid lain.';
+
+  @override
+  String get voucherTerm3 => 'Pembayaran lunas sebelum kelas pertama.';
+
+  @override
+  String get voucherTerm4 => 'Tidak ada pengembalian dana.';
+
+  @override
+  String get voucherBuyTitle => 'Beli voucher';
+
+  @override
+  String get voucherBuyIntro =>
+      'Pilih paket. Satu pertemuan 1,5 jam; 6 sampai 8 murid per kelas.';
+
+  @override
+  String get voucherNoPackages => 'Belum ada paket yang dijual.';
+
+  @override
+  String get voucherTermsTitle => 'Ketentuan';
+
+  @override
+  String get voucherAgree => 'Saya setuju dengan ketentuan di atas';
+
+  @override
+  String get voucherPay => 'Bayar';
+
+  @override
+  String get voucherPayNote =>
+      'Halaman pembayaran (Midtrans) terbuka di tab baru. Voucher muncul di sini setelah pembayaran dikonfirmasi.';
+
+  @override
+  String voucherOfferLine(int sessions, int days) {
+    return '$sessions pertemuan · berlaku $days hari';
+  }
+
+  @override
+  String get voucherMyVouchers => 'Voucher';
+
+  @override
+  String get voucherBuy => 'Beli voucher';
+
+  @override
+  String get voucherNone => 'Belum ada voucher.';
+
+  @override
+  String get voucherHistory => 'Riwayat voucher';
+
+  @override
+  String voucherHistoryPurchase(int n) {
+    return '+$n sesi dibeli';
+  }
+
+  @override
+  String voucherHistoryExpiry(int n) {
+    return '$n sesi hangus';
+  }
+
+  @override
+  String get voucherStatusActive => 'Aktif';
+
+  @override
+  String get voucherStatusUsedUp => 'Habis';
+
+  @override
+  String get voucherStatusExpired => 'Kedaluwarsa';
+
+  @override
+  String voucherSessionsPackage(int n) {
+    return '$n sesi';
+  }
+
+  @override
+  String voucherLeft(int left, int total) {
+    return 'sisa $left dari $total';
+  }
+
+  @override
+  String voucherBooked(int n) {
+    return '$n dipesan';
+  }
+
+  @override
+  String voucherUntil(String date, int days) {
+    return 'sampai $date ($days hari)';
+  }
+
+  @override
+  String voucherEnded(String date) {
+    return 'berakhir $date';
+  }
+
+  @override
+  String voucherForfeited(int n) {
+    return '$n hangus';
+  }
+
+  @override
+  String get voucherSourceCash => 'tunai';
+
+  @override
+  String get voucherSourceTransfer => 'transfer';
+
+  @override
+  String get voucherSourceOnline => 'online';
+
+  @override
+  String get invoicesBoughtInApp => 'dibeli di aplikasi';
+
+  @override
+  String get invoicesFilterMonth => 'Bulan';
+
+  @override
+  String invoicesFilteredTotal(int count, String total) {
+    return '$count tagihan · $total';
+  }
 }

@@ -2018,6 +2018,40 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
+### 2026-11-20 — Build 5 Voucher packages and self-purchase — COMMIT, release v0.1.23 (DEPLOYSTATE)
+- Built: Price list `nameChinese` / `validDays` / `active`; the buy sheet
+  and the voucher cards with history on the student and parent Payments
+  tabs; `createInvoice` for students and linked parents (terms, one open
+  purchase reused); validity, Chinese name, `sessionsBooked`, source and a
+  `voucher_history` purchase entry on every paid voucher (Midtrans, cash,
+  transfer); `functions/payments.js` + `test_payments.js`; the daily
+  `expireVouchers`; admin Invoices filters with total and the in-app tag;
+  Vouchers tab Chinese name and source; rules for `voucher_history`.
+- Must list: 1 Price list fields · 2 buy flow · 3 createInvoice for
+  students and parents · 4 paid → term with ledger · 5 pure logic with
+  MT-01..04 · 6 expiry job · 7 screens · 8 rules · 9 seed and tests. All
+  done.
+- Acceptance walk (emulator): 1 the buy sheet lists 8次课程 and 16次课程
+  with validity and price, the four terms, Pay disabled until a package and
+  the tick; 2–6 (settlement once, MT-03 repeat, reuse of the open invoice,
+  MT-02 pending / expire, MT-04 wrong signature 403, a parent buying for
+  the child and refused for another student, a student refused for another
+  uid, the expiry job once) run in the flow test against the emulator with
+  the Snap stub; 7 the admin Invoices tab filters by status, item and month
+  with "5 invoices · Rp 15.250.000" and the in-app tag; the Price list
+  dialog edits the Chinese name, validity and "sold in the app". Not walked
+  by hand: the parent tab and 360 px for these screens.
+- Proof: analyzer 0 errors / 0 warnings / 17 infos; `flutter test` 144
+  pass (+4) and 2 skipped; rules tests 73 pass, 1 skipped (+2); node tests
+  pass (+ `test_payments.js`, MT-01 to MT-04); flow test 70/70 (+8).
+- Owner: DEPLOYNOTE Then the **sandbox E2E on live** as `student1@` with a
+  Midtrans sandbox test card (`docs/GO_LIVE_CHECKLIST.md` §4–6) and MT-05
+  (compare with the sandbox dashboard). Production keys stay off.
+- Left out and why: the "Then" items (receipt PDF, invoice CSV of the
+  filter is the existing Export CSV of the visible rows).
+- Note: staff-made invoices get the Chinese name and validity from the
+  Price list row at payment time (`withPriceItem`).
+
 ### 2026-11-20 — Build 4 Progress report — 3ca62ff, release v0.1.22 (rules, indexes, functions and hosting live from the PC 2026-11-20 under the owner's standing go; 39 functions)
 - Built: `progress_summary/{uid}` kept by `refreshProgressSummary` (pure
   logic, ISO weeks in Jakarta time, the five warnings, the status label and

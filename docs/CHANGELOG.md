@@ -6,6 +6,51 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-20 — Claude (BUILD chat): Build 5 — voucher packages and self-purchase
+
+**What changed**
+- **Price list** rows gain `nameChinese` (报名费, 8次课程, 16次课程, HSK教材费),
+  `validDays` (60 for the packages) and `active` (sold in the app); the
+  admin Price list edits them; `termValidDays` stays the fallback.
+- **Buy in the app:** the student and the linked parent Payments tabs show
+  the vouchers (Chinese name, sessions left, booked, deadline with days
+  left, status) with their history and **Buy voucher**: the active session
+  packages, the flyer's four terms with one tick, **Pay** → `createInvoice`
+  → Midtrans Snap in a new tab. A second Buy while one purchase is open
+  reuses its payment link.
+- **`createInvoice`** is open to a student (own uid) and a parent (a child
+  in `studentIds`); self-purchases need `acceptedTerms` and carry
+  `termsVersion`, `createdByRole`, `selfPurchase`, `nameChinese`,
+  `validDays`; pending students are refused (`requireCaller`). Staff
+  invoices are unchanged.
+- **Paid → term:** the term gets the item's validity (Jakarta dates), the
+  Chinese name, `priceItemId`, `sessionsBooked: 0`, `source`, and a ledger
+  entry `voucher_history/{invoiceId}_purchase`; the same on cash and
+  transfer; the linked parent is told too.
+- **Pure logic** `functions/payments.js` (signature, status mapping,
+  credit decision, deadlines, expiry, who may buy) with
+  `functions/test_payments.js` (MT-01 to MT-04); the webhook uses it.
+- **`expireVouchers`** (00:30 Jakarta): active terms past their deadline
+  become `expired` with `sessionsForfeited`, a ledger entry and notices to
+  the student, the parent and the admins; idempotent.
+- **Admin:** Invoices tab filters (status, item, month) with the Rupiah
+  total and a "bought in the app" tag; Vouchers tab shows the Chinese name
+  and the source.
+- **Rules:** `voucher_history` read by the student, staff and the linked
+  parent, no client write; invoices unchanged.
+- **Emulator:** the flow test answers Snap with a local stub
+  (`functions/.env.local`) and signs notifications with the emulator key
+  (`functions/.secret.local`); both files are git-ignored.
+
+**Why**
+- Build 5 of `docs/PLAN.md` §4 (spec §6; decision 4; §5 Q17, Q18).
+
+**For review**
+- Production Midtrans keys stay off until the owner's sandbox E2E (MT-05).
+- Deploy rules and functions (1 new: `expireVouchers`), then hosting.
+
+---
+
 ## 2026-11-20 — Claude (BUILD chat): Build 4 — progress report
 
 **What changed**

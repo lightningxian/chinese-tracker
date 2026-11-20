@@ -7035,4 +7035,144 @@ class AppLocalizationsEn extends AppLocalizations {
   String progressRebuilt(int n) {
     return '$n reports rebuilt.';
   }
+
+  @override
+  String get voucherNameChinese => 'Chinese name';
+
+  @override
+  String get voucherValidDays => 'Valid for (days)';
+
+  @override
+  String get voucherSoldInApp => 'Sold in the app';
+
+  @override
+  String voucherValidFor(int days) {
+    return 'valid $days days';
+  }
+
+  @override
+  String get voucherNotSoldInApp => 'not sold in the app';
+
+  @override
+  String get voucherTerm1 =>
+      'Meetings not used within the validity (2 months) are forfeited.';
+
+  @override
+  String get voucherTerm2 =>
+      'Remaining meetings cannot be moved to another student.';
+
+  @override
+  String get voucherTerm3 => 'Payment in full before the first class.';
+
+  @override
+  String get voucherTerm4 => 'No refunds.';
+
+  @override
+  String get voucherBuyTitle => 'Buy a voucher';
+
+  @override
+  String get voucherBuyIntro =>
+      'Pick a package. One meeting is 1.5 hours; 6 to 8 students per class.';
+
+  @override
+  String get voucherNoPackages => 'No package is on sale right now.';
+
+  @override
+  String get voucherTermsTitle => 'Terms';
+
+  @override
+  String get voucherAgree => 'I agree to the terms above';
+
+  @override
+  String get voucherPay => 'Pay';
+
+  @override
+  String get voucherPayNote =>
+      'The payment page (Midtrans) opens in a new tab. The voucher appears here once the payment is confirmed.';
+
+  @override
+  String voucherOfferLine(int sessions, int days) {
+    return '$sessions meetings · valid $days days';
+  }
+
+  @override
+  String get voucherMyVouchers => 'Vouchers';
+
+  @override
+  String get voucherBuy => 'Buy voucher';
+
+  @override
+  String get voucherNone => 'No voucher yet.';
+
+  @override
+  String get voucherHistory => 'Voucher history';
+
+  @override
+  String voucherHistoryPurchase(int n) {
+    return '+$n sessions bought';
+  }
+
+  @override
+  String voucherHistoryExpiry(int n) {
+    return '$n sessions expired';
+  }
+
+  @override
+  String get voucherStatusActive => 'Active';
+
+  @override
+  String get voucherStatusUsedUp => 'Used up';
+
+  @override
+  String get voucherStatusExpired => 'Expired';
+
+  @override
+  String voucherSessionsPackage(int n) {
+    return '$n sessions';
+  }
+
+  @override
+  String voucherLeft(int left, int total) {
+    return '$left of $total left';
+  }
+
+  @override
+  String voucherBooked(int n) {
+    return '$n booked';
+  }
+
+  @override
+  String voucherUntil(String date, int days) {
+    return 'until $date ($days days)';
+  }
+
+  @override
+  String voucherEnded(String date) {
+    return 'ended $date';
+  }
+
+  @override
+  String voucherForfeited(int n) {
+    return '$n forfeited';
+  }
+
+  @override
+  String get voucherSourceCash => 'cash';
+
+  @override
+  String get voucherSourceTransfer => 'transfer';
+
+  @override
+  String get voucherSourceOnline => 'online';
+
+  @override
+  String get invoicesBoughtInApp => 'bought in the app';
+
+  @override
+  String get invoicesFilterMonth => 'Month';
+
+  @override
+  String invoicesFilteredTotal(int count, String total) {
+    return '$count invoices · $total';
+  }
 }

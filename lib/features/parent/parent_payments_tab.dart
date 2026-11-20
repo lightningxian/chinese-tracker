@@ -10,6 +10,7 @@ import '../../models/org_settings.dart';
 import '../../services/firestore_service.dart';
 import '../../services/payment_service.dart';
 import '../admin/admin_invoices_tab.dart' show InvoiceCard;
+import '../payments/voucher_widgets.dart';
 
 /// A child's invoices for a parent, with the same **Pay now** the student
 /// has: the invoice stays on the student, whoever is linked may pay it.
@@ -34,21 +35,31 @@ class ParentPaymentsTab extends StatelessWidget {
               return const Center(child: CircularProgressIndicator());
             }
             final invoices = snap.data ?? [];
-            if (invoices.isEmpty) {
-              return EmptyState(
-                icon: Icons.receipt_long_outlined,
-                title: context.l10n.parentPaymentsEmptyTitle,
-                subtitle: context.l10n.parentPaymentsEmptySubtitle,
-              );
-            }
-            return ListView.separated(
+            // Build 5: the child's vouchers and Beli voucher come first.
+            return ListView(
               padding: const EdgeInsets.all(20),
-              itemCount: invoices.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
-              itemBuilder: (_, i) => InvoiceCard(
-                invoice: invoices[i],
-                onPay: paymentsOn ? () => _pay(context, invoices[i]) : null,
-              ),
+              children: [
+                VoucherSection(
+                  key: ValueKey(child.uid),
+                  studentId: child.uid,
+                  canBuy: paymentsOn,
+                ),
+                const SizedBox(height: 20),
+                if (invoices.isEmpty)
+                  EmptyState(
+                    icon: Icons.receipt_long_outlined,
+                    title: context.l10n.parentPaymentsEmptyTitle,
+                    subtitle: context.l10n.parentPaymentsEmptySubtitle,
+                  )
+                else
+                  for (final invoice in invoices) ...[
+                    InvoiceCard(
+                      invoice: invoice,
+                      onPay: paymentsOn ? () => _pay(context, invoice) : null,
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+              ],
             );
           },
         );

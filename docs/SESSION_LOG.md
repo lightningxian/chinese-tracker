@@ -60,6 +60,16 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   warnings, report screen for four roles, chart, PDF, daily notices)
   written in full and marked NEXT**, with defaults for §5 Q13 to Q16.
 
+### 2026-11-20 — Claude (BUILD chat, PC): Build 5 vouchers and self-purchase
+
+- Built Build 5 (release v0.1.23): students and linked parents buy
+  voucher packages in the app (Midtrans Snap), paid invoices become
+  vouchers with their validity and a ledger, a daily job expires old
+  vouchers, admin invoice filters with totals.
+- Checked: analyzer 17 infos, `flutter test` 144 pass, rules tests 73 pass,
+  node tests (+ `test_payments.js`, MT-01..04), flow test 70/70, an
+  emulator walk. The owner still runs the sandbox E2E on live (MT-05).
+
 ### 2026-11-20 — Claude (BUILD chat, PC): Build 4 progress report
 
 - Built Build 4 (release v0.1.22): `progress_summary/{uid}` kept by

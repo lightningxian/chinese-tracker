@@ -16,7 +16,37 @@ class StudentClassTerm {
     this.purchasedAt,
     this.createdAt,
     this.sourceInvoiceId,
+    this.nameChinese = '',
+    this.sessionsBooked = 0,
+    this.source = '',
+    this.sessionsForfeited = 0,
   });
+
+  /// Build 5: the package's Chinese name (8次课程, 16次课程).
+  final String nameChinese;
+
+  /// Sessions booked ahead (Build 6); 0 until then.
+  final int sessionsBooked;
+
+  /// `app` (bought in the app), `midtrans`, `cash`, `transfer`, or "" (a
+  /// teacher or an admin added it).
+  final String source;
+
+  /// Sessions lost when the voucher expired.
+  final int sessionsForfeited;
+
+  static const statusExpired = 'expired';
+  bool get isExpired => status == statusExpired;
+
+  /// Days from today to the deadline (negative once passed), or null.
+  int? daysLeft({DateTime? on}) {
+    final end = DateTime.tryParse(deadlineDate);
+    if (end == null) return null;
+    final d = on ?? DateTime.now();
+    return DateTime(end.year, end.month, end.day)
+        .difference(DateTime(d.year, d.month, d.day))
+        .inDays;
+  }
 
   final String id;
   final String studentId;
@@ -93,6 +123,10 @@ class StudentClassTerm {
       purchasedAt: (data['purchasedAt'] as Timestamp?)?.toDate(),
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
       sourceInvoiceId: data['sourceInvoiceId'] as String?,
+      nameChinese: data['nameChinese'] as String? ?? '',
+      sessionsBooked: (data['sessionsBooked'] as num?)?.toInt() ?? 0,
+      source: data['source'] as String? ?? '',
+      sessionsForfeited: (data['sessionsForfeited'] as num?)?.toInt() ?? 0,
     );
   }
 

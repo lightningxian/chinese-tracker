@@ -627,6 +627,17 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Build 5: the voucher ledger (purchase and expiry entries), written
+    // only by functions. The student, staff and a linked parent read it.
+    match /voucher_history/{entryId} {
+      allow read: if isApprovedUser() && (
+        isStaff() ||
+        resource.data.get('studentId', '') == request.auth.uid ||
+        isParentOf(resource.data.get('studentId', ''))
+      );
+      allow write: if false;
+    }
+
     // Build 4: the progress summary of a student (functions write it). The
     // student, staff and a linked parent read it.
     match /progress_summary/{uid} {

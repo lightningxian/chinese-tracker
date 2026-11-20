@@ -50,7 +50,7 @@ retake" and "P6 Admin screen to edit weights" are superseded by the table above.
 | 02 | Sesi Kelas: level, time, room, teacher (info), seats left, **Daftar**, rejection reason | `student_join_session_section.dart`: "spots left", Join, "Class is full" dialog | Indonesian text, level filter, teacher name, seats; booking via function (Phase 2) |
 | 03 | R1 fill-in-the-blank with pembahasan | **Done (2026-11-12):** `reading_cloze` is editable (word bank A–F) and playable, the scanners import it, and every bank question carries an optional explanation shown on the result page | — |
 | 04 | T2/T3 hanzi typing question | **Done (Build 2A, 2026-11-17):** `type_hanzi` with the typing matcher (half marks shown as "Setengah nilai untuk sementara; guru akan memeriksanya"), plus T1 `type_pinyin` and T5 `essay` | Screenshot on live after the 2A deploy |
-| 05 | Voucher Kursus: remaining, expiry, history, **Beli** | Term section shows remaining/expiry/visit history; no self-purchase | Add packages + Beli (Phase 4) |
+| 05 | Voucher Kursus: remaining, expiry, history, **Beli** | Build 5: voucher cards (Chinese name, left, booked, deadline, status), `voucher_history`, **Buy voucher** with the flyer terms | Done (take on live) |
 | 06 | Test token entry with code and duration | Nothing | Build (Phase 5 supervised flow) |
 | 07 | Leaderboard per code, masked names, own row highlighted | **Done (Build 2B, 2026-11-20):** student Tests tab, a result, **Leaderboard** (Chinese names, own row in a teal frame, medals for the top 3) | Screenshot on the emulator or live after deploy |
 | 08 | Laporan Progress: "2 dari 3", KPI cards, chart, per-skill, note, test history | Build 4: the report screen (`fl_chart` line chart) on the student Progress tab, the parent tab and the staff student page | Done (take on live) |
@@ -60,7 +60,7 @@ retake" and "P6 Admin screen to edit weights" are superseded by the table above.
 | 12 | Admin: registration approval with placement choice | Build 3: Users → **Approval** (badge), one card per pending student with the choice, the placement result, teacher and level pickers, Approve / Reject | Done (take on live) |
 | 13 | Admin: promotion verification "HSK 3 → HSK 4" with 3 passed codes | **Done (Build 2B, 2026-11-20):** Tests, **Promotion** (badge), card "陈美琳 (Kelvin Santoso) · HSK 3 (Intermediate) → HSK 4 (Intermediate)" with the codes and marks, Approve / Decline | Screenshot on the emulator or live after deploy |
 | 14 | Admin dashboard: pending registrations, unconfirmed schedules, late check-ins, unclosed sessions, students needing attention | Dashboard with totals, sign-ups, voucher alerts, finance | Rework after Phases 1–3 exist |
-| 15 | Admin: Pembayaran with lunas / pending / expire | Invoices tab with Lunas / Menunggu / Kedaluwarsa / Gagal filters (Indonesian since 2026-11-12) | Done for the labels; Phase 4 filters as spec |
+| 15 | Admin: Pembayaran with lunas / pending / expire | Build 5: filters by status, item and month, the Rupiah total, the in-app tag | Done (take on live) |
 
 Roughly: 2 screens exist in a usable form, 5 exist partly, 8 don't exist. Taking
 the 15 screenshots means building most of the Phase 1–7 UI first, on emulator
@@ -191,12 +191,12 @@ Status per spec item. Evidence is `file:line` in this repo.
 | P3 closeSession transaction, idempotent, ledger | Partly | `concludeClassSession` in-app (`:1100-1147`), not atomic overall | concludeClassSession |
 | P3 Unclosed-session flag 2h after | Missing | Not found | — |
 | P3 Teacher monthly recap | Missing | Only "classes this week" count | — |
-| **P4** Voucher packages catalog | Partly | Hard-coded 8/16 and prices (`app_constants.dart:56-59`, `index.js:30-40`); 90-day validity | PACKAGE_PRICES |
-| P4 Student voucher screen (remaining/expiry/history/buy) | Partly | Remaining, expiry, history (`class_term_widgets.dart`); pay staff-created invoices only; no self-buy | StudentPaymentsTab |
-| P4 createMidtransTransaction | Partly | `createInvoice` (`index.js:380-529`), staff-only | createInvoice |
-| P4 Webhook: signature + mapping + idempotent credit | Done | `index.js:556-670`; amount not cross-checked against invoice | midtransNotification |
-| P4 Admin payments screen with filters | Partly | Sortable table, no status/date filters (`admin_invoices_tab.dart`) | AdminInvoicesTab |
-| P4 expireVouchers daily + low-balance reminders | Missing | Expiry only checked in app (`student_class_term.dart:42-58`) | voucherAlerts |
+| **P4** Voucher packages catalog | Done (Build 5) | Price list with `nameChinese`, `validDays`, `active` | `settings/pricing.items` |
+| P4 Student voucher screen (remaining/expiry/history/buy) | Done (Build 5) | `voucher_widgets.dart` on the student and parent Payments tabs | VoucherSection |
+| P4 createMidtransTransaction | Done (Build 5) | `createInvoice` for students (own uid) and linked parents, terms required | createInvoice |
+| P4 Webhook: signature + mapping + idempotent credit | Done | Pure logic `payments.js`; MT-01..04 in `test_payments.js` and the flow test; the amount is checked | midtransNotification |
+| P4 Admin payments screen with filters | Done (Build 5) | Status, item, month filters and the total | AdminInvoicesTab |
+| P4 expireVouchers daily + low-balance reminders | Done (Builds 4, 5) | `expireVouchers` 00:30 Jakarta; low balance = progress warning 4 from the daily job | expireVouchers |
 | **P5** Question bank with form/topic/explanation/audio | Partly | Has type, level, skill, tags, difficulty, image/audio and, since 2026-11-12, an explanation shown in the review (`ExerciseQuestion.explanation`); no form code | question_bank |
 | P5 Question forms L1–L3, R1–R4, T1–T5 | Done (2026-11-13) | L1 picture choice (`optionImageUrls`), L2 true/false, L3 listening with a recording per worksheet or a clip per question, R1–R4, T1 type the hanzi, T2 compose, T5 picture + keyword sentence; all importable by the AI paper reader, playable, and keyed on the server | ExerciseType, AI import |
 | P5 Answer keys students cannot read | Done | Package keys stay in `question_bank` (staff-only read); `startExercise` strips them; old-format exercises are no longer playable (2026-11-12). Quizzes (unused) still carry keys | startExercise |

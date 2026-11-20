@@ -740,3 +740,28 @@ describe("progress summary and notes (Build 4)", () => {
     await assertSucceeds(deleteDoc(doc(as("admin1"), "progress_notes", "n1")));
   });
 });
+
+// Build 5: the voucher ledger; invoices stay closed to client writes.
+describe("voucher ledger (Build 5)", () => {
+  it("the student, staff and the linked parent read an entry; nobody writes", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "voucher_history", "inv1_purchase"), { kind: "purchase", studentId: "student1", sessions: 8 });
+    });
+    await assertSucceeds(getDoc(doc(as("student1"), "voucher_history", "inv1_purchase")));
+    await assertSucceeds(getDoc(doc(as("parent1"), "voucher_history", "inv1_purchase")));
+    await assertSucceeds(getDoc(doc(as("teacher3"), "voucher_history", "inv1_purchase")));
+    await assertFails(getDoc(doc(as("student2"), "voucher_history", "inv1_purchase")));
+    await assertFails(setDoc(doc(as("admin1"), "voucher_history", "x"), { kind: "purchase", studentId: "student1" }));
+    await assertFails(setDoc(doc(as("student1"), "voucher_history", "y"), { kind: "purchase", studentId: "student1" }));
+  });
+  it("a student cannot create or flip an invoice", async () => {
+    await assertFails(setDoc(doc(as("student1"), "invoices", "self"), {
+      invoiceNumber: "X", studentId: "student1", amount: 1, status: "pending", paymentMethod: "manual",
+      kind: "sessions", sessions: 8, packageSize: 8, createdBy: "student1" }));
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "invoices", "inv2"), { studentId: "student1", status: "pending", amount: 1 });
+    });
+    await assertFails(updateDoc(doc(as("student1"), "invoices", "inv2"), { status: "paid" }));
+    await assertFails(updateDoc(doc(as("admin1"), "invoices", "inv2"), { status: "paid" }));
+  });
+});

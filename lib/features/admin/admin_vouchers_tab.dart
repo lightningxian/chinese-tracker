@@ -46,9 +46,18 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
     StudentClassTerm term,
   ) {
     final inv = _invoicesById[term.sourceInvoiceId];
+    // Build 5: where the voucher came from.
+    final source = switch (term.source.isNotEmpty ? term.source : (inv?.paymentMethod ?? '')) {
+      'app' => l.invoicesBoughtInApp,
+      'cash' => l.voucherSourceCash,
+      'transfer' => l.voucherSourceTransfer,
+      'midtrans' => l.voucherSourceOnline,
+      _ => '',
+    };
     return switch (_paymentState(term)) {
       _PaymentState.paid => (
-          '${l.adminInvoicesStatusPaid}${inv?.paidAt != null ? ' · ${DateFormat('d MMM').format(inv!.paidAt!)}' : ''}',
+          '${l.adminInvoicesStatusPaid}${inv?.paidAt != null ? ' · ${DateFormat('d MMM').format(inv!.paidAt!)}' : ''}'
+          '${source.isEmpty ? '' : ' · $source'}',
           AppColors.success,
         ),
       _PaymentState.pending => (
@@ -240,9 +249,11 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
         id: 'package',
         label: l.adminVouchersColPackage,
         sortable: true,
-        width: 96,
+        width: 110,
         cell: (term) => Text(
-          l.termSessionsCount(term.packageSize),
+          term.nameChinese.isNotEmpty
+              ? term.nameChinese
+              : l.termSessionsCount(term.packageSize),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: metaStyle,
@@ -580,6 +591,9 @@ class _VoucherCard extends StatelessWidget {
                         letterSpacing: 0.4,
                       ),
                     ),
+                    if (term.nameChinese.isNotEmpty)
+                      Text(term.nameChinese,
+                          style: const TextStyle(fontWeight: FontWeight.w700)),
                     const SizedBox(height: 6),
                     Text(
                       studentName,

@@ -252,6 +252,7 @@ def main():
     seed_marking(admin_uid, teacher_uids[0], student_uids)
     seed_build3(admin_uid, teacher_uids)
     seed_build4(admin_uid, teacher_uids, student_uids, student_names)
+    seed_build5(admin_uid, student_uids, student_names)
 
     # Notifications and settings
     put("notifications", "n_1", {"kind": "registration", "title": "New student registered",
@@ -262,10 +263,10 @@ def main():
         "read": False, "createdAt": ts(-2, 18), "targetRoute": "/teacher"})
     put("settings", "pricing", {
         "items": [
-            {"id": "registration", "name": "Registration (one-time)", "price": 100000, "kind": "registration", "sessions": 0},
-            {"id": "package8", "name": "8 class sessions", "price": 2450000, "kind": "sessions", "sessions": 8},
-            {"id": "package16", "name": "16 class sessions", "price": 3950000, "kind": "sessions", "sessions": 16},
-            {"id": "book", "name": "HSK materials & book", "price": 250000, "kind": "book", "sessions": 0},
+            {"id": "registration", "name": "Registration (one-time)", "nameChinese": "报名费", "price": 100000, "kind": "registration", "sessions": 0, "validDays": 0, "active": True},
+            {"id": "package8", "name": "8 class sessions", "nameChinese": "8次课程", "price": 2450000, "kind": "sessions", "sessions": 8, "validDays": 60, "active": True},
+            {"id": "package16", "name": "16 class sessions", "nameChinese": "16次课程", "price": 3950000, "kind": "sessions", "sessions": 16, "validDays": 60, "active": True},
+            {"id": "book", "name": "HSK materials & book", "nameChinese": "HSK教材费", "price": 250000, "kind": "book", "sessions": 0, "validDays": 0, "active": True},
         ],
         "package8": 2450000, "package16": 3950000, "book": 250000, "registration": 100000,
         "termValidDays": 60, "updatedAt": ts(-20)})
@@ -681,6 +682,41 @@ def seed_build4(admin_uid, teacher_uids, student_uids, student_names):
     print("Build 4: healthy student13@, warnings: student14@ attendance, student15@ "
           "falling scores, student16@ inactive, student17@ two failed tests, "
           "student18@ voucher 1 left")
+
+
+# ---------------------------------------------------------------- Build 5
+def seed_build5(admin_uid, student_uids, student_names):
+    """Build 5: an expired voucher waiting for the expiry job, one with 2
+    sessions left, and a paid in-app purchase with its ledger entry."""
+    put("student_class_terms", "term_past_deadline", {"studentId": student_uids[19],
+        "packageSize": 8, "sessionsRemaining": 3, "sessionsUsed": 5, "status": "active",
+        "startDate": ymd(-70), "deadlineDate": ymd(-3), "nameChinese": "8次课程",
+        "validDays": 60, "voucherCode": "2026_08_020", "createdBy": admin_uid,
+        "createdAt": ts(-70)})
+    put("student_class_terms", "term_two_left", {"studentId": student_uids[20],
+        "packageSize": 8, "sessionsRemaining": 2, "sessionsUsed": 6, "status": "active",
+        "startDate": ymd(-30), "deadlineDate": ymd(30), "nameChinese": "8次课程",
+        "validDays": 60, "voucherCode": "2026_09_021", "createdBy": admin_uid,
+        "createdAt": ts(-30)})
+    uid, name = student_uids[21], student_names[21]
+    put("invoices", "inv_app_paid", {"invoiceNumber": "ES-INV-17920099-APP", "studentId": uid,
+        "studentName": name, "teacherId": "", "item": "package", "description": "16 class sessions",
+        "packageSize": 16, "priceItemId": "package16", "kind": "sessions", "sessions": 16,
+        "nameChinese": "16次课程", "validDays": 60, "amount": 3950000, "currency": "IDR",
+        "status": "paid", "paymentMethod": "midtrans", "midtransOrderId": "ES-INV-17920099-APP",
+        "selfPurchase": True, "acceptedTerms": True, "termsVersion": "2026-10-flyer",
+        "createdByRole": "student", "dueDate": ymd(7), "createdBy": uid,
+        "createdAt": ts(-5), "paidAt": ts(-5, 10)})
+    put("student_class_terms", "term_app_paid", {"studentId": uid, "packageSize": 16,
+        "sessionsRemaining": 16, "sessionsUsed": 0, "sessionsBooked": 0, "status": "active",
+        "startDate": ymd(-5), "deadlineDate": ymd(55), "nameChinese": "16次课程",
+        "validDays": 60, "priceItemId": "package16", "source": "app",
+        "sourceInvoiceId": "inv_app_paid", "createdBy": "midtrans", "createdAt": ts(-5, 10)})
+    put("voucher_history", "inv_app_paid_purchase", {"kind": "purchase", "studentId": uid,
+        "termId": "term_app_paid", "invoiceId": "inv_app_paid", "sessions": 16,
+        "nameChinese": "16次课程", "amount": 3950000, "method": "midtrans", "date": ts(-5, 10)})
+    print("Build 5: price list with Chinese names, a past-deadline voucher (student20@), "
+          "2 sessions left (student21@), a paid in-app purchase (student22@)")
 
 
 if __name__ == "__main__":

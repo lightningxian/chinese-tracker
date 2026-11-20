@@ -1129,4 +1129,174 @@ await step("rebuildProgressSummaries is admin-only", async () => {
   assert.ok(r.data.rebuilt >= 20);
 });
 
+
+// ---------------------------------------------------------------------------
+// Build 5: buying a voucher in the app, the Midtrans webhook (MT-01 to
+// MT-04 against the emulator) and the expiry job. Snap is answered by a
+// local stub (functions/.env.local points the emulator at it); the
+// emulator's Midtrans key is in functions/.secret.local (never committed).
+const http = await import("node:http");
+const fs = await import("node:fs");
+const crypto = await import("node:crypto");
+const secretFile = new URL("./.secret.local", import.meta.url);
+const MT_KEY = fs.readFileSync(secretFile, "utf8").match(/MIDTRANS_SERVER_KEY=(.*)/)[1].trim();
+let snapCalls = 0;
+const stub = http.createServer((req, res) => {
+  snapCalls += 1;
+  res.writeHead(201, {"Content-Type": "application/json"});
+  res.end(JSON.stringify({token: `stub-token-${snapCalls}`,
+    redirect_url: `http://127.0.0.1:5199/pay/${snapCalls}`}));
+});
+await new Promise((r) => stub.listen(5199, "127.0.0.1", r));
+
+async function notify(orderId, transactionStatus, grossAmount, {badSignature = false} = {}) {
+  const statusCode = transactionStatus === "settlement" ? "200" : "202";
+  const signature = crypto.createHash("sha512")
+      .update(`${orderId}${statusCode}${grossAmount}${badSignature ? "wrong" : MT_KEY}`)
+      .digest("hex");
+  const r = await fetch(`${FN}/midtransNotification`, {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({order_id: orderId, status_code: statusCode,
+      gross_amount: grossAmount, signature_key: signature,
+      transaction_status: transactionStatus}),
+  });
+  return r.status;
+}
+const termsOf = async (invoiceId) => (await queryDocs("student_class_terms",
+    "sourceInvoiceId", invoiceId));
+const s7 = await signIn("student7@test.chinesetracker");
+const s8 = await signIn("student8@test.chinesetracker");
+// Start with no open invoice for the buyers.
+for (const s of [s7, s1]) {
+  for (const d of await queryDocs("invoices", "studentId", s.uid)) {
+    if (str(d.fields, "status") === "pending") await deleteDoc(`invoices/${d.id}`);
+  }
+}
+let bought;
+
+await step("a student buys a voucher: the terms must be ticked, Snap opens, the invoice is pending", async () => {
+  const noTerms = await call(s7, "createInvoice", {priceItemId: "package8"});
+  assert.equal(reasonOf(noTerms), "terms");
+  const book = await call(s7, "createInvoice", {priceItemId: "book", acceptedTerms: true});
+  assert.equal(reasonOf(book), "not-buyable", "only session packages are sold in the app");
+  const r = await call(s7, "createInvoice", {priceItemId: "package8", acceptedTerms: true});
+  assert.ok(r.data, JSON.stringify(r.error));
+  assert.match(r.data.redirectUrl, /^http:\/\/127\.0\.0\.1:5199\/pay\//);
+  bought = r.data;
+  const inv = await readDoc(`invoices/${bought.invoiceId}`);
+  assert.equal(inv.status, "pending");
+  assert.equal(inv.studentId, s7.uid);
+  assert.equal(inv.selfPurchase, true);
+  assert.equal(inv.acceptedTerms, true);
+  assert.equal(inv.createdByRole, "student");
+  assert.equal(inv.nameChinese, "8次课程");
+  assert.equal(inv.amount, 2450000, "the amount comes from the Price list");
+});
+
+await step("a second Buy reuses the open invoice and its payment link", async () => {
+  const before = snapCalls;
+  const r = await call(s7, "createInvoice", {priceItemId: "package16", acceptedTerms: true});
+  assert.ok(r.data, JSON.stringify(r.error));
+  assert.equal(r.data.reused, true);
+  assert.equal(r.data.invoiceId, bought.invoiceId);
+  assert.equal(snapCalls, before, "no new Snap transaction");
+});
+
+await step("a student cannot buy for another uid; a parent buys only for their own child", async () => {
+  const other = await call(s7, "createInvoice", {studentId: s8.uid, priceItemId: "package8",
+    acceptedTerms: true});
+  assert.equal(reasonOf(other), "not-yours");
+  const parent = await signIn("parent@test.chinesetracker");
+  const notChild = await call(parent, "createInvoice", {studentId: s8.uid,
+    priceItemId: "package8", acceptedTerms: true});
+  assert.equal(reasonOf(notChild), "not-yours");
+  const child = await call(parent, "createInvoice", {studentId: s1.uid,
+    priceItemId: "package8", acceptedTerms: true});
+  assert.ok(child.data, JSON.stringify(child.error));
+  const inv = await readDoc(`invoices/${child.data.invoiceId}`);
+  assert.equal(inv.studentId, s1.uid);
+  assert.equal(inv.createdByRole, "parent");
+  await deleteDoc(`invoices/${child.data.invoiceId}`);
+});
+
+await step("MT-04 a notification with a wrong signature is refused and changes nothing", async () => {
+  const inv = await readDoc(`invoices/${bought.invoiceId}`);
+  const status = await notify(inv.midtransOrderId, "settlement", "2450000.00", {badSignature: true});
+  assert.equal(status, 403);
+  assert.equal((await readDoc(`invoices/${bought.invoiceId}`)).status, "pending");
+  assert.equal((await termsOf(bought.invoiceId)).length, 0);
+});
+
+await step("MT-01 a settlement pays the invoice: one term of 8 sessions, 60 days, a ledger entry", async () => {
+  const inv = await readDoc(`invoices/${bought.invoiceId}`);
+  assert.equal(await notify(inv.midtransOrderId, "settlement", "2450000.00"), 200);
+  assert.equal((await readDoc(`invoices/${bought.invoiceId}`)).status, "paid");
+  const terms = await termsOf(bought.invoiceId);
+  assert.equal(terms.length, 1);
+  const t = await readDoc(`student_class_terms/${terms[0].id}`);
+  assert.equal(t.packageSize, 8);
+  assert.equal(t.sessionsRemaining, 8);
+  assert.equal(t.sessionsBooked, 0);
+  assert.equal(t.nameChinese, "8次课程");
+  assert.equal(t.source, "app");
+  const days = (Date.parse(t.deadlineDate) - Date.parse(t.startDate)) / 86400000;
+  assert.equal(days, 60);
+  const ledger = await readDoc(`voucher_history/${bought.invoiceId}_purchase`);
+  assert.equal(ledger.kind, "purchase");
+  assert.equal(ledger.sessions, 8);
+  assert.equal(ledger.termId, terms[0].id);
+});
+
+await step("MT-03 the same settlement again changes nothing (one credit)", async () => {
+  const inv = await readDoc(`invoices/${bought.invoiceId}`);
+  assert.equal(await notify(inv.midtransOrderId, "settlement", "2450000.00"), 200);
+  assert.equal((await termsOf(bought.invoiceId)).length, 1);
+});
+
+await step("MT-02 pending stays pending; an expire notification gives no term", async () => {
+  const r = await call(s7, "createInvoice", {priceItemId: "package16", acceptedTerms: true});
+  assert.ok(r.data, JSON.stringify(r.error));
+  assert.notEqual(r.data.invoiceId, bought.invoiceId, "the paid one is not reused");
+  const inv = await readDoc(`invoices/${r.data.invoiceId}`);
+  assert.equal(await notify(inv.midtransOrderId, "pending", "3950000.00"), 200);
+  assert.equal((await readDoc(`invoices/${r.data.invoiceId}`)).status, "pending");
+  assert.equal(await notify(inv.midtransOrderId, "expire", "3950000.00"), 200);
+  assert.equal((await readDoc(`invoices/${r.data.invoiceId}`)).status, "expired");
+  assert.equal((await termsOf(r.data.invoiceId)).length, 0);
+  // A late settlement for the expired invoice is not credited either.
+  assert.equal(await notify(inv.midtransOrderId, "settlement", "3950000.00"), 200);
+  assert.equal((await termsOf(r.data.invoiceId)).length, 0);
+});
+
+await step("the expiry job expires a past-deadline voucher once, with the forfeited sessions", async () => {
+  const id = `flow_expire_${RUN}`;
+  await setDocRaw(`student_class_terms/${id}`, {studentId: s8.uid, packageSize: 8,
+    sessionsRemaining: 3, sessionsUsed: 5, status: "active", startDate: "2026-01-01",
+    deadlineDate: "2026-03-01", nameChinese: "8次课程", createdAt: new Date()});
+  const run = async () => {
+    const job = await fetch(`${FN}/expireVouchers-0`, {
+      method: "POST", headers: {"Content-Type": "application/json"}, body: "{}",
+    });
+    assert.ok(job.ok, `job trigger: ${job.status}`);
+  };
+  await run();
+  const t = await waitFor(async () => {
+    const d = await readDoc(`student_class_terms/${id}`);
+    return d && d.status === "expired" ? d : null;
+  }, "the term to expire", 30000);
+  assert.equal(t.sessionsForfeited, 3);
+  const ledger = await readDoc(`voucher_history/${id}_expiry`);
+  assert.equal(ledger.kind, "expiry");
+  assert.equal(ledger.sessions, -3);
+  const notes = (await queryDocs("notifications", "userId", s8.uid))
+      .filter((n) => str(n.fields, "title") === "Voucher expired");
+  assert.equal(notes.length, 1);
+  await run();
+  await new Promise((r) => setTimeout(r, 4000));
+  const again = (await queryDocs("notifications", "userId", s8.uid))
+      .filter((n) => str(n.fields, "title") === "Voucher expired");
+  assert.equal(again.length, 1, "nothing new on the second run");
+});
+
+stub.close();
 console.log(`supervised flow: ${passed} steps passed`);

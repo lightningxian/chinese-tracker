@@ -217,14 +217,22 @@ class _PriceListBodyState extends State<_PriceListBody> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        item.name,
+                        item.nameChinese.isEmpty
+                            ? item.name
+                            : '${item.nameChinese} · ${item.name}',
                         style: const TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 15,
                         ),
                       ),
                       Text(
-                        l.adminPriceGives(item.givesLocalized(l)),
+                        [
+                          l.adminPriceGives(item.givesLocalized(l)),
+                          if (item.creditsSessions && item.validDays > 0)
+                            l.voucherValidFor(item.validDays),
+                          if (item.creditsSessions && !item.active)
+                            l.voucherNotSoldInApp,
+                        ].join(' · '),
                         style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 12.5,
@@ -330,9 +338,20 @@ class _PriceItemDialogState extends State<_PriceItemDialog> {
         : '${widget.existing!.sessions}',
   );
   late PriceKind _kind = widget.existing?.kind ?? PriceKind.sessions;
+  // Build 5: the Chinese name, validity and whether the app sells it.
+  late final _nameChinese =
+      TextEditingController(text: widget.existing?.nameChinese ?? '');
+  late final _validDays = TextEditingController(
+    text: (widget.existing?.validDays ?? 0) > 0
+        ? '${widget.existing!.validDays}'
+        : (widget.existing == null ? '60' : ''),
+  );
+  late bool _active = widget.existing?.active ?? true;
 
   @override
   void dispose() {
+    _nameChinese.dispose();
+    _validDays.dispose();
     _name.dispose();
     _price.dispose();
     _sessions.dispose();
@@ -365,6 +384,11 @@ class _PriceItemDialogState extends State<_PriceItemDialog> {
         kind: _kind,
         sessions:
             _kind == PriceKind.sessions ? int.parse(_sessions.text.trim()) : 0,
+        nameChinese: _nameChinese.text.trim(),
+        validDays: _kind == PriceKind.sessions
+            ? int.tryParse(_validDays.text.trim()) ?? 0
+            : 0,
+        active: _active,
       ),
     );
   }
@@ -392,6 +416,14 @@ class _PriceItemDialogState extends State<_PriceItemDialog> {
                 ),
                 validator: (v) =>
                     (v ?? '').trim().isEmpty ? l.adminPriceNameRequired : null,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _nameChinese,
+                decoration: InputDecoration(
+                  labelText: l.voucherNameChinese,
+                  hintText: '8次课程',
+                ),
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -431,6 +463,27 @@ class _PriceItemDialogState extends State<_PriceItemDialog> {
                         ? l.adminPriceSessionsInvalid
                         : null;
                   },
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _validDays,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: l.voucherValidDays,
+                    hintText: '60',
+                  ),
+                  validator: (v) {
+                    final t = (v ?? '').trim();
+                    if (t.isEmpty) return null;
+                    final n = int.tryParse(t);
+                    return n == null || n <= 0 ? l.adminPriceSessionsInvalid : null;
+                  },
+                ),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: _active,
+                  onChanged: (v) => setState(() => _active = v),
+                  title: Text(l.voucherSoldInApp),
                 ),
               ],
             ],
