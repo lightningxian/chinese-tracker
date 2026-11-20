@@ -1,0 +1,71 @@
+# Build 8 (docs/PLAN.md §4, Must 3): automatic checks on every push and
+# pull request. No secrets: the rules tests run on the Firebase emulators
+# with a demo project id; the paper-reader measuring tests skip without
+# the model files and their environment variables.
+name: checks
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  flutter:
+    name: Flutter analyze and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.9
+          cache: true
+      - run: flutter pub get
+      - name: Analyze (infos are reported, not fatal)
+        run: flutter analyze --no-fatal-infos
+      - run: flutter test
+
+  functions:
+    name: Functions logic tests (Node 22)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+      - run: npm ci --prefix functions
+      - run: node --check functions/index.js
+      - name: Every functions/test_*.js
+        run: |
+          set -e
+          for f in functions/test_*.js; do
+            echo "== $f"
+            node "$f"
+          done
+      - run: node functions/pn01_agreement.js functions/fixtures/pn01_sample.csv
+
+  rules:
+    name: Firestore and Storage rules tests (emulators)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: rules-tests/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci --prefix rules-tests
+      - run: npm install -g firebase-tools
+      - run: npm --prefix rules-tests run test:emulator

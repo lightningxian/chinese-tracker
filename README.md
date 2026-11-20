@@ -1,5 +1,7 @@
 # Easy Study
 
+[![checks](https://github.com/lightningxian/chinese-tracker/actions/workflows/checks.yml/badge.svg)](https://github.com/lightningxian/chinese-tracker/actions/workflows/checks.yml)
+
 Professional Flutter app for your Chinese teaching business: track students, monitor progress, and deliver lessons with quizzes — on **web, Android, and iOS**.
 
 > Product name: **Easy Study** · Repo folder: `chinese-tracker`
