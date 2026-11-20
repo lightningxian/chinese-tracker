@@ -15,6 +15,9 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ### 2026-11-20 — Claude (BUILD chat, PC): Build 2B leaderboard, promotion, names
 
+- Backend live the same day (owner said yes): rules, indexes and functions
+  deployed; `onTestResultWritten` and `decidePromotion` created, 27
+  functions on live.
 - Built Build 2B (`4ee0f42`, release v0.1.20): leaderboard per test code,
   promotion count and the admin Promotion screen (approve / decline), the
   progress card and ranks on the student Tests tab, the two name labels,

@@ -1109,13 +1109,12 @@ Any time:
 - Proof: analyzer 0 errors / 0 warnings / 17 infos; `flutter test` 127 pass
   (+9) and 2 skipped; rules tests 62 pass, 1 skipped (+5); node tests pass
   (+ `test_promotion.js`); flow test 41/41 (+9).
-- Owner must: (1) rules, indexes and functions:
+- Deployed: with the owner's yes, the BUILD chat ran
   `firebase deploy --only firestore:rules,firestore:indexes,functions --project chinese-tracker`
-  (adds `onTestResultWritten` and `decidePromotion`, 27 functions); (2)
-  hosting is already live (the BUILD chat ran `scripts/deploy_web.sh
-  --web-only --no-keys`); until (1) the new screens show empty boards and
-  Approve fails. Results written before the deploy reach a board and the
-  count only when they next change.
+  on 2026-11-20 (rules, indexes, `onTestResultWritten` and `decidePromotion`
+  created: 27 functions on live). Hosting was deployed before that
+  (`scripts/deploy_web.sh --web-only --no-keys`). Results written before the
+  deploy reach a board and the count only when they next change.
 - Left out and why: the "Then" items (2A leftovers, a CSV of a leaderboard)
   are not started. Classmates on attendance lists see the first Latin word,
   not the Chinese name: attendance stores only the Latin name.
