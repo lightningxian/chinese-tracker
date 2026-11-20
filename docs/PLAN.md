@@ -2036,7 +2036,7 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
-### 2026-11-21 — Build 6 Weekly timetable and booking — COMMIT, release v0.1.24 (DEPLOYSTATE)
+### 2026-11-21 — Build 6 Weekly timetable and booking — 0343ef7, release v0.1.24 (rules, indexes, functions and hosting live from the PC 2026-11-21 under the owner's standing go; 45 functions)
 - Built: `functions/scheduling.js` + `test_scheduling.js`;
   `checkScheduleConflict`, `saveSchedule` (locks), `generateSessions`
   (scheduled and after saves), `bookSession`, `cancelBooking`; rules,
@@ -2058,7 +2058,7 @@ Any time:
 - Proof: analyzer 17 infos; `flutter test` 146 pass (+2) and 2 skipped;
   rules tests 77 pass, 1 skipped (+4); node tests pass (+
   `test_scheduling.js`); flow test 78/78 (+8).
-- Owner: DEPLOYNOTE
+- Owner: deployed (5 functions created, 45 on live, 3 indexes, rules, hosting). The owner enters the real timetable (admin Classes → Timetable), each teacher's availability (teacher profile), and the class day on active vouchers (voucher form). Old one-off sessions keep working; students now book only through Daftar.
 - Left out: the "Then" items (ICS export, calendar view of availability);
   the class day in the buy sheet.
 
