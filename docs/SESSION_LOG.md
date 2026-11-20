@@ -43,8 +43,8 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 - Checked: analyzer 17 infos, `flutter test` 135 pass, rules tests 68 pass,
   node tests (+ `test_placement.js`), flow test 56/56 (PL-01, PL-02, the
   visitor path), an emulator walk at 1280, 400 and 360 px.
-- Pushed. Hosting, rules, indexes and functions (34) wait for the owner's
-  go, to go live together (the new screens need the new backend).
+- Deployed the same day at the owner's go: rules, indexes and functions
+  (34 on live), then hosting.
 
 ### 2026-11-20 — Claude (PLAN chat, Mac): Build 2B reviewed, Build 3 is NEXT
 

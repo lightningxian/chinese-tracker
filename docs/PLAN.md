@@ -1481,7 +1481,7 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
-### 2026-11-20 — Build 3 Registration approval, placement tests, rooms — 41543cc, release v0.1.21 (hosting, rules, indexes and functions wait for the owner's go, to go live together)
+### 2026-11-20 — Build 3 Registration approval, placement tests, rooms — 41543cc, release v0.1.21 (rules, indexes, functions and then hosting live from the PC 2026-11-20 at the owner's go; 34 functions)
 - Built: pending accounts (`status: 'pending'`, rules, `/waiting`), the
   register form's start-level choice with a live result-code check, the
   admin **Approval** section and page with `decideRegistration`, placement
@@ -1534,13 +1534,11 @@ Any time:
 - Proof: analyzer 0 errors / 0 warnings / 17 infos; `flutter test` 135
   pass (+8) and 2 skipped; rules tests 68 pass, 1 skipped (+6); node tests
   pass (+ `test_placement.js`); flow test 56/56 (+15).
-- Owner must: (1) rules, indexes and functions:
-  `firebase deploy --only firestore:rules,firestore:indexes,functions --project chinese-tracker`
-  (adds 7 functions, 34 on live), then hosting at once
-  (`scripts/deploy_web.sh --web-only --no-keys`). The BUILD chat held the
-  hosting deploy back: the new register form with the old rules refuses a
-  student without a link code, and the Approval buttons need the new
-  functions. (2) Open Org settings once
+- Deployed 2026-11-20 at the owner's go: rules, indexes and functions
+  (7 created, 34 on live), then hosting right after. Checked on live: the
+  bundle carries `/placement` and `/admin/users/approval`, `placementMenu`
+  answers without sign-in (no placement code yet).
+- Owner must: (1) Open Org settings once
   (writes `settings/rooms`). (3) Tick **Placement code** on one short
   paper's code. (4) Tell the admin that new students now wait on Users →
   Approval.
