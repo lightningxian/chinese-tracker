@@ -2018,7 +2018,7 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
-### 2026-11-20 — Build 5 Voucher packages and self-purchase — COMMIT, release v0.1.23 (DEPLOYSTATE)
+### 2026-11-20 — Build 5 Voucher packages and self-purchase — a2be4f3, release v0.1.23 (rules, functions and hosting live from the PC 2026-11-20 under the owner's standing go; 40 functions)
 - Built: Price list `nameChinese` / `validDays` / `active`; the buy sheet
   and the voucher cards with history on the student and parent Payments
   tabs; `createInvoice` for students and linked parents (terms, one open
@@ -2044,7 +2044,7 @@ Any time:
 - Proof: analyzer 0 errors / 0 warnings / 17 infos; `flutter test` 144
   pass (+4) and 2 skipped; rules tests 73 pass, 1 skipped (+2); node tests
   pass (+ `test_payments.js`, MT-01 to MT-04); flow test 70/70 (+8).
-- Owner: DEPLOYNOTE Then the **sandbox E2E on live** as `student1@` with a
+- Owner: deployed (1 function created, 40 on live, rules, hosting). Then the **sandbox E2E on live** as `student1@` with a
   Midtrans sandbox test card (`docs/GO_LIVE_CHECKLIST.md` §4–6) and MT-05
   (compare with the sandbox dashboard). Production keys stay off.
 - Left out and why: the "Then" items (receipt PDF, invoice CSV of the
