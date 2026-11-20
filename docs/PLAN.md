@@ -73,10 +73,10 @@ Read docs/PLAN.md. You are the BUILD chat. Follow section 0, run Build 0 if this
 
 ## 1. Where the project stands (2026-11-20)
 
-**Live:** https://chinese-tracker.web.app, hosting at release v0.1.22
-(Build 4, published from the PC 2026-11-20 night). Firebase project
-`chinese-tracker`, Blaze plan, **39 Cloud Functions** on Node 22 and 20
-composite indexes (Builds 2B, 3 and 4 went live on 2026-11-20, each
+**Live:** https://chinese-tracker.web.app, hosting at release v0.1.23
+(Build 5, published from the PC 2026-11-20 night). Firebase project
+`chinese-tracker`, Blaze plan, **40 Cloud Functions** on Node 22 and 20
+composite indexes (Builds 2B, 3, 4 and 5 went live on 2026-11-20, each
 deployed from the PC; the PLAN chat counts the functions and indexes from
 the Mac after every build). **Owner decision 2026-11-20 (said in the BUILD
 chat, recorded here):** every build in the queue is built and deployed
@@ -127,6 +127,7 @@ Android APK is off (table below). Firestore scheduled backups run nightly.
 | Try Build 2A on live | make a small package with one "type the hanzi" and one "type the pinyin" question, play it as `student1@`, mark it as `teacher@` in Tests, **Marking** |
 | Deploy Build 3 (rules, indexes, functions, then hosting) | done 2026-11-20 (night), from the PC at the owner's go, in that order: 34 functions, hosting v0.1.21 |
 | After the Build 3 deploy | open **Org settings** once (writes `settings/rooms`); tick **Placement code** on one short paper's code; tell the admin that new students now wait on Users, **Approval**. Placement papers for visitors should be choice and typing questions only (free writing counts as zero for a visitor) |
+| After the Build 5 deploy: **sandbox payment E2E (MT-05)** | **to do:** on live as `student1@`, Payments, **Beli voucher**, tick the terms, pay in Midtrans Snap with a sandbox test card (`docs/GO_LIVE_CHECKLIST.md` §4–6); check the invoice turns paid and one voucher with 8 sessions and a 60-day deadline appears; compare every test payment with the Midtrans sandbox dashboard. Production keys stay off until this passes |
 | After the Build 4 deploy | **to do:** sign in as admin on live, Org settings, **Rebuild progress summaries** once (the report screens are empty until then). Expect the first 07:00 run after that to send "no practice for 14 days" notices to every student who has not practised in the app for two weeks (the proposal's warning 3; students who never practised count from their approval or creation date) |
 | Try Build 2B on live | as admin: Tests, **Promotion** opens and shows the minimum codes (3); Tests, Results, a code, **Leaderboard**. As `student1@`: the Tests tab shows "0 of 3 codes passed". Results written before 2026-11-20 reach a board only when they next change (mark invalid and valid again does it) |
 | Functions deploy for Build 1C | done 2026-11-19 (deployed from the PC at the owner's go; 25 functions updated, the PLAN chat listed them from the Mac). Marking items of a test now also reach the student's own teacher, for attempts started from that day on |
@@ -228,7 +229,24 @@ with a fixed field shape and a 500-character text, edited by the author or
 an admin; the daily pass sends each warning at most once per 7 days;
 `rebuildProgressSummaries` is admin-only with an audit line. Live from the
 Mac: 39 functions, 20 indexes equal to the repo, the bundle carries the
-report. **Build 5 is NEXT.**
+report.
+
+**Build 5 is built and live** (release v0.1.23, report in §6; rules, one
+function and hosting deployed from the PC on 2026-11-20 under the owner's
+standing go) and reviewed by the PLAN chat on the Mac on 2026-11-21:
+analyzer baseline, 144 Flutter tests, node tests (+ `test_payments.js`,
+MT-01 to MT-04), rules tests 73 pass and 1 skipped. Read: `createInvoice`
+lets a student buy only for themself and a parent only for a linked child,
+demands the ticked terms, sells only active session packages, keeps the
+server-side amount and reuses one open purchase; the webhook's signature
+check, status mapping and idempotent credit moved to `functions/payments.js`
+unchanged in behaviour; the Snap stub URL is read only when the function
+runs on the emulator; the emulator secret and stub files are git-ignored
+and no `.local` or `.env` file is tracked; `voucher_history` is read by the
+owner, staff and the linked parent and written by nobody; the expiry job
+runs one idempotent transaction per term. Live from the Mac: 40 functions,
+20 indexes equal to the repo, the bundle carries the buy sheet. The sandbox
+E2E (MT-05) is the owner's (table above). **Build 6 is NEXT.**
 
 **PLAN chat decision 2026-11-17** (the BUILD chat asked): an answer from a
 supervised test that needs marking goes to the teacher who opened the
@@ -1386,7 +1404,7 @@ purchase and expiry jobs (Build 5), new push plumbing (the notices ride on
 and functions (the BUILD chat gives the command), then hosting, and presses
 **Rebuild progress summaries** once in Org settings.
 
-### Build 5 — Voucher packages and self-purchase — **NEXT**
+### Build 5 — Voucher packages and self-purchase — done 2026-11-20 (v0.1.23, report in §6)
 
 **Goal.** A student (or the linked parent) buys a voucher package inside the
 app: picks a package from the Price list with its Chinese name, ticks the
@@ -1524,7 +1542,7 @@ card (`docs/GO_LIVE_CHECKLIST.md` §4–6), checks the invoice flips to paid
 and one term appears, and compares every test payment with the sandbox
 dashboard (**MT-05**). The webhook URL is already registered.
 
-### Build 6 — Weekly timetable and booking
+### Build 6 — Weekly timetable and booking — **NEXT**
 
 **Goal.** The centre's weekly timetable lives in the app: repeating
 schedules from the flyer (weekday, time, room, teacher, 8 seats, valid

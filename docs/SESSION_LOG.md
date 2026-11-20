@@ -13,6 +13,20 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-21 — Claude (PLAN chat, Mac): Build 5 reviewed, Build 6 is NEXT
+
+- Pulled Build 5 (v0.1.23) and checked it on the Mac: analyzer 17 infos,
+  `flutter test` 144 pass and 2 skipped, node tests (+ `test_payments.js`,
+  MT-01 to MT-04), rules tests 73 pass and 1 skipped. Live: 40 functions,
+  20 indexes equal to the repo, the bundle carries the buy sheet.
+- Read: self-purchase is limited to the buyer's own account or linked
+  child, terms required, server-side amount kept; the Snap stub applies
+  only on the emulator; no secret or `.local` file is tracked. No change
+  asked.
+- Plan: Build 5 done, **Build 6 (weekly timetable and booking) NEXT**; the
+  spec holds against the Build 5 report (`sessionsBooked` exists on new
+  terms). The owner's sandbox E2E (MT-05) is in the §1 table.
+
 ### 2026-11-21 — Claude (PLAN chat, Mac): Build 4 reviewed, Build 5 is NEXT
 
 - Pulled Build 4 (v0.1.22) and checked it on the Mac: analyzer 17 infos,
