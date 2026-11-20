@@ -13,6 +13,22 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-20 — Claude (PLAN chat, Mac): Build 2B reviewed, Build 3 is NEXT
+
+- Pulled Build 2B (v0.1.20) and checked it on the Mac: analyzer 17 infos,
+  `flutter test` 127 pass and 2 skipped, node tests (+ `test_promotion.js`,
+  PN-01 6 of 6), rules tests 62 pass and 1 skipped.
+- Read the rules and functions: the four new collections are written only
+  by the trigger and `decidePromotion`; a student reads a board only for a
+  code they sat; `decidePromotion` is admin-only in one transaction;
+  `users.level` is closed to students; teacher bank writes follow
+  `createdBy`. Live from the Mac: the bundle carries the new routes, 27
+  functions, 18 indexes equal to the repo. No change asked.
+- Plan: Build 2B done. **Build 3 (registration approval, placement tests
+  in both ways, rooms, teacher levels) written in full and marked NEXT**,
+  with defaults for §5 Q4, Q10, Q11 and Q12. The public-repository
+  security item is still open for the owner.
+
 ### 2026-11-20 — Claude (BUILD chat, PC): Build 2B leaderboard, promotion, names
 
 - Backend live the same day (owner said yes): rules, indexes and functions
@@ -28,8 +44,8 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   and a declined student's card staying on "waiting".
 - Proof: analyzer 17 infos; `flutter test` 127 + 2 skipped; rules tests 62
   + 1 skipped; node tests; flow test 41/41. Report in `docs/PLAN.md` §6.
-- Hosting deployed from the PC. Rules, indexes and functions wait for the
-  owner's go: `firebase deploy --only firestore:rules,firestore:indexes,functions --project chinese-tracker`.
+- Hosting deployed from the PC; rules, indexes and functions followed the
+  same day (first bullet).
 
 ### 2026-11-19 — Claude (BUILD chat, PC): Build 1C functions deployed
 

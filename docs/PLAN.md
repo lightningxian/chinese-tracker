@@ -71,12 +71,13 @@ Read docs/PLAN.md. You are the BUILD chat. Follow section 0, run Build 0 if this
 
 ---
 
-## 1. Where the project stands (2026-11-19)
+## 1. Where the project stands (2026-11-20)
 
-**Live:** https://chinese-tracker.web.app, hosting at release v0.1.19
-(Build 1C, published from the PC 2026-11-18). Firebase project
-`chinese-tracker`, Blaze plan, **25 Cloud Functions** on Node 22 (Build 1C's
-functions live since 2026-11-19, deployed from the PC at the owner's go). The
+**Live:** https://chinese-tracker.web.app, hosting at release v0.1.20
+(Build 2B, published from the PC 2026-11-20). Firebase project
+`chinese-tracker`, Blaze plan, **27 Cloud Functions** on Node 22 (Build 1C's
+functions live since 2026-11-19, Build 2B's rules, index and two functions
+since 2026-11-20, all deployed from the PC at the owner's go). The
 backend of Builds 1B and 2A (Storage rules, Firestore rules, two marking
 indexes, functions) is live since 2026-11-17: the owner signed in to the
 Firebase CLI on the PC and had the BUILD chat run the deploy. The PLAN chat
@@ -106,7 +107,7 @@ Android APK is off (table below). Firestore scheduled backups run nightly.
 **Owner tasks still open** (steps in `docs/OWNER_PROCEDURES.md`,
 `docs/WORKSHEET_IMPORT.md`, `docs/CLAUDE_FULL_HANDOFF.md`)
 
-| Task | State on 2026-11-16 (evening) |
+| Task | State on 2026-11-20 |
 |---|---|
 | AI Logic "Get started" | done |
 | App Check web key | optional since 2026-11-17: papers are read by the built-in reader (Build 1B). Only **Scan paper with AI** needs the key (steps in `docs/WORKSHEET_IMPORT.md`). |
@@ -118,6 +119,7 @@ Android APK is off (table below). Firestore scheduled backups run nightly.
 | Exam mode on live | owner is testing |
 | Backend of Builds 1B and 2A | done 2026-11-17 (deployed from the PC) |
 | Try Build 2A on live | make a small package with one "type the hanzi" and one "type the pinyin" question, play it as `student1@`, mark it as `teacher@` in Tests, **Marking** |
+| Try Build 2B on live | as admin: Tests, **Promotion** opens and shows the minimum codes (3); Tests, Results, a code, **Leaderboard**. As `student1@`: the Tests tab shows "0 of 3 codes passed". Results written before 2026-11-20 reach a board only when they next change (mark invalid and valid again does it) |
 | Functions deploy for Build 1C | done 2026-11-19 (deployed from the PC at the owner's go; 25 functions updated, the PLAN chat listed them from the Mac). Marking items of a test now also reach the student's own teacher, for attempts started from that day on |
 | Proofread `H326202Z` on live | to do: Question bank, **Scan paper**, check every question against the page, note the minutes, save, type the official key, upload the recording, add the transcript, **Create test code**. Then **Download text** on the worksheet and put the file on the PC as `local_papers/H326202Z.truth.json` (never committed): that gives the reader's real right-as-read number for the thesis |
 | **Security: the GitHub repository is PUBLIC** (found by the PLAN chat 2026-11-17) | `docs/CLAUDE_FULL_HANDOFF.md` and `docs/FIREBASE_BACKEND.md` show the live test accounts' password. Owner: (1) reset the passwords of `admin@`, `teacher@`, `student1-3@test.chinesetracker` in Firebase Authentication; (2) decide whether the repository becomes private. The PLAN chat then removes the password from the docs |
@@ -170,7 +172,20 @@ leaves the computer; the practice paper is our own text; the only function
 change is `teacherIdsFor` (live since 2026-11-19). **The reader now reads 79 of 80 questions right
 on the practice paper** (37 before) and finds every slot of the real paper
 in about 70 seconds; the real paper's number waits for the owner's truth
-file. **Build 2B is NEXT.**
+file.
+
+**Build 2B is built** (release v0.1.20, report in §6) and reviewed by the
+PLAN chat on the Mac on 2026-11-20: analyzer baseline, 127 Flutter tests,
+node tests (+ `test_promotion.js`), rules tests 62 pass and 1 skipped. Read:
+`leaderboards`, `level_promotions`, `promotion_progress` and `level_history`
+are written only by the trigger and `decidePromotion`; a student reads a
+board only for a code they sat and reads their own recommendation (the
+decline reason is in it; the app does not show it); `decidePromotion` is
+admin-only, runs in one transaction and refuses a recommendation that is not
+waiting or whose student changed level; `users.level` cannot be changed by
+the student; a teacher's bank writes are tied to `createdBy`. Live checked
+from the Mac: the hosting bundle carries the new routes, 27 functions, the 18
+composite indexes match the repo. **Build 3 is NEXT.**
 
 **PLAN chat decision 2026-11-17** (the BUILD chat asked): an answer from a
 supervised test that needs marking goes to the teacher who opened the
@@ -841,7 +856,7 @@ Indonesian and English, dark, 1280 px and 360 px. These targets are the PLAN
 chat's; if the measurement of Must 2 shows they are out of reach, say so in
 the report.
 
-### Build 2B — Leaderboard, promotion, names — **NEXT**
+### Build 2B — Leaderboard, promotion, names — done 2026-11-20 (v0.1.20, report in §6)
 
 **Goal.** A final, valid test result puts the student on the leaderboard of
 its code and counts toward promotion: three different codes passed at the
@@ -932,29 +947,220 @@ proposal list.
 **After the build, the owner:** deploys rules, indexes and functions (the
 BUILD chat gives the command).
 
-### Build 3 — Registration approval, placement tests, rooms
+### Build 3 — Registration approval, placement tests, rooms — **NEXT**
 
-- Self-registered students are `pending`: they can sign in and see a waiting
-  page; admins get an **Approval** screen (name, teacher, placement result,
-  starting level) with approve and reject (reason). Register form: "Mulai
-  dari HSK 1" or "Sudah ikut tes penempatan" with the result code.
-- **Placement, the proposal's way (PL-01, PL-02):** a registered and approved
-  student who chose "tes penempatan" with a target level sits one test code
-  of the level below the target, with a teacher token. Passed: the target
-  level is recommended; failed: the tested level. The admin confirms the
-  starting level. The code counts as taken; the result stays off the
-  leaderboard.
-- **Placement, the public way:** test codes flagged `placement` (full papers
-  or short ones, each with its own timing) listed on a public page linked
-  from the landing page. A teacher opens a placement session; the visitor
-  types that token, a name and a WhatsApp number, sits the test in the same
-  player through functions that need no login (rate-limited, attempt
-  protected by a secret) and gets marks per part and a result code. No
-  review is shown, because these papers are reused. The result is stored in
-  `placement_results` and shows on the Approval screen.
-- **Rooms:** `settings/rooms` with `Main` and `Sub Room`; the class form
-  uses a picker. Teacher profile: levels the teacher can teach.
-- Screenshots 01 and 12.
+**Goal.** A new student registers and waits; the admin approves them with a
+teacher and a starting level, or rejects them with a reason. A placement
+test exists in both ways the owner asked for: the proposal's way (an
+approved student sits one code of the level below their target in a
+placement session) and the public way (a visitor on the landing page sits a
+short placement paper behind a teacher's token, with no account). Rooms
+become a list. Proves PL-01 and PL-02. Spec: `docs/THESIS_FEATURE_BACKLOG.md`
+sections 3 and 8; owner decisions 6, 7 and 15 in §2.
+
+**What exists.** `AuthService.register()` resolves a teacher link code
+through `resolveLinkCode`, then creates the auth account and the `users`
+doc (`active: true`, `level` picked by the student, `termSize`).
+`onUserCreated` tells the admins and the teacher. `openTestSession`,
+`startTest`, `submitTestPart`, `closeTestSession` and `finishSession` run a
+supervised test; `writeTestResult` writes `test_results`;
+`functions/promotion.js` already skips results with `placement: true`
+(`isPlacement`) for the board and the count; `decidePromotion` and the
+admin **Promotion** screen move a level up. `settings/org` is edited on the
+admin Org settings screen (`org_settings_screen.dart`). The session form has
+a free-text room. `qr_flutter` is in the app.
+
+**Defaults taken for the open questions of §5** (the owner may change them
+before the build starts): the visitor types a name and a WhatsApp number
+before the test and sees marks at once with no review (Q4); the teacher
+link code becomes optional at registration and the admin sets the teacher
+at approval (Q10); a student who chose the placement test is approved at
+HSK 1 first and moved by the placement result through the Promotion screen
+(Q11).
+
+**Must**
+
+1. **Pending accounts.** A self-registered student gets `status: 'pending'`
+   (`active` stays `true`, so the two flags keep their meanings: `active`
+   is the admin's on/off switch, `status` is the approval). The register
+   form loses the level picker and gets the choice **"Mulai dari HSK 1"**
+   or **"Ikut tes penempatan"** with a target level HSK 2 to 6, plus an
+   optional **result code** from a public placement test (resolved live by
+   `resolvePlacementResult`, which shows the paper's level, the mark and
+   the recommended level before the form is sent). The teacher link code
+   becomes optional; when typed it is still resolved before the auth
+   account is created (`.claude/rules/auth-and-link-codes.md`). Term size
+   stays as it is. Stored: `placementChoice` (`hsk1` or `test`),
+   `placementTarget` (`HSK 4`), `placementResultCode`.
+2. **Rules.** `isStudent()` also requires `status` to be missing or
+   `active` (existing students have no `status` field; no migration). A
+   pending or rejected student can read only their own `users` doc and the
+   notifications addressed to them. The self-update rule refuses changes
+   to `status`, `placement*` fields and `levels`. `selfUserCreateValid`
+   accepts `status: 'pending'`, an empty `level` and an empty `teacherId`.
+   Rules tests for each line.
+3. **Waiting page.** The router sends a signed-in student whose `status` is
+   `pending` or `rejected` to `/waiting` (and nowhere else): the name, what
+   they chose (HSK 1, or the target level and the result code), "waiting
+   for the admin", the centre's WhatsApp, **Sign out**. A rejected student
+   sees the reason. `AuthService` keeps them signed in (they are active).
+4. **Approval.** Admin Users tab, a new **Approval** section (first chip,
+   with a badge of pending accounts): one card per pending student with
+   the staff label, email, WhatsApp, registered date, the choice, the
+   placement result when a code was given (paper level, mark, passed,
+   recommended level), a teacher picker (prefilled from the link code) and
+   a starting level picker (prefilled with the recommended level, else
+   HSK 1). **Approve** and **Reject** (reason required) call
+   `decideRegistration` (admin only, one transaction): approve sets
+   `status: 'active'`, `level`, `teacherId`, `approvedAt`, `approvedBy`,
+   stamps `claimedBy` on the placement result so a code is used once, tells
+   the student (kind `registration`, opens `/student`) and the teacher, and
+   writes the audit log; reject sets `status: 'rejected'` and
+   `rejectReason`, tells the student, audit log. A rejected account may be
+   approved later. `onUserCreated` sends the admin notice to
+   `/admin/users/approval` and says "waiting for approval". Rejected
+   accounts sit in a collapsed list under the pending ones; deleting one
+   uses the existing `deleteUserAccount`.
+5. **Placement sessions.** `openTestSession` takes `placement: true`
+   (a tick on the Open session dialog, "Placement session: results stay off
+   the leaderboard and the count"). Every attempt and result of such a
+   session carries `placement: true` (`writeTestResult` stamps it; the
+   trigger of Build 2B already ignores it; a test proves the board and the
+   count are untouched). The start screen and the result card say
+   "Placement test". For a signed-in student the trigger also writes a
+   recommendation `level_promotions/{uid}_placement` (kind `placement`,
+   from the current level, to the recommended level: **passed = the paper's
+   level + 1, failed = the paper's level**; nothing when that equals the
+   current level) and tells the admins; the Promotion screen shows it with
+   a "Placement" chip and `decidePromotion` approves or declines it as
+   today (approve writes `level_history` with `kind: 'placement'` and sets
+   `placementDone: true`). The student's Tests tab card says "Placement
+   test: waiting for the admin" and then the result. Pure logic
+   (recommendation rule, result code, visitor key) in
+   `functions/placement.js` with a node test.
+6. **Placement codes and the public menu.** A test code gets `placement:
+   true` (tick on the code form, forces `countsForPromotion: false`); short
+   papers are ordinary worksheets with their own copied timing. A visitor
+   may only join a placement session on a placement code. Callable
+   `placementMenu` (no sign-in, rate-limited): active placement codes with
+   level, parts, minutes and question counts.
+7. **Visitor functions** (no sign-in; `request.auth` is null; every call
+   rate-limited per address with `throttle`; keys never leave the server,
+   reuse `stripQuestion` / `partPayload` / `scoreTest`):
+   - `startPlacement` `{token, name, whatsapp}`: the session must be open,
+     a placement session on a placement code, inside the join window;
+     creates `test_attempts/{sessionId_random}` with `visitor: true`,
+     `studentId: ''`, `visitorName`, `visitorWhatsapp` and `keyHash`
+     (SHA-256 of a random 128-bit key); returns the key **once**, the
+     attempt id, the facts and part 1. Wrong tokens count against the
+     address like `assertNotTokenBlocked` does for a uid.
+   - `submitPlacementPart` `{attemptId, key, partIndex, answers}`: checks
+     the key hash, then behaves like `submitTestPart` (closed part refused,
+     late = empty, next part returned). After the last part it writes
+     `placement_results/{attemptId}`: name, WhatsApp, codeId, code, level,
+     parts, total, max, passMark, passed, `recommendedLevel`, `resultCode`
+     (6 characters, no 0/O/1/I, unique), sessionId, openedBy, finishedAt,
+     `claimedBy: ''`; returns the marks per part, passed and the result
+     code. No keys, no review, ever (the papers are reused).
+   - `resolvePlacementResult` `{resultCode}`: level, total, max, passed,
+     recommended level, whether it is already claimed. Nothing else.
+   - `closeTestSession`, `finishSession` and `closeForgottenTestSessions`
+     also finish visitor attempts, through the same `placement_results`
+     path. Rules: `placement_results` read by staff, written by nobody;
+     visitor attempts are readable by staff only (`studentId` is empty).
+8. **Public pages** (routes `/placement`, `/placement/test`,
+   `/placement/result`, public in the router like `/register`): a
+   **Placement test** section on the landing page (after the levels ruler)
+   that links to `/placement`: the list from `placementMenu`, the token
+   form (token, name, WhatsApp, one line that says the name and number are
+   kept for registration), the player (reuse `test_player_screen.dart` in
+   a visitor mode that calls the visitor functions; attempt id and key kept
+   in `sessionStorage` so a reload resumes), the result page (marks per
+   part, passed or not, the recommended level, the result code in large
+   type with **Copy**, and **Daftar sekarang** that opens
+   `/register?placement=CODE` with the code filled in). The supervision
+   screen of a placement session shows visitor rows as "Visitor · name"
+   and a QR code of `https://chinese-tracker.web.app/placement?token=…`
+   beside the token.
+9. **Rooms and teacher levels.** `settings/rooms` `{names: ['Main', 'Sub
+   Room']}` edited on the Org settings screen (add, rename, remove; the
+   defaults are written when the doc is missing); the session forms use a
+   picker (a stored room that is not in the list stays selectable).
+   Teachers get `users.levels` (a list of `HSK 1` to `HSK 6`) ticked by the
+   admin on the user form and shown read-only on the teacher's profile tab;
+   Build 6 uses it. Rules: `settings/rooms` admin write; `levels` admin
+   only.
+10. **Notifications.** Kind `registration` opens `/admin/users/approval`
+    for the admin and `/student` for the student
+    (`notification_routes.dart` + its test).
+11. **Seed and tests.** `scripts/seed_emulator.py`: two pending students
+    (one "Mulai dari HSK 1", one target HSK 4 with a visitor result code
+    already in `placement_results`), one placement code `H1PLACE` (a short
+    HSK 1 paper of 6 questions, 2 minutes per part, from seeded bank items),
+    `settings/rooms`, `levels` on the teachers. Tests with the scenario IDs
+    in their names: **PL-02** (approve a "Mulai dari HSK 1" student: level
+    HSK 1, status active) and **PL-01** (target HSK 4, approved at HSK 1,
+    placement session on `H3DEMO1`, passes: recommendation to HSK 4 waits
+    for the admin; approve: level HSK 4, history, no board row, count 0 of
+    3 at HSK 4) in `functions/test_supervised_flow.mjs`; the visitor path
+    end to end in the same flow test (menu, token, two parts, result code,
+    resolve, claimed once; wrong key refused; a visitor calling `startTest`
+    or `getTestReview` refused); rules tests (pending student refused on
+    `exercises`, `class_sessions`, `test_results`; self-update of `status`,
+    `level`, `levels`, `teacherId` refused; `placement_results` staff only;
+    `settings/rooms` admin write); a Flutter test of the register form's
+    choice logic.
+
+**Then (if time is left):** a declined promotion recommendation reopens
+when the student passes one more different code after the decline (§5
+Q12); the Build 2B leftovers (the hourly job that closes forgotten single
+attempts of packages, item analysis per question, a CSV of a leaderboard);
+a WhatsApp link on the Approval card.
+
+**Not in this build:** the timetable and room clashes (Build 6), the
+progress report (Build 4), payments and self-purchase (Build 5), sending
+WhatsApp or SMS, email verification, speaking tests, deleting visitor data
+by itself (the admin deletes a `placement_results` doc by hand; a retention
+rule is a Build 8 question).
+
+**Acceptance walk (emulator)**
+
+1. Register as a new student with "Mulai dari HSK 1" and no link code: the
+   waiting page opens; `/student` and every other route send back to it;
+   the admin badge shows 1. Approve with teacher Andrea and HSK 1: the
+   student's next load lands on the home at HSK 1 (PL-02); the student
+   and the teacher get a notice.
+2. Register with "Ikut tes penempatan", target HSK 4. Approve at HSK 1. The
+   teacher opens a **placement** session on `H3DEMO1`; the student passes
+   it: the Promotion screen shows "Placement · HSK 1 → HSK 4" with the
+   mark; approve: level HSK 4, `level_history` has the entry, the
+   leaderboard of `H3DEMO1` has no row for them, the Tests tab says "0 of
+   3 codes passed toward HSK 5" (PL-01). Fail the same test with another
+   student: the recommendation says HSK 3.
+3. Visitor: landing page, **Placement test**, the token of a placement
+   session on `H1PLACE`, name and WhatsApp, two short parts, the result page
+   with marks and a code; reload in the middle resumes the same part. Register
+   with that code: the form shows the paper's level and mark; the Approval
+   card shows the same and prefills the level; approve; a second
+   registration with the same code is refused as claimed.
+4. Reject a pending student with a reason: their waiting page shows it;
+   approve them afterwards: it works.
+5. Wrong token ten times from one address: blocked for a while; a wrong
+   key on `submitPlacementPart` is refused; the visitor's browser never
+   receives a `correctIndex`, `answer` or `transcript` (check the network
+   panel); a student cannot read `placement_results`.
+6. The session form offers Main and Sub Room; the admin adds "Room 3" in
+   Org settings and the picker shows it; a teacher's profile lists their
+   levels.
+7. Indonesian (dark) and English (light), 1280 px and 360 px: register
+   form, waiting page, Approval, placement pages, supervision with a
+   visitor row and the QR. Screenshots 01 and 12 of the proposal list, plus
+   the placement token page for the book.
+
+**After the build, the owner:** deploys rules and functions (the BUILD
+chat gives the command), opens Org settings once so `settings/rooms` is
+written, ticks `placement` on one short paper's code on live, and tells the
+admin that new students now wait on the Approval screen.
 
 ### Build 4 — Progress report
 
@@ -1008,32 +1214,41 @@ screenshots from seeded data. Screenshots 14 and 15.
 Speaking tests (HSKK, YCT oral: answers recorded in the browser, marked by a
 teacher), final HSK 3.0 formats for levels 5 to 9, YCT timing.
 
-Builds 2B to 8 are outlines. The PLAN chat writes each one out in full (Must,
+Builds 4 to 8 are outlines. The PLAN chat writes each one out in full (Must,
 Then, Not, acceptance walk) after reading the report of the build before it.
 
 ---
 
 ## 5. Questions still open
 
-For the owner, before Build 2B:
+Settled by Build 2B (shipped 2026-11-20 with these defaults; the owner
+still tells the supervisor):
 
 1. The proposal says students see other students on the leaderboard as
-   "first name + initial" (scenario LB-01). The new rule is "Chinese name
-   only". Tell the supervisor, or keep the proposal's rule? **Build 2B is
-   written with the Chinese name**; say so if the proposal's rule stays.
-2. The proposal lets teachers add and edit questions in the bank. The app
-   keeps the bank admin-only since 2026-11-13. Plan: teachers add and edit
-   their own questions. Agreed? **Build 2B is written this way.**
+   "first name + initial" (scenario LB-01). The app shows the Chinese name
+   (owner decision 8). The book states the change.
+2. The proposal lets teachers add and edit questions in the bank. Teachers
+   now add and edit their own questions; scanning stays with the admin.
 3. Reading of decision 12, to confirm: "teacher code" is the 6-character
    token of the session a teacher opens (new every time, valid 15 minutes),
    not the teacher's permanent invite code; the token in the room is enough
    and no test is assigned to named students beforehand; the review opens
    when the teacher closes the session, so answers cannot travel during it.
 
-Before Build 3:
+Before Build 3 (Build 3 is written with the answers in bold; say so if one
+is wrong):
 
 4. Public placement: does the visitor type name and WhatsApp before the test
-   (assumed yes), and see marks at once without the review (assumed yes)?
+   (**yes**), and see marks at once without the review (**yes**)?
+10. Registration: the teacher link code becomes **optional** and the admin
+    sets the teacher on the Approval screen (the proposal: students do not
+    choose teachers). Keep the code required instead?
+11. A student who chose the placement test is **approved at HSK 1 first**;
+    the placement result then moves them through the Promotion screen
+    (one more admin tap). Or should approval wait until the test is sat?
+12. A declined promotion recommendation stays declined for that level today
+    (the BUILD chat asked). Plan: it **reopens after one more passed code**.
+    Agreed?
 
 Before Build 6:
 
@@ -1054,7 +1269,7 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
-### 2026-11-20 — Build 2B Leaderboard, promotion, names — 4ee0f42, release v0.1.20 (hosting live from the PC 2026-11-20; rules, indexes and functions wait for the owner's go)
+### 2026-11-20 — Build 2B Leaderboard, promotion, names — 4ee0f42, release v0.1.20 (hosting, rules, indexes and functions live from the PC 2026-11-20 at the owner's go)
 - Built: the `onTestResultWritten` trigger with pure logic in
   `functions/promotion.js`; `leaderboards/{codeId}/entries/{uid}`;
   `promotion_progress/{uid}`; `level_promotions/{uid_levelKey}`;
