@@ -13,6 +13,7 @@ import '../../models/app_user.dart';
 import '../../models/attendance_record.dart';
 import '../../core/errors/session_errors.dart';
 import '../../services/firestore_service.dart';
+import '../../services/timetable_service.dart';
 
 class StudentClassDetailScreen extends StatelessWidget {
   const StudentClassDetailScreen({
@@ -31,10 +32,9 @@ class StudentClassDetailScreen extends StatelessWidget {
     if (leave != true || !context.mounted) return;
 
     try {
-      await context.read<FirestoreService>().leaveSession(
-            sessionId: sessionId,
-            studentId: student.uid,
-          );
+      // Build 6: cancelling goes through cancelBooking (the seat and the
+      // voucher session come back).
+      await TimetableService().cancel(sessionId);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l.studentJoinLeftClass)),

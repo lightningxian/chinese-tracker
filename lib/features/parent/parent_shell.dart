@@ -13,9 +13,9 @@ import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import 'parent_overview_tab.dart';
 import '../progress/student_progress_report_screen.dart';
+import '../timetable/student_sessions_section.dart';
 import 'parent_payments_tab.dart';
 import 'parent_profile_tab.dart';
-import '../calendar/class_calendar_screen.dart';
 
 class ParentShell extends StatefulWidget {
   const ParentShell({super.key});
@@ -139,12 +139,17 @@ class _ParentShellState extends State<ParentShell> {
     final content = switch (_index) {
       // Build 4: the overview is the selected child's progress report.
       0 => StudentProgressReport(key: ValueKey(child.uid), studentId: child.uid),
-      1 => ClassCalendarScreen(
-          title: l.parentNavCalendar,
-          showAppBar: false,
-          sessions: context
-              .read<FirestoreService>()
-              .watchTeacherSessions(AppConstants.contentOwnerFor(child)),
+      // Build 6: the child's bookable sessions (the parent books for them).
+      1 => ListView(
+          key: ValueKey('sessions_${child.uid}'),
+          padding: const EdgeInsets.all(20),
+          children: [
+            StudentSessionsSection(
+              studentId: child.uid,
+              studentLevel: child.level ?? '',
+              forStudentId: child.uid,
+            ),
+          ],
         ),
       2 => ParentPaymentsTab(child: child),
       _ => ParentOverviewTab(child: child),

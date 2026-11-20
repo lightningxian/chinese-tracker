@@ -7149,4 +7149,166 @@ class AppLocalizationsId extends AppLocalizations {
   String invoicesFilteredTotal(int count, String total) {
     return '$count tagihan · $total';
   }
+
+  @override
+  String get bookingTitle => 'Sesi kelas (14 hari ke depan)';
+
+  @override
+  String get bookingMyLevel => 'Level saya';
+
+  @override
+  String get bookingNone => 'Tidak ada sesi dalam 14 hari ke depan.';
+
+  @override
+  String get bookingAllLevels => 'Semua level';
+
+  @override
+  String bookingSeatsLeft(int left, int total) {
+    return 'Sisa $left dari $total kursi';
+  }
+
+  @override
+  String get bookingBook => 'Daftar';
+
+  @override
+  String get bookingCancel => 'Batalkan';
+
+  @override
+  String get bookingFullShort => 'Penuh';
+
+  @override
+  String get bookingDone => 'Terdaftar.';
+
+  @override
+  String get bookingCancelled => 'Pendaftaran dibatalkan.';
+
+  @override
+  String get bookingFull => 'Kelas ini sudah penuh.';
+
+  @override
+  String get bookingNoSessions =>
+      'Tidak ada sisa sesi voucher. Beli voucher dulu.';
+
+  @override
+  String get bookingExpired => 'Vouchermu berakhir sebelum kelas ini.';
+
+  @override
+  String get bookingOverlap => 'Kamu sudah terdaftar di kelas pada jam ini.';
+
+  @override
+  String get bookingTooLate => 'Kelas ini sudah dimulai.';
+
+  @override
+  String get bookingNeedsTeacher => 'Menunggu guru';
+
+  @override
+  String get bookingLevel => 'Kelas ini untuk level lain.';
+
+  @override
+  String get bookingNotYours =>
+      'Kamu hanya bisa mendaftar untuk dirimu atau anakmu.';
+
+  @override
+  String get bookingFailed => 'Gagal mendaftar. Coba lagi.';
+
+  @override
+  String get timetableTitle => 'Jadwal mingguan';
+
+  @override
+  String get timetableGrid => 'Minggu';
+
+  @override
+  String get timetableList => 'Daftar';
+
+  @override
+  String get timetableAvailability => 'Ketersediaan';
+
+  @override
+  String get timetableNew => 'Jadwal baru';
+
+  @override
+  String get timetableEdit => 'Ubah jadwal';
+
+  @override
+  String timetableSeats(int n) {
+    return '$n kursi';
+  }
+
+  @override
+  String get timetableClassName => 'Nama kelas';
+
+  @override
+  String get timetableWeekday => 'Hari';
+
+  @override
+  String get timetableStart => 'Mulai';
+
+  @override
+  String get timetableEnd => 'Selesai';
+
+  @override
+  String get timetableCapacity => 'Kursi';
+
+  @override
+  String get timetableFrom => 'Berlaku dari';
+
+  @override
+  String get timetableTo => 'Berlaku sampai';
+
+  @override
+  String get timetableNoClash => 'Tidak bentrok.';
+
+  @override
+  String get timetableSuggestions => 'Waktu kosong';
+
+  @override
+  String get timetableDayOff => 'Libur';
+
+  @override
+  String get timetableDaysOff => 'Hari libur';
+
+  @override
+  String get timetableReason => 'Alasan';
+
+  @override
+  String get availabilityTitle => 'Ketersediaan saya';
+
+  @override
+  String get availabilityHint =>
+      'Jam mengajar tiap minggu, misalnya 15:00-18:00, 19:00-20:30.';
+
+  @override
+  String availabilityInvalid(String day) {
+    return 'Periksa jam pada $day.';
+  }
+
+  @override
+  String get availabilitySaved => 'Ketersediaan disimpan.';
+
+  @override
+  String get weekdayMon => 'Sen';
+
+  @override
+  String get weekdayTue => 'Sel';
+
+  @override
+  String get weekdayWed => 'Rab';
+
+  @override
+  String get weekdayThu => 'Kam';
+
+  @override
+  String get weekdayFri => 'Jum';
+
+  @override
+  String get weekdaySat => 'Sab';
+
+  @override
+  String get weekdaySun => 'Min';
+
+  @override
+  String get voucherClassDay => 'Hari kelas (terdaftar tiap minggu)';
+
+  @override
+  String get voucherNoClassDay => 'Tanpa hari kelas tetap';
 }

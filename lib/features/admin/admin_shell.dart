@@ -141,14 +141,25 @@ class _AdminShellState extends State<AdminShell> {
           icon: const Icon(Icons.document_scanner_outlined, size: 16),
           label: Text(l.adminShellScanWorksheet),
         ),
-      4 => FilledButton.icon(
-          onPressed: () => context.push('/admin/session/new'),
-          style: FilledButton.styleFrom(
-            backgroundColor: AppColors.navy,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          ),
-          icon: const Icon(Icons.add, size: 16),
-          label: Text(l.adminShellNewClass),
+      4 => Wrap(
+          spacing: 8,
+          children: [
+            // Build 6: the weekly timetable.
+            OutlinedButton.icon(
+              onPressed: () => context.push('/admin/timetable'),
+              icon: const Icon(Icons.calendar_view_week_outlined, size: 16),
+              label: Text(l.timetableTitle),
+            ),
+            FilledButton.icon(
+              onPressed: () => context.push('/admin/session/new'),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.navy,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              ),
+              icon: const Icon(Icons.add, size: 16),
+              label: Text(l.adminShellNewClass),
+            ),
+          ],
         ),
       5 => FilledButton.icon(
           onPressed: () => context.push('/admin/vouchers/new'),

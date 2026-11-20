@@ -17,7 +17,7 @@ import '../../models/lesson.dart';
 import '../../models/student_class_term.dart';
 import '../../models/student_progress.dart';
 import '../../services/firestore_service.dart';
-import 'student_join_session_section.dart';
+import '../timetable/student_sessions_section.dart';
 
 /// Student home, kept to about one screen: a header strip with three
 /// tiles (sessions left, exercises done with the streak, average score),
@@ -88,7 +88,11 @@ class StudentHomeTab extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 20),
-            StudentJoinSessionSection(student: student),
+            // Build 6: book the centre's sessions through the functions.
+            StudentSessionsSection(
+              studentId: student.uid,
+              studentLevel: student.level ?? '',
+            ),
             const SizedBox(height: 20),
             SectionHeader(title: l.studentHomeContinueLearning),
             _ContinueLearning(

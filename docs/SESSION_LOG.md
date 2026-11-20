@@ -74,6 +74,15 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   warnings, report screen for four roles, chart, PDF, daily notices)
   written in full and marked NEXT**, with defaults for §5 Q13 to Q16.
 
+### 2026-11-21 — Claude (BUILD chat, PC): Build 6 timetable and booking
+
+- Built Build 6 (release v0.1.24): weekly schedules with the conflict
+  check and locks, generated sessions, booking through functions that
+  reserve a voucher session, the admin Timetable, the student and parent
+  booking lists, teacher availability and days off.
+- Checked: analyzer 17 infos, `flutter test` 146 pass, rules tests, node
+  tests (+ `test_scheduling.js`), flow test 78/78 (+8).
+
 ### 2026-11-20 — Claude (BUILD chat, PC): Build 5 vouchers and self-purchase
 
 - Built Build 5 (release v0.1.23): students and linked parents buy

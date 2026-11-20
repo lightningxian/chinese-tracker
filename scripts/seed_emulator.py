@@ -253,6 +253,7 @@ def main():
     seed_build3(admin_uid, teacher_uids)
     seed_build4(admin_uid, teacher_uids, student_uids, student_names)
     seed_build5(admin_uid, student_uids, student_names)
+    seed_build6(admin_uid, teacher_uids, student_uids)
 
     # Notifications and settings
     put("notifications", "n_1", {"kind": "registration", "title": "New student registered",
@@ -717,6 +718,53 @@ def seed_build5(admin_uid, student_uids, student_names):
         "nameChinese": "16次课程", "amount": 3950000, "method": "midtrans", "date": ts(-5, 10)})
     print("Build 5: price list with Chinese names, a past-deadline voucher (student20@), "
           "2 sessions left (student21@), a paid in-app purchase (student22@)")
+
+
+# ---------------------------------------------------------------- Build 6
+def seed_build6(admin_uid, teacher_uids, student_uids):
+    """Build 6: the flyer's timetable across the four teachers and two
+    rooms, each teacher's availability, one day off, class days on two
+    vouchers; then the generation job runs once."""
+    put("settings", "scheduling", {"minGapMinutes": 15, "weeklyHoursWarning": 20,
+        "defaultCapacity": 8, "bookingCutoffMinutes": 0})
+    # Availability: weekday afternoons and Saturday daytime for everyone.
+    avail = {str(d): [{"startMinutes": 840, "endMinutes": 1140}] for d in (1, 2, 3, 5)}
+    avail["6"] = [{"startMinutes": 570, "endMinutes": 900}]
+    for uid in teacher_uids:
+        _req(f"{FS}/users/{uid}?updateMask.fieldPaths=availability", method="PATCH",
+             body={"fields": {"availability": fv(avail)}},
+             headers={"Authorization": "Bearer owner"})
+    # The flyer: Monday 16:00; Tue, Wed, Fri 15:00 and 16:30; Sat 10:00, 11:30, 13:00.
+    slots = [(1, 960, "Main")]
+    for d in (2, 3, 5):
+        slots += [(d, 900, "Main"), (d, 990, "Sub Room")]
+    slots += [(6, 600, "Main"), (6, 690, "Sub Room"), (6, 780, "Main")]
+    names = ["Teacher", "Andrea Natasha", "Budi Santoso", "Clara Wijaya"]
+    ids = []
+    for i, (day, start, room) in enumerate(slots):
+        t = i % len(teacher_uids)
+        sid = f"sch_{i + 1:02d}"
+        ids.append(sid)
+        put("schedules", sid, {"className": f"Kelas {'ABCDEFGHIJK'[i]}", "weekday": day,
+            "startMinutes": start, "endMinutes": start + 90, "room": room,
+            "teacherId": teacher_uids[t], "teacherName": names[t], "capacity": 8,
+            "level": "", "validFrom": ymd(-7), "validTo": ymd(120), "active": True,
+            "status": "unconfirmed", "createdBy": admin_uid, "createdAt": ts(-7)})
+    put("teacher_days_off", "off_1", {"teacherId": teacher_uids[1], "date": ymd(8),
+        "reason": "Family event", "createdAt": ts(-1)})
+    # Class days: student23's and student24's vouchers.
+    for n, (idx, sid) in enumerate([(22, ids[0]), (23, ids[1])]):
+        put("student_class_terms", f"term_class_day_{n}", {"studentId": student_uids[idx],
+            "packageSize": 8, "sessionsRemaining": 8, "sessionsUsed": 0, "sessionsBooked": 0,
+            "status": "active", "startDate": ymd(-2), "deadlineDate": ymd(58),
+            "nameChinese": "8次课程", "classDay": sid, "createdBy": admin_uid,
+            "createdAt": ts(-2)})
+    try:
+        _req("http://127.0.0.1:5001/chinese-tracker/us-central1/generateSessions-0", body={})
+        print(f"Build 6: {len(ids)} schedules, availability, a day off, class days; "
+              "sessions generated for 14 days")
+    except SystemExit as e:
+        print(f"Build 6: generation skipped: {e}")
 
 
 if __name__ == "__main__":

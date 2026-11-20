@@ -75,6 +75,7 @@ abstract final class ShellRouteUtils {
       if (centreKind != null) return centreKind.localizedTitle(l);
     }
     if (location.endsWith('/progress')) return l.progressReportTitle;
+    if (location.endsWith('/timetable')) return l.timetableTitle;
     if (location.endsWith('/users/approval')) return l.approvalTitle;
     if (location.endsWith('/users/new')) return l.routeTitleNewUser;
     if (location.contains('/users/') && location.endsWith('/edit')) {

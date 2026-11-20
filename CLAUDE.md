@@ -40,6 +40,7 @@ decisions. This app is also the owner's thesis project (see the thesis docs belo
 - **Registration approval and placement (Build 3, 2026-11-20):** a self-registered student is `status: 'pending'` (rules require it; `active` stays the admin's on/off switch; no `status` = an old, approved account) and sees only `/waiting` until an admin approves on Users → **Approval** (`decideRegistration`: level, teacher, a result code claimed once; reject with a reason). The teacher link code is optional at registration. A **placement session** (tick on Open session) keeps results off the board and the count and writes `level_promotions/{uid}_placement` (passed = paper level + 1, failed = paper level) for the Promotion screen. A **placement code** (tick on the code form) may be sat by visitors with no account from `/placement` behind a session token (`startPlacement` / `submitPlacementPart` / `resolvePlacementResult`, key hash on the attempt, no review ever); they get a 6-character result code for the register form. Rooms: `settings/rooms`; teacher levels: `users.levels` (admin only). Pure logic in `functions/placement.js`.
 - **Progress report (Build 4, 2026-11-20):** `progress_summary/{uid}` is written only by functions (`refreshProgressSummary`; pure logic and the five warnings in `functions/progress.js`), refreshed by triggers on exercise results, attendance, vouchers, `progress_notes` and test results, and by the daily 07:00 job, which also sends warning notices (kind `progress`) at most once per 7 days per student and warning. Practice = every final package result; attendance % = hadir ÷ (hadir + alpa). One report widget (`StudentProgressReport`, `fl_chart`) serves the student Progress tab, the parent's first tab and `/teacher/student/:id/progress`, `/admin/users/:id/progress`; Print report uses the same summary. Teachers write follow-up notes for their own students. After a deploy that changes the summary, press **Rebuild progress summaries** (Org settings).
 - **Vouchers in the app (Build 5, 2026-11-20):** students and linked parents buy session packages from the Price list (`nameChinese`, `validDays`, `active`) through `createInvoice` (terms ticked, one open purchase reused); a paid invoice becomes a term with its validity and a `voucher_history` entry; `expireVouchers` (00:30 Jakarta) forfeits what is left after the deadline. Pure logic in `functions/payments.js`. On the emulator, `functions/.secret.local` (`MIDTRANS_SERVER_KEY=emulator-only-midtrans-key`) and `functions/.env.local` (`MIDTRANS_SNAP_URL_EMULATOR=http://127.0.0.1:5199/snap`) are needed by the flow test; both are git-ignored and must never be committed.
+- **Timetable and booking (Build 6, 2026-11-21):** `schedules` are written only by `saveSchedule` (admin; conflict check in `functions/scheduling.js` inside a transaction with `schedule_locks`); `generateSessions` creates `class_sessions/{scheduleId_yyyyMMdd}` 14 days ahead (`generated: true`); students and linked parents book through `bookSession` / `cancelBooking` (a voucher session is reserved in `sessionsBooked`); students no longer write `attendance` themselves. A voucher's `classDay` books its student each week.
 - **Dark mode (2026-11-10):** `AppColors.*` are getters over the palette that is on (`AppPalette.light` / `.dark` in `lib/core/theme/app_theme.dart`, switched by `ThemeController`). Never write `const` in front of a widget or style that uses an `AppColors` value (the analyzer will refuse). A new colour goes into **both** palettes. The landing page keeps its own light `LandingBrand` tokens.
 
 ## Never
@@ -53,7 +54,7 @@ decisions. This app is also the owner's thesis project (see the thesis docs belo
 ## Conventions
 - **Commit author:** `GIT_AUTHOR_NAME="Wilsin Kuonadi" GIT_AUTHOR_EMAIL=wilsinkarimunwkk@gmail.com`
   (and matching `GIT_COMMITTER_*`) per commit. Don't change global git config.
-- **Push notes:** each commit body has a 2–6 bullet plain-language summary. For milestones and deploys, also `gh release create vX.Y.Z` with the same summary (latest: v0.1.23).
+- **Push notes:** each commit body has a 2–6 bullet plain-language summary. For milestones and deploys, also `gh release create vX.Y.Z` with the same summary (latest: v0.1.24).
 - **Change log:** after any code, rules, functions or config change, add an entry at the **top** of `docs/CHANGELOG.md` (What changed / Why / For review).
 - **Session log:** when a session ships something, add a dated entry at the top of `docs/SESSION_LOG.md`. Update `docs/THESIS_FEATURE_AUDIT.md` status when a spec item is finished.
 - **Scoped invariants:** `.claude/rules/*.md` (auth and link codes, exercise authoring admin/web-only, worksheet import web-only). Read the matching file before editing those areas.
@@ -66,7 +67,7 @@ decisions. This app is also the owner's thesis project (see the thesis docs belo
 flutter pub get
 flutter run -d chrome                 # no CONTENT_OWNER_ID needed locally; talks to LIVE Firebase
 flutter analyze                       # baseline: 0 errors, 0 warnings, 17 infos
-flutter test                          # 144 pass + 2 measuring tests skipped (2026-11-20, Build 5)
+flutter test                          # 146 pass + 2 measuring tests skipped (2026-11-21, Build 6)
 node --check functions/index.js
 node functions/test_exercise_play.js && node functions/test_reminders.js
 node functions/test_supervised_test.js          # Build 1 pure logic (TS-01, PN-05)
@@ -76,11 +77,12 @@ node functions/test_promotion.js                # Build 2B board order + promoti
 node functions/test_placement.js                # Build 3 recommendation rule, result codes, visitor key
 node functions/test_progress.js                 # Build 4 summary, weeks, the five warnings, notices
 node functions/test_payments.js                 # Build 5 Midtrans MT-01..04, deadlines, expiry
+node functions/test_scheduling.js               # Build 6 clashes, availability, generation, booking (VC-04)
 node functions/pn01_agreement.js functions/fixtures/pn01_sample.csv   # PN-01: 6 of 6
 
 # Firestore rules tests (needs Java 21: brew install openjdk@21)
 export PATH="/opt/homebrew/opt/openjdk@21/bin:$PATH"
-npm --prefix rules-tests run test:emulator      # 73 pass, 1 skipped (Firestore + Storage)
+npm --prefix rules-tests run test:emulator      # 77 pass, 1 skipped (Firestore + Storage)
 
 # Full emulator suite (auth 9099, firestore 8080, functions 5001, storage 9199,
 # pubsub 8085 for the hourly job, UI 4000).
@@ -88,7 +90,7 @@ npm --prefix rules-tests run test:emulator      # 73 pass, 1 skipped (Firestore 
 # Emulator accounts use the password `emulator-only-7` (never the live one).
 firebase emulators:start --project chinese-tracker
 python3 -I scripts/seed_emulator.py            # ~5 s; codes H3DEMO1, H3ESSAY, H1PLACE (placement); package pkg_typing; pending1@ / pending2@
-node functions/test_supervised_flow.mjs        # end-to-end on the emulators, 70 steps (~9 min)
+node functions/test_supervised_flow.mjs        # end-to-end on the emulators, 78 steps (~10 min)
                                                # (TS-01, TS-02, PN-02..05, LV-01..03, LB-01, PL-01, PL-02, visitor path, progress, MT-01..04;
                                                # needs functions/.secret.local + .env.local, see Build 5)
 # Run the hourly job by hand on the emulator:

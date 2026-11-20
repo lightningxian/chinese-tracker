@@ -331,7 +331,8 @@ describe("hardening 2026-11-12 (registration, invoices, attendance, quizzes)", (
     await assertFails(setDoc(doc(as("student1"), "attendance", "s_open_student1"), record("s_open", { attendanceStatus: "izin" })));
     await assertFails(setDoc(doc(as("student1"), "attendance", "s_open_student1"), record("s_open", { classTermId: "t_own" })));
     await assertFails(setDoc(doc(as("student1"), "attendance", "wrong_id"), record("s_open")));
-    await assertSucceeds(setDoc(doc(as("student1"), "attendance", "s_open_student1"), record("s_open")));
+    // Build 6: students book through bookSession; no direct create any more.
+    await assertFails(setDoc(doc(as("student1"), "attendance", "s_open_student1"), record("s_open")));
   });
   it("a student can leave an open class but not a concluded one", async () => {
     await seedSession("s_open");
@@ -341,8 +342,10 @@ describe("hardening 2026-11-12 (registration, invoices, attendance, quizzes)", (
       await setDoc(doc(db, "attendance", "s_open_student1"), record("s_open"));
       await setDoc(doc(db, "attendance", "s_done_student1"), record("s_done", { sessionCredited: true, classTermId: "t_own" }));
     });
-    await assertSucceeds(deleteDoc(doc(as("student1"), "attendance", "s_open_student1")));
+    // Build 6: students cancel through cancelBooking; no direct delete.
+    await assertFails(deleteDoc(doc(as("student1"), "attendance", "s_open_student1")));
     await assertFails(deleteDoc(doc(as("student1"), "attendance", "s_done_student1")));
+    await assertSucceeds(deleteDoc(doc(as("teacher1"), "attendance", "s_open_student1")));
   });
   it("exam attempts are readable by the student, parent and staff, never written", async () => {
     await env.withSecurityRulesDisabled(async (ctx) => {
@@ -763,5 +766,47 @@ describe("voucher ledger (Build 5)", () => {
     });
     await assertFails(updateDoc(doc(as("student1"), "invoices", "inv2"), { status: "paid" }));
     await assertFails(updateDoc(doc(as("admin1"), "invoices", "inv2"), { status: "paid" }));
+  });
+});
+
+// Build 6: the timetable is written by functions; days off by the teacher.
+describe("timetable (Build 6)", () => {
+  it("schedules: approved users read, nobody writes; locks closed", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "schedules", "sc1"), { className: "A", teacherId: "teacher1", weekday: 1 });
+      await setDoc(doc(ctx.firestore(), "schedule_locks", "teacher1"), { version: 1 });
+    });
+    await assertSucceeds(getDoc(doc(as("student1"), "schedules", "sc1")));
+    await assertSucceeds(getDoc(doc(as("teacher3"), "schedules", "sc1")));
+    await assertFails(setDoc(doc(as("admin1"), "schedules", "sc2"), { className: "B" }));
+    await assertFails(getDoc(doc(as("admin1"), "schedule_locks", "teacher1")));
+    await assertFails(setDoc(doc(as("admin1"), "schedule_locks", "teacher1"), { version: 9 }));
+  });
+  it("days off: the teacher writes their own, the admin any; staff read", async () => {
+    await assertSucceeds(setDoc(doc(as("teacher1"), "teacher_days_off", "d1"), { teacherId: "teacher1", date: "2026-12-01", reason: "x" }));
+    await assertFails(setDoc(doc(as("teacher3"), "teacher_days_off", "d2"), { teacherId: "teacher1", date: "2026-12-01" }));
+    await assertSucceeds(setDoc(doc(as("admin1"), "teacher_days_off", "d3"), { teacherId: "teacher3", date: "2026-12-02" }));
+    await assertSucceeds(getDoc(doc(as("teacher3"), "teacher_days_off", "d1")));
+    await assertFails(getDoc(doc(as("student1"), "teacher_days_off", "d1")));
+    await assertFails(deleteDoc(doc(as("teacher3"), "teacher_days_off", "d1")));
+    await assertSucceeds(deleteDoc(doc(as("teacher1"), "teacher_days_off", "d1")));
+  });
+  it("a client cannot set scheduleId on a session; a teacher edits their availability", async () => {
+    await assertFails(setDoc(doc(as("teacher1"), "class_sessions", "gen"), { teacherId: "teacher1", scheduleId: "sc1", sessionDate: "2026-12-01" }));
+    await assertSucceeds(setDoc(doc(as("teacher1"), "class_sessions", "own"), { teacherId: "teacher1", sessionDate: "2026-12-01" }));
+    await assertSucceeds(updateDoc(doc(as("teacher1"), "users", "teacher1"), { availability: { "1": [{ startMinutes: 900, endMinutes: 1200 }] } }));
+  });
+});
+
+describe("generated sessions (Build 6)", () => {
+  it("students and parents read the generated timetable of every teacher", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "class_sessions", "sch_x_20270105"), { teacherId: "teacher3", scheduleId: "sch_x", generated: true, sessionDate: "2027-01-05" });
+      await setDoc(doc(ctx.firestore(), "class_sessions", "oneoff_t3"), { teacherId: "teacher3", sessionDate: "2027-01-05" });
+    });
+    await assertSucceeds(getDoc(doc(as("student1"), "class_sessions", "sch_x_20270105")));
+    await assertSucceeds(getDoc(doc(as("parent1"), "class_sessions", "sch_x_20270105")));
+    await assertFails(getDoc(doc(as("student1"), "class_sessions", "oneoff_t3")), "another teacher's one-off");
+    await assertFails(setDoc(doc(as("teacher3"), "class_sessions", "fake"), { teacherId: "teacher3", generated: true, sessionDate: "2027-01-06" }));
   });
 });

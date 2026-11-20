@@ -31,7 +31,11 @@ class AppUser {
     this.placementResultCode,
     this.rejectReason,
     this.levels = const [],
+    this.availability = const {},
   });
+
+  /// Build 6: a teacher's weekly availability (weekday 1..7 → windows).
+  final Map<int, List<({int startMinutes, int endMinutes})>> availability;
 
   final String uid;
   final String email;
@@ -228,7 +232,27 @@ class AppUser {
               ?.map((e) => e.toString())
               .toList() ??
           const [],
+      availability: _availabilityOf(data['availability']),
     );
+  }
+
+  static Map<int, List<({int startMinutes, int endMinutes})>> _availabilityOf(
+      Object? raw) {
+    final out = <int, List<({int startMinutes, int endMinutes})>>{};
+    if (raw is! Map) return out;
+    for (final e in raw.entries) {
+      final day = int.tryParse('${e.key}');
+      if (day == null || e.value is! List) continue;
+      out[day] = [
+        for (final w in e.value as List)
+          if (w is Map)
+            (
+              startMinutes: (w['startMinutes'] as num?)?.toInt() ?? 0,
+              endMinutes: (w['endMinutes'] as num?)?.toInt() ?? 0,
+            ),
+      ];
+    }
+    return out;
   }
 
   Map<String, dynamic> toMap() => {

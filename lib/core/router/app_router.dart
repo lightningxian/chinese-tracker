@@ -12,6 +12,7 @@ import '../../features/auth/waiting_approval_screen.dart';
 import '../../features/admin/registration_approval_view.dart';
 import '../../features/placement/placement_pages.dart';
 import '../../features/progress/student_progress_report_screen.dart';
+import '../../features/timetable/admin_timetable_screen.dart';
 import '../../models/placement.dart';
 import '../../features/student/exercise_screen.dart';
 import '../../features/student/lesson_detail_screen.dart';
@@ -240,6 +241,10 @@ class AppRouter {
                   path: 'users/new',
                   builder: (_, __) =>
                       const AdminCreateUserScreen(embedded: true),
+                ),
+                GoRoute(
+                  path: 'timetable',
+                  builder: (_, __) => const AdminTimetableScreen(embedded: true),
                 ),
                 GoRoute(
                   path: 'users/approval',

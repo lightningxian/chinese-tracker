@@ -7175,4 +7175,165 @@ class AppLocalizationsEn extends AppLocalizations {
   String invoicesFilteredTotal(int count, String total) {
     return '$count invoices · $total';
   }
+
+  @override
+  String get bookingTitle => 'Class sessions (next 14 days)';
+
+  @override
+  String get bookingMyLevel => 'My level';
+
+  @override
+  String get bookingNone => 'No session in the next 14 days.';
+
+  @override
+  String get bookingAllLevels => 'All levels';
+
+  @override
+  String bookingSeatsLeft(int left, int total) {
+    return '$left of $total seats left';
+  }
+
+  @override
+  String get bookingBook => 'Book';
+
+  @override
+  String get bookingCancel => 'Cancel';
+
+  @override
+  String get bookingFullShort => 'Full';
+
+  @override
+  String get bookingDone => 'Booked.';
+
+  @override
+  String get bookingCancelled => 'Booking cancelled.';
+
+  @override
+  String get bookingFull => 'This class is full.';
+
+  @override
+  String get bookingNoSessions =>
+      'No voucher session left to book. Buy a voucher first.';
+
+  @override
+  String get bookingExpired => 'Your voucher ends before this class.';
+
+  @override
+  String get bookingOverlap => 'You already booked a class at this time.';
+
+  @override
+  String get bookingTooLate => 'This class has already started.';
+
+  @override
+  String get bookingNeedsTeacher => 'Waiting for a teacher';
+
+  @override
+  String get bookingLevel => 'This class is for another level.';
+
+  @override
+  String get bookingNotYours => 'You can only book for yourself or your child.';
+
+  @override
+  String get bookingFailed => 'Could not book. Try again.';
+
+  @override
+  String get timetableTitle => 'Timetable';
+
+  @override
+  String get timetableGrid => 'Week';
+
+  @override
+  String get timetableList => 'List';
+
+  @override
+  String get timetableAvailability => 'Availability';
+
+  @override
+  String get timetableNew => 'New schedule';
+
+  @override
+  String get timetableEdit => 'Edit schedule';
+
+  @override
+  String timetableSeats(int n) {
+    return '$n seats';
+  }
+
+  @override
+  String get timetableClassName => 'Class name';
+
+  @override
+  String get timetableWeekday => 'Day';
+
+  @override
+  String get timetableStart => 'Start';
+
+  @override
+  String get timetableEnd => 'End';
+
+  @override
+  String get timetableCapacity => 'Seats';
+
+  @override
+  String get timetableFrom => 'Valid from';
+
+  @override
+  String get timetableTo => 'Valid to';
+
+  @override
+  String get timetableNoClash => 'No clash.';
+
+  @override
+  String get timetableSuggestions => 'Free times';
+
+  @override
+  String get timetableDayOff => 'Day off';
+
+  @override
+  String get timetableDaysOff => 'Days off';
+
+  @override
+  String get timetableReason => 'Reason';
+
+  @override
+  String get availabilityTitle => 'My availability';
+
+  @override
+  String get availabilityHint =>
+      'Times you can teach each week, e.g. 15:00-18:00, 19:00-20:30.';
+
+  @override
+  String availabilityInvalid(String day) {
+    return 'Check the times on $day.';
+  }
+
+  @override
+  String get availabilitySaved => 'Availability saved.';
+
+  @override
+  String get weekdayMon => 'Mon';
+
+  @override
+  String get weekdayTue => 'Tue';
+
+  @override
+  String get weekdayWed => 'Wed';
+
+  @override
+  String get weekdayThu => 'Thu';
+
+  @override
+  String get weekdayFri => 'Fri';
+
+  @override
+  String get weekdaySat => 'Sat';
+
+  @override
+  String get weekdaySun => 'Sun';
+
+  @override
+  String get voucherClassDay => 'Class day (books each week)';
+
+  @override
+  String get voucherNoClassDay => 'No fixed class day';
 }

@@ -254,6 +254,8 @@ service cloud.firestore {
       // Parents: sessions for any teacher linked to one of their children.
       allow read: if isAdmin() ||
         (isTeacher() && resource.data.get('teacherId', '') == request.auth.uid) ||
+        // Build 6: the centre's generated timetable is open to book.
+        ((isStudent() || isParent()) && resource.data.get('generated', false) == true) ||
         (isStudent() &&
           resource.data.get('teacherId', '') != '' &&
           resource.data.get('teacherId', '') ==
@@ -262,8 +264,31 @@ service cloud.firestore {
           resource.data.get('teacherId', '') != '' &&
           resource.data.get('teacherId', '') in
             userDoc().data.get('teacherIds', []));
-      allow create: if isStaff();
-      allow update, delete: if isStaff();
+      // Build 6: a generated session (scheduleId) is written by functions.
+      allow create: if isStaff() && request.resource.data.get('scheduleId', '') == '' &&
+        request.resource.data.get('generated', false) != true;
+      allow update: if isStaff() &&
+        request.resource.data.get('scheduleId', '') == resource.data.get('scheduleId', '');
+      allow delete: if isStaff();
+    }
+
+    // Build 6: the weekly timetable, written only by saveSchedule (the
+    // conflict check cannot be skipped). Locks are for the functions.
+    match /schedules/{scheduleId} {
+      allow read: if isApprovedUser();
+      allow write: if false;
+    }
+    match /schedule_locks/{lockId} {
+      allow read, write: if false;
+    }
+    // Build 6: a teacher's days off (the teacher or an admin).
+    match /teacher_days_off/{id} {
+      allow read: if isStaff();
+      allow create: if isAdmin() ||
+        (isTeacher() && request.resource.data.get('teacherId', '') == request.auth.uid);
+      allow delete: if isAdmin() ||
+        (isTeacher() && resource.data.get('teacherId', '') == request.auth.uid);
+      allow update: if false;
     }
 
     match /lessons/{lessonId} {
@@ -504,18 +529,10 @@ service cloud.firestore {
       // A student joins an open class under the id `sessionId_uid`, with
       // only the fields joinSession writes: no attendance status (the
       // teacher sets hadir / izin / alpa at conclude) and no voucher link.
+      // Build 6: students book and cancel through bookSession /
+      // cancelBooking (functions), which reserve a voucher session; staff
+      // may still add a walk-in.
       allow create: if isSignedIn() && (
-        (request.auth.uid == request.resource.data.studentId &&
-          recordId == request.resource.data.sessionId + '_' + request.auth.uid &&
-          request.resource.data.keys().hasOnly([
-            'sessionId', 'studentId', 'teacherId', 'sessionDate', 'sessionTitle',
-            'startMinutes', 'endMinutes', 'attended', 'joinedBy', 'studentName',
-            'notes', 'sessionCredited', 'joinedAt'
-          ]) &&
-          request.resource.data.get('joinedBy', '') == 'student' &&
-          request.resource.data.get('attended', false) == true &&
-          request.resource.data.get('sessionCredited', false) == false &&
-          sessionIsOpen(request.resource.data.sessionId)) ||
         (isStaff() &&
           request.resource.data.get('joinedBy', '') == 'teacher' &&
           request.resource.data.get('sessionCredited', false) == false)
@@ -523,12 +540,7 @@ service cloud.firestore {
       allow update: if isStaff();
       // A student may leave only while the class is still open; after the
       // conclude the record is the centre's attendance evidence.
-      allow delete: if isSignedIn() && (
-        isStaff() ||
-        (resource.data.get('studentId', '') == request.auth.uid &&
-          resource.data.get('joinedBy', '') == 'student' &&
-          sessionIsOpen(resource.data.get('sessionId', '')))
-      );
+      allow delete: if isStaff();
     }
 
     // Push tokens (web / Android devices that opted in on the profile tab).

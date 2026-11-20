@@ -6,6 +6,47 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-21 — Claude (BUILD chat): Build 6 — weekly timetable and booking
+
+**What changed**
+- **Schedules** (`schedules/{id}`, written only by `saveSchedule`, admin)
+  with the conflict check in `functions/scheduling.js`: teacher and room
+  clashes (with the 15-minute gap, the clashing class named), availability,
+  the teacher's levels, the weekly-hours warning, five free-slot
+  suggestions. `checkScheduleConflict` answers the form as it is typed;
+  `saveSchedule` runs the check in a transaction that bumps
+  `schedule_locks` (JD-02). `settings/scheduling` holds the gap, the hours
+  warning, the capacity, the cutoff.
+- **Generation:** `generateSessions` (Sundays 20:00 Jakarta and after every
+  save) creates `class_sessions/{scheduleId_yyyyMMdd}` for 14 days
+  (`generated: true`, `status: scheduled`, or `needs_teacher` on a day
+  off); a second run creates nothing; edits follow sessions with no
+  bookings and flag the others; a voucher's `classDay` books its student.
+- **Booking:** `bookSession` / `cancelBooking` (student, or a linked parent
+  for the child) reserve a voucher session (`sessionsBooked`) and a seat
+  (`bookedCount`) in one transaction, with reason codes (full,
+  no_sessions, expired, overlap, too_late, needs_teacher, level).
+  Students can no longer create or delete `attendance` themselves.
+- **Screens:** admin **Timetable** (Classes tab button): week grid by room,
+  list, availability overview with days off, New schedule form with the
+  live reasons, warnings and suggested times; student home **Sesi Kelas**
+  (next 14 days, my level filter, seats left, Daftar / Batalkan, reasons
+  in words); the parent's second tab books for the child; teacher profile
+  availability and days off; the voucher form's class day.
+- Rules: schedules read by approved users, no client write; locks closed;
+  days off by the teacher or the admin; generated sessions readable by
+  students and parents, never written by clients. Indexes for sessions by
+  schedule, room and `generated`.
+
+**Why**
+- Build 6 of `docs/PLAN.md` §4 (spec §4; §5 Q5, Q19).
+
+**For review**
+- Deploy rules, indexes and functions (5 new), then hosting. The owner
+  enters the real timetable, availability and class days.
+
+---
+
 ## 2026-11-20 — Claude (BUILD chat): Build 5 — voucher packages and self-purchase
 
 **What changed**

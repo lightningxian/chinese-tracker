@@ -1299,4 +1299,149 @@ await step("the expiry job expires a past-deadline voucher once, with the forfei
 });
 
 stub.close();
+
+// ---------------------------------------------------------------------------
+// Build 6: the weekly timetable (JD-01, JD-02) and booking (VC-04). The
+// test schedules sit in June 2027 so they never meet the seeded timetable.
+const budi = await signIn("budi@test.chinesetracker");
+const clara = await signIn("clara@test.chinesetracker");
+const june = {validFrom: "2027-06-01", validTo: "2027-06-30", capacity: 8, level: ""};
+const mon = (extra) => ({className: "Flow Kelas", weekday: 1, startMinutes: 960,
+  endMinutes: 1050, room: "Main", ...june, ...extra});
+
+await step("JD-01 a teacher clash, a room clash, outside availability and a foreign level are refused with the reason", async () => {
+  const first = await call(admin, "saveSchedule", mon({teacherId: andrea.uid,
+    className: `Flow Dasar ${RUN}`}));
+  assert.ok(first.data, JSON.stringify(first.error));
+  const clash = await call(admin, "checkScheduleConflict", mon({teacherId: andrea.uid,
+    room: "Sub Room", startMinutes: 990, endMinutes: 1080}));
+  assert.equal(clash.data.ok, false);
+  assert.ok(clash.data.reasons.some((r) => r.code === "teacher" &&
+    /already teaches Flow Dasar .* on Monday 16:00–17:30/.test(r.text)), JSON.stringify(clash.data));
+  assert.ok(clash.data.suggestions.length >= 1, "free slots are suggested");
+  const saved = await call(admin, "saveSchedule", mon({teacherId: andrea.uid, room: "Sub Room",
+    startMinutes: 990, endMinutes: 1080}));
+  assert.equal(reasonOf(saved), "conflict", "saveSchedule refuses it too");
+  const room = await call(admin, "checkScheduleConflict", mon({teacherId: budi.uid}));
+  assert.ok(room.data.reasons.some((r) => r.code === "room"));
+  const ok = await call(admin, "checkScheduleConflict", mon({teacherId: budi.uid, room: "Sub Room"}));
+  assert.equal(ok.data.ok, true, JSON.stringify(ok.data));
+  const late = await call(admin, "checkScheduleConflict", mon({teacherId: andrea.uid,
+    room: "Sub Room", startMinutes: 1200, endMinutes: 1290}));
+  assert.ok(late.data.reasons.some((r) => r.code === "availability"));
+  const level = await call(admin, "checkScheduleConflict", mon({teacherId: teacher.uid,
+    room: "Sub Room", weekday: 2, level: "HSK 5"}));
+  assert.ok(level.data.reasons.some((r) => r.code === "level"));
+  const byTeacher = await call(teacher, "saveSchedule", mon({teacherId: teacher.uid}));
+  assert.equal(byTeacher.error.status, "PERMISSION_DENIED");
+});
+
+await step("JD-02 two admins save the same teacher and time at once: one schedule", async () => {
+  const body = {className: `Flow Race ${RUN}`, weekday: 3, startMinutes: 990, endMinutes: 1080,
+    room: "Main", teacherId: clara.uid, ...june};
+  const [a, b] = await Promise.all([call(admin, "saveSchedule", body),
+    call(admin, "saveSchedule", {...body, room: "Sub Room"})]);
+  const oks = [a, b].filter((r) => r.data && r.data.ok).length;
+  assert.equal(oks, 1, `one wins: ${JSON.stringify([a.error, b.error])}`);
+  const saved = (await queryDocs("schedules", "teacherId", clara.uid))
+      .filter((d) => str(d.fields, "className") === `Flow Race ${RUN}`);
+  assert.equal(saved.length, 1);
+});
+
+await step("generating sessions twice creates nothing new (deterministic ids)", async () => {
+  const count = async () => (await queryDocs("class_sessions", "scheduleId", "sch_02")).length;
+  const before = await count();
+  assert.ok(before >= 1, "seeded generation made sessions");
+  const job = await fetch(`${FN}/generateSessions-0`, {method: "POST",
+    headers: {"Content-Type": "application/json"}, body: "{}"});
+  assert.ok(job.ok);
+  await new Promise((r) => setTimeout(r, 6000));
+  assert.equal(await count(), before);
+  const one = (await queryDocs("class_sessions", "scheduleId", "sch_02"))[0];
+  assert.match(one.id, /^sch_02_\d{8}$/);
+});
+
+const s26 = await signIn("student26@test.chinesetracker");
+// Sessions on a later day than today (Jakarta), so none has started yet.
+const todayKey = new Date(Date.now() + 7 * 3600000).toISOString().slice(0, 10).replace(/-/g, "");
+const futureOf = async (sid) => (await queryDocs("class_sessions", "scheduleId", sid))
+    .filter((d) => str(d.fields, "status") === "scheduled")
+    .filter((d) => d.id.slice(-8) > todayKey)
+    .sort((x, y) => x.id.localeCompare(y.id));
+let picks;
+await step("VC-04 booking reserves a voucher session; with none left it is refused", async () => {
+  for (const d of await queryDocs("student_class_terms", "studentId", s26.uid)) {
+    await deleteDoc(`student_class_terms/${d.id}`);
+  }
+  await setDocRaw(`student_class_terms/flow_two_${RUN}`, {studentId: s26.uid, packageSize: 8,
+    sessionsRemaining: 2, sessionsUsed: 6, sessionsBooked: 0, status: "active",
+    startDate: "2026-11-01", deadlineDate: "2027-12-31", createdAt: new Date()});
+  picks = [...(await futureOf("sch_03")), ...(await futureOf("sch_06")),
+    ...(await futureOf("sch_09"))];
+  assert.ok(picks.length >= 3, "three future sessions");
+  for (const p of picks.slice(0, 2)) {
+    const r = await call(s26, "bookSession", {sessionId: p.id});
+    assert.ok(r.data, JSON.stringify(r.error));
+  }
+  const term = await readDoc(`student_class_terms/flow_two_${RUN}`);
+  assert.equal(term.sessionsBooked, 2);
+  assert.equal(term.sessionsRemaining, 2, "remaining moves only at close (Build 7)");
+  const third = await call(s26, "bookSession", {sessionId: picks[2].id});
+  assert.equal(reasonOf(third), "no_sessions");
+  const seat = await readDoc(`class_sessions/${picks[0].id}`);
+  assert.ok(seat.bookedCount >= 1);
+});
+
+await step("a full class, an overlapping class and a session on a day off are refused", async () => {
+  await patchDoc(`student_class_terms/flow_two_${RUN}`, {sessionsRemaining: {integerValue: "8"}});
+  const full = `flow_full_${RUN}`;
+  const date = (await readDoc(`class_sessions/${picks[0].id}`)).sessionDate;
+  await setDocRaw(`class_sessions/${full}`, {teacherId: budi.uid, sessionDate: "2027-01-05",
+    sessionTitle: "Full", startMinutes: 600, endMinutes: 690, capacity: 1, bookedCount: 1,
+    status: "scheduled", room: "Main", isOpen: true, isConcluded: false});
+  assert.equal(reasonOf(await call(s26, "bookSession", {sessionId: full})), "full");
+  const clash = `flow_clash_${RUN}`;
+  const p0 = await readDoc(`class_sessions/${picks[0].id}`);
+  await setDocRaw(`class_sessions/${clash}`, {teacherId: budi.uid, sessionDate: date,
+    sessionTitle: "Clash", startMinutes: p0.startMinutes + 30, endMinutes: p0.endMinutes + 30,
+    capacity: 8, bookedCount: 0, status: "scheduled", room: "Sub Room", isOpen: true,
+    isConcluded: false});
+  assert.equal(reasonOf(await call(s26, "bookSession", {sessionId: clash})), "overlap");
+  const off = `flow_off_${RUN}`;
+  await setDocRaw(`class_sessions/${off}`, {teacherId: budi.uid, sessionDate: "2027-01-06",
+    sessionTitle: "Off", startMinutes: 600, endMinutes: 690, capacity: 8, bookedCount: 0,
+    status: "needs_teacher", room: "Main", isOpen: true, isConcluded: false});
+  assert.equal(reasonOf(await call(s26, "bookSession", {sessionId: off})), "needs_teacher");
+});
+
+await step("cancel before the start gives the seat and the session back; after the start it is refused", async () => {
+  const id = picks[1].id;
+  const before = await readDoc(`class_sessions/${id}`);
+  const r = await call(s26, "cancelBooking", {sessionId: id});
+  assert.ok(r.data, JSON.stringify(r.error));
+  assert.equal((await readDoc(`class_sessions/${id}`)).bookedCount, before.bookedCount - 1);
+  assert.equal((await readDoc(`student_class_terms/flow_two_${RUN}`)).sessionsBooked, 1);
+  assert.equal(await readDoc(`attendance/${id}_${s26.uid}`), null);
+  await patchDoc(`class_sessions/${picks[0].id}`, {sessionDate: {stringValue: "2026-01-05"}});
+  const late = await call(s26, "cancelBooking", {sessionId: picks[0].id});
+  assert.equal(reasonOf(late), "too_late");
+});
+
+await step("a voucher's class day books its student into each new session", async () => {
+  const s23 = await signIn("student23@test.chinesetracker");
+  const sessions = await futureOf("sch_01");
+  assert.ok(sessions.length >= 1);
+  const att = await readDoc(`attendance/${sessions[0].id}_${s23.uid}`);
+  assert.ok(att && att.booked === true, "booked by the generation job");
+  assert.equal(att.bookedVia, "class_day");
+});
+
+await step("a parent books only for their own child; a student only for themself", async () => {
+  const parent2 = await signIn("parent@test.chinesetracker");
+  const notChild = await call(parent2, "bookSession", {studentId: s26.uid, sessionId: picks[2].id});
+  assert.equal(reasonOf(notChild), "not-yours");
+  const other = await call(s1, "bookSession", {studentId: s26.uid, sessionId: picks[2].id});
+  assert.equal(reasonOf(other), "not-yours");
+});
+
 console.log(`supervised flow: ${passed} steps passed`);

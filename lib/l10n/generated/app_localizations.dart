@@ -11633,6 +11633,312 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} invoices · {total}'**
   String invoicesFilteredTotal(int count, String total);
+
+  /// No description provided for @bookingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Class sessions (next 14 days)'**
+  String get bookingTitle;
+
+  /// No description provided for @bookingMyLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'My level'**
+  String get bookingMyLevel;
+
+  /// No description provided for @bookingNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No session in the next 14 days.'**
+  String get bookingNone;
+
+  /// No description provided for @bookingAllLevels.
+  ///
+  /// In en, this message translates to:
+  /// **'All levels'**
+  String get bookingAllLevels;
+
+  /// No description provided for @bookingSeatsLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{left} of {total} seats left'**
+  String bookingSeatsLeft(int left, int total);
+
+  /// No description provided for @bookingBook.
+  ///
+  /// In en, this message translates to:
+  /// **'Book'**
+  String get bookingBook;
+
+  /// No description provided for @bookingCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get bookingCancel;
+
+  /// No description provided for @bookingFullShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Full'**
+  String get bookingFullShort;
+
+  /// No description provided for @bookingDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Booked.'**
+  String get bookingDone;
+
+  /// No description provided for @bookingCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking cancelled.'**
+  String get bookingCancelled;
+
+  /// No description provided for @bookingFull.
+  ///
+  /// In en, this message translates to:
+  /// **'This class is full.'**
+  String get bookingFull;
+
+  /// No description provided for @bookingNoSessions.
+  ///
+  /// In en, this message translates to:
+  /// **'No voucher session left to book. Buy a voucher first.'**
+  String get bookingNoSessions;
+
+  /// No description provided for @bookingExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Your voucher ends before this class.'**
+  String get bookingExpired;
+
+  /// No description provided for @bookingOverlap.
+  ///
+  /// In en, this message translates to:
+  /// **'You already booked a class at this time.'**
+  String get bookingOverlap;
+
+  /// No description provided for @bookingTooLate.
+  ///
+  /// In en, this message translates to:
+  /// **'This class has already started.'**
+  String get bookingTooLate;
+
+  /// No description provided for @bookingNeedsTeacher.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for a teacher'**
+  String get bookingNeedsTeacher;
+
+  /// No description provided for @bookingLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'This class is for another level.'**
+  String get bookingLevel;
+
+  /// No description provided for @bookingNotYours.
+  ///
+  /// In en, this message translates to:
+  /// **'You can only book for yourself or your child.'**
+  String get bookingNotYours;
+
+  /// No description provided for @bookingFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not book. Try again.'**
+  String get bookingFailed;
+
+  /// No description provided for @timetableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Timetable'**
+  String get timetableTitle;
+
+  /// No description provided for @timetableGrid.
+  ///
+  /// In en, this message translates to:
+  /// **'Week'**
+  String get timetableGrid;
+
+  /// No description provided for @timetableList.
+  ///
+  /// In en, this message translates to:
+  /// **'List'**
+  String get timetableList;
+
+  /// No description provided for @timetableAvailability.
+  ///
+  /// In en, this message translates to:
+  /// **'Availability'**
+  String get timetableAvailability;
+
+  /// No description provided for @timetableNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New schedule'**
+  String get timetableNew;
+
+  /// No description provided for @timetableEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit schedule'**
+  String get timetableEdit;
+
+  /// No description provided for @timetableSeats.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} seats'**
+  String timetableSeats(int n);
+
+  /// No description provided for @timetableClassName.
+  ///
+  /// In en, this message translates to:
+  /// **'Class name'**
+  String get timetableClassName;
+
+  /// No description provided for @timetableWeekday.
+  ///
+  /// In en, this message translates to:
+  /// **'Day'**
+  String get timetableWeekday;
+
+  /// No description provided for @timetableStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get timetableStart;
+
+  /// No description provided for @timetableEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'End'**
+  String get timetableEnd;
+
+  /// No description provided for @timetableCapacity.
+  ///
+  /// In en, this message translates to:
+  /// **'Seats'**
+  String get timetableCapacity;
+
+  /// No description provided for @timetableFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Valid from'**
+  String get timetableFrom;
+
+  /// No description provided for @timetableTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Valid to'**
+  String get timetableTo;
+
+  /// No description provided for @timetableNoClash.
+  ///
+  /// In en, this message translates to:
+  /// **'No clash.'**
+  String get timetableNoClash;
+
+  /// No description provided for @timetableSuggestions.
+  ///
+  /// In en, this message translates to:
+  /// **'Free times'**
+  String get timetableSuggestions;
+
+  /// No description provided for @timetableDayOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Day off'**
+  String get timetableDayOff;
+
+  /// No description provided for @timetableDaysOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Days off'**
+  String get timetableDaysOff;
+
+  /// No description provided for @timetableReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason'**
+  String get timetableReason;
+
+  /// No description provided for @availabilityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'My availability'**
+  String get availabilityTitle;
+
+  /// No description provided for @availabilityHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Times you can teach each week, e.g. 15:00-18:00, 19:00-20:30.'**
+  String get availabilityHint;
+
+  /// No description provided for @availabilityInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the times on {day}.'**
+  String availabilityInvalid(String day);
+
+  /// No description provided for @availabilitySaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Availability saved.'**
+  String get availabilitySaved;
+
+  /// No description provided for @weekdayMon.
+  ///
+  /// In en, this message translates to:
+  /// **'Mon'**
+  String get weekdayMon;
+
+  /// No description provided for @weekdayTue.
+  ///
+  /// In en, this message translates to:
+  /// **'Tue'**
+  String get weekdayTue;
+
+  /// No description provided for @weekdayWed.
+  ///
+  /// In en, this message translates to:
+  /// **'Wed'**
+  String get weekdayWed;
+
+  /// No description provided for @weekdayThu.
+  ///
+  /// In en, this message translates to:
+  /// **'Thu'**
+  String get weekdayThu;
+
+  /// No description provided for @weekdayFri.
+  ///
+  /// In en, this message translates to:
+  /// **'Fri'**
+  String get weekdayFri;
+
+  /// No description provided for @weekdaySat.
+  ///
+  /// In en, this message translates to:
+  /// **'Sat'**
+  String get weekdaySat;
+
+  /// No description provided for @weekdaySun.
+  ///
+  /// In en, this message translates to:
+  /// **'Sun'**
+  String get weekdaySun;
+
+  /// No description provided for @voucherClassDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Class day (books each week)'**
+  String get voucherClassDay;
+
+  /// No description provided for @voucherNoClassDay.
+  ///
+  /// In en, this message translates to:
+  /// **'No fixed class day'**
+  String get voucherNoClassDay;
 }
 
 class _AppLocalizationsDelegate

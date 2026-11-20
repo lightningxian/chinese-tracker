@@ -11,6 +11,7 @@ import '../../core/widgets/theme_toggle.dart';
 import '../../core/widgets/teacher_student_link_card.dart';
 import '../../l10n/l10n.dart';
 import '../../models/app_user.dart';
+import '../timetable/teacher_availability_card.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 
@@ -173,6 +174,9 @@ class _TeacherProfileTabState extends State<TeacherProfileTab> {
               ],
             ),
           ),
+          const SizedBox(height: 16),
+          // Build 6: weekly availability and days off.
+          TeacherAvailabilityCard(teacher: user),
           const SizedBox(height: 16),
           TeacherStudentLinkCard(teacherId: user.uid),
           const SizedBox(height: 16),

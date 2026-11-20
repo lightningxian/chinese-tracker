@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -11,6 +12,8 @@ import '../../core/widgets/app_card.dart';
 import '../../core/widgets/shell_nested_page.dart';
 import '../../core/utils/money_format.dart';
 import '../../l10n/l10n.dart';
+import '../../services/timetable_service.dart';
+import '../timetable/admin_timetable_screen.dart' show weekdayLabel;
 import '../../l10n/labels_admin.dart';
 import '../../models/app_user.dart';
 import '../../models/invoice.dart';
@@ -50,6 +53,11 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
   int _sessionsRemaining = AppConstants.defaultTermSize;
   late DateTime _startDate;
   late DateTime _deadlineDate;
+
+  /// Build 6: the voucher's class day (a schedule), editable on an
+  /// existing voucher.
+  String _classDay = '';
+  late final Stream<List<Schedule>> _schedules = TimetableService().watchSchedules();
 
   /// The payment this voucher belongs to. Required for new vouchers: a
   /// voucher is always backed by a paid or pending invoice.
@@ -167,6 +175,7 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
       _packageSize = term.packageSize;
       _sessionsRemaining = term.sessionsRemaining;
       _startDate = DateTime.tryParse(term.startDate) ?? DateTime.now();
+      _classDay = term.classDay;
       _deadlineDate = DateTime.tryParse(term.deadlineDate) ??
           _startDate.add(const Duration(days: 90));
       _loading = false;
@@ -219,6 +228,10 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
           sessionsRemaining: _sessionsRemaining,
           notes: _notesController.text,
         );
+        await FirebaseFirestore.instance
+            .collection('student_class_terms')
+            .doc(widget.termId!)
+            .update({'classDay': _classDay});
       } else {
         final invoice = _invoice;
         if (invoice == null) {
@@ -472,6 +485,42 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
                                 minimumSize: const Size.fromHeight(44),
                               ),
                             ),
+                            if (widget.isEditing) ...[
+                              const SizedBox(height: 10),
+                              StreamBuilder<List<Schedule>>(
+                                stream: _schedules,
+                                builder: (context, snap) {
+                                  final list = (snap.data ?? const <Schedule>[])
+                                      .where((s) => s.active)
+                                      .toList();
+                                  final ids = {for (final s in list) s.id};
+                                  return DropdownButtonFormField<String>(
+                                    key: ValueKey('classday_${ids.length}_$_classDay'),
+                                    initialValue:
+                                        ids.contains(_classDay) ? _classDay : '',
+                                    isExpanded: true,
+                                    decoration: InputDecoration(
+                                        labelText: l.voucherClassDay),
+                                    items: [
+                                      DropdownMenuItem(
+                                          value: '', child: Text(l.voucherNoClassDay)),
+                                      for (final s in list)
+                                        DropdownMenuItem(
+                                          value: s.id,
+                                          child: Text(
+                                            '${weekdayLabel(l, s.weekday)} ${s.timeLabel} · '
+                                            '${s.className} · ${s.teacherName}',
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                    ],
+                                    onChanged: _saving
+                                        ? null
+                                        : (v) => setState(() => _classDay = v ?? ''),
+                                  );
+                                },
+                              ),
+                            ],
                             const SizedBox(height: 16),
                             TextFormField(
                               controller: _notesController,

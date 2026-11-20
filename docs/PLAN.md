@@ -2036,6 +2036,32 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
+### 2026-11-21 — Build 6 Weekly timetable and booking — COMMIT, release v0.1.24 (DEPLOYSTATE)
+- Built: `functions/scheduling.js` + `test_scheduling.js`;
+  `checkScheduleConflict`, `saveSchedule` (locks), `generateSessions`
+  (scheduled and after saves), `bookSession`, `cancelBooking`; rules,
+  three indexes; admin Timetable (grid, list, availability, live form),
+  student and parent booking lists, teacher availability and days off,
+  the voucher form's class day.
+- Must list: 1 schedules + settings · 2 availability and days off · 3
+  conflict check with locks · 4 generation · 5 booking · 6 class day · 7
+  screens · 8 rules and indexes · 9 seed and tests. All done; the class
+  day is set on the voucher form (edit), not yet chosen in the buy sheet.
+- Acceptance walk: the flow test covers JD-01 (teacher clash with the
+  class named and suggestions, room clash, outside availability, level),
+  JD-02 (two concurrent saves, one schedule), generation twice with the
+  same count, VC-04 (two bookings, the third refused "no_sessions"), full,
+  overlap, needs_teacher, cancel before and after the start, the class day
+  booking, the parent and the student refused for another uid. The new
+  screens were not walked by hand in this build (the browser pane was
+  small); analyzer and the Flutter tests pass.
+- Proof: analyzer 17 infos; `flutter test` 146 pass (+2) and 2 skipped;
+  rules tests 77 pass, 1 skipped (+4); node tests pass (+
+  `test_scheduling.js`); flow test 78/78 (+8).
+- Owner: DEPLOYNOTE
+- Left out: the "Then" items (ICS export, calendar view of availability);
+  the class day in the buy sheet.
+
 ### 2026-11-20 — Build 5 Voucher packages and self-purchase — a2be4f3, release v0.1.23 (rules, functions and hosting live from the PC 2026-11-20 under the owner's standing go; 40 functions)
 - Built: Price list `nameChinese` / `validDays` / `active`; the buy sheet
   and the voucher cards with history on the student and parent Payments

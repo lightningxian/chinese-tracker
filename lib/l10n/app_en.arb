@@ -2657,5 +2657,80 @@
         "type": "String"
       }
     }
-  }
+  },
+  "bookingTitle": "Class sessions (next 14 days)",
+  "bookingMyLevel": "My level",
+  "bookingNone": "No session in the next 14 days.",
+  "bookingAllLevels": "All levels",
+  "bookingSeatsLeft": "{left} of {total} seats left",
+  "@bookingSeatsLeft": {
+    "placeholders": {
+      "left": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "bookingBook": "Book",
+  "bookingCancel": "Cancel",
+  "bookingFullShort": "Full",
+  "bookingDone": "Booked.",
+  "bookingCancelled": "Booking cancelled.",
+  "bookingFull": "This class is full.",
+  "bookingNoSessions": "No voucher session left to book. Buy a voucher first.",
+  "bookingExpired": "Your voucher ends before this class.",
+  "bookingOverlap": "You already booked a class at this time.",
+  "bookingTooLate": "This class has already started.",
+  "bookingNeedsTeacher": "Waiting for a teacher",
+  "bookingLevel": "This class is for another level.",
+  "bookingNotYours": "You can only book for yourself or your child.",
+  "bookingFailed": "Could not book. Try again.",
+  "timetableTitle": "Timetable",
+  "timetableGrid": "Week",
+  "timetableList": "List",
+  "timetableAvailability": "Availability",
+  "timetableNew": "New schedule",
+  "timetableEdit": "Edit schedule",
+  "timetableSeats": "{n} seats",
+  "@timetableSeats": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "timetableClassName": "Class name",
+  "timetableWeekday": "Day",
+  "timetableStart": "Start",
+  "timetableEnd": "End",
+  "timetableCapacity": "Seats",
+  "timetableFrom": "Valid from",
+  "timetableTo": "Valid to",
+  "timetableNoClash": "No clash.",
+  "timetableSuggestions": "Free times",
+  "timetableDayOff": "Day off",
+  "timetableDaysOff": "Days off",
+  "timetableReason": "Reason",
+  "availabilityTitle": "My availability",
+  "availabilityHint": "Times you can teach each week, e.g. 15:00-18:00, 19:00-20:30.",
+  "availabilityInvalid": "Check the times on {day}.",
+  "@availabilityInvalid": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "availabilitySaved": "Availability saved.",
+  "weekdayMon": "Mon",
+  "weekdayTue": "Tue",
+  "weekdayWed": "Wed",
+  "weekdayThu": "Thu",
+  "weekdayFri": "Fri",
+  "weekdaySat": "Sat",
+  "weekdaySun": "Sun",
+  "voucherClassDay": "Class day (books each week)",
+  "voucherNoClassDay": "No fixed class day"
 }

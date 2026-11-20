@@ -1,6 +1,30 @@
 {
   "indexes": [
     {
+      "collectionGroup": "class_sessions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "generated", "order": "ASCENDING" },
+        { "fieldPath": "sessionDate", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "class_sessions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "scheduleId", "order": "ASCENDING" },
+        { "fieldPath": "sessionDate", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "class_sessions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "room", "order": "ASCENDING" },
+        { "fieldPath": "sessionDate", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "exercise_results",
       "queryScope": "COLLECTION",
       "fields": [

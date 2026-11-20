@@ -20,7 +20,12 @@ class StudentClassTerm {
     this.sessionsBooked = 0,
     this.source = '',
     this.sessionsForfeited = 0,
+    this.classDay = '',
   });
+
+  /// Build 6: the schedule id the student comes to every week; the
+  /// generation job books them into each new session of it.
+  final String classDay;
 
   /// Build 5: the package's Chinese name (8次课程, 16次课程).
   final String nameChinese;
@@ -127,6 +132,7 @@ class StudentClassTerm {
       sessionsBooked: (data['sessionsBooked'] as num?)?.toInt() ?? 0,
       source: data['source'] as String? ?? '',
       sessionsForfeited: (data['sessionsForfeited'] as num?)?.toInt() ?? 0,
+      classDay: data['classDay'] as String? ?? '',
     );
   }
 
