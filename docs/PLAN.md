@@ -2001,7 +2001,7 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
-### 2026-11-20 — Build 4 Progress report — COMMIT, release v0.1.22 (DEPLOYSTATE)
+### 2026-11-20 — Build 4 Progress report — 3ca62ff, release v0.1.22 (rules, indexes, functions and hosting live from the PC 2026-11-20 under the owner's standing go; 39 functions)
 - Built: `progress_summary/{uid}` kept by `refreshProgressSummary` (pure
   logic, ISO weeks in Jakarta time, the five warnings, the status label and
   `noticesDue` in `functions/progress.js`); triggers on `exercise_results`,
@@ -2038,7 +2038,7 @@ Any time:
 - Proof: analyzer 0 errors / 0 warnings / 17 infos; `flutter test` 140
   pass (+5) and 2 skipped; rules tests 71 pass, 1 skipped (+3); node tests
   pass (+ `test_progress.js`); flow test 62/62 (+6).
-- Owner: `fl_chart` approved in chat. DEPLOYNOTE
+- Owner: `fl_chart` approved in chat; deploys are pre-approved ("all auto build, also all is automatically confirmed"). Deployed: 5 functions created (39 on live), 2 indexes, rules, hosting. **Still to do by the owner:** sign in as admin on live → Org settings → **Rebuild progress summaries** once (it needs an admin sign-in, which Claude does not do on live).
 - Left out and why: the "Then" items (period filter and CSV on the admin
   list, Builds 2B / 3 leftovers). The parent's old overview content
   (stat cards) is replaced by the report, which covers it.
