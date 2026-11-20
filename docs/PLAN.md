@@ -73,10 +73,11 @@ Read docs/PLAN.md. You are the BUILD chat. Follow section 0, run Build 0 if this
 
 ## 1. Where the project stands (2026-11-20)
 
-**Live:** https://chinese-tracker.web.app, hosting at release v0.1.23
-(Build 5, published from the PC 2026-11-20 night). Firebase project
-`chinese-tracker`, Blaze plan, **40 Cloud Functions** on Node 22 and 20
-composite indexes (Builds 2B, 3, 4 and 5 went live on 2026-11-20, each
+**Live:** https://chinese-tracker.web.app, hosting at release v0.1.24
+(Build 6, published from the PC 2026-11-21). Firebase project
+`chinese-tracker`, Blaze plan, **45 Cloud Functions** on Node 22 and 23
+composite indexes (Builds 2B to 5 went live on 2026-11-20 and Build 6 on
+2026-11-21, each
 deployed from the PC; the PLAN chat counts the functions and indexes from
 the Mac after every build). **Owner decision 2026-11-20 (said in the BUILD
 chat, recorded here):** every build in the queue is built and deployed
@@ -127,6 +128,7 @@ Android APK is off (table below). Firestore scheduled backups run nightly.
 | Try Build 2A on live | make a small package with one "type the hanzi" and one "type the pinyin" question, play it as `student1@`, mark it as `teacher@` in Tests, **Marking** |
 | Deploy Build 3 (rules, indexes, functions, then hosting) | done 2026-11-20 (night), from the PC at the owner's go, in that order: 34 functions, hosting v0.1.21 |
 | After the Build 3 deploy | open **Org settings** once (writes `settings/rooms`); tick **Placement code** on one short paper's code; tell the admin that new students now wait on Users, **Approval**. Placement papers for visitors should be choice and typing questions only (free writing counts as zero for a visitor) |
+| After the Build 6 deploy | **to do:** enter the real timetable (admin Classes, **Timetable**: the flyer's slots, each with its teacher and room), each teacher's availability (teacher profile), and the class day on the active vouchers (admin voucher form). Students book only through **Daftar** from now on; old one-off sessions keep working |
 | After the Build 5 deploy: **sandbox payment E2E (MT-05)** | **to do:** on live as `student1@`, Payments, **Beli voucher**, tick the terms, pay in Midtrans Snap with a sandbox test card (`docs/GO_LIVE_CHECKLIST.md` §4–6); check the invoice turns paid and one voucher with 8 sessions and a 60-day deadline appears; compare every test payment with the Midtrans sandbox dashboard. Production keys stay off until this passes |
 | After the Build 4 deploy | **to do:** sign in as admin on live, Org settings, **Rebuild progress summaries** once (the report screens are empty until then). Expect the first 07:00 run after that to send "no practice for 14 days" notices to every student who has not practised in the app for two weeks (the proposal's warning 3; students who never practised count from their approval or creation date) |
 | Try Build 2B on live | as admin: Tests, **Promotion** opens and shows the minimum codes (3); Tests, Results, a code, **Leaderboard**. As `student1@`: the Tests tab shows "0 of 3 codes passed". Results written before 2026-11-20 reach a board only when they next change (mark invalid and valid again does it) |
@@ -246,7 +248,24 @@ and no `.local` or `.env` file is tracked; `voucher_history` is read by the
 owner, staff and the linked parent and written by nobody; the expiry job
 runs one idempotent transaction per term. Live from the Mac: 40 functions,
 20 indexes equal to the repo, the bundle carries the buy sheet. The sandbox
-E2E (MT-05) is the owner's (table above). **Build 6 is NEXT.**
+E2E (MT-05) is the owner's (table above).
+
+**Build 6 is built and live** (release v0.1.24, report in §6; rules, three
+indexes, five functions and hosting deployed from the PC on 2026-11-21
+under the owner's standing go) and reviewed by the PLAN chat on the Mac on
+2026-11-21: analyzer baseline, 146 Flutter tests, node tests (+
+`test_scheduling.js`), rules tests 77 pass and 1 skipped. Read: schedules
+are written only by `saveSchedule`, whose conflict check runs inside a
+transaction that bumps the teacher's and the room's lock document (two
+saves at once end with one schedule); generated sessions are written only
+by functions and students can no longer create or delete `attendance`
+themselves; `bookSession` checks the seat, the voucher and the overlap in
+one transaction and a student or parent may book only for their own
+account or child. Two deviations accepted: generated sessions are readable
+by every student and parent (the centre's timetable is shared), and the
+class day is set on the admin voucher form, not yet in the buy sheet
+(moved to Build 7's "Then"). The BUILD chat did not open the new screens
+by hand; the PLAN chat walked them on the emulator from the Mac: the Timetable (week grid with a horizontal scroll, list, availability with the day off), the New schedule form, where a Monday 16:00 class in Main for Andrea was refused with "Main is taken by Kelas A on Monday 16:00–17:30" and five free times, Save disabled; the student home list of the next 14 days with **Book**: "Booked." appeared, the row turned to **Cancel** and the seats went from 7 of 8 to 6 of 8; the same list at 375 px. All fine. One finding for Build 7: the admin Classes calendar shows no generated sessions (it lists one-off sessions only), so the admin finds them on the Timetable screen for now. **Build 7 is NEXT.**
 
 **PLAN chat decision 2026-11-17** (the BUILD chat asked): an answer from a
 supervised test that needs marking goes to the teacher who opened the
@@ -1542,7 +1561,7 @@ card (`docs/GO_LIVE_CHECKLIST.md` §4–6), checks the invoice flips to paid
 and one term appears, and compares every test payment with the sandbox
 dashboard (**MT-05**). The webhook URL is already registered.
 
-### Build 6 — Weekly timetable and booking — **NEXT**
+### Build 6 — Weekly timetable and booking — done 2026-11-21 (v0.1.24, report in §6)
 
 **Goal.** The centre's weekly timetable lives in the app: repeating
 schedules from the flyer (weekday, time, room, teacher, 8 seats, valid
@@ -1700,7 +1719,7 @@ closing, substitutes, reminders and the recap (Build 7); payments (Build 5).
 hosting; enters the real timetable and each teacher's availability; sets
 the class day on the active vouchers.
 
-### Build 7 — The teaching day
+### Build 7 — The teaching day — **NEXT**
 
 **Goal.** A teacher runs the day from one **Schedule** screen with tabs:
 confirms the week, asks for a change, checks in with server time, marks
@@ -1759,7 +1778,9 @@ minutes (Q21).
    attendance trigger after the transaction. The conclude dialog calls the
    function; the in-app `concludeClassSession` path is removed and the
    rules close attendance status changes to clients.
-5. **Substitute and cancel.** On a session, the admin sees **Substitute
+5. **Substitute and cancel.** The admin Classes calendar lists generated
+   sessions too (today it shows one-off sessions only, found in the PLAN
+   chat's walk of Build 6). On a session, the admin sees **Substitute
    teacher** with the candidates that are available at that time, can
    teach the level and have no clash (Build 6's check, reused);
    `assignSubstitute` (admin, transaction) sets `teacherId`,
@@ -1802,8 +1823,9 @@ minutes (Q21).
    once, reminder sent once, substitute assigned and told, cancel returns
    bookings; rules tests.
 
-**Then (if time is left):** a printable day sheet for the teacher; the
-unconfirmed and unclosed cards on the admin dashboard (else Build 8).
+**Then (if time is left):** the class day picker in the buy sheet (Build
+6 leftover); a printable day sheet for the teacher; the unconfirmed and
+unclosed cards on the admin dashboard (else Build 8).
 
 **Not in this build:** payroll (out of scope by the proposal), the admin
 dashboard rework and the monthly centre report (Build 8), online classes.

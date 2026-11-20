@@ -13,6 +13,22 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-21 — Claude (PLAN chat, Mac): Build 6 reviewed, Build 7 is NEXT
+
+- Pulled Build 6 (v0.1.24) and checked it on the Mac: analyzer 17 infos,
+  `flutter test` 146 pass and 2 skipped, node tests (+ `test_scheduling.js`),
+  rules tests 77 pass and 1 skipped. Live: 45 functions, 23 indexes equal
+  to the repo, the bundle carries the timetable and booking.
+- Read: schedules and generated sessions are functions-only; the conflict
+  check runs in a transaction with lock documents; booking is one
+  transaction limited to the caller's own account or child; students lost
+  the direct attendance writes. Two deviations accepted (shared timetable
+  reads; class day on the voucher form).
+- Walked the new screens on the emulator from the Mac (the BUILD chat had
+  not): the Timetable (week grid with a horizontal scroll, list, availability with the day off), the New schedule form, where a Monday 16:00 class in Main for Andrea was refused with "Main is taken by Kelas A on Monday 16:00–17:30" and five free times, Save disabled; the student home list of the next 14 days with **Book**: "Booked." appeared, the row turned to **Cancel** and the seats went from 7 of 8 to 6 of 8; the same list at 375 px. All fine. One finding for Build 7: the admin Classes calendar shows no generated sessions (it lists one-off sessions only), so the admin finds them on the Timetable screen for now.
+- Plan: Build 6 done, **Build 7 (the teaching day) NEXT**; the class day
+  in the buy sheet moved to Build 7's "Then".
+
 ### 2026-11-21 — Claude (PLAN chat, Mac): Build 5 reviewed, Build 6 is NEXT
 
 - Pulled Build 5 (v0.1.23) and checked it on the Mac: analyzer 17 infos,
