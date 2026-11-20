@@ -13,12 +13,13 @@ practice packages** from the question bank. The gates:
 | What | Who | Gate |
 |---|---|---|
 | Packages (`bankSheets` / `bankQuestionIds`): create, edit, publish, delete | admin: any; teacher: **own** packages (`teacherId` = their uid) | `ExerciseAuthoringPlatform.canManageExercises(user)` + `canEditExercise(user, exercise)` |
-| Question bank: scan worksheets, type / paste questions, edit, move, delete, load samples, harvest | admin | `ExerciseAuthoringPlatform.canManageBank(user)` |
+| Question bank: scan worksheets, load samples, harvest, every question | admin | `ExerciseAuthoringPlatform.canManageBank(user)` |
+| Question bank: type / paste questions; edit, move, delete **own** questions and worksheets made only of own questions (Build 2B, 2026-11-20) | teacher | `canWriteOwnBankQuestions(user)` + `canEditBankItem(user, item)` / `canEditBankSheet(user, sheet)` (`createdBy` = their uid) |
 | Old-format exercises (questions inside the document, `TeacherExerciseFormScreen`) | admin | `ExerciseAuthoringPlatform.canManageLegacyExercises(user)` |
 
-Everything above is **web only** (`kIsWeb`). Teachers may **read** the bank
-(rules: staff read) so the package form's *From bank* picker and the
-worksheet screen work for them, read-only. Assigning an exercise to students
+Everything above is **web only** (`kIsWeb`). Teachers **read** the whole
+bank (rules: staff read) so the package form's *From bank* picker and the
+worksheet screen work for them; other people's questions stay read-only. Assigning an exercise to students
 stays staff.
 
 Note: admin-created content uses `AppConstants.contentTeacherId`, which is
@@ -50,7 +51,13 @@ content account.
    inside). Used by `saveExercisePackage`, `setExercisesPublished`,
    `deleteExercise`. `createExercise` / `updateExercise` (legacy) stay
    admin-only.
-8. **Firestore rules**: `exercises` create/update/delete = `isAdmin()`, or
+8. **Bank rules (Build 2B)**: `question_bank` create = admin, or a teacher
+   with `createdBy` = their uid; update = admin, or the creator (and
+   `createdBy` unchanged), or any teacher touching only `usageCount` /
+   `lastUsedAt`; delete = admin or the creator. Tests: "leaderboard,
+   promotion, level, teacher bank (Build 2B)" in
+   `rules-tests/firestore.rules.test.mjs`.
+9. **Firestore rules**: `exercises` create/update/delete = `isAdmin()`, or
    `isTeacher()` with `ownsPackage(...)` on the existing and the new data
    (`teacherId == uid`, `questions` empty, at least one sheet or question;
    `teacherId` cannot change). Tests: "teacher packages (2026-11-13)" in
@@ -64,8 +71,8 @@ Worksheet upload is admin-only on web
 
 ## Do not
 
-- Let a teacher write to `question_bank` from the UI (the rules still allow
-  staff writes for the admin tooling; the UI gates are the teacher's limit).
+- Let a teacher scan worksheets, load samples, harvest, or change another
+  person's bank question from the UI (the rules refuse it too).
 - Let a teacher edit old-format exercises or another author's package
   without updating the service check, the rules and the tests together.
 - Add report export UI to the teacher dashboard or profile.

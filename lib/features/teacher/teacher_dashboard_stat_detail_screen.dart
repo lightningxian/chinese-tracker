@@ -299,7 +299,7 @@ class _StatDetailBody extends StatelessWidget {
                 .map(
                   (student) => _ScoreRow(
                     studentId: student.studentId,
-                    name: student.name,
+                    name: student.staffLabel,
                     subtitle: student.levelLabel,
                     score: student.avgQuizScore!,
                   ),
@@ -376,7 +376,7 @@ class _StatDetailBody extends StatelessWidget {
       rows.add(
         _ScoreRow(
           studentId: roster.studentId,
-          name: roster.name,
+          name: roster.staffLabel,
           subtitle:
               l.teacherDashExerciseCountLevel(total.count, roster.levelLabel),
           score: (total.sum / total.count).round(),
@@ -606,7 +606,7 @@ class _StatDetailBody extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          student.name,
+                          student.staffLabel,
                           style: const TextStyle(fontWeight: FontWeight.w600),
                         ),
                         Text(

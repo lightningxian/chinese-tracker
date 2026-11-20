@@ -16,6 +16,9 @@ import '../../models/app_user.dart';
 import '../../services/firestore_service.dart';
 import 'admin_dashboard_widgets.dart';
 
+/// Students show the staff label (PLAN.md §3); other roles keep their name.
+String _listName(AppUser u) => u.isStudent ? u.staffLabel : u.name;
+
 /// Users table. Click a student's row to open their page (`/admin/users/:id`);
 /// other roles open the edit form. Rows can be ticked to activate, deactivate
 /// or set the HSK level in one go, and the list exports to CSV.
@@ -128,8 +131,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
     final q = _query.trim().toLowerCase();
     if (q.isNotEmpty) {
       result = result.where((user) {
-        return user.name.toLowerCase().contains(q) ||
-            user.email.toLowerCase().contains(q) ||
+        return user.matchesSearch(q) ||
             _roleLabel(l, user).toLowerCase().contains(q);
       }).toList();
     }
@@ -152,7 +154,9 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
       int compare;
       switch (_sortColumn) {
         case _UserSortColumn.name:
-          compare = a.name.toLowerCase().compareTo(b.name.toLowerCase());
+          compare = _listName(a)
+              .toLowerCase()
+              .compareTo(_listName(b).toLowerCase());
         case _UserSortColumn.role:
           compare = _roleSortOrder(a).compareTo(_roleSortOrder(b));
           if (compare == 0) {
@@ -172,7 +176,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
           }
         case _UserSortColumn.status:
           compare = (a.active == b.active)
-              ? a.name.toLowerCase().compareTo(b.name.toLowerCase())
+              ? _listName(a).toLowerCase().compareTo(_listName(b).toLowerCase())
               : (a.active ? -1 : 1);
       }
       return _sortAscending ? compare : -compare;
@@ -345,7 +349,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
       final children = [
         for (final id in user.studentIds)
           for (final u in allUsers)
-            if (u.uid == id) u.name,
+            if (u.uid == id) u.staffLabel,
       ];
       if (children.isEmpty) return l.adminUsersNoChildLinked;
       final shown = children.take(3).join(', ');
@@ -459,7 +463,9 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(l.adminUsersDeleteTitle(user.displayNameIndonesian)),
+        title: Text(l.adminUsersDeleteTitle(user.isStudent
+            ? user.staffLabel
+            : user.displayNameIndonesian)),
         content: Text(l.adminUsersDeleteBody(user.email)),
         actions: [
           TextButton(
@@ -852,7 +858,7 @@ class _UserNameCell extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                user.name,
+                _listName(user),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
@@ -937,7 +943,7 @@ class _UserMobileCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      user.name,
+                      _listName(user),
                       style: const TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,

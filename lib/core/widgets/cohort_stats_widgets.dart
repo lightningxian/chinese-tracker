@@ -58,7 +58,11 @@ class _StudentRosterListState extends State<StudentRosterList> {
     final q = _query.trim().toLowerCase();
     final rows = widget.students.where((s) {
       if (_level != null && _levelOf(s) != _level) return false;
-      if (q.isNotEmpty && !s.name.toLowerCase().contains(q)) return false;
+      if (q.isNotEmpty &&
+          !s.staffLabel.toLowerCase().contains(q) &&
+          !s.name.toLowerCase().contains(q)) {
+        return false;
+      }
       return true;
     }).toList();
 
@@ -74,7 +78,9 @@ class _StudentRosterListState extends State<StudentRosterList> {
         case 'level':
           return _levelOf(a).compareTo(_levelOf(b));
         default:
-          return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+          return a.staffLabel
+              .toLowerCase()
+              .compareTo(b.staffLabel.toLowerCase());
       }
     }
 
@@ -340,7 +346,7 @@ class _StudentIdentity extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                student.name,
+                student.staffLabel,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style:

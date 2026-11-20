@@ -53,13 +53,9 @@ class _ExerciseAssignDialogState extends State<_ExerciseAssignDialog> {
     return students.where((s) {
       if (!s.isStudent || !s.active) return false;
       if (_levelFilter != null && s.level != _levelFilter) return false;
-      if (needle.isEmpty) return true;
-      return '${s.displayNameIndonesian} ${s.name} ${s.email}'
-          .toLowerCase()
-          .contains(needle);
+      return s.matchesSearch(needle);
     }).toList()
-      ..sort(
-          (a, b) => a.displayNameIndonesian.compareTo(b.displayNameIndonesian));
+      ..sort((a, b) => a.staffLabel.compareTo(b.staffLabel));
   }
 
   Future<void> _save() async {
@@ -252,7 +248,7 @@ class _ExerciseAssignDialogState extends State<_ExerciseAssignDialog> {
                                   dense: true,
                                   controlAffinity:
                                       ListTileControlAffinity.leading,
-                                  title: Text(s.displayNameIndonesian),
+                                  title: Text(s.staffLabel),
                                   subtitle: Text(
                                     [
                                       if (s.level != null) s.level!,

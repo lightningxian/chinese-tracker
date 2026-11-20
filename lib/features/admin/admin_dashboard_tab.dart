@@ -104,6 +104,9 @@ class AdminDashboardTab extends StatelessWidget {
                         const SizedBox(height: 24),
                         _FinancialSummarySection(
                           invoices: invoices,
+                          studentsById: {
+                            for (final s in allMurid) s.uid: s,
+                          },
                           terms: termsSnap.data ?? const [],
                           onOpenPayments: () => onSwitchTab(6),
                           onOpenVouchers: () => onSwitchTab(5),
@@ -283,12 +286,24 @@ class AdminDashboardTab extends StatelessWidget {
 class _FinancialSummarySection extends StatelessWidget {
   const _FinancialSummarySection({
     required this.invoices,
+    required this.studentsById,
     required this.terms,
     required this.onOpenPayments,
     required this.onOpenVouchers,
   });
 
   final List<Invoice> invoices;
+
+  /// Student profiles, so invoice rows show the staff label (PLAN.md §3).
+  final Map<String, AppUser> studentsById;
+
+  String _who(Invoice inv) {
+    final student = studentsById[inv.studentId];
+    if (student != null) return student.staffLabel;
+    return inv.studentName?.isNotEmpty == true
+        ? inv.studentName!
+        : inv.invoiceNumber;
+  }
   final List<StudentClassTerm> terms;
   final VoidCallback onOpenPayments;
   final VoidCallback onOpenVouchers;
@@ -383,7 +398,7 @@ class _FinancialSummarySection extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            '${inv.studentName?.isNotEmpty == true ? inv.studentName! : inv.invoiceNumber} · ${inv.itemLocalized(l)}',
+                            '${_who(inv)} · ${inv.itemLocalized(l)}',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(fontSize: 13),
@@ -442,9 +457,7 @@ class _FinancialSummarySection extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            inv.studentName?.isNotEmpty == true
-                                ? inv.studentName!
-                                : inv.invoiceNumber,
+                            _who(inv),
                             style: const TextStyle(fontSize: 13),
                           ),
                         ),

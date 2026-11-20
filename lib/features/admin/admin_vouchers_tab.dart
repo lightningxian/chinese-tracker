@@ -409,8 +409,9 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
     {
       {
         final l = context.l10n;
+        // Staff label `中文名 (Latin name)` (PLAN.md §3); search matches both.
         final usersById = <String, String>{
-          for (final u in usersSnap.data ?? []) u.uid: u.name,
+          for (final u in usersSnap.data ?? <AppUser>[]) u.uid: u.staffLabel,
         };
         final terms = _filter(termsSnap.data ?? [], usersById);
 

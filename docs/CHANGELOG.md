@@ -6,6 +6,76 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-20 — Claude (BUILD chat): Build 2B — leaderboard, promotion, names, teachers in the bank
+
+**What changed**
+- **One trigger on `test_results`** (`onTestResultWritten`, create / update /
+  delete) keeps the leaderboard and the promotion count right after every
+  change: a new final result, marking that makes a result final, valid ↔
+  invalid, an attempt reset. The rules for both live in
+  `functions/promotion.js` (pure, `node functions/test_promotion.js`).
+- **Leaderboard** `leaderboards/{codeId}/entries/{uid}`: only final, valid,
+  non-placement results; stores the peer label (Chinese name), the part
+  marks, total, max, passed, seconds, finish time. Order: total, then fewer
+  seconds, then earlier finish; equal total and seconds share a rank.
+  Screens: student result card and staff Test results (a chosen code),
+  **Leaderboard**; students see Chinese names and their own row framed,
+  staff see `中文名 (Latin)` (read from `users`).
+- **Promotion**: `settings/promotion.minCodes` (3, the admin changes it on
+  the Promotion screen). Different codes passed at the student's level
+  (final, valid, counts for promotion, not placement) are counted in
+  `promotion_progress/{uid}`; at the minimum the trigger writes
+  `level_promotions/{uid_levelKey}` (waiting) and tells the admins. A result
+  that turns invalid or is reset withdraws a waiting recommendation. HSK 6
+  has no next level.
+- **`decidePromotion`** (callable, admin only): Approve moves `users.level`
+  up one, writes `users/{uid}/level_history`, restarts the count at the new
+  level, tells the student and a linked parent, audit log. Decline needs a
+  reason, keeps the level, and the student's card says "Not moved up to HSK
+  4 yet. Your teacher will talk with you about the next step." (the reason
+  stays with the staff).
+- **Admin Tests → Promotion** (badge with the number waiting); **student
+  Tests tab**: level and group (Beginner 1-2, Intermediate 3-4, Advance
+  5-6), "2 of 3 codes passed", the codes, the rank on each result.
+- **Names (§3 of the plan):** staff lists, tables, pickers and searches use
+  `中文名 (Latin)` and match both names; classmates see the Chinese name; the
+  Chinese name is required on the student profile; the level field left the
+  student profile form ("set by the centre").
+- **Teachers and the bank:** a teacher types, pastes and edits their own
+  bank questions and worksheets (`createdBy` = their uid) and deletes only
+  those; scanning, samples, the harvest and test codes stay admin-only.
+- **Notifications:** a new kind `promotion`; the admin notice opens the
+  Promotion screen (it was read as a class notice and opened Classes), and
+  student test notices (marked test, level up) open the Tests tab: the
+  functions wrote `/student/tests`, which is not a route.
+- **Rules:** `users.level` cannot be changed by the student; read-only
+  (functions write) `leaderboards` + entries (staff, or a student who has a
+  result for that code), `level_promotions` (staff or own),
+  `promotion_progress` and `level_history` (own, staff, linked parent);
+  `question_bank` create / update / delete for a teacher's own items.
+  Index: `level_promotions` (status, createdAt desc).
+
+**Why**
+- Build 2B of `docs/PLAN.md` §4 (thesis LV-01, LV-03, LB-01; proposal
+  screenshots 07 and 13).
+
+**For review**
+- A declined recommendation stays declined for that level: passing more
+  codes at the same level makes no new one (only a level change by the
+  admin starts a new count). Question for the PLAN chat.
+- Classmates on attendance lists see the first Latin word: attendance
+  stores only the Latin name (would need `studentNameChinese` on attendance).
+- Proof: analyzer 17 infos (baseline); `flutter test` 127 pass + 2 skipped;
+  node tests incl. `test_promotion.js`; rules tests 62 pass + 1 skipped;
+  flow test 41/41 on the emulators.
+- **Deploy (owner's go):** `firebase deploy --only
+  firestore:rules,firestore:indexes,functions --project chinese-tracker`
+  (2 new functions: `onTestResultWritten`, `decidePromotion`). Results
+  written before the deploy reach a board or the count when they next
+  change.
+
+---
+
 ## 2026-11-18 — Claude (BUILD chat): Build 1C — reader accuracy (PaddleOCR), level flags, tones, proofreading record
 
 **What changed**

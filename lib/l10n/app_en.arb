@@ -301,6 +301,7 @@
   "studentProfilePersonalSubtitle": "Indonesian and Chinese names, WhatsApp, and parent contacts.",
   "studentProfileLearningTitle": "Learning",
   "studentProfileLearningSubtitle": "Your HSK level controls which practice exercises you see.",
+  "studentProfileLevelSetByCentre": "Your HSK level is set by the centre and decides which practice you see. Ask your teacher if it looks wrong.",
   "studentProfileCodeFailed": "Could not generate code: {error}",
   "@studentProfileCodeFailed": {
     "placeholders": {"error": {"type": "String"}}
@@ -2134,5 +2135,57 @@
   "paperCompareWrong": "Not right as read (! = not flagged): {numbers}",
   "@paperCompareWrong": {"placeholders": {"numbers": {"type": "String"}}},
   "paperCompareFailed": "Could not compare: {error}",
-  "@paperCompareFailed": {"placeholders": {"error": {"type": "String"}}}
+  "@paperCompareFailed": {"placeholders": {"error": {"type": "String"}}},
+  "leaderboardShort": "Leaderboard",
+  "leaderboardTitle": "Leaderboard · {code}",
+  "@leaderboardTitle": {"placeholders": {"code": {"type": "String"}}},
+  "leaderboardLockedTitle": "Not open for you",
+  "leaderboardLockedSubtitle": "A code's leaderboard opens after you have sat that code.",
+  "leaderboardEmptyTitle": "No results on the board yet",
+  "leaderboardEmptySubtitle": "Final, valid results appear here. Results waiting for marking come when they are marked.",
+  "leaderboardIntroStaff": "Highest total first; with equal totals, the faster student first. Invalid and pending results are not on the board.",
+  "leaderboardIntroStudent": "Highest total first; with equal totals, the faster student first. Your row is highlighted.",
+  "leaderboardYou": "{name} (you)",
+  "@leaderboardYou": {"placeholders": {"name": {"type": "String"}}},
+  "leaderboardRankOf": "Rank {rank} of {total}",
+  "@leaderboardRankOf": {"placeholders": {"rank": {"type": "int"}, "total": {"type": "int"}}},
+  "promotionTitle": "Promotion",
+  "promotionRule": "{count, plural, =1{A student is recommended after passing 1 code at their level.} other{A student is recommended after passing {count} different codes at their level.}}",
+  "@promotionRule": {"placeholders": {"count": {"type": "int"}}},
+  "promotionChange": "Change",
+  "promotionMinCodesTitle": "Codes needed for promotion",
+  "promotionMinCodesValue": "{count, plural, =1{1 code} other{{count} codes}}",
+  "@promotionMinCodesValue": {"placeholders": {"count": {"type": "int"}}},
+  "promotionEmptyTitle": "No one is waiting",
+  "promotionEmptySubtitle": "When a student passes enough codes at their level, they appear here.",
+  "promotionCodesPassed": "{count, plural, =1{1 code passed} other{{count} codes passed}}",
+  "@promotionCodesPassed": {"placeholders": {"count": {"type": "int"}}},
+  "promotionApprove": "Approve: {level}",
+  "@promotionApprove": {"placeholders": {"level": {"type": "String"}}},
+  "promotionApproved": "Approved. The student is now {level}.",
+  "@promotionApproved": {"placeholders": {"level": {"type": "String"}}},
+  "promotionDecline": "Decline",
+  "promotionDeclineTitle": "Decline the promotion",
+  "promotionDeclineReason": "Reason (the student keeps their level)",
+  "promotionDeclined": "Declined.",
+  "promotionProgress": "{count} of {min} codes passed",
+  "@promotionProgress": {"placeholders": {"count": {"type": "int"}, "min": {"type": "int"}}},
+  "promotionTowards": "Toward {level}. Each code counts once; it must be passed, valid and final.",
+  "@promotionTowards": {"placeholders": {"level": {"type": "String"}}},
+  "promotionWaitingForAdmin": "Enough codes passed: waiting for the admin to confirm {level}.",
+  "@promotionWaitingForAdmin": {"placeholders": {"level": {"type": "String"}}},
+  "promotionTopLevel": "HSK 6 is the highest level.",
+  "promotionErrNotWaiting": "This recommendation was already decided or withdrawn.",
+  "promotionErrLevelChanged": "The student's level has changed since this recommendation.",
+  "levelGroupBeginner": "Beginner",
+  "levelGroupIntermediate": "Intermediate",
+  "levelGroupAdvance": "Advance",
+  "promotionNotYetStudent": "Not moved up to {next} yet. Your teacher will talk with you about the next step.",
+  "@promotionNotYetStudent": {
+    "placeholders": {
+      "next": {
+        "type": "String"
+      }
+    }
+  }
 }

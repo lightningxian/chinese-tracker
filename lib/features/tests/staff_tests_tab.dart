@@ -7,10 +7,12 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../l10n/l10n.dart';
 import '../../models/app_user.dart';
+import '../../models/leaderboard.dart';
 import '../../models/marking_item.dart';
 import '../../models/test_track.dart';
 import '../../services/auth_service.dart';
 import '../../services/marking_service.dart';
+import '../../services/promotion_service.dart';
 import '../../services/test_service.dart';
 import 'test_labels.dart';
 
@@ -94,6 +96,22 @@ class StaffTestsTab extends StatelessWidget {
               },
             ),
             if (user.isAdmin) ...[
+              // Build 2B: students ready for the next level.
+              StreamBuilder<List<LevelPromotion>>(
+                stream: PromotionService().watchWaiting(),
+                builder: (context, snap) {
+                  final waiting = snap.data?.length ?? 0;
+                  return OutlinedButton.icon(
+                    onPressed: () => context.push('/admin/tests/promotion'),
+                    icon: Badge(
+                      isLabelVisible: waiting > 0,
+                      label: Text('$waiting'),
+                      child: const Icon(Icons.trending_up),
+                    ),
+                    label: Text(l.promotionTitle),
+                  );
+                },
+              ),
               OutlinedButton.icon(
                 onPressed: () => context.push('/admin/tests/codes'),
                 icon: const Icon(Icons.qr_code_2_outlined),

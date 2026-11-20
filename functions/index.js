@@ -4,7 +4,7 @@ const {getAuth} = require("firebase-admin/auth");
 const {getFirestore, FieldValue, Timestamp} = require("firebase-admin/firestore");
 const {getMessaging} = require("firebase-admin/messaging");
 const {onCall, onRequest, HttpsError} = require("firebase-functions/v2/https");
-const {onDocumentCreated} = require("firebase-functions/v2/firestore");
+const {onDocumentCreated, onDocumentWritten} = require("firebase-functions/v2/firestore");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
 const {defineSecret} = require("firebase-functions/params");
 const logger = require("firebase-functions/logger");
@@ -2393,4 +2393,223 @@ exports.resetTestAttempt = onCall(async (request) => {
     detail: `${r.studentName || ""} · ${r.code || ""} · total ${r.total ?? "-"}` +
       (reason ? ` · ${reason}` : "")});
   return {reset: true};
+});
+
+// ---------------------------------------------------------------------------
+// Build 2B (docs/PLAN.md §4): leaderboard per test code and the promotion
+// count. One trigger on `test_results` keeps both right after every change
+// (a new final result, marking that makes it final, invalid / valid again,
+// an attempt reset); the pure rules live in promotion.js.
+// ---------------------------------------------------------------------------
+const promo = require("./promotion");
+const LEADERBOARDS = "leaderboards";
+const LEVEL_PROMOTIONS = "level_promotions";
+// What the student's Tests tab shows: "2 of 3 codes passed" at their level.
+const PROMOTION_PROGRESS = "promotion_progress";
+
+async function promotionMinCodes() {
+  const snap = await db.collection(SETTINGS).doc("promotion").get();
+  const v = Number((snap.data() || {}).minCodes);
+  return v >= 1 ? Math.floor(v) : promo.DEFAULT_MIN_CODES;
+}
+
+/** Writes or removes the board entry of one student on one code. */
+async function syncLeaderboardEntry(codeId, uid, result) {
+  if (!codeId || !uid) return;
+  const codeSnap = await db.collection(TEST_CODES).doc(codeId).get();
+  const code = codeSnap.exists ? codeSnap.data() || {} : {};
+  const entry = result ? promo.entryOf(result, code) : null;
+  const board = db.collection(LEADERBOARDS).doc(codeId);
+  const ref = board.collection("entries").doc(uid);
+  if (!entry) {
+    await ref.delete();
+    return;
+  }
+  const {finishedAtMs, ...rest} = entry;
+  await board.set({
+    codeId, code: code.code || codeId, level: code.level || "",
+    updatedAt: FieldValue.serverTimestamp(),
+  }, {merge: true});
+  await ref.set({
+    ...rest,
+    finishedAt: finishedAtMs === null ? null : Timestamp.fromMillis(finishedAtMs),
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+}
+
+/**
+ * Recounts the codes a student passed at their current level; at
+ * `settings/promotion.minCodes` writes one waiting recommendation and tells
+ * the admins; below it, withdraws a waiting one.
+ */
+async function syncPromotion(uid) {
+  if (!uid) return;
+  const userSnap = await db.collection(USERS).doc(uid).get();
+  if (!userSnap.exists) return;
+  const user = userSnap.data() || {};
+  if ((user.role || "student") !== "student") return;
+  const levelKey = promo.levelKeyOf(user.level);
+  if (!levelKey) return;
+  const [minCodes, resultsSnap] = await Promise.all([
+    promotionMinCodes(),
+    db.collection(TEST_RESULTS).where("studentId", "==", uid).get(),
+  ]);
+  const codeIds = [...new Set(resultsSnap.docs
+      .map((d) => (d.data() || {}).codeId).filter(Boolean))];
+  const codes = {};
+  await Promise.all(codeIds.map(async (id) => {
+    const s = await db.collection(TEST_CODES).doc(id).get();
+    codes[id] = s.exists ? s.data() || {} : {};
+  }));
+  const rows = resultsSnap.docs.map((d) => {
+    const result = d.data() || {};
+    return {result, code: codes[result.codeId] || {}};
+  });
+  const state = promo.promotionState(rows, levelKey, minCodes);
+  const passedCodes = state.codes.map((id) => {
+    const r = rows.find((x) => x.result.codeId === id).result;
+    return {codeId: id, code: r.code || id, total: Number(r.total) || 0,
+      max: Number(r.max) || 0};
+  });
+  const ref = db.collection(LEVEL_PROMOTIONS).doc(promo.promotionId(uid, levelKey));
+  // `decision` tells the student's card what happened to a recommendation
+  // at this level: "" (none yet), "waiting" or "declined".
+  const decision = await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const current = snap.exists ? snap.data() || {} : null;
+    const status = current ? current.status : "";
+    if (status === "declined") return "declined";
+    if (state.reached) {
+      if (status === "approved") return "";
+      const fresh = !current || status === "withdrawn";
+      tx.set(ref, {
+        studentId: uid,
+        studentName: latinName(user),
+        studentNameChinese: String(user.nameChinese || "").trim(),
+        fromKey: levelKey, toKey: state.next,
+        fromLevel: `HSK ${levelKey}`, toLevel: `HSK ${state.next}`,
+        codes: passedCodes, count: state.count, minCodes: state.minCodes,
+        status: "waiting",
+        ...(fresh ? {createdAt: FieldValue.serverTimestamp()} : {}),
+        updatedAt: FieldValue.serverTimestamp(),
+      }, {merge: true});
+      if (fresh) {
+        tx.set(db.collection(NOTIFICATIONS).doc(), {
+          kind: "promotion",
+          title: "Promotion to check",
+          body: `${latinName(user)} passed ${state.count} codes at HSK ${levelKey}: ` +
+            `ready for HSK ${state.next}.`,
+          forRole: "admin",
+          userId: "",
+          targetRoute: "/admin/tests/promotion",
+          read: false,
+          createdAt: FieldValue.serverTimestamp(),
+        });
+      }
+      return "waiting";
+    } else if (status === "waiting") {
+      tx.update(ref, {
+        status: "withdrawn", codes: passedCodes, count: state.count,
+        withdrawnAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+    }
+    return "";
+  });
+  await db.collection(PROMOTION_PROGRESS).doc(uid).set({
+    studentId: uid, level: `HSK ${levelKey}`, levelKey,
+    group: promo.groupOf(levelKey), next: state.next ? `HSK ${state.next}` : "",
+    count: state.count, minCodes: state.minCodes, codes: passedCodes, decision,
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+}
+
+exports.onTestResultWritten = onDocumentWritten(`${TEST_RESULTS}/{resultId}`, async (event) => {
+  const before = event.data && event.data.before.exists ? event.data.before.data() : null;
+  const after = event.data && event.data.after.exists ? event.data.after.data() : null;
+  const r = after || before;
+  if (!r) return;
+  await syncLeaderboardEntry(r.codeId, r.studentId, after);
+  await syncPromotion(r.studentId);
+});
+
+/**
+ * Admin: approve or decline a waiting promotion. Approve moves `users.level`
+ * up one level, writes `users/{uid}/level_history`, tells the student and a
+ * linked parent; decline keeps the level and stores the reason. Audit log.
+ */
+exports.decidePromotion = onCall(async (request) => {
+  const {uid, profile} = await requireCaller(request);
+  if (profile.role !== "admin") {
+    throw new HttpsError("permission-denied", "Only admins decide promotions.");
+  }
+  const data = request.data || {};
+  const id = String(data.promotionId || "").trim();
+  const approve = data.approve === true;
+  const reason = String(data.reason || "").trim().slice(0, 500);
+  if (!id) throw new HttpsError("invalid-argument", "promotionId is required.");
+  if (!approve && !reason) {
+    throw new HttpsError("invalid-argument", "Give a reason to decline.");
+  }
+  const ref = db.collection(LEVEL_PROMOTIONS).doc(id);
+  const out = await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) throw new HttpsError("not-found", "Recommendation not found.");
+    const p = snap.data() || {};
+    if (p.status !== "waiting") {
+      throw new HttpsError("failed-precondition", "This recommendation is not waiting.",
+          {reason: "not-waiting"});
+    }
+    const userRef = db.collection(USERS).doc(p.studentId);
+    const userSnap = await tx.get(userRef);
+    const user = userSnap.exists ? userSnap.data() || {} : null;
+    if (!user) throw new HttpsError("not-found", "Student not found.");
+    if (promo.levelKeyOf(user.level) !== p.fromKey) {
+      throw new HttpsError("failed-precondition", "The student's level has changed.",
+          {reason: "level-changed"});
+    }
+    const now = FieldValue.serverTimestamp();
+    tx.update(ref, {
+      status: approve ? "approved" : "declined",
+      ...(approve ? {} : {declineReason: reason}),
+      decidedBy: uid, decidedByName: latinName(profile), decidedAt: now, updatedAt: now,
+    });
+    if (!approve) {
+      // The student's card stops saying "waiting for the admin".
+      tx.set(db.collection(PROMOTION_PROGRESS).doc(p.studentId),
+          {decision: "declined", updatedAt: now}, {merge: true});
+    }
+    if (approve) {
+      tx.update(userRef, {level: p.toLevel, updatedAt: now});
+      // The count starts again at the new level.
+      tx.set(db.collection(PROMOTION_PROGRESS).doc(p.studentId), {
+        studentId: p.studentId, level: p.toLevel, levelKey: p.toKey,
+        group: promo.groupOf(p.toKey),
+        next: promo.nextLevelKey(p.toKey) ? `HSK ${promo.nextLevelKey(p.toKey)}` : "",
+        count: 0, minCodes: Number(p.minCodes) || promo.DEFAULT_MIN_CODES, codes: [],
+        decision: "", updatedAt: now,
+      });
+      tx.set(userRef.collection("level_history").doc(), {
+        date: now, from: p.fromLevel, to: p.toLevel,
+        fromGroup: promo.groupOf(p.fromKey), toGroup: promo.groupOf(p.toKey),
+        codes: p.codes || [], promotionId: id, approvedBy: uid,
+      });
+      const note = {
+        kind: "promotion", title: "Level up",
+        body: `Congratulations! ${latinName(user)} moves from ${p.fromLevel} to ${p.toLevel}.`,
+        read: false, createdAt: now,
+      };
+      tx.set(db.collection(NOTIFICATIONS).doc(),
+          {...note, forRole: "student", userId: p.studentId, targetRoute: "/student/tests"});
+      if (user.linkedParentUid) {
+        tx.set(db.collection(NOTIFICATIONS).doc(),
+            {...note, forRole: "parent", userId: user.linkedParentUid, targetRoute: "/parent"});
+      }
+    }
+    return {student: latinName(user), from: p.fromLevel, to: p.toLevel};
+  });
+  await writeAudit({action: approve ? "promotion.approve" : "promotion.decline",
+    actorId: uid, actorName: latinName(profile), targetType: "level_promotion", targetId: id,
+    detail: `${out.student} · ${out.from} → ${out.to}` + (reason ? ` · ${reason}` : "")});
+  return {status: approve ? "approved" : "declined", level: approve ? out.to : out.from};
 });

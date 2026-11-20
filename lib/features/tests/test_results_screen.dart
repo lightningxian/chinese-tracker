@@ -75,6 +75,18 @@ class _TestResultsScreenState extends State<TestResultsScreen> {
                       ),
                   ],
                 ),
+              if (_codeId != null) ...[
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: OutlinedButton.icon(
+                    onPressed: () => context.push(
+                        '${widget.basePath}/leaderboard/${Uri.encodeComponent(_codeId!)}'),
+                    icon: const Icon(Icons.emoji_events_outlined),
+                    label: Text(l.leaderboardShort),
+                  ),
+                ),
+              ],
               const SizedBox(height: 12),
               if (shown.isEmpty)
                 EmptyState(
@@ -361,6 +373,15 @@ class TestResultScreen extends StatelessWidget {
                         alignment: WrapAlignment.center,
                         children: [
                           if (staff) ValidityButton(result: r),
+                          // Build 2B: the board of this code.
+                          if (r.valid && !r.isPendingMarking)
+                            OutlinedButton.icon(
+                              onPressed: () => context.push(staff
+                                  ? '${context.read<AuthService>().appUser?.isAdmin == true ? '/admin' : '/teacher'}/tests/leaderboard/${Uri.encodeComponent(r.codeId)}'
+                                  : '/student/test-leaderboard/${Uri.encodeComponent(r.codeId)}'),
+                              icon: const Icon(Icons.emoji_events_outlined),
+                              label: Text(l.leaderboardShort),
+                            ),
                           if (staff &&
                               context.read<AuthService>().appUser?.isAdmin ==
                                   true)

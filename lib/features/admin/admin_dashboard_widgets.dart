@@ -208,8 +208,8 @@ class AdminVoucherAlert {
   bool get depleted => sessionsRemaining == 0;
 
   String title(AppLocalizations l) => depleted
-      ? l.adminDashVoucherDepleted(student.name)
-      : l.adminDashVoucherLowBalance(student.name);
+      ? l.adminDashVoucherDepleted(student.staffLabel)
+      : l.adminDashVoucherLowBalance(student.staffLabel);
 
   String subtitle(AppLocalizations l) =>
       l.studentPaymentsSessionsRemaining(sessionsRemaining);

@@ -6,7 +6,11 @@ enum NotificationKind {
   grading('grading'),
 
   /// "Due today" reminders written by the `dailyReminders` function.
-  reminder('reminder');
+  reminder('reminder'),
+
+  /// Level promotions (Build 2B): "Promotion to check" for admins, "Level
+  /// up" for the student and a linked parent.
+  promotion('promotion');
 
   const NotificationKind(this.value);
 

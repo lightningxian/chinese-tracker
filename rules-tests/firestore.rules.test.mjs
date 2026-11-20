@@ -31,6 +31,7 @@ const USERS = {
   teacher2: { role: "teacher", email: "t2@test", name: "Guru Nonaktif", active: false },
   teacher3: { role: "teacher", email: "t3@test", name: "Guru Tiga", active: true },
   student1: { role: "student", email: "s1@test", name: "Murid", active: true, teacherId: "teacher1", level: "HSK 1", termSize: 8 },
+  student2: { role: "student", email: "s2@test", name: "Murid Dua", active: true, teacherId: "teacher3", level: "HSK 2", termSize: 8 },
   parent1: { role: "parent", email: "p1@test", name: "Orang Tua", active: true, studentIds: ["student1"], teacherIds: ["teacher1"] },
 };
 
@@ -537,5 +538,79 @@ describe("marking queue (Build 2A)", () => {
     await assertFails(updateDoc(doc(as("admin1"), "marking_items", "m_t1"),
       { status: "marked", mark: 1 }));
     await assertFails(setDoc(doc(as("student1"), "marking_items", "m_new"), item(["teacher1"])));
+  });
+});
+
+describe("leaderboard, promotion, level, teacher bank (Build 2B)", () => {
+  const entry = { name: "陈美琳", total: 250, max: 300, passed: true };
+  const seedBoard = async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, "test_results", "H3A_student1"), { codeId: "H3A", studentId: "student1", total: 250 });
+      await setDoc(doc(db, "leaderboards", "H3A"), { codeId: "H3A" });
+      await setDoc(doc(db, "leaderboards", "H3A", "entries", "student1"), entry);
+      await setDoc(doc(db, "leaderboards", "H3B"), { codeId: "H3B" });
+      await setDoc(doc(db, "leaderboards", "H3B", "entries", "student2"), entry);
+      await setDoc(doc(db, "level_promotions", "student1_1"),
+        { studentId: "student1", status: "waiting", fromKey: "1", toKey: "2" });
+      await setDoc(doc(db, "users", "student1", "level_history", "h1"), { from: "HSK 1", to: "HSK 2" });
+      await setDoc(doc(db, "promotion_progress", "student1"), { count: 2, minCodes: 3 });
+    });
+  };
+
+  it("LB-01 a student reads the board of a code they sat, not of another code", async () => {
+    await seedBoard();
+    await assertSucceeds(getDocs(collection(as("student1"), "leaderboards", "H3A", "entries")));
+    await assertSucceeds(getDoc(doc(as("student1"), "leaderboards", "H3A")));
+    await assertFails(getDocs(collection(as("student1"), "leaderboards", "H3B", "entries")));
+    await assertFails(getDocs(collection(as("student2"), "leaderboards", "H3A", "entries")));
+    await assertSucceeds(getDocs(collection(as("teacher1"), "leaderboards", "H3B", "entries")));
+    await assertSucceeds(getDocs(collection(as("admin1"), "leaderboards", "H3A", "entries")));
+    // A student still cannot read another student's result.
+    await assertFails(getDoc(doc(as("student2"), "test_results", "H3A_student1")));
+  });
+
+  it("nobody writes a board, a recommendation or the level history from the app", async () => {
+    await seedBoard();
+    await assertFails(setDoc(doc(as("student1"), "leaderboards", "H3A", "entries", "student1"), entry));
+    await assertFails(setDoc(doc(as("admin1"), "leaderboards", "H3A", "entries", "x"), entry));
+    await assertFails(updateDoc(doc(as("admin1"), "level_promotions", "student1_1"), { status: "approved" }));
+    await assertFails(setDoc(doc(as("student1"), "users", "student1", "level_history", "h2"), { to: "HSK 6" }));
+  });
+
+  it("a recommendation and the level history: own and staff only", async () => {
+    await seedBoard();
+    await assertSucceeds(getDoc(doc(as("student1"), "level_promotions", "student1_1")));
+    await assertFails(getDoc(doc(as("student2"), "level_promotions", "student1_1")));
+    await assertSucceeds(getDoc(doc(as("admin1"), "level_promotions", "student1_1")));
+    await assertSucceeds(getDocs(collection(as("student1"), "users", "student1", "level_history")));
+    await assertSucceeds(getDocs(collection(as("parent1"), "users", "student1", "level_history")));
+    await assertFails(getDocs(collection(as("student2"), "users", "student1", "level_history")));
+    await assertSucceeds(getDoc(doc(as("student1"), "promotion_progress", "student1")));
+    await assertSucceeds(getDoc(doc(as("parent1"), "promotion_progress", "student1")));
+    await assertFails(getDoc(doc(as("student2"), "promotion_progress", "student1")));
+    await assertFails(setDoc(doc(as("student1"), "promotion_progress", "student1"), { count: 3 }));
+  });
+
+  it("the level is the admin's: a student cannot change their own", async () => {
+    await assertFails(updateDoc(doc(as("student1"), "users", "student1"), { level: "HSK 6" }));
+    await assertSucceeds(updateDoc(doc(as("student1"), "users", "student1"), { phone: "0812" }));
+    await assertSucceeds(updateDoc(doc(as("admin1"), "users", "student1"), { level: "HSK 2" }));
+  });
+
+  it("a teacher writes only their own bank questions", async () => {
+    const q = { type: "multiple_choice", level: "HSK 1" };
+    await assertSucceeds(setDoc(doc(as("teacher3"), "question_bank", "t3q"), { ...q, createdBy: "teacher3" }));
+    await assertFails(setDoc(doc(as("teacher3"), "question_bank", "t3x"), { ...q, createdBy: "teacher1" }));
+    await assertFails(setDoc(doc(as("teacher3"), "question_bank", "t3y"), q));
+    // q1 belongs to teacher1.
+    await assertSucceeds(updateDoc(doc(as("teacher1"), "question_bank", "q1"), { level: "HSK 2" }));
+    await assertFails(updateDoc(doc(as("teacher3"), "question_bank", "q1"), { level: "HSK 3" }));
+    await assertFails(updateDoc(doc(as("teacher1"), "question_bank", "q1"), { createdBy: "teacher3" }));
+    await assertSucceeds(updateDoc(doc(as("teacher3"), "question_bank", "q1"), { usageCount: 1 }));
+    await assertFails(deleteDoc(doc(as("teacher3"), "question_bank", "q1")));
+    await assertSucceeds(deleteDoc(doc(as("teacher1"), "question_bank", "q1")));
+    await assertSucceeds(setDoc(doc(as("admin1"), "question_bank", "a1"), { ...q, createdBy: "someone" }));
+    await assertFails(setDoc(doc(as("student1"), "question_bank", "s1"), { ...q, createdBy: "student1" }));
   });
 });

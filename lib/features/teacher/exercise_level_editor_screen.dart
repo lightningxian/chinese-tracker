@@ -222,15 +222,14 @@ class _ExerciseLevelEditorScreenState extends State<ExerciseLevelEditorScreen> {
                       final all = (snap.data ?? const [])
                           .where((u) => u.active)
                           .toList()
-                        ..sort((a, b) => a.displayNameIndonesian
-                            .compareTo(b.displayNameIndonesian));
+                        ..sort((a, b) => a.staffLabel.compareTo(b.staffLabel));
                       return _PickerCard<AppUser>(
                         title: 'Students',
                         subtitle: 'Everyone ticked gets every exercise above.',
                         items: all,
                         matchesLevel: (u) =>
                             _hskLevel == null || u.level == _hskLevel,
-                        label: (u) => u.displayNameIndonesian,
+                        label: (u) => u.staffLabel,
                         detail: (u) => [
                           if (u.level != null) u.level!,
                           u.email,

@@ -332,8 +332,10 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     final ownerId = AppConstants.contentTeacherId(user);
-    // Teachers browse the bank (to build packages); only admins change it.
+    // Teachers browse the bank (to build packages) and, since Build 2B,
+    // type and paste their own questions; scanning and the rest is admin.
     final canManageBank = ExerciseAuthoringPlatform.canManageBank(user);
+    final canWriteOwn = ExerciseAuthoringPlatform.canWriteOwnBankQuestions(user);
 
     return ShellNestedPage(
       embedded: widget.embedded,
@@ -346,7 +348,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
           rows: () => _visible.map((s) => _csvRow(l, s)).toList(),
         ),
         const SizedBox(width: 8),
-        if (canManageBank) ...[
+        if (canWriteOwn) ...[
           TextButton.icon(
             onPressed: () => _openEditor(ownerId: ownerId),
             icon: const Icon(Icons.edit_outlined, size: 18),
@@ -382,24 +384,27 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
               }
             },
             itemBuilder: (_) => [
-              // The AI reader stays as an extra (needs App Check on live).
-              PopupMenuItem(
-                value: 'scan_ai',
-                child: Text(l.bankAiScanWorksheet),
-              ),
-              PopupMenuItem(
-                value: 'scan_local',
-                child: Text(l.bankScanWithoutAi),
-              ),
-              PopupMenuItem(
-                value: 'samples',
-                child: Text(l.bankLoadSamples),
-              ),
+              if (canManageBank) ...[
+                // The AI reader stays as an extra (needs App Check on live).
+                PopupMenuItem(
+                  value: 'scan_ai',
+                  child: Text(l.bankAiScanWorksheet),
+                ),
+                PopupMenuItem(
+                  value: 'scan_local',
+                  child: Text(l.bankScanWithoutAi),
+                ),
+                PopupMenuItem(
+                  value: 'samples',
+                  child: Text(l.bankLoadSamples),
+                ),
+              ],
               PopupMenuItem(value: 'paste', child: Text(l.bankBulkPaste)),
-              PopupMenuItem(
-                value: 'harvest',
-                child: Text(l.bankHarvestTitle),
-              ),
+              if (canManageBank)
+                PopupMenuItem(
+                  value: 'harvest',
+                  child: Text(l.bankHarvestTitle),
+                ),
             ],
           ),
         ],
@@ -474,7 +479,8 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
                                   sheet: sheet,
                                   onTap: () => _open(ownerId, sheet),
                                   onEdit: () => _open(ownerId, sheet),
-                                  onDelete: canManageBank
+                                  onDelete: ExerciseAuthoringPlatform
+                                          .canEditBankSheet(user, sheet)
                                       ? () => _delete(firestore, sheet)
                                       : null,
                                 ),
@@ -495,7 +501,6 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
     final l = context.l10n;
     final user = context.read<AuthService>().appUser!;
     final ownerId = AppConstants.contentTeacherId(user);
-    final canManageBank = ExerciseAuthoringPlatform.canManageBank(user);
     return [
       AppTableColumn(
         id: 'title',
@@ -547,7 +552,9 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
         width: 200,
         cell: (sheet) => _RowActions(
           onEdit: () => _open(ownerId, sheet),
-          onDelete: canManageBank ? () => _delete(firestore, sheet) : null,
+          onDelete: ExerciseAuthoringPlatform.canEditBankSheet(user, sheet)
+              ? () => _delete(firestore, sheet)
+              : null,
         ),
       ),
     ];
@@ -564,7 +571,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
           ),
         ),
       );
-    } else if (ExerciseAuthoringPlatform.canManageBank(user)) {
+    } else if (ExerciseAuthoringPlatform.canEditBankItem(user, sheet.first)) {
       _openEditor(ownerId: ownerId, existing: sheet.first);
     }
   }

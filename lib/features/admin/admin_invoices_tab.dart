@@ -31,6 +31,19 @@ class AdminInvoicesTab extends StatefulWidget {
 
 class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
   String? _sortColumnId;
+
+  /// Live student profiles, so rows show the staff label (PLAN.md §3).
+  late final Stream<List<AppUser>> _students =
+      context.read<FirestoreService>().watchAllStudents();
+  Map<String, AppUser> _studentsById = const {};
+
+  /// `中文名 (Latin name)` from the profile, else the name on the invoice.
+  String? _studentLabel(Invoice inv) {
+    final student = _studentsById[inv.studentId];
+    if (student != null) return student.staffLabel;
+    final stored = inv.studentName ?? '';
+    return stored.isEmpty ? null : stored;
+  }
   bool _sortAscending = true;
 
   void _onSort(String columnId) {
@@ -52,9 +65,9 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
     sorted.sort((a, b) {
       final compare = switch (columnId) {
         'invoice' => a.invoiceNumber.compareTo(b.invoiceNumber),
-        'student' => (a.studentName ?? '')
+        'student' => (_studentLabel(a) ?? '')
             .toLowerCase()
-            .compareTo((b.studentName ?? '').toLowerCase()),
+            .compareTo((_studentLabel(b) ?? '').toLowerCase()),
         'package' => a.packageSize.compareTo(b.packageSize),
         'amount' => a.amount.compareTo(b.amount),
         'due' => a.dueDate.compareTo(b.dueDate),
@@ -162,38 +175,48 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
             child: _InfoBanner(text: l.adminInvoicesCodeOnlyBanner),
           ),
         Expanded(
-          child: StreamBuilder<List<Invoice>>(
-            stream: firestore.watchAllInvoices(),
-            builder: (context, snap) {
-              if (snap.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              final invoices = snap.data ?? [];
-              if (invoices.isEmpty) {
-                return EmptyState(
-                  icon: Icons.receipt_long_outlined,
-                  title: l.adminInvoicesEmptyTitle,
-                  subtitle: l.adminInvoicesEmptySubtitle,
-                );
-              }
-              _visible = _sorted(invoices);
-              return ListView(
-                padding: const EdgeInsets.all(20),
-                children: [
-                  AppDataTable<Invoice>(
-                    rows: _visible,
-                    columns: _buildColumns(l),
-                    sortColumnId: _sortColumnId,
-                    sortAscending: _sortAscending,
-                    onSort: _onSort,
-                    mobileCardBuilder: (invoice) => InvoiceCard(
-                      invoice: invoice,
-                      onRecordPayment: invoice.isPending
-                          ? () => _recordPayment(context, invoice)
-                          : null,
-                    ),
-                  ),
-                ],
+          child: StreamBuilder<List<AppUser>>(
+            stream: _students,
+            builder: (context, studentsSnap) {
+              _studentsById = {
+                for (final s in studentsSnap.data ?? const <AppUser>[])
+                  s.uid: s,
+              };
+              return StreamBuilder<List<Invoice>>(
+                stream: firestore.watchAllInvoices(),
+                builder: (context, snap) {
+                  if (snap.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final invoices = snap.data ?? [];
+                  if (invoices.isEmpty) {
+                    return EmptyState(
+                      icon: Icons.receipt_long_outlined,
+                      title: l.adminInvoicesEmptyTitle,
+                      subtitle: l.adminInvoicesEmptySubtitle,
+                    );
+                  }
+                  _visible = _sorted(invoices);
+                  return ListView(
+                    padding: const EdgeInsets.all(20),
+                    children: [
+                      AppDataTable<Invoice>(
+                        rows: _visible,
+                        columns: _buildColumns(l),
+                        sortColumnId: _sortColumnId,
+                        sortAscending: _sortAscending,
+                        onSort: _onSort,
+                        mobileCardBuilder: (invoice) => InvoiceCard(
+                          invoice: invoice,
+                          studentLabel: _studentLabel(invoice),
+                          onRecordPayment: invoice.isPending
+                              ? () => _recordPayment(context, invoice)
+                              : null,
+                        ),
+                      ),
+                    ],
+                  );
+                },
               );
             },
           ),
@@ -234,7 +257,7 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
         sortable: true,
         flex: 2,
         cell: (invoice) => Text(
-          invoice.studentName?.isNotEmpty == true ? invoice.studentName! : '—',
+          _studentLabel(invoice) ?? '—',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: cellStyle,
@@ -345,7 +368,10 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
     final l = context.l10n;
     final result = await showDialog<({String method, String note})>(
       context: context,
-      builder: (_) => _RecordPaymentDialog(invoice: invoice),
+      builder: (_) => _RecordPaymentDialog(
+        invoice: invoice,
+        studentLabel: _studentLabel(invoice),
+      ),
     );
     if (result == null || !context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
@@ -359,7 +385,7 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
         SnackBar(
           content: Text(
             l.adminInvoicesRecorded(
-              invoice.studentName ?? l.adminInvoicesStudentFallback,
+              _studentLabel(invoice) ?? l.adminInvoicesStudentFallback,
               invoice.itemLocalized(l),
               localizedPaymentMethod(l, result.method).toLowerCase(),
             ),
@@ -383,7 +409,7 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
           l.adminInvoicesDeleteBody(
             invoice.invoiceNumber,
             invoice.itemLocalized(l),
-            invoice.studentName ?? invoice.studentId,
+            _studentLabel(invoice) ?? invoice.studentId,
           ),
         ),
         actions: [
@@ -426,9 +452,14 @@ class InvoiceCard extends StatelessWidget {
     required this.invoice,
     this.onPay,
     this.onRecordPayment,
+    this.studentLabel,
   });
 
   final Invoice invoice;
+
+  /// Admin side: the staff label of the student (PLAN.md §3). The student
+  /// and parent views leave it null and show the name on the invoice.
+  final String? studentLabel;
 
   /// Student side: open the online payment page (only when a link exists).
   final VoidCallback? onPay;
@@ -453,9 +484,10 @@ class InvoiceCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  invoice.studentName?.isNotEmpty == true
-                      ? invoice.studentName!
-                      : invoice.invoiceNumber,
+                  studentLabel ??
+                      (invoice.studentName?.isNotEmpty == true
+                          ? invoice.studentName!
+                          : invoice.invoiceNumber),
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 15,
@@ -673,7 +705,7 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
                     for (final s in students)
                       DropdownMenuItem(
                         value: s,
-                        child: Text(s.displayNameIndonesian),
+                        child: Text(s.staffLabel),
                       ),
                   ],
                   onChanged: (v) => setState(() => _student = v),
@@ -824,8 +856,8 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
         SnackBar(
           content: Text(
             _online
-                ? l.adminInvoicesCreatedOnline(student.displayNameIndonesian)
-                : l.adminInvoicesCreatedManual(student.displayNameIndonesian),
+                ? l.adminInvoicesCreatedOnline(student.staffLabel)
+                : l.adminInvoicesCreatedManual(student.staffLabel),
           ),
         ),
       );
@@ -841,9 +873,10 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
 
 /// "Mark as paid": how the money came in, plus an optional note.
 class _RecordPaymentDialog extends StatefulWidget {
-  const _RecordPaymentDialog({required this.invoice});
+  const _RecordPaymentDialog({required this.invoice, this.studentLabel});
 
   final Invoice invoice;
+  final String? studentLabel;
 
   @override
   State<_RecordPaymentDialog> createState() => _RecordPaymentDialogState();
@@ -877,7 +910,8 @@ class _RecordPaymentDialogState extends State<_RecordPaymentDialog> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              '${inv.studentName ?? inv.studentId} · ${inv.itemLocalized(l)} · '
+              '${widget.studentLabel ?? inv.studentName ?? inv.studentId} · '
+              '${inv.itemLocalized(l)} · '
               '${currency.format(inv.amount)}',
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),

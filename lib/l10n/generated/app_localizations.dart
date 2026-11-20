@@ -1334,6 +1334,12 @@ abstract class AppLocalizations {
   /// **'Your HSK level controls which practice exercises you see.'**
   String get studentProfileLearningSubtitle;
 
+  /// No description provided for @studentProfileLevelSetByCentre.
+  ///
+  /// In en, this message translates to:
+  /// **'Your HSK level is set by the centre and decides which practice you see. Ask your teacher if it looks wrong.'**
+  String get studentProfileLevelSetByCentre;
+
   /// No description provided for @studentProfileCodeFailed.
   ///
   /// In en, this message translates to:
@@ -10289,6 +10295,210 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not compare: {error}'**
   String paperCompareFailed(String error);
+
+  /// No description provided for @leaderboardShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Leaderboard'**
+  String get leaderboardShort;
+
+  /// No description provided for @leaderboardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Leaderboard · {code}'**
+  String leaderboardTitle(String code);
+
+  /// No description provided for @leaderboardLockedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Not open for you'**
+  String get leaderboardLockedTitle;
+
+  /// No description provided for @leaderboardLockedSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'A code\'s leaderboard opens after you have sat that code.'**
+  String get leaderboardLockedSubtitle;
+
+  /// No description provided for @leaderboardEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No results on the board yet'**
+  String get leaderboardEmptyTitle;
+
+  /// No description provided for @leaderboardEmptySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Final, valid results appear here. Results waiting for marking come when they are marked.'**
+  String get leaderboardEmptySubtitle;
+
+  /// No description provided for @leaderboardIntroStaff.
+  ///
+  /// In en, this message translates to:
+  /// **'Highest total first; with equal totals, the faster student first. Invalid and pending results are not on the board.'**
+  String get leaderboardIntroStaff;
+
+  /// No description provided for @leaderboardIntroStudent.
+  ///
+  /// In en, this message translates to:
+  /// **'Highest total first; with equal totals, the faster student first. Your row is highlighted.'**
+  String get leaderboardIntroStudent;
+
+  /// No description provided for @leaderboardYou.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} (you)'**
+  String leaderboardYou(String name);
+
+  /// No description provided for @leaderboardRankOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Rank {rank} of {total}'**
+  String leaderboardRankOf(int rank, int total);
+
+  /// No description provided for @promotionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Promotion'**
+  String get promotionTitle;
+
+  /// No description provided for @promotionRule.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{A student is recommended after passing 1 code at their level.} other{A student is recommended after passing {count} different codes at their level.}}'**
+  String promotionRule(int count);
+
+  /// No description provided for @promotionChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get promotionChange;
+
+  /// No description provided for @promotionMinCodesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Codes needed for promotion'**
+  String get promotionMinCodesTitle;
+
+  /// No description provided for @promotionMinCodesValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 code} other{{count} codes}}'**
+  String promotionMinCodesValue(int count);
+
+  /// No description provided for @promotionEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No one is waiting'**
+  String get promotionEmptyTitle;
+
+  /// No description provided for @promotionEmptySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'When a student passes enough codes at their level, they appear here.'**
+  String get promotionEmptySubtitle;
+
+  /// No description provided for @promotionCodesPassed.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 code passed} other{{count} codes passed}}'**
+  String promotionCodesPassed(int count);
+
+  /// No description provided for @promotionApprove.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve: {level}'**
+  String promotionApprove(String level);
+
+  /// No description provided for @promotionApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Approved. The student is now {level}.'**
+  String promotionApproved(String level);
+
+  /// No description provided for @promotionDecline.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline'**
+  String get promotionDecline;
+
+  /// No description provided for @promotionDeclineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline the promotion'**
+  String get promotionDeclineTitle;
+
+  /// No description provided for @promotionDeclineReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason (the student keeps their level)'**
+  String get promotionDeclineReason;
+
+  /// No description provided for @promotionDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'Declined.'**
+  String get promotionDeclined;
+
+  /// No description provided for @promotionProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} of {min} codes passed'**
+  String promotionProgress(int count, int min);
+
+  /// No description provided for @promotionTowards.
+  ///
+  /// In en, this message translates to:
+  /// **'Toward {level}. Each code counts once; it must be passed, valid and final.'**
+  String promotionTowards(String level);
+
+  /// No description provided for @promotionWaitingForAdmin.
+  ///
+  /// In en, this message translates to:
+  /// **'Enough codes passed: waiting for the admin to confirm {level}.'**
+  String promotionWaitingForAdmin(String level);
+
+  /// No description provided for @promotionTopLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'HSK 6 is the highest level.'**
+  String get promotionTopLevel;
+
+  /// No description provided for @promotionErrNotWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'This recommendation was already decided or withdrawn.'**
+  String get promotionErrNotWaiting;
+
+  /// No description provided for @promotionErrLevelChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'The student\'s level has changed since this recommendation.'**
+  String get promotionErrLevelChanged;
+
+  /// No description provided for @levelGroupBeginner.
+  ///
+  /// In en, this message translates to:
+  /// **'Beginner'**
+  String get levelGroupBeginner;
+
+  /// No description provided for @levelGroupIntermediate.
+  ///
+  /// In en, this message translates to:
+  /// **'Intermediate'**
+  String get levelGroupIntermediate;
+
+  /// No description provided for @levelGroupAdvance.
+  ///
+  /// In en, this message translates to:
+  /// **'Advance'**
+  String get levelGroupAdvance;
+
+  /// No description provided for @promotionNotYetStudent.
+  ///
+  /// In en, this message translates to:
+  /// **'Not moved up to {next} yet. Your teacher will talk with you about the next step.'**
+  String promotionNotYetStudent(String next);
 }
 
 class _AppLocalizationsDelegate

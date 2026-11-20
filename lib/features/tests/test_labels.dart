@@ -37,6 +37,8 @@ String testErrorMessage(AppLocalizations l, Object error) {
       'session-open' => l.testsErrorReviewSessionOpen,
       'not-finished' => l.testsErrorReviewNotFinished,
       'reason-required' => l.testsErrorReasonRequired,
+      'not-waiting' => l.promotionErrNotWaiting,
+      'level-changed' => l.promotionErrLevelChanged,
       _ => error.message ?? l.testsErrorGeneric,
     };
   }

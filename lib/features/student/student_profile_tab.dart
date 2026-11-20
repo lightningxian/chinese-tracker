@@ -34,7 +34,6 @@ class _StudentProfileTabState extends State<StudentProfileTab> {
   late final TextEditingController _whatsappController;
   late final TextEditingController _parentNameController;
   late final TextEditingController _parentPhoneController;
-  late String _level;
   late int _termSize;
   bool _saving = false;
   String? _error;
@@ -74,7 +73,6 @@ class _StudentProfileTabState extends State<StudentProfileTab> {
     _whatsappController.text = user.displayWhatsapp ?? '';
     _parentNameController.text = user.parentName ?? '';
     _parentPhoneController.text = user.parentPhone ?? '';
-    _level = user.level ?? AppConstants.hskLevels.first;
     _termSize = user.termSize ?? AppConstants.defaultTermSize;
   }
 
@@ -109,7 +107,8 @@ class _StudentProfileTabState extends State<StudentProfileTab> {
         whatsapp: _whatsappController.text,
         parentName: _parentNameController.text,
         parentPhone: _parentPhoneController.text,
-        level: _level,
+        // No level: the admin sets it (Build 2B); the rules refuse a
+        // student's own level change.
         termSize: _termSize,
       );
       if (!mounted) return;
@@ -163,19 +162,20 @@ class _StudentProfileTabState extends State<StudentProfileTab> {
                 showParentFields: true,
                 parentNameController: _parentNameController,
                 parentPhoneController: _parentPhoneController,
+                requireChineseName: true,
               ),
             ],
           ),
           const SizedBox(height: 16),
           ProfileSectionCard(
             title: l.studentProfileLearningTitle,
-            subtitle: l.studentProfileLearningSubtitle,
+            subtitle: l.studentProfileLevelSetByCentre,
             children: [
               ProfileStudentLearningFields(
-                level: _level,
+                level: user.level ?? AppConstants.hskLevels.first,
                 termSize: _termSize,
                 enabled: !_saving,
-                onLevelChanged: (value) => setState(() => _level = value),
+                onLevelChanged: null, // the admin sets the level
                 onTermSizeChanged: (value) => setState(() => _termSize = value),
               ),
             ],

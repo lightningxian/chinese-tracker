@@ -314,7 +314,7 @@ Future<void> showExerciseHomeworkProgressDialog({
       final overdue = assignment.isOverdue && best == null;
       rows.add(
         _ProgressRow(
-          name: student?.name ?? l.exerciseCardUnknownStudent,
+          name: student?.staffLabel ?? l.exerciseCardUnknownStudent,
           level: student?.level,
           dueDate: assignment.dueDate,
           bestScore: best,
@@ -334,7 +334,7 @@ Future<void> showExerciseHomeworkProgressDialog({
     for (final student in eligible) {
       rows.add(
         _ProgressRow(
-          name: student.name,
+          name: student.staffLabel,
           level: student.level,
           bestScore: scoresByStudent[student.uid],
           overdue: false,

@@ -163,7 +163,7 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
     setState(() {
       _term = term;
       _studentId = term.studentId;
-      _studentName = student?.name ?? l.adminVouchersUnknownStudent;
+      _studentName = student?.staffLabel ?? l.adminVouchersUnknownStudent;
       _packageSize = term.packageSize;
       _sessionsRemaining = term.sessionsRemaining;
       _startDate = DateTime.tryParse(term.startDate) ?? DateTime.now();
@@ -350,7 +350,7 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
                                           (student) => DropdownMenuItem(
                                             value: student.uid,
                                             child: Text(
-                                              '${student.name} · ${student.level ?? l.adminVoucherFormNoHsk}',
+                                              '${student.staffLabel} · ${student.level ?? l.adminVoucherFormNoHsk}',
                                             ),
                                           ),
                                         )

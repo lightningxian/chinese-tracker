@@ -141,7 +141,10 @@ service cloud.firestore {
           data.get('parentCode', '') == existing.get('parentCode', '')) &&
         // Child links are managed only by the linkChild Cloud Function.
         data.get('studentIds', []) == existing.get('studentIds', []) &&
-        data.get('teacherIds', []) == existing.get('teacherIds', []);
+        data.get('teacherIds', []) == existing.get('teacherIds', []) &&
+        // Build 2B: the HSK level is set by the admin (promotion), never by
+        // the student.
+        data.get('level', '') == existing.get('level', '');
     }
 
     function adminUserCreateValid() {
@@ -168,6 +171,13 @@ service cloud.firestore {
       return request.resource.data.diff(resource.data).affectedKeys()
           .hasOnly(['read']) &&
         request.resource.data.read == true;
+    }
+
+    // Build 2B: the student's level history (written by decidePromotion).
+    match /users/{userId}/level_history/{entryId} {
+      allow read: if isSignedIn() &&
+        (request.auth.uid == userId || isStaff() || isParentOf(userId));
+      allow write: if false;
     }
 
     match /users/{userId} {
@@ -313,7 +323,20 @@ service cloud.firestore {
     match /question_bank/{questionId} {
       // Scoped to staff: students never read raw answers.
       allow read: if isStaff();
-      allow create, update, delete: if isStaff();
+      // Build 2B: admins manage the whole bank; a teacher types, pastes and
+      // edits only the questions they created (createdBy = their uid, which
+      // never changes), and may bump the usage counter of any question.
+      allow create: if isAdmin() ||
+        (isTeacher() && request.resource.data.get('createdBy', '') == request.auth.uid);
+      allow update: if isAdmin() ||
+        (isTeacher() &&
+          resource.data.get('createdBy', '') == request.auth.uid &&
+          request.resource.data.get('createdBy', '') == request.auth.uid) ||
+        (isTeacher() &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['usageCount', 'lastUsedAt']));
+      allow delete: if isAdmin() ||
+        (isTeacher() && resource.data.get('createdBy', '') == request.auth.uid);
     }
 
     // Exercise bundles ("Levels"): staff manage; students never read them,
@@ -561,6 +584,37 @@ service cloud.firestore {
         resource.data.studentId == request.auth.uid ||
         isStaff()
       );
+      allow write: if false;
+    }
+
+    // Build 2B: the leaderboard of a test code, written only by the
+    // onTestResultWritten trigger. Staff read every board; a student reads a
+    // board only when their own result for that code exists (the result id
+    // is `<codeId>_<uid>`). Entries carry the peer label, never the Latin
+    // full name.
+    match /leaderboards/{codeId} {
+      allow read: if isStaff() || (isStudent() &&
+        exists(/databases/$(database)/documents/test_results/$(codeId + '_' + request.auth.uid)));
+      allow write: if false;
+      match /entries/{uid} {
+        allow read: if isStaff() || (isStudent() &&
+          exists(/databases/$(database)/documents/test_results/$(codeId + '_' + request.auth.uid)));
+        allow write: if false;
+      }
+    }
+
+    // Build 2B: promotion recommendations (functions write; admins decide
+    // through decidePromotion). Staff read; the student reads their own.
+    match /level_promotions/{promotionId} {
+      allow read: if isStaff() ||
+        (isSignedIn() && resource.data.get('studentId', '') == request.auth.uid);
+      allow write: if false;
+    }
+
+    // Build 2B: "2 of 3 codes passed" (written by the trigger).
+    match /promotion_progress/{uid} {
+      allow read: if isSignedIn() &&
+        (request.auth.uid == uid || isStaff() || isParentOf(uid));
       allow write: if false;
     }
 

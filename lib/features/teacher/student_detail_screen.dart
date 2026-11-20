@@ -93,7 +93,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
 
         return ShellNestedPage(
           embedded: widget.embedded,
-          title: student.displayNameIndonesian,
+          title: student.staffLabel,
           actions: [
             if (isAdmin)
               IconButton(

@@ -361,11 +361,10 @@ class _TeacherSessionDetailScreenState
                                   ...records.map((record) {
                                     final student =
                                         studentsById[record.studentId];
-                                    final name =
-                                        record.studentName?.isNotEmpty == true
+                                    final name = student?.staffLabel ??
+                                        (record.studentName?.isNotEmpty == true
                                             ? record.studentName!
-                                            : (student?.name ??
-                                                l.commonStudent);
+                                            : l.commonStudent);
                                     return Padding(
                                       padding: const EdgeInsets.only(bottom: 8),
                                       child: AppCard(

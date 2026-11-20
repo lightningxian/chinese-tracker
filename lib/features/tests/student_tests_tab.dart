@@ -7,8 +7,11 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../l10n/l10n.dart';
 import '../../models/app_user.dart';
+import '../../models/leaderboard.dart';
 import '../../models/test_track.dart';
+import '../../services/promotion_service.dart';
 import '../../services/test_service.dart';
+import 'promotion_screen.dart' show levelGroupName;
 
 /// The student's **Tests** place: type the token from the teacher, continue
 /// a test after a reload, and the list of the student's own results.
@@ -24,6 +27,7 @@ class StudentTestsTab extends StatefulWidget {
 class _StudentTestsTabState extends State<StudentTestsTab> {
   final _token = TextEditingController();
   final _service = TestService();
+  late final _progress = PromotionService().watchProgress(widget.student.uid);
 
   @override
   void dispose() {
@@ -135,6 +139,15 @@ class _StudentTestsTabState extends State<StudentTestsTab> {
             );
           },
         ),
+        // Build 2B: codes passed toward the next level (LV-03).
+        const SizedBox(height: 12),
+        StreamBuilder<PromotionProgress?>(
+          stream: _progress,
+          builder: (context, snap) => _ProgressCard(
+            progress: snap.data,
+            fallbackLevel: widget.student.level ?? '',
+          ),
+        ),
         const SizedBox(height: 20),
         Text(
           l.testsMyResults,
@@ -182,6 +195,8 @@ class _StudentTestsTabState extends State<StudentTestsTab> {
                                     color: AppColors.navy,
                                   ),
                                 ),
+                                if (r.valid && !r.isPendingMarking)
+                                  _RankText(codeId: r.codeId, uid: widget.student.uid),
                                 if (r.finishedAt != null)
                                   Text(
                                     DateFormat.yMMMd().format(r.finishedAt!),
@@ -227,6 +242,110 @@ class _StudentTestsTabState extends State<StudentTestsTab> {
           },
         ),
       ],
+    );
+  }
+}
+
+/// "2 of 3 codes passed" at the student's level (from promotion_progress).
+class _ProgressCard extends StatelessWidget {
+  const _ProgressCard({required this.progress, required this.fallbackLevel});
+
+  final PromotionProgress? progress;
+  final String fallbackLevel;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final p = progress;
+    final level = p?.level.isNotEmpty == true ? p!.level : fallbackLevel;
+    if (level.isEmpty) return const SizedBox.shrink();
+    final count = p?.count ?? 0;
+    final min = p?.minCodes ?? 3;
+    final next = p?.next ?? '';
+    final group = levelGroupName(l, level);
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.trending_up, color: AppColors.teal),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  group.isEmpty ? level : '$level · $group',
+                  style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.navy),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            l.promotionProgress(count > min ? min : count, min),
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+          ),
+          const SizedBox(height: 6),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: min == 0 ? 0 : (count / min).clamp(0, 1).toDouble(),
+              minHeight: 8,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            next.isEmpty
+                ? l.promotionTopLevel
+                : p?.declined == true
+                    ? l.promotionNotYetStudent(next)
+                    : count >= min
+                    ? l.promotionWaitingForAdmin(next)
+                    : l.promotionTowards(next),
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+          ),
+          if (p != null && p.codes.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final c in p.codes)
+                  Chip(
+                    visualDensity: VisualDensity.compact,
+                    label: Text('${c.code} · ${c.total}'),
+                  ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// "Rank 2 of 15" on a code's board (the student may read boards of codes
+/// they sat).
+class _RankText extends StatelessWidget {
+  const _RankText({required this.codeId, required this.uid});
+
+  final String codeId;
+  final String uid;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    return StreamBuilder<List<LeaderboardEntry>>(
+      stream: PromotionService().watchLeaderboard(codeId),
+      builder: (context, snap) {
+        final list = snap.data;
+        if (list == null) return const SizedBox.shrink();
+        final mine = list.where((e) => e.studentId == uid).firstOrNull;
+        if (mine == null) return const SizedBox.shrink();
+        return Text(
+          l.leaderboardRankOf(mine.rank, list.length),
+          style: TextStyle(color: AppColors.teal, fontWeight: FontWeight.w700, fontSize: 12),
+        );
+      },
     );
   }
 }

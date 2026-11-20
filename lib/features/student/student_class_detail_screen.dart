@@ -199,9 +199,15 @@ class StudentClassDetailScreen extends StatelessWidget {
                       else
                         ...roster.map((record) {
                           final isMe = record.studentId == student.uid;
-                          final name = record.studentName?.isNotEmpty == true
-                              ? record.studentName!
-                              : l.commonStudent;
+                          // Classmates see the peer label (PLAN.md §3). The
+                          // record keeps only the Latin name, so another
+                          // student shows as its first word.
+                          final stored = record.studentName ?? '';
+                          final name = stored.isEmpty
+                              ? l.commonStudent
+                              : isMe
+                                  ? stored
+                                  : AppUser.peerLabelOf(null, stored);
 
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 8),

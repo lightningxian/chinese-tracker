@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 
 import '../../models/app_user.dart';
 import '../../models/exercise.dart';
+import '../../models/question_bank_item.dart';
 
 /// Who may author what, and only on web.
 ///
@@ -24,6 +25,23 @@ abstract final class ExerciseAuthoringPlatform {
 
   /// Question bank authoring (scan, paste, type, edit, delete, samples).
   static bool canManageBank(AppUser? user) => isAdminOnWeb(user);
+
+  /// Build 2B: staff on web type and paste questions into the bank; a
+  /// teacher's questions carry `createdBy` = their uid (rules check it).
+  static bool canWriteOwnBankQuestions(AppUser? user) => canManageExercises(user);
+
+  /// Whether [user] may edit or delete this bank question: admins always,
+  /// teachers only the questions they created.
+  static bool canEditBankItem(AppUser? user, QuestionBankItem item) =>
+      canManageBank(user) ||
+      (canManageExercises(user) && item.createdBy == user!.uid);
+
+  /// A worksheet: every question must be the teacher's own.
+  static bool canEditBankSheet(AppUser? user, QuestionBankSheet sheet) =>
+      canManageBank(user) ||
+      (canManageExercises(user) &&
+          sheet.items.isNotEmpty &&
+          sheet.items.every((i) => i.createdBy == user!.uid));
 
   /// The old-format editor (questions inside the exercise document).
   static bool canManageLegacyExercises(AppUser? user) => isAdminOnWeb(user);

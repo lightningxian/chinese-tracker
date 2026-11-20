@@ -134,6 +134,7 @@ abstract final class TeacherStatsUtils {
       return StudentRosterSummary(
         studentId: student.uid,
         name: student.name,
+        staffLabel: student.staffLabel,
         levelLabel: l == null
             ? ProgressUtils.formatStudentLevel(student)
             : ProgressUtils.formatStudentLevelLocalized(l, student),

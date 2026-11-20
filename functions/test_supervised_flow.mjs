@@ -4,7 +4,7 @@
 // pkg_exam). Run after seeding:
 //   node functions/test_supervised_flow.mjs
 // Thesis scenario IDs (docs/THESIS_FEATURE_BACKLOG.md §13) are in the step
-// names: TS-01, TS-02, PN-04, PN-05, LV-02.
+// names: TS-01, TS-02, PN-02..05, LV-01..03, LB-01.
 import assert from "node:assert/strict";
 
 const PROJECT = "chinese-tracker";
@@ -527,6 +527,182 @@ await step("admin resets an attempt: audit-logged, the student can sit the code 
   const st = await call(s6, "startTest", {token: again.token});
   assert.ok(st.data, JSON.stringify(st.error));
   await call(teacher, "closeTestSession", {sessionId: again.sessionId});
+});
+
+// ---------------------------------------------------------------------------
+// Build 2B: leaderboard and promotion (LB-01, LV-01, LV-03). The trigger
+// onTestResultWritten runs after each write, so the checks wait for it.
+// ---------------------------------------------------------------------------
+async function waitFor(check, what, ms = 15000) {
+  const end = Date.now() + ms;
+  for (;;) {
+    const v = await check();
+    if (v) return v;
+    if (Date.now() > end) assert.fail(`timed out waiting for ${what}`);
+    await new Promise((r) => setTimeout(r, 300));
+  }
+}
+
+function toValue(v) {
+  if (v === null || v === undefined) return {nullValue: null};
+  if (v instanceof Date) return {timestampValue: v.toISOString()};
+  if (typeof v === "boolean") return {booleanValue: v};
+  if (typeof v === "number") return Number.isInteger(v) ? {integerValue: String(v)} : {doubleValue: v};
+  if (typeof v === "string") return {stringValue: v};
+  if (Array.isArray(v)) return {arrayValue: {values: v.map(toValue)}};
+  return {mapValue: {fields: Object.fromEntries(Object.entries(v).map(([k, x]) => [k, toValue(x)]))}};
+}
+
+async function setDocRaw(path, obj) {
+  const r = await fetch(`${FS}/${path}`, {
+    method: "PATCH",
+    headers: {"Content-Type": "application/json", Authorization: "Bearer owner"},
+    body: JSON.stringify({fields: Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, toValue(v)]))}),
+  });
+  assert.ok(r.ok, `set ${path}: ${r.status}`);
+}
+
+async function listDocs(path) {
+  const r = await fetch(`${FS}/${path}`, {headers: {Authorization: "Bearer owner"}});
+  const j = await r.json();
+  return j.documents || [];
+}
+
+const entryPath = (codeId, uid) => `leaderboards/${codeId}/entries/${uid}`;
+
+await step("LB-01 a final result is on the board of its code with the peer label, never the Latin full name", async () => {
+  const res = await readDoc(`test_results/${CODE}_${s1.uid}`);
+  assert.ok(res, "student1 sat the code earlier in the flow");
+  const e = await waitFor(() => readDoc(entryPath(CODE, s1.uid)), "student1's board entry");
+  assert.equal(e.total, res.total);
+  assert.ok(e.name && !e.name.includes(" "), `peer label, got "${e.name}"`);
+  assert.ok(!JSON.stringify(e).includes(res.studentName) || !res.studentName.includes(" "));
+  // The essay marked with the rubric above is final: on the board too.
+  await waitFor(() => readDoc(entryPath(ESSAY, s5.uid)), "the marked essay's entry");
+});
+
+await step("a pending result is on no board until it is marked", async () => {
+  const uid = "flow_pending";
+  await setDocRaw(`test_results/${CODE}_${uid}`, {
+    codeId: CODE, studentId: uid, family: "hsk", levelKey: "3", total: 250, max: 300,
+    passed: false, valid: true, status: "pending_marking", studentName: "Flow Pending",
+    studentNameChinese: "", finishedAt: new Date()});
+  await new Promise((r) => setTimeout(r, 2500));
+  assert.equal(await readDoc(entryPath(CODE, uid)), null);
+  await patchDoc(`test_results/${CODE}_${uid}`, {status: {stringValue: "final"},
+    passed: {booleanValue: true}});
+  const e = await waitFor(() => readDoc(entryPath(CODE, uid)), "the entry once final");
+  assert.equal(e.name, "Flow", "no Chinese name: the first word only");
+  await deleteDoc(`test_results/${CODE}_${uid}`);
+  await waitFor(async () => (await readDoc(entryPath(CODE, uid))) === null, "removal");
+});
+
+await step("a result marked invalid leaves the board at once and comes back when valid", async () => {
+  const id = `${CODE}_${s1.uid}`;
+  const off = await call(teacher, "setTestResultValidity", {resultId: id, valid: false, reason: "flow"});
+  assert.ok(off.data, JSON.stringify(off.error));
+  await waitFor(async () => (await readDoc(entryPath(CODE, s1.uid))) === null, "invalid → off the board");
+  const on = await call(teacher, "setTestResultValidity", {resultId: id, valid: true});
+  assert.ok(on.data, JSON.stringify(on.error));
+  await waitFor(() => readDoc(entryPath(CODE, s1.uid)), "valid → back on the board");
+});
+
+await step("Reset attempt takes the result off the board", async () => {
+  // student6 sat the essay code again after the reset above; reset again.
+  const id = `${ESSAY}_${s6.uid}`;
+  await waitFor(() => readDoc(entryPath(ESSAY, s6.uid)), "the second sitting on the board");
+  const r = await call(admin, "resetTestAttempt", {resultId: id, reason: "flow"});
+  assert.ok(r.data, JSON.stringify(r.error));
+  await waitFor(async () => (await readDoc(entryPath(ESSAY, s6.uid))) === null, "no entry after reset");
+});
+
+const s9 = await signIn("student9@test.chinesetracker");
+const s10 = await signIn("student10@test.chinesetracker");
+const PCODES = ["FLOWP1", "FLOWP2", "FLOWP3", "FLOWP4"];
+for (const c of PCODES) {
+  await setDocRaw(`test_codes/${c}`, {code: c, family: "hsk", level: "HSK 3", levelKey: "3",
+    countsForPromotion: true, active: true});
+}
+const passResult = (c, s, total) => setDocRaw(`test_results/${c}_${s.uid}`, {
+  codeId: c, code: c, studentId: s.uid, family: "hsk", level: "HSK 3", levelKey: "3",
+  total, max: 300, passMark: 180, passed: total >= 180, valid: true, status: "final",
+  studentName: "Flow Student", studentNameChinese: "测试", durationSeconds: 3000,
+  finishedAt: new Date(), parts: [{skill: "listening", mark: Math.round(total / 3), maxScore: 100}]});
+for (const s of [s9, s10]) {
+  await patchDoc(`users/${s.uid}`, {level: {stringValue: "HSK 3"}});
+  for (const c of PCODES) await deleteDoc(`test_results/${c}_${s.uid}`);
+  await deleteDoc(`level_promotions/${s.uid}_3`);
+}
+const promoPath = (s) => `level_promotions/${s.uid}_3`;
+
+await step("LV-03 two passes and one fail: no recommendation", async () => {
+  await passResult("FLOWP1", s9, 170);
+  await passResult("FLOWP2", s9, 195);
+  await passResult("FLOWP3", s9, 200);
+  await waitFor(async () => (await readDoc(`promotion_progress/${s9.uid}`) || {}).count === 2,
+      "progress 2 of 3");
+  const progress = await readDoc(`promotion_progress/${s9.uid}`);
+  assert.equal(progress.minCodes, 3);
+  assert.equal(progress.next, "HSK 4");
+  assert.equal(await readDoc(promoPath(s9)), null);
+});
+
+await step("LV-01 a third different code passed: a waiting recommendation for HSK 4 and the admins are told", async () => {
+  await passResult("FLOWP4", s9, 205);
+  const p = await waitFor(async () => {
+    const d = await readDoc(promoPath(s9));
+    return d && d.status === "waiting" ? d : null;
+  }, "the recommendation");
+  assert.equal(p.toLevel, "HSK 4");
+  assert.deepEqual(p.codes.map((c) => c.codeId), ["FLOWP2", "FLOWP3", "FLOWP4"]);
+  const notes = await queryDocs("notifications", "kind", "promotion");
+  assert.ok(notes.some((n) => str(n.fields, "forRole") === "admin"));
+});
+
+await step("a result turning invalid withdraws a waiting recommendation; valid again brings it back", async () => {
+  await patchDoc(`test_results/FLOWP4_${s9.uid}`, {valid: {booleanValue: false}});
+  await waitFor(async () => (await readDoc(promoPath(s9)) || {}).status === "withdrawn", "withdrawn");
+  await patchDoc(`test_results/FLOWP4_${s9.uid}`, {valid: {booleanValue: true}});
+  await waitFor(async () => (await readDoc(promoPath(s9)) || {}).status === "waiting", "waiting again");
+});
+
+await step("Approve: admin only; the level goes up, the history is written, the student is told", async () => {
+  const byTeacher = await call(teacher, "decidePromotion", {promotionId: `${s9.uid}_3`, approve: true});
+  assert.equal(byTeacher.error.status, "PERMISSION_DENIED");
+  const r = await call(admin, "decidePromotion", {promotionId: `${s9.uid}_3`, approve: true});
+  assert.ok(r.data, JSON.stringify(r.error));
+  assert.equal((await readDoc(`users/${s9.uid}`)).level, "HSK 4");
+  const fresh = await readDoc(`promotion_progress/${s9.uid}`);
+  assert.equal(fresh.level, "HSK 4");
+  assert.equal(fresh.count, 0, "the count starts again at the new level");
+  assert.equal((await readDoc(promoPath(s9))).status, "approved");
+  const history = await listDocs(`users/${s9.uid}/level_history`);
+  assert.equal(history.length >= 1, true);
+  const notes = await queryDocs("notifications", "userId", s9.uid);
+  assert.ok(notes.some((n) => str(n.fields, "kind") === "promotion"));
+  const again = await call(admin, "decidePromotion", {promotionId: `${s9.uid}_3`, approve: true});
+  assert.equal(reasonOf(again), "not-waiting");
+});
+
+await step("Decline needs a reason and keeps the level", async () => {
+  for (const [c, t] of [["FLOWP2", 190], ["FLOWP3", 200], ["FLOWP4", 210]]) {
+    await passResult(c, s10, t);
+  }
+  await waitFor(async () => (await readDoc(promoPath(s10)) || {}).status === "waiting", "s10 waiting");
+  const bare = await call(admin, "decidePromotion", {promotionId: `${s10.uid}_3`, approve: false});
+  assert.equal(bare.error.status, "INVALID_ARGUMENT");
+  const r = await call(admin, "decidePromotion",
+      {promotionId: `${s10.uid}_3`, approve: false, reason: "wait for the speaking test"});
+  assert.ok(r.data, JSON.stringify(r.error));
+  assert.equal((await readDoc(`users/${s10.uid}`)).level, "HSK 3");
+  assert.equal((await readDoc(promoPath(s10))).declineReason, "wait for the speaking test");
+  // The student's card stops saying "waiting", also after another result.
+  assert.equal((await readDoc(`promotion_progress/${s10.uid}`)).decision, "declined");
+  await passResult("FLOWP1", s10, 220);
+  await waitFor(async () => (await readDoc(`promotion_progress/${s10.uid}`) || {}).count === 4,
+      "s10 count 4");
+  assert.equal((await readDoc(`promotion_progress/${s10.uid}`)).decision, "declined");
+  assert.equal((await readDoc(promoPath(s10))).status, "declined");
 });
 
 console.log(`supervised flow: ${passed} steps passed`);

@@ -41,9 +41,9 @@ abstract final class TeacherActivityUtils {
           type: TeacherActivityType.exerciseSubmitted,
           occurredAt: at,
           studentId: result.studentId,
-          studentName: student?.name,
+          studentName: student?.staffLabel,
           title: student != null
-              ? l.activityScored(student.name, result.score)
+              ? l.activityScored(student.staffLabel, result.score)
               : l.activitySubmitted(result.score),
           subtitle: exercise?.title ?? l.activityExerciseFallback,
         ),
@@ -61,9 +61,9 @@ abstract final class TeacherActivityUtils {
           type: TeacherActivityType.lessonCompleted,
           occurredAt: at,
           studentId: record.studentId,
-          studentName: student?.name,
+          studentName: student?.staffLabel,
           title: student != null
-              ? l.activityLessonCompletedBy(student.name)
+              ? l.activityLessonCompletedBy(student.staffLabel)
               : l.activityLessonCompleted,
           subtitle: lesson != null
               ? '${lesson.termLabel} · ${lesson.title}'
@@ -82,9 +82,9 @@ abstract final class TeacherActivityUtils {
           type: TeacherActivityType.homeworkAssigned,
           occurredAt: at,
           studentId: assignment.studentId,
-          studentName: student?.name,
+          studentName: student?.staffLabel,
           title: student != null
-              ? l.activityAssignedTo(student.name)
+              ? l.activityAssignedTo(student.staffLabel)
               : l.activityAssigned,
           subtitle: exercise?.title ?? l.activityExerciseFallback,
         ),
@@ -96,7 +96,7 @@ abstract final class TeacherActivityUtils {
       if (at == null || !record.attended) continue;
       final student = studentsById[record.studentId];
       final name =
-          student?.name ?? record.studentName ?? l.activityStudentFallback;
+          student?.staffLabel ?? record.studentName ?? l.activityStudentFallback;
       events.add(
         TeacherActivityEvent(
           type: record.joinedByStudent
@@ -140,9 +140,9 @@ abstract final class TeacherActivityUtils {
           type: TeacherActivityType.termCreated,
           occurredAt: at,
           studentId: term.studentId,
-          studentName: student?.name,
+          studentName: student?.staffLabel,
           title: student != null
-              ? l.activityTermAddedFor(student.name)
+              ? l.activityTermAddedFor(student.staffLabel)
               : l.activityTermAdded,
           subtitle: l.activityTermSubtitle(
               term.packageSize, term.startDate, term.deadlineDate),
@@ -191,7 +191,7 @@ abstract final class TeacherActivityUtils {
       rows.add(
         HomeworkOverviewRow(
           studentId: assignment.studentId,
-          studentName: student?.name ?? 'Unknown student',
+          studentName: student?.staffLabel ?? 'Unknown student',
           exerciseId: assignment.exerciseId,
           exerciseTitle: exercise.title,
           bestScore: best,

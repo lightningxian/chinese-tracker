@@ -93,7 +93,9 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
           content: Text(
             l.adminUserFormCreated(
               profile.roleLocalized(l),
-              profile.displayNameIndonesian,
+              profile.isStudent
+                  ? profile.staffLabel
+                  : profile.displayNameIndonesian,
             ),
           ),
         ),
@@ -426,9 +428,7 @@ class _SearchableStudentListState extends State<_SearchableStudentList> {
     final q = _query.trim().toLowerCase();
     final shown = widget.students.where((s) {
       if (q.isEmpty) return true;
-      return s.displayNameIndonesian.toLowerCase().contains(q) ||
-          s.name.toLowerCase().contains(q) ||
-          s.email.toLowerCase().contains(q) ||
+      return s.matchesSearch(q) ||
           (s.level ?? '').toLowerCase().contains(q);
     }).toList();
     final selectedCount = widget.selectedIds.length;
@@ -466,7 +466,7 @@ class _SearchableStudentListState extends State<_SearchableStudentList> {
                       CheckboxListTile(
                         dense: true,
                         value: widget.selectedIds.contains(s.uid),
-                        title: Text(s.displayNameIndonesian),
+                        title: Text(s.staffLabel),
                         subtitle: s.level != null ? Text(s.level!) : null,
                         onChanged: widget.enabled
                             ? (v) => widget.onToggle(s.uid, v ?? false)

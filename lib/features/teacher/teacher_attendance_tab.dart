@@ -304,7 +304,9 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l.teacherAttStudentAdded(student.name))),
+          SnackBar(
+            content: Text(l.teacherAttStudentAdded(student.staffLabel)),
+          ),
         );
       }
     } on SessionFullException catch (e) {
@@ -320,7 +322,7 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(_errorMessage(e, studentName: student.name)),
+            content: Text(_errorMessage(e, studentName: student.staffLabel)),
             backgroundColor: AppColors.error,
           ),
         );
@@ -428,7 +430,7 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
                     ),
                   ),
                 ),
-                title: Text(student.name),
+                title: Text(student.staffLabel),
                 subtitle: student.email.isNotEmpty
                     ? Text(
                         student.email,
@@ -781,9 +783,10 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
                           runSpacing: 6,
                           children: records.map((record) {
                             final student = studentsById[record.studentId];
-                            final name = record.studentName?.isNotEmpty == true
-                                ? record.studentName!
-                                : (student?.name ?? l.commonStudent);
+                            final name = student?.staffLabel ??
+                                (record.studentName?.isNotEmpty == true
+                                    ? record.studentName!
+                                    : l.commonStudent);
                             final removing =
                                 _busyStudentIds.contains(record.studentId);
                             final status = record.sessionCredited

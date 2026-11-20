@@ -754,6 +754,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your HSK level controls which practice exercises you see.';
 
   @override
+  String get studentProfileLevelSetByCentre =>
+      'Your HSK level is set by the centre and decides which practice you see. Ask your teacher if it looks wrong.';
+
+  @override
   String studentProfileCodeFailed(String error) {
     return 'Could not generate code: $error';
   }
@@ -6349,5 +6353,157 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String paperCompareFailed(String error) {
     return 'Could not compare: $error';
+  }
+
+  @override
+  String get leaderboardShort => 'Leaderboard';
+
+  @override
+  String leaderboardTitle(String code) {
+    return 'Leaderboard · $code';
+  }
+
+  @override
+  String get leaderboardLockedTitle => 'Not open for you';
+
+  @override
+  String get leaderboardLockedSubtitle =>
+      'A code\'s leaderboard opens after you have sat that code.';
+
+  @override
+  String get leaderboardEmptyTitle => 'No results on the board yet';
+
+  @override
+  String get leaderboardEmptySubtitle =>
+      'Final, valid results appear here. Results waiting for marking come when they are marked.';
+
+  @override
+  String get leaderboardIntroStaff =>
+      'Highest total first; with equal totals, the faster student first. Invalid and pending results are not on the board.';
+
+  @override
+  String get leaderboardIntroStudent =>
+      'Highest total first; with equal totals, the faster student first. Your row is highlighted.';
+
+  @override
+  String leaderboardYou(String name) {
+    return '$name (you)';
+  }
+
+  @override
+  String leaderboardRankOf(int rank, int total) {
+    return 'Rank $rank of $total';
+  }
+
+  @override
+  String get promotionTitle => 'Promotion';
+
+  @override
+  String promotionRule(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'A student is recommended after passing $count different codes at their level.',
+      one: 'A student is recommended after passing 1 code at their level.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get promotionChange => 'Change';
+
+  @override
+  String get promotionMinCodesTitle => 'Codes needed for promotion';
+
+  @override
+  String promotionMinCodesValue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count codes',
+      one: '1 code',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get promotionEmptyTitle => 'No one is waiting';
+
+  @override
+  String get promotionEmptySubtitle =>
+      'When a student passes enough codes at their level, they appear here.';
+
+  @override
+  String promotionCodesPassed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count codes passed',
+      one: '1 code passed',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String promotionApprove(String level) {
+    return 'Approve: $level';
+  }
+
+  @override
+  String promotionApproved(String level) {
+    return 'Approved. The student is now $level.';
+  }
+
+  @override
+  String get promotionDecline => 'Decline';
+
+  @override
+  String get promotionDeclineTitle => 'Decline the promotion';
+
+  @override
+  String get promotionDeclineReason => 'Reason (the student keeps their level)';
+
+  @override
+  String get promotionDeclined => 'Declined.';
+
+  @override
+  String promotionProgress(int count, int min) {
+    return '$count of $min codes passed';
+  }
+
+  @override
+  String promotionTowards(String level) {
+    return 'Toward $level. Each code counts once; it must be passed, valid and final.';
+  }
+
+  @override
+  String promotionWaitingForAdmin(String level) {
+    return 'Enough codes passed: waiting for the admin to confirm $level.';
+  }
+
+  @override
+  String get promotionTopLevel => 'HSK 6 is the highest level.';
+
+  @override
+  String get promotionErrNotWaiting =>
+      'This recommendation was already decided or withdrawn.';
+
+  @override
+  String get promotionErrLevelChanged =>
+      'The student\'s level has changed since this recommendation.';
+
+  @override
+  String get levelGroupBeginner => 'Beginner';
+
+  @override
+  String get levelGroupIntermediate => 'Intermediate';
+
+  @override
+  String get levelGroupAdvance => 'Advance';
+
+  @override
+  String promotionNotYetStudent(String next) {
+    return 'Not moved up to $next yet. Your teacher will talk with you about the next step.';
   }
 }

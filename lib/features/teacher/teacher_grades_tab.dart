@@ -483,7 +483,7 @@ class _StudentLine extends StatelessWidget {
     return FutureBuilder<AppUser?>(
       future: firestore.getUser(studentId),
       builder: (context, snap) {
-        final name = snap.data?.displayNameIndonesian ?? '…';
+        final name = snap.data?.staffLabel ?? '…';
         return Text(
           name,
           style: const TextStyle(fontSize: 13),
@@ -632,7 +632,7 @@ class _GradeFormSheetState extends State<_GradeFormSheet> {
                         for (final s in students)
                           DropdownMenuItem(
                             value: s.uid,
-                            child: Text(s.displayNameIndonesian),
+                            child: Text(s.staffLabel),
                           ),
                       ],
                       onChanged: (v) => setState(() => _studentId = v),

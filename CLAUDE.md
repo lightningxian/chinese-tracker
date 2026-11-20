@@ -24,7 +24,7 @@ decisions. This app is also the owner's thesis project (see the thesis docs belo
 - Voucher packages: Chinese name, validity (e.g. 2 months), 8 or 16 sessions, the student's class day. Prices live in the admin **Price list** (`settings/pricing.items`, flyer defaults).
 - **Payments ↔ vouchers (2026-10-27):** every voucher links to an invoice (`sourceInvoiceId`). Admin records cash/transfer payments (`markInvoicePaid` callable); teachers may still add a term on a student page, which creates a pending invoice for the admin; old vouchers without a payment are shown on the admin dashboard as "Vouchers without payment".
 - Order of work: quick security fixes (done) → emulator (done) → design system → thesis phases in order, rebuilding each screen in the new design as its phase touches it, with ViewModels.
-- **Exercises = packages from the question bank (2026-11-09):** an exercise lists bank worksheets (`bankSheets`) and single questions (`bankQuestionIds`); students see only exercises assigned to them; packages are played through the `startExercise` / `checkExerciseAnswer` / `finishExercise` functions so answer keys never reach the client. Levels stay (they assign several exercises at once). **Teachers build packages too (2026-11-13):** a teacher creates, edits, publishes and deletes their own packages (`teacherId` = their uid) and assigns them; admins manage every exercise. The question bank (scan, paste, edit) and the old-format editor stay admin-only. See `.claude/rules/exercise-authoring-web-only.md`.
+- **Exercises = packages from the question bank (2026-11-09):** an exercise lists bank worksheets (`bankSheets`) and single questions (`bankQuestionIds`); students see only exercises assigned to them; packages are played through the `startExercise` / `checkExerciseAnswer` / `finishExercise` functions so answer keys never reach the client. Levels stay (they assign several exercises at once). **Teachers build packages too (2026-11-13):** a teacher creates, edits, publishes and deletes their own packages (`teacherId` = their uid) and assigns them; admins manage every exercise. The old-format editor stays admin-only. **Build 2B (2026-11-20):** a teacher types, pastes, edits and deletes their own bank questions and worksheets (`createdBy` = their uid); scanning, samples and test codes stay admin-only. See `.claude/rules/exercise-authoring-web-only.md`.
 - **UI language (2026-11-12):** every screen reads `context.l10n` (`lib/l10n/app_en.arb` template + `app_id.arb`, ~1,380 keys). Model enums keep their English `label` (sorting, CSV fixtures, logs); the UI shows them through the `localized(l)` extensions in `lib/l10n/labels_*.dart`. `LocaleController` also sets `Intl.defaultLocale`, so `DateFormat` follows the switch. Still English on purpose: the legacy exercise editor, quiz and level screens (unused), service error messages, PDF/CSV exports built in `lib/services`, OCR progress details.
 - **Quizzes and Levels (2026-11-10):** owner does not need them. Buttons removed from the Exercises tab; routes/screens still exist. The bank carries a **Type of exercise** per worksheet instead (`ExerciseCategory`: Exercise · Quiz · Exam · HSK Simulation).
 - **Exercise play (2026-11-11):** students answer every question first and submit once; `finishExercise` checks the whole attempt and returns the review. No per-answer function calls. A package may carry `timeLimitMinutes` (counts down, auto-submits).
@@ -36,6 +36,7 @@ decisions. This app is also the owner's thesis project (see the thesis docs belo
 - **Paper reader (2026-11-17):** HSK papers are read **inside the app with no outside API** (owner: "the job is only to read the PDF and build the questions"): on-device OCR with watermark removal, a structure builder that follows the test format, a proofreading screen, pictures cut by image analysis (Build 1B in `docs/PLAN.md`). **Scan paper with AI** stays as an extra, off on live until an App Check key exists. Official exam papers are never committed (`local_papers/` is git-ignored) and Claude does not type them out by hand. Each worksheet may carry a transcript of its recording, sent to students only with the review.
 - **Typing matcher and marking (Build 2A, 2026-11-17, from the proposal):** typed hanzi and pinyin are matched in `functions/typing_matcher.js` (full-width, ending punctuation, traditional characters and tone numbers all count; one wrong character or wrong tones = half, flagged; sentence order never half). Free writing (`picture_sentence`, `essay`) is 10 points and only a teacher marks it. Open items go to `marking_items` (written by functions only); a result with open items is `pending_marking` with no pass or fail; `markAnswer` makes it final and notifies the student. Teachers see their own queue, admins all.
 - **Paper reader engine (Build 1C, owner 2026-11-18):** Scan paper reads with PP-OCRv5 mobile (PaddlePaddle, Apache-2.0) through onnxruntime-web (MIT) in the browser (`web/paper_ocr_paddle.js`); Tesseract finds the lines and is the fallback. The ~31 MB of model files are served from our hosting, fetched at build time (`scripts/fetch_paper_ocr.mjs`), never committed. Flags by HSK level (`HskCharacters`, old HSK 1-3 lists) and stray marks; tone buttons for pinyin; a proofreading record per scanned worksheet; **Download text** gives a truth file for measuring.
+- **Leaderboard and promotion (Build 2B, 2026-11-20):** the `onTestResultWritten` trigger keeps `leaderboards/{codeId}/entries/{uid}` (final, valid, non-placement results; students see Chinese names) and `promotion_progress/{uid}`; at `settings/promotion.minCodes` (3) different codes passed at the student's level it writes `level_promotions/{uid_levelKey}` for the admin, who approves (`decidePromotion`: level up, `level_history`, student + parent told) or declines with a reason. `users.level` is admin-only. Pure logic in `functions/promotion.js`.
 - **Dark mode (2026-11-10):** `AppColors.*` are getters over the palette that is on (`AppPalette.light` / `.dark` in `lib/core/theme/app_theme.dart`, switched by `ThemeController`). Never write `const` in front of a widget or style that uses an `AppColors` value (the analyzer will refuse). A new colour goes into **both** palettes. The landing page keeps its own light `LandingBrand` tokens.
 
 ## Never
@@ -62,17 +63,18 @@ decisions. This app is also the owner's thesis project (see the thesis docs belo
 flutter pub get
 flutter run -d chrome                 # no CONTENT_OWNER_ID needed locally; talks to LIVE Firebase
 flutter analyze                       # baseline: 0 errors, 0 warnings, 17 infos
-flutter test                          # 118 pass + 2 measuring tests skipped (2026-11-18, Build 1C)
+flutter test                          # 127 pass + 2 measuring tests skipped (2026-11-20, Build 2B)
 node --check functions/index.js
 node functions/test_exercise_play.js && node functions/test_reminders.js
 node functions/test_supervised_test.js          # Build 1 pure logic (TS-01, PN-05)
 node functions/test_typing_matcher.js           # Build 2A matcher (PN-02, PN-03)
 node functions/test_marking.js                  # Build 2A queue + rubric
+node functions/test_promotion.js                # Build 2B board order + promotion (LV-01, LV-03, LB-01)
 node functions/pn01_agreement.js functions/fixtures/pn01_sample.csv   # PN-01: 6 of 6
 
 # Firestore rules tests (needs Java 21: brew install openjdk@21)
 export PATH="/opt/homebrew/opt/openjdk@21/bin:$PATH"
-npm --prefix rules-tests run test:emulator      # 57 pass, 1 skipped (Firestore + Storage)
+npm --prefix rules-tests run test:emulator      # 62 pass, 1 skipped (Firestore + Storage)
 
 # Full emulator suite (auth 9099, firestore 8080, functions 5001, storage 9199,
 # pubsub 8085 for the hourly job, UI 4000).
@@ -80,8 +82,8 @@ npm --prefix rules-tests run test:emulator      # 57 pass, 1 skipped (Firestore 
 # Emulator accounts use the password `emulator-only-7` (never the live one).
 firebase emulators:start --project chinese-tracker
 python3 -I scripts/seed_emulator.py            # ~5 s; codes H3DEMO1, H3ESSAY; package pkg_typing
-node functions/test_supervised_flow.mjs        # end-to-end on the emulators, 32 steps
-                                               # (TS-01, TS-02, PN-02..05, LV-02)
+node functions/test_supervised_flow.mjs        # end-to-end on the emulators, 41 steps
+                                               # (TS-01, TS-02, PN-02..05, LV-01..03, LB-01)
 # Run the hourly job by hand on the emulator:
 # curl -X POST http://127.0.0.1:5001/chinese-tracker/us-central1/closeForgottenTestSessions-0
 # Web app against the emulators: ALWAYS this script (builds to build/web-emulator,

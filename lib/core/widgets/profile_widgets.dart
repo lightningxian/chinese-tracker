@@ -337,6 +337,7 @@ class ProfilePersonalFields extends StatelessWidget {
     this.showParentFields = false,
     this.parentNameController,
     this.parentPhoneController,
+    this.requireChineseName = false,
   });
 
   final TextEditingController nameIndonesianController;
@@ -347,6 +348,9 @@ class ProfilePersonalFields extends StatelessWidget {
   final bool showParentFields;
   final TextEditingController? parentNameController;
   final TextEditingController? parentPhoneController;
+
+  /// Students must keep a Chinese name (PLAN.md §3, staff and peer labels).
+  final bool requireChineseName;
 
   @override
   Widget build(BuildContext context) {
@@ -374,6 +378,11 @@ class ProfilePersonalFields extends StatelessWidget {
             hintText: '中文名',
             prefixIcon: const Icon(Icons.translate_outlined),
           ),
+          validator: requireChineseName
+              ? (value) => value == null || value.trim().isEmpty
+                  ? l.identityNameChineseRequired
+                  : null
+              : null,
         ),
         const SizedBox(height: 16),
         TextFormField(
@@ -461,31 +470,37 @@ class ProfileStudentLearningFields extends StatelessWidget {
   final String level;
   final int termSize;
   final bool enabled;
-  final ValueChanged<String> onLevelChanged;
+
+  /// Null hides the HSK level picker: a student's own profile, where the
+  /// admin sets the level (Build 2B).
+  final ValueChanged<String>? onLevelChanged;
   final ValueChanged<int> onTermSizeChanged;
 
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
+    final onLevelChanged = this.onLevelChanged;
     return Column(
       children: [
-        DropdownButtonFormField<String>(
-          initialValue: level,
-          decoration: InputDecoration(
-            labelText: l.commonHskLevel,
-            prefixIcon: const Icon(Icons.school_outlined),
+        if (onLevelChanged != null) ...[
+          DropdownButtonFormField<String>(
+            initialValue: level,
+            decoration: InputDecoration(
+              labelText: l.commonHskLevel,
+              prefixIcon: const Icon(Icons.school_outlined),
+            ),
+            items: AppConstants.hskLevels
+                .map(
+                  (item) => DropdownMenuItem(
+                    value: item,
+                    child: Text(item),
+                  ),
+                )
+                .toList(),
+            onChanged: enabled ? (value) => onLevelChanged(value ?? level) : null,
           ),
-          items: AppConstants.hskLevels
-              .map(
-                (item) => DropdownMenuItem(
-                  value: item,
-                  child: Text(item),
-                ),
-              )
-              .toList(),
-          onChanged: enabled ? (value) => onLevelChanged(value ?? level) : null,
-        ),
-        const SizedBox(height: 16),
+          const SizedBox(height: 16),
+        ],
         DropdownButtonFormField<int>(
           initialValue: termSize,
           decoration: InputDecoration(

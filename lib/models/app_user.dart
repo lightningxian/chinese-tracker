@@ -112,6 +112,32 @@ class AppUser {
     return words.isEmpty ? '' : words.first;
   }
 
+  /// True when [query] is empty or found (case-insensitive) in the Chinese
+  /// name, the Latin name, [name] or, with [includeEmail], the email.
+  bool matchesSearch(String query, {bool includeEmail = true}) =>
+      nameMatches(
+        query,
+        chinese: nameChinese,
+        latin: latinName,
+        others: [name, if (includeEmail) email],
+      );
+
+  /// Search helper for names stored outside a profile: matches the Chinese
+  /// name, the Latin name and any [others] (email, codes).
+  static bool nameMatches(
+    String query, {
+    String? chinese,
+    String latin = '',
+    Iterable<String?> others = const [],
+  }) {
+    final q = query.trim().toLowerCase();
+    if (q.isEmpty) return true;
+    for (final value in [chinese, latin, ...others]) {
+      if (value != null && value.toLowerCase().contains(q)) return true;
+    }
+    return false;
+  }
+
   /// WhatsApp number with fallback to legacy [phone].
   String? get displayWhatsapp {
     final value = whatsapp?.trim();

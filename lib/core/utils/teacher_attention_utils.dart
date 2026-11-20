@@ -69,7 +69,7 @@ abstract final class TeacherAttentionUtils {
             AttentionItem(
               student: student,
               reason: AttentionReason.overdueExercise,
-              message: '${student.name} has overdue practice',
+              message: '${student.staffLabel} has overdue practice',
             ),
           );
           continue;
@@ -84,7 +84,7 @@ abstract final class TeacherAttentionUtils {
               reason: AttentionReason.staleAssignment,
               count: now.difference(assignedAt).inDays,
               message:
-                  '${student.name} has assigned practice not started (${now.difference(assignedAt).inDays}d)',
+                  '${student.staffLabel} has assigned practice not started (${now.difference(assignedAt).inDays}d)',
             ),
           );
         }
@@ -116,7 +116,7 @@ abstract final class TeacherAttentionUtils {
             student: student,
             reason: AttentionReason.inactiveStudent,
             count: _inactiveDays,
-            message: '${student.name} inactive for $_inactiveDays+ days',
+            message: '${student.staffLabel} inactive for $_inactiveDays+ days',
           ),
         );
       }
@@ -129,8 +129,8 @@ abstract final class TeacherAttentionUtils {
             reason: AttentionReason.lowSessions,
             count: remaining,
             message: remaining == 0
-                ? '${student.name} has no class sessions left'
-                : '${student.name} has $remaining class session${remaining == 1 ? '' : 's'} left',
+                ? '${student.staffLabel} has no class sessions left'
+                : '${student.staffLabel} has $remaining class session${remaining == 1 ? '' : 's'} left',
           ),
         );
       }
@@ -139,9 +139,9 @@ abstract final class TeacherAttentionUtils {
     items.sort((a, b) {
       final byReason = a.reason.index.compareTo(b.reason.index);
       if (byReason != 0) return byReason;
-      return a.student.name
+      return a.student.staffLabel
           .toLowerCase()
-          .compareTo(b.student.name.toLowerCase());
+          .compareTo(b.student.staffLabel.toLowerCase());
     });
 
     return items;

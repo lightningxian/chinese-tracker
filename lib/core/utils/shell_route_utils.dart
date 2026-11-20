@@ -57,6 +57,8 @@ abstract final class ShellRouteUtils {
     if (location.contains('/tests/codes')) return l.testsCodesTitle;
     if (location.contains('/tests/supervise/')) return l.testsSupervisionTitle;
     if (location.contains('/tests/marking')) return l.markingTitle;
+    if (location.contains('/tests/promotion')) return l.promotionTitle;
+    if (location.contains('/tests/leaderboard/')) return l.leaderboardShort;
     if (location.contains('/tests/results')) return l.testsResultsTitle;
     if (location.contains('/tests/result/')) return l.testsCardTitle;
     return l.testsTitle;

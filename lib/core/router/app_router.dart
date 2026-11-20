@@ -38,7 +38,9 @@ import '../../features/teacher/teacher_exercise_form_screen.dart';
 import '../../features/teacher/student_detail_screen.dart';
 import '../../features/teacher/teacher_session_detail_screen.dart';
 import '../../features/teacher/teacher_session_form_screen.dart';
+import '../../features/tests/leaderboard_screen.dart';
 import '../../features/tests/marking_screen.dart';
+import '../../features/tests/promotion_screen.dart';
 import '../../features/tests/test_codes_screen.dart';
 import '../../features/tests/test_formats_screen.dart';
 import '../../features/tests/test_player_screen.dart';
@@ -371,6 +373,19 @@ class AppRouter {
                   builder: (context, _) =>
                       MarkingScreen(user: auth.appUser!, embedded: true),
                 ),
+                // Build 2B: promotion recommendations and leaderboards.
+                GoRoute(
+                  path: 'tests/promotion',
+                  builder: (_, __) => const PromotionScreen(embedded: true),
+                ),
+                GoRoute(
+                  path: 'tests/leaderboard/:codeId',
+                  builder: (_, state) => LeaderboardScreen(
+                    codeId: state.pathParameters['codeId']!,
+                    staff: true,
+                    embedded: true,
+                  ),
+                ),
                 GoRoute(
                   path: 'tests/results',
                   builder: (_, state) => TestResultsScreen(
@@ -566,6 +581,14 @@ class AppRouter {
                       MarkingScreen(user: auth.appUser!, embedded: true),
                 ),
                 GoRoute(
+                  path: 'tests/leaderboard/:codeId',
+                  builder: (_, state) => LeaderboardScreen(
+                    codeId: state.pathParameters['codeId']!,
+                    staff: true,
+                    embedded: true,
+                  ),
+                ),
+                GoRoute(
                   path: 'tests/results',
                   builder: (_, state) => TestResultsScreen(
                     basePath: '/teacher/tests',
@@ -614,6 +637,12 @@ class AppRouter {
               path: 'test-result/:id',
               builder: (_, state) => TestResultScreen(
                 resultId: state.pathParameters['id']!,
+              ),
+            ),
+            GoRoute(
+              path: 'test-leaderboard/:codeId',
+              builder: (_, state) => LeaderboardScreen(
+                codeId: state.pathParameters['codeId']!,
               ),
             ),
             GoRoute(

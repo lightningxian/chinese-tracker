@@ -23,6 +23,9 @@ import '../../services/admin_report_service.dart';
 import '../../services/firestore_service.dart';
 import 'admin_dashboard_widgets.dart';
 
+/// Students show the staff label (PLAN.md §3); other roles keep their name.
+String _listName(AppUser u) => u.isStudent ? u.staffLabel : u.name;
+
 class AdminDashboardStatDetailScreen extends StatelessWidget {
   const AdminDashboardStatDetailScreen({
     super.key,
@@ -211,7 +214,8 @@ class _AdminStatDetailBody extends StatelessWidget {
     }
 
     final sorted = [...items]
-      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+      ..sort((a, b) =>
+          _listName(a).toLowerCase().compareTo(_listName(b).toLowerCase()));
 
     return Column(
       children: [
@@ -242,7 +246,7 @@ class _AdminStatDetailBody extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          user.name,
+                          _listName(user),
                           style: const TextStyle(fontWeight: FontWeight.w600),
                         ),
                         Text(
@@ -387,7 +391,7 @@ class _AdminStatDetailBody extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          student.name,
+                          student.staffLabel,
                           style: const TextStyle(fontWeight: FontWeight.w600),
                         ),
                         Text(

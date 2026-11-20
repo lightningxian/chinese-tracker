@@ -54,9 +54,12 @@ class QuestionBankSheetScreen extends StatelessWidget {
             .where((s) => s.key == sheetKey)
             .firstOrNull;
         final user = context.watch<AuthService>().appUser;
-        // Teachers open a worksheet to read it (and assign it); only admins
-        // change the bank.
+        // Teachers open a worksheet to read it (and assign it); since Build
+        // 2B they edit a worksheet made only of their own questions. Test
+        // codes, the truth file and the scan record stay with the admin.
         final canManageBank = ExerciseAuthoringPlatform.canManageBank(user);
+        final canEdit = sheet != null &&
+            ExerciseAuthoringPlatform.canEditBankSheet(user, sheet);
 
         return Scaffold(
           backgroundColor: AppColors.surface,
@@ -89,10 +92,10 @@ class QuestionBankSheetScreen extends StatelessWidget {
                         FilledButton.styleFrom(backgroundColor: AppColors.navy),
                   ),
                 const SizedBox(width: 8),
-                if (canManageBank) ...[
+                if (canEdit) ...[
                   // Build 1C: the proofread worksheet as a truth file for
                   // measuring the paper reader (docs/PLAN.md §4, Must 1b).
-                  if (sheet.isSheet)
+                  if (canManageBank && sheet.isSheet)
                     IconButton(
                       onPressed: () => _downloadText(context, sheet),
                       icon: const Icon(Icons.file_download_outlined),
@@ -133,14 +136,14 @@ class QuestionBankSheetScreen extends StatelessWidget {
                     const SizedBox(height: 12),
                     _ListeningAudioCard(
                       sheet: sheet,
-                      readOnly: !canManageBank,
+                      readOnly: !canEdit,
                       onUpload: () => _uploadAudio(context, sheet),
                       onRemove: () => _setAudio(context, sheet, null),
                     ),
                     const SizedBox(height: 12),
                     SheetTranscriptCard(
                       sheet: sheet,
-                      readOnly: !canManageBank,
+                      readOnly: !canEdit,
                     ),
                     if (canManageBank && sheet.paperRecord != null) ...[
                       const SizedBox(height: 12),
@@ -154,7 +157,7 @@ class QuestionBankSheetScreen extends StatelessWidget {
                           sectionHeading: _headingFor(sheet, i),
                           index: i,
                           item: item,
-                          readOnly: !canManageBank,
+                          readOnly: !canEdit,
                           onTap: () => _edit(context, item, sheet),
                           onMoveUp: i == 0
                               ? null
@@ -166,7 +169,7 @@ class QuestionBankSheetScreen extends StatelessWidget {
                         ),
                       ),
                     const SizedBox(height: 6),
-                    if (canManageBank)
+                    if (canEdit)
                       Align(
                         alignment: Alignment.centerLeft,
                         child: OutlinedButton.icon(

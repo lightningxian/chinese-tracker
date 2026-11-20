@@ -38,10 +38,18 @@ class StudentRosterSummary {
     required this.sessionsRemaining,
     this.avgQuizScore,
     this.lastActivityAt,
-  });
+    String? staffLabel,
+  }) : _staffLabel = staffLabel;
 
   final String studentId;
+
+  /// Latin name, used by the PDF/CSV exports.
   final String name;
+  final String? _staffLabel;
+
+  /// What staff see in the app: `中文名 (Latin name)` (PLAN.md §3).
+  String get staffLabel =>
+      (_staffLabel ?? '').isNotEmpty ? _staffLabel! : name;
   final String levelLabel;
   final int lessonsCompleted;
   final int lessonsTotal;

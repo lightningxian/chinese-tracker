@@ -610,7 +610,7 @@ class TeacherDashboardTab extends StatelessWidget {
                                                                   children: [
                                                                     Text(
                                                                       student
-                                                                          .name,
+                                                                          .staffLabel,
                                                                       style:
                                                                           const TextStyle(
                                                                         fontWeight:
