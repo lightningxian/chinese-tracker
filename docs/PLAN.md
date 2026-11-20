@@ -1054,6 +1054,82 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
+### 2026-11-20 — Build 2B Leaderboard, promotion, names — 4ee0f42, release v0.1.20 (hosting live from the PC 2026-11-20; rules, indexes and functions wait for the owner's go)
+- Built: the `onTestResultWritten` trigger with pure logic in
+  `functions/promotion.js`; `leaderboards/{codeId}/entries/{uid}`;
+  `promotion_progress/{uid}`; `level_promotions/{uid_levelKey}`;
+  `decidePromotion`; the Leaderboard screen (student and staff), the admin
+  Promotion screen with a badge and the minimum-codes setting, the progress
+  card and ranks on the student Tests tab; the two name labels everywhere;
+  teachers in the bank; rules, index, tests.
+- Must list: 1 trigger + pure module + node test pass · 2 leaderboard (peer
+  label stored, rules: staff, or a student with a result for that code)
+  pass · 3 leaderboard screens pass · 4 promotion count, `settings/promotion`
+  `minCodes`, withdraw on invalid / reset, no next level after HSK 6 pass ·
+  5 Promotion screen, Approve (level, history, student + parent told,
+  audit), Decline with a reason, level groups pass · 6 `users.level`
+  admin-only in the rules and gone from the student form, rules test pass ·
+  7 Tests tab "2 of 3" and rank per result pass · 8 names pass, with one gap
+  (below) · 9 teachers type, paste, edit and delete their own bank
+  questions, rules + `.claude/rules/exercise-authoring-web-only.md` pass ·
+  10 tests pass: LV-01 (170 / 195 / 200 / 205 → recommend HSK 4), LV-03,
+  LB-01 (15 people against a hand ranking) in `functions/test_promotion.js`;
+  the flow test walks marking, invalid / valid, reset, LV-03, LV-01,
+  Approve, Decline.
+- **Acceptance on the emulators:**
+  1. A third passed code: the recommendation appears live on the Promotion
+     screen and the badge counts it; Approve moved student11 to HSK 4,
+     wrote `level_history` (HSK 3 → HSK 4, intermediate), restarted the
+     count at HSK 4 ("next HSK 5", 0). Pass.
+  2. Two passes and one fail: "HSK 3 · Intermediate, 2 of 3 codes passed,
+     toward HSK 4", no recommendation. Pass.
+  3. Invalid leaves the board and the count at once, valid brings both
+     back; a pending result is on no board until marked; a reset takes the
+     result off (flow test). Pass.
+  4. A student opens the board of a code they sat (own row framed, ties
+     share rank 2, next rank 4) and is refused ("Not open for you") on a
+     code they have not sat. Pass.
+  5. Names: student sees Chinese names; admin board and Promotion card show
+     `陈美琳 (Kelvin Santoso)`. Pass. Teacher bank: covered by rules tests
+     (own question edited, another's refused) and the gates in the code;
+     not clicked through in the browser.
+  6. Decline: the dialog stays open without a reason; with one, "Ditolak."
+     and the student's card says "Not moved up to HSK 4 yet. Your teacher
+     will talk with you about the next step." Pass.
+  7. Indonesian (dark) and English (light), 1280 px and 360 px: the board
+     cut long staff labels at 360 px (now 2 lines); otherwise no overflow.
+     Pass.
+- Fixed during the walk: the admin "Promotion to check" notice opened the
+  Classes tab (unknown kind read as a class notice); student test notices
+  pointed at `/student/tests`, which is not a route (also the Build 2A
+  "Marked" notice, live since 2A): now the kind `promotion` exists and both
+  open the Tests tab (`test/notification_routes_test.dart`). A declined
+  recommendation left the student's card on "waiting for the admin"
+  forever: `promotion_progress.decision` now says `declined`.
+- Proof: analyzer 0 errors / 0 warnings / 17 infos; `flutter test` 127 pass
+  (+9) and 2 skipped; rules tests 62 pass, 1 skipped (+5); node tests pass
+  (+ `test_promotion.js`); flow test 41/41 (+9).
+- Owner must: (1) rules, indexes and functions:
+  `firebase deploy --only firestore:rules,firestore:indexes,functions --project chinese-tracker`
+  (adds `onTestResultWritten` and `decidePromotion`, 27 functions); (2)
+  hosting is already live (the BUILD chat ran `scripts/deploy_web.sh
+  --web-only --no-keys`); until (1) the new screens show empty boards and
+  Approve fails. Results written before the deploy reach a board and the
+  count only when they next change.
+- Left out and why: the "Then" items (2A leftovers, a CSV of a leaderboard)
+  are not started. Classmates on attendance lists see the first Latin word,
+  not the Chinese name: attendance stores only the Latin name.
+- Notes for the PLAN chat:
+  - **Question:** a declined recommendation stays declined for that level;
+    passing more codes at the same level makes no new one. Should a new
+    passed code (or a number of them) reopen it?
+  - A student can read their own `level_promotions` doc (rules), so the
+    decline reason is not secret from a curious student; the app does not
+    show it.
+  - The staff label on the leaderboard is read from `users` with a
+    `role == student` query in chunks of 30 (teachers may only read
+    students).
+
 ### 2026-11-18 — Build 1C Reader accuracy — b38a4f9, release v0.1.19 (hosting live from the PC 2026-11-18; functions deployed from the PC 2026-11-19 at the owner's go, 25 updated)
 - Built: PP-OCRv5 mobile recognition in the browser (`web/paper_ocr_paddle.js`,
   model files fetched into `web/ocr/` by `scripts/fetch_paper_ocr.mjs`, not

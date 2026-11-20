@@ -13,6 +13,21 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-20 — Claude (BUILD chat, PC): Build 2B leaderboard, promotion, names
+
+- Built Build 2B (`4ee0f42`, release v0.1.20): leaderboard per test code,
+  promotion count and the admin Promotion screen (approve / decline), the
+  progress card and ranks on the student Tests tab, the two name labels,
+  teachers editing their own bank questions, `users.level` admin-only.
+- Walked it on the emulators (Indonesian dark, English light, 1280 px and
+  360 px); fixed a cut name on the board at 360 px, the admin promotion
+  notice opening Classes, student test notices pointing at a missing route,
+  and a declined student's card staying on "waiting".
+- Proof: analyzer 17 infos; `flutter test` 127 + 2 skipped; rules tests 62
+  + 1 skipped; node tests; flow test 41/41. Report in `docs/PLAN.md` §6.
+- Hosting deployed from the PC. Rules, indexes and functions wait for the
+  owner's go: `firebase deploy --only firestore:rules,firestore:indexes,functions --project chinese-tracker`.
+
 ### 2026-11-19 — Claude (BUILD chat, PC): Build 1C functions deployed
 
 - At the owner's go, ran `firebase deploy --only functions --project
