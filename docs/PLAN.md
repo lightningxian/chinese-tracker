@@ -1371,50 +1371,545 @@ and functions (the BUILD chat gives the command), then hosting, and presses
 
 ### Build 5 — Voucher packages and self-purchase
 
-Chinese names on the price list (proposal: 报名费, 8次课程, 16次课程,
-HSK教材费); the student's voucher screen gets **Beli**: choose a package,
-tick the flyer terms, pay through Midtrans (`createInvoice` opened to the
-student for their own account); a daily job expires vouchers after their 2
-months and sends low-balance and expiry reminders. Proves MT-01 to MT-05
-(function tests for signature, repeat and status mapping; MT-05 is the
-owner's comparison with the Midtrans dashboard). Screenshot 05.
+**Goal.** A student (or the linked parent) buys a voucher package inside the
+app: picks a package from the Price list with its Chinese name, ticks the
+flyer's terms, pays through Midtrans Snap, and the paid invoice becomes a
+term (voucher) by itself. A daily job expires vouchers after their validity.
+Proves MT-01 to MT-04 in function tests; MT-05 is the owner's comparison
+with the Midtrans sandbox dashboard. Screenshots 05 and 15. Spec:
+`docs/THESIS_FEATURE_BACKLOG.md` section 6; owner decision 4 (prices and
+terms) and the voucher decision of 2026-10-27 in `CLAUDE.md`.
+
+**What exists.** `settings/pricing.items` (id, name, price, kind, sessions;
+flyer defaults in `functions/index.js` and `pricing_settings.dart`) edited on
+the admin Price list screen; one `termValidDays` (60) for every item;
+`createInvoice` (staff only; derives the amount on the server; creates the
+Midtrans Snap transaction with the server key from Secret Manager; sandbox
+URL); `midtransNotification` (SHA-512 signature in constant time, status
+mapping in `midtransStatusToInvoice`, amount check, one transaction that
+flips the invoice and credits the term through `creditPaidInvoice`,
+idempotent on a final invoice); `markInvoicePaid` (admin, cash or
+transfer); `student_class_terms` (`packageSize`, `sessionsRemaining`,
+`sessionsUsed`, `startDate`, `deadlineDate`, `status`, `voucherCode`,
+`sourceInvoiceId`); the student and parent Payments tabs ("Pay now" on a
+staff-created invoice, `PaymentService.openPayment` opens Snap in a tab); the
+admin Invoices tab (sortable, status labels, no filters); `AdminAttentionUtils
+.buildVoucherAlerts` (in-app). The sandbox E2E test has never been run
+(`docs/CLAUDE_FULL_HANDOFF.md`). **Never** switch to production keys before
+it passes (`CLAUDE.md`).
+
+**Defaults taken for the open questions of §5:** the terms to tick are the
+four of decision 4 (Q17); the student and the linked parent may buy, staff
+keep creating invoices as today (Q18).
+
+**Must**
+
+1. **Price list items** gain `nameChinese` (proposal: 报名费, 8次课程,
+   16次课程, HSK教材费), `validDays` (60 for the packages, 0 for one-time
+   items) and `active`; the admin Price list screen edits them; the flyer
+   defaults carry the Chinese names. `termValidDays` stays as the fallback
+   for items without `validDays`.
+2. **Buy flow.** The student Payments tab and the parent Payments tab get
+   **Beli voucher**: the active session packages as cards (Chinese name,
+   name, sessions, validity, price in Rupiah), the four terms of the flyer
+   with one tick box ("I agree"), **Bayar** → `createInvoice` → Snap opens
+   in a new tab; back in the app the invoice shows as pending with **Pay
+   now** until the webhook flips it. One pending self-purchase at a time
+   per student (a second **Beli** reuses the open invoice's Snap link).
+3. **`createInvoice` opened to students and parents.** A student may
+   create an invoice only for their own uid; a parent only for a student in
+   their `studentIds`; staff as today. Self-purchases carry
+   `acceptedTerms: true`, `termsVersion` (the date of the flyer) and
+   `createdByRole`. Everything else stays: server-side amount, Snap call,
+   the dangling-invoice cleanup, audit. Pending students (Build 3) are
+   refused by `requireCaller`.
+4. **Paid → term.** `creditPaidInvoice` uses the item's `validDays`, copies
+   `nameChinese` and `priceItemId` onto the term, writes `sessionsBooked: 0`
+   (Build 6 counts bookings there) and a ledger entry
+   `voucher_history/{invoiceId}_purchase` (`kind: purchase`, +N sessions,
+   termId, studentId, date). The cash and transfer path of `markInvoicePaid`
+   does the same. Registration and book items credit nothing, as today.
+5. **Pure logic** in `functions/payments.js`: `signatureFor(orderId,
+   statusCode, grossAmount, serverKey)`, `invoiceStatusFor(transactionStatus,
+   fraudStatus)` (moved from `index.js`), `creditDecision(invoice, status,
+   grossAmount)` (credit / ignore-final / amount-mismatch / no-credit),
+   `expiredTerms(terms, todayKey)`, `termDeadline(startDate, validDays)`;
+   `functions/test_payments.js` proves **MT-01** (settlement → paid and one
+   credit), **MT-02** (pending stays pending; expire and cancel → no credit),
+   **MT-03** (the same notification twice → one credit), **MT-04** (a wrong
+   signature → rejected) on the pure functions, and the flow test does the
+   same against the emulator by posting signed notifications to the webhook
+   (the secret for the emulator lives in `functions/.secret.local`, never
+   committed; the Snap call in the emulator goes to a tiny local stub
+   started by the flow test, selected by an environment variable the
+   function reads only when it runs on the emulator).
+6. **Expiry job.** A daily `expireVouchers` at 00:30 Jakarta: active terms
+   whose `deadlineDate` has passed become `status: expired` with
+   `sessionsForfeited` = remaining, a ledger entry `kind: expiry`, and a
+   notice to the student, the linked parent and the admins. The voucher
+   reminders (2 sessions left, 7 days to the deadline) are **not** sent
+   here: Build 4's daily notices already carry warning 4; this job only
+   expires. The in-app `isWithinTermDates` check stays as the display
+   guard.
+7. **Screens.** Student and parent voucher card: Chinese name, sessions
+   remaining, booked (0 until Build 6), deadline with days left, status,
+   and the history from `voucher_history` plus the credited attendance as
+   today. Admin Invoices tab: filters by status (lunas, menunggu,
+   kedaluwarsa, gagal), by item and by month, a "bought in the app" chip,
+   and the Rupiah total of the filtered rows (screenshot 15). Admin
+   Vouchers tab shows `nameChinese` and the source (bought in the app,
+   cash, transfer, added by a teacher).
+8. **Rules.** `voucher_history`: read by the student, staff and the linked
+   parent; write false. `invoices` unchanged (clients never create or flip
+   an invoice; the pending cash invoice by staff stays). `settings/pricing`
+   admin write, as today. Rules tests.
+9. **Seed and tests.** Seed: the flyer's four items with Chinese names and
+   validity; one expired term and one term with 2 sessions left; a paid
+   self-purchase with its ledger entry. Tests: `test_payments.js` (Must 5);
+   flow test steps: a student buys (stub Snap), the webhook settles it once,
+   a second settlement changes nothing, an expire notification on a pending
+   invoice gives no term, a wrong signature is refused, a parent buys for
+   their child and not for another student, a student cannot buy for
+   another uid, the expiry job expires a term once; rules tests; a Flutter
+   test of the package card mapping and the terms tick gate.
+
+**Then (if time is left):** a receipt PDF for a paid invoice; the CSV of the
+filtered invoices; the leftovers of Builds 2B to 4.
+
+**Not in this build:** production Midtrans keys (blocked until the sandbox
+E2E passes); the class day of a voucher and booking (Build 6); refunds;
+Snap inside the app (it stays a browser tab); WhatsApp or email receipts.
+
+**Acceptance walk (emulator with the Snap stub, then the sandbox on live by
+the owner)**
+
+1. As a student: **Beli voucher**, pick 8次课程, the terms must be ticked
+   before **Bayar** is enabled, Snap opens, the invoice shows pending.
+2. Post a settlement notification for that order: the invoice is paid, one
+   term appears with 8 sessions, the deadline 60 days ahead, the ledger
+   entry and the student's notice; post it again: nothing changes (MT-03).
+3. A second pending purchase reuses the open invoice.
+4. Post an expire notification on a new pending invoice: status expired, no
+   term (MT-02). Post a notification with a wrong signature: 403, nothing
+   changes (MT-04).
+5. As the parent: buy for the child; the term is the child's; buying for
+   another uid is refused.
+6. Run the expiry job by hand: the seeded past-deadline term is expired with
+   its forfeited sessions and the notices; run again: nothing.
+7. Admin Invoices: filter by status and month, the total follows; the Price
+   list shows and edits the Chinese names and validity.
+8. Indonesian (dark) and English (light), 1280 px and 360 px. Screenshots 05
+   and 15.
+
+**After the build, the owner:** deploys rules and functions, then hosting;
+runs the **sandbox E2E on live** as `student1@` with a Midtrans sandbox test
+card (`docs/GO_LIVE_CHECKLIST.md` §4–6), checks the invoice flips to paid
+and one term appears, and compares every test payment with the sandbox
+dashboard (**MT-05**). The webhook URL is already registered.
 
 ### Build 6 — Weekly timetable and booking
 
-Weekly slots from the flyer (weekday, time, room, teacher, 8 seats, valid
-period, no level); teacher availability and days off; a conflict check with
-free-slot suggestions; a job that creates the coming weeks' sessions;
-`bookSession` / `cancelBooking` functions that reserve a voucher session and
-check seats, overlap and a cancel cut-off; a voucher's class day books its
-student automatically. Vouchers get `sessionsBooked`. Proves JD-01, JD-02
-and VC-04. Screenshots 02 and 11.
+**Goal.** The centre's weekly timetable lives in the app: repeating
+schedules from the flyer (weekday, time, room, teacher, 8 seats, valid
+period, level optional), teacher availability and days off, a conflict
+check with the reason and free-slot suggestions, a job that creates the
+coming two weeks' sessions, and booking through functions that reserve a
+voucher session. A voucher's class day books its student by itself. Proves
+JD-01, JD-02 and VC-04. Screenshots 02 and 11. Spec: backlog section 4;
+owner decisions 5, 6 and 9; §3's note that a slot has no level.
+
+**What exists.** One-off `class_sessions` (teacherId, sessionDate,
+sessionTitle, startMinutes, endMinutes, capacity 20, isOpen, isConcluded,
+room from `settings/rooms` since Build 3, mode); a student joins by writing
+`attendance/{sessionId_uid}` from the app (`joinSession`, rules allow it;
+`leaveSession` deletes it); `isSessionFull` counts in the app (can race);
+no availability, no overlap check, no reservation on the voucher; the
+teacher calendar (`class_calendar_screen.dart`); `users.levels` on teachers
+(Build 3); `student_class_terms.sessionsBooked` (Build 5).
+
+**Defaults taken for the open questions of §5:** a schedule's level is
+optional and empty means all levels; a student has one fixed weekly slot
+through the voucher's class day **and** may book other sessions while they
+have sessions left (Q5); capacity 8, minimum gap 15 minutes, weekly
+teaching-hours warning at 20 hours (Q19).
+
+**Must**
+
+1. **Schedules** `schedules/{id}`: `className`, `weekday` (1 Monday to 7
+   Sunday), `startMinutes`, `endMinutes`, `room` (from `settings/rooms`),
+   `teacherId`, `teacherName`, `capacity` (8), `level` ('' = all levels),
+   `validFrom`, `validTo`, `active`, `status` (`unconfirmed` until the
+   teacher confirms in Build 7), `createdBy`, timestamps. Written only by
+   functions (`saveSchedule`, admin) so the conflict check cannot be
+   skipped; read by approved users. `settings/scheduling`: `minGapMinutes`
+   15, `weeklyHoursWarning` 20, `defaultCapacity` 8, `bookingCutoffMinutes`
+   0 (Build 7 may use it), edited on Org settings.
+2. **Teacher availability.** `users/{uid}.availability` (per weekday a
+   list of `{startMinutes, endMinutes}`) edited by the teacher on the
+   profile tab and by the admin on the user form (rules: the teacher may
+   change only their own `availability`); `teacher_days_off/{id}`
+   (`teacherId`, `date`, `reason`) created by the teacher or the admin.
+   Admin **Availability** overview: one table, weekdays as columns, one row
+   per teacher, days off listed under it.
+3. **Conflict check** as pure logic in `functions/scheduling.js`:
+   `validate(schedule, teacher)` (end after start, capacity at least 1,
+   level inside the teacher's `levels` when both are set), `insideAvail
+   ability`, `overlaps(a, b, gapMinutes)` with `startA < endB && startB <
+   endA` widened by the gap, teacher clash against the teacher's other
+   schedules on that weekday and their one-off sessions in the valid
+   period, room clash against other schedules and sessions in that room,
+   `weeklyHours(teacher)` (warning only), `suggestFreeSlots(teacher,
+   weekday, length)` (the first 5 free windows inside the availability on
+   that weekday, then the other weekdays). The reason text names the
+   clashing class and time ("Andrea already teaches Kelas Dasar B on Monday
+   15:00–16:30"). `checkScheduleConflict` (callable, admin) returns
+   `{ok, reasons[], warnings[], suggestions[]}` for the form as the admin
+   types; `saveSchedule` (callable, admin) runs the same check **inside a
+   transaction** that reads and bumps `schedule_locks/{teacherId}` and
+   `schedule_locks/room_{room}` (version counters), so two admins saving
+   the same teacher and time at once end with one schedule (JD-02: the
+   second transaction retries, sees the first schedule and is refused).
+   The same path runs on edit, on a teacher change and on a replacement
+   session (Build 7 reuses it).
+4. **Session generation.** `generateSessions` runs every Sunday 20:00
+   Jakarta and after every `saveSchedule`: for each active schedule inside
+   its valid period, `class_sessions/{scheduleId_yyyyMMdd}` for the next 14
+   days (deterministic id, so a second run creates nothing), with
+   `scheduleId`, `status: scheduled`, `bookedCount: 0`, `capacity`, `room`,
+   `level`, the teacher, `isOpen: true`; on a day off the session is created
+   with `status: needs_teacher` and no bookings are accepted until Build 7
+   assigns a substitute or cancels it. Editing a schedule updates its
+   future sessions that have no bookings yet and flags the others for the
+   admin.
+5. **Booking.** `bookSession` (callable, student or the linked parent for
+   their child, one transaction): the session is `scheduled`, in the
+   future, has a seat (`bookedCount < capacity`), the level matches or is
+   empty; the student has an active, unexpired term with `remaining −
+   booked > 0`; no other booked session overlaps; then it writes
+   `attendance/{sessionId_uid}` (`joinedBy: student`, `booked: true`,
+   `classTermId`), `bookedCount + 1`, `sessionsBooked + 1` on the term, a
+   notice to the student. Refusals carry a reason code (`full`,
+   `no_sessions`, `expired`, `overlap`, `too_late`, `needs_teacher`, `level`).
+   `cancelBooking` (same callers, before the session starts): deletes the
+   attendance doc, `bookedCount − 1`, `sessionsBooked − 1`. The rules stop
+   students from creating or deleting `attendance` docs themselves (the
+   old `joinSession` / `leaveSession` are removed from the app); staff may
+   still add a walk-in with `joinedBy: teacher` (credited only at close,
+   Build 7).
+6. **A voucher's class day.** A term gets `classDay` = a schedule id,
+   chosen at purchase (Build 5's cards show the schedules of the flyer) or
+   set by the admin on the voucher form. `generateSessions` books the
+   student into each new session of that schedule through the same
+   `bookSession` checks (a refusal is logged, not raised); the student may
+   cancel one and book another session.
+7. **Screens.** Admin **Timetable**: the week as a grid (weekdays across,
+   rooms down, each cell the class with teacher, level and seats), a list
+   view, **New schedule** form (class name, weekday, time, room, teacher,
+   level, capacity, period) that shows the reasons, warnings and the
+   suggested free slots as it is filled (screenshot 11), schedule detail
+   with its coming sessions and bookings. Student **Sesi Kelas** (replaces
+   the join section): the next 14 days, filter "my level" or "all", each
+   row with day, time, room, teacher name (information only), seats left,
+   **Daftar** or **Batalkan**, and the refusal reason in words
+   (screenshot 02). Parent: the same for the selected child. Teacher: the
+   week view reads the new sessions (the full Schedule screen with tabs is
+   Build 7).
+8. **Rules and indexes.** `schedules` read approved users, write false;
+   `teacher_days_off` create and delete by the owning teacher or admin,
+   read staff; `schedule_locks` nobody; `attendance` create and delete
+   closed to students; `class_sessions` read as today, write staff for
+   one-off sessions, functions for generated ones (a generated session's
+   `scheduleId` cannot be set by a client). Indexes for `class_sessions`
+   by `scheduleId` and `sessionDate`, and by `room` and `sessionDate`.
+9. **Seed and tests.** Seed: the flyer's timetable (Monday 16:00; Tuesday,
+   Wednesday, Friday 15:00 and 16:30; Saturday 10:00, 11:30, 13:00) across
+   the four teachers and two rooms, availability for each teacher, one day
+   off, generated sessions for two weeks, class days on the seeded terms.
+   Tests: `functions/test_scheduling.js` (overlap and gap math, availability,
+   level check, suggestions, weekly hours, Jakarta weekday and date
+   generation over a valid period, idempotent ids); flow test steps:
+   **JD-01** (a teacher clash, a room clash, outside availability and a
+   level outside the teacher's levels are each refused with the reason and
+   suggestions), **JD-02** (two concurrent `saveSchedule` calls for the
+   same teacher and time: one saved), generate twice (no duplicates),
+   **VC-04** (book with 0 sessions left refused), a full class refused, an
+   overlapping booking refused, book then cancel before start, cancel after
+   start refused, the class day books the student on generation, the parent
+   books for the child only; rules tests for Must 8.
+
+**Then (if time is left):** an ICS export of a teacher's sessions; a real
+calendar view of availability; the leftovers of earlier builds.
+
+**Not in this build:** confirmation, change requests, check-in, attendance,
+closing, substitutes, reminders and the recap (Build 7); payments (Build 5).
+
+**Acceptance walk (emulator)**
+
+1. Create the flyer's Monday 16:00 class for Andrea in Main: saved; create
+   another at Monday 16:30 for Andrea: refused with the reason and three
+   suggestions; in Sub Room with Budi: saved; Andrea on Monday 20:00
+   (outside her availability): refused.
+2. Two browser tabs save the same teacher and time together: one wins.
+3. Generated sessions appear for 14 days with the deterministic ids; run
+   the job again: the same count.
+4. As a student with 2 sessions left: book two sessions (booked 2, remaining
+   unchanged until close), a third is refused ("no sessions left"); a full
+   class shows "full"; an overlapping one "clash"; cancel one before it
+   starts: booked 1.
+5. A term with a class day: after generation the student is booked into
+   next week's session by itself; the notice arrives.
+6. Admin timetable grid and list, Indonesian (dark) and English (light),
+   1280 px and 360 px. Screenshots 02 and 11.
+
+**After the build, the owner:** deploys rules, indexes and functions, then
+hosting; enters the real timetable and each teacher's availability; sets
+the class day on the active vouchers.
 
 ### Build 7 — The teaching day
 
-Teacher **Schedule** with tabs on one screen (today, week, availability):
-confirm, request a change, check in with server time, attendance, close the
-session in one transaction with a ledger (ends the double-charge risk);
-substitute teacher; cancelling a session returns the bookings; reminder one
-hour before; late check-in and unclosed-session flags; monthly recap; the
-reconciliation script. Proves VC-01, VC-02, VC-03 and VC-05. Screenshot 09.
+**Goal.** A teacher runs the day from one **Schedule** screen with tabs:
+confirms the week, asks for a change, checks in with server time, marks
+attendance, and closes the session in one idempotent transaction that
+writes the voucher ledger. The admin assigns substitutes, cancels sessions
+(bookings return), sees late check-ins and unclosed sessions, and reads a
+monthly recap per teacher. Proves VC-01, VC-02, VC-03 and VC-05.
+Screenshot 09. Spec: backlog section 5; owner decision 9; the examiners'
+condition "voucher deduction in one transaction, idempotent" (§7).
+
+**What exists.** Build 6's schedules, generated sessions and bookings in
+`attendance` with `booked: true` and `classTermId`; the conclude dialog
+(`conclude_class_dialog.dart`: hadir / izin / alpa per student, credits the
+term in the app, not atomic); `ClassSession.isOpen` / `isConcluded`;
+`allowTeacherReschedule` in Org settings; `cleanupExpiredLinkCodes` as the
+hourly job; `teacher_recaps` not yet; `voucher_history` purchase and expiry
+entries (Build 5).
+
+**Defaults taken for the open questions of §5:** a booking may be cancelled
+(izin) until the session starts (Q20); the late check-in limit is 15
+minutes (Q21).
+
+**Must**
+
+1. **Teacher Schedule screen**, one screen with three tabs (owner decision
+   9): **Today** (sessions of the day with status chips `scheduled`,
+   `ongoing`, `done`, `cancelled`, `needs_teacher`; the booked students;
+   **Mulai sesi**, **Absensi**, **Tutup sesi**), **Week** (the 7 days with
+   **Konfirmasi** per schedule and **Ajukan perubahan**), **Availability**
+   (Build 6's editor and days off). The teacher calendar screen stays for
+   the month view.
+2. **Confirmation and change requests.** `confirmSchedule` (teacher, own
+   schedule) sets `status: confirmed`; `requestScheduleChange` (teacher)
+   writes `schedule_change_requests/{id}` (scheduleId, teacherId, reason,
+   wanted change in words, status `open`) and tells the admins; the admin
+   resolves it on the schedule detail (edit through `saveSchedule`, or
+   decline with a note); the teacher is told. Unconfirmed schedules are
+   listed for the admin (the dashboard card is Build 8).
+3. **Check-in.** `checkInSession` (teacher of the session or admin): server
+   time into `checkInAt`, `status: ongoing`, `lateMinutes` when the check-in
+   is more than 15 minutes after the start. A session cannot be checked in
+   more than 30 minutes before its start or after its end.
+4. **Attendance and close.** The attendance step marks each booked student
+   hadir / izin / alpa (and walk-ins added by the teacher); `closeSession`
+   (callable, teacher of the session or admin, **one transaction,
+   idempotent**): continues only while `status` is `ongoing` (or
+   `scheduled` when the admin closes a forgotten one); for hadir and alpa:
+   `sessionsBooked − 1`, `sessionsUsed + 1`, `sessionsRemaining − 1` on the
+   student's term; for izin: `sessionsBooked − 1` only; one ledger doc
+   `voucher_history/{sessionId}_{studentId}` per student with the fixed id
+   (`kind: session`, status, −1 or 0), so a second call cannot deduct
+   twice; the attendance docs get `attendanceStatus` and `sessionCredited`;
+   `status: done`, `closedAt`, `isConcluded: true`; the teacher's month doc
+   `teacher_recaps/{teacherId}_{yyyyMM}` gets `held + 1` and the session's
+   hours. The progress summary (Build 4) and the notices run from the
+   attendance trigger after the transaction. The conclude dialog calls the
+   function; the in-app `concludeClassSession` path is removed and the
+   rules close attendance status changes to clients.
+5. **Substitute and cancel.** On a session, the admin sees **Substitute
+   teacher** with the candidates that are available at that time, can
+   teach the level and have no clash (Build 6's check, reused);
+   `assignSubstitute` (admin, transaction) sets `teacherId`,
+   `substituteFor`, and tells both teachers and the booked students.
+   `cancelSession` (admin; the teacher for their own one-off session):
+   `status: cancelled`, every booking returned (`sessionsBooked − 1`, the
+   attendance docs marked `cancelled`), the students told to pick another
+   session. Cancelling a schedule cancels its future sessions the same way.
+6. **Jobs.** `sessionReminders` (hourly): one notice per session to the
+   teacher and the booked students one hour before the start
+   (`reminderSentAt` on the session); `checkTeacherCheckIn` (every 15
+   minutes): sessions 15 minutes past their start and still `scheduled` →
+   `lateCheckIn: true`, one admin notice; sessions 2 hours past their end
+   and not `done` or `cancelled` → `unclosed: true` (the admin's list on
+   the sessions tab; the dashboard card is Build 8). The hourly job also
+   closes forgotten single attempts of exam-mode packages (the Build 2A
+   leftover), through the existing `closeForgottenTestSessions` or next to
+   it.
+7. **Monthly recap.** Admin **Teacher recap**: month picker, one row per
+   teacher (scheduled, held, cancelled, late check-ins, hours; data only,
+   no pay), from `teacher_recaps` with a CSV. Pure logic for the counters
+   in `functions/teaching_day.js`.
+8. **Reconciliation (VC-05).** Admin-only callable `reconcileVouchers`:
+   for every term compares `sessionsUsed` with the count of
+   `voucher_history` session entries that deducted, and `sessionsBooked`
+   with the open bookings; returns the mismatches; a button on Org settings
+   shows the result and `tool/reconcile_vouchers.mjs` calls it from the
+   command line (emulator or live with a signed-in admin token).
+9. **Rules and tests.** `schedule_change_requests` create by the owning
+   teacher, read staff, update admin; `teacher_recaps` read staff, write
+   false; `attendance` update closed to clients except the staff `notes`;
+   `class_sessions` status fields written only by functions. Tests:
+   `functions/test_teaching_day.js` (close arithmetic per status, the
+   idempotency decision, late rule, reminder window, recap hours); flow
+   test steps: **VC-01** (3 hadir, 1 izin, 1 alpa: four terms used + 1, the
+   izin term untouched, five ledger docs), **VC-02** (`closeSession` twice:
+   deducted once), **VC-03** (close while the same student books another
+   session: both succeed, counts right), **VC-05** (reconcile reports no
+   mismatch; a hand-broken counter is reported), late check-in flagged
+   once, reminder sent once, substitute assigned and told, cancel returns
+   bookings; rules tests.
+
+**Then (if time is left):** a printable day sheet for the teacher; the
+unconfirmed and unclosed cards on the admin dashboard (else Build 8).
+
+**Not in this build:** payroll (out of scope by the proposal), the admin
+dashboard rework and the monthly centre report (Build 8), online classes.
+
+**Acceptance walk (emulator)**
+
+1. Teacher Week tab: confirm two schedules; ask for a change with a
+   reason: the admin sees it and declines with a note; the teacher sees it.
+2. Today tab: **Mulai sesi** 20 minutes after the start: the session is
+   ongoing and flagged late; the admin got one notice.
+3. Attendance 3 hadir, 1 izin, 1 alpa, **Tutup sesi**: the terms follow
+   VC-01, the ledger has five docs, the session is done, the recap counts
+   it; press **Tutup sesi** again: nothing changes (VC-02).
+4. During a close, book another session as one of those students: both
+   succeed (VC-03).
+5. Substitute: the candidate list leaves out the busy teacher; assign:
+   everyone told. Cancel a session with two bookings: both returned, both
+   told.
+6. Run the hourly job by hand: the reminder lands once; the forgotten
+   session is flagged unclosed.
+7. Reconcile: no mismatch; break a counter by hand: reported.
+8. Indonesian (dark) and English (light), 1280 px and 360 px. Screenshot 09.
+
+**After the build, the owner:** deploys rules and functions, then hosting;
+the teachers confirm their schedules; the first real session is closed
+through the app and the recap checked.
 
 ### Build 8 — Dashboard, trial kit, screenshot pass
 
-Admin dashboard of the spec and the monthly report job; a GitHub Action
-running analyze and tests; the trial kit: seed of 1 admin, 4 teachers and 30
-students (12 beginner, 10 intermediate, 8 advanced), a checklist of the 731
-questions the trial needs (one practice package of 15 per level, one test
-code per level, two more HSK 3 codes), the task sheets of the proposal's
-Table 20 and the SUS questionnaire; one pass that produces all 15 proposal
-screenshots from seeded data. Screenshots 14 and 15.
+**Goal.** The admin dashboard of the proposal, the monthly centre report,
+automatic checks on GitHub, and the kit for the thesis trial: a seed of 35
+respondents, the 731-question checklist, the task sheets of the proposal's
+Table 20, the SUS questionnaire with its scoring, and one pass that
+produces the 15 proposal screenshots. Screenshots 14 and 15 (15 done in
+Build 5). Spec: backlog sections 10 and 13; §7's trial facts; owner
+addition 16 (black-box tables, automatic checks on GitHub).
+
+**What exists.** The admin dashboard (totals, sign-ups chart, voucher
+alerts, finance) and metrics section; `progress_summary` statuses (Build
+4); pending registrations (Build 3); unconfirmed schedules, late check-ins
+and unclosed sessions flags (Build 7); `scripts/seed_emulator.py` (1 admin,
+4 teachers, 30 students, codes, packages); `docs/THESIS_PROPOSAL_ASSETS.md`
+(the 15 screenshots by name); `tool/paper_measure/` (headless Chrome
+runner); the paper reader as the import tool for printed papers; no CI.
+
+**Must**
+
+1. **Admin dashboard** rework to the proposal's six cards, each a count
+   that opens its list: pending registrations, unconfirmed schedules, late
+   check-ins (today and this week), unclosed sessions, students needing
+   attention (summaries with status `attention` or `follow_up`), today's
+   sessions; the finance and sign-up cards stay below (screenshot 14).
+2. **Monthly report.** `monthlyReport` on the 1st at 01:00 Jakarta writes
+   `reports/{yyyyMM}`: new students, revenue (paid invoices), active
+   students (a booking or a result in the month), level distribution,
+   attendance rate, teaching hours per teacher; admin **Reports** screen
+   with a month picker, the same numbers, CSV and a PDF; **Rebuild** for a
+   past month (admin callable).
+3. **Automatic checks on GitHub.** `.github/workflows/checks.yml` on every
+   push and pull request: Flutter (pinned version) `pub get`, `analyze`,
+   `test`; Node 22 `node --check functions/index.js` and every
+   `functions/test_*.js`; the rules tests with the Firebase emulators
+   (Java 21). No secrets needed; the paper-reader tests skip without the
+   model files. A badge in `README.md`. (The repository is public today;
+   Actions run free.)
+4. **Trial seed.** `scripts/seed_trial.py` with two modes: `emulator`
+   (everything) and `live` (accounts and structures only, never papers):
+   1 admin, 4 teachers with levels and availability, 30 students (12
+   beginner, 10 intermediate, 8 advanced; Chinese and Latin names from a
+   list the owner gives, else placeholders), the rooms, the price list, the
+   flyer's timetable, vouchers with class days, and for the emulator the
+   seeded sessions, results and bookings that make every dashboard card
+   non-empty. Idempotent (fixed ids). The live accounts get passwords from
+   a file that is never committed; the owner distributes them.
+5. **Question bank checklist.** `docs/TRIAL_KIT.md`: the table of the 731
+   questions the trial needs (per level: one practice package of 15, one
+   test code in the full format; two more HSK 3 codes), each row with its
+   source paper, the import route (paper reader, CSV/JSON import, typed),
+   who checks it, and its state; a CSV/JSON import `scripts/import
+   _questions.mjs` for the owner's digital questions (bank docs and
+   Storage audio; no invented Chinese content; official papers never
+   committed), with a dry run that reports what it would write.
+6. **Task sheets and SUS.** `docs/trial/` holds the task sheets per role
+   from the proposal's Table 20 (student, teacher, admin: numbered tasks
+   with the expected result and a pass/fail column), the SUS questionnaire
+   (the 10 standard items in Indonesian, 1 to 5), a printable page for
+   each (PDF from the docs with the existing `pdf` package or a plain
+   print stylesheet), a results sheet template (CSV) and
+   `tool/sus_score.mjs` that computes the SUS mean and the per-item
+   numbers from the CSV. The black-box table template per build
+   (`docs/trial/blackbox_template.md`) with the acceptance walks of §4
+   already filled in as rows.
+7. **Screenshot pass.** `tool/screenshots/run.mjs`: headless Chrome against
+   the emulator bundle (`scripts/run_emulator_web.sh`) with the trial seed,
+   signs in per role, navigates to each of the 15 screens, waits for data,
+   and saves `docs/screenshots/proposal/NN_name.png` at 1280×800,
+   Indonesian, light mode, with the file names of
+   `docs/THESIS_PROPOSAL_ASSETS.md`; a Markdown contact sheet lists them.
+   Screens the runner cannot reach (the Snap tab) get a written step in the
+   same doc.
+8. **Tests.** The workflow is green on the commit; the seed runs twice
+   without duplicates (checked by a count step in the flow test); the SUS
+   script has a node test with a known sheet (mean 72.5 on a sample); the
+   dashboard cards have a Flutter test for the count mapping; the monthly
+   report's pure logic in `functions/reports.js` has a node test.
+
+**Then (if time is left):** a "Trial day" checklist for the admin
+(accounts, devices, Wi-Fi, order of tasks); a one-page student guide in
+Indonesian; the leftovers of earlier builds.
+
+**Not in this build:** speaking tests, HSK 3.0 levels 5 to 9, iOS native,
+a staging project (there is none by decision), the book itself.
+
+**Acceptance walk (emulator)**
+
+1. Seed the trial: every dashboard card shows a count; each opens its list.
+2. Rebuild last month's report: the numbers match a hand count of the seed;
+   CSV and PDF download.
+3. Push a branch: the workflow runs analyze, tests, node and rules tests
+   and is green; break a test on purpose: red.
+4. Run the screenshot pass: 15 files appear with the right names; open the
+   contact sheet.
+5. `TRIAL_KIT.md` lists 731 rows with a state each; the import dry run on a
+   sample CSV reports the rows and writes nothing; the real run writes the
+   bank docs and audio on the emulator.
+6. Print the task sheets and the SUS page; score a filled sample CSV.
+7. Indonesian (dark) and English (light), 1280 px and 360 px for the new
+   screens. Screenshot 14.
+
+**After the build, the owner:** approves the workflow file, runs the trial
+seed on live in `live` mode, gives the respondents' names and the trial
+dates (§7), and fills the question bank from the checklist.
 
 ### After the thesis builds — extras for the centre
 
 Speaking tests (HSKK, YCT oral: answers recorded in the browser, marked by a
 teacher), final HSK 3.0 formats for levels 5 to 9, YCT timing.
 
-Builds 5 to 8 are outlines. The PLAN chat writes each one out in full (Must,
-Then, Not, acceptance walk) after reading the report of the build before it.
+Builds 5 to 8 are written in full (2026-11-21, while Build 4 was being
+built). The PLAN chat re-reads each one against the report of the build
+before it and adjusts it before marking it NEXT.
 
 ---
 
@@ -1463,11 +1958,35 @@ is wrong):
 16. Attendance percent = **hadir ÷ (hadir + alpa)**; izin (excused before
     class) is left out, as it is for the voucher. Agreed?
 
-Before Build 6:
+Before Build 5 (written with the answers in bold):
+
+17. The terms the buyer ticks are the four of decision 4 (**a term not
+    finished in 2 months is forfeited; sessions cannot move to another
+    student; payment in full before the first class; no refunds**). Any
+    other line from the flyer?
+18. **The student and the linked parent may buy** in the app; staff keep
+    creating invoices as today. Agreed?
+
+Before Build 6 (written with the answers in bold):
 
 5. The proposal gives every weekly schedule one HSK level; the flyer says
    classes mix levels. Plan: level optional ("all levels"). Does every
-   student have one fixed weekly slot, or pick a slot each week?
+   student have one fixed weekly slot, or pick a slot each week? **Both:
+   the voucher's class day books the fixed slot by itself, and the student
+   may book other sessions while sessions are left.**
+19. Defaults: **capacity 8 seats, minimum gap 15 minutes between a
+    teacher's classes, a warning above 20 teaching hours a week**. Change
+    any?
+
+Before Build 7 (written with the answers in bold):
+
+20. A booking may be cancelled, or marked izin, **until the session
+    starts**; after that it counts as alpa unless the teacher marks izin
+    at close. Agreed?
+21. **Late check-in = more than 15 minutes after the start** (the
+    proposal). Agreed?
+
+Before Build 8: the trial names, devices and dates (§7 "Still needed").
 
 Any time:
 

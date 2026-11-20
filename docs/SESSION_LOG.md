@@ -13,6 +13,21 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-21 — Claude (PLAN chat, Mac): Builds 5 to 8 written in full
+
+- While the BUILD chat builds Build 4, the PLAN chat wrote Builds 5
+  (voucher packages and self-purchase, MT-01 to MT-05), 6 (weekly
+  timetable, availability, conflict check with suggestions, session
+  generation, booking through functions, JD-01, JD-02, VC-04), 7 (the
+  teaching day: confirm, change request, check-in, idempotent close with
+  the voucher ledger, substitutes, cancel, reminders, recap, VC-01 to
+  VC-05) and 8 (dashboard, monthly report, GitHub checks, trial seed, the
+  731-question checklist, task sheets, SUS, screenshot pass) out in full in
+  `docs/PLAN.md` §4, each with Must, Then, Not and an acceptance walk.
+- §5 gained Q17 to Q21 with the defaults those builds take. Each spec is
+  re-read against the report of the build before it before it is marked
+  NEXT.
+
 ### 2026-11-20 (night) — Claude (PLAN chat, Mac): Build 3 reviewed, Build 4 is NEXT
 
 - Pulled Build 3 (v0.1.21) and checked it on the Mac: analyzer 17 infos,
