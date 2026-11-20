@@ -1444,4 +1444,268 @@ await step("a parent books only for their own child; a student only for themself
   assert.equal(reasonOf(other), "not-yours");
 });
 
+// ---------------------------------------------------------------------------
+// Build 7: the teaching day — check-in, the close in one idempotent
+// transaction with the voucher ledger (VC-01, VC-02, VC-03), reconciliation
+// (VC-05), the late / reminder / unclosed job, substitutes and cancels.
+const jak = new Date(Date.now() + 7 * 3600000);
+const today7 = jak.toISOString().slice(0, 10);
+const nowMin = jak.getUTCHours() * 60 + jak.getUTCMinutes();
+const tomorrow7 = new Date(Date.now() + 31 * 3600000).toISOString().slice(0, 10);
+const atMs = (date, min) => Date.parse(`${date}T00:00:00Z`) - 7 * 3600000 + min * 60000;
+const juneMonday = (() => {
+  for (let d = 1; d <= 7; d += 1) {
+    const s = `2027-06-0${d}`;
+    if (new Date(`${s}T00:00:00Z`).getUTCDay() === 1) return s;
+  }
+  return "2027-06-07";
+})();
+const juneTuesday = `2027-06-${String(Number(juneMonday.slice(-2)) + 1).padStart(2, "0")}`;
+const day = await Promise.all([19, 20, 21, 22, 24, 27].map((n) =>
+  signIn(`student${n}@test.chinesetracker`)));
+const [d19, d20, d21, d22, d24, d27] = day;
+const S7 = `flow7_${RUN}`;
+const S7B = `flow7b_${RUN}`;
+const S7C = `flow7c_${RUN}`;
+const S7E = `flow7e_${RUN}`;
+const term7 = (s) => `flow7_term_${s.uid}`;
+const session7 = (id, extra) => setDocRaw(`class_sessions/${id}`, {teacherId: budi.uid,
+  teacherName: "Budi Santoso", sessionTitle: `Flow Hari ${id}`, capacity: 8, bookedCount: 0,
+  status: "scheduled", room: "Sub Room", level: "", isOpen: true, isConcluded: false,
+  generated: true, scheduleId: "flow7_schedule", createdAt: new Date(), ...extra});
+const notices = async (uid, title) => (await queryDocs("notifications", "userId", uid))
+    .filter((n) => str(n.fields, "title") === title);
+
+await step("Build 7 setup: five students with a voucher each book one session", async () => {
+  for (const s of day) {
+    for (const d of await queryDocs("student_class_terms", "studentId", s.uid)) {
+      await deleteDoc(`student_class_terms/${d.id}`);
+    }
+    for (const a of await queryDocs("attendance", "studentId", s.uid)) {
+      await deleteDoc(`attendance/${a.id}`);
+    }
+    await setDocRaw(`student_class_terms/${term7(s)}`, {studentId: s.uid, packageSize: 8,
+      sessionsRemaining: 5, sessionsUsed: 3, sessionsBooked: 0, status: "active",
+      startDate: "2026-11-01", deadlineDate: "2027-12-31", createdAt: new Date()});
+  }
+  await session7(S7, {sessionDate: tomorrow7, startMinutes: 370, endMinutes: 460});
+  await session7(S7B, {sessionDate: tomorrow7, startMinutes: 480, endMinutes: 570,
+    sessionTitle: "Flow Hari B"});
+  for (const s of [d19, d20, d21, d22, d24]) {
+    const r = await call(s, "bookSession", {sessionId: S7});
+    assert.ok(r.data, JSON.stringify(r.error));
+  }
+  assert.equal((await readDoc(`class_sessions/${S7}`)).bookedCount, 5);
+  assert.equal((await readDoc(`student_class_terms/${term7(d19)}`)).sessionsBooked, 1);
+  // The class is today, started 20 minutes ago (the owner moves it).
+  const start = Math.max(0, nowMin - 20);
+  await patchDoc(`class_sessions/${S7}`, {sessionDate: {stringValue: today7},
+    startMinutes: {integerValue: String(start)},
+    endMinutes: {integerValue: String(Math.min(1439, start + 90))}});
+});
+
+await step("check-in: another teacher and a student are refused; the teacher starts it with the server time, flagged late", async () => {
+  assert.equal(reasonOf(await call(teacher, "checkInSession", {sessionId: S7})), "not-yours");
+  assert.equal((await call(d19, "checkInSession", {sessionId: S7})).error.status,
+      "PERMISSION_DENIED");
+  const r = await call(budi, "checkInSession", {sessionId: S7});
+  assert.ok(r.data, JSON.stringify(r.error));
+  const s = await readDoc(`class_sessions/${S7}`);
+  assert.equal(s.status, "ongoing");
+  assert.ok(s.checkInAt instanceof Date);
+  if (nowMin >= 20) {
+    assert.ok(s.lateMinutes >= 19, `late ${s.lateMinutes}`);
+    assert.equal(s.lateCheckIn, true);
+  }
+  assert.ok(reasonOf(await call(budi, "checkInSession", {sessionId: S7})), "not twice");
+});
+
+await step("VC-01 + VC-03 close (3 hadir, 1 izin, 1 alpa) while one of them books another session: both succeed, counts right", async () => {
+  const statuses = {[d19.uid]: "hadir", [d20.uid]: "hadir", [d21.uid]: "hadir",
+    [d22.uid]: "izin", [d24.uid]: "alpa"};
+  assert.equal((await call(d19, "closeSession", {sessionId: S7, statuses})).error.status,
+      "PERMISSION_DENIED");
+  const [closed, booked] = await Promise.all([
+    call(budi, "closeSession", {sessionId: S7, statuses}),
+    call(d19, "bookSession", {sessionId: S7B}),
+  ]);
+  assert.ok(closed.data, JSON.stringify(closed.error));
+  assert.ok(booked.data, JSON.stringify(booked.error));
+  assert.equal(closed.data.credited, 4);
+  assert.equal(closed.data.excused, 1);
+  const t = async (s) => readDoc(`student_class_terms/${term7(s)}`);
+  const t19 = await t(d19);
+  assert.deepEqual([t19.sessionsUsed, t19.sessionsRemaining, t19.sessionsBooked], [4, 4, 1],
+      "the new booking survives the close");
+  for (const s of [d20, d21, d24]) {
+    const x = await t(s);
+    assert.deepEqual([x.sessionsUsed, x.sessionsRemaining, x.sessionsBooked], [4, 4, 0]);
+  }
+  const izin = await t(d22);
+  assert.deepEqual([izin.sessionsUsed, izin.sessionsRemaining, izin.sessionsBooked], [3, 5, 0]);
+  const ledger = [];
+  for (const s of [d19, d20, d21, d22, d24]) {
+    ledger.push(await readDoc(`voucher_history/${S7}_${s.uid}`));
+  }
+  assert.equal(ledger.filter(Boolean).length, 5, "five ledger docs");
+  assert.deepEqual(ledger.map((e) => e.sessions), [-1, -1, -1, 0, -1]);
+  assert.ok(ledger.every((e) => e.kind === "session"));
+  const s = await readDoc(`class_sessions/${S7}`);
+  assert.equal(s.status, "done");
+  assert.equal(s.isConcluded, true);
+  const a = await readDoc(`attendance/${S7}_${d24.uid}`);
+  assert.equal(a.attendanceStatus, "alpa");
+  assert.equal(a.sessionCredited, true);
+  const recap = await readDoc(`teacher_recaps/${budi.uid}_${today7.slice(0, 7).replace("-", "")}`);
+  assert.ok(recap.held >= 1 && recap.hours >= 1.5, JSON.stringify(recap));
+});
+
+await step("VC-02 closing the same session again deducts nothing", async () => {
+  const before = await readDoc(`student_class_terms/${term7(d20)}`);
+  const again = await call(budi, "closeSession", {sessionId: S7, statuses: {[d20.uid]: "alpa"}});
+  assert.ok(again.data, JSON.stringify(again.error));
+  assert.equal(again.data.already, true);
+  const after = await readDoc(`student_class_terms/${term7(d20)}`);
+  assert.deepEqual([after.sessionsUsed, after.sessionsRemaining],
+      [before.sessionsUsed, before.sessionsRemaining]);
+  assert.equal((await readDoc(`voucher_history/${S7}_${d20.uid}`)).status, "hadir");
+});
+
+await step("VC-05 reconcile: no mismatch on these vouchers; a counter broken by hand is reported", async () => {
+  assert.equal((await call(budi, "reconcileVouchers", {})).error.status, "PERMISSION_DENIED");
+  const mine = new Set(day.map(term7));
+  const ok = await call(admin, "reconcileVouchers", {});
+  assert.ok(ok.data, JSON.stringify(ok.error));
+  assert.deepEqual(ok.data.mismatches.filter((m) => mine.has(m.termId)), []);
+  await patchDoc(`student_class_terms/${term7(d21)}`, {sessionsUsed: {integerValue: "7"}});
+  const bad = await call(admin, "reconcileVouchers", {});
+  const found = bad.data.mismatches.filter((m) => mine.has(m.termId));
+  assert.equal(found.length, 1);
+  assert.equal(found[0].termId, term7(d21));
+  assert.match(found[0].problems[0], /sessionsUsed [0-9]+ but 1 in the ledger/);
+  await patchDoc(`student_class_terms/${term7(d21)}`, {sessionsUsed: {integerValue: "4"}});
+});
+
+await step("the job: the reminder goes once an hour before; late check-in is flagged once with one admin notice; unclosed after 2 hours", async () => {
+  await session7(S7C, {sessionDate: juneMonday, startMinutes: 960, endMinutes: 1050,
+    sessionTitle: `Flow Hari C ${RUN}`});
+  const r = await call(d27, "bookSession", {sessionId: S7C});
+  assert.ok(r.data, JSON.stringify(r.error));
+  const pass = (min) => call(admin, "runTeachingDayPass", {nowMs: atMs(juneMonday, min)});
+  const remind = async () => (await notices(d27.uid, "Class in an hour"))
+      .filter((n) => str(n.fields, "body").includes(`Flow Hari C ${RUN}`)).length;
+  assert.ok((await pass(920)).data);
+  assert.equal(await remind(), 1);
+  await pass(930);
+  assert.equal(await remind(), 1, "once");
+  assert.equal((await call(budi, "runTeachingDayPass", {})).error.status, "PERMISSION_DENIED");
+  const lateNotes = async () => (await queryDocs("notifications", "forRole", "admin"))
+      .filter((n) => str(n.fields, "title") === "Late check-in" &&
+        str(n.fields, "body").includes(`Flow Hari C ${RUN}`)).length;
+  await pass(980);
+  assert.equal((await readDoc(`class_sessions/${S7C}`)).lateCheckIn, true);
+  assert.equal(await lateNotes(), 1);
+  await pass(1000);
+  assert.equal(await lateNotes(), 1, "flagged once");
+  await pass(1050 + 119);
+  assert.notEqual((await readDoc(`class_sessions/${S7C}`)).unclosed, true);
+  await pass(1050 + 121);
+  assert.equal((await readDoc(`class_sessions/${S7C}`)).unclosed, true);
+});
+
+await step("substitute: the busy teacher is left out; the admin assigns one and everyone is told", async () => {
+  assert.equal((await call(budi, "substituteCandidates", {sessionId: S7C})).error.status,
+      "PERMISSION_DENIED");
+  const c = await call(admin, "substituteCandidates", {sessionId: S7C});
+  assert.ok(c.data, JSON.stringify(c.error));
+  const ids = c.data.candidates.map((x) => x.uid);
+  assert.ok(!ids.includes(budi.uid), "not the session's own teacher");
+  assert.ok(!ids.includes(andrea.uid), "Andrea teaches Flow Dasar at that time");
+  const sub = ids[0] || clara.uid;
+  const r = await call(admin, "assignSubstitute", {sessionId: S7C, teacherId: sub});
+  assert.ok(r.data, JSON.stringify(r.error));
+  const s = await readDoc(`class_sessions/${S7C}`);
+  assert.equal(s.teacherId, sub);
+  assert.equal(s.substituteFor, budi.uid);
+  assert.equal((await readDoc(`attendance/${S7C}_${d27.uid}`)).teacherId, sub);
+  assert.equal((await notices(d27.uid, "Substitute teacher")).length, 1);
+  assert.equal((await notices(sub, "Substitute teacher")).length >= 1, true);
+  assert.equal((await notices(budi.uid, "Substitute teacher")).length >= 1, true);
+});
+
+await step("cancel: the teacher may not cancel a timetable session; the admin cancels and both bookings come back", async () => {
+  await session7(S7E, {sessionDate: juneTuesday, startMinutes: 600, endMinutes: 690,
+    sessionTitle: `Flow Hari E ${RUN}`});
+  for (const s of [d20, d24]) {
+    const r = await call(s, "bookSession", {sessionId: S7E});
+    assert.ok(r.data, JSON.stringify(r.error));
+  }
+  assert.equal((await readDoc(`student_class_terms/${term7(d20)}`)).sessionsBooked, 1);
+  assert.equal(reasonOf(await call(budi, "cancelSession", {sessionId: S7E})), "admin-only");
+  const r = await call(admin, "cancelSession", {sessionId: S7E});
+  assert.ok(r.data, JSON.stringify(r.error));
+  assert.equal(r.data.returned, 2);
+  const s = await readDoc(`class_sessions/${S7E}`);
+  assert.equal(s.status, "cancelled");
+  assert.equal(s.bookedCount, 0);
+  for (const st of [d20, d24]) {
+    assert.equal((await readDoc(`student_class_terms/${term7(st)}`)).sessionsBooked, 0);
+    assert.equal((await readDoc(`attendance/${S7E}_${st.uid}`)).status, "cancelled");
+    assert.equal((await notices(st.uid, "Class cancelled")).length, 1);
+  }
+  const again = await call(admin, "cancelSession", {sessionId: S7E});
+  assert.ok(again.data);
+  assert.equal(again.data.returned, 0, "a second cancel returns nothing");
+  const rc = await call(admin, "reconcileVouchers", {});
+  const mine = new Set(day.map(term7));
+  assert.deepEqual(rc.data.mismatches.filter((m) => mine.has(m.termId)), []);
+});
+
+await step("confirm and change requests: the teacher confirms their own schedule, asks with a reason; the admin declines with a note", async () => {
+  const sc = (await queryDocs("schedules", "teacherId", clara.uid))
+      .find((d) => str(d.fields, "className") === `Flow Race ${RUN}`);
+  assert.ok(sc);
+  assert.equal(reasonOf(await call(budi, "confirmSchedule", {scheduleId: sc.id})), "not-yours");
+  assert.ok((await call(clara, "confirmSchedule", {scheduleId: sc.id})).data);
+  assert.equal((await readDoc(`schedules/${sc.id}`)).status, "confirmed");
+  assert.equal(reasonOf(await call(clara, "requestScheduleChange", {scheduleId: sc.id,
+    reason: " "})), "reason-required");
+  const req = await call(clara, "requestScheduleChange", {scheduleId: sc.id,
+    reason: "Exam week at my campus", wanted: "Thursday instead"});
+  assert.ok(req.data, JSON.stringify(req.error));
+  assert.equal((await readDoc(`schedule_change_requests/${req.data.requestId}`)).status, "open");
+  assert.equal((await call(clara, "resolveScheduleChange", {requestId: req.data.requestId,
+    accept: false})).error.status, "PERMISSION_DENIED");
+  const done = await call(admin, "resolveScheduleChange", {requestId: req.data.requestId,
+    accept: false, note: "Room is taken on Thursday"});
+  assert.ok(done.data);
+  const after = await readDoc(`schedule_change_requests/${req.data.requestId}`);
+  assert.equal(after.status, "declined");
+  assert.equal(after.note, "Room is taken on Thursday");
+  assert.equal((await notices(clara.uid, "Schedule change declined")).length, 1);
+});
+
+await step("teacher recap: one row per teacher with scheduled, held, cancelled and hours", async () => {
+  const r = await call(admin, "teacherRecap", {month: juneMonday.slice(0, 7).replace("-", "")});
+  assert.ok(r.data, JSON.stringify(r.error));
+  const b = r.data.rows.find((x) => x.teacherId === budi.uid);
+  assert.ok(b && b.cancelled >= 1 && b.scheduled >= 1, JSON.stringify(r.data.rows));
+  const now = await call(admin, "teacherRecap", {month: today7.slice(0, 7).replace("-", "")});
+  const b2 = now.data.rows.find((x) => x.teacherId === budi.uid);
+  assert.ok(b2 && b2.held >= 1 && b2.hours >= 1.5, JSON.stringify(b2));
+  assert.equal((await call(budi, "teacherRecap", {month: "202701"})).error.status,
+      "PERMISSION_DENIED");
+});
+
+await step("a forgotten one-attempt exam is closed by the hourly job", async () => {
+  const id = `flow7_exam_${RUN}_${d27.uid}`;
+  await setDocRaw(`exercise_attempts/${id}`, {studentId: d27.uid, exerciseId: "flow7_exam",
+    category: "exam", startedAt: new Date(Date.now() - 2 * 3600000), timeLimitSeconds: 600});
+  const r = await call(admin, "runTeachingDayPass", {attempts: true});
+  assert.ok(r.data && r.data.attempts >= 1, JSON.stringify(r));
+  const a = await readDoc(`exercise_attempts/${id}`);
+  assert.ok(a.finishedAt instanceof Date);
+  assert.equal(a.closedBy, "system");
+});
+
 console.log(`supervised flow: ${passed} steps passed`);

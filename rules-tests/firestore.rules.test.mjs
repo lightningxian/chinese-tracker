@@ -810,3 +810,47 @@ describe("generated sessions (Build 6)", () => {
     await assertFails(setDoc(doc(as("teacher3"), "class_sessions", "fake"), { teacherId: "teacher3", generated: true, sessionDate: "2027-01-06" }));
   });
 });
+
+// Build 7: the session's life and the voucher counters are written by
+// functions; staff keep only the attendance notes.
+describe("teaching day (Build 7)", () => {
+  it("session status fields are closed to clients; the teacher still edits a one-off", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "class_sessions", "o7"), { teacherId: "teacher1", sessionDate: "2027-01-05", isOpen: true, isConcluded: false });
+      await setDoc(doc(ctx.firestore(), "class_sessions", "g7"), { teacherId: "teacher1", scheduleId: "sc", generated: true, sessionDate: "2027-01-05", status: "scheduled" });
+    });
+    await assertSucceeds(updateDoc(doc(as("teacher1"), "class_sessions", "o7"), { sessionTitle: "New title", isOpen: false }));
+    for (const f of [{ status: "done" }, { isConcluded: true }, { checkInAt: 1 }, { lateCheckIn: false }, { teacherId: "teacher3" }, { bookedCount: 0 }]) {
+      await assertFails(updateDoc(doc(as("teacher1"), "class_sessions", "o7"), f));
+      await assertFails(updateDoc(doc(as("admin1"), "class_sessions", "g7"), f));
+    }
+    await assertFails(setDoc(doc(as("teacher1"), "class_sessions", "x7"), { teacherId: "teacher1", sessionDate: "2027-01-06", status: "done" }));
+    await assertFails(deleteDoc(doc(as("admin1"), "class_sessions", "g7")), "generated: cancel instead");
+    await assertSucceeds(deleteDoc(doc(as("teacher1"), "class_sessions", "o7")));
+  });
+  it("attendance: staff change notes only; a booking is not deleted by hand", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "attendance", "g7_student1"), { sessionId: "g7", studentId: "student1", teacherId: "teacher1", booked: true, classTermId: "t1", sessionCredited: false });
+      await setDoc(doc(ctx.firestore(), "attendance", "o7_student2"), { sessionId: "o7", studentId: "student2", teacherId: "teacher1", attended: true, joinedBy: "teacher", sessionCredited: false });
+    });
+    await assertSucceeds(updateDoc(doc(as("teacher1"), "attendance", "g7_student1"), { notes: "came late" }));
+    await assertFails(updateDoc(doc(as("teacher1"), "attendance", "g7_student1"), { attendanceStatus: "hadir" }));
+    await assertFails(updateDoc(doc(as("admin1"), "attendance", "g7_student1"), { sessionCredited: true }));
+    await assertFails(deleteDoc(doc(as("teacher1"), "attendance", "g7_student1")));
+    await assertSucceeds(deleteDoc(doc(as("teacher1"), "attendance", "o7_student2")), "a walk-in before the close");
+  });
+  it("change requests and recaps: functions write; the teacher reads their own", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "schedule_change_requests", "r1"), { teacherId: "teacher1", status: "open" });
+      await setDoc(doc(ctx.firestore(), "teacher_recaps", "teacher1_202701"), { teacherId: "teacher1", held: 1 });
+    });
+    await assertSucceeds(getDoc(doc(as("teacher1"), "schedule_change_requests", "r1")));
+    await assertFails(getDoc(doc(as("teacher3"), "schedule_change_requests", "r1")));
+    await assertSucceeds(getDoc(doc(as("admin1"), "schedule_change_requests", "r1")));
+    await assertFails(setDoc(doc(as("teacher1"), "schedule_change_requests", "r2"), { teacherId: "teacher1", status: "open" }));
+    await assertFails(updateDoc(doc(as("admin1"), "schedule_change_requests", "r1"), { status: "done" }));
+    await assertSucceeds(getDoc(doc(as("teacher1"), "teacher_recaps", "teacher1_202701")));
+    await assertFails(getDoc(doc(as("student1"), "teacher_recaps", "teacher1_202701")));
+    await assertFails(setDoc(doc(as("admin1"), "teacher_recaps", "teacher1_202701"), { held: 9 }));
+  });
+});

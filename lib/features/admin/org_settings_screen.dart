@@ -10,6 +10,7 @@ import '../../models/org_settings.dart';
 import '../../services/firestore_service.dart';
 import '../../services/progress_service.dart';
 import '../../services/rooms_service.dart';
+import '../teaching/admin_teaching_views.dart';
 
 /// Admin-only centre settings. Toggles persist immediately to `settings/org`
 /// and gate dependent features (payments, evaluations, teacher reschedule).
@@ -122,7 +123,11 @@ class OrgSettingsScreen extends StatelessWidget {
               const SizedBox(height: 10),
               // Build 4: rebuild every student's progress summary (once
               // after the deploy; the functions keep them after that).
-              const _RebuildSummariesCard(),              const SizedBox(height: 10),
+              const _RebuildSummariesCard(),
+              const SizedBox(height: 10),
+              // Build 7: vouchers against the ledger (VC-05).
+              const ReconcileVouchersCard(),
+              const SizedBox(height: 10),
               AppCard(
                 onTap: () => context.push('/admin/materials'),
                 child: _NavRow(

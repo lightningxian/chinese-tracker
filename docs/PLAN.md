@@ -2058,6 +2058,42 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
+### 2026-11-21 — Build 7 The teaching day — COMMIT, release v0.1.25 (DEPLOYSTATE)
+- Built: `functions/teaching_day.js` + `test_teaching_day.js`;
+  `checkInSession`, `closeSession` (one transaction, ledger, recap),
+  `confirmSchedule`, `requestScheduleChange`, `resolveScheduleChange`,
+  `substituteCandidates`, `assignSubstitute`, `cancelSession`,
+  `teacherRecap`, `reconcileVouchers`, `runTeachingDayPass`, the jobs
+  `sessionReminders` and `checkTeacherCheckIn`; rules; teacher Schedule
+  screen; admin Follow-up and Teacher recap on the Timetable; Voucher check
+  on Org settings; `tool/reconcile_vouchers.mjs`.
+- Must list: 1 Schedule screen · 2 confirm and change requests · 3
+  check-in · 4 attendance and close · 5 substitute, cancel, the admin
+  calendar lists generated sessions · 6 jobs (with the forgotten exam
+  attempts) · 7 recap · 8 reconciliation · 9 rules and tests. All done.
+- Choices: a teacher's own one-off session (not from the timetable) may
+  be closed without a check-in, so the old Classes flow keeps working;
+  walk-ins without a booking are charged from the oldest usable voucher;
+  a student with no usable voucher gets a ledger doc with 0 and
+  `noVoucher: true` and is listed in the result; the change request is
+  "done" after the admin edits the schedule with the normal form; a
+  forgotten exam attempt is closed with no score.
+- Acceptance walk: the flow test covers check-in (another teacher and a
+  student refused, server time, late), VC-01 with VC-03 (3 hadir, 1 izin,
+  1 alpa while one of them books another session: both succeed, counts
+  right, five ledger docs), VC-02 (second close: nothing), VC-05 (no
+  mismatch; a broken counter reported), reminder once, late flag once
+  with one admin notice, unclosed after 2 hours, substitute (the busy
+  teacher left out; everyone told), cancel (two bookings returned,
+  both told, a second cancel returns nothing), confirm and a declined
+  change request, the recap, a forgotten exam attempt. The new screens were walked on the emulator at 1280 px and 360 px: the teacher Schedule (Today changed live from Terjadwal to Berlangsung · Terlambat 20 mnt while the flow test checked in), the admin Follow-up and Teacher recap, and the admin Classes calendar listing timetable sessions with Mulai sesi / Guru pengganti / Batalkan sesi.
+- Proof: analyzer 17 infos; `flutter test` 150 pass (+4) and 2 skipped;
+  rules tests 80 pass (+3), 1 skipped; node tests pass (+
+  `test_teaching_day.js`); flow test 89/89.
+- Owner: DEPLOYNOTE
+- Left out: the "Then" items (printable day sheet, the class day picker in
+  the buy sheet; the dashboard cards are Build 8).
+
 ### 2026-11-21 — Build 6 Weekly timetable and booking — 0343ef7, release v0.1.24 (rules, indexes, functions and hosting live from the PC 2026-11-21 under the owner's standing go; 45 functions)
 - Built: `functions/scheduling.js` + `test_scheduling.js`;
   `checkScheduleConflict`, `saveSchedule` (locks), `generateSessions`

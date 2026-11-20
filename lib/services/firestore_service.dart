@@ -39,6 +39,7 @@ import '../models/lesson.dart';
 import '../models/quiz.dart';
 import '../models/quiz_result.dart';
 import '../models/student_progress.dart';
+import 'teaching_day_service.dart';
 
 class FirestoreService {
   FirestoreService({FirebaseFirestore? firestore})
@@ -1544,126 +1545,25 @@ class FirestoreService {
         .delete();
   }
 
-  /// Concludes a class. [statuses] maps studentId → `hadir` | `izin` | `alpa`
-  /// (see [AttendanceRecord]); students not in the map keep their stored
-  /// status, defaulting to hadir. Hadir and alpa charge one session; izin
-  /// (excused before class) is recorded but not charged.
+  /// Concludes a class through the `closeSession` function (Build 7): one
+  /// transaction that charges the vouchers, writes the voucher ledger and
+  /// closes the session; a second call changes nothing. [statuses] maps
+  /// studentId → `hadir` | `izin` | `alpa`; hadir and alpa use a session,
+  /// izin only returns a booking.
   Future<ConcludeClassResult> concludeClassSession(
     String sessionId, {
     Map<String, String> statuses = const {},
   }) async {
-    final session = await getClassSession(sessionId);
-    if (session == null) {
-      throw const ClassConcludeException('Class not found.');
-    }
-    if (session.isConcluded) {
-      throw const ClassConcludeException('This class is already concluded.');
-    }
-
-    final attendanceSnap = await _db
-        .collection(AppConstants.attendanceCollection)
-        .where('sessionId', isEqualTo: sessionId)
-        .get();
-
-    var creditedCount = 0;
-    var excusedCount = 0;
-    final failedStudents = <String>[];
-
-    for (final doc in attendanceSnap.docs) {
-      final record = AttendanceRecord.fromFirestore(doc);
-      if (!record.attended || record.sessionCredited) continue;
-
-      final status = statuses[record.studentId] ??
-          record.normalizedStatus ??
-          AttendanceRecord.hadir;
-      if (status == AttendanceRecord.izin) {
-        await doc.reference.update({'attendanceStatus': status});
-        excusedCount++;
-        continue;
-      }
-
-      final name = record.studentName?.isNotEmpty == true
-          ? record.studentName!
-          : 'Student';
-
-      try {
-        final classTermId = await _deductClassSession(record.studentId);
-        await doc.reference.update({
-          'classTermId': classTermId,
-          'sessionCredited': true,
-          'attendanceStatus': status,
-        });
-        creditedCount++;
-      } on NoClassCreditsException {
-        await doc.reference.update({'attendanceStatus': status});
-        failedStudents.add(name);
-      }
-    }
-
-    await _db
-        .collection(AppConstants.classSessionsCollection)
-        .doc(sessionId)
-        .update({
-      'isConcluded': true,
-      'isOpen': false,
-      'concludedAt': FieldValue.serverTimestamp(),
-    });
-
-    return ConcludeClassResult(
-      creditedCount: creditedCount,
-      failedStudents: failedStudents,
-      excusedCount: excusedCount,
-    );
-  }
-
-  Future<StudentClassTerm?> _getOldestActiveTerm(String studentId) async {
-    final snap = await _db
-        .collection(AppConstants.studentClassTermsCollection)
-        .where('studentId', isEqualTo: studentId)
-        .where('status', isEqualTo: StudentClassTerm.statusActive)
-        .get();
-
-    final terms = snap.docs.map(StudentClassTerm.fromFirestore).toList()
-      ..removeWhere(
-        (t) => t.sessionsRemaining <= 0 || !t.isWithinTermDates,
+    try {
+      final r = await TeachingDayService().close(sessionId, statuses);
+      return ConcludeClassResult(
+        creditedCount: r.credited,
+        failedStudents: r.failed,
+        excusedCount: r.excused,
       );
-
-    if (terms.isEmpty) return null;
-
-    terms.sort((a, b) {
-      final aTime = a.purchasedAt ?? a.createdAt ?? DateTime(1970);
-      final bTime = b.purchasedAt ?? b.createdAt ?? DateTime(1970);
-      return aTime.compareTo(bTime);
-    });
-    return terms.first;
-  }
-
-  /// Deducts one session from the student's oldest active term package.
-  Future<String> _deductClassSession(String studentId) async {
-    final term = await _getOldestActiveTerm(studentId);
-    if (term == null || term.sessionsRemaining <= 0) {
-      throw const NoClassCreditsException();
+    } on TeachingDayException catch (e) {
+      throw ClassConcludeException(e.message);
     }
-
-    final ref =
-        _db.collection(AppConstants.studentClassTermsCollection).doc(term.id);
-    await _db.runTransaction((tx) async {
-      final snap = await tx.get(ref);
-      if (!snap.exists) throw const NoClassCreditsException();
-      final data = snap.data()!;
-      final remaining = data['sessionsRemaining'] as int? ?? 0;
-      if (remaining <= 0) throw const NoClassCreditsException();
-      final used = data['sessionsUsed'] as int? ?? 0;
-      final newRemaining = remaining - 1;
-      tx.update(ref, {
-        'sessionsRemaining': newRemaining,
-        'sessionsUsed': used + 1,
-        'status': newRemaining <= 0
-            ? StudentClassTerm.statusDepleted
-            : StudentClassTerm.statusActive,
-      });
-    });
-    return term.id;
   }
 
   Future<void> _refundClassSession(String classTermId) async {

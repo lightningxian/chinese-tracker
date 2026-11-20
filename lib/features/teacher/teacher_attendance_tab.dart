@@ -11,7 +11,6 @@ import '../../core/errors/conclude_errors.dart';
 import '../../core/errors/session_errors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
-import '../../core/widgets/conclude_class_dialog.dart';
 import '../../core/widgets/responsive_card_grid.dart';
 import '../../core/widgets/status_pill.dart';
 import '../../l10n/l10n.dart';
@@ -20,7 +19,7 @@ import '../../models/attendance_record.dart';
 import '../../models/class_session.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
-import '../../services/notification_service.dart';
+import '../teaching/session_life.dart';
 
 /// Classes tab: one calendar for upcoming and past classes. Tap a day to see
 /// its classes (open or concluded) and to create a class on that date.
@@ -65,7 +64,10 @@ class _TeacherAttendanceTabState extends State<TeacherAttendanceTab> {
     final teacherId = AppConstants.contentTeacherId(user);
 
     return StreamBuilder<List<ClassSession>>(
-      stream: context.read<FirestoreService>().watchTeacherSessions(teacherId),
+      // Build 7: the admin sees every session, the timetable's too.
+      stream: user.isAdmin
+          ? context.read<FirestoreService>().watchAllClassSessions()
+          : context.read<FirestoreService>().watchTeacherSessions(teacherId),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -94,6 +96,32 @@ class _TeacherAttendanceTabState extends State<TeacherAttendanceTab> {
             return ListView(
               padding: const EdgeInsets.fromLTRB(padding, 8, padding, 88),
               children: [
+                // Build 7: the teacher's day lives on the Schedule screen.
+                if (!user.isAdmin) ...[
+                  AppCard(
+                    onTap: () => context.push('/teacher/schedule'),
+                    child: Row(
+                      children: [
+                        Icon(Icons.today_outlined, color: AppColors.teal),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(l.scheduleTitle,
+                                  style: const TextStyle(fontWeight: FontWeight.w700)),
+                              Text(l.scheduleEntryHint,
+                                  style: TextStyle(
+                                      color: AppColors.textSecondary, fontSize: 12)),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.chevron_right),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                ],
                 AppCard(
                   padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
                   child: TableCalendar<ClassSession>(
@@ -236,59 +264,10 @@ class _TeacherClassCard extends StatefulWidget {
 
 class _TeacherClassCardState extends State<_TeacherClassCard> {
   bool _deleting = false;
-  bool _concluding = false;
   final Set<String> _busyStudentIds = {};
 
   ClassSession get session => widget.session;
   bool get historyMode => widget.historyMode;
-
-  Future<void> _confirmConclude() async {
-    final statuses = await ConcludeClassDialog.show(
-      context,
-      sessionId: session.id,
-      sessionTitle: session.sessionTitle,
-    );
-    if (statuses == null || !mounted) return;
-    final l = context.l10n;
-
-    setState(() => _concluding = true);
-    final firestore = context.read<FirestoreService>();
-    final notifications = context.read<NotificationService>();
-    try {
-      final result =
-          await firestore.concludeClassSession(session.id, statuses: statuses);
-      final summary = l.teacherAttConcludeSummary(
-        result.creditedCount,
-        result.excusedCount,
-      );
-      await notifications.notifySession(
-        title: l.teacherAttClassConcludedTitle,
-        body: l.teacherAttClassConcludedBody(session.sessionTitle, summary),
-      );
-      if (mounted) {
-        final msg = result.hasFailures
-            ? l.teacherAttConcludedWithFailures(
-                result.creditedCount,
-                result.failedStudents.join(', '),
-              )
-            : l.teacherAttConcludedSnack(summary);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg)),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_errorMessage(e)),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _concluding = false);
-    }
-  }
 
   Future<void> _addStudent(AppUser student) async {
     if (_busyStudentIds.contains(student.uid)) return;
@@ -528,13 +507,6 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
     return StatusPills.closed();
   }
 
-  ButtonStyle get _compactButtonStyle => FilledButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        minimumSize: const Size(0, 34),
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-      );
-
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
@@ -544,7 +516,7 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
         ? DateFormat('EEE, d MMM yyyy').format(date)
         : session.sessionDate;
     final concluded = session.isConcluded || historyMode;
-    final busy = _deleting || _concluding;
+    final busy = _deleting;
 
     return Stack(
       children: [
@@ -561,7 +533,7 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
                 stream: firestore.watchSessionAttendance(session.id),
                 builder: (context, attendanceSnap) {
                   final records = (attendanceSnap.data ?? [])
-                      .where((r) => r.attended)
+                      .where((r) => r.inClass)
                       .toList();
                   final joined = records.length;
                   final joinedIds = records.map((r) => r.studentId).toSet();
@@ -632,6 +604,8 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
+                                const SizedBox(height: 6),
+                                SessionStatusChips(session: session),
                                 if (concluded && session.concludedAt != null)
                                   Padding(
                                     padding: const EdgeInsets.only(top: 2),
@@ -659,18 +633,8 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
                         runSpacing: 8,
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
-                          if (!concluded)
-                            FilledButton.icon(
-                              onPressed: busy ? null : _confirmConclude,
-                              icon: const Icon(Icons.done_all, size: 16),
-                              label: Text(l.teacherAttConclude),
-                              style: _compactButtonStyle.copyWith(
-                                backgroundColor: WidgetStatePropertyAll(
-                                  AppColors.teal,
-                                ),
-                              ),
-                            ),
-                          if (!concluded)
+                          SessionLifeActions(session: session),
+                          if (!concluded && !session.generated)
                             OutlinedButton.icon(
                               onPressed: busy
                                   ? null
@@ -693,6 +657,7 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
                                 ),
                               ),
                             ),
+                          if (!session.generated && !concluded)
                           OutlinedButton.icon(
                             onPressed: busy ? null : _confirmDelete,
                             icon: const Icon(Icons.delete_outline, size: 16),
@@ -846,7 +811,7 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
             },
           ),
         ),
-        if (_deleting || _concluding)
+        if (_deleting)
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(

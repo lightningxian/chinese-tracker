@@ -54,7 +54,7 @@ retake" and "P6 Admin screen to edit weights" are superseded by the table above.
 | 06 | Test token entry with code and duration | Nothing | Build (Phase 5 supervised flow) |
 | 07 | Leaderboard per code, masked names, own row highlighted | **Done (Build 2B, 2026-11-20):** student Tests tab, a result, **Leaderboard** (Chinese names, own row in a teal frame, medals for the top 3) | Screenshot on the emulator or live after deploy |
 | 08 | Laporan Progress: "2 dari 3", KPI cards, chart, per-skill, note, test history | Build 4: the report screen (`fl_chart` line chart) on the student Progress tab, the parent tab and the staff student page | Done (take on live) |
-| 09 | Guru: Jadwal Mengajar with status, Mulai Sesi / Isi Absensi / Konfirmasi, availability | Classes tab + calendar; no status/check-in/confirm/availability | Build (Phase 2–3) |
+| 09 | Guru: Jadwal Mengajar with status, Mulai Sesi / Isi Absensi / Konfirmasi, availability | Build 7: teacher **Schedule** (Today / Week / Availability) with status chips, Mulai sesi, Tutup sesi (attendance), Konfirmasi, Ajukan perubahan | Done |
 | 10 | Guru: supervision screen with big token and "left page" events | Nothing | Build (Phase 5) |
 | 11 | Admin: create jadwal with clash warning + free-slot suggestions | One-off session form, no clash check | Build jadwal + `checkScheduleConflict` (Phase 2) |
 | 12 | Admin: registration approval with placement choice | Build 3: Users → **Approval** (badge), one card per pending student with the choice, the placement result, teacher and level pickers, Approve / Reject | Done (take on live) |
@@ -177,20 +177,20 @@ Status per spec item. Evidence is `file:line` in this repo.
 | P2 Admin repeating schedule (level/weekdays/time/room/teacher/quota/valid period) | Missing | One-off sessions only (`firestore_service.dart:781-845`); admin sessions get `CONTENT_OWNER_ID` as teacher (`app_router.dart:225-231`) | class_sessions |
 | P2 Conflict check function with suggestions | Missing | Not found | — |
 | P2 Scheduled generateSessions | Missing | Only `cleanupExpiredLinkCodes` and `dailyReminders` are scheduled | — |
-| P2 Teacher schedule screen with confirm + request change | Missing | Calendar and list only (`class_calendar_screen.dart`) | class calendar |
-| P2 Schedule confirmation status | Missing | `registrationState` is about student registration | — |
-| P2 Substitute teacher picker | Missing | `updateClassSession` never changes teacherId | — |
-| P2 Cancel session returning bookings | Partly | `deleteClassSession` hard-deletes, no refund, no notification (`firestore_service.dart:847-860`) | deleteClassSession |
+| P2 Teacher schedule screen with confirm + request change | Done (Build 7) | `teacher_schedule_screen.dart`; `confirmSchedule`, `requestScheduleChange`, `resolveScheduleChange` | TeacherScheduleScreen |
+| P2 Schedule confirmation status | Done (Build 7) | `schedules.status` unconfirmed / confirmed; admin Follow-up lists the unconfirmed | schedules |
+| P2 Substitute teacher picker | Done (Build 7) | `substituteCandidates` + `assignSubstitute` (everyone told) | session_life.dart |
+| P2 Cancel session returning bookings | Done (Build 7) | `cancelSession` returns every booking and tells the students; a schedule switched off cancels its future sessions | cancelSession |
 | P2 Student bookSession callable with quota/voucher/overlap checks | Partly | In-app `joinSession` (`firestore_service.dart:1239-1281,1329-1353`); capacity count can race; balance not reserved; no overlap check | joinSession |
 | P2 cancelBooking | Partly | `leaveSession` in-app (`:1303-1327`); no cutoff | leaveSession |
 | P2 Student session list with seats left + book button | Done | `student_join_session_section.dart:213,252-282` | StudentJoinSessionSection |
-| **P3** sessionReminder 1h before | Missing | Not found | — |
-| P3 Teacher check-in with server time | Missing | Not found | — |
-| P3 checkTeacherCheckIn late notify | Missing | Not found | — |
+| **P3** sessionReminder 1h before | Done (Build 7) | `sessionReminders` hourly, once per session (`reminderSentAt`) | sessionReminders |
+| P3 Teacher check-in with server time | Done (Build 7) | `checkInSession` (30 min before to the end; late > 15 min stored) | checkInSession |
+| P3 checkTeacherCheckIn late notify | Done (Build 7) | every 15 minutes; flagged once, one admin notice | checkTeacherCheckIn |
 | P3 Attendance hadir/izin/alpa | Partly | Teacher picks hadir / izin / alpa per student when concluding the class (`conclude_class_dialog.dart`); izin is not charged. History shows Present / Excused / Absent (2026-11-11). No change after conclude (`setAttendanceStatus` unused) | ConcludeClassDialog |
-| P3 closeSession transaction, idempotent, ledger | Partly | `concludeClassSession` in-app (`:1100-1147`), not atomic overall | concludeClassSession |
-| P3 Unclosed-session flag 2h after | Missing | Not found | — |
-| P3 Teacher monthly recap | Missing | Only "classes this week" count | — |
+| P3 closeSession transaction, idempotent, ledger | Done (Build 7) | `closeSession`: one transaction, `voucher_history/{sessionId}_{studentId}`, VC-01/02/03 in the flow test | closeSession |
+| P3 Unclosed-session flag 2h after | Done (Build 7) | `unclosed: true`, admin Follow-up list | checkTeacherCheckIn |
+| P3 Teacher monthly recap | Done (Build 7) | `teacher_recaps` + `teacherRecap`; admin Timetable → Teacher recap with CSV | TeacherRecapView |
 | **P4** Voucher packages catalog | Done (Build 5) | Price list with `nameChinese`, `validDays`, `active` | `settings/pricing.items` |
 | P4 Student voucher screen (remaining/expiry/history/buy) | Done (Build 5) | `voucher_widgets.dart` on the student and parent Payments tabs | VoucherSection |
 | P4 createMidtransTransaction | Done (Build 5) | `createInvoice` for students (own uid) and linked parents, terms required | createInvoice |
@@ -231,5 +231,5 @@ Status per spec item. Evidence is `file:line` in this repo.
 | **Testing** seed script | Partly | `scripts/seed_test_accounts.sh`, `seed_report_demo_data.py`, run against live | seed scripts |
 | Testing question import (CSV/JSON + audio) | Partly | Built-in HSK paper reader (2026-11-17, Build 1B: scanned PDF → 80 slots by the HSK format, pictures, proofreading screen, answer key incl. writing, no outside service; **Build 1C 2026-11-18**: PP-OCRv5 in the browser, 79 of 80 right as read on the practice paper `H399001P` against 37 before, flags by HSK level and stray marks, tone buttons for pinyin, a proofreading record per worksheet for the thesis test chapter, **Download text** as a truth file) + AI paper reader (off on live) + paste + on-device OCR; one recording per worksheet up to 60 MB with a transcript; no CSV/JSON | Worksheet import |
 | Testing emulator rules tests | Done | `rules-tests/firestore.rules.test.mjs`, 30 pass (`npm --prefix rules-tests run test:emulator`) | rules-tests |
-| Testing reconciliation script | Missing | Not found | — |
+| Testing reconciliation script | Done (Build 7) | `reconcileVouchers` + `tool/reconcile_vouchers.mjs` + Org settings Voucher check (VC-05) | reconcileVouchers |
 | Testing unit tests NA formula / typing matcher | Typing matcher done (2026-11-17); NA formula dropped by v2 | `functions/test_typing_matcher.js` (PN-02, PN-03), `functions/test_marking.js`, PN-01 agreement script `functions/pn01_agreement.js` (fixture 6 of 6 = 100%; the 200 real answers come from the trial) | — |

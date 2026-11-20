@@ -57,7 +57,40 @@ class ClassSession {
     this.registrationState,
     this.concludedAt,
     this.createdAt,
+    this.status = '',
+    this.generated = false,
+    this.scheduleId = '',
+    this.teacherName = '',
+    this.level = '',
+    this.bookedCount = 0,
+    this.lateCheckIn = false,
+    this.lateMinutes = 0,
+    this.unclosed = false,
+    this.substituteFor = '',
+    this.checkInAt,
   });
+
+  /// Build 7: `scheduled`, `ongoing`, `done`, `cancelled`,
+  /// `needs_teacher` (written by functions; empty on old one-off sessions).
+  final String status;
+  final bool generated;
+  final String scheduleId;
+  final String teacherName;
+  final String level;
+  final int bookedCount;
+  final bool lateCheckIn;
+  final int lateMinutes;
+  final bool unclosed;
+  final String substituteFor;
+  final DateTime? checkInAt;
+
+  /// The life status, with old sessions read from `isConcluded`.
+  String get lifeStatus => status.isNotEmpty
+      ? status
+      : (isConcluded ? 'done' : 'scheduled');
+  bool get isCancelled => lifeStatus == 'cancelled';
+  bool get isOngoing => lifeStatus == 'ongoing';
+  bool get isClosedOrCancelled => isConcluded || isCancelled || lifeStatus == 'done';
 
   final String id;
   final String teacherId;
@@ -103,6 +136,17 @@ class ClassSession {
           RegistrationState.fromValue(data['registrationState'] as String?),
       concludedAt: (data['concludedAt'] as Timestamp?)?.toDate(),
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
+      status: data['status'] as String? ?? '',
+      generated: data['generated'] as bool? ?? false,
+      scheduleId: data['scheduleId'] as String? ?? '',
+      teacherName: data['teacherName'] as String? ?? '',
+      level: data['level'] as String? ?? '',
+      bookedCount: (data['bookedCount'] as num?)?.toInt() ?? 0,
+      lateCheckIn: data['lateCheckIn'] as bool? ?? false,
+      lateMinutes: (data['lateMinutes'] as num?)?.toInt() ?? 0,
+      unclosed: data['unclosed'] as bool? ?? false,
+      substituteFor: data['substituteFor'] as String? ?? '',
+      checkInAt: (data['checkInAt'] as Timestamp?)?.toDate(),
     );
   }
 

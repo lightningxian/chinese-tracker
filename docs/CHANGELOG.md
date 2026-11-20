@@ -6,6 +6,68 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-21 — Claude (BUILD chat): Build 7 — the teaching day
+
+**What changed**
+- **Close in one transaction (VC-01, VC-02, VC-03):** `closeSession`
+  (teacher of the session or admin) marks every booked student and walk-in
+  hadir / izin / alpa, moves the voucher counters (hadir and alpa: booked
+  −1, used +1, remaining −1; izin: booked −1 only), writes one ledger doc
+  `voucher_history/{sessionId}_{studentId}` per student, sets the session
+  `done` and adds the session to `teacher_recaps/{teacherId}_{yyyyMM}`, all
+  in one transaction. A second call changes nothing. The conclude dialog
+  now calls it; the in-app deduction is gone. Walk-ins without a booking
+  are charged from their oldest usable voucher, as before.
+- **Check-in:** `checkInSession` with the server time, from 30 minutes
+  before the start to the end; more than 15 minutes late is stored
+  (`lateMinutes`, `lateCheckIn`). A teacher's own one-off session can still
+  be closed without a check-in.
+- **Substitute and cancel:** `substituteCandidates` (free at that time, the
+  level, no clash; Build 6's check) and `assignSubstitute` (transaction;
+  both teachers and the booked students told); `cancelSession` (admin, or
+  the teacher for their own one-off) returns every booking and tells the
+  students; switching a schedule off cancels its future sessions.
+- **Confirm and change requests:** `confirmSchedule`,
+  `requestScheduleChange` (`schedule_change_requests`, admins told),
+  `resolveScheduleChange` (done or declined with a note, teacher told).
+- **Jobs:** `sessionReminders` (hourly: one reminder an hour before, to the
+  teacher and the booked students; also closes forgotten one-attempt exams,
+  the Build 2A leftover) and `checkTeacherCheckIn` (every 15 minutes: late
+  check-in flagged once with one admin notice; unclosed 2 hours after the
+  end). `runTeachingDayPass` (admin) runs the same pass by hand.
+- **Recap and reconciliation (VC-05):** `teacherRecap` (scheduled, held,
+  cancelled, late check-ins, hours per teacher and month) and
+  `reconcileVouchers` (each voucher's used sessions against the ledger,
+  booked sessions against the open bookings; usage from before the ledger
+  is remembered in `ledgerBaseUsed`). `tool/reconcile_vouchers.mjs` runs it
+  from the command line.
+- **Screens:** teacher **Schedule** (`/teacher/schedule`, from the Classes
+  tab): Today (status chips, booked students, Mulai sesi, Tutup sesi),
+  Week (confirm, ask for a change, my requests, next 7 days), Availability.
+  The Classes calendar card shows the status chips and the same buttons
+  (admins also Substitute and Cancel); the admin Classes calendar now lists
+  every session, the timetable's too. Admin Timetable gains **Follow-up**
+  (change requests, unconfirmed schedules, late / unclosed / no-teacher
+  sessions) and **Teacher recap** (month, table, CSV). Org settings gains
+  **Voucher check**.
+- **Rules:** the session's life fields (`status`, check-in, flags,
+  `isConcluded`, `teacherId`, `bookedCount`) are written only by
+  functions; a generated or concluded session cannot be deleted; staff
+  change only `notes` on attendance and cannot delete a booking;
+  `schedule_change_requests` and `teacher_recaps` are read by the teacher
+  concerned and admins, written by functions.
+
+**Why**
+- Build 7 of `docs/PLAN.md` §4 (spec §5; owner decision 9; the examiners'
+  condition "voucher deduction in one transaction, idempotent").
+
+**For review**
+- Deploy rules and functions (11 new callables, 2 new jobs: 58 in all), then hosting.
+  The teachers confirm their schedules; the first real session is closed
+  through the app and the recap checked. Press **Voucher check** once.
+
+---
+
 ## 2026-11-21 — Claude (BUILD chat): Build 6 — weekly timetable and booking
 
 **What changed**

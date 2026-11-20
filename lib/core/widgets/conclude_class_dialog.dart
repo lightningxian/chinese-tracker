@@ -93,7 +93,7 @@ class _ConcludeClassDialogState extends State<ConcludeClassDialog> {
           );
         }
         final pending = (snap.data ?? const [])
-            .where((r) => r.attended && !r.sessionCredited)
+            .where((r) => r.inClass && !r.sessionCredited && !r.closed)
             .toList()
           ..sort((a, b) => nameOf(a).compareTo(nameOf(b)));
 

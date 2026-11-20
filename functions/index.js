@@ -3741,7 +3741,9 @@ exports.saveSchedule = onCall(async (request) => {
     detail: `${s.className} · ${sched.WEEKDAY_NAMES[s.weekday]} ` +
       `${sched.clock(s.startMinutes)}–${sched.clock(s.endMinutes)} · ${s.room}`});
   const generated = await generateSessionsNow({scheduleIds: [out.scheduleId]});
-  return {ok: true, scheduleId: out.scheduleId, warnings: out.warnings, ...generated};
+  // Build 7: switching a schedule off cancels its future sessions.
+  const cancelled = s.active === false ? await cancelFutureSessions(out.scheduleId) : 0;
+  return {ok: true, scheduleId: out.scheduleId, warnings: out.warnings, ...generated, cancelled};
 });
 
 /**
@@ -3938,4 +3940,542 @@ exports.cancelBooking = onCall(async (request) => {
     }
     return {cancelled: true};
   });
+});
+
+// ---------------------------------------------------------------------------
+// Build 7 (docs/PLAN.md §4): the teaching day. Confirmation and change
+// requests, check-in with server time, the close in ONE idempotent
+// transaction that writes the voucher ledger (VC-01, VC-02, VC-03),
+// substitutes and cancellations, reminders and late / unclosed flags, the
+// monthly recap and reconciliation (VC-05). Pure logic in teaching_day.js.
+// ---------------------------------------------------------------------------
+const tday = require("./teaching_day");
+const CHANGE_REQUESTS = "schedule_change_requests";
+const TEACHER_RECAPS = "teacher_recaps";
+
+async function requireSessionStaff(request, session) {
+  const caller = await requireStaff(request);
+  if (caller.profile.role !== "admin" && session.teacherId !== caller.uid) {
+    throw new HttpsError("permission-denied", "This is another teacher's session.",
+        {reason: "not-yours"});
+  }
+  return caller;
+}
+
+async function loadSession(id) {
+  const sid = String(id || "").trim();
+  if (!sid || sid.includes("/")) throw new HttpsError("invalid-argument", "sessionId is required.");
+  const ref = db.collection(CLASS_SESSIONS).doc(sid);
+  const snap = await ref.get();
+  if (!snap.exists) throw new HttpsError("not-found", "Session not found.");
+  return {ref, session: snap.data() || {}};
+}
+
+/** Teacher: confirm their own schedule. */
+exports.confirmSchedule = onCall(async (request) => {
+  const {uid} = await requireStaff(request);
+  const ref = db.collection(SCHEDULES).doc(String((request.data || {}).scheduleId || ""));
+  const snap = await ref.get();
+  if (!snap.exists) throw new HttpsError("not-found", "Schedule not found.");
+  if ((snap.data() || {}).teacherId !== uid) {
+    throw new HttpsError("permission-denied", "Not your schedule.", {reason: "not-yours"});
+  }
+  await ref.update({status: "confirmed", confirmedAt: FieldValue.serverTimestamp()});
+  return {status: "confirmed"};
+});
+
+/** Teacher: ask the admin for a change to a schedule. */
+exports.requestScheduleChange = onCall(async (request) => {
+  const {uid, profile} = await requireStaff(request);
+  const data = request.data || {};
+  const scheduleId = String(data.scheduleId || "");
+  const reason = String(data.reason || "").trim().slice(0, 500);
+  const wanted = String(data.wanted || "").trim().slice(0, 500);
+  if (!reason) throw new HttpsError("invalid-argument", "Give a reason.", {reason: "reason-required"});
+  const s = await db.collection(SCHEDULES).doc(scheduleId).get();
+  if (!s.exists || (s.data() || {}).teacherId !== uid) {
+    throw new HttpsError("permission-denied", "Not your schedule.", {reason: "not-yours"});
+  }
+  const ref = await db.collection(CHANGE_REQUESTS).add({scheduleId, teacherId: uid,
+    teacherName: latinName(profile), className: (s.data() || {}).className || "", reason, wanted,
+    status: "open", createdAt: FieldValue.serverTimestamp()});
+  await db.collection(NOTIFICATIONS).add({kind: "session", title: "Schedule change request",
+    body: `${latinName(profile)}: ${(s.data() || {}).className || ""} — ${reason}`,
+    forRole: "admin", userId: "", targetRoute: "/admin/timetable", read: false,
+    createdAt: FieldValue.serverTimestamp()});
+  return {requestId: ref.id};
+});
+
+/** Admin: resolve a change request (done or declined with a note). */
+exports.resolveScheduleChange = onCall(async (request) => {
+  await requireAdmin(request);
+  const data = request.data || {};
+  const ref = db.collection(CHANGE_REQUESTS).doc(String(data.requestId || ""));
+  const snap = await ref.get();
+  if (!snap.exists) throw new HttpsError("not-found", "Request not found.");
+  const status = data.accept === true ? "done" : "declined";
+  const note = String(data.note || "").trim().slice(0, 500);
+  await ref.update({status, note, resolvedAt: FieldValue.serverTimestamp()});
+  const r = snap.data() || {};
+  await db.collection(NOTIFICATIONS).add({kind: "session",
+    title: status === "done" ? "Schedule change done" : "Schedule change declined",
+    body: `${r.className || ""}${note ? ` — ${note}` : ""}`, forRole: "teacher",
+    userId: r.teacherId || "", targetRoute: "/teacher", read: false,
+    createdAt: FieldValue.serverTimestamp()});
+  return {status};
+});
+
+/** Teacher of the session or admin: check in with the server's time. */
+exports.checkInSession = onCall(async (request) => {
+  const {ref, session} = await loadSession((request.data || {}).sessionId);
+  await requireSessionStaff(request, session);
+  if ((session.status || "scheduled") !== "scheduled" || session.isConcluded === true) {
+    throw new HttpsError("failed-precondition", "This session cannot start.",
+        {reason: session.status || "closed"});
+  }
+  const d = tday.checkInDecision(session, Date.now());
+  if (!d.ok) throw new HttpsError("failed-precondition", "Not inside the check-in window.", {reason: d.reason});
+  await ref.update({status: "ongoing", checkInAt: FieldValue.serverTimestamp(),
+    lateMinutes: d.lateMinutes, ...(d.lateMinutes ? {lateCheckIn: true} : {})});
+  return {status: "ongoing", lateMinutes: d.lateMinutes};
+});
+
+/**
+ * Close a session in ONE transaction, idempotent (VC-02): every booked
+ * student's attendance status, the term counters (hadir / alpa use a
+ * session, izin returns the booking), one ledger doc per student with a
+ * fixed id, the session `done`, the teacher's month recap.
+ * data: {sessionId, statuses: {studentId: 'hadir'|'izin'|'alpa'}}
+ */
+exports.closeSession = onCall(async (request) => {
+  const data = request.data || {};
+  const {ref, session} = await loadSession(data.sessionId);
+  const {profile} = await requireSessionStaff(request, session);
+  const byAdmin = profile.role === "admin";
+  const statuses = data.statuses && typeof data.statuses === "object" ? data.statuses : {};
+  const attSnap = await db.collection("attendance").where("sessionId", "==", ref.id).get();
+  // Students added by the teacher (no booking) are charged from their
+  // oldest usable term, as the old client-side close did.
+  const legacyIds = [...new Set(attSnap.docs.map((d) => d.data() || {})
+      .filter((a) => a.booked !== true && a.attended === true && !a.classTermId)
+      .map((a) => a.studentId).filter(Boolean))];
+  const legacyTerms = {};
+  for (const sid of legacyIds) {
+    const q = await db.collection(CLASS_TERMS).where("studentId", "==", sid).get();
+    const t = sched.termForBooking(q.docs.map((d) => ({id: d.id, ...(d.data() || {})})),
+        session.sessionDate);
+    if (t) legacyTerms[sid] = t.id;
+  }
+  return db.runTransaction(async (tx) => {
+    const cur = await tx.get(ref);
+    const s = cur.data() || {};
+    const status = s.status || (s.isConcluded ? "done" : "scheduled");
+    // A one-off session made by a teacher has no check-in step.
+    const decision = tday.closeDecision(status, byAdmin || s.generated !== true);
+    if (decision === "already-done") {
+      return {status: "done", already: true, credited: 0, excused: 0, failed: []};
+    }
+    // A timetable session that has not started yet is not closed by anyone.
+    const early = s.generated === true && status === "scheduled" &&
+      Date.now() < tday.atMs(s.sessionDate, s.startMinutes);
+    if (decision !== "close" || early) {
+      throw new HttpsError("failed-precondition", "Start the session first.",
+          {reason: early ? "not-started" : decision});
+    }
+    const atts = [];
+    for (const d of attSnap.docs) {
+      const a = (await tx.get(d.ref)).data() || {};
+      if (a.sessionCredited === true || a.closed === true || a.status === "cancelled") continue;
+      if (a.booked !== true && a.attended !== true) continue;
+      atts.push({ref: d.ref, a, termId: a.classTermId || legacyTerms[a.studentId] || ""});
+    }
+    const termIds = [...new Set(atts.map((x) => x.termId).filter(Boolean))];
+    const terms = {};
+    for (const id of termIds) {
+      const snap = await tx.get(db.collection(CLASS_TERMS).doc(id));
+      if (snap.exists) {
+        const t = snap.data() || {};
+        terms[id] = {ref: snap.ref, t, base: t.ledgerBaseUsed === undefined ?
+          Number(t.sessionsUsed) || 0 : null};
+      }
+    }
+    const recapRef = db.collection(TEACHER_RECAPS)
+        .doc(`${s.teacherId}_${tday.monthKey(s.sessionDate)}`);
+    const recap = await tx.get(recapRef);
+    let credited = 0;
+    let excused = 0;
+    const failed = [];
+    for (const {ref: aRef, a, termId} of atts) {
+      const st = ["hadir", "izin", "alpa"].includes(statuses[a.studentId]) ?
+        statuses[a.studentId] : (["hadir", "izin", "alpa"].includes(a.attendanceStatus) ?
+          a.attendanceStatus : (a.booked === true ? "alpa" : "hadir"));
+      const raw = tday.closeEffect(st);
+      // Only a booking holds a reserved session to give back.
+      const eff = {...raw, booked: a.booked === true ? raw.booked : 0};
+      const entry = terms[termId];
+      const usable = Boolean(entry) && (eff.used === 0 ||
+        (Number(entry.t.sessionsRemaining) || 0) + eff.remaining >= 0);
+      if (usable) {
+        const t = entry.t;
+        entry.t = {...t,
+          sessionsBooked: Math.max(0, (Number(t.sessionsBooked) || 0) + eff.booked),
+          sessionsUsed: (Number(t.sessionsUsed) || 0) + eff.used,
+          sessionsRemaining: Math.max(0, (Number(t.sessionsRemaining) || 0) + eff.remaining)};
+      }
+      const charged = usable && eff.used > 0;
+      if (st === "izin") excused += 1;
+      else if (charged) credited += 1;
+      else failed.push(a.studentName || a.studentId);
+      tx.set(db.collection(VOUCHER_HISTORY).doc(`${ref.id}_${a.studentId}`), {
+        kind: "session", studentId: a.studentId, termId: usable ? termId : "",
+        sessionId: ref.id, sessionDate: s.sessionDate || "", status: st,
+        sessions: charged ? eff.delta : 0, ...(st !== "izin" && !charged ? {noVoucher: true} : {}),
+        date: FieldValue.serverTimestamp(),
+      });
+      tx.update(aRef, {attendanceStatus: st, sessionCredited: charged, closed: true,
+        ...(usable ? {classTermId: termId} : {})});
+    }
+    for (const {ref: tRef, t, base} of Object.values(terms)) {
+      // The first ledger entry remembers what was used before the ledger.
+      tx.update(tRef, {...(base !== null ? {ledgerBaseUsed: base} : {}),
+        sessionsBooked: Number(t.sessionsBooked) || 0,
+        sessionsUsed: Number(t.sessionsUsed) || 0,
+        sessionsRemaining: Number(t.sessionsRemaining) || 0,
+        ...((Number(t.sessionsRemaining) || 0) <= 0 ? {status: "depleted"} : {})});
+    }
+    tx.update(ref, {status: "done", isConcluded: true, isOpen: false,
+      concludedAt: FieldValue.serverTimestamp()});
+    const r = recap.exists ? recap.data() || {} : {};
+    tx.set(recapRef, {teacherId: s.teacherId || "", teacherName: s.teacherName || "",
+      month: tday.monthKey(s.sessionDate),
+      held: (Number(r.held) || 0) + 1,
+      hours: Math.round(((Number(r.hours) || 0) + tday.sessionHours(s)) * 10) / 10,
+      lateCheckIns: (Number(r.lateCheckIns) || 0) + (s.lateCheckIn ? 1 : 0),
+      students: (Number(r.students) || 0) + credited,
+      updatedAt: FieldValue.serverTimestamp()}, {merge: true});
+    return {status: "done", credited, excused, failed};
+  });
+});
+
+/** Admin: the teachers who could take a session (available, level, no clash). */
+exports.substituteCandidates = onCall(async (request) => {
+  await requireAdmin(request);
+  const {session} = await loadSession((request.data || {}).sessionId);
+  const settings = await schedulingSettings();
+  const teachers = await db.collection(USERS).where("role", "==", "teacher").get();
+  const out = [];
+  for (const d of teachers.docs) {
+    const t = d.data() || {};
+    if (d.id === session.teacherId || t.active === false) continue;
+    const s = {id: "", className: session.sessionTitle || "", weekday: sched.weekdayOf(session.sessionDate),
+      startMinutes: session.startMinutes, endMinutes: session.endMinutes,
+      room: session.room || "", teacherId: d.id, capacity: 1, level: session.level || "",
+      validFrom: session.sessionDate, validTo: session.sessionDate};
+    const {teacher, ctx} = await scheduleContext(s, settings);
+    const result = checkResult(s, teacher, {...ctx, roomSchedules: [], roomSessions: []}, settings);
+    if (result.ok) out.push({uid: d.id, name: latinName(t)});
+  }
+  return {candidates: out};
+});
+
+/** Admin: give a session to another teacher (everyone is told). */
+exports.assignSubstitute = onCall(async (request) => {
+  await requireAdmin(request);
+  const data = request.data || {};
+  const {ref, session} = await loadSession(data.sessionId);
+  const subId = String(data.teacherId || "");
+  const sub = await db.collection(USERS).doc(subId).get();
+  if (!sub.exists || (sub.data() || {}).role !== "teacher") {
+    throw new HttpsError("invalid-argument", "Pick a teacher.", {reason: "teacher"});
+  }
+  const subName = latinName(sub.data() || {});
+  const atts = await db.collection("attendance").where("sessionId", "==", ref.id).get();
+  await db.runTransaction(async (tx) => {
+    const cur = (await tx.get(ref)).data() || {};
+    if (["done", "cancelled"].includes(cur.status) || cur.isConcluded === true) {
+      throw new HttpsError("failed-precondition", "This session is closed.", {reason: "done"});
+    }
+    tx.update(ref, {teacherId: subId, teacherName: subName,
+      substituteFor: cur.substituteFor || cur.teacherId || "",
+      status: cur.status === "needs_teacher" ? "scheduled" : cur.status || "scheduled"});
+    // The substitute's lists read attendance by teacher.
+    for (const d of atts.docs) tx.update(d.ref, {teacherId: subId});
+  });
+  const batch = db.batch();
+  const base = {kind: "session", title: "Substitute teacher", read: false,
+    createdAt: FieldValue.serverTimestamp(),
+    body: `${session.sessionTitle || "Class"} ${session.sessionDate} ` +
+      `${sched.clock(session.startMinutes)}: ${subName} teaches.`};
+  batch.set(db.collection(NOTIFICATIONS).doc(), {...base, forRole: "teacher", userId: subId,
+    targetRoute: "/teacher"});
+  if (session.teacherId) {
+    batch.set(db.collection(NOTIFICATIONS).doc(), {...base, forRole: "teacher",
+      userId: session.teacherId, targetRoute: "/teacher"});
+  }
+  for (const d of atts.docs) {
+    if ((d.data() || {}).status === "cancelled") continue;
+    batch.set(db.collection(NOTIFICATIONS).doc(), {...base, forRole: "student",
+      userId: (d.data() || {}).studentId || "", targetRoute: "/student"});
+  }
+  await batch.commit();
+  return {teacherId: subId};
+});
+
+/**
+ * Cancels one session in a transaction: every open booking comes back
+ * (`sessionsBooked - 1`, the attendance doc `cancelled`), the teacher's
+ * month recap counts it, the students are told to pick another session.
+ * @return {Promise<number>} how many bookings were returned
+ */
+async function cancelSessionCore(ref, session) {
+  const atts = await db.collection("attendance").where("sessionId", "==", ref.id).get();
+  const told = await db.runTransaction(async (tx) => {
+    const cur = (await tx.get(ref)).data() || {};
+    if (cur.status === "cancelled" || cur.status === "done" || cur.isConcluded === true) {
+      return null;
+    }
+    const rows = [];
+    for (const d of atts.docs) {
+      const a = (await tx.get(d.ref)).data() || {};
+      if (a.booked !== true || a.sessionCredited === true || a.closed === true ||
+        a.status === "cancelled") continue;
+      const tRef = a.classTermId ? db.collection(CLASS_TERMS).doc(a.classTermId) : null;
+      rows.push({d, a, t: tRef ? await tx.get(tRef) : null});
+    }
+    const recapRef = db.collection(TEACHER_RECAPS)
+        .doc(`${cur.teacherId || ""}_${tday.monthKey(cur.sessionDate)}`);
+    const recap = await tx.get(recapRef);
+    const minus = {};
+    for (const {d, a, t} of rows) {
+      tx.update(d.ref, {status: "cancelled", booked: false});
+      if (t && t.exists) minus[a.classTermId] = {ref: t.ref, t: t.data() || {}, n: (minus[a.classTermId] || {n: 0}).n + 1};
+    }
+    for (const {ref: tRef, t, n} of Object.values(minus)) {
+      tx.update(tRef, {sessionsBooked: Math.max(0, (Number(t.sessionsBooked) || 0) - n)});
+    }
+    tx.update(ref, {status: "cancelled", isOpen: false, bookedCount: 0,
+      cancelledAt: FieldValue.serverTimestamp()});
+    const r = recap.exists ? recap.data() || {} : {};
+    tx.set(recapRef, {teacherId: cur.teacherId || "", teacherName: cur.teacherName || "",
+      month: tday.monthKey(cur.sessionDate), cancelled: (Number(r.cancelled) || 0) + 1,
+      updatedAt: FieldValue.serverTimestamp()}, {merge: true});
+    return rows.map((x) => x.a.studentId);
+  });
+  if (told === null) return 0;
+  const batch = db.batch();
+  for (const sid of told) {
+    batch.set(db.collection(NOTIFICATIONS).doc(), {kind: "session", title: "Class cancelled",
+      body: `${session.sessionTitle || "Class"} ${session.sessionDate} ` +
+        `${sched.clock(session.startMinutes)} is cancelled. Your session is back; book another.`,
+      forRole: "student", userId: sid, targetRoute: "/student", read: false,
+      createdAt: FieldValue.serverTimestamp()});
+  }
+  if (told.length) await batch.commit();
+  return told.length;
+}
+
+/** Admin (or the teacher of a one-off): cancel; every booking comes back. */
+exports.cancelSession = onCall(async (request) => {
+  const data = request.data || {};
+  const {ref, session} = await loadSession(data.sessionId);
+  const {profile} = await requireSessionStaff(request, session);
+  if (profile.role !== "admin" && session.scheduleId) {
+    throw new HttpsError("permission-denied", "Ask the admin to cancel a timetable session.",
+        {reason: "admin-only"});
+  }
+  if (session.status === "done" || session.isConcluded === true) {
+    throw new HttpsError("failed-precondition", "This session is closed.", {reason: "done"});
+  }
+  const returned = await cancelSessionCore(ref, session);
+  return {cancelled: true, returned};
+});
+
+/** A schedule switched off: its future sessions are cancelled the same way. */
+async function cancelFutureSessions(scheduleId, nowMs = Date.now()) {
+  const today = sched.jakartaDate(nowMs);
+  const snap = await db.collection(CLASS_SESSIONS).where("scheduleId", "==", scheduleId).get();
+  let n = 0;
+  for (const d of snap.docs) {
+    const s = d.data() || {};
+    if (String(s.sessionDate || "") < today) continue;
+    if (!["scheduled", "needs_teacher"].includes(s.status || "scheduled")) continue;
+    await cancelSessionCore(d.ref, s);
+    n += 1;
+  }
+  return n;
+}
+
+/**
+ * The teaching-day pass over yesterday's and today's sessions: reminders
+ * an hour before (once), late check-in (once, one admin notice), unclosed
+ * two hours after the end.
+ */
+async function teachingDayPass({nowMs = Date.now(), reminders = true, flags = true} = {}) {
+  const today = sched.jakartaDate(nowMs);
+  const yesterday = sched.addDays(today, -1);
+  const snap = await db.collection(CLASS_SESSIONS)
+      .where("sessionDate", "in", [yesterday, today]).get();
+  const out = {reminders: 0, late: 0, unclosed: 0};
+  for (const d of snap.docs) {
+    const s = d.data() || {};
+    if (reminders && tday.reminderDue(s, nowMs)) {
+      // Claim the reminder in a transaction so two runs send it once.
+      const claimed = await db.runTransaction(async (tx) => {
+        const cur = (await tx.get(d.ref)).data() || {};
+        if (!tday.reminderDue(cur, nowMs)) return false;
+        tx.update(d.ref, {reminderSentAt: FieldValue.serverTimestamp()});
+        return true;
+      });
+      if (claimed) {
+        const atts = await db.collection("attendance").where("sessionId", "==", d.id).get();
+        const batch = db.batch();
+        const body = `${s.sessionTitle || "Class"} at ${sched.clock(s.startMinutes)}` +
+          `${s.room ? ` in ${s.room}` : ""}.`;
+        const base = {kind: "reminder", title: "Class in an hour", body, read: false,
+          createdAt: FieldValue.serverTimestamp()};
+        if (s.teacherId) {
+          batch.set(db.collection(NOTIFICATIONS).doc(), {...base, forRole: "teacher",
+            userId: s.teacherId, targetRoute: "/teacher"});
+        }
+        for (const a of atts.docs) {
+          const ad = a.data() || {};
+          if (ad.booked !== true || ad.status === "cancelled") continue;
+          batch.set(db.collection(NOTIFICATIONS).doc(), {...base, forRole: "student",
+            userId: ad.studentId || "", targetRoute: "/student"});
+        }
+        await batch.commit();
+        out.reminders += 1;
+      }
+    }
+    if (flags && tday.lateCheckInDue(s, nowMs)) {
+      const flagged = await db.runTransaction(async (tx) => {
+        const cur = (await tx.get(d.ref)).data() || {};
+        if (!tday.lateCheckInDue(cur, nowMs)) return false;
+        tx.update(d.ref, {lateCheckIn: true});
+        return true;
+      });
+      if (flagged) {
+        await db.collection(NOTIFICATIONS).add({kind: "session", title: "Late check-in",
+          body: `${s.teacherName || "A teacher"} has not started ${s.sessionTitle || "a class"} ` +
+            `(${s.sessionDate} ${sched.clock(s.startMinutes)}).`, forRole: "admin", userId: "",
+          targetRoute: "/admin/timetable", read: false, createdAt: FieldValue.serverTimestamp()});
+        out.late += 1;
+      }
+    }
+    if (flags && tday.unclosedDue(s, nowMs)) {
+      await d.ref.update({unclosed: true});
+      out.unclosed += 1;
+    }
+  }
+  logger.info(`teachingDayPass: ${JSON.stringify(out)}`);
+  return out;
+}
+
+/**
+ * Build 2A leftover: a one-attempt exam the student opened and never
+ * submitted closes itself once its clock (plus grace, plus 10 minutes) has
+ * run out; an exam without a clock after 24 hours. No score is written.
+ */
+async function closeForgottenAttempts(nowMs = Date.now()) {
+  const snap = await db.collection(EXERCISE_ATTEMPTS).get();
+  let closed = 0;
+  for (const d of snap.docs) {
+    const a = d.data() || {};
+    if (a.finishedAt) continue;
+    const started = millisOf(a.startedAt);
+    if (!started) continue;
+    const limit = Number(a.timeLimitSeconds) || 0;
+    const until = limit ? started + (limit + LATE_GRACE_SECONDS + 600) * 1000 :
+      started + 24 * 3600 * 1000;
+    if (nowMs < until) continue;
+    await d.ref.update({finishedAt: FieldValue.serverTimestamp(), closedBy: "system",
+      late: true});
+    closed += 1;
+  }
+  if (closed) logger.info(`closeForgottenAttempts: closed ${closed}`);
+  return closed;
+}
+
+exports.sessionReminders = onSchedule(
+    {schedule: "every 60 minutes", timeZone: "Asia/Jakarta"},
+    async () => {
+      await teachingDayPass({reminders: true, flags: false});
+      await closeForgottenAttempts();
+    },
+);
+
+exports.checkTeacherCheckIn = onSchedule(
+    {schedule: "every 15 minutes", timeZone: "Asia/Jakarta"},
+    async () => {
+      await teachingDayPass({reminders: false, flags: true});
+    },
+);
+
+/**
+ * Admin (VC-05): every term's `sessionsUsed` against the ledger's session
+ * entries that deducted, and `sessionsBooked` against the open bookings.
+ */
+exports.reconcileVouchers = onCall({timeoutSeconds: 300}, async (request) => {
+  await requireAdmin(request);
+  const [terms, ledger, atts] = await Promise.all([
+    db.collection(CLASS_TERMS).get(),
+    db.collection(VOUCHER_HISTORY).where("kind", "==", "session").get(),
+    db.collection("attendance").where("booked", "==", true).get(),
+  ]);
+  const used = {};
+  for (const d of ledger.docs) {
+    const e = d.data() || {};
+    if (Number(e.sessions) < 0 && e.termId) used[e.termId] = (used[e.termId] || 0) + 1;
+  }
+  const open = {};
+  for (const d of atts.docs) {
+    const a = d.data() || {};
+    if (a.sessionCredited !== true && a.closed !== true && a.status !== "cancelled" &&
+      a.classTermId) {
+      open[a.classTermId] = (open[a.classTermId] || 0) + 1;
+    }
+  }
+  const mismatches = [];
+  for (const d of terms.docs) {
+    const t = d.data() || {};
+    // Only vouchers that go through the ledger (Build 7 onward) are checked.
+    if (!used[d.id] && !open[d.id] && !(Number(t.sessionsBooked) > 0)) continue;
+    // Usage from before the ledger (Build 7) is not checked.
+    const base = t.ledgerBaseUsed === undefined ?
+      (used[d.id] ? 0 : Number(t.sessionsUsed) || 0) : Number(t.ledgerBaseUsed) || 0;
+    const m = tday.reconcileTerm({...t, sessionsUsed: (Number(t.sessionsUsed) || 0) - base},
+        used[d.id] || 0, open[d.id] || 0);
+    if (m.length) mismatches.push({termId: d.id, studentId: t.studentId || "", problems: m});
+  }
+  return {checked: terms.size, mismatches};
+});
+
+/** Admin: one row per teacher for a month (data only, no pay). */
+exports.teacherRecap = onCall(async (request) => {
+  await requireAdmin(request);
+  const month = String((request.data || {}).month || "").replace(/\D/g, "").slice(0, 6);
+  if (month.length !== 6) throw new HttpsError("invalid-argument", "month is yyyyMM.");
+  const from = `${month.slice(0, 4)}-${month.slice(4)}-01`;
+  const to = `${month.slice(0, 4)}-${month.slice(4)}-31`;
+  const [recaps, sessions] = await Promise.all([
+    db.collection(TEACHER_RECAPS).where("month", "==", month).get(),
+    db.collection(CLASS_SESSIONS).where("sessionDate", ">=", from)
+        .where("sessionDate", "<=", to).get(),
+  ]);
+  return {month, rows: tday.recapRows(recaps.docs.map((d) => d.data() || {}),
+      sessions.docs.map((d) => d.data() || {}))};
+});
+
+/**
+ * Admin, emulator only with a chosen time: runs the teaching-day pass now
+ * (the flow test uses it; on live it uses the real clock).
+ */
+exports.runTeachingDayPass = onCall(async (request) => {
+  await requireAdmin(request);
+  const data = request.data || {};
+  const emulator = process.env.FUNCTIONS_EMULATOR === "true";
+  const nowMs = emulator && Number(data.nowMs) > 0 ? Number(data.nowMs) : Date.now();
+  const out = await teachingDayPass({nowMs});
+  if (data.attempts === true) out.attempts = await closeForgottenAttempts(nowMs);
+  return out;
 });

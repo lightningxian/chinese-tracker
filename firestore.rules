@@ -266,10 +266,37 @@ service cloud.firestore {
             userDoc().data.get('teacherIds', []));
       // Build 6: a generated session (scheduleId) is written by functions.
       allow create: if isStaff() && request.resource.data.get('scheduleId', '') == '' &&
-        request.resource.data.get('generated', false) != true;
+        request.resource.data.get('generated', false) != true &&
+        request.resource.data.get('isConcluded', false) == false &&
+        !request.resource.data.keys().hasAny(sessionFunctionFields());
+      // Build 7: the session's life (check-in, close, cancel, substitute,
+      // flags) is written only by functions.
       allow update: if isStaff() &&
-        request.resource.data.get('scheduleId', '') == resource.data.get('scheduleId', '');
-      allow delete: if isStaff();
+        request.resource.data.get('scheduleId', '') == resource.data.get('scheduleId', '') &&
+        !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(sessionFunctionFields().concat(['isConcluded', 'teacherId', 'generated']));
+      allow delete: if isStaff() && resource.data.get('generated', false) != true &&
+        resource.data.get('isConcluded', false) != true;
+    }
+
+    function sessionFunctionFields() {
+      return ['status', 'checkInAt', 'lateMinutes', 'lateCheckIn', 'unclosed',
+        'reminderSentAt', 'concludedAt', 'closedAt', 'cancelledAt', 'substituteFor',
+        'bookedCount'];
+    }
+
+    // Build 7: a teacher asks the admin to change their schedule (the
+    // function writes it; staff read; the admin resolves through a function).
+    match /schedule_change_requests/{id} {
+      allow read: if isAdmin() ||
+        (isTeacher() && resource.data.get('teacherId', '') == request.auth.uid);
+      allow write: if false;
+    }
+    // Build 7: the teacher's month counters (functions only).
+    match /teacher_recaps/{id} {
+      allow read: if isAdmin() ||
+        (isTeacher() && resource.data.get('teacherId', '') == request.auth.uid);
+      allow write: if false;
     }
 
     // Build 6: the weekly timetable, written only by saveSchedule (the
@@ -537,10 +564,15 @@ service cloud.firestore {
           request.resource.data.get('joinedBy', '') == 'teacher' &&
           request.resource.data.get('sessionCredited', false) == false)
       );
-      allow update: if isStaff();
-      // A student may leave only while the class is still open; after the
-      // conclude the record is the centre's attendance evidence.
-      allow delete: if isStaff();
+      // Build 7: the status, the voucher link and the booking are written
+      // by closeSession / bookSession / cancelSession; staff keep notes.
+      allow update: if isStaff() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['notes']);
+      // Staff remove a walk-in before the close; a booking is cancelled
+      // through the functions so its voucher session comes back.
+      allow delete: if isStaff() && resource.data.get('booked', false) != true &&
+        resource.data.get('sessionCredited', false) != true &&
+        resource.data.get('closed', false) != true;
     }
 
     // Push tokens (web / Android devices that opted in on the profile tab).

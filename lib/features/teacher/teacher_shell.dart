@@ -83,14 +83,29 @@ class _TeacherShellState extends State<TeacherShell> {
     }
 
     return switch (_index) {
-      3 => FilledButton.icon(
-          onPressed: () => context.push('/teacher/session/new'),
-          style: FilledButton.styleFrom(
-            backgroundColor: AppColors.navy,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          ),
-          icon: const Icon(Icons.add, size: 16),
-          label: Text(context.l10n.teacherShellNewClass),
+      3 => Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Build 7: the teaching day (Today / Week / Availability).
+            OutlinedButton.icon(
+              onPressed: () => context.push('/teacher/schedule'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              ),
+              icon: const Icon(Icons.today_outlined, size: 16),
+              label: Text(context.l10n.scheduleTitle),
+            ),
+            const SizedBox(width: 8),
+            FilledButton.icon(
+              onPressed: () => context.push('/teacher/session/new'),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.navy,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              ),
+              icon: const Icon(Icons.add, size: 16),
+              label: Text(context.l10n.teacherShellNewClass),
+            ),
+          ],
         ),
       _ => null,
     };

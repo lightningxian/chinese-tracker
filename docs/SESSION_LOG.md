@@ -13,6 +13,16 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-21 — Claude (BUILD chat, PC): Build 7 the teaching day
+
+- Built Build 7 (release v0.1.25): check-in with server time, the close
+  in one idempotent transaction with the voucher ledger, substitutes and
+  cancellations, confirmations and change requests, reminders and late /
+  unclosed flags, the monthly teacher recap, voucher reconciliation, the
+  teacher Schedule screen and the admin Follow-up.
+- Checked: analyzer 17 infos, `flutter test` 150 pass, rules tests 80
+  pass, node tests (+ `test_teaching_day.js`), flow test 89/89.
+
 ### 2026-11-21 — Claude (PLAN chat, Mac): Build 6 reviewed, Build 7 is NEXT
 
 - Pulled Build 6 (v0.1.24) and checked it on the Mac: analyzer 17 infos,

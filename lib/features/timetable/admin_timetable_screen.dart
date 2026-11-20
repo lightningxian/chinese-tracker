@@ -13,6 +13,7 @@ import '../../models/app_user.dart';
 import '../../services/firestore_service.dart';
 import '../../services/rooms_service.dart';
 import '../../services/timetable_service.dart';
+import '../teaching/admin_teaching_views.dart';
 
 String weekdayLabel(AppLocalizations l, int d) => switch (d) {
       1 => l.weekdayMon,
@@ -81,6 +82,8 @@ class _AdminTimetableScreenState extends State<AdminTimetableScreen> {
                           ButtonSegment(value: 0, label: Text(l.timetableGrid)),
                           ButtonSegment(value: 1, label: Text(l.timetableList)),
                           ButtonSegment(value: 2, label: Text(l.timetableAvailability)),
+                          ButtonSegment(value: 3, label: Text(l.timetableFollowUp)),
+                          ButtonSegment(value: 4, label: Text(l.timetableRecap)),
                         ],
                         selected: {_view},
                         onSelectionChanged: (v) => setState(() => _view = v.first),
@@ -111,8 +114,12 @@ class _AdminTimetableScreenState extends State<AdminTimetableScreen> {
                           ),
                         ),
                       )
+                  else if (_view == 2)
+                    _Availability(teachers: teachers)
+                  else if (_view == 3)
+                    AdminFollowUpView(schedules: all)
                   else
-                    _Availability(teachers: teachers),
+                    const TeacherRecapView(),
                 ],
               );
             },

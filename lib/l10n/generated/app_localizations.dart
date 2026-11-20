@@ -11939,6 +11939,510 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No fixed class day'**
   String get voucherNoClassDay;
+
+  /// No description provided for @cancelAdminOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask the admin to cancel a timetable session.'**
+  String get cancelAdminOnly;
+
+  /// No description provided for @cancelSessionBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel {title} on {date}? Every booking comes back to its voucher and the students are told.'**
+  String cancelSessionBody(Object title, Object date);
+
+  /// No description provided for @cancelSessionButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel session'**
+  String get cancelSessionButton;
+
+  /// No description provided for @cancelSessionConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel session'**
+  String get cancelSessionConfirm;
+
+  /// No description provided for @cancelSessionDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Session cancelled. Bookings returned.'**
+  String get cancelSessionDone;
+
+  /// No description provided for @cancelSessionKeep.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep'**
+  String get cancelSessionKeep;
+
+  /// No description provided for @cancelSessionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel this session?'**
+  String get cancelSessionTitle;
+
+  /// No description provided for @changeAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get changeAccept;
+
+  /// No description provided for @changeAcceptHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Make the change on the schedule (New schedule / edit), then mark it done.'**
+  String get changeAcceptHint;
+
+  /// No description provided for @changeAcceptTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark the change as done'**
+  String get changeAcceptTitle;
+
+  /// No description provided for @changeDecline.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline'**
+  String get changeDecline;
+
+  /// No description provided for @changeDeclineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline the request'**
+  String get changeDeclineTitle;
+
+  /// No description provided for @changeNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note for the teacher'**
+  String get changeNote;
+
+  /// No description provided for @changeStatusDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'declined'**
+  String get changeStatusDeclined;
+
+  /// No description provided for @changeStatusDone.
+  ///
+  /// In en, this message translates to:
+  /// **'done'**
+  String get changeStatusDone;
+
+  /// No description provided for @changeStatusOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'waiting'**
+  String get changeStatusOpen;
+
+  /// No description provided for @checkInButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Start session'**
+  String get checkInButton;
+
+  /// No description provided for @checkInDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Session started.'**
+  String get checkInDone;
+
+  /// No description provided for @checkInDoneLate.
+  ///
+  /// In en, this message translates to:
+  /// **'Session started, {minutes} minutes late.'**
+  String checkInDoneLate(int minutes);
+
+  /// No description provided for @checkInTooEarly.
+  ///
+  /// In en, this message translates to:
+  /// **'Too early: you can start 30 minutes before the class.'**
+  String get checkInTooEarly;
+
+  /// No description provided for @checkInTooLate.
+  ///
+  /// In en, this message translates to:
+  /// **'The class time is over; ask the admin to close it.'**
+  String get checkInTooLate;
+
+  /// No description provided for @closeAlreadyDone.
+  ///
+  /// In en, this message translates to:
+  /// **'This session was already closed. Nothing changed.'**
+  String get closeAlreadyDone;
+
+  /// No description provided for @closeDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Session closed: {credited} charged, {excused} excused.'**
+  String closeDone(int credited, int excused);
+
+  /// No description provided for @closeDoneWithFailures.
+  ///
+  /// In en, this message translates to:
+  /// **'Session closed: {credited} charged. No voucher for: {names}.'**
+  String closeDoneWithFailures(int credited, Object names);
+
+  /// No description provided for @closeNotStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Start the session first.'**
+  String get closeNotStarted;
+
+  /// No description provided for @closeSessionButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Close session'**
+  String get closeSessionButton;
+
+  /// No description provided for @followUpNothing.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to follow up.'**
+  String get followUpNothing;
+
+  /// No description provided for @followUpRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'Change requests ({count})'**
+  String followUpRequests(int count);
+
+  /// No description provided for @followUpSessions.
+  ///
+  /// In en, this message translates to:
+  /// **'Sessions to check ({count})'**
+  String followUpSessions(int count);
+
+  /// No description provided for @followUpUnconfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Not confirmed by the teacher ({count})'**
+  String followUpUnconfirmed(int count);
+
+  /// No description provided for @recapCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get recapCancelled;
+
+  /// No description provided for @recapCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied as CSV.'**
+  String get recapCopied;
+
+  /// No description provided for @recapEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No sessions this month.'**
+  String get recapEmpty;
+
+  /// No description provided for @recapHeld.
+  ///
+  /// In en, this message translates to:
+  /// **'Held'**
+  String get recapHeld;
+
+  /// No description provided for @recapHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Data only, no pay. Held and hours count closed sessions.'**
+  String get recapHint;
+
+  /// No description provided for @recapHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Hours'**
+  String get recapHours;
+
+  /// No description provided for @recapLate.
+  ///
+  /// In en, this message translates to:
+  /// **'Late check-ins'**
+  String get recapLate;
+
+  /// No description provided for @recapScheduled.
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled'**
+  String get recapScheduled;
+
+  /// No description provided for @recapTeacher.
+  ///
+  /// In en, this message translates to:
+  /// **'Teacher'**
+  String get recapTeacher;
+
+  /// No description provided for @reconcileButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Check vouchers'**
+  String get reconcileButton;
+
+  /// No description provided for @reconcileHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Compares every voucher\'s used and booked sessions with the voucher history and the open bookings.'**
+  String get reconcileHint;
+
+  /// No description provided for @reconcileMismatches.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} vouchers do not match:'**
+  String reconcileMismatches(int count);
+
+  /// No description provided for @reconcileOk.
+  ///
+  /// In en, this message translates to:
+  /// **'All {count} vouchers match.'**
+  String reconcileOk(int count);
+
+  /// No description provided for @reconcileTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Voucher check'**
+  String get reconcileTitle;
+
+  /// No description provided for @scheduleAskChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask for a change'**
+  String get scheduleAskChange;
+
+  /// No description provided for @scheduleChangeReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason'**
+  String get scheduleChangeReason;
+
+  /// No description provided for @scheduleChangeReasonRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Give a reason.'**
+  String get scheduleChangeReasonRequired;
+
+  /// No description provided for @scheduleChangeSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get scheduleChangeSend;
+
+  /// No description provided for @scheduleChangeSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent to the admin.'**
+  String get scheduleChangeSent;
+
+  /// No description provided for @scheduleChangeWanted.
+  ///
+  /// In en, this message translates to:
+  /// **'What should change (day, time, room)'**
+  String get scheduleChangeWanted;
+
+  /// No description provided for @scheduleConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get scheduleConfirm;
+
+  /// No description provided for @scheduleConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule confirmed.'**
+  String get scheduleConfirmed;
+
+  /// No description provided for @scheduleEntryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s sessions, the week, availability'**
+  String get scheduleEntryHint;
+
+  /// No description provided for @scheduleMyRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'My change requests'**
+  String get scheduleMyRequests;
+
+  /// No description provided for @scheduleMySchedules.
+  ///
+  /// In en, this message translates to:
+  /// **'My weekly classes'**
+  String get scheduleMySchedules;
+
+  /// No description provided for @scheduleNextSevenDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Next 7 days'**
+  String get scheduleNextSevenDays;
+
+  /// No description provided for @scheduleNoSchedules.
+  ///
+  /// In en, this message translates to:
+  /// **'No weekly classes yet.'**
+  String get scheduleNoSchedules;
+
+  /// No description provided for @scheduleNoSessionsToday.
+  ///
+  /// In en, this message translates to:
+  /// **'No sessions today.'**
+  String get scheduleNoSessionsToday;
+
+  /// No description provided for @scheduleNoSessionsWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'No sessions in the next 7 days.'**
+  String get scheduleNoSessionsWeek;
+
+  /// No description provided for @scheduleNoStudents.
+  ///
+  /// In en, this message translates to:
+  /// **'No students booked yet.'**
+  String get scheduleNoStudents;
+
+  /// No description provided for @scheduleStatusConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmed'**
+  String get scheduleStatusConfirmed;
+
+  /// No description provided for @scheduleStatusUnconfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Not confirmed'**
+  String get scheduleStatusUnconfirmed;
+
+  /// No description provided for @scheduleStudents.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} students'**
+  String scheduleStudents(int count);
+
+  /// No description provided for @scheduleTabToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get scheduleTabToday;
+
+  /// No description provided for @scheduleTabWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Week'**
+  String get scheduleTabWeek;
+
+  /// No description provided for @scheduleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule'**
+  String get scheduleTitle;
+
+  /// No description provided for @sessionAlreadyClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'This session is closed.'**
+  String get sessionAlreadyClosed;
+
+  /// No description provided for @sessionLateCheckIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Not started on time'**
+  String get sessionLateCheckIn;
+
+  /// No description provided for @sessionLateMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'Late {minutes} min'**
+  String sessionLateMinutes(int minutes);
+
+  /// No description provided for @sessionNotYours.
+  ///
+  /// In en, this message translates to:
+  /// **'This is another teacher\'s session.'**
+  String get sessionNotYours;
+
+  /// No description provided for @sessionStatusCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get sessionStatusCancelled;
+
+  /// No description provided for @sessionStatusDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get sessionStatusDone;
+
+  /// No description provided for @sessionStatusNeedsTeacher.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs a teacher'**
+  String get sessionStatusNeedsTeacher;
+
+  /// No description provided for @sessionStatusOngoing.
+  ///
+  /// In en, this message translates to:
+  /// **'Ongoing'**
+  String get sessionStatusOngoing;
+
+  /// No description provided for @sessionStatusScheduled.
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled'**
+  String get sessionStatusScheduled;
+
+  /// No description provided for @sessionSubstitute.
+  ///
+  /// In en, this message translates to:
+  /// **'Substitute'**
+  String get sessionSubstitute;
+
+  /// No description provided for @sessionUnclosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Not closed'**
+  String get sessionUnclosed;
+
+  /// No description provided for @substituteButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Substitute'**
+  String get substituteButton;
+
+  /// No description provided for @substituteDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Substitute assigned. Everyone was told.'**
+  String get substituteDone;
+
+  /// No description provided for @substituteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Free at that time, can teach the level, no clash.'**
+  String get substituteHint;
+
+  /// No description provided for @substituteNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No teacher is free at that time.'**
+  String get substituteNone;
+
+  /// No description provided for @substituteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a substitute teacher'**
+  String get substituteTitle;
+
+  /// No description provided for @timetableFollowUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow-up'**
+  String get timetableFollowUp;
+
+  /// No description provided for @timetableRecap.
+  ///
+  /// In en, this message translates to:
+  /// **'Teacher recap'**
+  String get timetableRecap;
 }
 
 class _AppLocalizationsDelegate

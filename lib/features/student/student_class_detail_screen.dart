@@ -99,7 +99,7 @@ class StudentClassDetailScreen extends StatelessWidget {
                 stream: firestore.watchSessionAttendance(sessionId),
                 builder: (context, rosterSnap) {
                   final roster =
-                      (rosterSnap.data ?? []).where((r) => r.attended).toList();
+                      (rosterSnap.data ?? []).where((r) => r.inClass).toList();
                   roster.sort((a, b) {
                     final nameA = a.studentName ?? a.studentId;
                     final nameB = b.studentName ?? b.studentId;

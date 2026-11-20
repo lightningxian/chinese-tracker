@@ -247,7 +247,7 @@ class _OpenSessionJoinCard extends StatelessWidget {
       stream: firestore.watchSessionAttendance(session.id),
       builder: (context, rosterSnap) {
         final joinedCount =
-            (rosterSnap.data ?? []).where((r) => r.attended).length;
+            (rosterSnap.data ?? []).where((r) => r.inClass).length;
         final isFull = firestore.isSessionFull(session, joinedCount);
         final spotsLeft =
             (session.capacity - joinedCount).clamp(0, session.capacity);

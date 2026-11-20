@@ -40,6 +40,7 @@ abstract final class ShellRouteUtils {
     if (location.contains('/exercise')) return 2;
     if (location.contains('/session')) return 3;
     if (location.contains('/calendar')) return 3;
+    if (location.endsWith('/schedule')) return 3;
     if (location.contains('/grades')) return 4;
     if (location.contains('/question-bank')) return 2;
     if (location.contains('/levels')) return 2;
@@ -133,6 +134,7 @@ abstract final class ShellRouteUtils {
       return l.routeTitleClassDetails;
     }
     if (location.endsWith('/calendar')) return l.routeTitleCalendar;
+    if (location.endsWith('/schedule')) return l.scheduleTitle;
     if (location.endsWith('/grades')) return l.routeTitleGrades;
     if (location.endsWith('/question-bank')) return l.routeTitleQuestionBank;
     if (location.endsWith('/levels')) return l.routeTitleLevels;

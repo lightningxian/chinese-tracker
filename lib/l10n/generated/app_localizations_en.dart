@@ -7336,4 +7336,285 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get voucherNoClassDay => 'No fixed class day';
+
+  @override
+  String get cancelAdminOnly => 'Ask the admin to cancel a timetable session.';
+
+  @override
+  String cancelSessionBody(Object title, Object date) {
+    return 'Cancel $title on $date? Every booking comes back to its voucher and the students are told.';
+  }
+
+  @override
+  String get cancelSessionButton => 'Cancel session';
+
+  @override
+  String get cancelSessionConfirm => 'Cancel session';
+
+  @override
+  String get cancelSessionDone => 'Session cancelled. Bookings returned.';
+
+  @override
+  String get cancelSessionKeep => 'Keep';
+
+  @override
+  String get cancelSessionTitle => 'Cancel this session?';
+
+  @override
+  String get changeAccept => 'Done';
+
+  @override
+  String get changeAcceptHint =>
+      'Make the change on the schedule (New schedule / edit), then mark it done.';
+
+  @override
+  String get changeAcceptTitle => 'Mark the change as done';
+
+  @override
+  String get changeDecline => 'Decline';
+
+  @override
+  String get changeDeclineTitle => 'Decline the request';
+
+  @override
+  String get changeNote => 'Note for the teacher';
+
+  @override
+  String get changeStatusDeclined => 'declined';
+
+  @override
+  String get changeStatusDone => 'done';
+
+  @override
+  String get changeStatusOpen => 'waiting';
+
+  @override
+  String get checkInButton => 'Start session';
+
+  @override
+  String get checkInDone => 'Session started.';
+
+  @override
+  String checkInDoneLate(int minutes) {
+    return 'Session started, $minutes minutes late.';
+  }
+
+  @override
+  String get checkInTooEarly =>
+      'Too early: you can start 30 minutes before the class.';
+
+  @override
+  String get checkInTooLate =>
+      'The class time is over; ask the admin to close it.';
+
+  @override
+  String get closeAlreadyDone =>
+      'This session was already closed. Nothing changed.';
+
+  @override
+  String closeDone(int credited, int excused) {
+    return 'Session closed: $credited charged, $excused excused.';
+  }
+
+  @override
+  String closeDoneWithFailures(int credited, Object names) {
+    return 'Session closed: $credited charged. No voucher for: $names.';
+  }
+
+  @override
+  String get closeNotStarted => 'Start the session first.';
+
+  @override
+  String get closeSessionButton => 'Close session';
+
+  @override
+  String get followUpNothing => 'Nothing to follow up.';
+
+  @override
+  String followUpRequests(int count) {
+    return 'Change requests ($count)';
+  }
+
+  @override
+  String followUpSessions(int count) {
+    return 'Sessions to check ($count)';
+  }
+
+  @override
+  String followUpUnconfirmed(int count) {
+    return 'Not confirmed by the teacher ($count)';
+  }
+
+  @override
+  String get recapCancelled => 'Cancelled';
+
+  @override
+  String get recapCopied => 'Copied as CSV.';
+
+  @override
+  String get recapEmpty => 'No sessions this month.';
+
+  @override
+  String get recapHeld => 'Held';
+
+  @override
+  String get recapHint =>
+      'Data only, no pay. Held and hours count closed sessions.';
+
+  @override
+  String get recapHours => 'Hours';
+
+  @override
+  String get recapLate => 'Late check-ins';
+
+  @override
+  String get recapScheduled => 'Scheduled';
+
+  @override
+  String get recapTeacher => 'Teacher';
+
+  @override
+  String get reconcileButton => 'Check vouchers';
+
+  @override
+  String get reconcileHint =>
+      'Compares every voucher\'s used and booked sessions with the voucher history and the open bookings.';
+
+  @override
+  String reconcileMismatches(int count) {
+    return '$count vouchers do not match:';
+  }
+
+  @override
+  String reconcileOk(int count) {
+    return 'All $count vouchers match.';
+  }
+
+  @override
+  String get reconcileTitle => 'Voucher check';
+
+  @override
+  String get scheduleAskChange => 'Ask for a change';
+
+  @override
+  String get scheduleChangeReason => 'Reason';
+
+  @override
+  String get scheduleChangeReasonRequired => 'Give a reason.';
+
+  @override
+  String get scheduleChangeSend => 'Send';
+
+  @override
+  String get scheduleChangeSent => 'Sent to the admin.';
+
+  @override
+  String get scheduleChangeWanted => 'What should change (day, time, room)';
+
+  @override
+  String get scheduleConfirm => 'Confirm';
+
+  @override
+  String get scheduleConfirmed => 'Schedule confirmed.';
+
+  @override
+  String get scheduleEntryHint => 'Today\'s sessions, the week, availability';
+
+  @override
+  String get scheduleMyRequests => 'My change requests';
+
+  @override
+  String get scheduleMySchedules => 'My weekly classes';
+
+  @override
+  String get scheduleNextSevenDays => 'Next 7 days';
+
+  @override
+  String get scheduleNoSchedules => 'No weekly classes yet.';
+
+  @override
+  String get scheduleNoSessionsToday => 'No sessions today.';
+
+  @override
+  String get scheduleNoSessionsWeek => 'No sessions in the next 7 days.';
+
+  @override
+  String get scheduleNoStudents => 'No students booked yet.';
+
+  @override
+  String get scheduleStatusConfirmed => 'Confirmed';
+
+  @override
+  String get scheduleStatusUnconfirmed => 'Not confirmed';
+
+  @override
+  String scheduleStudents(int count) {
+    return '$count students';
+  }
+
+  @override
+  String get scheduleTabToday => 'Today';
+
+  @override
+  String get scheduleTabWeek => 'Week';
+
+  @override
+  String get scheduleTitle => 'Schedule';
+
+  @override
+  String get sessionAlreadyClosed => 'This session is closed.';
+
+  @override
+  String get sessionLateCheckIn => 'Not started on time';
+
+  @override
+  String sessionLateMinutes(int minutes) {
+    return 'Late $minutes min';
+  }
+
+  @override
+  String get sessionNotYours => 'This is another teacher\'s session.';
+
+  @override
+  String get sessionStatusCancelled => 'Cancelled';
+
+  @override
+  String get sessionStatusDone => 'Done';
+
+  @override
+  String get sessionStatusNeedsTeacher => 'Needs a teacher';
+
+  @override
+  String get sessionStatusOngoing => 'Ongoing';
+
+  @override
+  String get sessionStatusScheduled => 'Scheduled';
+
+  @override
+  String get sessionSubstitute => 'Substitute';
+
+  @override
+  String get sessionUnclosed => 'Not closed';
+
+  @override
+  String get substituteButton => 'Substitute';
+
+  @override
+  String get substituteDone => 'Substitute assigned. Everyone was told.';
+
+  @override
+  String get substituteHint =>
+      'Free at that time, can teach the level, no clash.';
+
+  @override
+  String get substituteNone => 'No teacher is free at that time.';
+
+  @override
+  String get substituteTitle => 'Pick a substitute teacher';
+
+  @override
+  String get timetableFollowUp => 'Follow-up';
+
+  @override
+  String get timetableRecap => 'Teacher recap';
 }

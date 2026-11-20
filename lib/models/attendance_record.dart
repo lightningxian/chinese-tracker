@@ -18,7 +18,22 @@ class AttendanceRecord {
     this.classTermId,
     this.sessionCredited = false,
     this.attendanceStatus,
+    this.booked = false,
+    this.status = '',
+    this.closed = false,
   });
+
+  /// Build 6: booked through `bookSession` (holds a voucher session).
+  final bool booked;
+
+  /// Build 7: `cancelled` when the booking was returned.
+  final String status;
+
+  /// Build 7: handled by `closeSession`.
+  final bool closed;
+
+  /// In the class: a walk-in the teacher added, or a booking not cancelled.
+  bool get inClass => (attended || booked) && status != 'cancelled';
 
   final String id;
   final String sessionId;
@@ -89,6 +104,9 @@ class AttendanceRecord {
       classTermId: data['classTermId'] as String?,
       sessionCredited: data['sessionCredited'] as bool? ?? false,
       attendanceStatus: data['attendanceStatus'] as String?,
+      booked: data['booked'] as bool? ?? false,
+      status: data['status'] as String? ?? '',
+      closed: data['closed'] as bool? ?? false,
     );
   }
 

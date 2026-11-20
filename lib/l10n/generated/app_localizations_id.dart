@@ -7311,4 +7311,285 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get voucherNoClassDay => 'Tanpa hari kelas tetap';
+
+  @override
+  String get cancelAdminOnly => 'Minta admin membatalkan sesi dari jadwal.';
+
+  @override
+  String cancelSessionBody(Object title, Object date) {
+    return 'Batalkan $title pada $date? Setiap pendaftaran kembali ke vouchernya dan siswa diberi tahu.';
+  }
+
+  @override
+  String get cancelSessionButton => 'Batalkan sesi';
+
+  @override
+  String get cancelSessionConfirm => 'Batalkan sesi';
+
+  @override
+  String get cancelSessionDone => 'Sesi dibatalkan. Pendaftaran dikembalikan.';
+
+  @override
+  String get cancelSessionKeep => 'Tetap';
+
+  @override
+  String get cancelSessionTitle => 'Batalkan sesi ini?';
+
+  @override
+  String get changeAccept => 'Selesai';
+
+  @override
+  String get changeAcceptHint =>
+      'Ubah jadwalnya dulu (Jadwal baru / edit), lalu tandai selesai.';
+
+  @override
+  String get changeAcceptTitle => 'Tandai perubahan selesai';
+
+  @override
+  String get changeDecline => 'Tolak';
+
+  @override
+  String get changeDeclineTitle => 'Tolak permintaan';
+
+  @override
+  String get changeNote => 'Catatan untuk guru';
+
+  @override
+  String get changeStatusDeclined => 'ditolak';
+
+  @override
+  String get changeStatusDone => 'selesai';
+
+  @override
+  String get changeStatusOpen => 'menunggu';
+
+  @override
+  String get checkInButton => 'Mulai sesi';
+
+  @override
+  String get checkInDone => 'Sesi dimulai.';
+
+  @override
+  String checkInDoneLate(int minutes) {
+    return 'Sesi dimulai, terlambat $minutes menit.';
+  }
+
+  @override
+  String get checkInTooEarly =>
+      'Terlalu awal: sesi bisa dimulai 30 menit sebelum kelas.';
+
+  @override
+  String get checkInTooLate =>
+      'Waktu kelas sudah lewat; minta admin menutupnya.';
+
+  @override
+  String get closeAlreadyDone =>
+      'Sesi ini sudah ditutup. Tidak ada yang berubah.';
+
+  @override
+  String closeDone(int credited, int excused) {
+    return 'Sesi ditutup: $credited dipotong, $excused izin.';
+  }
+
+  @override
+  String closeDoneWithFailures(int credited, Object names) {
+    return 'Sesi ditutup: $credited dipotong. Tanpa voucher: $names.';
+  }
+
+  @override
+  String get closeNotStarted => 'Mulai sesi dulu.';
+
+  @override
+  String get closeSessionButton => 'Tutup sesi';
+
+  @override
+  String get followUpNothing => 'Tidak ada yang perlu ditindaklanjuti.';
+
+  @override
+  String followUpRequests(int count) {
+    return 'Permintaan perubahan ($count)';
+  }
+
+  @override
+  String followUpSessions(int count) {
+    return 'Sesi yang perlu dicek ($count)';
+  }
+
+  @override
+  String followUpUnconfirmed(int count) {
+    return 'Belum dikonfirmasi guru ($count)';
+  }
+
+  @override
+  String get recapCancelled => 'Batal';
+
+  @override
+  String get recapCopied => 'Disalin sebagai CSV.';
+
+  @override
+  String get recapEmpty => 'Tidak ada sesi bulan ini.';
+
+  @override
+  String get recapHeld => 'Terlaksana';
+
+  @override
+  String get recapHint =>
+      'Data saja, tanpa gaji. Terlaksana dan jam dihitung dari sesi yang ditutup.';
+
+  @override
+  String get recapHours => 'Jam';
+
+  @override
+  String get recapLate => 'Terlambat mulai';
+
+  @override
+  String get recapScheduled => 'Terjadwal';
+
+  @override
+  String get recapTeacher => 'Guru';
+
+  @override
+  String get reconcileButton => 'Cek voucher';
+
+  @override
+  String get reconcileHint =>
+      'Membandingkan sesi terpakai dan terdaftar di tiap voucher dengan riwayat voucher dan pendaftaran yang terbuka.';
+
+  @override
+  String reconcileMismatches(int count) {
+    return '$count voucher tidak cocok:';
+  }
+
+  @override
+  String reconcileOk(int count) {
+    return 'Semua $count voucher cocok.';
+  }
+
+  @override
+  String get reconcileTitle => 'Cek voucher';
+
+  @override
+  String get scheduleAskChange => 'Ajukan perubahan';
+
+  @override
+  String get scheduleChangeReason => 'Alasan';
+
+  @override
+  String get scheduleChangeReasonRequired => 'Isi alasannya.';
+
+  @override
+  String get scheduleChangeSend => 'Kirim';
+
+  @override
+  String get scheduleChangeSent => 'Terkirim ke admin.';
+
+  @override
+  String get scheduleChangeWanted => 'Yang ingin diubah (hari, jam, ruang)';
+
+  @override
+  String get scheduleConfirm => 'Konfirmasi';
+
+  @override
+  String get scheduleConfirmed => 'Jadwal dikonfirmasi.';
+
+  @override
+  String get scheduleEntryHint => 'Sesi hari ini, minggu ini, ketersediaan';
+
+  @override
+  String get scheduleMyRequests => 'Permintaan perubahan saya';
+
+  @override
+  String get scheduleMySchedules => 'Kelas mingguan saya';
+
+  @override
+  String get scheduleNextSevenDays => '7 hari ke depan';
+
+  @override
+  String get scheduleNoSchedules => 'Belum ada kelas mingguan.';
+
+  @override
+  String get scheduleNoSessionsToday => 'Tidak ada sesi hari ini.';
+
+  @override
+  String get scheduleNoSessionsWeek => 'Tidak ada sesi 7 hari ke depan.';
+
+  @override
+  String get scheduleNoStudents => 'Belum ada siswa terdaftar.';
+
+  @override
+  String get scheduleStatusConfirmed => 'Dikonfirmasi';
+
+  @override
+  String get scheduleStatusUnconfirmed => 'Belum dikonfirmasi';
+
+  @override
+  String scheduleStudents(int count) {
+    return '$count siswa';
+  }
+
+  @override
+  String get scheduleTabToday => 'Hari ini';
+
+  @override
+  String get scheduleTabWeek => 'Minggu';
+
+  @override
+  String get scheduleTitle => 'Jadwal';
+
+  @override
+  String get sessionAlreadyClosed => 'Sesi ini sudah ditutup.';
+
+  @override
+  String get sessionLateCheckIn => 'Belum dimulai tepat waktu';
+
+  @override
+  String sessionLateMinutes(int minutes) {
+    return 'Terlambat $minutes mnt';
+  }
+
+  @override
+  String get sessionNotYours => 'Ini sesi guru lain.';
+
+  @override
+  String get sessionStatusCancelled => 'Dibatalkan';
+
+  @override
+  String get sessionStatusDone => 'Selesai';
+
+  @override
+  String get sessionStatusNeedsTeacher => 'Perlu guru';
+
+  @override
+  String get sessionStatusOngoing => 'Berlangsung';
+
+  @override
+  String get sessionStatusScheduled => 'Terjadwal';
+
+  @override
+  String get sessionSubstitute => 'Guru pengganti';
+
+  @override
+  String get sessionUnclosed => 'Belum ditutup';
+
+  @override
+  String get substituteButton => 'Guru pengganti';
+
+  @override
+  String get substituteDone => 'Guru pengganti ditetapkan. Semua diberi tahu.';
+
+  @override
+  String get substituteHint =>
+      'Kosong di jam itu, bisa mengajar levelnya, tidak bentrok.';
+
+  @override
+  String get substituteNone => 'Tidak ada guru yang kosong di jam itu.';
+
+  @override
+  String get substituteTitle => 'Pilih guru pengganti';
+
+  @override
+  String get timetableFollowUp => 'Tindak lanjut';
+
+  @override
+  String get timetableRecap => 'Rekap guru';
 }
