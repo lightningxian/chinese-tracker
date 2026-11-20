@@ -11,6 +11,7 @@ import '../../features/auth/complete_profile_screen.dart';
 import '../../features/auth/waiting_approval_screen.dart';
 import '../../features/admin/registration_approval_view.dart';
 import '../../features/placement/placement_pages.dart';
+import '../../features/progress/student_progress_report_screen.dart';
 import '../../models/placement.dart';
 import '../../features/student/exercise_screen.dart';
 import '../../features/student/lesson_detail_screen.dart';
@@ -255,6 +256,14 @@ class AppRouter {
                 // One page per student: profile, vouchers, payments,
                 // attendance, evaluations, practice results, progress.
                 GoRoute(
+                  path: 'users/:id/progress',
+                  builder: (_, state) => StudentProgressReportScreen(
+                    studentId: state.pathParameters['id']!,
+                    embedded: true,
+                    page: true,
+                  ),
+                ),
+                GoRoute(
                   path: 'users/:id',
                   builder: (_, state) => StudentDetailScreen(
                     studentId: state.pathParameters['id']!,
@@ -470,6 +479,14 @@ class AppRouter {
               path: '/teacher',
               builder: (_, __) => const SizedBox.shrink(),
               routes: [
+                GoRoute(
+                  path: 'student/:id/progress',
+                  builder: (_, state) => StudentProgressReportScreen(
+                    studentId: state.pathParameters['id']!,
+                    embedded: true,
+                    page: true,
+                  ),
+                ),
                 GoRoute(
                   path: 'student/:id',
                   builder: (_, state) => StudentDetailScreen(

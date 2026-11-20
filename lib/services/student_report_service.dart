@@ -1,6 +1,7 @@
 import 'package:printing/printing.dart';
 
 import '../core/constants/app_constants.dart';
+import '../core/reports/progress_report_pdf.dart';
 import '../core/reports/student_progress_report_pdf.dart';
 import '../core/utils/exercise_utils.dart';
 import '../core/utils/progress_utils.dart';
@@ -9,6 +10,7 @@ import '../models/exercise_result.dart';
 import '../models/student_progress.dart';
 import '../models/student_progress_report_data.dart';
 import 'firestore_service.dart';
+import 'progress_service.dart';
 
 class StudentReportService {
   StudentReportService({required FirestoreService firestore})
@@ -155,8 +157,20 @@ class StudentReportService {
     );
   }
 
+  /// Build 4: the printable report is built from the progress summary (the
+  /// same data as the report screen); the old lesson/term report remains
+  /// for a student who has no summary yet.
   Future<void> previewReport(String studentId) async {
     try {
+      final summary = await ProgressService().loadSummary(studentId);
+      if (summary != null) {
+        final doc = await ProgressReportPdf.build(summary);
+        await Printing.layoutPdf(
+          onLayout: (_) async => doc.save(),
+          name: _fileName(summary.studentName),
+        );
+        return;
+      }
       final data = await buildReportData(studentId);
       final doc = await StudentProgressReportPdf.build(data);
       await Printing.layoutPdf(

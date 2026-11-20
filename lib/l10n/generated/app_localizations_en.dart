@@ -6836,4 +6836,203 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get teacherLevelsNone => 'The admin has not set your levels yet.';
+
+  @override
+  String get progressReportTitle => 'Progress report';
+
+  @override
+  String get progressReportTab => 'Report';
+
+  @override
+  String get progressPrint => 'Print report';
+
+  @override
+  String progressPrintFailed(String error) {
+    return 'Could not make the PDF: $error';
+  }
+
+  @override
+  String get progressReportUnavailable => 'This report cannot be opened.';
+
+  @override
+  String get progressReportEmptyTitle => 'No report yet';
+
+  @override
+  String get progressReportEmptySubtitle =>
+      'The report fills in after the first practice, class or test.';
+
+  @override
+  String get progressStatusGood => 'Progres Baik';
+
+  @override
+  String get progressStatusAttention => 'Perlu Perhatian';
+
+  @override
+  String get progressStatusFollowUp => 'Perlu Tindak Lanjut';
+
+  @override
+  String progressCodesToward(int count, int min, String next) {
+    return '$count of $min codes passed toward $next';
+  }
+
+  @override
+  String get progressKpiAttendance => 'Attendance (30 days)';
+
+  @override
+  String progressKpiAttendanceNote(int hadir, int alpa, int izin) {
+    return 'Present $hadir · absent $alpa · excused $izin';
+  }
+
+  @override
+  String get progressKpiPractice => 'Practice average (14 days)';
+
+  @override
+  String progressKpiPracticeNote(int n) {
+    return '$n attempts';
+  }
+
+  @override
+  String progressKpiPracticeChange(String change) {
+    return '$change against the 14 days before';
+  }
+
+  @override
+  String get progressKpiTests => 'Tests passed at this level';
+
+  @override
+  String progressKpiTestsNote(String level) {
+    return 'Codes passed at $level';
+  }
+
+  @override
+  String get progressKpiVoucher => 'Voucher sessions left';
+
+  @override
+  String progressKpiVoucherNote(int days) {
+    return '$days days to the deadline';
+  }
+
+  @override
+  String get progressKpiNoVoucher => 'No active voucher';
+
+  @override
+  String get progressWarnings => 'Warnings';
+
+  @override
+  String get progressWarn1 => 'Attendance';
+
+  @override
+  String get progressWarn2 => 'Score drop';
+
+  @override
+  String get progressWarn3 => 'Inactive';
+
+  @override
+  String get progressWarn4 => 'Voucher';
+
+  @override
+  String get progressWarn5 => 'Tests failed';
+
+  @override
+  String get progressWarn1Rule => 'Attendance under 75% in the last 30 days.';
+
+  @override
+  String get progressWarn2Rule =>
+      'Practice average under 60 in the last 2 weeks, or 10 points lower than before.';
+
+  @override
+  String get progressWarn3Rule => 'No practice for 14 days.';
+
+  @override
+  String get progressWarn4Rule =>
+      '2 or fewer sessions left, or the voucher ends within 7 days.';
+
+  @override
+  String get progressWarn5Rule => 'The last two tests were not passed.';
+
+  @override
+  String get progressPracticeChart => 'Weekly practice (last 12 weeks)';
+
+  @override
+  String get progressPracticeEmpty => 'No practice in the last 12 weeks.';
+
+  @override
+  String progressAttempts(int n) {
+    return '$n attempts';
+  }
+
+  @override
+  String get progressSkills => 'Average per skill (90 days)';
+
+  @override
+  String get progressSkillsEmpty => 'No practice to measure yet.';
+
+  @override
+  String get progressTeacherNote => 'Teacher\'s note';
+
+  @override
+  String get progressNoteEmpty => 'No note yet.';
+
+  @override
+  String get progressAddNote => 'Add note';
+
+  @override
+  String get progressEditNote => 'Edit note';
+
+  @override
+  String get progressNoteHint => 'What should the student and the parent know?';
+
+  @override
+  String get progressTestHistory => 'Test history';
+
+  @override
+  String get progressTestsEmpty => 'No test yet.';
+
+  @override
+  String progressRank(int rank, int size) {
+    return 'Rank $rank of $size';
+  }
+
+  @override
+  String get progressTagInvalid => 'Invalid';
+
+  @override
+  String get progressAttendance => 'Attendance (last 10)';
+
+  @override
+  String get progressAttendanceEmpty => 'No attendance recorded yet.';
+
+  @override
+  String get progressLevelHistory => 'Level history';
+
+  @override
+  String get progressLevelHistoryEmpty => 'No level change yet.';
+
+  @override
+  String progressAttentionTitle(int n) {
+    return 'Students needing attention ($n)';
+  }
+
+  @override
+  String get progressAttentionEmpty => 'Every student is on track.';
+
+  @override
+  String get progressFilterAll => 'All';
+
+  @override
+  String progressShowAll(int n) {
+    return 'Show all $n';
+  }
+
+  @override
+  String get progressRebuildTitle => 'Rebuild progress summaries';
+
+  @override
+  String get progressRebuildHint =>
+      'Once after an update: recounts every student\'s report.';
+
+  @override
+  String progressRebuilt(int n) {
+    return '$n reports rebuilt.';
+  }
 }

@@ -6,6 +6,9 @@ abstract final class NotificationRoutes {
   /// Position of **Tests** in the student shell.
   static const studentTestsTab = 4;
 
+  /// Position of **Progress** in the student shell.
+  static const studentProgressTab = 3;
+
   /// Prefer [AppNotification.targetRoute]; otherwise kind + role defaults.
   static String? pathFor(AppNotification notification, {required String role}) {
     final explicit = notification.targetRoute?.trim();
@@ -29,6 +32,11 @@ abstract final class NotificationRoutes {
           AppConstants.roleParent => '/parent',
           _ => '/teacher',
         },
+      NotificationKind.progress => switch (role) {
+          AppConstants.roleAdmin => '/admin',
+          AppConstants.roleStudent => '/student',
+          _ => '/teacher',
+        },
       NotificationKind.session ||
       NotificationKind.reminder =>
         role == AppConstants.roleStudent
@@ -47,6 +55,11 @@ abstract final class NotificationRoutes {
         (notification.kind == NotificationKind.promotion ||
             notification.targetRoute?.trim() == '/student/tests')) {
       return studentTestsTab;
+    }
+    // Build 4: a progress warning opens the student's Progress tab; staff
+    // open the student's report page (its own route).
+    if (notification.kind == NotificationKind.progress) {
+      return role == AppConstants.roleStudent ? studentProgressTab : null;
     }
     // Build 3: a registration waiting for approval opens its own page.
     if (notification.kind == NotificationKind.registration &&

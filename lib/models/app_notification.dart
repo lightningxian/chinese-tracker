@@ -10,7 +10,10 @@ enum NotificationKind {
 
   /// Level promotions (Build 2B): "Promotion to check" for admins, "Level
   /// up" for the student and a linked parent.
-  promotion('promotion');
+  promotion('promotion'),
+
+  /// Progress warnings (Build 4), sent by the daily job.
+  progress('progress');
 
   const NotificationKind(this.value);
 

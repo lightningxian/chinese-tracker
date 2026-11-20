@@ -4,7 +4,7 @@
 // pkg_exam). Run after seeding:
 //   node functions/test_supervised_flow.mjs
 // Thesis scenario IDs (docs/THESIS_FEATURE_BACKLOG.md §13) are in the step
-// names: TS-01, TS-02, PN-02..05, LV-01..03, LB-01, PL-01, PL-02.
+// names: TS-01, TS-02, PN-02..05, LV-01..03, LB-01, PL-01, PL-02 (Build 4: progress).
 import assert from "node:assert/strict";
 
 const PROJECT = "chinese-tracker";
@@ -1012,6 +1012,121 @@ await step("closing a placement session finishes a sitting visitor into placemen
   assert.equal(pr.total, 0);
   assert.match(pr.resultCode, /^[A-HJ-NP-Z2-9]{6}$/);
   assert.equal(await readDoc(`test_results/${r.data.attemptId}`), null);
+});
+
+
+// ---------------------------------------------------------------------------
+// Build 4: the progress summary (seeded: student13 healthy, student18 with
+// one voucher session left).
+async function readAs(user, path) {
+  const r = await fetch(`${FS}/${path}`, {headers: {Authorization: `Bearer ${user.token}`}});
+  return r.status;
+}
+async function writeAs(user, path, obj) {
+  const r = await fetch(`${FS}/${path}`, {
+    method: "PATCH",
+    headers: {"Content-Type": "application/json", Authorization: `Bearer ${user.token}`},
+    body: JSON.stringify({fields: Object.fromEntries(
+        Object.entries(obj).map(([k, v]) => [k, toValue(v)]))}),
+  });
+  return r.status;
+}
+const s13 = await signIn("student13@test.chinesetracker");
+const s18 = await signIn("student18@test.chinesetracker");
+const parent = await signIn("parent@test.chinesetracker");
+const summaryOf = (s) => readDoc(`progress_summary/${s.uid}`);
+
+await step("a new practice result updates the summary within seconds", async () => {
+  const before = await summaryOf(s13);
+  assert.ok(before, "seeded summary");
+  const when = new Date();
+  await setDocRaw(`exercise_results/flow_prg_${RUN}`, {studentId: s13.uid,
+    exerciseId: "pkg_practice", score: 100, status: "final", category: "exercise",
+    bySkill: {reading: {correct: 4, total: 4}}, submittedAt: when});
+  const after = await waitFor(async () => {
+    const d = await summaryOf(s13);
+    return d && d.practice.lastPracticeMs >= when.getTime() - 1000 ? d : null;
+  }, "the summary after a practice result");
+  assert.equal(after.practice.attempts90, before.practice.attempts90 + 1);
+  assert.equal(after.practice.weeks.length, 12);
+});
+
+await step("a test result adds a history row with its leaderboard rank", async () => {
+  await setDocRaw(`test_results/PRG3_${s13.uid}`, {codeId: "PRG3", code: "PRG3",
+    studentId: s13.uid, family: "hsk", level: "HSK 3", levelKey: "3", total: 240, max: 300,
+    passMark: 180, passed: true, valid: true, status: "final", studentName: "Flow",
+    studentNameChinese: "测", durationSeconds: 3000, finishedAt: new Date(),
+    parts: [{skill: "listening", mark: 80, maxScore: 100}]});
+  const d = await waitFor(async () => {
+    const x = await summaryOf(s13);
+    const row = x && x.tests.history.find((h) => h.codeId === "PRG3");
+    return row && row.rank !== null ? x : null;
+  }, "the PRG3 row with a rank");
+  const row = d.tests.history.find((h) => h.codeId === "PRG3");
+  assert.equal(row.rank, 1);
+  assert.ok(row.boardSize >= 1);
+  assert.equal(d.tests.passedAtLevel, 3, "PRG1, PRG2 and PRG3 at HSK 3");
+  const prg2 = d.tests.history.find((h) => h.codeId === "PRG2");
+  assert.ok(prg2.rank > 1 && prg2.boardSize === 15, `PRG2 rank ${prg2.rank} of ${prg2.boardSize}`);
+});
+
+await step("a teacher's note shows for the student and the parent; others cannot write it", async () => {
+  const id = `flow_note_${RUN}`;
+  const note = {studentId: s1.uid, teacherId: teacher.uid, teacherName: "Test Teacher",
+    text: "Flow note: keep reading.", createdAt: new Date()};
+  assert.equal(await writeAs(s1, `progress_notes/${id}x`, {...note, teacherId: s1.uid}), 403);
+  assert.equal(await writeAs(andrea, `progress_notes/${id}y`, {...note, teacherId: andrea.uid}), 403,
+      "student1 is not Andrea's student");
+  assert.equal(await writeAs(teacher, `progress_notes/${id}`, note), 200);
+  const d = await waitFor(async () => {
+    const x = await summaryOf(s1);
+    return x && x.latestNote && x.latestNote.text === note.text ? x : null;
+  }, "the note on the summary");
+  assert.equal(d.latestNote.teacherName, "Test Teacher");
+  assert.equal(await readAs(s1, `progress_notes/${id}`), 200);
+  assert.equal(await readAs(parent, `progress_notes/${id}`), 200);
+  assert.equal(await readAs(parent, `progress_summary/${s1.uid}`), 200);
+});
+
+await step("a student cannot read another student's summary", async () => {
+  assert.equal(await readAs(s1, `progress_summary/${s13.uid}`), 403);
+  assert.equal(await readAs(s13, `progress_summary/${s13.uid}`), 200);
+  assert.equal(await readAs(parent, `progress_summary/${s13.uid}`), 403);
+});
+
+await step("the daily job sends each warning notice once, and not again within 7 days", async () => {
+  await patchDoc(`progress_summary/${s18.uid}`, {notifiedAt: {mapValue: {fields: {}}}});
+  const count = async () => (await queryDocs("notifications", "studentId", s18.uid))
+      .filter((n) => str(n.fields, "kind") === "progress").length;
+  const before = await count();
+  const run = async () => {
+    const job = await fetch(`${FN}/dailyReminders-0`, {
+      method: "POST", headers: {"Content-Type": "application/json"}, body: "{}",
+    });
+    assert.ok(job.ok, `job trigger: ${job.status}`);
+  };
+  await run();
+  const after = await waitFor(async () => {
+    const n = await count();
+    return n > before ? n : null;
+  }, "the voucher notices", 60000);
+  const notes = (await queryDocs("notifications", "studentId", s18.uid))
+      .filter((n) => str(n.fields, "kind") === "progress");
+  assert.ok(notes.some((n) => str(n.fields, "forRole") === "student"));
+  assert.ok(notes.some((n) => str(n.fields, "forRole") === "admin"));
+  const s = await summaryOf(s18);
+  assert.ok(s.notifiedAt["4"], "notifiedAt stamped for warning 4");
+  await run();
+  await new Promise((r) => setTimeout(r, 8000));
+  assert.equal(await count(), after, "nothing new on the second run");
+});
+
+await step("rebuildProgressSummaries is admin-only", async () => {
+  const byTeacher = await call(teacher, "rebuildProgressSummaries", {});
+  assert.equal(byTeacher.error.status, "PERMISSION_DENIED");
+  const r = await call(admin, "rebuildProgressSummaries", {});
+  assert.ok(r.data, JSON.stringify(r.error));
+  assert.ok(r.data.rebuilt >= 20);
 });
 
 console.log(`supervised flow: ${passed} steps passed`);

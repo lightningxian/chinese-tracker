@@ -695,3 +695,48 @@ describe("registration approval and placement (Build 3)", () => {
     await assertFails(setDoc(doc(as("teacher1"), "settings", "rooms"), { names: ["Room 9"] }));
   });
 });
+
+// Build 4: the progress summary and teachers' follow-up notes.
+describe("progress summary and notes (Build 4)", () => {
+  const seed = async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, "progress_summary", "student1"), { status: "good", warnings: [] });
+      await setDoc(doc(db, "progress_summary", "student2"), { status: "attention", warnings: [] });
+      await setDoc(doc(db, "progress_notes", "n1"), { studentId: "student1", teacherId: "teacher1", teacherName: "Guru", text: "Bagus" });
+    });
+  };
+  const note = (extra = {}) => ({ studentId: "student1", teacherId: "teacher1", teacherName: "Guru", text: "Rajin", ...extra });
+
+  it("the student, staff and the linked parent read a summary; nobody writes it", async () => {
+    await seed();
+    await assertSucceeds(getDoc(doc(as("student1"), "progress_summary", "student1")));
+    await assertFails(getDoc(doc(as("student1"), "progress_summary", "student2")));
+    await assertSucceeds(getDoc(doc(as("parent1"), "progress_summary", "student1")));
+    await assertFails(getDoc(doc(as("parent1"), "progress_summary", "student2")));
+    await assertSucceeds(getDoc(doc(as("teacher3"), "progress_summary", "student1")));
+    await assertSucceeds(getDoc(doc(as("admin1"), "progress_summary", "student2")));
+    await assertFails(setDoc(doc(as("admin1"), "progress_summary", "student1"), { status: "good" }));
+    await assertFails(setDoc(doc(as("student1"), "progress_summary", "student1"), { status: "good" }));
+  });
+  it("a teacher adds notes for their own students only; a student never", async () => {
+    await assertSucceeds(setDoc(doc(as("teacher1"), "progress_notes", "a"), note()));
+    await assertFails(setDoc(doc(as("teacher3"), "progress_notes", "b"), note({ teacherId: "teacher3" })),
+      "student1 belongs to teacher1");
+    await assertFails(setDoc(doc(as("teacher1"), "progress_notes", "c"), note({ teacherId: "teacher3" })));
+    await assertFails(setDoc(doc(as("teacher1"), "progress_notes", "d"), note({ text: "x".repeat(501) })));
+    await assertFails(setDoc(doc(as("student1"), "progress_notes", "e"), note({ teacherId: "student1" })));
+    await assertSucceeds(setDoc(doc(as("admin1"), "progress_notes", "f"), note({ teacherId: "admin1", studentId: "student2" })));
+  });
+  it("notes: the student and the parent read; the author or an admin edits; another teacher cannot", async () => {
+    await seed();
+    await assertSucceeds(getDoc(doc(as("student1"), "progress_notes", "n1")));
+    await assertSucceeds(getDoc(doc(as("parent1"), "progress_notes", "n1")));
+    await assertFails(getDoc(doc(as("student2"), "progress_notes", "n1")));
+    await assertSucceeds(updateDoc(doc(as("teacher1"), "progress_notes", "n1"), { text: "Lebih baik" }));
+    await assertFails(updateDoc(doc(as("teacher3"), "progress_notes", "n1"), { text: "Bukan saya" }));
+    await assertFails(updateDoc(doc(as("teacher1"), "progress_notes", "n1"), { studentId: "student2" }));
+    await assertFails(deleteDoc(doc(as("teacher3"), "progress_notes", "n1")));
+    await assertSucceeds(deleteDoc(doc(as("admin1"), "progress_notes", "n1")));
+  });
+});

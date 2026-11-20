@@ -251,6 +251,7 @@ def main():
     seed_tests(admin_uid, student_uids)
     seed_marking(admin_uid, teacher_uids[0], student_uids)
     seed_build3(admin_uid, teacher_uids)
+    seed_build4(admin_uid, teacher_uids, student_uids, student_names)
 
     # Notifications and settings
     put("notifications", "n_1", {"kind": "registration", "title": "New student registered",
@@ -570,6 +571,116 @@ def seed_build3(admin_uid, teacher_uids):
             "placementResultCode": code, "createdAt": ts(0, 8)})
     print(f"Build 3: pending1@ / pending2@ waiting for approval, placement code "
           f"{PLACE_CODE} ({PLACE_SHEET}), visitor result code RK4PLC, settings/rooms")
+
+
+# ---------------------------------------------------------------- Build 4
+FN = "http://127.0.0.1:5001/chinese-tracker/us-central1"
+
+
+def _exercise_result(doc_id, uid, days_ago, score, skills=None):
+    skills = skills or {"reading": (round(score / 25), 4), "listening": (round(score / 50), 2)}
+    put("exercise_results", doc_id, {
+        "studentId": uid, "exerciseId": "pkg_practice", "exerciseTitle": "Latihan HSK 1 (paket)",
+        "category": "exercise", "score": score, "status": "final", "scoredBy": "server",
+        "correct": sum(c for c, _ in skills.values()), "total": sum(t for _, t in skills.values()),
+        "bySkill": {k: {"correct": c, "total": t} for k, (c, t) in skills.items()},
+        "submittedAt": ts(-days_ago, 11)})
+
+
+def _attendance(doc_id, uid, teacher, days_ago, status):
+    put("attendance", doc_id, {
+        "sessionId": doc_id, "studentId": uid, "teacherId": teacher,
+        "sessionDate": ymd(-days_ago), "sessionTitle": "Kelas (seed)",
+        "startMinutes": 900, "endMinutes": 990, "attended": status == "hadir",
+        "attendanceStatus": status, "joinedBy": "teacher", "sessionCredited": True,
+        "joinedAt": ts(-days_ago, 8)})
+
+
+def _test_result(code, uid, days_ago, total, chinese, latin, level="HSK 3"):
+    put("test_results", f"{code}_{uid}", {
+        "codeId": code, "code": code, "studentId": uid, "family": "hsk", "level": level,
+        "levelKey": level[-1], "total": total, "max": 300, "passMark": 180,
+        "passed": total >= 180, "valid": True, "status": "final", "studentName": latin,
+        "studentNameChinese": chinese, "durationSeconds": 3000 + total,
+        "finishedAt": ts(-days_ago, 10),
+        "parts": [{"skill": "listening", "mark": total // 3, "maxScore": 100},
+                  {"skill": "reading", "mark": total // 3, "maxScore": 100},
+                  {"skill": "writing", "mark": total - 2 * (total // 3), "maxScore": 100}]})
+
+
+def seed_build4(admin_uid, teacher_uids, student_uids, student_names):
+    """Build 4: one healthy student (12 weeks of practice, 2 of 3 codes, a
+    note) and five shaped for the five warnings; then every summary is
+    rebuilt with the admin callable."""
+    for c in ["PRG1", "PRG2", "PRG3", "PRG4"]:
+        put("test_codes", c, {"code": c, "family": "hsk", "level": "HSK 3", "levelKey": "3",
+            "countsForPromotion": True, "active": True, "sheetKey": "310901-KK",
+            "format": {"parts": [], "passMark": 180}, "createdAt": ts(-30)})
+    # student13 (index 12, HSK 3): healthy.
+    ok, ok_name = student_uids[12], student_names[12]
+    t_ok = teacher_uids[12 % len(teacher_uids)]
+    for w in range(12):
+        for k, score in enumerate([72 + w, 78 + w]):
+            _exercise_result(f"prg_ok_{w}_{k}", ok, w * 7 + 1 + k * 2, min(score, 100))
+    for d, st in [(2, "hadir"), (6, "hadir"), (9, "hadir"), (13, "izin"), (16, "hadir"), (20, "hadir")]:
+        _attendance(f"prg_ok_att_{d}", ok, t_ok, d, st)
+    put("student_class_terms", "term_13", {"studentId": ok, "packageSize": 16,
+        "sessionsRemaining": 9, "sessionsUsed": 7, "status": "active",
+        "startDate": ymd(-30), "deadlineDate": ymd(40), "voucherCode": "2026_09_013",
+        "createdBy": admin_uid, "createdAt": ts(-30)})
+    _test_result("PRG1", ok, 20, 230, CN[12 % len(CN)], ok_name)
+    _test_result("PRG2", ok, 8, 215, CN[12 % len(CN)], ok_name)
+    # Fourteen classmates on PRG2's board (the healthy student ranks among
+    # them); students the flow test does not use.
+    for n, j in enumerate([7, 10, 11] + list(range(18, 29))):
+        _test_result("PRG2", student_uids[j], 9, 180 + n * 6, CN[j % len(CN)], student_names[j])
+    put("progress_notes", "prg_note_ok", {"studentId": ok, "teacherId": t_ok,
+        "teacherName": TEACHERS[12 % len(TEACHERS)][1],
+        "text": "Rajin latihan menulis. Lanjutkan membaca teks pendek setiap hari.",
+        "createdAt": ts(-2, 15)})
+
+    # student14 (index 13): attendance under 75 % (2 present, 3 absent).
+    a = student_uids[13]
+    for d, st in [(2, "hadir"), (5, "alpa"), (9, "alpa"), (12, "hadir"), (16, "alpa")]:
+        _attendance(f"prg_att_{d}", a, teacher_uids[13 % len(teacher_uids)], d, st)
+    _exercise_result("prg_att_ex", a, 2, 80)
+    # student15 (index 14): practice falling 15 points.
+    f = student_uids[14]
+    for i, (d, sc) in enumerate([(16, 90), (20, 85), (3, 72), (6, 68)]):
+        _exercise_result(f"prg_fall_{i}", f, d, sc)
+    # student16 (index 15): no practice for 20 days.
+    _exercise_result("prg_idle", student_uids[15], 20, 85)
+    put("student_class_terms", "term_16", {"studentId": student_uids[15], "packageSize": 8,
+        "sessionsRemaining": 6, "sessionsUsed": 2, "status": "active",
+        "startDate": ymd(-20), "deadlineDate": ymd(40), "voucherCode": "2026_09_016",
+        "createdBy": admin_uid, "createdAt": ts(-20)})
+    # student17 (index 16, HSK 3): two tests failed in a row.
+    t = student_uids[16]
+    _exercise_result("prg_fail_ex", t, 1, 75)
+    _test_result("PRG3", t, 10, 150, CN[16 % len(CN)], student_names[16])
+    _test_result("PRG4", t, 4, 170, CN[16 % len(CN)], student_names[16])
+    # student18 (index 17): voucher with 1 session left.
+    v = student_uids[17]
+    _exercise_result("prg_voucher_ex", v, 1, 88)
+    put("student_class_terms", "term_18", {"studentId": v, "packageSize": 8,
+        "sessionsRemaining": 1, "sessionsUsed": 7, "status": "active",
+        "startDate": ymd(-40), "deadlineDate": ymd(20), "voucherCode": "2026_09_018",
+        "createdBy": admin_uid, "createdAt": ts(-40)})
+
+    # Rebuild every summary through the admin callable (the triggers ran on
+    # each write too, in any order).
+    token = _req(f"{AUTH}/accounts:signInWithPassword?key=fake",
+                 body={"email": "admin@test.chinesetracker", "password": PASSWORD,
+                       "returnSecureToken": True})["idToken"]
+    try:
+        out = _req(f"{FN}/rebuildProgressSummaries", body={"data": {}},
+                   headers={"Authorization": f"Bearer {token}"})
+        print(f"Build 4: summaries rebuilt {out.get('result')}")
+    except SystemExit as e:
+        print(f"Build 4: rebuild skipped (functions emulator?): {e}")
+    print("Build 4: healthy student13@, warnings: student14@ attendance, student15@ "
+          "falling scores, student16@ inactive, student17@ two failed tests, "
+          "student18@ voucher 1 left")
 
 
 if __name__ == "__main__":

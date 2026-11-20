@@ -46,6 +46,18 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   warnings, report screen for four roles, chart, PDF, daily notices)
   written in full and marked NEXT**, with defaults for §5 Q13 to Q16.
 
+### 2026-11-20 — Claude (BUILD chat, PC): Build 4 progress report
+
+- Built Build 4 (release v0.1.22): `progress_summary/{uid}` kept by
+  functions (triggers + the daily job), the five warnings and the status
+  label, warning notices once per 7 days, teachers' follow-up notes, one
+  report screen (`fl_chart`, approved by the owner) for students, parents,
+  teachers and admins, attention lists, the PDF, a rebuild button.
+- Owner instructions this session: build the queue and deploy without
+  asking; stop at 99% of the weekly limit (both in Claude's memory).
+- Checked: analyzer 17 infos, `flutter test` 140 pass, rules tests 71 pass,
+  node tests (+ `test_progress.js`), flow test 62/62, an emulator walk.
+
 ### 2026-11-20 — Claude (BUILD chat, PC): Build 3 registration approval, placement tests, rooms
 
 - Built Build 3 (release v0.1.21): self-registered students wait as

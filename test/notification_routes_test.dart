@@ -47,4 +47,15 @@ void main() {
     // An old registration notice (no route) still opens the Users tab.
     expect(NotificationRoutes.tabFor(_n('registration', 'admin', '/admin'), role: 'admin'), 1);
   });
+
+  test('Build 4: a progress warning opens Progress for the student, the report for staff', () {
+    final student = _n('progress', 'student', '/student/progress');
+    expect(student.kind, NotificationKind.progress);
+    expect(NotificationRoutes.tabFor(student, role: 'student'), NotificationRoutes.studentProgressTab);
+    final teacher = _n('progress', 'teacher', '/teacher/student/u1/progress');
+    expect(NotificationRoutes.tabFor(teacher, role: 'teacher'), isNull);
+    expect(NotificationRoutes.pathFor(teacher, role: 'teacher'), '/teacher/student/u1/progress');
+    final admin = _n('progress', 'admin', '/admin/users/u1/progress');
+    expect(NotificationRoutes.pathFor(admin, role: 'admin'), '/admin/users/u1/progress');
+  });
 }

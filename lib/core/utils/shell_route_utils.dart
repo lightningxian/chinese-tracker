@@ -74,6 +74,7 @@ abstract final class ShellRouteUtils {
       final centreKind = TeacherDashboardStatKind.fromRouteSlug(slug);
       if (centreKind != null) return centreKind.localizedTitle(l);
     }
+    if (location.endsWith('/progress')) return l.progressReportTitle;
     if (location.endsWith('/users/approval')) return l.approvalTitle;
     if (location.endsWith('/users/new')) return l.routeTitleNewUser;
     if (location.contains('/users/') && location.endsWith('/edit')) {
@@ -117,6 +118,7 @@ abstract final class ShellRouteUtils {
       final kind = TeacherDashboardStatKind.fromRouteSlug(slug);
       if (kind != null) return kind.localizedTitle(l);
     }
+    if (location.endsWith('/progress')) return l.progressReportTitle;
     if (location.contains('/student/')) return l.routeTitleStudentProfile;
     if (location.endsWith('/exercise/new')) return l.routeTitleNewExercise;
     if (location.contains('/exercise/') && location.endsWith('/edit')) {

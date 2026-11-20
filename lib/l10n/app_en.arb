@@ -2374,5 +2374,161 @@
   "roomsSave": "Save",
   "teacherLevelsTitle": "Levels taught",
   "teacherLevelsHint": "The levels this teacher teaches (used by the weekly timetable).",
-  "teacherLevelsNone": "The admin has not set your levels yet."
+  "teacherLevelsNone": "The admin has not set your levels yet.",
+  "progressReportTitle": "Progress report",
+  "progressReportTab": "Report",
+  "progressPrint": "Print report",
+  "progressPrintFailed": "Could not make the PDF: {error}",
+  "@progressPrintFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "progressReportUnavailable": "This report cannot be opened.",
+  "progressReportEmptyTitle": "No report yet",
+  "progressReportEmptySubtitle": "The report fills in after the first practice, class or test.",
+  "progressStatusGood": "Progres Baik",
+  "progressStatusAttention": "Perlu Perhatian",
+  "progressStatusFollowUp": "Perlu Tindak Lanjut",
+  "progressCodesToward": "{count} of {min} codes passed toward {next}",
+  "@progressCodesToward": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "min": {
+        "type": "int"
+      },
+      "next": {
+        "type": "String"
+      }
+    }
+  },
+  "progressKpiAttendance": "Attendance (30 days)",
+  "progressKpiAttendanceNote": "Present {hadir} · absent {alpa} · excused {izin}",
+  "@progressKpiAttendanceNote": {
+    "placeholders": {
+      "hadir": {
+        "type": "int"
+      },
+      "alpa": {
+        "type": "int"
+      },
+      "izin": {
+        "type": "int"
+      }
+    }
+  },
+  "progressKpiPractice": "Practice average (14 days)",
+  "progressKpiPracticeNote": "{n} attempts",
+  "@progressKpiPracticeNote": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "progressKpiPracticeChange": "{change} against the 14 days before",
+  "@progressKpiPracticeChange": {
+    "placeholders": {
+      "change": {
+        "type": "String"
+      }
+    }
+  },
+  "progressKpiTests": "Tests passed at this level",
+  "progressKpiTestsNote": "Codes passed at {level}",
+  "@progressKpiTestsNote": {
+    "placeholders": {
+      "level": {
+        "type": "String"
+      }
+    }
+  },
+  "progressKpiVoucher": "Voucher sessions left",
+  "progressKpiVoucherNote": "{days} days to the deadline",
+  "@progressKpiVoucherNote": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "progressKpiNoVoucher": "No active voucher",
+  "progressWarnings": "Warnings",
+  "progressWarn1": "Attendance",
+  "progressWarn2": "Score drop",
+  "progressWarn3": "Inactive",
+  "progressWarn4": "Voucher",
+  "progressWarn5": "Tests failed",
+  "progressWarn1Rule": "Attendance under 75% in the last 30 days.",
+  "progressWarn2Rule": "Practice average under 60 in the last 2 weeks, or 10 points lower than before.",
+  "progressWarn3Rule": "No practice for 14 days.",
+  "progressWarn4Rule": "2 or fewer sessions left, or the voucher ends within 7 days.",
+  "progressWarn5Rule": "The last two tests were not passed.",
+  "progressPracticeChart": "Weekly practice (last 12 weeks)",
+  "progressPracticeEmpty": "No practice in the last 12 weeks.",
+  "progressAttempts": "{n} attempts",
+  "@progressAttempts": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "progressSkills": "Average per skill (90 days)",
+  "progressSkillsEmpty": "No practice to measure yet.",
+  "progressTeacherNote": "Teacher's note",
+  "progressNoteEmpty": "No note yet.",
+  "progressAddNote": "Add note",
+  "progressEditNote": "Edit note",
+  "progressNoteHint": "What should the student and the parent know?",
+  "progressTestHistory": "Test history",
+  "progressTestsEmpty": "No test yet.",
+  "progressRank": "Rank {rank} of {size}",
+  "@progressRank": {
+    "placeholders": {
+      "rank": {
+        "type": "int"
+      },
+      "size": {
+        "type": "int"
+      }
+    }
+  },
+  "progressTagInvalid": "Invalid",
+  "progressAttendance": "Attendance (last 10)",
+  "progressAttendanceEmpty": "No attendance recorded yet.",
+  "progressLevelHistory": "Level history",
+  "progressLevelHistoryEmpty": "No level change yet.",
+  "progressAttentionTitle": "Students needing attention ({n})",
+  "@progressAttentionTitle": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "progressAttentionEmpty": "Every student is on track.",
+  "progressFilterAll": "All",
+  "progressShowAll": "Show all {n}",
+  "@progressShowAll": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "progressRebuildTitle": "Rebuild progress summaries",
+  "progressRebuildHint": "Once after an update: recounts every student's report.",
+  "progressRebuilt": "{n} reports rebuilt.",
+  "@progressRebuilt": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  }
 }

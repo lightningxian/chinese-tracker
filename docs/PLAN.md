@@ -2001,6 +2001,54 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
+### 2026-11-20 — Build 4 Progress report — COMMIT, release v0.1.22 (DEPLOYSTATE)
+- Built: `progress_summary/{uid}` kept by `refreshProgressSummary` (pure
+  logic, ISO weeks in Jakarta time, the five warnings, the status label and
+  `noticesDue` in `functions/progress.js`); triggers on `exercise_results`,
+  `attendance`, `student_class_terms`, `progress_notes` and the existing
+  test-result trigger; refresh after approvals; the daily pass in
+  `dailyReminders` with notices to the spec's roles once per 7 days;
+  `progress_notes` with rules; `rebuildProgressSummaries` (admin) behind a
+  button on Org settings; the report widget (header, status, codes bar,
+  four KPIs, `fl_chart` 12-week line chart, skill bars, note with Add /
+  Edit, warnings, test history with rank and tags, attendance, level
+  history, Print report) on the student Progress tab, the parent's first
+  tab and the staff student page; attention lists on the teacher dashboard
+  and the admin metrics (level and teacher filters); the PDF from the same
+  summary; `progress` notices; two indexes.
+- Must list: 1 summary doc + pure module · 2 the five warnings with
+  boundary tests · 3 refresh helper + triggers, never failing the write ·
+  4 daily pass + notices once per 7 days · 5 rules for summary and notes ·
+  6 report screen in every place · 7 attention lists (inactive and low
+  sessions moved to warnings 3 and 4) · 8 PDF · 9 rebuild, seed, tests ·
+  10 `progress` notification routes. All done.
+- Acceptance walk (emulator): the healthy student13 in Indonesian, dark, 1280 px:
+  status "Progres Baik", the codes bar, four KPIs (attendance 100%,
+  practice 84 with +6, tests 3, voucher 9 sessions / 40 days), the 12-week
+  chart, skill bars, the teacher's note, the history with "rank 9 of 15",
+  attendance chips, the level history's empty state. At 360 px (light) the
+  KPIs fit two per row; the segment labels wrapped, fixed by hiding the
+  segment icons below 480 px. Admin dashboard: "Students needing attention
+  (27)" with level and teacher filters, status and warning chips. The
+  rest (a new practice result moving the summary, a test row with its
+  rank, notes for the student and the parent and refused for others, a
+  student refused on another summary, notices once and not again, the
+  rebuild admin-only) runs in the flow test. Not walked by hand: the PDF
+  print dialog, the teacher dashboard list, the parent tab.
+- Proof: analyzer 0 errors / 0 warnings / 17 infos; `flutter test` 140
+  pass (+5) and 2 skipped; rules tests 71 pass, 1 skipped (+3); node tests
+  pass (+ `test_progress.js`); flow test 62/62 (+6).
+- Owner: `fl_chart` approved in chat. DEPLOYNOTE
+- Left out and why: the "Then" items (period filter and CSV on the admin
+  list, Builds 2B / 3 leftovers). The parent's old overview content
+  (stat cards) is replaced by the report, which covers it.
+- Notes for the PLAN chat:
+  - Warning 1 counts when at least 4 marked records (hadir, izin or alpa)
+    exist in 30 days; the percent leaves izin out.
+  - Students who never practised count from their approval date (or the
+    account's creation for older accounts), so most old seed accounts
+    carry warning 3 until they practise.
+
 ### 2026-11-20 — Build 3 Registration approval, placement tests, rooms — 41543cc, release v0.1.21 (rules, indexes, functions and then hosting live from the PC 2026-11-20 at the owner's go; 34 functions)
 - Built: pending accounts (`status: 'pending'`, rules, `/waiting`), the
   register form's start-level choice with a live result-code check, the

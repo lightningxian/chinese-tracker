@@ -8,6 +8,7 @@ import '../../core/widgets/shell_nested_page.dart';
 import '../../l10n/l10n.dart';
 import '../../models/org_settings.dart';
 import '../../services/firestore_service.dart';
+import '../../services/progress_service.dart';
 import '../../services/rooms_service.dart';
 
 /// Admin-only centre settings. Toggles persist immediately to `settings/org`
@@ -119,6 +120,9 @@ class OrgSettingsScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
+              // Build 4: rebuild every student's progress summary (once
+              // after the deploy; the functions keep them after that).
+              const _RebuildSummariesCard(),              const SizedBox(height: 10),
               AppCard(
                 onTap: () => context.push('/admin/materials'),
                 child: _NavRow(
@@ -351,6 +355,62 @@ class _RoomsCardState extends State<_RoomsCard> {
           ),
         );
       },
+    );
+  }
+}
+
+class _RebuildSummariesCard extends StatefulWidget {
+  const _RebuildSummariesCard();
+
+  @override
+  State<_RebuildSummariesCard> createState() => _RebuildSummariesCardState();
+}
+
+class _RebuildSummariesCardState extends State<_RebuildSummariesCard> {
+  bool _busy = false;
+
+  Future<void> _run() async {
+    final l = context.l10n;
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _busy = true);
+    try {
+      final n = await ProgressService().rebuildAll();
+      messenger.showSnackBar(SnackBar(content: Text(l.progressRebuilt(n))));
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(
+        content: Text('$e'),
+        backgroundColor: AppColors.error,
+      ));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    return AppCard(
+      onTap: _busy ? null : _run,
+      child: Row(
+        children: [
+          _busy
+              ? const SizedBox(
+                  width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+              : Icon(Icons.refresh, color: AppColors.navy),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l.progressRebuildTitle,
+                    style: const TextStyle(fontWeight: FontWeight.w700)),
+                Text(l.progressRebuildHint,
+                    style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

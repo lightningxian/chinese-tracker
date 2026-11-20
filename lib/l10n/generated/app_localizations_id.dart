@@ -6807,4 +6807,206 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get teacherLevelsNone => 'Admin belum mengatur level yang kamu ajar.';
+
+  @override
+  String get progressReportTitle => 'Laporan progres';
+
+  @override
+  String get progressReportTab => 'Laporan';
+
+  @override
+  String get progressPrint => 'Cetak laporan';
+
+  @override
+  String progressPrintFailed(String error) {
+    return 'PDF tidak bisa dibuat: $error';
+  }
+
+  @override
+  String get progressReportUnavailable => 'Laporan ini tidak bisa dibuka.';
+
+  @override
+  String get progressReportEmptyTitle => 'Belum ada laporan';
+
+  @override
+  String get progressReportEmptySubtitle =>
+      'Laporan terisi setelah latihan, kelas atau tes pertama.';
+
+  @override
+  String get progressStatusGood => 'Progres Baik';
+
+  @override
+  String get progressStatusAttention => 'Perlu Perhatian';
+
+  @override
+  String get progressStatusFollowUp => 'Perlu Tindak Lanjut';
+
+  @override
+  String progressCodesToward(int count, int min, String next) {
+    return '$count dari $min kode lulus menuju $next';
+  }
+
+  @override
+  String get progressKpiAttendance => 'Kehadiran (30 hari)';
+
+  @override
+  String progressKpiAttendanceNote(int hadir, int alpa, int izin) {
+    return 'Hadir $hadir · alpa $alpa · izin $izin';
+  }
+
+  @override
+  String get progressKpiPractice => 'Rata-rata latihan (14 hari)';
+
+  @override
+  String progressKpiPracticeNote(int n) {
+    return '$n percobaan';
+  }
+
+  @override
+  String progressKpiPracticeChange(String change) {
+    return '$change dibanding 14 hari sebelumnya';
+  }
+
+  @override
+  String get progressKpiTests => 'Tes lulus di level ini';
+
+  @override
+  String progressKpiTestsNote(String level) {
+    return 'Kode lulus di $level';
+  }
+
+  @override
+  String get progressKpiVoucher => 'Sisa sesi voucher';
+
+  @override
+  String progressKpiVoucherNote(int days) {
+    return '$days hari sampai batas waktu';
+  }
+
+  @override
+  String get progressKpiNoVoucher => 'Tidak ada voucher aktif';
+
+  @override
+  String get progressWarnings => 'Peringatan';
+
+  @override
+  String get progressWarn1 => 'Kehadiran';
+
+  @override
+  String get progressWarn2 => 'Nilai turun';
+
+  @override
+  String get progressWarn3 => 'Tidak aktif';
+
+  @override
+  String get progressWarn4 => 'Voucher';
+
+  @override
+  String get progressWarn5 => 'Tes tidak lulus';
+
+  @override
+  String get progressWarn1Rule =>
+      'Kehadiran di bawah 75% dalam 30 hari terakhir.';
+
+  @override
+  String get progressWarn2Rule =>
+      'Rata-rata latihan di bawah 60 dalam 2 minggu terakhir, atau turun 10 poin.';
+
+  @override
+  String get progressWarn3Rule => 'Tidak ada latihan selama 14 hari.';
+
+  @override
+  String get progressWarn4Rule =>
+      'Sisa 2 sesi atau kurang, atau voucher berakhir dalam 7 hari.';
+
+  @override
+  String get progressWarn5Rule => 'Dua tes terakhir tidak lulus.';
+
+  @override
+  String get progressPracticeChart => 'Latihan per minggu (12 minggu terakhir)';
+
+  @override
+  String get progressPracticeEmpty =>
+      'Belum ada latihan dalam 12 minggu terakhir.';
+
+  @override
+  String progressAttempts(int n) {
+    return '$n percobaan';
+  }
+
+  @override
+  String get progressSkills => 'Rata-rata per keterampilan (90 hari)';
+
+  @override
+  String get progressSkillsEmpty => 'Belum ada latihan untuk diukur.';
+
+  @override
+  String get progressTeacherNote => 'Catatan guru';
+
+  @override
+  String get progressNoteEmpty => 'Belum ada catatan.';
+
+  @override
+  String get progressAddNote => 'Tambah catatan';
+
+  @override
+  String get progressEditNote => 'Ubah catatan';
+
+  @override
+  String get progressNoteHint =>
+      'Apa yang perlu diketahui murid dan orang tua?';
+
+  @override
+  String get progressTestHistory => 'Riwayat tes';
+
+  @override
+  String get progressTestsEmpty => 'Belum ada tes.';
+
+  @override
+  String progressRank(int rank, int size) {
+    return 'Peringkat $rank dari $size';
+  }
+
+  @override
+  String get progressTagInvalid => 'Tidak sah';
+
+  @override
+  String get progressAttendance => 'Kehadiran (10 terakhir)';
+
+  @override
+  String get progressAttendanceEmpty => 'Belum ada kehadiran tercatat.';
+
+  @override
+  String get progressLevelHistory => 'Riwayat level';
+
+  @override
+  String get progressLevelHistoryEmpty => 'Belum ada perubahan level.';
+
+  @override
+  String progressAttentionTitle(int n) {
+    return 'Murid yang perlu perhatian ($n)';
+  }
+
+  @override
+  String get progressAttentionEmpty => 'Semua murid berjalan baik.';
+
+  @override
+  String get progressFilterAll => 'Semua';
+
+  @override
+  String progressShowAll(int n) {
+    return 'Tampilkan semua $n';
+  }
+
+  @override
+  String get progressRebuildTitle => 'Bangun ulang ringkasan progres';
+
+  @override
+  String get progressRebuildHint =>
+      'Sekali setelah pembaruan: menghitung ulang laporan semua murid.';
+
+  @override
+  String progressRebuilt(int n) {
+    return '$n laporan dibangun ulang.';
+  }
 }

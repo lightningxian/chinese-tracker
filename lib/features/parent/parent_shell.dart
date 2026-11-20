@@ -12,6 +12,7 @@ import '../../models/app_user.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import 'parent_overview_tab.dart';
+import '../progress/student_progress_report_screen.dart';
 import 'parent_payments_tab.dart';
 import 'parent_profile_tab.dart';
 import '../calendar/class_calendar_screen.dart';
@@ -136,7 +137,8 @@ class _ParentShellState extends State<ParentShell> {
     }
 
     final content = switch (_index) {
-      0 => ParentOverviewTab(child: child),
+      // Build 4: the overview is the selected child's progress report.
+      0 => StudentProgressReport(key: ValueKey(child.uid), studentId: child.uid),
       1 => ClassCalendarScreen(
           title: l.parentNavCalendar,
           showAppBar: false,

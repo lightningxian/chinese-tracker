@@ -627,6 +627,50 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Build 4: the progress summary of a student (functions write it). The
+    // student, staff and a linked parent read it.
+    match /progress_summary/{uid} {
+      allow read: if isApprovedUser() &&
+        (request.auth.uid == uid || isStaff() || isParentOf(uid));
+      allow write: if false;
+    }
+
+    // Build 4: a teacher's follow-up note on a student's report. A teacher
+    // writes notes only for their own students (users.teacherId), an admin
+    // for anyone; the author or an admin edits or deletes it.
+    function progressNoteShape(d) {
+      return d.keys().hasOnly(['studentId', 'teacherId', 'teacherName', 'text',
+          'createdAt', 'updatedAt']) &&
+        d.get('studentId', '') is string && d.studentId.size() > 0 &&
+        d.get('text', '') is string && d.text.size() > 0 && d.text.size() <= 500 &&
+        d.get('teacherId', '') == request.auth.uid;
+    }
+
+    match /progress_notes/{noteId} {
+      allow read: if isApprovedUser() && (
+        isStaff() ||
+        resource.data.get('studentId', '') == request.auth.uid ||
+        isParentOf(resource.data.get('studentId', ''))
+      );
+      allow create: if progressNoteShape(request.resource.data) && (
+        isAdmin() ||
+        (isTeacher() &&
+          get(/databases/$(database)/documents/users/$(request.resource.data.studentId))
+            .data.get('teacherId', '') == request.auth.uid)
+      );
+      allow update: if (isAdmin() ||
+          (isTeacher() && resource.data.get('teacherId', '') == request.auth.uid)) &&
+        request.resource.data.studentId == resource.data.studentId &&
+        request.resource.data.get('text', '') is string &&
+        request.resource.data.text.size() > 0 &&
+        request.resource.data.text.size() <= 500 &&
+        request.resource.data.keys().hasOnly(['studentId', 'teacherId', 'teacherName',
+          'text', 'createdAt', 'updatedAt']) &&
+        request.resource.data.get('teacherId', '') == resource.data.get('teacherId', '');
+      allow delete: if isAdmin() ||
+        (isTeacher() && resource.data.get('teacherId', '') == request.auth.uid);
+    }
+
     // Build 3: a visitor's placement result (name, WhatsApp, marks, result
     // code), written only by the placement functions. Staff read.
     match /placement_results/{resultId} {

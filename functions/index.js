@@ -435,8 +435,21 @@ exports.onNotificationCreated = onDocumentCreated(
  * re-run never sends twice.
  */
 exports.dailyReminders = onSchedule(
-  {schedule: "every day 07:00", timeZone: "Asia/Jakarta"},
+  {schedule: "every day 07:00", timeZone: "Asia/Jakarta", timeoutSeconds: 540},
   async () => {
+    try {
+      await assignmentReminders();
+    } catch (err) {
+      logger.error("dailyReminders: reminders", err);
+    }
+    // Build 4: every student's progress summary and the warning notices.
+    await dailyProgressPass();
+  },
+);
+
+/** "Due today" reminders of assignments (the job's first half). */
+async function assignmentReminders() {
+  {
     const now = Date.now();
     const windowMs = 24 * 60 * 60 * 1000;
     const todayKey = reminders.jakartaDateKey(now);
@@ -496,8 +509,8 @@ exports.dailyReminders = onSchedule(
     }
     if (sent) await batch.commit();
     logger.info(`dailyReminders: ${sent} reminders written`);
-  },
-);
+  }
+}
 
 exports.cleanupExpiredLinkCodes = onSchedule("every 60 minutes", async () => {
   const now = Timestamp.now();
@@ -2575,6 +2588,7 @@ exports.onTestResultWritten = onDocumentWritten(`${TEST_RESULTS}/{resultId}`, as
   await syncLeaderboardEntry(r.codeId, r.studentId, after);
   await syncPromotion(r.studentId);
   if (after) await syncPlacement(event.params.resultId, after);
+  await safeRefresh(r.studentId, "test result");
 });
 
 /**
@@ -2655,12 +2669,14 @@ exports.decidePromotion = onCall(async (request) => {
             {...note, forRole: "parent", userId: user.linkedParentUid, targetRoute: "/parent"});
       }
     }
-    return {student: latinName(user), from: p.fromLevel, to: p.toLevel};
+    return {student: latinName(user), from: p.fromLevel, to: p.toLevel,
+      studentId: p.studentId};
   });
   await writeAudit({action: (approve ? "promotion.approve" : "promotion.decline") +
       (id.endsWith("_placement") ? ".placement" : ""),
     actorId: uid, actorName: latinName(profile), targetType: "level_promotion", targetId: id,
     detail: `${out.student} · ${out.from} → ${out.to}` + (reason ? ` · ${reason}` : "")});
+  if (approve) await safeRefresh(out.studentId, "promotion approved");
   return {status: approve ? "approved" : "declined", level: approve ? out.to : out.from};
 });
 
@@ -3224,5 +3240,226 @@ exports.decideRegistration = onCall(async (request) => {
     actorId: uid, actorName: latinName(profile), targetType: "user", targetId: studentId,
     detail: approve ? `${out.student} · ${level} · ${out.teacher}` :
       `${out.student} · ${reason}`});
+  if (approve) await safeRefresh(studentId, "registration approved");
   return {status: approve ? "active" : "rejected"};
+});
+
+// ---------------------------------------------------------------------------
+// Build 4 (docs/PLAN.md §4): the student progress summary. One document per
+// student (`progress_summary/{uid}`) feeds the report screen of every role.
+// `refreshProgressSummary` reads the student's documents with bounded
+// queries and writes what functions/progress.js decides. Triggers on the
+// source collections call it; the daily job refreshes every student (some
+// warnings move with time) and sends the warning notices, at most once per
+// 7 days per student and warning.
+// ---------------------------------------------------------------------------
+const progress = require("./progress");
+const PROGRESS_SUMMARY = "progress_summary";
+const PROGRESS_NOTES = "progress_notes";
+
+function msOf(v) {
+  if (!v) return null;
+  if (typeof v.toMillis === "function") return v.toMillis();
+  if (v instanceof Date) return v.getTime();
+  if (typeof v === "number") return v;
+  return null;
+}
+
+/** Rank and board size of [uid] on the board of [codeId], or nulls. */
+async function rankOn(codeId, uid) {
+  const snap = await db.collection(LEADERBOARDS).doc(codeId).collection("entries").get();
+  const entries = snap.docs.map((d) => {
+    const e = d.data() || {};
+    return {studentId: d.id, total: Number(e.total) || 0,
+      seconds: e.seconds === null || e.seconds === undefined ? null : Number(e.seconds),
+      finishedAtMs: msOf(e.finishedAt)};
+  });
+  const ranked = promo.rankEntries(entries);
+  const mine = ranked.find((e) => e.studentId === uid);
+  return {rank: mine ? mine.rank : null, boardSize: mine ? ranked.length : null};
+}
+
+/** Rebuilds `progress_summary/{uid}`; returns the summary or null. */
+async function refreshProgressSummary(uid) {
+  if (!uid) return null;
+  const userSnap = await db.collection(USERS).doc(uid).get();
+  if (!userSnap.exists) return null;
+  const user = userSnap.data() || {};
+  if ((user.role || "student") !== "student") return null;
+  const ref = db.collection(PROGRESS_SUMMARY).doc(uid);
+  const [prevSnap, promoSnap, exSnap, attSnap, termSnap, testSnap, noteSnap, histSnap] =
+    await Promise.all([
+      ref.get(),
+      db.collection(PROMOTION_PROGRESS).doc(uid).get(),
+      db.collection(EXERCISE_RESULTS).where("studentId", "==", uid)
+          .orderBy("submittedAt", "desc").limit(200).get(),
+      db.collection("attendance").where("studentId", "==", uid)
+          .orderBy("sessionDate", "desc").limit(60).get(),
+      db.collection(CLASS_TERMS).where("studentId", "==", uid).get(),
+      db.collection(TEST_RESULTS).where("studentId", "==", uid).get(),
+      db.collection(PROGRESS_NOTES).where("studentId", "==", uid)
+          .orderBy("createdAt", "desc").limit(1).get(),
+      db.collection(USERS).doc(uid).collection("level_history").get(),
+    ]);
+  const previous = prevSnap.exists ? prevSnap.data() || {} : {};
+  const tests = testSnap.docs.map((d) => ({resultId: d.id, ...(d.data() || {})}))
+      .map((t) => ({...t, finishedAtMs: msOf(t.finishedAt)}));
+  // Ranks of the newest 20 codes on a board.
+  const rankCodes = [...new Set(tests
+      .filter((t) => (t.status || "final") === "final" && t.valid !== false &&
+        t.placement !== true)
+      .sort((a, b) => (b.finishedAtMs || 0) - (a.finishedAtMs || 0))
+      .map((t) => t.codeId).filter(Boolean))].slice(0, 20);
+  const ranks = {};
+  await Promise.all(rankCodes.map(async (c) => {
+    ranks[c] = await rankOn(c, uid);
+  }));
+  const note = noteSnap.empty ? null : noteSnap.docs[0].data() || {};
+  const summary = progress.summarize({
+    user: {level: user.level,
+      activeSinceMs: msOf(user.approvedAt) || msOf(user.createdAt)},
+    promotion: promoSnap.exists ? promoSnap.data() || {} : {},
+    exercises: exSnap.docs.map((d) => {
+      const e = d.data() || {};
+      return {score: e.score, status: e.status, bySkill: e.bySkill,
+        submittedAtMs: msOf(e.submittedAt)};
+    }),
+    attendance: attSnap.docs.map((d) => {
+      const a = d.data() || {};
+      return {sessionDate: a.sessionDate, status: a.attendanceStatus,
+        title: a.sessionTitle || ""};
+    }),
+    terms: termSnap.docs.map((d) => ({id: d.id, ...(d.data() || {})})),
+    tests: tests.map((t) => ({...t, ...(ranks[t.codeId] || {})})),
+    note: note ? {text: note.text, teacherName: note.teacherName,
+      createdAtMs: msOf(note.createdAt)} : null,
+    levelHistory: histSnap.docs.map((d) => {
+      const h = d.data() || {};
+      return {from: h.from, to: h.to, kind: h.kind, dateMs: msOf(h.date)};
+    }),
+    previous,
+  }, Date.now());
+  await ref.set({
+    ...summary,
+    studentId: uid,
+    studentName: latinName(user),
+    studentNameChinese: String(user.nameChinese || "").trim(),
+    teacherId: String(user.teacherId || ""),
+    active: user.active !== false,
+    notifiedAt: previous.notifiedAt || {},
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+  return summary;
+}
+
+/** A refresh never fails the write that triggered it. */
+async function safeRefresh(uid, why) {
+  try {
+    await refreshProgressSummary(uid);
+  } catch (err) {
+    logger.error(`progress summary ${uid} (${why})`, err);
+  }
+}
+
+function studentIdOfEvent(event) {
+  const before = event.data && event.data.before.exists ? event.data.before.data() : null;
+  const after = event.data && event.data.after.exists ? event.data.after.data() : null;
+  return String(((after || before) || {}).studentId || "");
+}
+
+exports.onExerciseResultWritten = onDocumentWritten(`${EXERCISE_RESULTS}/{id}`,
+    async (event) => safeRefresh(studentIdOfEvent(event), "exercise result"));
+exports.onAttendanceWritten = onDocumentWritten("attendance/{id}",
+    async (event) => safeRefresh(studentIdOfEvent(event), "attendance"));
+exports.onClassTermWritten = onDocumentWritten(`${CLASS_TERMS}/{id}`,
+    async (event) => safeRefresh(studentIdOfEvent(event), "voucher"));
+exports.onProgressNoteWritten = onDocumentWritten(`${PROGRESS_NOTES}/{id}`,
+    async (event) => safeRefresh(studentIdOfEvent(event), "note"));
+
+/** Active, approved students (the daily pass and the rebuild). */
+async function activeStudentIds() {
+  const snap = await db.collection(USERS).where("role", "==", "student").get();
+  return snap.docs.filter((d) => {
+    const u = d.data() || {};
+    return u.active !== false && isApprovedStatus(u.status);
+  }).map((d) => d.id);
+}
+
+/**
+ * The daily pass: refresh every active student's summary, then send the
+ * warning notices that are due (the spec's table: who hears about which
+ * warning), at most once per 7 days per student and warning.
+ */
+async function dailyProgressPass() {
+  const nowMs = Date.now();
+  const ids = await activeStudentIds();
+  let notices = 0;
+  for (const uid of ids) {
+    try {
+      await refreshProgressSummary(uid);
+      const ref = db.collection(PROGRESS_SUMMARY).doc(uid);
+      const snap = await ref.get();
+      const s = snap.data() || {};
+      const due = progress.noticesDue(s, nowMs, s.notifiedAt || {});
+      if (!due.length) continue;
+      const name = AppUserLabel(s);
+      const batch = db.batch();
+      const notified = {...(s.notifiedAt || {})};
+      for (const d of due) {
+        const text = progress.noticeText(d.id, name, d.detail);
+        const base = {kind: "progress", title: text.title, body: text.body, read: false,
+          studentId: uid, warning: d.id, createdAt: FieldValue.serverTimestamp()};
+        for (const role of d.roles) {
+          if (role === "student") {
+            batch.set(db.collection(NOTIFICATIONS).doc(), {...base, forRole: "student",
+              userId: uid, targetRoute: "/student/progress"});
+          } else if (role === "teacher" && s.teacherId) {
+            batch.set(db.collection(NOTIFICATIONS).doc(), {...base, forRole: "teacher",
+              userId: s.teacherId, targetRoute: `/teacher/student/${uid}/progress`});
+          } else if (role === "admin") {
+            batch.set(db.collection(NOTIFICATIONS).doc(), {...base, forRole: "admin",
+              userId: "", targetRoute: `/admin/users/${uid}/progress`});
+          }
+          notices += 1;
+        }
+        notified[String(d.id)] = nowMs;
+      }
+      batch.update(ref, {notifiedAt: notified});
+      await batch.commit();
+    } catch (err) {
+      logger.error(`dailyProgressPass: ${uid}`, err);
+    }
+  }
+  logger.info(`dailyProgressPass: ${ids.length} summaries, ${notices} notices`);
+  return {students: ids.length, notices};
+}
+
+/** `中文名 (Latin)` from a summary (staff read the notices). */
+function AppUserLabel(s) {
+  const c = String(s.studentNameChinese || "").trim();
+  const l = String(s.studentName || "").trim();
+  if (!c) return l;
+  if (!l) return c;
+  return `${c} (${l})`;
+}
+
+/** Admin: rebuild every active student's summary (once after the deploy). */
+exports.rebuildProgressSummaries = onCall({timeoutSeconds: 540}, async (request) => {
+  const {uid, profile} = await requireCaller(request);
+  if (profile.role !== "admin") {
+    throw new HttpsError("permission-denied", "Only admins rebuild the summaries.");
+  }
+  const ids = await activeStudentIds();
+  let done = 0;
+  for (const id of ids) {
+    try {
+      await refreshProgressSummary(id);
+      done += 1;
+    } catch (err) {
+      logger.error(`rebuildProgressSummaries: ${id}`, err);
+    }
+  }
+  await writeAudit({action: "progress.rebuild", actorId: uid, actorName: latinName(profile),
+    targetType: "progress_summary", targetId: "all", detail: `${done} of ${ids.length}`});
+  return {students: ids.length, rebuilt: done};
 });

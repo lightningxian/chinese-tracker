@@ -11063,6 +11063,348 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The admin has not set your levels yet.'**
   String get teacherLevelsNone;
+
+  /// No description provided for @progressReportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress report'**
+  String get progressReportTitle;
+
+  /// No description provided for @progressReportTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Report'**
+  String get progressReportTab;
+
+  /// No description provided for @progressPrint.
+  ///
+  /// In en, this message translates to:
+  /// **'Print report'**
+  String get progressPrint;
+
+  /// No description provided for @progressPrintFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not make the PDF: {error}'**
+  String progressPrintFailed(String error);
+
+  /// No description provided for @progressReportUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This report cannot be opened.'**
+  String get progressReportUnavailable;
+
+  /// No description provided for @progressReportEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No report yet'**
+  String get progressReportEmptyTitle;
+
+  /// No description provided for @progressReportEmptySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The report fills in after the first practice, class or test.'**
+  String get progressReportEmptySubtitle;
+
+  /// No description provided for @progressStatusGood.
+  ///
+  /// In en, this message translates to:
+  /// **'Progres Baik'**
+  String get progressStatusGood;
+
+  /// No description provided for @progressStatusAttention.
+  ///
+  /// In en, this message translates to:
+  /// **'Perlu Perhatian'**
+  String get progressStatusAttention;
+
+  /// No description provided for @progressStatusFollowUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Perlu Tindak Lanjut'**
+  String get progressStatusFollowUp;
+
+  /// No description provided for @progressCodesToward.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} of {min} codes passed toward {next}'**
+  String progressCodesToward(int count, int min, String next);
+
+  /// No description provided for @progressKpiAttendance.
+  ///
+  /// In en, this message translates to:
+  /// **'Attendance (30 days)'**
+  String get progressKpiAttendance;
+
+  /// No description provided for @progressKpiAttendanceNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Present {hadir} · absent {alpa} · excused {izin}'**
+  String progressKpiAttendanceNote(int hadir, int alpa, int izin);
+
+  /// No description provided for @progressKpiPractice.
+  ///
+  /// In en, this message translates to:
+  /// **'Practice average (14 days)'**
+  String get progressKpiPractice;
+
+  /// No description provided for @progressKpiPracticeNote.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} attempts'**
+  String progressKpiPracticeNote(int n);
+
+  /// No description provided for @progressKpiPracticeChange.
+  ///
+  /// In en, this message translates to:
+  /// **'{change} against the 14 days before'**
+  String progressKpiPracticeChange(String change);
+
+  /// No description provided for @progressKpiTests.
+  ///
+  /// In en, this message translates to:
+  /// **'Tests passed at this level'**
+  String get progressKpiTests;
+
+  /// No description provided for @progressKpiTestsNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Codes passed at {level}'**
+  String progressKpiTestsNote(String level);
+
+  /// No description provided for @progressKpiVoucher.
+  ///
+  /// In en, this message translates to:
+  /// **'Voucher sessions left'**
+  String get progressKpiVoucher;
+
+  /// No description provided for @progressKpiVoucherNote.
+  ///
+  /// In en, this message translates to:
+  /// **'{days} days to the deadline'**
+  String progressKpiVoucherNote(int days);
+
+  /// No description provided for @progressKpiNoVoucher.
+  ///
+  /// In en, this message translates to:
+  /// **'No active voucher'**
+  String get progressKpiNoVoucher;
+
+  /// No description provided for @progressWarnings.
+  ///
+  /// In en, this message translates to:
+  /// **'Warnings'**
+  String get progressWarnings;
+
+  /// No description provided for @progressWarn1.
+  ///
+  /// In en, this message translates to:
+  /// **'Attendance'**
+  String get progressWarn1;
+
+  /// No description provided for @progressWarn2.
+  ///
+  /// In en, this message translates to:
+  /// **'Score drop'**
+  String get progressWarn2;
+
+  /// No description provided for @progressWarn3.
+  ///
+  /// In en, this message translates to:
+  /// **'Inactive'**
+  String get progressWarn3;
+
+  /// No description provided for @progressWarn4.
+  ///
+  /// In en, this message translates to:
+  /// **'Voucher'**
+  String get progressWarn4;
+
+  /// No description provided for @progressWarn5.
+  ///
+  /// In en, this message translates to:
+  /// **'Tests failed'**
+  String get progressWarn5;
+
+  /// No description provided for @progressWarn1Rule.
+  ///
+  /// In en, this message translates to:
+  /// **'Attendance under 75% in the last 30 days.'**
+  String get progressWarn1Rule;
+
+  /// No description provided for @progressWarn2Rule.
+  ///
+  /// In en, this message translates to:
+  /// **'Practice average under 60 in the last 2 weeks, or 10 points lower than before.'**
+  String get progressWarn2Rule;
+
+  /// No description provided for @progressWarn3Rule.
+  ///
+  /// In en, this message translates to:
+  /// **'No practice for 14 days.'**
+  String get progressWarn3Rule;
+
+  /// No description provided for @progressWarn4Rule.
+  ///
+  /// In en, this message translates to:
+  /// **'2 or fewer sessions left, or the voucher ends within 7 days.'**
+  String get progressWarn4Rule;
+
+  /// No description provided for @progressWarn5Rule.
+  ///
+  /// In en, this message translates to:
+  /// **'The last two tests were not passed.'**
+  String get progressWarn5Rule;
+
+  /// No description provided for @progressPracticeChart.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly practice (last 12 weeks)'**
+  String get progressPracticeChart;
+
+  /// No description provided for @progressPracticeEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No practice in the last 12 weeks.'**
+  String get progressPracticeEmpty;
+
+  /// No description provided for @progressAttempts.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} attempts'**
+  String progressAttempts(int n);
+
+  /// No description provided for @progressSkills.
+  ///
+  /// In en, this message translates to:
+  /// **'Average per skill (90 days)'**
+  String get progressSkills;
+
+  /// No description provided for @progressSkillsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No practice to measure yet.'**
+  String get progressSkillsEmpty;
+
+  /// No description provided for @progressTeacherNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Teacher\'s note'**
+  String get progressTeacherNote;
+
+  /// No description provided for @progressNoteEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No note yet.'**
+  String get progressNoteEmpty;
+
+  /// No description provided for @progressAddNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Add note'**
+  String get progressAddNote;
+
+  /// No description provided for @progressEditNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit note'**
+  String get progressEditNote;
+
+  /// No description provided for @progressNoteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'What should the student and the parent know?'**
+  String get progressNoteHint;
+
+  /// No description provided for @progressTestHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Test history'**
+  String get progressTestHistory;
+
+  /// No description provided for @progressTestsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No test yet.'**
+  String get progressTestsEmpty;
+
+  /// No description provided for @progressRank.
+  ///
+  /// In en, this message translates to:
+  /// **'Rank {rank} of {size}'**
+  String progressRank(int rank, int size);
+
+  /// No description provided for @progressTagInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid'**
+  String get progressTagInvalid;
+
+  /// No description provided for @progressAttendance.
+  ///
+  /// In en, this message translates to:
+  /// **'Attendance (last 10)'**
+  String get progressAttendance;
+
+  /// No description provided for @progressAttendanceEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No attendance recorded yet.'**
+  String get progressAttendanceEmpty;
+
+  /// No description provided for @progressLevelHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Level history'**
+  String get progressLevelHistory;
+
+  /// No description provided for @progressLevelHistoryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No level change yet.'**
+  String get progressLevelHistoryEmpty;
+
+  /// No description provided for @progressAttentionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Students needing attention ({n})'**
+  String progressAttentionTitle(int n);
+
+  /// No description provided for @progressAttentionEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Every student is on track.'**
+  String get progressAttentionEmpty;
+
+  /// No description provided for @progressFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get progressFilterAll;
+
+  /// No description provided for @progressShowAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Show all {n}'**
+  String progressShowAll(int n);
+
+  /// No description provided for @progressRebuildTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rebuild progress summaries'**
+  String get progressRebuildTitle;
+
+  /// No description provided for @progressRebuildHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Once after an update: recounts every student\'s report.'**
+  String get progressRebuildHint;
+
+  /// No description provided for @progressRebuilt.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} reports rebuilt.'**
+  String progressRebuilt(int n);
 }
 
 class _AppLocalizationsDelegate

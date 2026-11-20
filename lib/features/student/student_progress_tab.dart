@@ -14,11 +14,12 @@ import '../../models/lesson.dart';
 import '../../models/student_progress.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
+import '../progress/student_progress_report_screen.dart';
 
-enum _ProgressView { lessons, exercises }
+enum _ProgressView { report, lessons, exercises }
 
-/// Progress tab: lessons by term (as before) or every exercise attempt with
-/// its score, correct count and time, newest first.
+/// Progress tab: the progress report (Build 4), every exercise attempt with
+/// its score, correct count and time, or lessons by term.
 class StudentProgressTab extends StatefulWidget {
   const StudentProgressTab({super.key, required this.studentId});
 
@@ -29,11 +30,13 @@ class StudentProgressTab extends StatefulWidget {
 }
 
 class _StudentProgressTabState extends State<StudentProgressTab> {
-  _ProgressView _view = _ProgressView.exercises;
+  _ProgressView _view = _ProgressView.report;
 
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
+    // Three segments fit a phone only without their icons.
+    final narrow = MediaQuery.sizeOf(context).width < 480;
     return Column(
       children: [
         Padding(
@@ -42,13 +45,18 @@ class _StudentProgressTabState extends State<StudentProgressTab> {
             showSelectedIcon: false,
             segments: [
               ButtonSegment(
+                value: _ProgressView.report,
+                icon: narrow ? null : const Icon(Icons.insights_outlined, size: 18),
+                label: Text(l.progressReportTab),
+              ),
+              ButtonSegment(
                 value: _ProgressView.exercises,
-                icon: const Icon(Icons.fitness_center_outlined, size: 18),
+                icon: narrow ? null : const Icon(Icons.fitness_center_outlined, size: 18),
                 label: Text(l.studentProgressExercises),
               ),
               ButtonSegment(
                 value: _ProgressView.lessons,
-                icon: const Icon(Icons.menu_book_outlined, size: 18),
+                icon: narrow ? null : const Icon(Icons.menu_book_outlined, size: 18),
                 label: Text(l.studentProgressLessons),
               ),
             ],
@@ -58,6 +66,8 @@ class _StudentProgressTabState extends State<StudentProgressTab> {
         ),
         Expanded(
           child: switch (_view) {
+            _ProgressView.report =>
+              StudentProgressReport(studentId: widget.studentId),
             _ProgressView.exercises =>
               _ExerciseHistory(studentId: widget.studentId),
             _ProgressView.lessons =>

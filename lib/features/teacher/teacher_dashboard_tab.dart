@@ -6,6 +6,7 @@ import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/teacher_activity_utils.dart';
 import '../../core/utils/teacher_attention_utils.dart';
+import '../progress/progress_attention_list.dart';
 import '../../core/utils/teacher_stats_utils.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/cohort_stats_widgets.dart';
@@ -147,6 +148,7 @@ class TeacherDashboardTab extends StatelessWidget {
                                           assignments: assignments,
                                           exerciseResults: results,
                                           classTerms: classTerms,
+                                          includeActivity: false,
                                         );
 
                                         final homeworkOverview =
@@ -460,6 +462,13 @@ class TeacherDashboardTab extends StatelessWidget {
                                               ),
                                             ),
                                             const SizedBox(height: 24),
+                                            // Build 4: the five progress
+                                            // warnings of my students.
+                                            ProgressAttentionList(
+                                              teacherId: teacher?.uid ?? '',
+                                              maxRows: 8,
+                                            ),
+                                            const SizedBox(height: 16),
                                             SectionHeader(
                                               title:
                                                   l.teacherDashNeedsAttention,

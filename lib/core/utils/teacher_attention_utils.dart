@@ -42,6 +42,9 @@ abstract final class TeacherAttentionUtils {
     required List<ExerciseAssignment> assignments,
     required List<ExerciseResult> exerciseResults,
     required List<StudentClassTerm> classTerms,
+    // Build 4: where the progress summaries are shown, "inactive" and "low
+    // sessions" come from their warnings 3 and 4 instead (no double count).
+    bool includeActivity = true,
   }) {
     final items = <AttentionItem>[];
     final now = DateTime.now();
@@ -107,6 +110,7 @@ abstract final class TeacherAttentionUtils {
       final lastActive = _latest(lastLesson, lastExercise);
       final inactiveSince = now.subtract(const Duration(days: _inactiveDays));
 
+      if (!includeActivity) continue;
       final hasHistory =
           studentProgress.isNotEmpty || studentResults.isNotEmpty;
       if (hasHistory &&

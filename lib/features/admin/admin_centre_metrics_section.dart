@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../progress/progress_attention_list.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -82,6 +83,7 @@ class AdminCentreMetricsSection extends StatelessWidget {
                                   assignments: assignments,
                                   exerciseResults: results,
                                   classTerms: classTerms,
+                                  includeActivity: false,
                                 );
 
                                 final cohortStats =
@@ -123,6 +125,17 @@ class AdminCentreMetricsSection extends StatelessWidget {
                                       onTap: () => onCentreStatTap(
                                         TeacherDashboardStatKind
                                             .homeworkOverview,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 20),
+                                    // Build 4: students needing attention,
+                                    // filtered by level and teacher.
+                                    StreamBuilder<List<AppUser>>(
+                                      stream: firestore.watchAllTeachers(),
+                                      builder: (context, tSnap) =>
+                                          ProgressAttentionList(
+                                        teachers: tSnap.data ?? const [],
+                                        maxRows: 10,
                                       ),
                                     ),
                                   ],

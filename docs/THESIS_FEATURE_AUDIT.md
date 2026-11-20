@@ -21,7 +21,7 @@ section says otherwise.
 | **Placement test** at registration: "Mulai dari HSK 1" or "Ikut tes penempatan" + target HSK 2–6; later take one code of the level below the target | Build 3 (2026-11-20): the register form offers "Mulai dari HSK 1" or "Ikut tes penempatan" + target HSK 2–6 and an optional result code of a public placement test; the student is `pending`. Approved at HSK 1 (or the result code's level), then a teacher opens a **placement session** on a code; the result writes `level_promotions/{uid}_placement` (passed = paper level + 1, failed = paper level) for the admin's Promotion screen. Visitors sit placement codes from the landing page behind a token (`startPlacement`). PL-01, PL-02 in the flow test | Done (emulator; live after deploy) |
 | **Practice**: 1 package of 15 questions per level, built by the teacher from the bank | Teachers build packages from the bank on web and assign them per student with a due date (2026-11-13); the bank itself stays admin-only. No fixed "15 per level" rule | Done (free size) |
 | **Settings**: pass marks and minimum number of codes editable by admin | Pass marks live in the test formats (Build 1); the minimum number of codes is `settings/promotion.minCodes`, changed on the Promotion screen (Build 2B) | Done |
-| **Progress report**: "2 of 3 codes passed", test history with leaderboard rank; warning 5 = failed 2 tests in a row | Build 2B: the student Tests tab shows "2 of 3 codes passed" with the level group and the rank on each result; the full progress report (KPI, chart, warnings) is Build 4 | Partly (Build 4) |
+| **Progress report**: "2 of 3 codes passed", test history with leaderboard rank; warning 5 = failed 2 tests in a row | Build 2B: the student Tests tab shows "2 of 3 codes passed" with the level group and the rank on each result; Build 4 (2026-11-20): the full report from `progress_summary/{uid}` (KPIs, 12-week chart, skills, note, history with rank "3 of 15", warnings, status) for the student, the parent, the teacher and the admin, plus a PDF | Done (take on live) |
 | **Import of old results** from the "Nilai Simulasi HSK" project (`easy-study-hsk`) | Nothing; access to that project not yet checked | Missing, needs owner's go-ahead |
 | **Rules** for `leaderboard`, `pelaksanaan_tes` (tokens), `nilai` (teacher marks invalid) | Build 1: rules for `test_formats`, `test_codes`, `test_sessions`, `test_attempts`, `test_results`; Build 2B: `leaderboards` (+ entries), `level_promotions`, `promotion_progress`, `users/{uid}/level_history` (all written by functions only), `users.level` admin-only, teacher bank questions by `createdBy` (5 rules tests) | Done |
 | **Question bank target**: 731 questions (90 practice + 481 full-format codes + 160 extra HSK 3) via CSV/JSON + audio import tool | Paste and PDF/image/DOC OCR import only; no CSV/JSON, no batch audio; no form codes L1–T5 | Partly (import), Missing (forms) |
@@ -53,7 +53,7 @@ retake" and "P6 Admin screen to edit weights" are superseded by the table above.
 | 05 | Voucher Kursus: remaining, expiry, history, **Beli** | Term section shows remaining/expiry/visit history; no self-purchase | Add packages + Beli (Phase 4) |
 | 06 | Test token entry with code and duration | Nothing | Build (Phase 5 supervised flow) |
 | 07 | Leaderboard per code, masked names, own row highlighted | **Done (Build 2B, 2026-11-20):** student Tests tab, a result, **Leaderboard** (Chinese names, own row in a teal frame, medals for the top 3) | Screenshot on the emulator or live after deploy |
-| 08 | Laporan Progress: "2 dari 3", KPI cards, chart, per-skill, note, test history | List-style progress tab, no chart library | Build (Phase 7) |
+| 08 | Laporan Progress: "2 dari 3", KPI cards, chart, per-skill, note, test history | Build 4: the report screen (`fl_chart` line chart) on the student Progress tab, the parent tab and the staff student page | Done (take on live) |
 | 09 | Guru: Jadwal Mengajar with status, Mulai Sesi / Isi Absensi / Konfirmasi, availability | Classes tab + calendar; no status/check-in/confirm/availability | Build (Phase 2–3) |
 | 10 | Guru: supervision screen with big token and "left page" events | Nothing | Build (Phase 5) |
 | 11 | Admin: create jadwal with clash warning + free-slot suggestions | One-off session form, no clash check | Build jadwal + `checkScheduleConflict` (Phase 2) |
@@ -214,11 +214,11 @@ Status per spec item. Evidence is `file:line` in this repo.
 | P6 Remedial retake | Missing | Not found | — |
 | P6 Level group derivation | Partly | Report-only bands (`admin_report_service.dart:231-233`) | HskBandCount |
 | P6 Admin screen to edit weights | Missing | Not found | — |
-| **P7** progress_summary doc per student | Missing | Only per-lesson `student_progress` docs | — |
-| P7 Warning indicators (5) | Partly | In-app: inactive 7 days, ≤2 sessions (`teacher_attention_utils.dart:28-30`) | TeacherAttentionUtils |
-| P7 Status label | Missing | Not found | — |
-| P7 Access scoping | Partly | Student/parent limited to own; any teacher reads all students | rules |
-| P7 Report screen layout | Missing | `student_progress_tab.dart` is a list; no chart library | StudentProgressTab |
+| **P7** progress_summary doc per student | Done (Build 4) | `refreshProgressSummary` + triggers on exercise_results, attendance, terms, notes, test results; pure logic `functions/progress.js` | `progress_summary` |
+| P7 Warning indicators (5) | Done (Build 4) | The five warnings of the spec in `progress.js` (boundaries in `test_progress.js`); notices from the daily job to the spec's roles, once per 7 days | `warningsOf`, `noticesDue` |
+| P7 Status label | Done (Build 4) | Progres Baik / Perlu Perhatian / Perlu Tindak Lanjut from the warning count | `statusOf` |
+| P7 Access scoping | Done (Build 4) | Summary: own, staff, linked parent; notes written by the student's teacher or an admin; teacher dashboard lists their own students, admin filters by level and teacher | rules |
+| P7 Report screen layout | Done (Build 4) | `student_progress_report_screen.dart` in the proposal's order | StudentProgressReport |
 | **P8** monthlyReport scheduled | Missing | Admin PDFs on demand only | admin PDF exports |
 | P8 Admin dashboard (6 items) | Partly | Totals, signups chart, voucher alerts, finance (`admin_dashboard_tab.dart`) | AdminDashboardTab |
 | **P9** FCM notifications | Missing | In-app only, 4 events; read query likely denied | `notifications` |

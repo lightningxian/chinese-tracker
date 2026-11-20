@@ -6,6 +6,64 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-20 — Claude (BUILD chat): Build 4 — progress report
+
+**What changed**
+- **`progress_summary/{studentId}`**, written only by functions
+  (`refreshProgressSummary` in `functions/index.js`, pure logic in
+  `functions/progress.js`): level and group, codes passed toward the next
+  level, the last 12 ISO weeks of practice (Jakarta time; average and
+  attempts), the 14-day averages and the change, the skills over 90 days,
+  the test history with the leaderboard rank, attendance over 30 days
+  (hadir ÷ (hadir + alpa), izin left out), the active voucher, the latest
+  teacher note, the level history, the five warnings and the status label
+  (good / attention / follow_up).
+- **Who refreshes it:** new triggers on `exercise_results`, `attendance`,
+  `student_class_terms` and `progress_notes`, the existing
+  `onTestResultWritten`, and an approve in `decideRegistration` /
+  `decidePromotion`. A failed refresh is logged and never fails the write.
+- **Daily pass:** `dailyReminders` (07:00 Jakarta) also refreshes every
+  active, approved student and sends the warning notices (kind `progress`)
+  to the roles of the spec's table, at most once per 7 days per student and
+  warning (`notifiedAt` on the summary).
+- **`progress_notes`**: a teacher's follow-up note (rules: a teacher writes
+  for their own students, an admin for anyone; the student, the parent and
+  staff read; the author or an admin edits).
+- **Report screen** `StudentProgressReport` for every role: header with the
+  status chip, "2 of 3 codes passed toward HSK 4", four KPI cards, the
+  weekly practice line chart (`fl_chart`, approved by the owner), skill
+  bars, the teacher note with Add / Edit, the warnings, the test history
+  with ranks and tags, attendance, the level history, Print report. Where:
+  the student's Progress tab (new first segment), the parent's first tab,
+  **Progress report** on the student page of teachers and admins
+  (`/teacher/student/:id/progress`, `/admin/users/:id/progress`).
+- **Attention lists:** "Students needing attention" on the teacher
+  dashboard (their students) and the admin metrics (filters by level and
+  teacher); the old inactive and low-sessions items moved into the
+  summary's warnings 3 and 4.
+- **PDF:** Print report builds the same report (`ProgressReportPdf`);
+  `previewReport` keeps its entry points and falls back to the old report
+  for a student with no summary.
+- **Rebuild:** admin-only `rebuildProgressSummaries` behind **Rebuild
+  progress summaries** on Org settings.
+- Indexes: `exercise_results` (studentId, submittedAt desc),
+  `progress_notes` (studentId, createdAt desc).
+- Seed: a healthy student13@ and five students shaped for the five
+  warnings (student14@ to student18@); tests `functions/test_progress.js`,
+  flow test steps, rules tests, `test/progress_summary_test.dart`.
+
+**Why**
+- Build 4 of `docs/PLAN.md` §4 (spec §9; §5 Q13–Q16 defaults).
+
+**For review**
+- Deploy rules, indexes and functions (5 new: 4 triggers and
+  `rebuildProgressSummaries`), then hosting; then press **Rebuild progress
+  summaries** once (Org settings).
+- The daily job now reads every active student's documents once a day
+  (bounded queries); watch the function's duration in the logs.
+
+---
+
 ## 2026-11-20 — Claude (BUILD chat): Build 3 — registration approval, placement tests, rooms
 
 **What changed**

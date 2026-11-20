@@ -261,6 +261,20 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
                         ),
                       ],
                       const SizedBox(height: 12),
+                      // Build 4: the progress report page.
+                      AppCard(
+                        child: FilledButton.icon(
+                          onPressed: () => context.push(
+                              '${GoRouterState.of(context).uri.path}/progress'),
+                          icon: const Icon(Icons.insights_outlined),
+                          label: Text(l.progressReportTitle),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.navy,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
                       AppCard(
                         child: OutlinedButton.icon(
                           onPressed:
