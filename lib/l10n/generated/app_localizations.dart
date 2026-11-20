@@ -10499,6 +10499,570 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Not moved up to {next} yet. Your teacher will talk with you about the next step.'**
   String promotionNotYetStudent(String next);
+
+  /// No description provided for @placementTestLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Placement test'**
+  String get placementTestLabel;
+
+  /// No description provided for @placementSessionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Placement session'**
+  String get placementSessionLabel;
+
+  /// No description provided for @placementRuleNoReview.
+  ///
+  /// In en, this message translates to:
+  /// **'You see your marks at the end. The questions are not shown again.'**
+  String get placementRuleNoReview;
+
+  /// No description provided for @placementErrNotApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Your registration is waiting for the admin\'s approval.'**
+  String get placementErrNotApproved;
+
+  /// No description provided for @placementErrBadKey.
+  ///
+  /// In en, this message translates to:
+  /// **'This test link is no longer valid. Ask your teacher for a new token.'**
+  String get placementErrBadKey;
+
+  /// No description provided for @placementErrVisitorDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Type your name and a WhatsApp number (8 to 15 digits).'**
+  String get placementErrVisitorDetails;
+
+  /// No description provided for @placementErrNotPlacement.
+  ///
+  /// In en, this message translates to:
+  /// **'This token is not for a placement test.'**
+  String get placementErrNotPlacement;
+
+  /// No description provided for @placementErrBadResultCode.
+  ///
+  /// In en, this message translates to:
+  /// **'This result code is not valid. It has 6 letters and digits.'**
+  String get placementErrBadResultCode;
+
+  /// No description provided for @placementErrClaimed.
+  ///
+  /// In en, this message translates to:
+  /// **'This result code was already used by another student.'**
+  String get placementErrClaimed;
+
+  /// No description provided for @placementErrTokenShort.
+  ///
+  /// In en, this message translates to:
+  /// **'The token has 6 letters and digits.'**
+  String get placementErrTokenShort;
+
+  /// No description provided for @approvalErrNotPending.
+  ///
+  /// In en, this message translates to:
+  /// **'This registration is already decided.'**
+  String get approvalErrNotPending;
+
+  /// No description provided for @approvalErrTeacher.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick an active teacher.'**
+  String get approvalErrTeacher;
+
+  /// No description provided for @approvalErrLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a starting level.'**
+  String get approvalErrLevel;
+
+  /// No description provided for @registerStartLevelTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Where do you start?'**
+  String get registerStartLevelTitle;
+
+  /// No description provided for @registerChoiceHsk1.
+  ///
+  /// In en, this message translates to:
+  /// **'Start from HSK 1'**
+  String get registerChoiceHsk1;
+
+  /// No description provided for @registerChoiceHsk1Help.
+  ///
+  /// In en, this message translates to:
+  /// **'For beginners. The admin approves you at HSK 1.'**
+  String get registerChoiceHsk1Help;
+
+  /// No description provided for @registerChoiceTest.
+  ///
+  /// In en, this message translates to:
+  /// **'Take a placement test'**
+  String get registerChoiceTest;
+
+  /// No description provided for @registerChoiceTestHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'You already know some Mandarin. A short test finds your level.'**
+  String get registerChoiceTestHelp;
+
+  /// No description provided for @registerTargetLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Level you aim for'**
+  String get registerTargetLevel;
+
+  /// No description provided for @registerTargetLevelRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick the level you aim for.'**
+  String get registerTargetLevelRequired;
+
+  /// No description provided for @registerResultCodeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Placement result code (optional)'**
+  String get registerResultCodeLabel;
+
+  /// No description provided for @registerResultCodeHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'From a placement test you took at the centre. Press Check.'**
+  String get registerResultCodeHelper;
+
+  /// No description provided for @registerResultCodeCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'Check'**
+  String get registerResultCodeCheck;
+
+  /// No description provided for @registerResultCodeCheckFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Press Check next to the result code first.'**
+  String get registerResultCodeCheckFirst;
+
+  /// No description provided for @placementSummaryLine.
+  ///
+  /// In en, this message translates to:
+  /// **'{level} paper: {total} of {max}'**
+  String placementSummaryLine(String level, int total, int max);
+
+  /// No description provided for @placementPassed.
+  ///
+  /// In en, this message translates to:
+  /// **'Passed'**
+  String get placementPassed;
+
+  /// No description provided for @placementNotPassed.
+  ///
+  /// In en, this message translates to:
+  /// **'Not passed'**
+  String get placementNotPassed;
+
+  /// No description provided for @placementRecommended.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommended level: {level}'**
+  String placementRecommended(String level);
+
+  /// No description provided for @teacherLinkCodeOptionalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Teacher\'s link code (optional)'**
+  String get teacherLinkCodeOptionalLabel;
+
+  /// No description provided for @teacherLinkCodeOptionalHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave it empty if you have none: the admin chooses your teacher.'**
+  String get teacherLinkCodeOptionalHelper;
+
+  /// No description provided for @waitingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for approval'**
+  String get waitingTitle;
+
+  /// No description provided for @waitingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account is made. The admin checks it and sets your teacher and level.'**
+  String get waitingSubtitle;
+
+  /// No description provided for @waitingRejectedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Registration not approved'**
+  String get waitingRejectedTitle;
+
+  /// No description provided for @waitingRejectedSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The admin did not approve this registration. Contact the centre.'**
+  String get waitingRejectedSubtitle;
+
+  /// No description provided for @waitingYourChoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Your choice:'**
+  String get waitingYourChoice;
+
+  /// No description provided for @waitingChoiceTest.
+  ///
+  /// In en, this message translates to:
+  /// **'Placement test, aiming for {target}'**
+  String waitingChoiceTest(String target);
+
+  /// No description provided for @waitingResultCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Result code {code}'**
+  String waitingResultCode(String code);
+
+  /// No description provided for @waitingForAdmin.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for the admin. This page opens the app by itself once you are approved.'**
+  String get waitingForAdmin;
+
+  /// No description provided for @waitingReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason:'**
+  String get waitingReason;
+
+  /// No description provided for @waitingWhatsApp.
+  ///
+  /// In en, this message translates to:
+  /// **'WhatsApp the centre ({number})'**
+  String waitingWhatsApp(String number);
+
+  /// No description provided for @approvalChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Approval'**
+  String get approvalChip;
+
+  /// No description provided for @approvalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Registrations to approve'**
+  String get approvalTitle;
+
+  /// No description provided for @approvalIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'New students wait here. Pick their teacher and starting level, then approve or reject.'**
+  String get approvalIntro;
+
+  /// No description provided for @approvalEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No registration is waiting.'**
+  String get approvalEmpty;
+
+  /// No description provided for @approvalRejectedList.
+  ///
+  /// In en, this message translates to:
+  /// **'Rejected ({count})'**
+  String approvalRejectedList(int count);
+
+  /// No description provided for @approvalTeacher.
+  ///
+  /// In en, this message translates to:
+  /// **'Teacher'**
+  String get approvalTeacher;
+
+  /// No description provided for @approvalStartLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting level'**
+  String get approvalStartLevel;
+
+  /// No description provided for @approvalApprove.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve'**
+  String get approvalApprove;
+
+  /// No description provided for @approvalReject.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject'**
+  String get approvalReject;
+
+  /// No description provided for @approvalApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} approved at {level}.'**
+  String approvalApproved(String name, String level);
+
+  /// No description provided for @approvalRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Registration rejected.'**
+  String get approvalRejected;
+
+  /// No description provided for @approvalRejectTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject {name}?'**
+  String approvalRejectTitle(String name);
+
+  /// No description provided for @approvalRejectReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason (the student sees it)'**
+  String get approvalRejectReason;
+
+  /// No description provided for @approvalRejectedBecause.
+  ///
+  /// In en, this message translates to:
+  /// **'Rejected: {reason}'**
+  String approvalRejectedBecause(String reason);
+
+  /// No description provided for @placementScanToJoin.
+  ///
+  /// In en, this message translates to:
+  /// **'Visitors scan to open the placement test'**
+  String get placementScanToJoin;
+
+  /// No description provided for @placementVisitorRow.
+  ///
+  /// In en, this message translates to:
+  /// **'Visitor · {name}'**
+  String placementVisitorRow(String name);
+
+  /// No description provided for @placementSessionTick.
+  ///
+  /// In en, this message translates to:
+  /// **'Placement session'**
+  String get placementSessionTick;
+
+  /// No description provided for @placementSessionTickHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Results stay off the leaderboard and the promotion count.'**
+  String get placementSessionTickHelp;
+
+  /// No description provided for @placementCodeTick.
+  ///
+  /// In en, this message translates to:
+  /// **'Placement code'**
+  String get placementCodeTick;
+
+  /// No description provided for @placementCodeTickHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Visitors may sit it from the landing page. It never counts toward promotion.'**
+  String get placementCodeTickHelp;
+
+  /// No description provided for @placementPaperPassed.
+  ///
+  /// In en, this message translates to:
+  /// **'Placement paper passed'**
+  String get placementPaperPassed;
+
+  /// No description provided for @placementPaperFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Placement paper not passed'**
+  String get placementPaperFailed;
+
+  /// No description provided for @placementStudentWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for the admin (recommended: {level}).'**
+  String placementStudentWaiting(String level);
+
+  /// No description provided for @placementStudentApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'You start at {level}.'**
+  String placementStudentApproved(String level);
+
+  /// No description provided for @placementStudentDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'Your teacher will talk with you about your level.'**
+  String get placementStudentDeclined;
+
+  /// No description provided for @placementHomeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Find your level'**
+  String get placementHomeTitle;
+
+  /// No description provided for @placementHomeIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Sit a short placement test at the centre. Your teacher gives you a token. At the end you see your marks and get a result code to register with.'**
+  String get placementHomeIntro;
+
+  /// No description provided for @placementResumeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You have a placement test in progress in this tab.'**
+  String get placementResumeBody;
+
+  /// No description provided for @placementResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get placementResume;
+
+  /// No description provided for @placementMenuEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No placement test is open right now.'**
+  String get placementMenuEmpty;
+
+  /// No description provided for @placementFormTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Start with your token'**
+  String get placementFormTitle;
+
+  /// No description provided for @placementToken.
+  ///
+  /// In en, this message translates to:
+  /// **'Token'**
+  String get placementToken;
+
+  /// No description provided for @placementName.
+  ///
+  /// In en, this message translates to:
+  /// **'Your name'**
+  String get placementName;
+
+  /// No description provided for @placementWhatsapp.
+  ///
+  /// In en, this message translates to:
+  /// **'WhatsApp number'**
+  String get placementWhatsapp;
+
+  /// No description provided for @placementKeptNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Your name and number are kept by the centre for your registration.'**
+  String get placementKeptNote;
+
+  /// No description provided for @placementContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get placementContinue;
+
+  /// No description provided for @placementNoResult.
+  ///
+  /// In en, this message translates to:
+  /// **'No result in this tab.'**
+  String get placementNoResult;
+
+  /// No description provided for @placementResultTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your placement result'**
+  String get placementResultTitle;
+
+  /// No description provided for @placementTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get placementTotal;
+
+  /// No description provided for @placementYourCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Your result code'**
+  String get placementYourCode;
+
+  /// No description provided for @placementCodeHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Type it when you register, or show it at the centre.'**
+  String get placementCodeHelp;
+
+  /// No description provided for @placementCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Result code copied.'**
+  String get placementCopied;
+
+  /// No description provided for @placementRegisterNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Register now'**
+  String get placementRegisterNow;
+
+  /// No description provided for @roomsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rooms'**
+  String get roomsTitle;
+
+  /// No description provided for @roomsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Room'**
+  String get roomsLabel;
+
+  /// No description provided for @roomsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The rooms the class form offers.'**
+  String get roomsHint;
+
+  /// No description provided for @roomsName.
+  ///
+  /// In en, this message translates to:
+  /// **'Room name'**
+  String get roomsName;
+
+  /// No description provided for @roomsAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add room'**
+  String get roomsAdd;
+
+  /// No description provided for @roomsRename.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get roomsRename;
+
+  /// No description provided for @roomsRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get roomsRemove;
+
+  /// No description provided for @roomsSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get roomsSave;
+
+  /// No description provided for @teacherLevelsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Levels taught'**
+  String get teacherLevelsTitle;
+
+  /// No description provided for @teacherLevelsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The levels this teacher teaches (used by the weekly timetable).'**
+  String get teacherLevelsHint;
+
+  /// No description provided for @teacherLevelsNone.
+  ///
+  /// In en, this message translates to:
+  /// **'The admin has not set your levels yet.'**
+  String get teacherLevelsNone;
 }
 
 class _AppLocalizationsDelegate

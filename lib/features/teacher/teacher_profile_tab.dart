@@ -140,6 +140,40 @@ class _TeacherProfileTabState extends State<TeacherProfileTab> {
             ],
           ),
           const SizedBox(height: 16),
+          // Build 3: the levels the admin ticked for this teacher.
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  context.l10n.teacherLevelsTitle,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.navy,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                if (user.levels.isEmpty)
+                  Text(
+                    context.l10n.teacherLevelsNone,
+                    style: TextStyle(color: AppColors.textSecondary),
+                  )
+                else
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      for (final lv in user.levels)
+                        Chip(
+                          visualDensity: VisualDensity.compact,
+                          label: Text(lv),
+                        ),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
           TeacherStudentLinkCard(teacherId: user.uid),
           const SizedBox(height: 16),
           PushSettingCard(uid: user.uid),

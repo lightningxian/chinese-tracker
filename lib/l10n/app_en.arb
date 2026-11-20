@@ -2187,5 +2187,192 @@
         "type": "String"
       }
     }
-  }
+  },
+  "placementTestLabel": "Placement test",
+  "placementSessionLabel": "Placement session",
+  "placementRuleNoReview": "You see your marks at the end. The questions are not shown again.",
+  "placementErrNotApproved": "Your registration is waiting for the admin's approval.",
+  "placementErrBadKey": "This test link is no longer valid. Ask your teacher for a new token.",
+  "placementErrVisitorDetails": "Type your name and a WhatsApp number (8 to 15 digits).",
+  "placementErrNotPlacement": "This token is not for a placement test.",
+  "placementErrBadResultCode": "This result code is not valid. It has 6 letters and digits.",
+  "placementErrClaimed": "This result code was already used by another student.",
+  "placementErrTokenShort": "The token has 6 letters and digits.",
+  "approvalErrNotPending": "This registration is already decided.",
+  "approvalErrTeacher": "Pick an active teacher.",
+  "approvalErrLevel": "Pick a starting level.",
+  "registerStartLevelTitle": "Where do you start?",
+  "registerChoiceHsk1": "Start from HSK 1",
+  "registerChoiceHsk1Help": "For beginners. The admin approves you at HSK 1.",
+  "registerChoiceTest": "Take a placement test",
+  "registerChoiceTestHelp": "You already know some Mandarin. A short test finds your level.",
+  "registerTargetLevel": "Level you aim for",
+  "registerTargetLevelRequired": "Pick the level you aim for.",
+  "registerResultCodeLabel": "Placement result code (optional)",
+  "registerResultCodeHelper": "From a placement test you took at the centre. Press Check.",
+  "registerResultCodeCheck": "Check",
+  "registerResultCodeCheckFirst": "Press Check next to the result code first.",
+  "placementSummaryLine": "{level} paper: {total} of {max}",
+  "@placementSummaryLine": {
+    "placeholders": {
+      "level": {
+        "type": "String"
+      },
+      "total": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "placementPassed": "Passed",
+  "placementNotPassed": "Not passed",
+  "placementRecommended": "Recommended level: {level}",
+  "@placementRecommended": {
+    "placeholders": {
+      "level": {
+        "type": "String"
+      }
+    }
+  },
+  "teacherLinkCodeOptionalLabel": "Teacher's link code (optional)",
+  "teacherLinkCodeOptionalHelper": "Leave it empty if you have none: the admin chooses your teacher.",
+  "waitingTitle": "Waiting for approval",
+  "waitingSubtitle": "Your account is made. The admin checks it and sets your teacher and level.",
+  "waitingRejectedTitle": "Registration not approved",
+  "waitingRejectedSubtitle": "The admin did not approve this registration. Contact the centre.",
+  "waitingYourChoice": "Your choice:",
+  "waitingChoiceTest": "Placement test, aiming for {target}",
+  "@waitingChoiceTest": {
+    "placeholders": {
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "waitingResultCode": "Result code {code}",
+  "@waitingResultCode": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "waitingForAdmin": "Waiting for the admin. This page opens the app by itself once you are approved.",
+  "waitingReason": "Reason:",
+  "waitingWhatsApp": "WhatsApp the centre ({number})",
+  "@waitingWhatsApp": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "approvalChip": "Approval",
+  "approvalTitle": "Registrations to approve",
+  "approvalIntro": "New students wait here. Pick their teacher and starting level, then approve or reject.",
+  "approvalEmpty": "No registration is waiting.",
+  "approvalRejectedList": "Rejected ({count})",
+  "@approvalRejectedList": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "approvalTeacher": "Teacher",
+  "approvalStartLevel": "Starting level",
+  "approvalApprove": "Approve",
+  "approvalReject": "Reject",
+  "approvalApproved": "{name} approved at {level}.",
+  "@approvalApproved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "level": {
+        "type": "String"
+      }
+    }
+  },
+  "approvalRejected": "Registration rejected.",
+  "approvalRejectTitle": "Reject {name}?",
+  "@approvalRejectTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "approvalRejectReason": "Reason (the student sees it)",
+  "approvalRejectedBecause": "Rejected: {reason}",
+  "@approvalRejectedBecause": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "placementScanToJoin": "Visitors scan to open the placement test",
+  "placementVisitorRow": "Visitor · {name}",
+  "@placementVisitorRow": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "placementSessionTick": "Placement session",
+  "placementSessionTickHelp": "Results stay off the leaderboard and the promotion count.",
+  "placementCodeTick": "Placement code",
+  "placementCodeTickHelp": "Visitors may sit it from the landing page. It never counts toward promotion.",
+  "placementPaperPassed": "Placement paper passed",
+  "placementPaperFailed": "Placement paper not passed",
+  "placementStudentWaiting": "Waiting for the admin (recommended: {level}).",
+  "@placementStudentWaiting": {
+    "placeholders": {
+      "level": {
+        "type": "String"
+      }
+    }
+  },
+  "placementStudentApproved": "You start at {level}.",
+  "@placementStudentApproved": {
+    "placeholders": {
+      "level": {
+        "type": "String"
+      }
+    }
+  },
+  "placementStudentDeclined": "Your teacher will talk with you about your level.",
+  "placementHomeTitle": "Find your level",
+  "placementHomeIntro": "Sit a short placement test at the centre. Your teacher gives you a token. At the end you see your marks and get a result code to register with.",
+  "placementResumeBody": "You have a placement test in progress in this tab.",
+  "placementResume": "Continue",
+  "placementMenuEmpty": "No placement test is open right now.",
+  "placementFormTitle": "Start with your token",
+  "placementToken": "Token",
+  "placementName": "Your name",
+  "placementWhatsapp": "WhatsApp number",
+  "placementKeptNote": "Your name and number are kept by the centre for your registration.",
+  "placementContinue": "Continue",
+  "placementNoResult": "No result in this tab.",
+  "placementResultTitle": "Your placement result",
+  "placementTotal": "Total",
+  "placementYourCode": "Your result code",
+  "placementCodeHelp": "Type it when you register, or show it at the centre.",
+  "placementCopied": "Result code copied.",
+  "placementRegisterNow": "Register now",
+  "roomsTitle": "Rooms",
+  "roomsLabel": "Room",
+  "roomsHint": "The rooms the class form offers.",
+  "roomsName": "Room name",
+  "roomsAdd": "Add room",
+  "roomsRename": "Rename",
+  "roomsRemove": "Remove",
+  "roomsSave": "Save",
+  "teacherLevelsTitle": "Levels taught",
+  "teacherLevelsHint": "The levels this teacher teaches (used by the weekly timetable).",
+  "teacherLevelsNone": "The admin has not set your levels yet."
 }

@@ -5,6 +5,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/exercise_skill_category.dart';
+import '../models/placement.dart';
 import '../models/question_bank_item.dart';
 import '../models/test_track.dart';
 import 'exercise_play_service.dart';
@@ -16,7 +17,21 @@ import 'exercise_play_service.dart';
 /// (`openTestSession`, `startTest`, `submitTestPart`, `reportTestEvent`,
 /// `closeTestSession`, `setTestResultValidity`, `getTestReview`), so answer
 /// keys never reach the app.
-class TestService {
+/// What the test player needs from a server: the signed-in student's
+/// functions ([TestService]) or a visitor's (`VisitorTestBackend`, Build 3).
+abstract class TestPlayBackend {
+  Future<TestFacts> peek(String token);
+  Future<TestStep> start({String? token, String? codeId});
+  Future<TestStep> submitPart(
+      String codeId, int partIndex, Map<String, PlayAnswer> answers);
+  Future<void> reportEvent(String codeId, {required bool left});
+  Stream<TestAttempt?> watchAttempt(String id);
+
+  /// True for a visitor (no account): no result card, no review.
+  bool get isVisitor => false;
+}
+
+class TestService implements TestPlayBackend {
   TestService({FirebaseFirestore? firestore, FirebaseFunctions? functions})
       : _db = firestore ?? FirebaseFirestore.instance,
         _functions = functions ?? FirebaseFunctions.instance;
@@ -166,10 +181,12 @@ class TestService {
         ..sort((a, b) => a.studentName.compareTo(b.studentName)));
 
   Future<OpenedSession> openSession(String codeId,
-      {bool partClocks = true}) async {
-    final r = await _functions
-        .httpsCallable('openTestSession')
-        .call({'codeId': codeId, 'partClocks': partClocks});
+      {bool partClocks = true, bool placement = false}) async {
+    final r = await _functions.httpsCallable('openTestSession').call({
+      'codeId': codeId,
+      'partClocks': partClocks,
+      'placement': placement,
+    });
     return OpenedSession.fromServer(Map<String, dynamic>.from(r.data as Map));
   }
 
@@ -230,6 +247,10 @@ class TestService {
           .where((a) => !a.finished)
           .toList());
 
+  @override
+  bool get isVisitor => false;
+
+  @override
   Stream<TestAttempt?> watchAttempt(String id) => _db
       .collection(attemptsCollection)
       .doc(id)
@@ -247,6 +268,7 @@ class TestService {
   // ---------------------------------------------------------------- student
 
   /// Start-screen facts for a token (no clock starts).
+  @override
   Future<TestFacts> peek(String token) async {
     final r = await _functions
         .httpsCallable('startTest')
@@ -255,6 +277,7 @@ class TestService {
   }
 
   /// Joins with a token (or resumes with [codeId]) and returns the open part.
+  @override
   Future<TestStep> start({String? token, String? codeId}) async {
     final r = await _functions.httpsCallable('startTest').call({
       if (token != null) 'token': token,
@@ -264,6 +287,7 @@ class TestService {
   }
 
   /// Submits the open part; returns the next part or the finish.
+  @override
   Future<TestStep> submitPart(
     String codeId,
     int partIndex,
@@ -277,6 +301,7 @@ class TestService {
     return TestStep.fromServer(Map<String, dynamic>.from(r.data as Map));
   }
 
+  @override
   Future<void> reportEvent(String codeId, {required bool left}) async {
     try {
       await _functions.httpsCallable('reportTestEvent').call({
@@ -381,17 +406,20 @@ class OpenedSession {
     required this.sessionId,
     required this.token,
     required this.joinUntil,
+    this.placement = false,
   });
 
   final String sessionId;
   final String token;
   final DateTime joinUntil;
+  final bool placement;
 
   factory OpenedSession.fromServer(Map<String, dynamic> m) => OpenedSession(
         sessionId: m['sessionId'] as String? ?? '',
         token: m['token'] as String? ?? '',
         joinUntil: DateTime.fromMillisecondsSinceEpoch(
             (m['joinUntilMillis'] as num?)?.toInt() ?? 0),
+        placement: m['placement'] == true,
       );
 }
 
@@ -408,7 +436,11 @@ class TestFacts {
     required this.partClocks,
     this.releaseYear,
     this.started = false,
+    this.placement = false,
   });
+
+  /// Build 3: a placement test (the start screen and the card say so).
+  final bool placement;
 
   final String codeId;
   final String code;
@@ -437,6 +469,7 @@ class TestFacts {
         partClocks: m['partClocks'] != false,
         releaseYear: (m['releaseYear'] as num?)?.toInt(),
         started: m['started'] == true,
+        placement: m['placement'] == true,
       );
 }
 
@@ -456,7 +489,15 @@ class TestStep {
     this.partSeconds = 0,
     this.elapsedSeconds = 0,
     this.recordingUrl = '',
+    this.visitorKey,
+    this.visitorResult,
   });
+
+  /// Build 3: a visitor's attempt key, sent once by `startPlacement`.
+  final String? visitorKey;
+
+  /// Build 3: a visitor's marks and result code at the finish.
+  final VisitorResult? visitorResult;
 
   final TestFacts facts;
   final bool finished;
@@ -493,6 +534,10 @@ class TestStep {
         partSeconds: (m['partSeconds'] as num?)?.toInt() ?? 0,
         elapsedSeconds: (m['elapsedSeconds'] as num?)?.toInt() ?? 0,
         recordingUrl: m['recordingUrl'] as String? ?? '',
+        visitorKey: m['key'] as String?,
+        visitorResult: m['finished'] == true && m['resultCode'] is String
+            ? VisitorResult.fromMap(m)
+            : null,
       );
 }
 

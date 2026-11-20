@@ -74,6 +74,7 @@ abstract final class ShellRouteUtils {
       final centreKind = TeacherDashboardStatKind.fromRouteSlug(slug);
       if (centreKind != null) return centreKind.localizedTitle(l);
     }
+    if (location.endsWith('/users/approval')) return l.approvalTitle;
     if (location.endsWith('/users/new')) return l.routeTitleNewUser;
     if (location.contains('/users/') && location.endsWith('/edit')) {
       return l.routeTitleEditUser;

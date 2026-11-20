@@ -109,7 +109,11 @@ CN = ["陈美琳", "林志明", "张婷婷", "黄俊杰", "刘雅文", "王建�
       "周文豪", "郑雪丽", "蔡伟强"]
 LEVELS = ["HSK 1"] * 6 + ["HSK 2"] * 6 + ["HSK 3"] * 5 + ["HSK 4"] * 5 + \
          ["HSK 5"] * 4 + ["HSK 6"] * 4
-ROOMS = ["Ruang 1", "Ruang 2", "Ruang 3"]
+# Build 3: the rooms list (settings/rooms); "Ruang 3" is an old free-text
+# room that stays selectable on the session form.
+ROOMS = ["Main", "Sub Room", "Ruang 3"]
+TEACHER_LEVELS = [["HSK 1", "HSK 2"], ["HSK 1", "HSK 2", "HSK 3"], ["HSK 3", "HSK 4"],
+                  ["HSK 5", "HSK 6"]]
 
 
 def main():
@@ -127,12 +131,13 @@ def main():
 
     # Teachers
     teacher_uids = []
-    for slug, name, cn in TEACHERS:
+    for t_i, (slug, name, cn) in enumerate(TEACHERS):
         email = f"{slug}@test.chinesetracker"
         uid = auth_user(email)
         teacher_uids.append(uid)
         put("users", uid, {"email": email, "name": name, "nameIndonesian": name,
             "nameChinese": cn, "role": "teacher", "active": True,
+            "levels": TEACHER_LEVELS[t_i],
             "whatsapp": "+62812000000", "createdAt": created})
 
     # Students (student1..3 keep the live test emails; the rest are demo names)
@@ -245,6 +250,7 @@ def main():
 
     seed_tests(admin_uid, student_uids)
     seed_marking(admin_uid, teacher_uids[0], student_uids)
+    seed_build3(admin_uid, teacher_uids)
 
     # Notifications and settings
     put("notifications", "n_1", {"kind": "registration", "title": "New student registered",
@@ -500,6 +506,70 @@ def seed_marking(admin_uid, teacher_uid, student_uids):
         "createdAt": ts(-3)})
     print(f"Build 2A: package pkg_typing ({TYPING_SHEET}), test code {ESSAY_CODE} "
           f"({ESSAY_SHEET}) with free writing; emulator password {PASSWORD}")
+
+
+# ---------------------------------------------------------------- Build 3
+PLACE_SHEET = "310906-PLC"
+PLACE_CODE = "H1PLACE"
+
+
+def seed_build3(admin_uid, teacher_uids):
+    """Build 3: two pending registrations (one with a visitor's placement
+    result code), a short HSK 1 placement code, the rooms list."""
+    put("settings", "rooms", {"names": ["Main", "Sub Room"], "updatedAt": ts(-1)})
+
+    # A short HSK 1 paper: 3 listening + 3 reading, 2 minutes per part.
+    place = dict(sheet=PLACE_SHEET, title="HSK 1 · Placement (seed)", level="HSK 1",
+                 category="exam")
+    for n, (q, opts, key) in enumerate([
+            ("他是谁？", ["老师", "医生", "学生"], 0),
+            ("他们在哪儿？", ["学校", "饭店", "商店"], 1),
+            ("现在几点？", ["八点", "九点", "十点"], 2)]):
+        bank_item(f"pl_l{n + 1}", n + 1, "listening", "multiple_choice",
+                  {"prompt": q, "options": opts, "correctIndex": key}, "一、听力",
+                  admin_uid, **place)
+    for n, (q, opts, key) in enumerate([
+            ("我（ ）中国人。", ["是", "有", "在"], 0),
+            ("你叫什么（ ）？", ["朋友", "名字", "老师"], 1),
+            ("我很（ ）茶。", ["喜欢", "学生", "今天"], 0)]):
+        bank_item(f"pl_r{n + 1}", n + 4, "reading", "multiple_choice",
+                  {"prompt": q, "options": opts, "correctIndex": key}, "二、阅读",
+                  admin_uid, **place)
+
+    def part(skill, q, m):
+        return {"skill": skill, "questions": q, "minutes": m, "maxScore": 100}
+    put("test_codes", PLACE_CODE, {
+        "code": PLACE_CODE, "family": "hsk", "level": "HSK 1", "levelKey": "1",
+        "sheetKey": PLACE_SHEET, "formatId": "hsk-1", "releaseYear": 2021,
+        "format": {"parts": [part("listening", 3, 2), part("reading", 3, 2)], "passMark": 120},
+        "active": True, "placement": True, "countsForPromotion": False,
+        "createdBy": admin_uid, "createdAt": ts(-2)})
+
+    # A visitor already sat a placement paper (HSK 3, passed → HSK 4).
+    put("placement_results", "seed_visitor_1", {
+        "name": "Rina Kusuma", "whatsapp": "+6281299990001", "codeId": "H3DEMO1",
+        "code": "H3DEMO1", "level": "HSK 3", "levelKey": "3",
+        "parts": [{"skill": "listening", "mark": 80, "maxScore": 100},
+                  {"skill": "reading", "mark": 75, "maxScore": 100},
+                  {"skill": "writing", "mark": 70, "maxScore": 100}],
+        "total": 225, "max": 300, "passMark": 180, "passed": True,
+        "recommendedLevel": "HSK 4", "resultCode": "RK4PLC", "sessionId": "seed",
+        "openedBy": teacher_uids[0], "supervisorName": "Test Teacher",
+        "finishedAt": ts(-1, 10), "claimedBy": "", "createdAt": ts(-1, 10)})
+
+    # Two pending registrations.
+    for email, name, cn, choice, target, code, teacher in [
+            ("pending1@test.chinesetracker", "Doni Pratama", "", "hsk1", "", "", ""),
+            ("pending2@test.chinesetracker", "Rina Kusuma", "林丽娜", "test", "HSK 4",
+             "RK4PLC", teacher_uids[1])]:
+        uid = auth_user(email)
+        put("users", uid, {"email": email, "name": name, "nameIndonesian": name,
+            "nameChinese": cn, "role": "student", "active": True, "status": "pending",
+            "teacherId": teacher, "level": "", "termSize": 8, "whatsapp": "+6281299990002",
+            "placementChoice": choice, "placementTarget": target,
+            "placementResultCode": code, "createdAt": ts(0, 8)})
+    print(f"Build 3: pending1@ / pending2@ waiting for approval, placement code "
+          f"{PLACE_CODE} ({PLACE_SHEET}), visitor result code RK4PLC, settings/rooms")
 
 
 if __name__ == "__main__":

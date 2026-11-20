@@ -228,6 +228,23 @@ exports.onUserCreated = onDocumentCreated(`${USERS}/{uid}`, async (event) => {
   const now = FieldValue.serverTimestamp();
   const batch = db.batch();
 
+  // Build 3: a self-registered student waits on the admin's Approval list;
+  // their teacher hears about them when the admin approves.
+  if (user.status === "pending") {
+    batch.set(db.collection(NOTIFICATIONS).doc(), {
+      kind: "registration",
+      title: "Registration waiting for approval",
+      body: `${studentName} registered and is waiting for approval.`,
+      forRole: "admin",
+      userId: "",
+      targetRoute: "/admin/users/approval",
+      read: false,
+      createdAt: now,
+    });
+    await batch.commit();
+    return;
+  }
+
   batch.set(db.collection(NOTIFICATIONS).doc(), {
     kind: "registration",
     title: "New student registered",
@@ -1197,7 +1214,17 @@ async function requireCaller(request) {
   if (!profile || profile.active === false) {
     throw new HttpsError("permission-denied", "This account is not active.");
   }
+  // Build 3: a self-registered student waits for the admin's approval.
+  if ((profile.role || "student") === "student" && !isApprovedStatus(profile.status)) {
+    throw new HttpsError("permission-denied", "This account is waiting for approval.",
+        {reason: "not-approved"});
+  }
   return {uid: auth.uid, profile};
+}
+
+/** Students made before Build 3 have no `status`: they count as approved. */
+function isApprovedStatus(status) {
+  return status === undefined || status === null || status === "" || status === "active";
 }
 
 /** The published package exercise the student is assigned to, or throws. */
@@ -1580,8 +1607,9 @@ async function loadTestParts(code, format) {
 }
 
 /** What the start screen shows (no questions). */
-function testFacts(codeId, code, format, partClocks) {
+function testFacts(codeId, code, format, partClocks, placement = false) {
   return {
+    placement: placement === true || code.placement === true,
     codeId,
     code: code.code || codeId,
     family: code.family || "",
@@ -1761,6 +1789,9 @@ function writeTestResult(writer, {attemptId, attempt, codeId, code, format, spli
     openMarking: scored.open,
     resultNumber: tests.resultNumber(attemptId, nowMs),
     leftCount: Number(attempt.leftCount) || 0,
+    // Build 3: placement results stay off the board and the count.
+    placement: attempt.placement === true || code.placement === true ||
+      !!(session && session.placement === true),
     // Server time from start to the last submit: Build 2's leaderboard
     // breaks ties by the shorter time.
     durationSeconds: tests.durationSeconds(millisOf(attempt.startedAt), nowMs),
@@ -1816,6 +1847,8 @@ exports.openTestSession = onCall(async (request) => {
   // Owner decision 2026-11-16: the teacher chooses per session. true = a
   // clock per part (as planned); false = one clock for the whole paper.
   const partClocks = data.partClocks !== false;
+  // Build 3: a placement session (any code; a placement code always is one).
+  const placement = data.placement === true || code.placement === true;
   const token = await freshToken();
   const ref = db.collection(TEST_SESSIONS).doc();
   await ref.set({
@@ -1825,6 +1858,9 @@ exports.openTestSession = onCall(async (request) => {
     level: code.level || "",
     levelKey: code.levelKey || "",
     partClocks,
+    placement,
+    // Visitors (no account) may join only a placement code's session.
+    visitorsAllowed: code.placement === true,
     token,
     joinUntil,
     openedBy: uid,
@@ -1835,8 +1871,8 @@ exports.openTestSession = onCall(async (request) => {
   });
   await writeAudit({action: "test.session.open", actorId: uid,
     actorName: latinName(profile), targetType: "test_session", targetId: ref.id,
-    detail: codeId});
-  return {sessionId: ref.id, token, joinUntilMillis: joinUntil.toMillis()};
+    detail: placement ? `${codeId} (placement)` : codeId});
+  return {sessionId: ref.id, token, joinUntilMillis: joinUntil.toMillis(), placement};
 });
 
 /**
@@ -1895,7 +1931,8 @@ exports.startTest = onCall(async (request) => {
 
   const partClocks = existing ?
     existing.partClocks !== false : session.partClocks !== false;
-  const facts = testFacts(codeId, code, format, partClocks);
+  const placement = existing ? existing.placement === true : session.placement === true;
+  const facts = testFacts(codeId, code, format, partClocks, placement);
   if (data.peek === true) {
     return {...facts, started: !!existing, finished: false};
   }
@@ -1920,6 +1957,7 @@ exports.startTest = onCall(async (request) => {
         openedBy: session.openedBy || "",
         supervisorName: session.openedByName || "",
         partClocks,
+        placement,
         partIndex: 0,
         partCount: tests.clockFormat(format, partClocks).parts.length,
         partStartedAt: [startedTs],
@@ -2039,7 +2077,7 @@ exports.submitTestPart = onCall(async (request) => {
 
   if (out.finished) return {finished: true, resultId: attemptId};
   return {
-    ...testFacts(codeId, code, format, out.attempt.partClocks),
+    ...testFacts(codeId, code, format, out.attempt.partClocks, out.attempt.placement),
     finished: false,
     attemptId,
     ...partPayload(split, format, out.attempt, Date.now()),
@@ -2146,8 +2184,13 @@ async function finishSession(sessionId, {actorId, actorName, waitMs}) {
         partIndex: format.parts.length, status: "finished", closedBySession: true,
         finishedAt: FieldValue.serverTimestamp(),
       });
-      writeTestResult(tx, {attemptId: doc.id, attempt: closed, codeId, code, format,
-        split, session});
+      if (attempt.visitor === true) {
+        writePlacementResult(tx, {attemptId: doc.id, attempt: closed, codeId, code,
+          format, split, session, resultCode: await freshResultCode()});
+      } else {
+        writeTestResult(tx, {attemptId: doc.id, attempt: closed, codeId, code, format,
+          split, session});
+      }
       return true;
     });
     if (did) {
@@ -2531,6 +2574,7 @@ exports.onTestResultWritten = onDocumentWritten(`${TEST_RESULTS}/{resultId}`, as
   if (!r) return;
   await syncLeaderboardEntry(r.codeId, r.studentId, after);
   await syncPromotion(r.studentId);
+  if (after) await syncPlacement(event.params.resultId, after);
 });
 
 /**
@@ -2579,8 +2623,10 @@ exports.decidePromotion = onCall(async (request) => {
       tx.set(db.collection(PROMOTION_PROGRESS).doc(p.studentId),
           {decision: "declined", updatedAt: now}, {merge: true});
     }
+    const isPlacementKind = p.kind === "placement";
     if (approve) {
-      tx.update(userRef, {level: p.toLevel, updatedAt: now});
+      tx.update(userRef, {level: p.toLevel, updatedAt: now,
+        ...(isPlacementKind ? {placementDone: true} : {})});
       // The count starts again at the new level.
       tx.set(db.collection(PROMOTION_PROGRESS).doc(p.studentId), {
         studentId: p.studentId, level: p.toLevel, levelKey: p.toKey,
@@ -2590,13 +2636,16 @@ exports.decidePromotion = onCall(async (request) => {
         decision: "", updatedAt: now,
       });
       tx.set(userRef.collection("level_history").doc(), {
+        kind: isPlacementKind ? "placement" : "promotion",
         date: now, from: p.fromLevel, to: p.toLevel,
         fromGroup: promo.groupOf(p.fromKey), toGroup: promo.groupOf(p.toKey),
         codes: p.codes || [], promotionId: id, approvedBy: uid,
       });
       const note = {
-        kind: "promotion", title: "Level up",
-        body: `Congratulations! ${latinName(user)} moves from ${p.fromLevel} to ${p.toLevel}.`,
+        kind: "promotion", title: isPlacementKind ? "Placement result" : "Level up",
+        body: isPlacementKind ?
+          `${latinName(user)} starts at ${p.toLevel} after the placement test.` :
+          `Congratulations! ${latinName(user)} moves from ${p.fromLevel} to ${p.toLevel}.`,
         read: false, createdAt: now,
       };
       tx.set(db.collection(NOTIFICATIONS).doc(),
@@ -2608,8 +2657,572 @@ exports.decidePromotion = onCall(async (request) => {
     }
     return {student: latinName(user), from: p.fromLevel, to: p.toLevel};
   });
-  await writeAudit({action: approve ? "promotion.approve" : "promotion.decline",
+  await writeAudit({action: (approve ? "promotion.approve" : "promotion.decline") +
+      (id.endsWith("_placement") ? ".placement" : ""),
     actorId: uid, actorName: latinName(profile), targetType: "level_promotion", targetId: id,
     detail: `${out.student} · ${out.from} → ${out.to}` + (reason ? ` · ${reason}` : "")});
   return {status: approve ? "approved" : "declined", level: approve ? out.to : out.from};
+});
+
+// ---------------------------------------------------------------------------
+// Build 3 (docs/PLAN.md §4): registration approval and placement tests.
+// A self-registered student is `status: 'pending'` until an admin approves
+// them (decideRegistration). A placement result recommends a starting level
+// (level_promotions/{uid}_placement, decided on the Promotion screen). A
+// visitor with no account sits a placement paper behind a teacher's token
+// (startPlacement / submitPlacementPart) and gets a result code that the
+// register form and the Approval card read (resolvePlacementResult).
+// ---------------------------------------------------------------------------
+const placement = require("./placement");
+const PLACEMENT_RESULTS = "placement_results";
+const HSK_LEVELS = ["HSK 1", "HSK 2", "HSK 3", "HSK 4", "HSK 5", "HSK 6"];
+
+/** A result code no placement result uses yet. */
+async function freshResultCode() {
+  for (let i = 0; i < 8; i++) {
+    const code = placement.makeResultCode((max) => crypto.randomInt(max));
+    const taken = await db.collection(PLACEMENT_RESULTS)
+        .where("resultCode", "==", code).limit(1).get();
+    if (taken.empty) return code;
+  }
+  throw new HttpsError("unavailable", "Could not make a result code. Try again.");
+}
+
+/**
+ * Scores a visitor's attempt and writes `placement_results/{attemptId}` (in
+ * the caller's transaction). Never a review, never a marking queue: the
+ * papers are reused. Answers a teacher would mark count as zero.
+ */
+function writePlacementResult(writer, {attemptId, attempt, codeId, code, format, split,
+  session, resultCode}) {
+  const scored = tests.scoreTest(split, format, attempt.answers || {}, true);
+  const total = scored.total;
+  const passed = tests.isPassed(total, scored.passMark, true);
+  const nowMs = Date.now();
+  const recommended = placement.recommendedKey(code.level || code.levelKey, passed);
+  const doc = {
+    name: attempt.visitorName || "",
+    whatsapp: attempt.visitorWhatsapp || "",
+    codeId,
+    code: code.code || codeId,
+    level: code.level || "",
+    levelKey: code.levelKey || placement.levelKeyOf(code.level),
+    parts: scored.parts.map(({points, ...p}) => p),
+    total,
+    max: scored.max,
+    passMark: scored.passMark,
+    passed,
+    recommendedLevel: recommended ? `HSK ${recommended}` : "",
+    resultCode,
+    sessionId: attempt.sessionId || "",
+    openedBy: (session && session.openedBy) || attempt.openedBy || "",
+    supervisorName: (session && session.openedByName) || attempt.supervisorName || "",
+    durationSeconds: tests.durationSeconds(millisOf(attempt.startedAt), nowMs),
+    finishedAt: Timestamp.fromMillis(nowMs),
+    claimedBy: "",
+    createdAt: FieldValue.serverTimestamp(),
+  };
+  writer.set(db.collection(PLACEMENT_RESULTS).doc(attemptId), doc);
+  return doc;
+}
+
+/** What the visitor's result page shows (no keys, no answers). */
+function visitorResultView(r) {
+  return {
+    finished: true,
+    level: r.level || "",
+    parts: (r.parts || []).map((p) => ({skill: p.skill, mark: p.mark,
+      maxScore: p.maxScore})),
+    total: r.total,
+    max: r.max,
+    passMark: r.passMark,
+    passed: r.passed === true,
+    recommendedLevel: r.recommendedLevel || "",
+    resultCode: r.resultCode || "",
+  };
+}
+
+/** The placement code a visitor may sit, or throws. */
+async function loadPlacementCode(codeId) {
+  const loaded = await loadTestCode(codeId);
+  if (loaded.code.placement !== true || loaded.code.active === false) {
+    throw new HttpsError("failed-precondition", "This is not an open placement test.",
+        {reason: "not-placement"});
+  }
+  if (!loaded.format.parts.length) {
+    throw new HttpsError("failed-precondition", "This test code has no parts.");
+  }
+  return loaded;
+}
+
+/**
+ * Public: the active placement codes with their level, parts, minutes and
+ * question counts (the landing page's Placement test list).
+ */
+exports.placementMenu = onCall(async (request) => {
+  await throttle(request, "placement-menu", 60, 10 * 60 * 1000);
+  const snap = await db.collection(TEST_CODES).where("placement", "==", true).get();
+  const out = [];
+  for (const doc of snap.docs) {
+    const code = doc.data() || {};
+    if (code.active === false) continue;
+    const format = tests.cleanFormat(code.format);
+    if (!format.parts.length) continue;
+    let counts = [];
+    try {
+      counts = (await loadTestParts(code, format)).map((items) => items.length);
+    } catch (err) {
+      logger.warn(`placementMenu: ${doc.id}`, err);
+    }
+    out.push(placement.menuEntry(doc.id, code, format, counts));
+  }
+  out.sort((a, b) => a.level.localeCompare(b.level) || a.code.localeCompare(b.code));
+  return {codes: out};
+});
+
+/** Loads a visitor attempt and checks its key, or throws. */
+async function visitorAttempt(attemptId, key) {
+  const id = String(attemptId || "").trim();
+  if (!id || id.includes("/")) {
+    throw new HttpsError("invalid-argument", "attemptId is required.");
+  }
+  const ref = db.collection(TEST_ATTEMPTS).doc(id);
+  const snap = await ref.get();
+  const a = snap.exists ? snap.data() || {} : null;
+  if (!a || a.visitor !== true || !placement.keyMatches(key, a.keyHash)) {
+    throw new HttpsError("permission-denied", "This test link is not valid.",
+        {reason: "bad-key"});
+  }
+  return {ref, attempt: a};
+}
+
+/**
+ * Public (no sign-in): a visitor starts a placement test.
+ * - `{token, name, whatsapp}`: the session must be an open placement session
+ *   on a placement code, inside its join window. Creates the attempt and
+ *   returns its id and a key (**once**; only its hash is stored), the facts
+ *   and part 1.
+ * - `{attemptId, key}`: resumes (a reload), or returns the result when the
+ *   attempt is finished.
+ */
+exports.startPlacement = onCall(async (request) => {
+  await throttle(request, "placement-start", 60, 10 * 60 * 1000);
+  const data = request.data || {};
+  const nowMs = Date.now();
+
+  if (data.attemptId) {
+    const {ref, attempt} = await visitorAttempt(data.attemptId, data.key);
+    const {id: codeId, code, format} = await loadTestCode(attempt.codeId);
+    if (attempt.finishedAt) {
+      const r = await db.collection(PLACEMENT_RESULTS).doc(ref.id).get();
+      return r.exists ? visitorResultView(r.data() || {}) : {finished: true};
+    }
+    const split = await loadTestParts(code, format);
+    const resultCode = await freshResultCode();
+    const out = await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      let a = snap.data() || {};
+      if (a.finishedAt) return {finished: true};
+      const adv = advanceExpiredParts(a, format, nowMs);
+      if (adv.finished) {
+        const sSnap = await tx.get(db.collection(TEST_SESSIONS).doc(a.sessionId));
+        const closed = {...a, partIndex: adv.partIndex};
+        tx.update(ref, {partIndex: adv.partIndex, partStartedAt: adv.partStartedAt,
+          status: "finished", finishedAt: Timestamp.fromMillis(nowMs)});
+        const doc = writePlacementResult(tx, {attemptId: ref.id, attempt: closed, codeId,
+          code, format, split, session: sSnap.exists ? sSnap.data() : null, resultCode});
+        return {finished: true, doc};
+      }
+      if (adv.changed) {
+        const startedTs = adv.partStartedAt[adv.partIndex];
+        tx.update(ref, {partIndex: adv.partIndex, partStartedAt: adv.partStartedAt,
+          partEndsAt: partEndsAt(format, adv.partIndex, startedTs, a.partClocks)});
+        a = {...a, partIndex: adv.partIndex, partStartedAt: adv.partStartedAt};
+      }
+      return {finished: false, attempt: a};
+    });
+    if (out.finished) {
+      if (out.doc) return visitorResultView(out.doc);
+      const r = await db.collection(PLACEMENT_RESULTS).doc(ref.id).get();
+      return r.exists ? visitorResultView(r.data() || {}) : {finished: true};
+    }
+    return {...testFacts(codeId, code, format, out.attempt.partClocks, true),
+      finished: false, attemptId: ref.id,
+      ...partPayload(split, format, out.attempt, Date.now())};
+  }
+
+  // A wrong token counts against the address (a visitor has no uid).
+  const who = `ip:${clientIp(request)}`;
+  await assertNotTokenBlocked(who);
+  const token = tests.normalizeToken(data.token);
+  const found = token ? await sessionForToken(token) : null;
+  if (!found || found.session.placement !== true) {
+    await recordWrongToken(who);
+    throw new HttpsError("not-found", "This token is not valid.", {reason: "bad-token"});
+  }
+  const session = found.session;
+  if (millisOf(session.joinUntil) < nowMs) {
+    throw new HttpsError("deadline-exceeded",
+        "The time to join has ended. Ask for a new token.", {reason: "join-closed"});
+  }
+  const {id: codeId, code, format} = await loadPlacementCode(session.codeId);
+  const partClocks = session.partClocks !== false;
+  if (data.peek === true) {
+    return {...testFacts(codeId, code, format, partClocks, true), started: false,
+      finished: false};
+  }
+  const name = placement.cleanVisitorName(data.name);
+  const whatsapp = placement.cleanWhatsapp(data.whatsapp);
+  if (!name || !whatsapp) {
+    throw new HttpsError("invalid-argument", "Type your name and WhatsApp number.",
+        {reason: "visitor-details"});
+  }
+  const split = await loadTestParts(code, format);
+  const key = placement.makeVisitorKey();
+  const ref = db.collection(TEST_ATTEMPTS)
+      .doc(`${found.id}_${crypto.randomBytes(8).toString("hex")}`);
+  const startedTs = Timestamp.fromMillis(nowMs);
+  const attempt = {
+    codeId,
+    visitor: true,
+    studentId: "",
+    studentName: name,
+    visitorName: name,
+    visitorWhatsapp: whatsapp,
+    keyHash: placement.hashKey(key),
+    sessionId: found.id,
+    openedBy: session.openedBy || "",
+    supervisorName: session.openedByName || "",
+    partClocks,
+    placement: true,
+    partIndex: 0,
+    partCount: tests.clockFormat(format, partClocks).parts.length,
+    partStartedAt: [startedTs],
+    partEndsAt: partEndsAt(format, 0, startedTs, partClocks),
+    answers: {},
+    leftCount: 0,
+    events: [],
+    status: "in_progress",
+    startedAt: startedTs,
+  };
+  await ref.set(attempt);
+  return {...testFacts(codeId, code, format, partClocks, true), finished: false,
+    attemptId: ref.id, key, ...partPayload(split, format, attempt, Date.now())};
+});
+
+/**
+ * Public: a visitor submits the open part (like submitTestPart: a closed
+ * part is refused, a late one counts as empty). After the last part writes
+ * `placement_results` and returns the marks and the result code.
+ */
+exports.submitPlacementPart = onCall(async (request) => {
+  await throttle(request, "placement-submit", 300, 10 * 60 * 1000);
+  const data = request.data || {};
+  const {ref, attempt: first} = await visitorAttempt(data.attemptId, data.key);
+  const partIndex = Number(data.partIndex);
+  if (!Number.isInteger(partIndex) || partIndex < 0) {
+    throw new HttpsError("invalid-argument", "partIndex is required.");
+  }
+  const {id: codeId, code, format} = await loadTestCode(first.codeId);
+  const split = await loadTestParts(code, format);
+  const resultCode = await freshResultCode();
+  const out = await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const attempt = snap.data() || {};
+    if (attempt.finishedAt) return {finished: true};
+    if (partIndex !== attempt.partIndex) {
+      throw new HttpsError("failed-precondition", "This part is already closed.",
+          {reason: "part-closed", partIndex: attempt.partIndex});
+    }
+    const sSnap = await tx.get(db.collection(TEST_SESSIONS).doc(attempt.sessionId));
+    const partClocks = attempt.partClocks !== false;
+    const clock = tests.clockFormat(format, partClocks);
+    const nowMs = Date.now();
+    const startedMs = millisOf((attempt.partStartedAt || [])[partIndex]);
+    const late = tests.isPartLate(startedMs, tests.partSeconds(clock, partIndex),
+        LATE_GRACE_SECONDS, nowMs);
+    const answers = {...(attempt.answers || {})};
+    if (partClocks) {
+      answers[String(partIndex)] = late ? {} :
+        tests.answersForPart(split[partIndex] || [], data.answers);
+    } else {
+      split.forEach((items, i) => {
+        answers[String(i)] = late ? {} : tests.answersForPart(items, data.answers);
+      });
+    }
+    const next = partIndex + 1;
+    if (next >= clock.parts.length || attempt.submitRequested === true) {
+      const closed = {...attempt, answers, partIndex: next};
+      tx.update(ref, {answers, partIndex: next, status: "finished",
+        finishedAt: Timestamp.fromMillis(nowMs)});
+      const doc = writePlacementResult(tx, {attemptId: ref.id, attempt: closed, codeId,
+        code, format, split, session: sSnap.exists ? sSnap.data() : null, resultCode});
+      return {finished: true, doc};
+    }
+    const startedTs = Timestamp.fromMillis(nowMs);
+    const partStartedAt = [...(attempt.partStartedAt || [])];
+    partStartedAt[next] = startedTs;
+    tx.update(ref, {answers, partIndex: next, partStartedAt,
+      partEndsAt: partEndsAt(format, next, startedTs, partClocks)});
+    return {finished: false, attempt: {...attempt, answers, partIndex: next, partStartedAt}};
+  });
+  if (out.finished) {
+    if (out.doc) return visitorResultView(out.doc);
+    const r = await db.collection(PLACEMENT_RESULTS).doc(ref.id).get();
+    return r.exists ? visitorResultView(r.data() || {}) : {finished: true};
+  }
+  return {...testFacts(codeId, code, format, out.attempt.partClocks, true),
+    finished: false, attemptId: ref.id,
+    ...partPayload(split, format, out.attempt, Date.now())};
+});
+
+/** Public: a visitor's "left the page" / "came back" (like reportTestEvent). */
+exports.reportPlacementEvent = onCall(async (request) => {
+  await throttle(request, "placement-event", 300, 10 * 60 * 1000);
+  const data = request.data || {};
+  const {ref} = await visitorAttempt(data.attemptId, data.key);
+  const type = data.type === "back" ? "back" : "left";
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const a = snap.data() || {};
+    if (a.finishedAt) return {recorded: false};
+    const now = Date.now();
+    const events = Array.isArray(a.events) ? a.events : [];
+    const last = events[events.length - 1];
+    if (last && last.type === type && now - Number(last.at || 0) < 2000) {
+      return {recorded: false};
+    }
+    tx.update(ref, {
+      events: tests.appendEvent(events, {type, at: now, part: a.partIndex}),
+      ...(type === "left" ? {leftCount: FieldValue.increment(1)} : {}),
+      lastEventAt: Timestamp.fromMillis(now),
+    });
+    return {recorded: true};
+  });
+});
+
+/** The placement result of a result code, or null. */
+async function placementResultByCode(resultCode) {
+  const code = placement.normalizeResultCode(resultCode);
+  if (!code) return null;
+  const snap = await db.collection(PLACEMENT_RESULTS)
+      .where("resultCode", "==", code).limit(1).get();
+  if (snap.empty) return null;
+  return {id: snap.docs[0].id, ref: snap.docs[0].ref, result: snap.docs[0].data() || {}};
+}
+
+/** What a result code shows: no name, no number. */
+function placementSummary(r) {
+  return {
+    resultCode: r.resultCode || "",
+    code: r.code || "",
+    level: r.level || "",
+    total: Number(r.total) || 0,
+    max: Number(r.max) || 0,
+    passed: r.passed === true,
+    recommendedLevel: r.recommendedLevel || "",
+    claimed: !!r.claimedBy,
+  };
+}
+
+/**
+ * Public: what the register form shows for a result code: the paper's
+ * level, the mark, passed, the recommended level and whether a registered
+ * student already used it.
+ */
+exports.resolvePlacementResult = onCall(async (request) => {
+  await throttle(request, "placement-resolve", 30, 10 * 60 * 1000);
+  const found = await placementResultByCode((request.data || {}).resultCode);
+  if (!found) {
+    throw new HttpsError("not-found", "This result code is not valid.",
+        {reason: "bad-result-code"});
+  }
+  return placementSummary(found.result);
+});
+
+/**
+ * Keeps `level_promotions/{uid}_placement` for a signed-in student's final,
+ * valid placement result: passed = paper level + 1, failed = paper level,
+ * nothing when that equals the current level. Tells the admins once.
+ */
+async function syncPlacement(resultId, result) {
+  const uid = result.studentId;
+  if (!uid || result.placement !== true) return;
+  if ((result.status || "final") !== "final" || result.valid === false) return;
+  const userSnap = await db.collection(USERS).doc(uid).get();
+  if (!userSnap.exists) return;
+  const user = userSnap.data() || {};
+  if ((user.role || "student") !== "student") return;
+  const ref = db.collection(LEVEL_PROMOTIONS).doc(`${uid}_placement`);
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const current = snap.exists ? snap.data() || {} : null;
+    // A decided recommendation of this result stays decided (the approve
+    // changed the level, so recomputing would compare with the new one).
+    if (current && current.resultId === resultId && current.status !== "waiting") return;
+    const fromLevel = current && current.resultId === resultId ?
+      current.fromLevel : user.level;
+    const rec = placement.recommendationFor(fromLevel, result.level || result.levelKey,
+        result.passed === true);
+    if (!rec) {
+      if (current && current.status === "waiting") {
+        tx.update(ref, {status: "withdrawn", withdrawnAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp()});
+      }
+      return;
+    }
+    const fresh = !current || current.status !== "waiting";
+    tx.set(ref, {
+      kind: "placement",
+      studentId: uid,
+      studentName: latinName(user),
+      studentNameChinese: String(user.nameChinese || "").trim(),
+      fromKey: rec.fromKey, toKey: rec.toKey,
+      fromLevel: `HSK ${rec.fromKey}`, toLevel: `HSK ${rec.toKey}`,
+      resultId,
+      codes: [{codeId: result.codeId || "", code: result.code || result.codeId || "",
+        total: Number(result.total) || 0, max: Number(result.max) || 0}],
+      paperLevel: result.level || "",
+      passed: result.passed === true,
+      count: 1, minCodes: 1,
+      status: "waiting",
+      declineReason: FieldValue.delete(),
+      ...(fresh ? {createdAt: FieldValue.serverTimestamp()} : {}),
+      updatedAt: FieldValue.serverTimestamp(),
+    }, {merge: true});
+    if (fresh) {
+      tx.set(db.collection(NOTIFICATIONS).doc(), {
+        kind: "promotion",
+        title: "Placement result to check",
+        body: `${latinName(user)} sat a placement test (${result.code || result.codeId}): ` +
+          `HSK ${rec.fromKey} → HSK ${rec.toKey}.`,
+        forRole: "admin",
+        userId: "",
+        targetRoute: "/admin/tests/promotion",
+        read: false,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+    }
+  });
+}
+
+/**
+ * Admin: the placement result behind a pending student's result code (the
+ * Approval card; `placement_results` is staff-readable, but the code is
+ * only on the student's profile).
+ */
+exports.registrationPlacement = onCall(async (request) => {
+  await requireStaff(request);
+  const found = await placementResultByCode((request.data || {}).resultCode);
+  if (!found) return {found: false};
+  return {found: true, claimedBy: found.result.claimedBy || "",
+    ...placementSummary(found.result)};
+});
+
+/**
+ * Admin: approve or reject a pending registration (one transaction).
+ * Approve sets `status: 'active'`, the level and the teacher, stamps the
+ * placement result code as used, tells the student and the teacher.
+ * Reject stores the reason and tells the student. A rejected account may be
+ * approved later. Audit log both ways.
+ */
+exports.decideRegistration = onCall(async (request) => {
+  const {uid, profile} = await requireCaller(request);
+  if (profile.role !== "admin") {
+    throw new HttpsError("permission-denied", "Only admins approve registrations.");
+  }
+  const data = request.data || {};
+  const studentId = String(data.studentId || "").trim();
+  const approve = data.approve === true;
+  const reason = String(data.reason || "").trim().slice(0, 500);
+  const level = String(data.level || "").trim();
+  const teacherId = String(data.teacherId || "").trim();
+  if (!studentId || studentId.includes("/")) {
+    throw new HttpsError("invalid-argument", "studentId is required.");
+  }
+  if (!approve && !reason) {
+    throw new HttpsError("invalid-argument", "Give a reason to reject.",
+        {reason: "reason-required"});
+  }
+  if (approve && !HSK_LEVELS.includes(level)) {
+    throw new HttpsError("invalid-argument", "Pick a starting level.", {reason: "level"});
+  }
+  if (approve && !teacherId) {
+    throw new HttpsError("invalid-argument", "Pick a teacher.", {reason: "teacher"});
+  }
+  const userRef = db.collection(USERS).doc(studentId);
+  const pre = await userRef.get();
+  const pending = pre.exists ? pre.data() || {} : null;
+  const found = approve && pending && pending.placementResultCode ?
+    await placementResultByCode(pending.placementResultCode) : null;
+
+  const out = await db.runTransaction(async (tx) => {
+    const snap = await tx.get(userRef);
+    const user = snap.exists ? snap.data() || {} : null;
+    if (!user || (user.role || "student") !== "student") {
+      throw new HttpsError("not-found", "Student not found.");
+    }
+    if (user.status !== "pending" && user.status !== "rejected") {
+      throw new HttpsError("failed-precondition", "This registration is already decided.",
+          {reason: "not-pending"});
+    }
+    const now = FieldValue.serverTimestamp();
+    if (!approve) {
+      tx.update(userRef, {status: "rejected", rejectReason: reason, rejectedBy: uid,
+        rejectedAt: now, updatedAt: now});
+      tx.set(db.collection(NOTIFICATIONS).doc(), {
+        kind: "registration", title: "Registration not approved",
+        body: `Your registration was not approved: ${reason}`,
+        forRole: "student", userId: studentId, targetRoute: "/waiting",
+        read: false, createdAt: now,
+      });
+      return {student: latinName(user)};
+    }
+    const tSnap = await tx.get(db.collection(USERS).doc(teacherId));
+    const teacher = tSnap.exists ? tSnap.data() || {} : null;
+    if (!teacher || teacher.role !== "teacher" || teacher.active === false) {
+      throw new HttpsError("failed-precondition", "Pick an active teacher.",
+          {reason: "teacher"});
+    }
+    if (found) {
+      const rSnap = await tx.get(found.ref);
+      const r = rSnap.data() || {};
+      if (r.claimedBy && r.claimedBy !== studentId) {
+        throw new HttpsError("failed-precondition",
+            "This placement result code was already used by another student.",
+            {reason: "claimed"});
+      }
+      tx.update(found.ref, {claimedBy: studentId, claimedAt: now});
+    }
+    tx.update(userRef, {
+      status: "active", level, teacherId, approvedAt: now, approvedBy: uid,
+      rejectReason: FieldValue.delete(), updatedAt: now,
+    });
+    const key = promo.levelKeyOf(level);
+    const next = promo.nextLevelKey(key);
+    tx.set(db.collection(PROMOTION_PROGRESS).doc(studentId), {
+      studentId, level, levelKey: key, group: promo.groupOf(key),
+      next: next ? `HSK ${next}` : "",
+      count: 0, minCodes: promo.DEFAULT_MIN_CODES, codes: [], decision: "", updatedAt: now,
+    });
+    const name = latinName(user);
+    tx.set(db.collection(NOTIFICATIONS).doc(), {
+      kind: "registration", title: "Welcome to Easy Study",
+      body: `Your registration is approved. You start at ${level}.`,
+      forRole: "student", userId: studentId, targetRoute: "/student",
+      read: false, createdAt: now,
+    });
+    tx.set(db.collection(NOTIFICATIONS).doc(), {
+      kind: "registration", title: "New student",
+      body: `${name} joined your students at ${level}.`,
+      forRole: "teacher", userId: teacherId, targetRoute: "/teacher",
+      read: false, createdAt: now,
+    });
+    return {student: name, teacher: latinName(teacher)};
+  });
+  await writeAudit({action: approve ? "registration.approve" : "registration.reject",
+    actorId: uid, actorName: latinName(profile), targetType: "user", targetId: studentId,
+    detail: approve ? `${out.student} · ${level} · ${out.teacher}` :
+      `${out.student} · ${reason}`});
+  return {status: approve ? "active" : "rejected"};
 });

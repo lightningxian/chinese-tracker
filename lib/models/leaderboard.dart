@@ -139,7 +139,18 @@ class LevelPromotion {
     this.minCodes = 3,
     this.createdAt,
     this.declineReason = '',
+    this.kind = 'promotion',
+    this.passed = false,
   });
+
+  /// Build 3: `placement` for a placement result's recommendation
+  /// (`{uid}_placement`), else `promotion`.
+  final String kind;
+
+  /// Placement: whether the paper was passed.
+  final bool passed;
+
+  bool get isPlacement => kind == 'placement';
 
   final String id;
   final String studentId;
@@ -174,6 +185,8 @@ class LevelPromotion {
       minCodes: (m['minCodes'] as num?)?.round() ?? 3,
       createdAt: (m['createdAt'] as Timestamp?)?.toDate(),
       declineReason: m['declineReason'] as String? ?? '',
+      kind: m['kind'] as String? ?? 'promotion',
+      passed: m['passed'] == true,
     );
   }
 }

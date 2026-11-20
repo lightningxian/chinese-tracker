@@ -8,6 +8,7 @@ import '../../core/widgets/app_card.dart';
 import '../../core/widgets/shell_nested_page.dart';
 import '../../l10n/l10n.dart';
 import '../../models/class_session.dart';
+import '../../services/rooms_service.dart';
 import '../../services/firestore_service.dart';
 
 class TeacherSessionFormScreen extends StatefulWidget {
@@ -40,6 +41,7 @@ class _TeacherSessionFormScreenState extends State<TeacherSessionFormScreen> {
   final _titleController = TextEditingController();
   final _capacityController = TextEditingController();
   final _roomController = TextEditingController();
+  final _rooms = RoomsService().watchRooms();
   late DateTime _selectedDate;
   late TimeOfDay _startTime;
   late TimeOfDay _endTime;
@@ -341,10 +343,33 @@ class _TeacherSessionFormScreenState extends State<TeacherSessionFormScreen> {
                 },
               ),
               const SizedBox(height: 16),
-              // Mode, room and registration state are not shown: the centre
-              // has one location and no rooms yet, and registration state was
-              // a label only. Existing values are kept on save untouched.
-              // Thesis Phase 2 brings rooms and real session statuses.
+              // Build 3: the room comes from the Org settings list; a stored
+              // room that is no longer listed stays selectable. Mode and
+              // registration state stay hidden (kept on save untouched).
+              StreamBuilder<List<String>>(
+                stream: _rooms,
+                builder: (context, snap) {
+                  final rooms = RoomsService.choices(
+                      snap.data ?? RoomsService.defaults,
+                      _roomController.text);
+                  final current = _roomController.text.trim();
+                  return DropdownButtonFormField<String>(
+                    key: ValueKey('room_${rooms.join('|')}_$current'),
+                    initialValue: rooms.contains(current) ? current : null,
+                    decoration: InputDecoration(
+                      labelText: l.roomsLabel,
+                      prefixIcon: const Icon(Icons.meeting_room_outlined),
+                    ),
+                    items: [
+                      for (final r in rooms)
+                        DropdownMenuItem(value: r, child: Text(r)),
+                    ],
+                    onChanged: (v) =>
+                        setState(() => _roomController.text = v ?? ''),
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
               AppCard(
                 child: SwitchListTile(
                   contentPadding: EdgeInsets.zero,

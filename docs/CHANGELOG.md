@@ -6,6 +6,88 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-20 — Claude (BUILD chat): Build 3 — registration approval, placement tests, rooms
+
+**What changed**
+- **Pending accounts.** A self-registered student is created with
+  `status: 'pending'` (the rules require it, with no level). The register
+  form (and the complete-profile form) lost the level picker and gained
+  **Mulai dari HSK 1** / **Ikut tes penempatan** with a target level HSK
+  2–6, plus an optional **placement result code** checked live with
+  `resolvePlacementResult`. The teacher link code is optional; a typed code
+  is still resolved before the auth account is made.
+- **Rules.** `isStudent()` needs an approved status (missing = an old,
+  approved account); the content reads use `isApprovedUser()`, so a pending
+  or rejected student reads only their own profile and their notices. The
+  self-update rule keeps `status`, `placement*`, `rejectReason`,
+  `approvedBy` and `levels` unchanged. `placement_results`: staff read, no
+  client write. Visitor attempts (`studentId: ''`) are staff-only.
+  `requireCaller()` in the functions refuses pending students too.
+- **Waiting page** `/waiting`: name, the choice, "waiting for the admin",
+  the centre's WhatsApp, Sign out; a rejected student sees the reason. The
+  page follows the profile, so an approval opens the app by itself.
+- **Approval.** Admin Users → **Approval** chip (badge) and
+  `/admin/users/approval` (the admin notice opens it): one card per pending
+  student with the staff label, email, WhatsApp, date, the choice, the
+  placement result of a result code, teacher and starting-level pickers
+  (prefilled from the link code and the recommended level). `decideRegistration`
+  (admin only, one transaction) approves (status, level, teacher, the result
+  code claimed once, student + teacher told, audit) or rejects with a reason
+  (may be approved later). Rejected accounts sit in a collapsed list with
+  Delete.
+- **Placement sessions.** A tick on Open session (forced on for a placement
+  code): attempts and results carry `placement: true`, so they stay off the
+  leaderboard and the count; the start screen and the result card say
+  "Placement test". For a signed-in student the trigger writes
+  `level_promotions/{uid}_placement` (passed = paper level + 1, failed =
+  paper level, nothing when equal to the current level) and tells the
+  admins; the Promotion screen shows it with a Placement chip;
+  `decidePromotion` approves it (history `kind: 'placement'`,
+  `placementDone: true`). The student's Tests tab shows "Placement test:
+  waiting for the admin" and then the result.
+- **Public placement test.** A tick on the code form makes a **placement
+  code** (never counts). `placementMenu`, `startPlacement`,
+  `submitPlacementPart`, `reportPlacementEvent`, `resolvePlacementResult`
+  work without sign-in (rate-limited per address; wrong tokens blocked per
+  address). A visitor types the token, a name and a WhatsApp number; the
+  attempt key is returned once and only its SHA-256 is stored; no answer
+  key, review or transcript ever leaves the server. The last part writes
+  `placement_results` with a 6-character result code. Closing the session
+  (button or hourly job) finishes a sitting visitor the same way. Pages
+  `/placement`, `/placement/test` (the supervised player in visitor mode;
+  a reload resumes from sessionStorage), `/placement/result` (marks per
+  part, the recommended level, the code with Copy and **Daftar sekarang**);
+  a Placement test section on the landing page; supervision shows
+  "Visitor · name" and a QR of `/placement?token=…` for a placement code.
+  `registrationPlacement` gives the Approval card the result behind a code.
+- **Rooms and teacher levels.** `settings/rooms {names}` (Main, Sub Room
+  written when missing) edited on Org settings; the class form picks a room
+  (an old free-text room stays selectable). `users.levels` ticked by the
+  admin on the user form, shown on the teacher's profile.
+- **Notifications.** Kind `registration` opens `/admin/users/approval` for
+  the admin and the home for the student.
+- Pure logic `functions/placement.js` + `node functions/test_placement.js`;
+  seed: `pending1@`, `pending2@` (result code RK4PLC), placement code
+  `H1PLACE`, `settings/rooms`, teacher levels; flow test 56 steps (PL-01,
+  PL-02, the visitor path); rules tests 68; Flutter tests 135; 34 functions.
+
+**Why**
+- Build 3 of `docs/PLAN.md` §4 (thesis spec §3 and §8, owner decisions 6,
+  7 and 15; §5 Q4, Q10, Q11 defaults).
+
+**For review**
+- Deploy: `firebase deploy --only firestore:rules,firestore:indexes,functions --project chinese-tracker`
+  (adds `placementMenu`, `startPlacement`, `submitPlacementPart`,
+  `reportPlacementEvent`, `resolvePlacementResult`, `registrationPlacement`,
+  `decideRegistration`: 34 functions). Until then the live register form
+  refuses new students (the old rules want a level and a teacher).
+- After the deploy, existing students are unaffected (no `status` field =
+  approved). New sign-ups wait on the Approval screen.
+- The public functions run without sign-in; each is rate-limited per
+  address, and the visitor never receives keys.
+
+---
+
 ## 2026-11-20 — Claude (BUILD chat): Build 2B — leaderboard, promotion, names, teachers in the bank
 
 **What changed**

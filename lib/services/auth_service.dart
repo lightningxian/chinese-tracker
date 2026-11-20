@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import '../core/constants/app_constants.dart';
 import '../core/utils/level_utils.dart';
 import '../models/app_user.dart';
+import '../models/placement.dart';
 import '../services/child_link_service.dart';
 import '../services/teacher_link_code_service.dart';
 
@@ -88,13 +89,16 @@ class AuthService extends ChangeNotifier {
     _appUser = AppUser.fromFirestore(doc);
   }
 
+  /// Build 3: a self-registered student is `pending` until an admin
+  /// approves them (level and teacher are set then). [linkCode] is optional;
+  /// when typed it is still resolved BEFORE the auth account is created.
   Future<AppUser> register({
     required String nameIndonesian,
     required String email,
     required String password,
-    required String level,
     required int termSize,
     required String linkCode,
+    required RegistrationChoice choice,
     String? nameChinese,
     String? whatsapp,
     String? parentName,
@@ -103,10 +107,7 @@ class AuthService extends ChangeNotifier {
     // Validate the link code BEFORE creating the auth account. Otherwise a bad
     // code leaves an orphaned Firebase Auth user with no Firestore profile,
     // and the email can no longer be re-registered.
-    final teacherId = await TeacherLinkCodeService.resolveTeacherId(
-      firestore: _firestore,
-      rawCode: linkCode,
-    );
+    final teacherId = await _optionalTeacher(linkCode);
 
     final credential = await _auth.createUserWithEmailAndPassword(
       email: email.trim(),
@@ -126,9 +127,12 @@ class AuthService extends ChangeNotifier {
       parentPhone: _optional(parentPhone),
       role: AppConstants.roleStudent,
       teacherId: teacherId,
-      level: level,
       termSize: termSize,
       createdAt: DateTime.now(),
+      status: AppUser.statusPending,
+      placementChoice: choice.toFields()['placementChoice'],
+      placementTarget: choice.toFields()['placementTarget'],
+      placementResultCode: choice.toFields()['placementResultCode'],
     );
 
     await _firestore
@@ -321,9 +325,9 @@ class AuthService extends ChangeNotifier {
 
   Future<AppUser> completeProfile({
     required String nameIndonesian,
-    required String level,
     required int termSize,
     required String linkCode,
+    required RegistrationChoice choice,
     String? nameChinese,
     String? whatsapp,
     String? parentName,
@@ -337,10 +341,7 @@ class AuthService extends ChangeNotifier {
       );
     }
 
-    final teacherId = await TeacherLinkCodeService.resolveTeacherId(
-      firestore: _firestore,
-      rawCode: linkCode,
-    );
+    final teacherId = await _optionalTeacher(linkCode);
     final indonesian = nameIndonesian.trim();
 
     final profile = AppUser(
@@ -354,9 +355,12 @@ class AuthService extends ChangeNotifier {
       parentPhone: _optional(parentPhone),
       role: AppConstants.roleStudent,
       teacherId: teacherId,
-      level: level,
       termSize: termSize,
       createdAt: DateTime.now(),
+      status: AppUser.statusPending,
+      placementChoice: choice.toFields()['placementChoice'],
+      placementTarget: choice.toFields()['placementTarget'],
+      placementResultCode: choice.toFields()['placementResultCode'],
     );
 
     await _firestore
@@ -367,6 +371,16 @@ class AuthService extends ChangeNotifier {
     _appUser = profile;
     notifyListeners();
     return profile;
+  }
+
+  /// Build 3: the teacher link code is optional. Empty → no teacher (the
+  /// admin picks one at approval); typed → resolved by `resolveLinkCode`.
+  Future<String?> _optionalTeacher(String linkCode) async {
+    if (linkCode.trim().isEmpty) return null;
+    return TeacherLinkCodeService.resolveTeacherId(
+      firestore: _firestore,
+      rawCode: linkCode,
+    );
   }
 
   String? _optional(String? value) {

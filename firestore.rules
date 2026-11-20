@@ -37,11 +37,27 @@ service cloud.firestore {
       return isTeacher() || isAdmin();
     }
 
+    // Build 3: a self-registered student is `pending` until an admin
+    // approves them (`rejected` when refused). Students made before Build 3
+    // have no `status` and count as approved.
+    function statusApproved(data) {
+      return data.get('status', 'active') in ['active', ''];
+    }
+
     function isStudent() {
       return isSignedIn() &&
         hasUserProfile() &&
         isActive() &&
-        userDoc().data.get('role', 'student') == 'student';
+        userDoc().data.get('role', 'student') == 'student' &&
+        statusApproved(userDoc().data);
+    }
+
+    // Signed in and not a pending or rejected student. A pending student
+    // reads only their own profile and the notifications addressed to them.
+    // (No profile yet, e.g. the complete-profile step, counts as signed in.)
+    function isApprovedUser() {
+      return isSignedIn() &&
+        (!hasUserProfile() || statusApproved(userDoc().data));
     }
 
     function isParent() {
@@ -113,11 +129,22 @@ service cloud.firestore {
         data.get('email', '') is string &&
         data.get('name', '') is string &&
         data.get('active', true) == true &&
+        // Build 3: a student registers as `pending`, with no level (the
+        // admin sets it at approval) and an optional teacher (a typed link
+        // code; else the admin picks one).
         (role != 'student' || (
-          isActiveTeacher(data.get('teacherId', '')) &&
-          data.get('level', '') is string &&
-          data.get('termSize', 0) in [8, 16]
+          data.get('status', '') == 'pending' &&
+          (data.get('teacherId', '') == '' || isActiveTeacher(data.get('teacherId', ''))) &&
+          data.get('level', '') == '' &&
+          data.get('termSize', 0) in [8, 16] &&
+          data.get('placementChoice', '') in ['hsk1', 'test'] &&
+          data.get('placementTarget', '') is string &&
+          data.get('placementResultCode', '') is string &&
+          !('levels' in data) &&
+          !('approvedBy' in data) &&
+          !('placementDone' in data)
         )) &&
+        (role != 'parent' || !('status' in data)) &&
         // Parents self-register with NO linked children. Linking is done only
         // by the linkChild Cloud Function (admin SDK), which verifies the child
         // access code server-side — so a parent can't link to an arbitrary
@@ -144,7 +171,17 @@ service cloud.firestore {
         data.get('teacherIds', []) == existing.get('teacherIds', []) &&
         // Build 2B: the HSK level is set by the admin (promotion), never by
         // the student.
-        data.get('level', '') == existing.get('level', '');
+        data.get('level', '') == existing.get('level', '') &&
+        // Build 3: approval, the placement choice and a teacher's levels
+        // are the admin's (decideRegistration, the user form).
+        data.get('status', '') == existing.get('status', '') &&
+        data.get('placementChoice', '') == existing.get('placementChoice', '') &&
+        data.get('placementTarget', '') == existing.get('placementTarget', '') &&
+        data.get('placementResultCode', '') == existing.get('placementResultCode', '') &&
+        data.get('placementDone', false) == existing.get('placementDone', false) &&
+        data.get('rejectReason', '') == existing.get('rejectReason', '') &&
+        data.get('approvedBy', '') == existing.get('approvedBy', '') &&
+        data.get('levels', []) == existing.get('levels', []);
     }
 
     function adminUserCreateValid() {
@@ -175,7 +212,7 @@ service cloud.firestore {
 
     // Build 2B: the student's level history (written by decidePromotion).
     match /users/{userId}/level_history/{entryId} {
-      allow read: if isSignedIn() &&
+      allow read: if isApprovedUser() &&
         (request.auth.uid == userId || isStaff() || isParentOf(userId));
       allow write: if false;
     }
@@ -230,12 +267,12 @@ service cloud.firestore {
     }
 
     match /lessons/{lessonId} {
-      allow read: if isSignedIn();
+      allow read: if isApprovedUser();
       allow write: if isStaff();
     }
 
     match /quizzes/{quizId} {
-      allow read: if isSignedIn();
+      allow read: if isApprovedUser();
       allow write: if isStaff();
     }
 
@@ -252,7 +289,7 @@ service cloud.firestore {
     }
 
     match /exercises/{exerciseId} {
-      allow read: if isSignedIn();
+      allow read: if isApprovedUser();
       // Admins manage every exercise. Teachers (2026-11-13) create, edit
       // and delete their own packages (teacherId = their uid), never an
       // old-format exercise, and cannot hand a package to someone else.
@@ -353,8 +390,9 @@ service cloud.firestore {
 
     match /settings/{docId} {
       // Centre-wide settings are readable by any signed-in user (so gates can
-      // be evaluated client-side); only admins may change them.
-      allow read: if isSignedIn();
+      // be evaluated client-side); only admins may change them. Build 3:
+      // `settings/rooms` {names} lists the rooms of the session forms.
+      allow read: if isApprovedUser();
       allow write: if isAdmin();
     }
 
@@ -367,7 +405,7 @@ service cloud.firestore {
 
     match /materials/{materialId} {
       // Staff manage materials; signed-in users may read published ones.
-      allow read: if isSignedIn() && (
+      allow read: if isApprovedUser() && (
         isStaff() ||
         resource.data.get('status', 'draft') == 'published'
       );
@@ -391,7 +429,7 @@ service cloud.firestore {
       // Written only by the finishExercise function (admin SDK), which
       // checks the answers itself. No client write: a student could
       // otherwise post any score (closed 2026-11-12).
-      allow read: if isSignedIn() && (
+      allow read: if isApprovedUser() && (
         resource == null ||
         resource.data.studentId == request.auth.uid ||
         isStaff() ||
@@ -400,17 +438,17 @@ service cloud.firestore {
     }
 
     match /student_progress/{progressId} {
-      allow read: if isSignedIn() && (
+      allow read: if isApprovedUser() && (
         resource == null ||
         resource.data.studentId == request.auth.uid ||
         isStaff() ||
         isParentOf(resource.data.get('studentId', ''))
       );
-      allow create: if isSignedIn() &&
+      allow create: if isApprovedUser() &&
         request.resource.data.studentId == request.auth.uid;
       // On update the existing doc must already belong to the caller, so a
       // student cannot overwrite another student's progress by guessing its id.
-      allow update: if isSignedIn() &&
+      allow update: if isApprovedUser() &&
         resource.data.studentId == request.auth.uid &&
         request.resource.data.studentId == request.auth.uid;
     }
@@ -455,7 +493,7 @@ service cloud.firestore {
     }
 
     match /attendance/{recordId} {
-      allow read: if isSignedIn() && (
+      allow read: if isApprovedUser() && (
         resource == null ||
         isStaff() ||
         resource.data.get('studentId', '') == request.auth.uid ||
@@ -578,12 +616,21 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Build 3: a visitor's attempt has `studentId: ''`, so only staff
+    // read it (the key hash and the WhatsApp number are on it).
     match /test_attempts/{attemptId} {
-      allow read: if isSignedIn() && (
+      allow read: if isApprovedUser() && (
         resource == null ||
-        resource.data.studentId == request.auth.uid ||
+        (resource.data.studentId != '' && resource.data.studentId == request.auth.uid) ||
         isStaff()
       );
+      allow write: if false;
+    }
+
+    // Build 3: a visitor's placement result (name, WhatsApp, marks, result
+    // code), written only by the placement functions. Staff read.
+    match /placement_results/{resultId} {
+      allow read: if isStaff();
       allow write: if false;
     }
 
@@ -613,13 +660,13 @@ service cloud.firestore {
 
     // Build 2B: "2 of 3 codes passed" (written by the trigger).
     match /promotion_progress/{uid} {
-      allow read: if isSignedIn() &&
+      allow read: if isApprovedUser() &&
         (request.auth.uid == uid || isStaff() || isParentOf(uid));
       allow write: if false;
     }
 
     match /test_results/{resultId} {
-      allow read: if isSignedIn() && (
+      allow read: if isApprovedUser() && (
         resource == null ||
         resource.data.studentId == request.auth.uid ||
         isStaff() ||

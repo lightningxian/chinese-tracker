@@ -9,6 +9,7 @@ import '../../models/app_user.dart';
 import '../../models/leaderboard.dart';
 import '../../services/promotion_service.dart';
 import 'test_labels.dart';
+import 'test_player_screen.dart' show PlacementChip;
 
 /// Which recommendation is being decided (the list itself is a live
 /// stream).
@@ -232,6 +233,14 @@ class _PromotionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          if (p.isPlacement)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: PlacementChip(label: l.placementTestLabel),
+              ),
+            ),
           Text(
             AppUser.staffLabelOf(p.studentNameChinese, p.studentName),
             style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.navy, fontSize: 16),
@@ -247,7 +256,10 @@ class _PromotionCard extends StatelessWidget {
               style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
             ),
           const SizedBox(height: 8),
-          Text(l.promotionCodesPassed(p.codes.length),
+          Text(
+              p.isPlacement
+                  ? (p.passed ? l.placementPaperPassed : l.placementPaperFailed)
+                  : l.promotionCodesPassed(p.codes.length),
               style: TextStyle(color: AppColors.textSecondary)),
           const SizedBox(height: 4),
           Wrap(

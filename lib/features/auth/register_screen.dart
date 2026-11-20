@@ -7,14 +7,20 @@ import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/auth_scaffold.dart';
 import '../../core/widgets/language_toggle.dart';
+import '../../core/widgets/placement_choice_fields.dart';
 import '../../core/widgets/registration_identity_fields.dart';
 import '../../l10n/l10n.dart';
 import '../../services/auth_service.dart';
 import '../../services/child_link_service.dart';
+import '../../models/app_user.dart';
+import '../../models/placement.dart';
 import '../../models/teacher_link_code.dart';
 
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+  const RegisterScreen({super.key, this.initialResultCode});
+
+  /// Build 3: `/register?placement=CODE` from a visitor's result page.
+  final String? initialResultCode;
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -35,8 +41,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String _role = AppConstants.roleStudent;
   bool _loading = false;
   String? _error;
-  String _level = AppConstants.hskLevels.first;
   int _termSize = AppConstants.defaultTermSize;
+  late RegistrationChoice _choice = RegistrationChoice(
+    choice: (widget.initialResultCode ?? '').isNotEmpty
+        ? AppUser.choiceTest
+        : AppUser.choiceHsk1,
+    resultCode: widget.initialResultCode ?? '',
+  );
 
   bool get _isParent => _role == AppConstants.roleParent;
   bool get _isStudent => _role == AppConstants.roleStudent;
@@ -55,8 +66,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
+  /// The message for a start-level choice that cannot be sent yet.
+  String? _choiceMessage() {
+    final l = context.l10n;
+    return switch (_choice.issue) {
+      null => null,
+      RegistrationChoiceIssue.targetMissing => l.registerTargetLevelRequired,
+      RegistrationChoiceIssue.resultCodeInvalid => l.placementErrBadResultCode,
+      RegistrationChoiceIssue.resultCodeUnchecked => l.registerResultCodeCheckFirst,
+      RegistrationChoiceIssue.resultCodeClaimed => l.placementErrClaimed,
+    };
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_isStudent) {
+      final msg = _choiceMessage();
+      if (msg != null) {
+        setState(() => _error = msg);
+        return;
+      }
+    }
     setState(() {
       _loading = true;
       _error = null;
@@ -82,9 +112,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
           parentPhone: _parentPhoneController.text,
           email: _emailController.text,
           password: _passwordController.text,
-          level: _level,
           termSize: _termSize,
           linkCode: _linkCodeController.text,
+          choice: _choice,
         );
         if (!mounted) return;
         // Registration notifications for admin + teacher are created
@@ -236,26 +266,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     textCapitalization: TextCapitalization.characters,
                     autocorrect: false,
                     decoration: InputDecoration(
-                      labelText: l.teacherLinkCodeLabel,
+                      labelText: l.teacherLinkCodeOptionalLabel,
                       hintText: l.commonCodeHint,
                       prefixIcon: const Icon(Icons.link_outlined),
-                      helperText: l.teacherLinkCodeHelper,
+                      helperText: l.teacherLinkCodeOptionalHelper,
+                      helperMaxLines: 3,
                     ),
-                    validator: (v) => v == null || v.trim().length < 4
-                        ? l.teacherLinkCodeRequired
-                        : null,
+                    // Optional (Build 3): the admin sets the teacher when
+                    // approving. A typed code must still look like one.
+                    validator: (v) {
+                      final t = v?.trim() ?? '';
+                      return t.isNotEmpty && t.length < 4
+                          ? l.teacherLinkCodeRequired
+                          : null;
+                    },
                   ),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    initialValue: _level,
-                    decoration: InputDecoration(
-                      labelText: l.commonHskLevel,
-                      prefixIcon: const Icon(Icons.school_outlined),
-                    ),
-                    items: AppConstants.hskLevels
-                        .map((l) => DropdownMenuItem(value: l, child: Text(l)))
-                        .toList(),
-                    onChanged: (v) => setState(() => _level = v ?? _level),
+                  const SizedBox(height: 20),
+                  PlacementChoiceFields(
+                    value: _choice,
+                    enabled: !_loading,
+                    onChanged: (v) => setState(() {
+                      _choice = v;
+                      _error = null;
+                    }),
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<int>(

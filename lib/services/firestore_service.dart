@@ -236,8 +236,11 @@ class FirestoreService {
     String? level,
     int? termSize,
     String? phone,
+    List<String>? levels,
   }) async {
     final updates = <String, dynamic>{};
+    // Build 3: a teacher's levels (admin only in the rules).
+    if (levels != null) updates['levels'] = levels;
     if (name != null) updates['name'] = name.trim();
     if (nameIndonesian != null) {
       final trimmed = nameIndonesian.trim();

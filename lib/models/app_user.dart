@@ -25,6 +25,12 @@ class AppUser {
     this.linkedParentName,
     this.createdAt,
     this.active = true,
+    this.status,
+    this.placementChoice,
+    this.placementTarget,
+    this.placementResultCode,
+    this.rejectReason,
+    this.levels = const [],
   });
 
   final String uid;
@@ -63,6 +69,36 @@ class AppUser {
   bool get hasLinkedParent => (linkedParentUid ?? '').isNotEmpty;
   final DateTime? createdAt;
   final bool active;
+
+  /// Build 3: `pending` until an admin approves a self-registered student,
+  /// `rejected` when refused, `active` after approval. Accounts made before
+  /// Build 3 have none and count as approved.
+  final String? status;
+
+  /// `hsk1` ("Mulai dari HSK 1") or `test` (wants a placement test).
+  final String? placementChoice;
+
+  /// The level a student who chose the placement test aims at (`HSK 4`).
+  final String? placementTarget;
+
+  /// Result code of a public placement test typed at registration.
+  final String? placementResultCode;
+  final String? rejectReason;
+
+  /// A teacher's levels (`HSK 1`..`HSK 6`), ticked by the admin.
+  final List<String> levels;
+
+  bool get isPending => status == statusPending;
+  bool get isRejected => status == statusRejected;
+
+  /// Pending or rejected: the student waits on the waiting page.
+  bool get awaitsApproval => isStudent && (isPending || isRejected);
+
+  static const statusPending = 'pending';
+  static const statusRejected = 'rejected';
+  static const statusActive = 'active';
+  static const choiceHsk1 = 'hsk1';
+  static const choiceTest = 'test';
 
   bool get isTeacher => role == AppConstants.roleTeacher;
   bool get isStudent => role == AppConstants.roleStudent;
@@ -183,6 +219,15 @@ class AppUser {
       linkedParentName: data['linkedParentName'] as String?,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
       active: data['active'] as bool? ?? true,
+      status: data['status'] as String?,
+      placementChoice: data['placementChoice'] as String?,
+      placementTarget: data['placementTarget'] as String?,
+      placementResultCode: data['placementResultCode'] as String?,
+      rejectReason: data['rejectReason'] as String?,
+      levels: (data['levels'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
     );
   }
 
@@ -212,6 +257,11 @@ class AppUser {
         if (linkedParentName != null && linkedParentName!.isNotEmpty)
           'linkedParentName': linkedParentName,
         'active': active,
+        if (status != null) 'status': status,
+        if (placementChoice != null) 'placementChoice': placementChoice,
+        if (placementTarget != null) 'placementTarget': placementTarget,
+        if (placementResultCode != null)
+          'placementResultCode': placementResultCode,
         'createdAt': createdAt != null
             ? Timestamp.fromDate(createdAt!)
             : FieldValue.serverTimestamp(),

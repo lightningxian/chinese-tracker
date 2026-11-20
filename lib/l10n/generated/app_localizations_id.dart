@@ -6477,4 +6477,334 @@ class AppLocalizationsId extends AppLocalizations {
   String promotionNotYetStudent(String next) {
     return 'Belum naik ke $next. Gurumu akan membicarakan langkah berikutnya denganmu.';
   }
+
+  @override
+  String get placementTestLabel => 'Tes penempatan';
+
+  @override
+  String get placementSessionLabel => 'Sesi penempatan';
+
+  @override
+  String get placementRuleNoReview =>
+      'Nilaimu muncul di akhir. Soal-soalnya tidak ditampilkan lagi.';
+
+  @override
+  String get placementErrNotApproved =>
+      'Pendaftaranmu masih menunggu persetujuan admin.';
+
+  @override
+  String get placementErrBadKey =>
+      'Tautan tes ini sudah tidak berlaku. Minta token baru ke gurumu.';
+
+  @override
+  String get placementErrVisitorDetails =>
+      'Ketik namamu dan nomor WhatsApp (8 sampai 15 angka).';
+
+  @override
+  String get placementErrNotPlacement =>
+      'Token ini bukan untuk tes penempatan.';
+
+  @override
+  String get placementErrBadResultCode =>
+      'Kode hasil ini tidak valid. Kodenya 6 huruf dan angka.';
+
+  @override
+  String get placementErrClaimed => 'Kode hasil ini sudah dipakai murid lain.';
+
+  @override
+  String get placementErrTokenShort => 'Token terdiri dari 6 huruf dan angka.';
+
+  @override
+  String get approvalErrNotPending => 'Pendaftaran ini sudah diputuskan.';
+
+  @override
+  String get approvalErrTeacher => 'Pilih guru yang aktif.';
+
+  @override
+  String get approvalErrLevel => 'Pilih level awal.';
+
+  @override
+  String get registerStartLevelTitle => 'Mulai dari mana?';
+
+  @override
+  String get registerChoiceHsk1 => 'Mulai dari HSK 1';
+
+  @override
+  String get registerChoiceHsk1Help =>
+      'Untuk pemula. Admin menyetujuimu di HSK 1.';
+
+  @override
+  String get registerChoiceTest => 'Ikut tes penempatan';
+
+  @override
+  String get registerChoiceTestHelp =>
+      'Kamu sudah bisa sedikit Mandarin. Tes singkat menentukan levelmu.';
+
+  @override
+  String get registerTargetLevel => 'Level yang kamu tuju';
+
+  @override
+  String get registerTargetLevelRequired => 'Pilih level yang kamu tuju.';
+
+  @override
+  String get registerResultCodeLabel => 'Kode hasil tes penempatan (opsional)';
+
+  @override
+  String get registerResultCodeHelper =>
+      'Dari tes penempatan yang kamu ikuti di pusat. Tekan Periksa.';
+
+  @override
+  String get registerResultCodeCheck => 'Periksa';
+
+  @override
+  String get registerResultCodeCheckFirst =>
+      'Tekan Periksa di samping kode hasil dulu.';
+
+  @override
+  String placementSummaryLine(String level, int total, int max) {
+    return 'Kertas $level: $total dari $max';
+  }
+
+  @override
+  String get placementPassed => 'Lulus';
+
+  @override
+  String get placementNotPassed => 'Belum lulus';
+
+  @override
+  String placementRecommended(String level) {
+    return 'Level yang disarankan: $level';
+  }
+
+  @override
+  String get teacherLinkCodeOptionalLabel => 'Kode tautan guru (opsional)';
+
+  @override
+  String get teacherLinkCodeOptionalHelper =>
+      'Kosongkan jika tidak punya: admin yang memilih gurumu.';
+
+  @override
+  String get waitingTitle => 'Menunggu persetujuan';
+
+  @override
+  String get waitingSubtitle =>
+      'Akunmu sudah dibuat. Admin memeriksanya dan menentukan guru serta levelmu.';
+
+  @override
+  String get waitingRejectedTitle => 'Pendaftaran tidak disetujui';
+
+  @override
+  String get waitingRejectedSubtitle =>
+      'Admin tidak menyetujui pendaftaran ini. Hubungi pusat.';
+
+  @override
+  String get waitingYourChoice => 'Pilihanmu:';
+
+  @override
+  String waitingChoiceTest(String target) {
+    return 'Tes penempatan, menuju $target';
+  }
+
+  @override
+  String waitingResultCode(String code) {
+    return 'Kode hasil $code';
+  }
+
+  @override
+  String get waitingForAdmin =>
+      'Menunggu admin. Halaman ini membuka aplikasi sendiri setelah kamu disetujui.';
+
+  @override
+  String get waitingReason => 'Alasan:';
+
+  @override
+  String waitingWhatsApp(String number) {
+    return 'WhatsApp pusat ($number)';
+  }
+
+  @override
+  String get approvalChip => 'Persetujuan';
+
+  @override
+  String get approvalTitle => 'Pendaftaran untuk disetujui';
+
+  @override
+  String get approvalIntro =>
+      'Murid baru menunggu di sini. Pilih guru dan level awalnya, lalu setujui atau tolak.';
+
+  @override
+  String get approvalEmpty => 'Tidak ada pendaftaran yang menunggu.';
+
+  @override
+  String approvalRejectedList(int count) {
+    return 'Ditolak ($count)';
+  }
+
+  @override
+  String get approvalTeacher => 'Guru';
+
+  @override
+  String get approvalStartLevel => 'Level awal';
+
+  @override
+  String get approvalApprove => 'Setujui';
+
+  @override
+  String get approvalReject => 'Tolak';
+
+  @override
+  String approvalApproved(String name, String level) {
+    return '$name disetujui di $level.';
+  }
+
+  @override
+  String get approvalRejected => 'Pendaftaran ditolak.';
+
+  @override
+  String approvalRejectTitle(String name) {
+    return 'Tolak $name?';
+  }
+
+  @override
+  String get approvalRejectReason => 'Alasan (murid melihatnya)';
+
+  @override
+  String approvalRejectedBecause(String reason) {
+    return 'Ditolak: $reason';
+  }
+
+  @override
+  String get placementScanToJoin =>
+      'Pengunjung memindai untuk membuka tes penempatan';
+
+  @override
+  String placementVisitorRow(String name) {
+    return 'Pengunjung · $name';
+  }
+
+  @override
+  String get placementSessionTick => 'Sesi penempatan';
+
+  @override
+  String get placementSessionTickHelp =>
+      'Hasil tidak masuk papan peringkat dan hitungan kenaikan level.';
+
+  @override
+  String get placementCodeTick => 'Kode penempatan';
+
+  @override
+  String get placementCodeTickHelp =>
+      'Pengunjung bisa mengerjakannya dari halaman depan. Tidak pernah dihitung untuk kenaikan level.';
+
+  @override
+  String get placementPaperPassed => 'Kertas penempatan lulus';
+
+  @override
+  String get placementPaperFailed => 'Kertas penempatan belum lulus';
+
+  @override
+  String placementStudentWaiting(String level) {
+    return 'Menunggu admin (disarankan: $level).';
+  }
+
+  @override
+  String placementStudentApproved(String level) {
+    return 'Kamu mulai di $level.';
+  }
+
+  @override
+  String get placementStudentDeclined =>
+      'Gurumu akan membicarakan levelmu denganmu.';
+
+  @override
+  String get placementHomeTitle => 'Temukan levelmu';
+
+  @override
+  String get placementHomeIntro =>
+      'Ikuti tes penempatan singkat di pusat. Gurumu memberi token. Di akhir kamu melihat nilaimu dan mendapat kode hasil untuk mendaftar.';
+
+  @override
+  String get placementResumeBody =>
+      'Ada tes penempatan yang sedang berjalan di tab ini.';
+
+  @override
+  String get placementResume => 'Lanjutkan';
+
+  @override
+  String get placementMenuEmpty => 'Belum ada tes penempatan yang dibuka.';
+
+  @override
+  String get placementFormTitle => 'Mulai dengan token';
+
+  @override
+  String get placementToken => 'Token';
+
+  @override
+  String get placementName => 'Namamu';
+
+  @override
+  String get placementWhatsapp => 'Nomor WhatsApp';
+
+  @override
+  String get placementKeptNote =>
+      'Nama dan nomormu disimpan oleh pusat untuk pendaftaranmu.';
+
+  @override
+  String get placementContinue => 'Lanjut';
+
+  @override
+  String get placementNoResult => 'Tidak ada hasil di tab ini.';
+
+  @override
+  String get placementResultTitle => 'Hasil tes penempatanmu';
+
+  @override
+  String get placementTotal => 'Total';
+
+  @override
+  String get placementYourCode => 'Kode hasilmu';
+
+  @override
+  String get placementCodeHelp =>
+      'Ketik saat mendaftar, atau tunjukkan di pusat.';
+
+  @override
+  String get placementCopied => 'Kode hasil disalin.';
+
+  @override
+  String get placementRegisterNow => 'Daftar sekarang';
+
+  @override
+  String get roomsTitle => 'Ruangan';
+
+  @override
+  String get roomsLabel => 'Ruangan';
+
+  @override
+  String get roomsHint => 'Ruangan yang ditawarkan formulir kelas.';
+
+  @override
+  String get roomsName => 'Nama ruangan';
+
+  @override
+  String get roomsAdd => 'Tambah ruangan';
+
+  @override
+  String get roomsRename => 'Ubah nama';
+
+  @override
+  String get roomsRemove => 'Hapus';
+
+  @override
+  String get roomsSave => 'Simpan';
+
+  @override
+  String get teacherLevelsTitle => 'Level yang diajar';
+
+  @override
+  String get teacherLevelsHint =>
+      'Level yang diajar guru ini (dipakai jadwal mingguan).';
+
+  @override
+  String get teacherLevelsNone => 'Admin belum mengatur level yang kamu ajar.';
 }

@@ -39,6 +39,16 @@ String testErrorMessage(AppLocalizations l, Object error) {
       'reason-required' => l.testsErrorReasonRequired,
       'not-waiting' => l.promotionErrNotWaiting,
       'level-changed' => l.promotionErrLevelChanged,
+      // Build 3.
+      'not-approved' => l.placementErrNotApproved,
+      'bad-key' => l.placementErrBadKey,
+      'visitor-details' => l.placementErrVisitorDetails,
+      'not-placement' => l.placementErrNotPlacement,
+      'bad-result-code' => l.placementErrBadResultCode,
+      'claimed' => l.placementErrClaimed,
+      'not-pending' => l.approvalErrNotPending,
+      'teacher' => l.approvalErrTeacher,
+      'level' => l.approvalErrLevel,
       _ => error.message ?? l.testsErrorGeneric,
     };
   }

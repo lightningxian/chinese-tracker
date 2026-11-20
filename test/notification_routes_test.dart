@@ -34,4 +34,17 @@ void main() {
     expect(NotificationRoutes.tabFor(n, role: 'parent'), isNull);
     expect(NotificationRoutes.pathFor(n, role: 'parent'), '/parent');
   });
+
+  test('Build 3: a registration opens Approval for the admin, the home for the student', () {
+    final admin = _n('registration', 'admin', '/admin/users/approval');
+    expect(NotificationRoutes.tabFor(admin, role: 'admin'), isNull);
+    expect(NotificationRoutes.pathFor(admin, role: 'admin'), '/admin/users/approval');
+    final noRoute = _n('registration', 'admin');
+    expect(NotificationRoutes.pathFor(noRoute, role: 'admin'), '/admin/users/approval');
+    final student = _n('registration', 'student', '/student');
+    expect(NotificationRoutes.tabFor(student, role: 'student'), isNull);
+    expect(NotificationRoutes.pathFor(student, role: 'student'), '/student');
+    // An old registration notice (no route) still opens the Users tab.
+    expect(NotificationRoutes.tabFor(_n('registration', 'admin', '/admin'), role: 'admin'), 1);
+  });
 }

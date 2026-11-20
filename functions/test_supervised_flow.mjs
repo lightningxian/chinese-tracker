@@ -4,7 +4,7 @@
 // pkg_exam). Run after seeding:
 //   node functions/test_supervised_flow.mjs
 // Thesis scenario IDs (docs/THESIS_FEATURE_BACKLOG.md §13) are in the step
-// names: TS-01, TS-02, PN-02..05, LV-01..03, LB-01.
+// names: TS-01, TS-02, PN-02..05, LV-01..03, LB-01, PL-01, PL-02.
 import assert from "node:assert/strict";
 
 const PROJECT = "chinese-tracker";
@@ -703,6 +703,315 @@ await step("Decline needs a reason and keeps the level", async () => {
       "s10 count 4");
   assert.equal((await readDoc(`promotion_progress/${s10.uid}`)).decision, "declined");
   assert.equal((await readDoc(promoPath(s10))).status, "declined");
+});
+
+
+// ---------------------------------------------------------------------------
+// Build 3: registration approval, placement sessions, the visitor path.
+// New accounts register through the rules (a student's own token), like the
+// app's register form.
+const RUN = Date.now().toString(36);
+async function registerStudent(tag, extra = {}) {
+  const email = `flow_${tag}_${RUN}@test.chinesetracker`;
+  const r = await fetch(`${AUTH}/accounts:signUp?key=fake`, {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({email, password: PASSWORD, returnSecureToken: true}),
+  });
+  const j = await r.json();
+  assert.ok(j.idToken, JSON.stringify(j).slice(0, 200));
+  const user = {token: j.idToken, uid: j.localId};
+  const doc = {role: "student", email, name: `Flow ${tag}`, nameIndonesian: `Flow ${tag}`,
+    active: true, status: "pending", teacherId: "", level: "", termSize: 8,
+    placementChoice: "hsk1", placementTarget: "", placementResultCode: "", ...extra};
+  const w = await fetch(`${FS}/users/${user.uid}`, {
+    method: "PATCH",
+    headers: {"Content-Type": "application/json", Authorization: `Bearer ${user.token}`},
+    body: JSON.stringify({fields: Object.fromEntries(
+        Object.entries(doc).map(([k, v]) => [k, toValue(v)]))}),
+  });
+  assert.ok(w.ok, `register ${tag}: ${w.status} ${await w.text()}`);
+  return user;
+}
+
+/** A callable with no sign-in (the visitor). */
+async function callPublic(name, data) {
+  const r = await fetch(`${FN}/${name}`, {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({data}),
+  });
+  const j = await r.json();
+  return j.error ? {error: j.error} : {data: j.result};
+}
+
+const andrea = await signIn("andrea@test.chinesetracker");
+const H3_ALL_RIGHT = [
+  {tq_l1: {index: 0}, tq_l2: {index: 2}, tq_l3: {index: 0}, tq_l4: {index: 1}},
+  {tq_r1: {index: 0}, tq_r2: {index: 0}, tq_r3: {index: 0}, tq_r4: {index: 0}},
+  {tq_w1: {text: "刚"}, tq_w2: {text: "等"}, tq_w3: {order: ["经理的", "办公室在", "二楼"]}},
+];
+
+let pl02;
+await step("a self-registered student is pending: the admins are told, the functions refuse them", async () => {
+  pl02 = await registerStudent("pl02");
+  const u = await readDoc(`users/${pl02.uid}`);
+  assert.equal(u.status, "pending");
+  const notes = await waitFor(async () => {
+    const all = await queryDocs("notifications", "targetRoute", "/admin/users/approval");
+    return all.some((n) => str(n.fields, "body").includes("Flow pl02")) ? all : null;
+  }, "the admin's approval notice");
+  assert.ok(notes.length >= 1);
+  const r = await call(pl02, "startTest", {token: "ABCDEF"});
+  assert.equal(reasonOf(r), "not-approved");
+});
+
+await step("decideRegistration: admin only, a teacher and a level are required", async () => {
+  const byTeacher = await call(teacher, "decideRegistration",
+      {studentId: pl02.uid, approve: true, level: "HSK 1", teacherId: andrea.uid});
+  assert.equal(byTeacher.error.status, "PERMISSION_DENIED");
+  const noTeacher = await call(admin, "decideRegistration",
+      {studentId: pl02.uid, approve: true, level: "HSK 1"});
+  assert.equal(reasonOf(noTeacher), "teacher");
+  const badLevel = await call(admin, "decideRegistration",
+      {studentId: pl02.uid, approve: true, level: "HSK 9", teacherId: andrea.uid});
+  assert.equal(reasonOf(badLevel), "level");
+});
+
+await step("PL-02 approve a 'Mulai dari HSK 1' student: level HSK 1, status active, student and teacher told", async () => {
+  const r = await call(admin, "decideRegistration",
+      {studentId: pl02.uid, approve: true, level: "HSK 1", teacherId: andrea.uid});
+  assert.ok(r.data, JSON.stringify(r.error));
+  const u = await readDoc(`users/${pl02.uid}`);
+  assert.equal(u.status, "active");
+  assert.equal(u.level, "HSK 1");
+  assert.equal(u.teacherId, andrea.uid);
+  assert.equal(u.approvedBy, admin.uid);
+  const mine = await queryDocs("notifications", "userId", pl02.uid);
+  assert.ok(mine.some((n) => str(n.fields, "kind") === "registration" &&
+    str(n.fields, "targetRoute") === "/student"));
+  const theirs = await queryDocs("notifications", "userId", andrea.uid);
+  assert.ok(theirs.some((n) => str(n.fields, "body").includes("Flow pl02")));
+  const again = await call(admin, "decideRegistration",
+      {studentId: pl02.uid, approve: true, level: "HSK 1", teacherId: andrea.uid});
+  assert.equal(reasonOf(again), "not-pending");
+});
+
+await step("reject needs a reason; a rejected account may be approved later", async () => {
+  const s = await registerStudent("reject");
+  const bare = await call(admin, "decideRegistration", {studentId: s.uid, approve: false});
+  assert.equal(reasonOf(bare), "reason-required");
+  const r = await call(admin, "decideRegistration",
+      {studentId: s.uid, approve: false, reason: "Please register with your own email."});
+  assert.ok(r.data, JSON.stringify(r.error));
+  let u = await readDoc(`users/${s.uid}`);
+  assert.equal(u.status, "rejected");
+  assert.equal(u.rejectReason, "Please register with your own email.");
+  const ok = await call(admin, "decideRegistration",
+      {studentId: s.uid, approve: true, level: "HSK 2", teacherId: andrea.uid});
+  assert.ok(ok.data, JSON.stringify(ok.error));
+  u = await readDoc(`users/${s.uid}`);
+  assert.equal(u.status, "active");
+  assert.equal(u.rejectReason, undefined);
+});
+
+let plSession;
+let pl01;
+await step("PL-01 a target-HSK-4 student is approved at HSK 1 and sits a placement session on H3DEMO1", async () => {
+  pl01 = await registerStudent("pl01", {placementChoice: "test", placementTarget: "HSK 4"});
+  const ok = await call(admin, "decideRegistration",
+      {studentId: pl01.uid, approve: true, level: "HSK 1", teacherId: teacher.uid});
+  assert.ok(ok.data, JSON.stringify(ok.error));
+  const open = await call(teacher, "openTestSession", {codeId: CODE, placement: true});
+  assert.ok(open.data, JSON.stringify(open.error));
+  assert.equal(open.data.placement, true);
+  plSession = open.data;
+  const peek = await call(pl01, "startTest", {token: plSession.token, peek: true});
+  assert.equal(peek.data.placement, true, "the start screen says Placement test");
+  let r = await call(pl01, "startTest", {token: plSession.token});
+  assert.ok(r.data, JSON.stringify(r.error));
+  for (let i = 0; i < 3; i++) {
+    r = await call(pl01, "submitTestPart", {codeId: CODE, partIndex: i, answers: H3_ALL_RIGHT[i]});
+    assert.ok(r.data, JSON.stringify(r.error));
+  }
+  assert.equal(r.data.finished, true);
+  const res = await readDoc(`test_results/${CODE}_${pl01.uid}`);
+  assert.equal(res.placement, true);
+  assert.equal(res.passed, true);
+});
+
+await step("PL-01 the pass recommends HSK 1 → HSK 4 for the admin; no board row, no count", async () => {
+  const p = await waitFor(async () => {
+    const d = await readDoc(`level_promotions/${pl01.uid}_placement`);
+    return d && d.status === "waiting" ? d : null;
+  }, "the placement recommendation");
+  assert.equal(p.kind, "placement");
+  assert.equal(p.fromLevel, "HSK 1");
+  assert.equal(p.toLevel, "HSK 4");
+  const notes = await queryDocs("notifications", "title", "Placement result to check");
+  assert.ok(notes.some((n) => str(n.fields, "body").includes("Flow pl01")));
+  assert.equal(await readDoc(entryPath(CODE, pl01.uid)), null);
+  const progress = await readDoc(`promotion_progress/${pl01.uid}`);
+  assert.equal(progress ? progress.count : 0, 0);
+});
+
+await step("PL-01 approve: level HSK 4, history kind placement, still no board row, 0 codes toward HSK 5", async () => {
+  const r = await call(admin, "decidePromotion",
+      {promotionId: `${pl01.uid}_placement`, approve: true});
+  assert.ok(r.data, JSON.stringify(r.error));
+  const u = await readDoc(`users/${pl01.uid}`);
+  assert.equal(u.level, "HSK 4");
+  assert.equal(u.placementDone, true);
+  const history = await listDocs(`users/${pl01.uid}/level_history`);
+  assert.ok(history.some((h) => (h.fields.kind || {}).stringValue === "placement"));
+  const progress = await readDoc(`promotion_progress/${pl01.uid}`);
+  assert.equal(progress.level, "HSK 4");
+  assert.equal(progress.next, "HSK 5");
+  assert.equal(progress.count, 0);
+  await new Promise((res) => setTimeout(res, 1500));
+  assert.equal(await readDoc(entryPath(CODE, pl01.uid)), null);
+  assert.equal((await readDoc(`level_promotions/${pl01.uid}_placement`)).status, "approved");
+});
+
+await step("a failed placement test recommends the paper's level (HSK 3)", async () => {
+  const s = await registerStudent("plfail", {placementChoice: "test", placementTarget: "HSK 4"});
+  await call(admin, "decideRegistration",
+      {studentId: s.uid, approve: true, level: "HSK 1", teacherId: teacher.uid});
+  let r = await call(s, "startTest", {token: plSession.token});
+  assert.ok(r.data, JSON.stringify(r.error));
+  for (let i = 0; i < 3; i++) {
+    r = await call(s, "submitTestPart", {codeId: CODE, partIndex: i, answers: {}});
+  }
+  const p = await waitFor(async () => {
+    const d = await readDoc(`level_promotions/${s.uid}_placement`);
+    return d && d.status === "waiting" ? d : null;
+  }, "the failed placement's recommendation");
+  assert.equal(p.toLevel, "HSK 3");
+  await call(teacher, "closeTestSession", {sessionId: plSession.sessionId});
+});
+
+// The visitor path (no account).
+const PLACE = "H1PLACE";
+let visitorSession;
+let visitor;
+await step("placement menu: public, lists the placement code with its parts and minutes", async () => {
+  const r = await callPublic("placementMenu", {});
+  assert.ok(r.data, JSON.stringify(r.error));
+  const e = r.data.codes.find((c) => c.codeId === PLACE);
+  assert.ok(e, "H1PLACE is listed");
+  assert.equal(e.level, "HSK 1");
+  assert.equal(e.minutes, 4);
+  assert.deepEqual(e.parts.map((p) => p.questions), [3, 3]);
+  assert.ok(!r.data.codes.some((c) => c.codeId === CODE), "an ordinary code is not listed");
+});
+
+await step("a visitor needs a placement session's token, a name and a WhatsApp number", async () => {
+  const open = await call(teacher, "openTestSession", {codeId: PLACE});
+  assert.ok(open.data, JSON.stringify(open.error));
+  assert.equal(open.data.placement, true, "a placement code always opens a placement session");
+  visitorSession = open.data;
+  const wrong = await callPublic("startPlacement", {token: "ZZZZZZ", name: "Visitor", whatsapp: "081234567890"});
+  assert.equal(reasonOf(wrong), "bad-token");
+  // An ordinary session's token is not valid for a visitor.
+  const ordinary = await call(teacher, "openTestSession", {codeId: CODE});
+  const notPlacement = await callPublic("startPlacement",
+      {token: ordinary.data.token, name: "Visitor", whatsapp: "081234567890"});
+  assert.equal(reasonOf(notPlacement), "bad-token");
+  await call(teacher, "closeTestSession", {sessionId: ordinary.data.sessionId});
+  const noName = await callPublic("startPlacement", {token: visitorSession.token, name: "", whatsapp: "0812"});
+  assert.equal(reasonOf(noName), "visitor-details");
+});
+
+await step("a visitor starts: a key once, part 1 without keys; a reload resumes the same part", async () => {
+  const r = await callPublic("startPlacement",
+      {token: visitorSession.token, name: "Flow Visitor", whatsapp: "+62 812 0000 1111"});
+  assert.ok(r.data, JSON.stringify(r.error));
+  visitor = {attemptId: r.data.attemptId, key: r.data.key};
+  assert.match(visitor.key, /^[0-9a-f]{32}$/);
+  assert.equal(r.data.placement, true);
+  assert.equal(r.data.partIndex, 0);
+  assert.equal(r.data.questions.length, 3);
+  assert.ok(!JSON.stringify(r.data).includes("correctIndex"), "no key leaves the server");
+  const a = await readDoc(`test_attempts/${visitor.attemptId}`);
+  assert.equal(a.visitor, true);
+  assert.equal(a.studentId, "");
+  assert.equal(a.visitorWhatsapp, "+6281200001111");
+  assert.ok(a.keyHash && a.keyHash !== visitor.key, "only the hash is stored");
+  const again = await callPublic("startPlacement", visitor);
+  assert.equal(again.data.partIndex, 0);
+  assert.equal(again.data.key, undefined, "the key is never sent again");
+});
+
+await step("a wrong key is refused; a visitor cannot use the student functions", async () => {
+  const bad = await callPublic("submitPlacementPart",
+      {attemptId: visitor.attemptId, key: "0".repeat(32), partIndex: 0, answers: {}});
+  assert.equal(reasonOf(bad), "bad-key");
+  const st = await callPublic("startTest", {token: visitorSession.token});
+  assert.equal(st.error.status, "UNAUTHENTICATED");
+  const rv = await callPublic("getTestReview", {resultId: visitor.attemptId});
+  assert.equal(rv.error.status, "UNAUTHENTICATED");
+});
+
+let resultCode;
+await step("two parts → marks per part and a result code; no review, no test_results", async () => {
+  let r = await callPublic("submitPlacementPart", {...visitor, partIndex: 0,
+    answers: {pl_l1: {index: 0}, pl_l2: {index: 1}, pl_l3: {index: 2}}});
+  assert.ok(r.data, JSON.stringify(r.error));
+  assert.equal(r.data.partIndex, 1);
+  r = await callPublic("submitPlacementPart", {...visitor, partIndex: 1,
+    answers: {pl_r1: {index: 0}, pl_r2: {index: 1}, pl_r3: {index: 1}}});
+  assert.ok(r.data, JSON.stringify(r.error));
+  assert.equal(r.data.finished, true);
+  assert.deepEqual(r.data.parts.map((p) => p.mark), [100, 67]);
+  assert.equal(r.data.passed, true);
+  assert.equal(r.data.recommendedLevel, "HSK 2");
+  assert.match(r.data.resultCode, /^[A-HJ-NP-Z2-9]{6}$/);
+  assert.ok(!JSON.stringify(r.data).match(/correctIndex|answer|transcript|explanation/));
+  resultCode = r.data.resultCode;
+  const pr = await readDoc(`placement_results/${visitor.attemptId}`);
+  assert.equal(pr.name, "Flow Visitor");
+  assert.equal(pr.claimedBy, "");
+  assert.equal(await readDoc(`test_results/${visitor.attemptId}`), null);
+  // A reload after the end shows the result again.
+  const again = await callPublic("startPlacement", visitor);
+  assert.equal(again.data.resultCode, resultCode);
+});
+
+await step("resolve the result code; the first student who registers with it claims it", async () => {
+  const r = await callPublic("resolvePlacementResult", {resultCode: resultCode.toLowerCase()});
+  assert.ok(r.data, JSON.stringify(r.error));
+  assert.equal(r.data.level, "HSK 1");
+  assert.equal(r.data.recommendedLevel, "HSK 2");
+  assert.equal(r.data.claimed, false);
+  assert.equal(r.data.name, undefined, "no name or number for the public");
+  const bad = await callPublic("resolvePlacementResult", {resultCode: "ZZZZZZ"});
+  assert.equal(reasonOf(bad), "bad-result-code");
+  const first = await registerStudent("claim1", {placementChoice: "test",
+    placementTarget: "HSK 2", placementResultCode: resultCode});
+  const card = await call(admin, "registrationPlacement", {resultCode});
+  assert.equal(card.data.recommendedLevel, "HSK 2");
+  const ok = await call(admin, "decideRegistration",
+      {studentId: first.uid, approve: true, level: "HSK 2", teacherId: teacher.uid});
+  assert.ok(ok.data, JSON.stringify(ok.error));
+  assert.equal((await readDoc(`placement_results/${visitor.attemptId}`)).claimedBy, first.uid);
+  const second = await registerStudent("claim2", {placementChoice: "test",
+    placementTarget: "HSK 2", placementResultCode: resultCode});
+  const refused = await call(admin, "decideRegistration",
+      {studentId: second.uid, approve: true, level: "HSK 2", teacherId: teacher.uid});
+  assert.equal(reasonOf(refused), "claimed");
+  const after = await callPublic("resolvePlacementResult", {resultCode});
+  assert.equal(after.data.claimed, true);
+});
+
+await step("closing a placement session finishes a sitting visitor into placement_results", async () => {
+  const r = await callPublic("startPlacement",
+      {token: visitorSession.token, name: "Late Visitor", whatsapp: "081200002222"});
+  assert.ok(r.data, JSON.stringify(r.error));
+  const c = await call(teacher, "closeTestSession", {sessionId: visitorSession.sessionId});
+  assert.ok(c.data, JSON.stringify(c.error));
+  const pr = await readDoc(`placement_results/${r.data.attemptId}`);
+  assert.ok(pr, "the visitor's result is written");
+  assert.equal(pr.total, 0);
+  assert.match(pr.resultCode, /^[A-HJ-NP-Z2-9]{6}$/);
+  assert.equal(await readDoc(`test_results/${r.data.attemptId}`), null);
 });
 
 console.log(`supervised flow: ${passed} steps passed`);

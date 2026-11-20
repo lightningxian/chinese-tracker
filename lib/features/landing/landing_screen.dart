@@ -215,6 +215,8 @@ class _LandingScreenState extends State<LandingScreen> {
           SliverToBoxAdapter(
             child: KeyedSubtree(key: _levelsKey, child: const _RulerSection()),
           ),
+          // Build 3: the public placement test (behind a teacher's token).
+          const SliverToBoxAdapter(child: _PlacementSection()),
           SliverToBoxAdapter(
             child: KeyedSubtree(key: _aboutKey, child: const _AboutSection()),
           ),
@@ -736,6 +738,46 @@ class _RulerSection extends StatelessWidget {
           _RulerBar(columns: wide ? 6 : 3),
         ],
       ),
+    );
+  }
+}
+
+/// Build 3: "Not sure of your level?" → /placement, where a visitor sits
+/// a short placement paper with the token their teacher gives in the room.
+class _PlacementSection extends StatelessWidget {
+  const _PlacementSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final wide = MediaQuery.sizeOf(context).width >= _wideBreak;
+    final text = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionTitle(
+          'Not sure of your level?',
+          sub: 'Take a short placement test at the centre. Your teacher gives '
+              'you a token; you get your marks and a result code to register '
+              'with.',
+        ),
+        const SizedBox(height: 20),
+        _BrandButton(
+          label: 'Placement test',
+          onPressed: () => context.push('/placement'),
+        ),
+      ],
+    );
+    return _Section(
+      vertical: wide ? 56 : 44,
+      child: wide
+          ? Row(
+              children: [
+                Expanded(child: text),
+                const SizedBox(width: 32),
+                Text('测', style: LandingBrand.han(size: 120,
+                    color: LandingBrand.teal)),
+              ],
+            )
+          : text,
     );
   }
 }

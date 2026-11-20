@@ -40,6 +40,9 @@ class _AdminEditUserScreenState extends State<AdminEditUserScreen> {
   bool _saving = false;
   String? _error;
   String _level = AppConstants.hskLevels.first;
+
+  /// Build 3: the levels a teacher teaches (Build 6 uses them).
+  Set<String> _levels = {};
   int _termSize = AppConstants.defaultTermSize;
 
   @override
@@ -78,6 +81,7 @@ class _AdminEditUserScreenState extends State<AdminEditUserScreen> {
     setState(() {
       _user = user;
       _level = user.level ?? AppConstants.hskLevels.first;
+      _levels = user.levels.toSet();
       _termSize = user.termSize ?? AppConstants.defaultTermSize;
       _loading = false;
     });
@@ -104,6 +108,12 @@ class _AdminEditUserScreenState extends State<AdminEditUserScreen> {
             parentPhone: user.isStudent ? _parentPhoneController.text : null,
             level: user.isStudent ? _level : null,
             termSize: user.isStudent ? _termSize : null,
+            levels: user.isTeacher
+                ? [
+                    for (final lv in AppConstants.hskLevels)
+                      if (_levels.contains(lv)) lv,
+                  ]
+                : null,
           );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -211,6 +221,41 @@ class _AdminEditUserScreenState extends State<AdminEditUserScreen> {
                               parentNameController: _parentNameController,
                               parentPhoneController: _parentPhoneController,
                             ),
+                            if (user.isTeacher) ...[
+                              const SizedBox(height: 16),
+                              Text(
+                                l.teacherLevelsTitle,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.navy,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                l.teacherLevelsHint,
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  for (final lv in AppConstants.hskLevels)
+                                    FilterChip(
+                                      label: Text(lv),
+                                      selected: _levels.contains(lv),
+                                      onSelected: _saving
+                                          ? null
+                                          : (on) => setState(() => on
+                                              ? _levels.add(lv)
+                                              : _levels.remove(lv)),
+                                    ),
+                                ],
+                              ),
+                            ],
                             if (user.isStudent) ...[
                               const SizedBox(height: 16),
                               ProfileStudentLearningFields(

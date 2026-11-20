@@ -154,6 +154,7 @@ class TestCodeFormViewModel extends ChangeNotifier {
         releaseYear = c.releaseYear;
         active = c.active;
         countsForPromotion = c.countsForPromotion;
+        placement = c.placement;
         partsVersion++;
         _ready();
       });
@@ -188,6 +189,9 @@ class TestCodeFormViewModel extends ChangeNotifier {
   int? releaseYear;
   bool active = true;
   bool countsForPromotion = true;
+
+  /// Build 3: a placement code (visitors may sit it; never counts).
+  bool placement = false;
 
   /// Bumped when [parts] is replaced from outside the editor (format
   /// chosen, code loaded) so the editor rebuilds with the new values.
@@ -252,6 +256,12 @@ class TestCodeFormViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setPlacement(bool v) {
+    placement = v;
+    if (v) countsForPromotion = false;
+    notifyListeners();
+  }
+
   bool get canSave =>
       !saving &&
       TestCode.normalize(code).isNotEmpty &&
@@ -270,7 +280,8 @@ class TestCodeFormViewModel extends ChangeNotifier {
         passMark: passMark,
         releaseYear: releaseYear,
         active: active,
-        countsForPromotion: countsForPromotion,
+        countsForPromotion: placement ? false : countsForPromotion,
+        placement: placement,
       );
 
   Future<void> save(String createdBy) async {
@@ -528,9 +539,16 @@ class _TestCodeForm extends StatelessWidget {
                 ),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  value: vm.countsForPromotion,
-                  onChanged: vm.setCountsForPromotion,
+                  value: vm.countsForPromotion && !vm.placement,
+                  onChanged: vm.placement ? null : vm.setCountsForPromotion,
                   title: Text(l.testsCountsForPromotion),
+                ),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: vm.placement,
+                  onChanged: vm.setPlacement,
+                  title: Text(l.placementCodeTick),
+                  subtitle: Text(l.placementCodeTickHelp),
                 ),
               ],
             ),

@@ -6506,4 +6506,334 @@ class AppLocalizationsEn extends AppLocalizations {
   String promotionNotYetStudent(String next) {
     return 'Not moved up to $next yet. Your teacher will talk with you about the next step.';
   }
+
+  @override
+  String get placementTestLabel => 'Placement test';
+
+  @override
+  String get placementSessionLabel => 'Placement session';
+
+  @override
+  String get placementRuleNoReview =>
+      'You see your marks at the end. The questions are not shown again.';
+
+  @override
+  String get placementErrNotApproved =>
+      'Your registration is waiting for the admin\'s approval.';
+
+  @override
+  String get placementErrBadKey =>
+      'This test link is no longer valid. Ask your teacher for a new token.';
+
+  @override
+  String get placementErrVisitorDetails =>
+      'Type your name and a WhatsApp number (8 to 15 digits).';
+
+  @override
+  String get placementErrNotPlacement =>
+      'This token is not for a placement test.';
+
+  @override
+  String get placementErrBadResultCode =>
+      'This result code is not valid. It has 6 letters and digits.';
+
+  @override
+  String get placementErrClaimed =>
+      'This result code was already used by another student.';
+
+  @override
+  String get placementErrTokenShort => 'The token has 6 letters and digits.';
+
+  @override
+  String get approvalErrNotPending => 'This registration is already decided.';
+
+  @override
+  String get approvalErrTeacher => 'Pick an active teacher.';
+
+  @override
+  String get approvalErrLevel => 'Pick a starting level.';
+
+  @override
+  String get registerStartLevelTitle => 'Where do you start?';
+
+  @override
+  String get registerChoiceHsk1 => 'Start from HSK 1';
+
+  @override
+  String get registerChoiceHsk1Help =>
+      'For beginners. The admin approves you at HSK 1.';
+
+  @override
+  String get registerChoiceTest => 'Take a placement test';
+
+  @override
+  String get registerChoiceTestHelp =>
+      'You already know some Mandarin. A short test finds your level.';
+
+  @override
+  String get registerTargetLevel => 'Level you aim for';
+
+  @override
+  String get registerTargetLevelRequired => 'Pick the level you aim for.';
+
+  @override
+  String get registerResultCodeLabel => 'Placement result code (optional)';
+
+  @override
+  String get registerResultCodeHelper =>
+      'From a placement test you took at the centre. Press Check.';
+
+  @override
+  String get registerResultCodeCheck => 'Check';
+
+  @override
+  String get registerResultCodeCheckFirst =>
+      'Press Check next to the result code first.';
+
+  @override
+  String placementSummaryLine(String level, int total, int max) {
+    return '$level paper: $total of $max';
+  }
+
+  @override
+  String get placementPassed => 'Passed';
+
+  @override
+  String get placementNotPassed => 'Not passed';
+
+  @override
+  String placementRecommended(String level) {
+    return 'Recommended level: $level';
+  }
+
+  @override
+  String get teacherLinkCodeOptionalLabel => 'Teacher\'s link code (optional)';
+
+  @override
+  String get teacherLinkCodeOptionalHelper =>
+      'Leave it empty if you have none: the admin chooses your teacher.';
+
+  @override
+  String get waitingTitle => 'Waiting for approval';
+
+  @override
+  String get waitingSubtitle =>
+      'Your account is made. The admin checks it and sets your teacher and level.';
+
+  @override
+  String get waitingRejectedTitle => 'Registration not approved';
+
+  @override
+  String get waitingRejectedSubtitle =>
+      'The admin did not approve this registration. Contact the centre.';
+
+  @override
+  String get waitingYourChoice => 'Your choice:';
+
+  @override
+  String waitingChoiceTest(String target) {
+    return 'Placement test, aiming for $target';
+  }
+
+  @override
+  String waitingResultCode(String code) {
+    return 'Result code $code';
+  }
+
+  @override
+  String get waitingForAdmin =>
+      'Waiting for the admin. This page opens the app by itself once you are approved.';
+
+  @override
+  String get waitingReason => 'Reason:';
+
+  @override
+  String waitingWhatsApp(String number) {
+    return 'WhatsApp the centre ($number)';
+  }
+
+  @override
+  String get approvalChip => 'Approval';
+
+  @override
+  String get approvalTitle => 'Registrations to approve';
+
+  @override
+  String get approvalIntro =>
+      'New students wait here. Pick their teacher and starting level, then approve or reject.';
+
+  @override
+  String get approvalEmpty => 'No registration is waiting.';
+
+  @override
+  String approvalRejectedList(int count) {
+    return 'Rejected ($count)';
+  }
+
+  @override
+  String get approvalTeacher => 'Teacher';
+
+  @override
+  String get approvalStartLevel => 'Starting level';
+
+  @override
+  String get approvalApprove => 'Approve';
+
+  @override
+  String get approvalReject => 'Reject';
+
+  @override
+  String approvalApproved(String name, String level) {
+    return '$name approved at $level.';
+  }
+
+  @override
+  String get approvalRejected => 'Registration rejected.';
+
+  @override
+  String approvalRejectTitle(String name) {
+    return 'Reject $name?';
+  }
+
+  @override
+  String get approvalRejectReason => 'Reason (the student sees it)';
+
+  @override
+  String approvalRejectedBecause(String reason) {
+    return 'Rejected: $reason';
+  }
+
+  @override
+  String get placementScanToJoin => 'Visitors scan to open the placement test';
+
+  @override
+  String placementVisitorRow(String name) {
+    return 'Visitor · $name';
+  }
+
+  @override
+  String get placementSessionTick => 'Placement session';
+
+  @override
+  String get placementSessionTickHelp =>
+      'Results stay off the leaderboard and the promotion count.';
+
+  @override
+  String get placementCodeTick => 'Placement code';
+
+  @override
+  String get placementCodeTickHelp =>
+      'Visitors may sit it from the landing page. It never counts toward promotion.';
+
+  @override
+  String get placementPaperPassed => 'Placement paper passed';
+
+  @override
+  String get placementPaperFailed => 'Placement paper not passed';
+
+  @override
+  String placementStudentWaiting(String level) {
+    return 'Waiting for the admin (recommended: $level).';
+  }
+
+  @override
+  String placementStudentApproved(String level) {
+    return 'You start at $level.';
+  }
+
+  @override
+  String get placementStudentDeclined =>
+      'Your teacher will talk with you about your level.';
+
+  @override
+  String get placementHomeTitle => 'Find your level';
+
+  @override
+  String get placementHomeIntro =>
+      'Sit a short placement test at the centre. Your teacher gives you a token. At the end you see your marks and get a result code to register with.';
+
+  @override
+  String get placementResumeBody =>
+      'You have a placement test in progress in this tab.';
+
+  @override
+  String get placementResume => 'Continue';
+
+  @override
+  String get placementMenuEmpty => 'No placement test is open right now.';
+
+  @override
+  String get placementFormTitle => 'Start with your token';
+
+  @override
+  String get placementToken => 'Token';
+
+  @override
+  String get placementName => 'Your name';
+
+  @override
+  String get placementWhatsapp => 'WhatsApp number';
+
+  @override
+  String get placementKeptNote =>
+      'Your name and number are kept by the centre for your registration.';
+
+  @override
+  String get placementContinue => 'Continue';
+
+  @override
+  String get placementNoResult => 'No result in this tab.';
+
+  @override
+  String get placementResultTitle => 'Your placement result';
+
+  @override
+  String get placementTotal => 'Total';
+
+  @override
+  String get placementYourCode => 'Your result code';
+
+  @override
+  String get placementCodeHelp =>
+      'Type it when you register, or show it at the centre.';
+
+  @override
+  String get placementCopied => 'Result code copied.';
+
+  @override
+  String get placementRegisterNow => 'Register now';
+
+  @override
+  String get roomsTitle => 'Rooms';
+
+  @override
+  String get roomsLabel => 'Room';
+
+  @override
+  String get roomsHint => 'The rooms the class form offers.';
+
+  @override
+  String get roomsName => 'Room name';
+
+  @override
+  String get roomsAdd => 'Add room';
+
+  @override
+  String get roomsRename => 'Rename';
+
+  @override
+  String get roomsRemove => 'Remove';
+
+  @override
+  String get roomsSave => 'Save';
+
+  @override
+  String get teacherLevelsTitle => 'Levels taught';
+
+  @override
+  String get teacherLevelsHint =>
+      'The levels this teacher teaches (used by the weekly timetable).';
+
+  @override
+  String get teacherLevelsNone => 'The admin has not set your levels yet.';
 }

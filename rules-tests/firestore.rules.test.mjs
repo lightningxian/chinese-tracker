@@ -67,7 +67,8 @@ describe("self-registration", () => {
   it("lets a student create their own profile with a teacher", async () => {
     await assertSucceeds(setDoc(doc(as("newstudent"), "users", "newstudent"), {
       role: "student", email: "n@test", name: "Baru", active: true,
-      teacherId: "teacher1", level: "HSK 1", termSize: 8,
+      teacherId: "teacher1", level: "", termSize: 8, status: "pending",
+      placementChoice: "hsk1", placementTarget: "", placementResultCode: "",
     }));
   });
 
@@ -302,7 +303,8 @@ describe("hardening 2026-11-12 (registration, invoices, attendance, quizzes)", (
   };
 
   it("a student cannot register under a made-up or deactivated teacher", async () => {
-    const base = { role: "student", email: "x@test", name: "X", active: true, level: "HSK 1", termSize: 8 };
+    const base = { role: "student", email: "x@test", name: "X", active: true, level: "", termSize: 8,
+      status: "pending", placementChoice: "hsk1", placementTarget: "", placementResultCode: "" };
     await assertFails(setDoc(doc(as("newstudent"), "users", "newstudent"), { ...base, teacherId: "nobody" }));
     await assertFails(setDoc(doc(as("newstudent"), "users", "newstudent"), { ...base, teacherId: "teacher2" }));
     await assertSucceeds(setDoc(doc(as("newstudent"), "users", "newstudent"), { ...base, teacherId: "teacher1" }));
@@ -612,5 +614,84 @@ describe("leaderboard, promotion, level, teacher bank (Build 2B)", () => {
     await assertSucceeds(deleteDoc(doc(as("teacher1"), "question_bank", "q1")));
     await assertSucceeds(setDoc(doc(as("admin1"), "question_bank", "a1"), { ...q, createdBy: "someone" }));
     await assertFails(setDoc(doc(as("student1"), "question_bank", "s1"), { ...q, createdBy: "student1" }));
+  });
+});
+
+// Build 3: pending registrations, placement results, rooms, teacher levels.
+describe("registration approval and placement (Build 3)", () => {
+  const pendingBase = {
+    role: "student", email: "w@test", name: "Menunggu", active: true, status: "pending",
+    teacherId: "", level: "", termSize: 8, placementChoice: "test",
+    placementTarget: "HSK 4", placementResultCode: "",
+  };
+  const seedPending = async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, "users", "pending1"), pendingBase);
+      await setDoc(doc(db, "users", "rejected1"), { ...pendingBase, status: "rejected", rejectReason: "x" });
+      await setDoc(doc(db, "exercises", "e1"), { title: "E", bankSheets: ["s"] });
+      await setDoc(doc(db, "class_sessions", "c1"), { teacherId: "teacher1", isOpen: true });
+      await setDoc(doc(db, "test_results", "C_pending1"), { studentId: "pending1", total: 1 });
+      await setDoc(doc(db, "test_attempts", "sess_visitor"), { studentId: "", visitor: true, keyHash: "h" });
+      await setDoc(doc(db, "placement_results", "sess_visitor"), { name: "V", whatsapp: "0812", resultCode: "ABCDEF" });
+      await setDoc(doc(db, "notifications", "n_pending"), { userId: "pending1", forRole: "student", title: "w", body: "", kind: "registration", read: false });
+    });
+  };
+
+  it("a student registers as pending with no level and no teacher", async () => {
+    await assertSucceeds(setDoc(doc(as("newstudent"), "users", "newstudent"), pendingBase));
+  });
+  it("a student cannot register approved, with a level, or with teacher levels", async () => {
+    const write = (extra) => setDoc(doc(as("newstudent"), "users", "newstudent"), { ...pendingBase, ...extra });
+    await assertFails(write({ status: "active" }));
+    const { status, ...noStatus } = pendingBase;
+    await assertFails(setDoc(doc(as("newstudent"), "users", "newstudent"), noStatus));
+    await assertFails(write({ level: "HSK 4" }));
+    await assertFails(write({ levels: ["HSK 1"] }));
+    await assertFails(write({ placementChoice: "skip" }));
+    await assertFails(write({ approvedBy: "admin1" }));
+  });
+  it("a pending student reads only their own profile and their notices", async () => {
+    await seedPending();
+    await assertSucceeds(getDoc(doc(as("pending1"), "users", "pending1")));
+    await assertSucceeds(getDoc(doc(as("pending1"), "notifications", "n_pending")));
+    await assertFails(getDoc(doc(as("pending1"), "exercises", "e1")));
+    await assertFails(getDoc(doc(as("pending1"), "class_sessions", "c1")));
+    await assertFails(getDoc(doc(as("pending1"), "test_results", "C_pending1")));
+    await assertFails(getDoc(doc(as("pending1"), "users", "teacher1")));
+    await assertFails(getDoc(doc(as("pending1"), "settings", "rooms")));
+    await assertFails(getDoc(doc(as("rejected1"), "exercises", "e1")));
+    // An approved student (no status field) still reads them.
+    await assertSucceeds(getDoc(doc(as("student1"), "exercises", "e1")));
+  });
+  it("a student cannot approve themselves or change their choice, level, levels or teacher", async () => {
+    await seedPending();
+    const self = (data) => updateDoc(doc(as("pending1"), "users", "pending1"), data);
+    await assertFails(self({ status: "active" }));
+    await assertFails(self({ level: "HSK 4" }));
+    await assertFails(self({ levels: ["HSK 4"] }));
+    await assertFails(self({ teacherId: "teacher1" }));
+    await assertFails(self({ placementTarget: "HSK 6" }));
+    await assertFails(self({ placementResultCode: "ZZZZZZ" }));
+    await assertSucceeds(self({ whatsapp: "0812" }));
+    await assertFails(updateDoc(doc(as("student1"), "users", "student1"), { status: "pending" }));
+    await assertFails(updateDoc(doc(as("teacher1"), "users", "teacher1"), { levels: ["HSK 1"] }));
+    await assertSucceeds(updateDoc(doc(as("admin1"), "users", "teacher1"), { levels: ["HSK 1", "HSK 2"] }));
+  });
+  it("placement results and visitor attempts: staff only, no client writes", async () => {
+    await seedPending();
+    await assertSucceeds(getDoc(doc(as("teacher1"), "placement_results", "sess_visitor")));
+    await assertSucceeds(getDoc(doc(as("admin1"), "placement_results", "sess_visitor")));
+    await assertFails(getDoc(doc(as("student1"), "placement_results", "sess_visitor")));
+    await assertFails(getDoc(doc(env.unauthenticatedContext().firestore(), "placement_results", "sess_visitor")));
+    await assertFails(setDoc(doc(as("admin1"), "placement_results", "x"), { resultCode: "AAAAAA" }));
+    await assertSucceeds(getDoc(doc(as("teacher1"), "test_attempts", "sess_visitor")));
+    await assertFails(getDoc(doc(as("student1"), "test_attempts", "sess_visitor")));
+  });
+  it("settings/rooms: everyone signed in reads, only the admin writes", async () => {
+    await assertSucceeds(setDoc(doc(as("admin1"), "settings", "rooms"), { names: ["Main", "Sub Room"] }));
+    await assertSucceeds(getDoc(doc(as("teacher1"), "settings", "rooms")));
+    await assertSucceeds(getDoc(doc(as("student1"), "settings", "rooms")));
+    await assertFails(setDoc(doc(as("teacher1"), "settings", "rooms"), { names: ["Room 9"] }));
   });
 });

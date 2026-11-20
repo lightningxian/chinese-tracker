@@ -52,6 +52,13 @@ class PromotionService {
       .snapshots()
       .map((s) => s.docs.map(LevelPromotion.fromDoc).toList());
 
+  /// Build 3: the student's placement recommendation, if any.
+  Stream<LevelPromotion?> watchPlacement(String uid) => _db
+      .collection('level_promotions')
+      .doc('${uid}_placement')
+      .snapshots()
+      .map((d) => d.exists ? LevelPromotion.fromDoc(d) : null);
+
   /// "2 of 3 codes passed" of one student (null before the first result).
   Stream<PromotionProgress?> watchProgress(String uid) => _db
       .collection('promotion_progress')

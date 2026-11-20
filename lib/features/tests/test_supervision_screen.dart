@@ -13,6 +13,7 @@ import '../../models/app_user.dart';
 import '../../models/test_track.dart';
 import '../../services/test_service.dart';
 import 'test_labels.dart';
+import 'test_player_screen.dart' show PlacementChip;
 
 /// ViewModel of the supervision screen: the session, its attempts (live),
 /// and a one-second tick for the countdowns.
@@ -180,6 +181,11 @@ class _SupervisionView extends StatelessWidget {
           AppCard(
             child: Column(
               children: [
+                if (session.placement)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: PlacementChip(label: l.placementSessionLabel),
+                  ),
                 Text(
                   '${session.code} · ${session.level}',
                   style: TextStyle(color: AppColors.textSecondary),
@@ -233,13 +239,20 @@ class _SupervisionView extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: QrImageView(
-                        data: tokenLink(session.token),
+                        // Build 3: a placement code's QR opens the public
+                        // placement page (visitors have no account).
+                        data: session.visitorsAllowed
+                            ? placementTokenLink(session.token)
+                            : tokenLink(session.token),
                         size: 180,
                         backgroundColor: Colors.white,
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(l.testsScanToJoin,
+                    Text(
+                        session.visitorsAllowed
+                            ? l.placementScanToJoin
+                            : l.testsScanToJoin,
                         style: TextStyle(
                             color: AppColors.textSecondary, fontSize: 12)),
                   ],
@@ -333,7 +346,9 @@ class _AttemptRow extends StatelessWidget {
           SizedBox(
             width: 220,
             child: Text(
-              AppUser.staffLabelOf(a.studentNameChinese, a.studentName),
+              a.visitor
+                  ? l.placementVisitorRow(a.studentName)
+                  : AppUser.staffLabelOf(a.studentNameChinese, a.studentName),
               style: TextStyle(
                 fontWeight: FontWeight.w700,
                 color: AppColors.navy,
@@ -384,5 +399,9 @@ class _AttemptRow extends StatelessWidget {
 
 /// The address a phone opens from the token's QR code: the student's test
 /// page with the token filled in (the same page the Tests tab opens).
+/// Build 3: the public placement page with the token filled in.
+String placementTokenLink(String token) =>
+    '${Uri.base.origin}/placement?token=${Uri.encodeComponent(token)}';
+
 String tokenLink(String token) =>
     '${Uri.base.origin}/student/test?token=${Uri.encodeComponent(token)}';

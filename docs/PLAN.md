@@ -1269,6 +1269,82 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
+### 2026-11-20 — Build 3 Registration approval, placement tests, rooms — release v0.1.21 (hosting, rules, indexes and functions wait for the owner's go, to go live together)
+- Built: pending accounts (`status: 'pending'`, rules, `/waiting`), the
+  register form's start-level choice with a live result-code check, the
+  admin **Approval** section and page with `decideRegistration`, placement
+  sessions (`placement: true` on sessions, attempts and results) with
+  `level_promotions/{uid}_placement` on the Promotion screen, placement
+  codes and the public visitor path (`placementMenu`, `startPlacement`,
+  `submitPlacementPart`, `reportPlacementEvent`, `resolvePlacementResult`,
+  `registrationPlacement`, `placement_results`, pages `/placement*`, the
+  landing section, visitor rows and QR on supervision), `settings/rooms`
+  with the room picker, teacher `levels`, registration notices. Pure logic
+  in `functions/placement.js`.
+- Must list: 1 pending accounts + choice + optional link code · 2 rules
+  (`statusApproved`, `isApprovedUser`, self-update locks, create shape) ·
+  3 waiting page · 4 Approval + `decideRegistration` (claimed once, audit,
+  reject then approve) · 5 placement sessions + recommendation rule +
+  Promotion chip + Tests tab card · 6 placement codes + `placementMenu` ·
+  7 visitor functions (key hash, throttles, finish by close / hourly job) ·
+  8 public pages + landing section + QR · 9 rooms + teacher levels · 10
+  `registration` notices + test · 11 seed + tests. All done.
+- Acceptance walk (emulator, 2026-11-20):
+  1. Registered `walk1@` with "Mulai dari HSK 1" and no link code: the
+     waiting page opened; `/student` sent back to `/waiting`. Approval page
+     listed it; approved with Andrea at HSK 1 ("approved at HSK 1"). Pass.
+  2. PL-01 and the failed case run in the flow test (approve at HSK 1,
+     placement session on `H3DEMO1`, pass → "HSK 1 → HSK 4" waits, approve:
+     level HSK 4, history `placement`, no board row, 0 of 3 toward HSK 5;
+     fail → HSK 3). The Promotion screen shows the cards with the
+     Placement chip and "Placement paper not passed". Pass.
+  3. Visitor at 400 px: `/placement?token=…` (from the QR link) prefilled
+     the token, the menu showed "HSK 1 · 4 min · 6 questions"; start screen
+     with the Placement chip and "no review" rule; a reload resumed part 1
+     with the answer and the clock; the network reply had no `correctIndex`;
+     two parts → 100 / 33, 133 of 200, passed, HSK 2, code shown with Copy
+     and Daftar sekarang; the register form opened with the code, Check
+     showed "HSK 1 paper: 133 of 200 · Passed · HSK 2" and filled the
+     target level. Supervision showed "Visitor · Visitor Walk · Left the
+     page: 1 · finished". Claimed-once runs in the flow test. Pass.
+  4. Reject with a reason, then approve: flow test. Pass.
+  5. Wrong tokens, wrong key, a visitor calling `startTest` /
+     `getTestReview`, a student reading `placement_results`: flow and rules
+     tests. Pass.
+  6. Org settings Rooms: Main, Sub Room; added "Room 3"; the class form's
+     picker lists all three. Andrea's user form shows HSK 1–3 ticked. Pass.
+  7. Indonesian light at 360 px: the result page fits (the app-bar title
+     is cut with "…"); English dark at 1280 px for the admin screens.
+     Not walked: the waiting page in Indonesian and the Approval page at
+     360 px.
+- Fixed during the walk: the Approval page's top bar said "Student" (it
+  matched `/users/:id`); it now says "Registrations to approve".
+- Proof: analyzer 0 errors / 0 warnings / 17 infos; `flutter test` 135
+  pass (+8) and 2 skipped; rules tests 68 pass, 1 skipped (+6); node tests
+  pass (+ `test_placement.js`); flow test 56/56 (+15).
+- Owner must: (1) rules, indexes and functions:
+  `firebase deploy --only firestore:rules,firestore:indexes,functions --project chinese-tracker`
+  (adds 7 functions, 34 on live), then hosting at once
+  (`scripts/deploy_web.sh --web-only --no-keys`). The BUILD chat held the
+  hosting deploy back: the new register form with the old rules refuses a
+  student without a link code, and the Approval buttons need the new
+  functions. (2) Open Org settings once
+  (writes `settings/rooms`). (3) Tick **Placement code** on one short
+  paper's code. (4) Tell the admin that new students now wait on Users →
+  Approval.
+- Left out and why: the "Then" items (§5 Q12 reopen after a decline, the
+  Build 2B leftovers, a WhatsApp link on the Approval card). Staff have no
+  list of visitor results yet (they see them on supervision and through a
+  result code on the Approval card). Testing two tabs in one browser: a
+  reload in one tab signs the other out in the emulator bundle (the
+  emulator guard); a visitor on their own phone is not affected.
+- Notes for the PLAN chat:
+  - A placement session on an ordinary code (PL-01 on `H3DEMO1`) is for
+    signed-in students only; visitors join only a placement code's session
+    (`visitorsAllowed` on the session decides the QR link).
+  - Answers a teacher would mark (free writing) count as zero for a
+    visitor: placement papers should be choice and typing only.
+
 ### 2026-11-20 — Build 2B Leaderboard, promotion, names — 4ee0f42, release v0.1.20 (hosting, rules, indexes and functions live from the PC 2026-11-20 at the owner's go)
 - Built: the `onTestResultWritten` trigger with pure logic in
   `functions/promotion.js`; `leaderboards/{codeId}/entries/{uid}`;

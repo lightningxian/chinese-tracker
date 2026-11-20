@@ -13,6 +13,7 @@ import '../../core/widgets/table_tools.dart';
 import '../../l10n/l10n.dart';
 import '../../l10n/labels_admin.dart';
 import '../../models/app_user.dart';
+import 'registration_approval_view.dart';
 import '../../services/firestore_service.dart';
 import 'admin_dashboard_widgets.dart';
 
@@ -22,6 +23,9 @@ String _listName(AppUser u) => u.isStudent ? u.staffLabel : u.name;
 /// Users table. Click a student's row to open their page (`/admin/users/:id`);
 /// other roles open the edit form. Rows can be ticked to activate, deactivate
 /// or set the HSK level in one go, and the list exports to CSV.
+/// The Approval chip of the role tabs (Build 3).
+const _approvalFilter = '__approval';
+
 class AdminUsersTab extends StatefulWidget {
   const AdminUsersTab({super.key});
 
@@ -116,7 +120,8 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
   }
 
   List<AppUser> _filter(AppLocalizations l, List<AppUser> users) {
-    var result = users;
+    // Build 3: pending and rejected registrations live under Approval.
+    var result = users.where((u) => !u.awaitsApproval).toList();
 
     if (_roleFilter != null) {
       result = result.where((user) => user.role == _roleFilter).toList();
@@ -318,14 +323,30 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
 
   /// One chip per role with its count; the selected chip filters the table.
   Widget _roleTabs(AppLocalizations l, List<AppUser> allUsers) {
-    final counts = <String?, int>{null: allUsers.length};
-    for (final user in allUsers) {
+    final listed = allUsers.where((u) => !u.awaitsApproval).toList();
+    final counts = <String?, int>{null: listed.length};
+    for (final user in listed) {
       counts[user.role] = (counts[user.role] ?? 0) + 1;
     }
+    final pending = RegistrationApprovalView.pendingCount(allUsers);
     return Wrap(
       spacing: 8,
       runSpacing: 8,
       children: [
+        ChoiceChip(
+          avatar: pending > 0
+              ? Badge(
+                  label: Text('$pending'),
+                  backgroundColor: AppColors.error,
+                )
+              : const Icon(Icons.how_to_reg_outlined, size: 18),
+          label: Text(l.approvalChip),
+          selected: _roleFilter == _approvalFilter,
+          onSelected: (_) => setState(() {
+            _roleFilter = _approvalFilter;
+            _selected = {};
+          }),
+        ),
         for (final entry in _roleFilterOptions(l).entries)
           ChoiceChip(
             label: Text('${entry.value} (${counts[entry.key] ?? 0})'),
@@ -551,6 +572,9 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
             const SizedBox(height: 12),
             _roleTabs(l, allUsers),
             const SizedBox(height: 12),
+            if (_roleFilter == _approvalFilter)
+              RegistrationApprovalView(users: allUsers)
+            else ...[
             _selectionBar(l, users),
             if (users.isEmpty)
               AppCard(
@@ -584,6 +608,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                   onEdit: () => context.push('/admin/users/${user.uid}/edit'),
                 ),
               ),
+            ],
           ],
         );
       },

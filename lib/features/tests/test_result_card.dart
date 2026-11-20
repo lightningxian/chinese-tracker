@@ -11,6 +11,7 @@ import '../../core/theme/app_theme.dart';
 import '../../l10n/l10n.dart';
 import '../../models/test_track.dart';
 import 'test_labels.dart';
+import 'test_player_screen.dart' show PlacementChip;
 
 /// Centre name printed on the card.
 const kCentreName = '易华文教中心 · Easy Study';
@@ -106,6 +107,10 @@ class TestResultCard extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
           ),
+          if (r.placement) ...[
+            const SizedBox(height: 6),
+            Center(child: PlacementChip(label: l.placementTestLabel)),
+          ],
           const SizedBox(height: 14),
           Table(
             border: TableBorder.all(color: line),

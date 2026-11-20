@@ -6,8 +6,10 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_logo.dart';
+import '../../core/widgets/placement_choice_fields.dart';
 import '../../core/widgets/registration_identity_fields.dart';
 import '../../l10n/l10n.dart';
+import '../../models/placement.dart';
 import '../../models/teacher_link_code.dart';
 import '../../services/auth_service.dart';
 
@@ -27,7 +29,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
   final _parentPhoneController = TextEditingController();
   final _linkCodeController = TextEditingController();
 
-  String _level = AppConstants.hskLevels.first;
+  RegistrationChoice _choice = const RegistrationChoice();
   int _termSize = AppConstants.defaultTermSize;
   bool _loading = false;
   String? _error;
@@ -46,6 +48,17 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     final l = context.l10n;
+    final issue = switch (_choice.issue) {
+      null => null,
+      RegistrationChoiceIssue.targetMissing => l.registerTargetLevelRequired,
+      RegistrationChoiceIssue.resultCodeInvalid => l.placementErrBadResultCode,
+      RegistrationChoiceIssue.resultCodeUnchecked => l.registerResultCodeCheckFirst,
+      RegistrationChoiceIssue.resultCodeClaimed => l.placementErrClaimed,
+    };
+    if (issue != null) {
+      setState(() => _error = issue);
+      return;
+    }
     setState(() {
       _loading = true;
       _error = null;
@@ -60,9 +73,9 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
         whatsapp: _whatsappController.text,
         parentName: _parentNameController.text,
         parentPhone: _parentPhoneController.text,
-        level: _level,
         termSize: _termSize,
         linkCode: _linkCodeController.text,
+        choice: _choice,
       );
     } on TeacherLinkCodeException catch (e) {
       setState(() => _error = e.message);
@@ -163,30 +176,27 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                           textCapitalization: TextCapitalization.characters,
                           autocorrect: false,
                           decoration: InputDecoration(
-                            labelText: l.teacherLinkCodeLabel,
+                            labelText: l.teacherLinkCodeOptionalLabel,
                             hintText: l.commonCodeHint,
                             prefixIcon: const Icon(Icons.link_outlined),
-                            helperText: l.teacherLinkCodeHelper,
+                            helperText: l.teacherLinkCodeOptionalHelper,
+                            helperMaxLines: 3,
                           ),
-                          validator: (v) => v == null || v.trim().length < 4
-                              ? l.teacherLinkCodeRequired
-                              : null,
+                          validator: (v) {
+                            final t = v?.trim() ?? '';
+                            return t.isNotEmpty && t.length < 4
+                                ? l.teacherLinkCodeRequired
+                                : null;
+                          },
                         ),
-                        const SizedBox(height: 16),
-                        DropdownButtonFormField<String>(
-                          initialValue: _level,
-                          decoration: InputDecoration(
-                            labelText: l.commonHskLevel,
-                            prefixIcon: const Icon(Icons.school_outlined),
-                          ),
-                          items: AppConstants.hskLevels
-                              .map((l) => DropdownMenuItem(
-                                    value: l,
-                                    child: Text(l),
-                                  ))
-                              .toList(),
-                          onChanged: (v) =>
-                              setState(() => _level = v ?? _level),
+                        const SizedBox(height: 20),
+                        PlacementChoiceFields(
+                          value: _choice,
+                          enabled: !_loading,
+                          onChanged: (v) => setState(() {
+                            _choice = v;
+                            _error = null;
+                          }),
                         ),
                         const SizedBox(height: 16),
                         DropdownButtonFormField<int>(

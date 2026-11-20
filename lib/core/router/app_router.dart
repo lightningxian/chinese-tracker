@@ -8,6 +8,10 @@ import '../../features/auth/login_screen.dart';
 import '../../features/auth/register_screen.dart';
 import '../../features/auth/test_login_screen.dart';
 import '../../features/auth/complete_profile_screen.dart';
+import '../../features/auth/waiting_approval_screen.dart';
+import '../../features/admin/registration_approval_view.dart';
+import '../../features/placement/placement_pages.dart';
+import '../../models/placement.dart';
 import '../../features/student/exercise_screen.dart';
 import '../../features/student/lesson_detail_screen.dart';
 import '../../models/quiz.dart';
@@ -93,6 +97,11 @@ class AppRouter {
             location == '/splash' ||
             (kDebugMode && location == '/dev-login');
         final onComplete = location == '/complete-profile';
+        // Build 3: the public placement test works signed in or not.
+        final onPlacement =
+            location == '/placement' || location.startsWith('/placement/');
+        if (onPlacement) return null;
+        final onWaiting = location == '/waiting';
 
         if (!signedIn && !onPublic) return '/';
         if (signedIn && !hasProfile && !onComplete) {
@@ -103,6 +112,10 @@ class AppRouter {
 
         if (signedIn && hasProfile) {
           final user = auth.appUser!;
+          // Build 3: a pending or rejected student sees only the waiting
+          // page (the rules refuse everything else too).
+          if (user.awaitsApproval) return onWaiting ? null : '/waiting';
+          if (onWaiting) return null; // falls to home below
           String homeFor(dynamic u) {
             if (u.isAdmin) return '/admin';
             if (u.isTeacher) return '/teacher';
@@ -119,7 +132,7 @@ class AppRouter {
               !location.startsWith(home);
           if (inOtherSection) return home;
 
-          if (onPublic || onComplete) {
+          if (onPublic || onComplete || onWaiting) {
             return home;
           }
 
@@ -149,7 +162,36 @@ class AppRouter {
         ),
         GoRoute(
           path: '/register',
-          builder: (_, __) => const RegisterScreen(),
+          builder: (_, state) => RegisterScreen(
+            initialResultCode: state.uri.queryParameters['placement'],
+          ),
+        ),
+        GoRoute(
+          path: '/waiting',
+          builder: (_, __) => const WaitingApprovalScreen(),
+        ),
+        // Build 3: the public placement test (no account).
+        GoRoute(
+          path: '/placement',
+          builder: (_, state) => PlacementHomePage(
+            initialToken: state.uri.queryParameters['token'],
+          ),
+        ),
+        GoRoute(
+          path: '/placement/test',
+          builder: (_, state) => PlacementTestPage(
+            start: state.extra is PlacementStart
+                ? state.extra! as PlacementStart
+                : null,
+          ),
+        ),
+        GoRoute(
+          path: '/placement/result',
+          builder: (_, state) => PlacementResultPage(
+            result: state.extra is VisitorResult
+                ? state.extra! as VisitorResult
+                : null,
+          ),
         ),
         if (kDebugMode)
           GoRoute(
@@ -197,6 +239,11 @@ class AppRouter {
                   path: 'users/new',
                   builder: (_, __) =>
                       const AdminCreateUserScreen(embedded: true),
+                ),
+                GoRoute(
+                  path: 'users/approval',
+                  builder: (_, __) =>
+                      const RegistrationApprovalPage(embedded: true),
                 ),
                 GoRoute(
                   path: 'users/:id/edit',

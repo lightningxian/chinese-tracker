@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../l10n/l10n.dart';
+import '../../models/placement.dart';
 import '../../models/test_track.dart';
 import '../../services/exercise_play_service.dart';
 import '../../services/test_service.dart';
@@ -25,9 +26,15 @@ class TestPlayerViewModel extends ChangeNotifier {
     unawaited(_init());
   }
 
-  final TestService _service;
+  final TestPlayBackend _service;
   final String? token;
   String? codeId;
+
+  /// Build 3: a visitor's public placement test (no result card).
+  bool get isVisitor => _service.isVisitor;
+
+  /// A visitor's marks and result code at the finish.
+  VisitorResult? visitorResult;
 
   TestPlayerPhase phase = TestPlayerPhase.loading;
   TestFacts? facts;
@@ -169,6 +176,7 @@ class TestPlayerViewModel extends ChangeNotifier {
       codeId = s.facts.codeId;
     }
     if (s.finished) {
+      visitorResult = s.visitorResult ?? visitorResult;
       _finish(s.resultId);
       return;
     }
@@ -274,6 +282,7 @@ class TestPlayerViewModel extends ChangeNotifier {
       await TestService.forgetAnswers(codeId!, s.partIndex);
       await player.stop();
       if (next.finished) {
+        visitorResult = next.visitorResult ?? visitorResult;
         _finish(next.resultId);
       } else {
         await _apply(next, fresh: true);
@@ -328,16 +337,20 @@ class TestPlayerViewModel extends ChangeNotifier {
 /// The supervised test: start screen, then part by part under the server
 /// clock, then the result card.
 class TestPlayerScreen extends StatelessWidget {
-  const TestPlayerScreen({super.key, this.token, this.codeId});
+  const TestPlayerScreen({super.key, this.token, this.codeId, this.backend});
 
   final String? token;
   final String? codeId;
 
+  /// Build 3: a visitor's backend (public placement test); the signed-in
+  /// student's functions when null.
+  final TestPlayBackend? backend;
+
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) =>
-          TestPlayerViewModel(TestService(), token: token, codeId: codeId),
+      create: (_) => TestPlayerViewModel(backend ?? TestService(),
+          token: token, codeId: codeId),
       child: const _PlayerView(),
     );
   }
@@ -410,7 +423,9 @@ class _PlayerViewState extends State<_PlayerView> {
       final id = vm.resultId;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        if (id != null) {
+        if (vm.isVisitor) {
+          context.go('/placement/result', extra: vm.visitorResult);
+        } else if (id != null) {
           context.pushReplacement('/student/test-result/$id');
         } else {
           context.pop();
@@ -433,7 +448,7 @@ class _PlayerViewState extends State<_PlayerView> {
                 icon: const Icon(Icons.arrow_back),
                 onPressed: () => context.canPop()
                     ? context.pop()
-                    : context.go('/student'),
+                    : context.go(vm.isVisitor ? '/placement' : '/student'),
               ),
         title: Text(
           facts == null ? l.testsTitle : '${facts.code} · ${facts.level}',
@@ -503,6 +518,14 @@ class _StartScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                if (f.placement)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: PlacementChip(label: l.placementTestLabel),
+                    ),
+                  ),
                 Text(
                   chineseExamType(f.family, f.levelKey),
                   style: TextStyle(
@@ -552,7 +575,7 @@ class _StartScreen extends StatelessWidget {
                   if (f.partClocks) l.testsRuleRecording,
                   l.testsRuleNoBack,
                   l.testsRuleLeaving,
-                  l.testsRuleOnce,
+                  if (vm.isVisitor) l.placementRuleNoReview else l.testsRuleOnce,
                 ])
                   Padding(
                     padding: const EdgeInsets.only(bottom: 6),
@@ -840,6 +863,40 @@ class _RecordingBar extends StatelessWidget {
               },
               icon: Icon(vm.recordingPlaying ? Icons.pause : Icons.play_arrow),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "Placement test" label (start screen, result card, supervision, the
+/// Promotion screen).
+class PlacementChip extends StatelessWidget {
+  const PlacementChip({super.key, required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColors.teal.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.explore_outlined, size: 14, color: AppColors.teal),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: AppColors.teal,
+              fontWeight: FontWeight.w700,
+              fontSize: 12,
+            ),
+          ),
         ],
       ),
     );

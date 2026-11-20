@@ -16,9 +16,25 @@ Do not regress these when editing the files above. Background in
 ## Registration order
 
 - In `AuthService.register()`, resolve the teacher link code **before**
-  `createUserWithEmailAndPassword`. Creating the auth account first and then
+  `createUserWithEmailAndPassword` (Build 3: the code is optional; when
+  typed it is still resolved first). Creating the auth account first and then
   hitting an invalid code leaves an orphaned account whose email can't be
   reused.
+
+## Pending students (Build 3, 2026-11-20)
+
+- A self-registered student is created with `status: 'pending'` (the rules
+  require it, with `level: ''`), and an optional `teacherId` (empty when no
+  link code was typed). Only `decideRegistration` (admin) makes them
+  `active`, sets `level` and `teacherId`. `status` missing = an account made
+  before Build 3 = approved; keep that default in `statusApproved()`,
+  `isApprovedStatus()` and `AppUser.awaitsApproval`.
+- `isStudent()` requires an approved status; `isApprovedUser()` guards the
+  content reads; `requireCaller()` in the functions refuses pending
+  students. A pending student reads only their own `users` doc and the
+  notifications addressed to them. The router sends them to `/waiting`.
+- The self-update rule keeps `status`, `placement*`, `rejectReason`,
+  `approvedBy` and a teacher's `levels` unchanged.
 
 ## Who can create accounts
 

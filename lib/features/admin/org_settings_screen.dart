@@ -8,6 +8,7 @@ import '../../core/widgets/shell_nested_page.dart';
 import '../../l10n/l10n.dart';
 import '../../models/org_settings.dart';
 import '../../services/firestore_service.dart';
+import '../../services/rooms_service.dart';
 
 /// Admin-only centre settings. Toggles persist immediately to `settings/org`
 /// and gate dependent features (payments, evaluations, teacher reschedule).
@@ -94,6 +95,9 @@ class OrgSettingsScreen extends StatelessWidget {
                 onChanged: (v) =>
                     update(settings.copyWith(autoGenerateStaffPasswords: v)),
               ),
+              const SizedBox(height: 12),
+              SectionHeader(title: l.roomsTitle),
+              const _RoomsCard(),
               const SizedBox(height: 12),
               SectionHeader(title: l.orgSettingsPrices),
               AppCard(
@@ -226,3 +230,127 @@ class _NavRow extends StatelessWidget {
 /// Editable prices and term validity (`settings/pricing`). The server reads
 /// the same document when it creates invoices, so what the admin types here
 /// is what students are charged. The landing page shows these too.
+
+/// Build 3: the rooms of the session forms (`settings/rooms`). Opening the
+/// screen writes the defaults (Main, Sub Room) when the doc is missing.
+class _RoomsCard extends StatefulWidget {
+  const _RoomsCard();
+
+  @override
+  State<_RoomsCard> createState() => _RoomsCardState();
+}
+
+class _RoomsCardState extends State<_RoomsCard> {
+  final _service = RoomsService();
+  late final Stream<List<String>> _rooms = _service.watchRooms();
+
+  @override
+  void initState() {
+    super.initState();
+    _service.ensureDefaults().catchError((Object e) {
+      debugPrint('rooms: $e');
+    });
+  }
+
+  Future<String?> _ask(String title, {String initial = ''}) async {
+    final l = context.l10n;
+    final c = TextEditingController(text: initial);
+    final out = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(title),
+        content: TextField(
+          controller: c,
+          autofocus: true,
+          decoration: InputDecoration(labelText: l.roomsName),
+          onSubmitted: (v) => Navigator.pop(ctx, v),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l.commonCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, c.text),
+            child: Text(l.roomsSave),
+          ),
+        ],
+      ),
+    );
+    c.dispose();
+    final v = out?.trim() ?? '';
+    return v.isEmpty ? null : v;
+  }
+
+  Future<void> _save(List<String> rooms) async {
+    try {
+      await _service.save(rooms);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('$e'),
+          backgroundColor: AppColors.error,
+        ));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    return StreamBuilder<List<String>>(
+      stream: _rooms,
+      builder: (context, snap) {
+        final rooms = snap.data ?? RoomsService.defaults;
+        return AppCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(l.roomsHint,
+                  style: TextStyle(color: AppColors.textSecondary)),
+              const SizedBox(height: 8),
+              for (var i = 0; i < rooms.length; i++)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.meeting_room_outlined),
+                  title: Text(rooms[i]),
+                  trailing: Wrap(
+                    children: [
+                      IconButton(
+                        tooltip: l.roomsRename,
+                        icon: const Icon(Icons.edit_outlined),
+                        onPressed: () async {
+                          final v =
+                              await _ask(l.roomsRename, initial: rooms[i]);
+                          if (v == null) return;
+                          await _save([...rooms]..[i] = v);
+                        },
+                      ),
+                      IconButton(
+                        tooltip: l.roomsRemove,
+                        icon: const Icon(Icons.delete_outline),
+                        onPressed: rooms.length <= 1
+                            ? null
+                            : () => _save([...rooms]..removeAt(i)),
+                      ),
+                    ],
+                  ),
+                ),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: () async {
+                    final v = await _ask(l.roomsAdd);
+                    if (v != null) await _save([...rooms, v]);
+                  },
+                  icon: const Icon(Icons.add),
+                  label: Text(l.roomsAdd),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}

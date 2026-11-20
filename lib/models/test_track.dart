@@ -298,6 +298,7 @@ class TestCode {
     this.releaseYear,
     this.active = true,
     this.countsForPromotion = true,
+    this.placement = false,
     this.createdAt,
   });
 
@@ -313,6 +314,10 @@ class TestCode {
   final int? releaseYear;
   final bool active;
   final bool countsForPromotion;
+
+  /// Build 3: a placement code. Visitors may sit it from the landing page;
+  /// its results never reach a board or the promotion count.
+  final bool placement;
   final DateTime? createdAt;
 
   int get maxTotal => _sumMax(parts);
@@ -341,6 +346,7 @@ class TestCode {
       releaseYear: (m['releaseYear'] as num?)?.toInt(),
       active: m['active'] != false,
       countsForPromotion: m['countsForPromotion'] != false,
+      placement: m['placement'] == true,
       createdAt: (m['createdAt'] as Timestamp?)?.toDate(),
     );
   }
@@ -358,7 +364,9 @@ class TestCode {
         },
         'releaseYear': releaseYear,
         'active': active,
-        'countsForPromotion': countsForPromotion,
+        // A placement code never counts toward promotion.
+        'countsForPromotion': placement ? false : countsForPromotion,
+        'placement': placement,
       };
 }
 
@@ -375,8 +383,13 @@ class TestSession {
     required this.openedByName,
     required this.status,
     this.partClocks = true,
+    this.placement = false,
+    this.visitorsAllowed = false,
     this.createdAt,
   });
+
+  /// A placement code's session: visitors join from `/placement`.
+  final bool visitorsAllowed;
 
   final String id;
   final String codeId;
@@ -391,6 +404,10 @@ class TestSession {
   /// true: a clock per part (the supervised test as planned). false: one
   /// clock for the whole paper, free movement between parts, one submit.
   final bool partClocks;
+
+  /// Build 3: results stay off the leaderboard and the count; visitors may
+  /// join when the code is a placement code.
+  final bool placement;
   final DateTime? createdAt;
 
   bool get isOpen => status == 'open';
@@ -408,6 +425,8 @@ class TestSession {
       openedByName: m['openedByName'] as String? ?? '',
       status: m['status'] as String? ?? 'open',
       partClocks: m['partClocks'] != false,
+      placement: m['placement'] == true,
+      visitorsAllowed: m['visitorsAllowed'] == true,
       createdAt: (m['createdAt'] as Timestamp?)?.toDate(),
     );
   }
@@ -440,7 +459,13 @@ class TestAttempt {
     this.startedAt,
     this.partClocks = true,
     this.submitRequested = false,
+    this.visitor = false,
+    this.visitorWhatsapp = '',
   });
+
+  /// Build 3: a visitor with no account (public placement test).
+  final bool visitor;
+  final String visitorWhatsapp;
 
   /// Build 2A: the teacher pressed "End test for everyone"; the player
   /// sends the open part at once so typed answers are kept.
@@ -489,6 +514,8 @@ class TestAttempt {
       startedAt: (m['startedAt'] as Timestamp?)?.toDate(),
       partClocks: m['partClocks'] != false,
       submitRequested: m['submitRequested'] == true,
+      visitor: m['visitor'] == true,
+      visitorWhatsapp: m['visitorWhatsapp'] as String? ?? '',
     );
   }
 }
@@ -545,7 +572,11 @@ class TestResult {
     this.releaseYear,
     this.leftCount = 0,
     this.finishedAt,
+    this.placement = false,
   });
+
+  /// Build 3: sat in a placement session (off the board and the count).
+  final bool placement;
 
   final String id;
   final String codeId;
@@ -608,6 +639,7 @@ class TestResult {
       releaseYear: (m['releaseYear'] as num?)?.toInt(),
       leftCount: (m['leftCount'] as num?)?.toInt() ?? 0,
       finishedAt: (m['finishedAt'] as Timestamp?)?.toDate(),
+      placement: m['placement'] == true,
     );
   }
 }

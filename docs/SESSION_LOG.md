@@ -13,6 +13,21 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-20 — Claude (BUILD chat, PC): Build 3 registration approval, placement tests, rooms
+
+- Built Build 3 (release v0.1.21): self-registered students wait as
+  `pending` on `/waiting` until the admin approves them on Users →
+  Approval (`decideRegistration`); the register form asks "Mulai dari HSK 1"
+  or "Ikut tes penempatan" with an optional result code; placement sessions
+  recommend a level on the Promotion screen; visitors sit placement codes
+  from `/placement` with no account and get a result code; rooms list and
+  teacher levels.
+- Checked: analyzer 17 infos, `flutter test` 135 pass, rules tests 68 pass,
+  node tests (+ `test_placement.js`), flow test 56/56 (PL-01, PL-02, the
+  visitor path), an emulator walk at 1280, 400 and 360 px.
+- Pushed. Hosting, rules, indexes and functions (34) wait for the owner's
+  go, to go live together (the new screens need the new backend).
+
 ### 2026-11-20 — Claude (PLAN chat, Mac): Build 2B reviewed, Build 3 is NEXT
 
 - Pulled Build 2B (v0.1.20) and checked it on the Mac: analyzer 17 infos,

@@ -12,8 +12,12 @@ abstract final class NotificationRoutes {
     if (explicit != null && explicit.isNotEmpty) return explicit;
 
     return switch (notification.kind) {
-      NotificationKind.registration =>
-        role == AppConstants.roleAdmin ? '/admin' : '/teacher',
+      // Build 3: the admin opens the Approval list; the student the app.
+      NotificationKind.registration => switch (role) {
+          AppConstants.roleAdmin => '/admin/users/approval',
+          AppConstants.roleStudent => '/student',
+          _ => '/teacher',
+        },
       NotificationKind.grading => role == AppConstants.roleStudent
           ? '/student'
           : role == AppConstants.roleAdmin
@@ -43,6 +47,12 @@ abstract final class NotificationRoutes {
         (notification.kind == NotificationKind.promotion ||
             notification.targetRoute?.trim() == '/student/tests')) {
       return studentTestsTab;
+    }
+    // Build 3: a registration waiting for approval opens its own page.
+    if (notification.kind == NotificationKind.registration &&
+        (role == AppConstants.roleStudent ||
+            notification.targetRoute?.trim() == '/admin/users/approval')) {
+      return null;
     }
     return switch ((role, notification.kind)) {
       (AppConstants.roleAdmin, NotificationKind.registration) => 1, // Users

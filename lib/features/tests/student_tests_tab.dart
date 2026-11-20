@@ -28,6 +28,7 @@ class _StudentTestsTabState extends State<StudentTestsTab> {
   final _token = TextEditingController();
   final _service = TestService();
   late final _progress = PromotionService().watchProgress(widget.student.uid);
+  late final _placement = PromotionService().watchPlacement(widget.student.uid);
 
   @override
   void dispose() {
@@ -139,6 +140,16 @@ class _StudentTestsTabState extends State<StudentTestsTab> {
             );
           },
         ),
+        // Build 3: a placement test's recommendation.
+        StreamBuilder<LevelPromotion?>(
+          stream: _placement,
+          builder: (context, snap) => snap.data == null
+              ? const SizedBox.shrink()
+              : Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: _PlacementCard(promotion: snap.data!),
+                ),
+        ),
         // Build 2B: codes passed toward the next level (LV-03).
         const SizedBox(height: 12),
         StreamBuilder<PromotionProgress?>(
@@ -247,6 +258,49 @@ class _StudentTestsTabState extends State<StudentTestsTab> {
 }
 
 /// "2 of 3 codes passed" at the student's level (from promotion_progress).
+/// "Placement test: waiting for the admin", then the result.
+class _PlacementCard extends StatelessWidget {
+  const _PlacementCard({required this.promotion});
+
+  final LevelPromotion promotion;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final p = promotion;
+    final text = switch (p.status) {
+      'waiting' => l.placementStudentWaiting(p.toLevel),
+      'approved' => l.placementStudentApproved(p.toLevel),
+      'declined' => l.placementStudentDeclined,
+      _ => '',
+    };
+    if (text.isEmpty) return const SizedBox.shrink();
+    return AppCard(
+      child: Row(
+        children: [
+          Icon(
+            p.status == 'waiting' ? Icons.hourglass_top : Icons.explore_outlined,
+            color: AppColors.teal,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l.placementTestLabel,
+                    style: TextStyle(
+                        fontWeight: FontWeight.w800, color: AppColors.navy)),
+                const SizedBox(height: 2),
+                Text(text),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _ProgressCard extends StatelessWidget {
   const _ProgressCard({required this.progress, required this.fallbackLevel});
 

@@ -30,7 +30,7 @@ class StaffTestsTab extends StatelessWidget {
     final l = context.l10n;
     final service = TestService();
     // The dialog opens at once and loads the active codes itself.
-    final picked = await showDialog<(TestCode, bool)>(
+    final picked = await showDialog<(TestCode, bool, bool)>(
       context: context,
       builder: (_) => StreamBuilder<List<TestCode>>(
         stream: service.watchCodes(),
@@ -44,7 +44,8 @@ class StaffTestsTab extends StatelessWidget {
     final messenger = ScaffoldMessenger.of(context);
     try {
       final opened =
-          await service.openSession(picked.$1.id, partClocks: picked.$2);
+          await service.openSession(picked.$1.id,
+              partClocks: picked.$2, placement: picked.$3);
       if (context.mounted) {
         context.push('$_base/supervise/${opened.sessionId}');
       }
@@ -229,6 +230,10 @@ class _OpenSessionDialogState extends State<_OpenSessionDialog> {
   TestCode? _code;
   bool _partClocks = true;
 
+  /// Build 3: results stay off the leaderboard and the count; a placement
+  /// code always opens a placement session.
+  bool _placement = false;
+
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
@@ -285,6 +290,16 @@ class _OpenSessionDialogState extends State<_OpenSessionDialog> {
                         ? l.testsPartClocksOn
                         : l.testsPartClocksOff),
                   ),
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    value: _placement || (_code?.placement ?? false),
+                    onChanged: _code?.placement ?? false
+                        ? null
+                        : (v) => setState(() => _placement = v ?? false),
+                    title: Text(l.placementSessionTick),
+                    subtitle: Text(l.placementSessionTickHelp),
+                  ),
                 ],
               ),
       ),
@@ -296,7 +311,11 @@ class _OpenSessionDialogState extends State<_OpenSessionDialog> {
         FilledButton(
           onPressed: _code == null
               ? null
-              : () => Navigator.of(context).pop((_code!, _partClocks)),
+              : () => Navigator.of(context).pop((
+                    _code!,
+                    _partClocks,
+                    _placement || _code!.placement,
+                  )),
           child: Text(l.testsOpen),
         ),
       ],
