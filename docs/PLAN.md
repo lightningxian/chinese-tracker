@@ -73,13 +73,13 @@ Read docs/PLAN.md. You are the BUILD chat. Follow section 0, run Build 0 if this
 
 ## 1. Where the project stands (2026-11-20)
 
-**Live:** https://chinese-tracker.web.app, hosting at release v0.1.20
-(Build 2B, published from the PC 2026-11-20). **Build 3 (v0.1.21) is built
-and reviewed but not live:** its rules, index, functions and hosting go live
-together after the owner's go (table below). Firebase project
-`chinese-tracker`, Blaze plan, **27 Cloud Functions** on Node 22 (Build 1C's
-functions live since 2026-11-19, Build 2B's rules, index and two functions
-since 2026-11-20, all deployed from the PC at the owner's go). The
+**Live:** https://chinese-tracker.web.app, hosting at release v0.1.21
+(Build 3, published from the PC 2026-11-20 night). Firebase project
+`chinese-tracker`, Blaze plan, **34 Cloud Functions** on Node 22 (Build 1C's
+functions live since 2026-11-19; Build 2B's rules, index and two functions
+and Build 3's rules, index and seven functions since 2026-11-20, all
+deployed from the PC at the owner's go; the PLAN chat counted 34 from the
+Mac and called the public `placementMenu` on live). The
 backend of Builds 1B and 2A (Storage rules, Firestore rules, two marking
 indexes, functions) is live since 2026-11-17: the owner signed in to the
 Firebase CLI on the PC and had the BUILD chat run the deploy. The PLAN chat
@@ -121,7 +121,7 @@ Android APK is off (table below). Firestore scheduled backups run nightly.
 | Exam mode on live | owner is testing |
 | Backend of Builds 1B and 2A | done 2026-11-17 (deployed from the PC) |
 | Try Build 2A on live | make a small package with one "type the hanzi" and one "type the pinyin" question, play it as `student1@`, mark it as `teacher@` in Tests, **Marking** |
-| **Deploy Build 3** (rules, indexes, functions, then hosting) | **to do, in this order:** (1) `firebase deploy --only firestore:rules,firestore:indexes,functions --project chinese-tracker` (34 functions; say "yes, deploy" in the BUILD chat and it runs it from the PC); (2) hosting at once: `scripts/deploy_web.sh --web-only --no-keys` (the BUILD chat or the PLAN chat). Hosting was held back on purpose: the new register form writes `status: pending` with no level, which the old rules refuse, and the Approval buttons need the new functions. Until both are live, registration on the live site keeps the old form |
+| Deploy Build 3 (rules, indexes, functions, then hosting) | done 2026-11-20 (night), from the PC at the owner's go, in that order: 34 functions, hosting v0.1.21 |
 | After the Build 3 deploy | open **Org settings** once (writes `settings/rooms`); tick **Placement code** on one short paper's code; tell the admin that new students now wait on Users, **Approval**. Placement papers for visitors should be choice and typing questions only (free writing counts as zero for a visitor) |
 | Try Build 2B on live | as admin: Tests, **Promotion** opens and shows the minimum codes (3); Tests, Results, a code, **Leaderboard**. As `student1@`: the Tests tab shows "0 of 3 codes passed". Results written before 2026-11-20 reach a board only when they next change (mark invalid and valid again does it) |
 | Functions deploy for Build 1C | done 2026-11-19 (deployed from the PC at the owner's go; 25 functions updated, the PLAN chat listed them from the Mac). Marking items of a test now also reach the student's own teacher, for attempts started from that day on |
@@ -209,8 +209,9 @@ address (8 wrong tokens in 10 minutes), so a classroom behind one Wi-Fi
 router can block itself for a while if several visitors mistype; and
 `decideRegistration` writes the default minimum of 3 codes into
 `promotion_progress` instead of `settings/promotion.minCodes` (the trigger
-corrects it at the next result). Hosting is on hold until the owner's
-backend deploy (table above). **Build 4 is NEXT.**
+corrects it at the next result). **Live since 2026-11-20 (night):** rules,
+index, functions and hosting, deployed from the PC at the owner's go.
+**Build 4 is NEXT.**
 
 **PLAN chat decision 2026-11-17** (the BUILD chat asked): an answer from a
 supervised test that needs marking goes to the teacher who opened the
