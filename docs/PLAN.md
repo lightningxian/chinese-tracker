@@ -1269,7 +1269,7 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
-### 2026-11-20 — Build 3 Registration approval, placement tests, rooms — release v0.1.21 (hosting, rules, indexes and functions wait for the owner's go, to go live together)
+### 2026-11-20 — Build 3 Registration approval, placement tests, rooms — 41543cc, release v0.1.21 (hosting, rules, indexes and functions wait for the owner's go, to go live together)
 - Built: pending accounts (`status: 'pending'`, rules, `/waiting`), the
   register form's start-level choice with a live result-code check, the
   admin **Approval** section and page with `decideRegistration`, placement
