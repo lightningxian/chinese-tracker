@@ -13,6 +13,22 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-21 — Claude (PLAN chat, Mac): Build 8 reviewed; the eight thesis builds are done
+
+- Pulled Build 8 (v0.1.26) and checked it on the Mac: analyzer 17 infos,
+  `flutter test` 152 pass and 2 skipped, node tests (+ `test_reports.js`,
+  `tool/test_sus_score.mjs`, `tool/test_import_questions.mjs`), rules tests
+  81 pass and 1 skipped. Live: 60 functions, 23 indexes equal to the repo,
+  the bundle carries the monthly report; the GitHub checks are green.
+- Read: `reports` admin-read and functions-write; the workflow has no
+  secret; the live trial seed takes a key by path and keeps names and
+  passwords in git-ignored files; the emulator-only sign-in is not in the
+  live bundle. One hygiene item: a `.pyc` file was committed.
+- Plan: Build 8 done; **nothing marked NEXT**. PLAN.md §4 gained "After
+  Build 8": the owner's live tasks in order, the trial steps, the small
+  follow-ups, the book inputs. The hourly check loop of the PLAN chat
+  stops here.
+
 ### 2026-11-21 — Claude (BUILD chat, PC): Build 8 dashboard, trial kit, screenshots
 
 - Built Build 8 (release v0.1.26): the admin dashboard's six duty cards,

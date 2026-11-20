@@ -73,11 +73,12 @@ Read docs/PLAN.md. You are the BUILD chat. Follow section 0, run Build 0 if this
 
 ## 1. Where the project stands (2026-11-20)
 
-**Live:** https://chinese-tracker.web.app, hosting at release v0.1.25
-(Build 7, published from the PC 2026-11-21). Firebase project
-`chinese-tracker`, Blaze plan, **58 Cloud Functions** on Node 22 and 23
-composite indexes (Builds 2B to 5 went live on 2026-11-20, Builds 6 and 7
-on 2026-11-21, each
+**Live:** https://chinese-tracker.web.app, hosting at release v0.1.26
+(Build 8, published from the PC 2026-11-21). **All eight thesis builds are
+built, reviewed and live (2026-11-21).** Firebase project
+`chinese-tracker`, Blaze plan, **60 Cloud Functions** on Node 22 and 23
+composite indexes (Builds 2B to 5 went live on 2026-11-20, Builds 6, 7
+and 8 on 2026-11-21, each
 deployed from the PC; the PLAN chat counts the functions and indexes from
 the Mac after every build). **Owner decision 2026-11-20 (said in the BUILD
 chat, recorded here):** every build in the queue is built and deployed
@@ -128,6 +129,7 @@ Android APK is off (table below). Firestore scheduled backups run nightly.
 | Try Build 2A on live | make a small package with one "type the hanzi" and one "type the pinyin" question, play it as `student1@`, mark it as `teacher@` in Tests, **Marking** |
 | Deploy Build 3 (rules, indexes, functions, then hosting) | done 2026-11-20 (night), from the PC at the owner's go, in that order: 34 functions, hosting v0.1.21 |
 | After the Build 3 deploy | open **Org settings** once (writes `settings/rooms`); tick **Placement code** on one short paper's code; tell the admin that new students now wait on Users, **Approval**. Placement papers for visitors should be choice and typing questions only (free writing counts as zero for a visitor) |
+| After the Build 8 deploy | **to do:** Laporan, **Laporan bulanan**, Hitung ulang once for October and November; when the respondents are known, the live trial seed (names and passwords in the git-ignored `scripts/trial/*.local.*` files, a service-account key downloaded outside the repo, `--dry-run` first); fill the question bank from `docs/TRIAL_KIT.md`. The GitHub checks are green on main (badge in `README.md`) |
 | After the Build 7 deploy | **to do:** the teachers confirm their schedules on **Schedule**, Week; the first real session is closed through the app (Mulai sesi, Absensi, Tutup sesi) and checked on Timetable, **Teacher recap**; press Org settings, **Voucher check** once (older vouchers are measured from their first close through the app) |
 | After the Build 6 deploy | **to do:** enter the real timetable (admin Classes, **Timetable**: the flyer's slots, each with its teacher and room), each teacher's availability (teacher profile), and the class day on the active vouchers (admin voucher form). Students book only through **Daftar** from now on; old one-off sessions keep working |
 | After the Build 5 deploy: **sandbox payment E2E (MT-05)** | **to do:** on live as `student1@`, Payments, **Beli voucher**, tick the terms, pay in Midtrans Snap with a sandbox test card (`docs/GO_LIVE_CHECKLIST.md` §4–6); check the invoice turns paid and one voucher with 8 sessions and a 60-day deadline appears; compare every test payment with the Midtrans sandbox dashboard. Production keys stay off until this passes |
@@ -284,8 +286,24 @@ password (an admin's ID token on live). The BUILD chat's six choices are
 accepted, with one follow-up: a forgotten exam attempt is closed without a
 result, so it never shows in the history; Build 8's "Then" asks for a zero
 result instead, as a late test gets. Live from the Mac: 58 functions, 23
-indexes equal to the repo, the bundle carries the Schedule screen. **Build
-8 is NEXT.**
+indexes equal to the repo, the bundle carries the Schedule screen.
+
+**Build 8 is built and live** (release v0.1.26, report in §6; rules, two
+functions and hosting deployed from the PC on 2026-11-21 under the owner's
+standing go; the GitHub checks are green on main) and reviewed by the PLAN
+chat on the Mac on 2026-11-21: analyzer baseline, 152 Flutter tests, node
+tests (+ `test_reports.js` and the two tool tests), rules tests 81 pass and
+1 skipped. Read: `reports/{yyyyMM}` is written by functions and read by
+admins only; the rebuild is admin-only; the workflow holds no secret and
+pins the Flutter version; the live trial seed takes a service-account key
+by path and never embeds one, and the names and passwords live in
+git-ignored files; the emulator-only `?as=` sign-in and its password are
+absent from the live bundle; the forgotten-attempt zero result is in. One
+hygiene item for the next BUILD session: `scripts/__pycache__/*.pyc` was
+committed and `__pycache__/` is not git-ignored. Live from the Mac: 60
+functions, 23 indexes equal to the repo, the bundle carries the monthly
+report. **Nothing is marked NEXT: the thesis builds are finished, the
+owner decides what follows ("After Build 8" in §4).**
 
 **PLAN chat decision 2026-11-17** (the BUILD chat asked): an answer from a
 supervised test that needs marking goes to the teacher who opened the
@@ -1873,7 +1891,7 @@ dashboard rework and the monthly centre report (Build 8), online classes.
 the teachers confirm their schedules; the first real session is closed
 through the app and the recap checked.
 
-### Build 8 — Dashboard, trial kit, screenshot pass — **NEXT**
+### Build 8 — Dashboard, trial kit, screenshot pass — done 2026-11-21 (v0.1.26, report in §6)
 
 **Goal.** The admin dashboard of the proposal, the monthly centre report,
 automatic checks on GitHub, and the kit for the thesis trial: a seed of 35
@@ -1982,6 +2000,66 @@ a staging project (there is none by decision), the book itself.
 **After the build, the owner:** approves the workflow file, runs the trial
 seed on live in `live` mode, gives the respondents' names and the trial
 dates (§7), and fills the question bank from the checklist.
+
+### After Build 8 — what comes next (PLAN chat, 2026-11-21)
+
+All eight thesis builds are live (v0.1.16 to v0.1.26, 60 functions), two
+months ahead of the calendar in §7. **Nothing is marked NEXT**: the owner
+chooses the order below and says so in the BUILD chat (code) or here
+(docs).
+
+**A. The owner's live tasks, in order** (details in the §1 table)
+
+1. Security: reset the five test passwords in Firebase Authentication and
+   decide whether the repository becomes private; the PLAN chat then
+   removes the password from the docs.
+2. Org settings: **Rebuild progress summaries** once, **Voucher check**
+   once.
+3. The real timetable, each teacher's availability, the class day on the
+   active vouchers; the teachers confirm their schedules; tick **Placement
+   code** on one short paper; tell the admin that new students wait on
+   Users, **Approval**.
+4. The sandbox payment E2E on live (MT-05); production keys stay off until
+   it passes.
+5. Proofread `H326202Z` and make its truth file; fill the question bank
+   from `docs/TRIAL_KIT.md` (731 questions).
+6. Laporan bulanan: Hitung ulang once for October and November.
+7. Android APK: rebuild on the Mac and publish, or leave it off (§5 Q8).
+
+**B. The trial** (second half of January 2027 in §7's calendar)
+
+- Respondents' names in `scripts/trial/respondents.local.csv` and
+  passwords in `scripts/trial/passwords.local.json` (both git-ignored);
+  `py -I scripts/seed_trial.py live --credentials <key> --dry-run`, then
+  without `--dry-run`; `verify` prints the counts.
+- Print `docs/trial/task_sheet_*.html`, `sus_questionnaire.html` and
+  `student_guide.html`; follow `docs/trial/TRIAL_DAY.md`.
+- Check the task sheets against the proposal's Table 20 when the Word
+  file arrives (§7 "Still needed" 2).
+- After the trial: `node tool/sus_score.mjs` on the filled
+  `sus_results_template.csv`; **Voucher check** (VC-05); the black-box
+  tables from `docs/trial/blackbox_template.md`; screens 03 and 11 by hand
+  for the book (`docs/screenshots/proposal/CONTACT_SHEET.md`).
+
+**C. Follow-ups the builds left** (small; a BUILD session when the owner
+wants them)
+
+- Repository hygiene: remove `scripts/__pycache__/seed_emulator.cpython-313.pyc`
+  and add `__pycache__/` to `.gitignore`.
+- The class day picker in the buy sheet; the printable teacher day sheet.
+- Build 3 notes: the wrong-token block for visitors is per address (a
+  shared classroom router can block itself); `decideRegistration` writes
+  the default minimum of codes instead of `settings/promotion.minCodes`.
+- A retention rule for `placement_results` (visitor names and numbers).
+- The open questions of §5: Q6 (HSK 3.0 papers), Q7 (listening scripts),
+  Q8 (APK), Q9 (iOS acceptance), Q12 (reopen a declined recommendation).
+
+**D. The book** (§7): the inputs still needed from the owner (campus guide
+and a model book, the proposal's Word file, the centre's facts and photos
+of the old tools, the trial dates and devices, the supervisor's dates);
+each build's acceptance walk becomes a black-box table; the scenario IDs
+(§3) become the functional validation chapter; `docs/screenshots/proposal/`
+supplies the figures.
 
 ### After the thesis builds — extras for the centre
 
