@@ -13,6 +13,20 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-21 — Claude (PLAN chat, Mac): Build 4 reviewed, Build 5 is NEXT
+
+- Pulled Build 4 (v0.1.22) and checked it on the Mac: analyzer 17 infos,
+  `flutter test` 140 pass and 2 skipped, node tests (+ `test_progress.js`),
+  rules tests 71 pass and 1 skipped. Live: 39 functions, 20 indexes equal
+  to the repo, the bundle carries the report screens.
+- Read the rules and functions: the summary is functions-only; notes are
+  shaped and tied to the student's own teacher; notices once per 7 days;
+  the rebuild is admin-only. No change asked.
+- Recorded the owner's standing go (said in the BUILD chat) in PLAN.md §1.
+- Plan: Build 4 done, **Build 5 (voucher packages and self-purchase)
+  NEXT**, re-read against the Build 4 report: no change needed (Build 4
+  already sends the voucher warning, so Build 5's job only expires).
+
 ### 2026-11-21 — Claude (PLAN chat, Mac): Builds 5 to 8 written in full
 
 - While the BUILD chat builds Build 4, the PLAN chat wrote Builds 5

@@ -73,13 +73,17 @@ Read docs/PLAN.md. You are the BUILD chat. Follow section 0, run Build 0 if this
 
 ## 1. Where the project stands (2026-11-20)
 
-**Live:** https://chinese-tracker.web.app, hosting at release v0.1.21
-(Build 3, published from the PC 2026-11-20 night). Firebase project
-`chinese-tracker`, Blaze plan, **34 Cloud Functions** on Node 22 (Build 1C's
-functions live since 2026-11-19; Build 2B's rules, index and two functions
-and Build 3's rules, index and seven functions since 2026-11-20, all
-deployed from the PC at the owner's go; the PLAN chat counted 34 from the
-Mac and called the public `placementMenu` on live). The
+**Live:** https://chinese-tracker.web.app, hosting at release v0.1.22
+(Build 4, published from the PC 2026-11-20 night). Firebase project
+`chinese-tracker`, Blaze plan, **39 Cloud Functions** on Node 22 and 20
+composite indexes (Builds 2B, 3 and 4 went live on 2026-11-20, each
+deployed from the PC; the PLAN chat counts the functions and indexes from
+the Mac after every build). **Owner decision 2026-11-20 (said in the BUILD
+chat, recorded here):** every build in the queue is built and deployed
+without asking ("all auto build, all automatically confirmed"); the BUILD
+chat stops when the weekly usage limit reaches 99 percent. The PLAN chat
+still reviews every build on the Mac before the next one is marked NEXT.
+The
 backend of Builds 1B and 2A (Storage rules, Firestore rules, two marking
 indexes, functions) is live since 2026-11-17: the owner signed in to the
 Firebase CLI on the PC and had the BUILD chat run the deploy. The PLAN chat
@@ -123,6 +127,7 @@ Android APK is off (table below). Firestore scheduled backups run nightly.
 | Try Build 2A on live | make a small package with one "type the hanzi" and one "type the pinyin" question, play it as `student1@`, mark it as `teacher@` in Tests, **Marking** |
 | Deploy Build 3 (rules, indexes, functions, then hosting) | done 2026-11-20 (night), from the PC at the owner's go, in that order: 34 functions, hosting v0.1.21 |
 | After the Build 3 deploy | open **Org settings** once (writes `settings/rooms`); tick **Placement code** on one short paper's code; tell the admin that new students now wait on Users, **Approval**. Placement papers for visitors should be choice and typing questions only (free writing counts as zero for a visitor) |
+| After the Build 4 deploy | **to do:** sign in as admin on live, Org settings, **Rebuild progress summaries** once (the report screens are empty until then). Expect the first 07:00 run after that to send "no practice for 14 days" notices to every student who has not practised in the app for two weeks (the proposal's warning 3; students who never practised count from their approval or creation date) |
 | Try Build 2B on live | as admin: Tests, **Promotion** opens and shows the minimum codes (3); Tests, Results, a code, **Leaderboard**. As `student1@`: the Tests tab shows "0 of 3 codes passed". Results written before 2026-11-20 reach a board only when they next change (mark invalid and valid again does it) |
 | Functions deploy for Build 1C | done 2026-11-19 (deployed from the PC at the owner's go; 25 functions updated, the PLAN chat listed them from the Mac). Marking items of a test now also reach the student's own teacher, for attempts started from that day on |
 | Proofread `H326202Z` on live | to do: Question bank, **Scan paper**, check every question against the page, note the minutes, save, type the official key, upload the recording, add the transcript, **Create test code**. Then **Download text** on the worksheet and put the file on the PC as `local_papers/H326202Z.truth.json` (never committed): that gives the reader's real right-as-read number for the thesis |
@@ -211,7 +216,19 @@ router can block itself for a while if several visitors mistype; and
 `promotion_progress` instead of `settings/promotion.minCodes` (the trigger
 corrects it at the next result). **Live since 2026-11-20 (night):** rules,
 index, functions and hosting, deployed from the PC at the owner's go.
-**Build 4 is NEXT.**
+**Build 4 is built and live** (release v0.1.22, report in §6; rules, two
+indexes, five functions and hosting deployed from the PC on 2026-11-20
+under the owner's standing go) and reviewed by the PLAN chat on the Mac the
+same night: analyzer baseline, 140 Flutter tests, node tests (+
+`test_progress.js`), rules tests 71 pass and 1 skipped. Read:
+`progress_summary` is written only by `refreshProgressSummary` (bounded
+queries; a failed refresh never fails the write that triggered it);
+`progress_notes` are created only by an admin or the student's own teacher
+with a fixed field shape and a 500-character text, edited by the author or
+an admin; the daily pass sends each warning at most once per 7 days;
+`rebuildProgressSummaries` is admin-only with an audit line. Live from the
+Mac: 39 functions, 20 indexes equal to the repo, the bundle carries the
+report. **Build 5 is NEXT.**
 
 **PLAN chat decision 2026-11-17** (the BUILD chat asked): an answer from a
 supervised test that needs marking goes to the teacher who opened the
@@ -1188,7 +1205,7 @@ chat gives the command), opens Org settings once so `settings/rooms` is
 written, ticks `placement` on one short paper's code on live, and tells the
 admin that new students now wait on the Approval screen.
 
-### Build 4 — Progress report — **NEXT**
+### Build 4 — Progress report — done 2026-11-20 (v0.1.22, report in §6)
 
 **Goal.** One summary document per student, kept by functions, feeds one
 report screen for the student, the parent, the teacher and the admin in the
@@ -1369,7 +1386,7 @@ purchase and expiry jobs (Build 5), new push plumbing (the notices ride on
 and functions (the BUILD chat gives the command), then hosting, and presses
 **Rebuild progress summaries** once in Org settings.
 
-### Build 5 — Voucher packages and self-purchase
+### Build 5 — Voucher packages and self-purchase — **NEXT**
 
 **Goal.** A student (or the linked parent) buys a voucher package inside the
 app: picks a package from the Price list with its Chinese name, ticks the
