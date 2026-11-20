@@ -2082,7 +2082,7 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
-### 2026-11-21 — Build 8 Dashboard, trial kit, screenshot pass — COMMIT, release v0.1.26 (DEPLOYSTATE)
+### 2026-11-21 — Build 8 Dashboard, trial kit, screenshot pass — 2b1d798 + a2575ff, release v0.1.26 (rules, functions and hosting live from the PC 2026-11-21 under the owner's standing go; 60 functions)
 - Built: six duty cards on the admin dashboard; `functions/reports.js` +
   `test_reports.js`, `monthlyReport`, `rebuildMonthlyReport`, the Laporan
   bulanan card (CSV, PDF); `.github/workflows/checks.yml`; the trial seed
@@ -2108,14 +2108,14 @@ Any time:
   the flow test rebuilds the month and checks the revenue against the paid
   invoices; the workflow ran on the `ci-check` branch: Node and rules jobs
   green, the Flutter job red on the PDFium test until it learned to skip,
-  then CISTATE; the screenshot pass saved the 13 files; the import dry run
+  then green on main (a2575ff: Flutter, Node and rules jobs all pass); the screenshot pass saved the 13 files; the import dry run
   reported 4 questions and wrote nothing, the real run wrote them with the
   audio on the emulator; the SUS sample scores 72.5.
 - Proof: analyzer 17 infos; `flutter test` 152 pass (+2) and 2 skipped;
   rules tests 81 pass (+1), 1 skipped; node tests pass (+ `test_reports.js`,
   `tool/test_sus_score.mjs`, `tool/test_import_questions.mjs`); flow test
   91/91.
-- Owner: DEPLOYNOTE
+- Owner: the workflow is on main and green (Actions tab; the badge is in README.md); when the respondents are known, put the names in `scripts/trial/respondents.local.csv` and the passwords in `scripts/trial/passwords.local.json`, download a service-account key from the Firebase console (outside the repo), run `py -I scripts/seed_trial.py live --credentials <key> --dry-run`, then without `--dry-run`; fill the question bank from `docs/TRIAL_KIT.md`; press Laporan → Laporan bulanan → Hitung ulang once for October and November.
 - Left out ("Then"): the class day picker in the buy sheet and the
   printable day sheet. Done from "Then": the forgotten-attempt zero result,
   the trial-day checklist, the one-page student guide.
