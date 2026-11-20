@@ -74,7 +74,9 @@ Read docs/PLAN.md. You are the BUILD chat. Follow section 0, run Build 0 if this
 ## 1. Where the project stands (2026-11-20)
 
 **Live:** https://chinese-tracker.web.app, hosting at release v0.1.20
-(Build 2B, published from the PC 2026-11-20). Firebase project
+(Build 2B, published from the PC 2026-11-20). **Build 3 (v0.1.21) is built
+and reviewed but not live:** its rules, index, functions and hosting go live
+together after the owner's go (table below). Firebase project
 `chinese-tracker`, Blaze plan, **27 Cloud Functions** on Node 22 (Build 1C's
 functions live since 2026-11-19, Build 2B's rules, index and two functions
 since 2026-11-20, all deployed from the PC at the owner's go). The
@@ -119,6 +121,8 @@ Android APK is off (table below). Firestore scheduled backups run nightly.
 | Exam mode on live | owner is testing |
 | Backend of Builds 1B and 2A | done 2026-11-17 (deployed from the PC) |
 | Try Build 2A on live | make a small package with one "type the hanzi" and one "type the pinyin" question, play it as `student1@`, mark it as `teacher@` in Tests, **Marking** |
+| **Deploy Build 3** (rules, indexes, functions, then hosting) | **to do, in this order:** (1) `firebase deploy --only firestore:rules,firestore:indexes,functions --project chinese-tracker` (34 functions; say "yes, deploy" in the BUILD chat and it runs it from the PC); (2) hosting at once: `scripts/deploy_web.sh --web-only --no-keys` (the BUILD chat or the PLAN chat). Hosting was held back on purpose: the new register form writes `status: pending` with no level, which the old rules refuse, and the Approval buttons need the new functions. Until both are live, registration on the live site keeps the old form |
+| After the Build 3 deploy | open **Org settings** once (writes `settings/rooms`); tick **Placement code** on one short paper's code; tell the admin that new students now wait on Users, **Approval**. Placement papers for visitors should be choice and typing questions only (free writing counts as zero for a visitor) |
 | Try Build 2B on live | as admin: Tests, **Promotion** opens and shows the minimum codes (3); Tests, Results, a code, **Leaderboard**. As `student1@`: the Tests tab shows "0 of 3 codes passed". Results written before 2026-11-20 reach a board only when they next change (mark invalid and valid again does it) |
 | Functions deploy for Build 1C | done 2026-11-19 (deployed from the PC at the owner's go; 25 functions updated, the PLAN chat listed them from the Mac). Marking items of a test now also reach the student's own teacher, for attempts started from that day on |
 | Proofread `H326202Z` on live | to do: Question bank, **Scan paper**, check every question against the page, note the minutes, save, type the official key, upload the recording, add the transcript, **Create test code**. Then **Download text** on the worksheet and put the file on the PC as `local_papers/H326202Z.truth.json` (never committed): that gives the reader's real right-as-read number for the thesis |
@@ -185,7 +189,28 @@ admin-only, runs in one transaction and refuses a recommendation that is not
 waiting or whose student changed level; `users.level` cannot be changed by
 the student; a teacher's bank writes are tied to `createdBy`. Live checked
 from the Mac: the hosting bundle carries the new routes, 27 functions, the 18
-composite indexes match the repo. **Build 3 is NEXT.**
+composite indexes match the repo.
+
+**Build 3 is built** (release v0.1.21, report in §6) and reviewed by the
+PLAN chat on the Mac on 2026-11-20 (night): analyzer baseline, 135 Flutter
+tests, node tests (+ `test_placement.js`), rules tests 68 pass and 1
+skipped. Read: a pending student is refused by `isStudent()`,
+`isApprovedUser()` and `requireCaller()`; the self-update rule locks
+`status`, the placement fields and `levels`; `decideRegistration` is
+admin-only in one transaction, needs an active teacher and a level from the
+list, claims a result code once; the visitor path is public but every call
+is rate-limited per address, the attempt key is a random 128-bit value
+stored as a hash and compared in constant time, visitor attempts have an
+empty `studentId` so no student reads them, `placement_results` is staff
+only, a visitor may only join a placement session on a placement code, and
+the result view and the result-code lookup carry no name, number or key.
+Two notes, no change asked: the wrong-token block for visitors is per
+address (8 wrong tokens in 10 minutes), so a classroom behind one Wi-Fi
+router can block itself for a while if several visitors mistype; and
+`decideRegistration` writes the default minimum of 3 codes into
+`promotion_progress` instead of `settings/promotion.minCodes` (the trigger
+corrects it at the next result). Hosting is on hold until the owner's
+backend deploy (table above). **Build 4 is NEXT.**
 
 **PLAN chat decision 2026-11-17** (the BUILD chat asked): an answer from a
 supervised test that needs marking goes to the teacher who opened the
@@ -947,7 +972,7 @@ proposal list.
 **After the build, the owner:** deploys rules, indexes and functions (the
 BUILD chat gives the command).
 
-### Build 3 — Registration approval, placement tests, rooms — **NEXT**
+### Build 3 — Registration approval, placement tests, rooms — done 2026-11-20 (v0.1.21, report in §6; live after the owner's deploy)
 
 **Goal.** A new student registers and waits; the admin approves them with a
 teacher and a starting level, or rejects them with a reason. A placement
@@ -1162,13 +1187,186 @@ chat gives the command), opens Org settings once so `settings/rooms` is
 written, ticks `placement` on one short paper's code on live, and tells the
 admin that new students now wait on the Approval screen.
 
-### Build 4 — Progress report
+### Build 4 — Progress report — **NEXT**
 
-`progress_summary/{studentId}` kept by functions; report screen for student,
-parent, teacher and admin: codes passed at the level, attendance, exercises,
-marks over time (chart: add `fl_chart`), per-skill bars, teacher note, test
-history with rank, the five warnings of the spec and a status label;
-printable PDF. Screenshot 08.
+**Goal.** One summary document per student, kept by functions, feeds one
+report screen for the student, the parent, the teacher and the admin in the
+proposal's layout: status chip, "2 of 3 codes passed", four KPI cards, the
+weekly practice chart, per-skill bars, the latest teacher note, the test
+history with the leaderboard rank. The five warnings of the spec and the
+status label are computed in the same place and notified once a day. A
+printable PDF. Screenshot 08. Spec: `docs/THESIS_FEATURE_BACKLOG.md`
+section 9 (LV-03's "progress shows 2 of 3" is already proven by Build 2B).
+
+**What exists.** `exercise_results` (score 0 to 100, `correct`, `total`,
+`bySkill` `{skill: {correct, total}}`, `category`, `submittedAt`, `late`),
+written only by `finishExercise`; `test_results`, `leaderboards` (the rank
+is computed from the entries), `promotion_progress` (count of codes at the
+level), `users/{uid}/level_history`; `attendance` records with
+`attendanceStatus` `hadir` / `izin` / `alpa`, `sessionDate`, `classTermId`;
+`student_class_terms` (`sessionsRemaining`, `deadlineDate`, `status`);
+`evaluations` (a teacher's rating, strengths, improvements, comment per
+term); `TeacherAttentionUtils` (client side: overdue exercise, stale
+assignment, inactive 7 days, low sessions) on the teacher dashboard and the
+admin metrics section; `AdminAttentionUtils.buildVoucherAlerts`; the old PDF
+`StudentProgressReportPdf` behind `StudentReportService.previewReport`
+(lessons, terms, exercises); `student_progress_tab.dart` (two segments:
+lessons by term, exercise attempts); the parent overview tab; the
+`dailyReminders` job at 07:00 Jakarta (assignment reminders, pure logic in
+`functions/reminders.js`); packages `pdf` and `printing` with the Chinese
+font of the result card. No chart package yet.
+
+**Defaults taken for the open questions of §5** (the owner may change them
+before the build starts): practice = every package result, whatever its
+category (Q13); the teacher note is a new follow-up note, the latest one is
+shown, evaluations stay as they are (Q14); warning notices go out once a
+day at 07:00 Jakarta and at most once per 7 days per student and warning
+(Q15); attendance % = hadir ÷ (hadir + alpa), izin left out (Q16).
+
+**Must**
+
+1. **`progress_summary/{studentId}`**, written only by functions. Fields:
+   `level`, `levelKey`, `group`; `codes` (count, minCodes, next, copied
+   from `promotion_progress`); `practice` (the last 12 ISO weeks, Jakarta
+   time: average score and attempts per week; average of the last 14 days;
+   average of the 14 days before; last practice date; attempts in 90 days);
+   `skills` (average per skill from `bySkill` over 90 days: listening,
+   reading, typing, plus writing and speaking when present); `tests`
+   (history newest first: codeId, code, level, date, marks per part, total,
+   max, passed, valid, status, rank and board size, placement flag; passed
+   count at the current level); `attendance` (percent in the last 30 days,
+   counts of hadir / izin / alpa, the last 10 records); `voucher`
+   (sessions remaining, `booked` 0 until Build 6, deadline, days left,
+   status); `latestNote` (text, teacher, date); `levelHistory`;
+   `warnings[]` (`{id: 1..5, since, detail}`); `status` (`good` with 0
+   warnings, `attention` with 1, `follow_up` with 2 or more); `updatedAt`.
+   Pure logic in `functions/progress.js`: `summarize(inputs, nowMs)`,
+   `warningsOf(summary, nowMs)`, `statusOf(warnings)`, ISO-week buckets,
+   with a node test (Must 9).
+2. **Warnings**, exactly the spec's table: (1) attendance under 75 percent
+   in the last 30 days, when at least 4 records exist; (2) practice average
+   of the last 14 days under 60, or at least 10 points under the 14 days
+   before (each window needs at least 2 attempts); (3) no practice for 14
+   days (students with no practice ever count from their approval date);
+   (4) voucher with 2 or fewer sessions left, or a deadline within 7 days,
+   on the active term; (5) the last two final, valid, non-placement test
+   results both failed. Boundary values in the node test.
+3. **Who refreshes it.** One helper `refreshProgressSummary(uid)` in
+   `index.js` reads the student's documents with bounded queries
+   (`exercise_results` by `studentId` ordered by `submittedAt` desc, limit
+   200: add the composite index to `firestore.indexes.json`; `attendance`
+   by `studentId` and `sessionDate` desc, limit 60, the index exists;
+   `student_class_terms` by `studentId`; `test_results` by `studentId`; the
+   rank from `leaderboards/{codeId}/entries` of each code, at most 20
+   codes; the latest `progress_notes`; `level_history`) and writes the
+   summary. Called from `onDocumentWritten` triggers on `exercise_results`,
+   `attendance`, `student_class_terms` and `progress_notes`, from the
+   existing `onTestResultWritten`, and after an approve in
+   `decideRegistration` and `decidePromotion`. A failed refresh is logged
+   and never fails the write that triggered it.
+4. **Daily pass and notices.** The `dailyReminders` job (07:00 Jakarta)
+   also refreshes the summary of every active, approved student (warnings
+   1, 3 and 4 move with time, not with writes) and then sends the warning
+   notices of the spec's table as `notifications` docs (the student's own
+   teacher = `users.teacherId`; admin broadcasts), kind `progress`, at most
+   once per 7 days per student and warning (`notifiedAt[id]` on the
+   summary). A cleared warning sends nothing. Pure selection logic in
+   `progress.js` (`noticesDue(summary, nowMs)`).
+5. **Rules.** `progress_summary/{uid}`: read by the student, staff and the
+   linked parent; write false. `progress_notes/{id}` (`studentId`,
+   `teacherId`, `teacherName`, `text` up to 500 characters, `createdAt`):
+   create by a teacher for a student with `teacherId` = their uid, or by an
+   admin; read by staff, the student and the linked parent; update and
+   delete by the author or an admin. Rules tests.
+6. **Report screen**, one widget for every role (`StudentProgressReport
+   Screen(studentId)`; reads the summary doc and streams `progress_notes`):
+   header with the name label of the viewer's role, the level chip with
+   its group and the status chip (Progres Baik / Perlu Perhatian / Perlu
+   Tindak Lanjut); the "2 of 3 codes passed toward HSK 4" bar; four KPI
+   cards (attendance 30 days, practice average 14 days with the change
+   against the 14 days before, tests passed at the level, voucher sessions
+   left with the days to the deadline); the weekly practice line chart of
+   12 weeks (`fl_chart`, the owner approves the dependency; the BUILD chat
+   reads `AppColors` for both palettes); per-skill bars; the latest
+   teacher note with **Add note** for staff; the warnings with the rule's
+   text; the test history table (code, date, marks per part, total, passed,
+   rank "3 of 15", tags invalid / placement / pending marking, a tap opens
+   the result card); the level history. Every block has an empty state.
+   Where it lives: student Progress tab = this screen, with the old
+   exercise-attempt list as a second segment (the lessons-by-term segment
+   stays when the student has lessons); parent overview = the report of
+   the selected child; teacher student detail gets **Progress report**;
+   admin Users, a student, **Progress report**.
+7. **Attention lists.** The teacher dashboard's attention list shows the
+   five warnings from the summaries of the teacher's students (status
+   chip, warning chips, tap opens the report) and keeps the two
+   assignment items of `TeacherAttentionUtils` (overdue exercise, stale
+   assignment); the inactive and low-sessions items move to the summary's
+   warnings 3 and 4 so nothing is counted twice. The admin metrics section
+   gets **Students needing attention** with filters by level and teacher.
+8. **PDF.** **Print report** builds the same report with `pdf` and
+   `printing` (Chinese font as the result card): header, status, KPIs, the
+   weekly averages as a table, the skill table, the warnings, the test
+   history, the latest note. It replaces the content of
+   `StudentProgressReportPdf`; `previewReport` keeps its entry points.
+9. **Backfill, seed, tests.** Admin-only callable `rebuildProgressSummaries`
+   behind a button on the Org settings screen (every active student; the
+   owner presses it once after the deploy; the seed uses it on the
+   emulator). Seed: five students shaped for the five warnings (attendance
+   under 75, falling scores, inactive 20 days, two failed tests, a voucher
+   with 1 session left) plus one healthy student with 12 weeks of practice
+   and 2 of 3 codes. Tests: `functions/test_progress.js` (week buckets at
+   the Jakarta midnight boundary, averages, skill averages, attendance
+   with izin left out, every warning at and beside its boundary, the
+   status label, `noticesDue` once per 7 days); flow test steps: a new
+   practice result updates the summary, a test result adds a history row
+   with its rank, a note appears for the student and the parent, a student
+   cannot read another summary, the daily job sends each notice once and
+   not again, `rebuildProgressSummaries` is admin-only; a Flutter test of
+   the chart data mapping and the empty states; `notification_routes_test`
+   for kind `progress`.
+10. **Notifications.** Kind `progress` opens the student's Progress tab,
+    the teacher's student report, the admin's student page.
+
+**Then (if time is left):** a period filter (this month, last 3 months) and
+a CSV on the admin attention list; the leftovers of Builds 2B and 3 (§5 Q12
+reopen after a decline, the hourly job that closes forgotten single package
+attempts, item analysis per question, a leaderboard CSV, a WhatsApp link on
+the Approval card).
+
+**Not in this build:** the monthly admin report and dashboard rework (Build
+8), schedules and booking (`booked` stays 0 until Build 6), voucher
+purchase and expiry jobs (Build 5), new push plumbing (the notices ride on
+`onNotificationCreated`), speaking.
+
+**Acceptance walk (emulator)**
+
+1. The healthy seeded student: header, status Progres Baik, "2 of 3 codes
+   passed", four KPIs, a 12-week chart, skill bars, the note, the history
+   with a rank "2 of 15" and the level history. Empty blocks show their
+   empty states on a brand-new student.
+2. Play a practice package as that student: the current week's point and
+   the 14-day average move within seconds.
+3. Finish a test code as another student: the history row appears with its
+   rank and the "tests passed" KPI follows; mark it invalid: the row is
+   tagged and the KPI drops.
+4. Conclude a class with one izin and one alpa: the attendance percent
+   follows hadir ÷ (hadir + alpa).
+5. The five shaped students show the right warning chips and labels; the
+   teacher dashboard lists them with the two assignment items; the admin
+   list filters by level and teacher.
+6. Run the daily job by hand on the emulator: the notices land once for
+   the roles of the table; run it again: nothing new.
+7. A teacher adds a note: the student and the parent see it; a student
+   cannot add one; another teacher cannot edit it.
+8. Print: the PDF shows Chinese names, the tables and the note.
+9. The parent sees the selected child's report and never another child's.
+10. Indonesian (dark) and English (light), 1280 px and 360 px. Screenshot
+    08 of the proposal list.
+
+**After the build, the owner:** approves `fl_chart`, deploys rules, index
+and functions (the BUILD chat gives the command), then hosting, and presses
+**Rebuild progress summaries** once in Org settings.
 
 ### Build 5 — Voucher packages and self-purchase
 
@@ -1214,7 +1412,7 @@ screenshots from seeded data. Screenshots 14 and 15.
 Speaking tests (HSKK, YCT oral: answers recorded in the browser, marked by a
 teacher), final HSK 3.0 formats for levels 5 to 9, YCT timing.
 
-Builds 4 to 8 are outlines. The PLAN chat writes each one out in full (Must,
+Builds 5 to 8 are outlines. The PLAN chat writes each one out in full (Must,
 Then, Not, acceptance walk) after reading the report of the build before it.
 
 ---
@@ -1235,8 +1433,8 @@ still tells the supervisor):
    and no test is assigned to named students beforehand; the review opens
    when the teacher closes the session, so answers cannot travel during it.
 
-Before Build 3 (Build 3 is written with the answers in bold; say so if one
-is wrong):
+Build 3 was built with the answers in bold (2026-11-20); say so if one is
+wrong and it becomes a follow-up:
 
 4. Public placement: does the visitor type name and WhatsApp before the test
    (**yes**), and see marks at once without the review (**yes**)?
@@ -1249,6 +1447,20 @@ is wrong):
 12. A declined promotion recommendation stays declined for that level today
     (the BUILD chat asked). Plan: it **reopens after one more passed code**.
     Agreed?
+
+Before Build 4 (Build 4 is written with the answers in bold; say so if one
+is wrong):
+
+13. Practice for the chart and the averages = **every package result**
+    (exercise, quiz, exam and HSK simulation packages); supervised test
+    codes are "tests". Should exam-mode packages be left out of practice?
+14. The "teacher note" of the report is a **new follow-up note** (teachers
+    add one from the report; the latest is shown); the Evaluations tab
+    stays as it is. Or should the latest evaluation comment be the note?
+15. Warning notices go out **once a day at 07:00 Jakarta, at most once per
+    7 days** per student and warning, not on every change. Agreed?
+16. Attendance percent = **hadir ÷ (hadir + alpa)**; izin (excused before
+    class) is left out, as it is for the voucher. Agreed?
 
 Before Build 6:
 

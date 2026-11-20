@@ -13,6 +13,24 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-20 (night) — Claude (PLAN chat, Mac): Build 3 reviewed, Build 4 is NEXT
+
+- Pulled Build 3 (v0.1.21) and checked it on the Mac: analyzer 17 infos,
+  `flutter test` 135 pass and 2 skipped, node tests (+ `test_placement.js`),
+  rules tests 68 pass and 1 skipped.
+- Read the rules and the seven new functions: pending students are refused
+  by rules and functions alike; `decideRegistration` is admin-only in one
+  transaction; the visitor path is rate-limited per address, keyed by a
+  hashed 128-bit key, staff-only to read, and never returns a key, a name
+  or a number. Two notes (per-address token block in a classroom; the
+  default minimum of codes written at approval), no change asked.
+- Hosting is on hold on purpose: the new register form needs the new rules
+  and the Approval buttons the new functions, so rules, index, functions
+  and hosting go live together after the owner's go (PLAN.md §1 table).
+- Plan: Build 3 done. **Build 4 (progress report: summary doc, five
+  warnings, report screen for four roles, chart, PDF, daily notices)
+  written in full and marked NEXT**, with defaults for §5 Q13 to Q16.
+
 ### 2026-11-20 — Claude (BUILD chat, PC): Build 3 registration approval, placement tests, rooms
 
 - Built Build 3 (release v0.1.21): self-registered students wait as
