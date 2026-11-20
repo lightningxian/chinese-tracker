@@ -2058,7 +2058,7 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
-### 2026-11-21 — Build 7 The teaching day — COMMIT, release v0.1.25 (DEPLOYSTATE)
+### 2026-11-21 — Build 7 The teaching day — e2aabdb, release v0.1.25 (rules, functions and hosting live from the PC 2026-11-21 under the owner's standing go; 58 functions)
 - Built: `functions/teaching_day.js` + `test_teaching_day.js`;
   `checkInSession`, `closeSession` (one transaction, ledger, recap),
   `confirmSchedule`, `requestScheduleChange`, `resolveScheduleChange`,
@@ -2090,7 +2090,7 @@ Any time:
 - Proof: analyzer 17 infos; `flutter test` 150 pass (+4) and 2 skipped;
   rules tests 80 pass (+3), 1 skipped; node tests pass (+
   `test_teaching_day.js`); flow test 89/89.
-- Owner: DEPLOYNOTE
+- Owner: the teachers confirm their schedules on Schedule → Week; close the first real session through the app and look at Timetable → Teacher recap; press Org settings → **Voucher check** once (older vouchers are measured from their first close).
 - Left out: the "Then" items (printable day sheet, the class day picker in
   the buy sheet; the dashboard cards are Build 8).
 
