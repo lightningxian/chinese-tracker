@@ -1706,6 +1706,46 @@ await step("a forgotten one-attempt exam is closed by the hourly job", async () 
   const a = await readDoc(`exercise_attempts/${id}`);
   assert.ok(a.finishedAt instanceof Date);
   assert.equal(a.closedBy, "system");
+  // Build 8: a zero result, so it shows in the student's history.
+  const zero = await readDoc(`exercise_results/${id}_closed`);
+  assert.ok(zero, "a zero result is written");
+  assert.equal(zero.score, 0);
+  assert.equal(zero.studentId, d27.uid);
+  assert.equal(zero.late, true);
+  const again = await call(admin, "runTeachingDayPass", {attempts: true});
+  assert.equal(again.data.attempts, 0, "closed once");
+});
+
+// ---------------------------------------------------------------------------
+// Build 8: the monthly report and the seed's counts.
+await step("monthly report: admin-only rebuild; revenue equals this month's paid invoices", async () => {
+  const month = today7.slice(0, 7).replace("-", "");
+  assert.equal((await call(budi, "rebuildMonthlyReport", {month})).error.status,
+      "PERMISSION_DENIED");
+  assert.equal(reasonOf(await call(admin, "rebuildMonthlyReport", {month: "2026-11"})), "month");
+  const r = await call(admin, "rebuildMonthlyReport", {month});
+  assert.ok(r.data, JSON.stringify(r.error));
+  const from = Date.parse(`${today7.slice(0, 7)}-01T00:00:00+07:00`);
+  const [y, m] = [Number(month.slice(0, 4)), Number(month.slice(4))];
+  const to = Date.parse(`${m === 12 ? y + 1 : y}-${String(m === 12 ? 1 : m + 1).padStart(2, "0")}-01T00:00:00+07:00`);
+  let revenue = 0;
+  for (const d of await queryDocs("invoices", "status", "paid")) {
+    const paidAt = d.fields.paidAt && Date.parse(d.fields.paidAt.timestampValue);
+    if (paidAt >= from && paidAt < to) revenue += Number(d.fields.amount.integerValue ?? d.fields.amount.doubleValue ?? 0);
+  }
+  assert.equal(r.data.revenue, revenue);
+  const stored = await readDoc(`reports/${month}`);
+  assert.equal(stored.revenue, revenue);
+  assert.ok(stored.teachingHours >= 1.5, "Build 7's closed session counts");
+});
+
+await step("the seed: one admin and four teachers, the flyer's ten schedules, no duplicates", async () => {
+  const admins = (await queryDocs("users", "role", "admin")).filter((d) => !d.id.startsWith("trial_"));
+  const teachers = (await queryDocs("users", "role", "teacher")).filter((d) => !d.id.startsWith("trial_"));
+  assert.equal(admins.length, 1);
+  assert.equal(teachers.length, 4);
+  const flyer = (await listDocs("schedules?pageSize=300")).filter((d) => /\/sch_\d\d$/.test(d.name));
+  assert.equal(flyer.length, 10);
 });
 
 console.log(`supervised flow: ${passed} steps passed`);

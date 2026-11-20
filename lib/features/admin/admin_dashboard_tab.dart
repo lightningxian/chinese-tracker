@@ -19,6 +19,7 @@ import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import 'admin_centre_metrics_section.dart';
 import 'admin_dashboard_widgets.dart';
+import 'admin_duty_cards.dart';
 
 class AdminDashboardTab extends StatelessWidget {
   const AdminDashboardTab({
@@ -75,6 +76,12 @@ class AdminDashboardTab extends StatelessWidget {
                     return ListView(
                       padding: EdgeInsets.all(isWide ? 32 : 20),
                       children: [
+                        // Build 8: the proposal's six duty cards first.
+                        AdminDutyCards(
+                          users: users,
+                          onOpenClasses: () => onSwitchTab(4),
+                        ),
+                        const SizedBox(height: 20),
                         _statsRow(context, report, invoices),
                         const SizedBox(height: 20),
                         if (isWide)

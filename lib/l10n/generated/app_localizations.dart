@@ -12443,6 +12443,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Teacher recap'**
   String get timetableRecap;
+
+  /// No description provided for @dutyPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending registrations'**
+  String get dutyPending;
+
+  /// No description provided for @dutyUnconfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unconfirmed schedules'**
+  String get dutyUnconfirmed;
+
+  /// No description provided for @dutyLate.
+  ///
+  /// In en, this message translates to:
+  /// **'Late check-ins today'**
+  String get dutyLate;
+
+  /// No description provided for @dutyLateWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} this week'**
+  String dutyLateWeek(int count);
+
+  /// No description provided for @dutyUnclosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unclosed sessions'**
+  String get dutyUnclosed;
+
+  /// No description provided for @dutyAttention.
+  ///
+  /// In en, this message translates to:
+  /// **'Students needing attention'**
+  String get dutyAttention;
+
+  /// No description provided for @dutyToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s sessions'**
+  String get dutyToday;
+
+  /// No description provided for @monthlyReportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly report'**
+  String get monthlyReportTitle;
+
+  /// No description provided for @monthlyRebuild.
+  ///
+  /// In en, this message translates to:
+  /// **'Rebuild'**
+  String get monthlyRebuild;
+
+  /// No description provided for @monthlyReportRebuilt.
+  ///
+  /// In en, this message translates to:
+  /// **'Report rebuilt.'**
+  String get monthlyReportRebuilt;
+
+  /// No description provided for @monthlyNotBuilt.
+  ///
+  /// In en, this message translates to:
+  /// **'Not built yet. Press Rebuild.'**
+  String get monthlyNotBuilt;
+
+  /// No description provided for @monthlyNewStudents.
+  ///
+  /// In en, this message translates to:
+  /// **'New students'**
+  String get monthlyNewStudents;
+
+  /// No description provided for @monthlyRevenue.
+  ///
+  /// In en, this message translates to:
+  /// **'Revenue (paid invoices)'**
+  String get monthlyRevenue;
+
+  /// No description provided for @monthlyActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active students'**
+  String get monthlyActive;
+
+  /// No description provided for @monthlyAttendance.
+  ///
+  /// In en, this message translates to:
+  /// **'Attendance'**
+  String get monthlyAttendance;
+
+  /// No description provided for @monthlyHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Teaching hours'**
+  String get monthlyHours;
+
+  /// No description provided for @monthlyLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Level'**
+  String get monthlyLevel;
+
+  /// No description provided for @monthlyTeacher.
+  ///
+  /// In en, this message translates to:
+  /// **'Teacher'**
+  String get monthlyTeacher;
+
+  /// No description provided for @monthlyItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Item'**
+  String get monthlyItem;
+
+  /// No description provided for @monthlyValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Value'**
+  String get monthlyValue;
 }
 
 class _AppLocalizationsDelegate

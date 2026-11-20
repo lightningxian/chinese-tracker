@@ -1,0 +1,5 @@
+sheet_code,sheet_title,index,level,category,type,skill,section,prompt,options,correct,keyword,segments,explanation,audio,image
+SAMPLE-L,Sample listening sheet (format only),1,HSK 3,exam,listening,listening,Part 1,Sample listening prompt 1,option A|option B|option C,B,,,Sample explanation,sample_audio.mp3,
+SAMPLE-L,Sample listening sheet (format only),2,HSK 3,exam,listening,listening,Part 1,"Sample prompt, with a comma",option A|option B|option C,1,,,,,
+SAMPLE-W,Sample writing sheet (format only),1,HSK 3,exam,compose_sentences,typing,Part 3,,,,,piece one|piece two|piece three,,,
+SAMPLE-W,Sample writing sheet (format only),2,HSK 3,exam,type_pinyin,typing,Part 3,Sample typed prompt,answer one|answer two,,,,,,

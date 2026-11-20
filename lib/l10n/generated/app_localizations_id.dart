@@ -7592,4 +7592,66 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get timetableRecap => 'Rekap guru';
+
+  @override
+  String get dutyPending => 'Pendaftaran menunggu';
+
+  @override
+  String get dutyUnconfirmed => 'Jadwal belum dikonfirmasi';
+
+  @override
+  String get dutyLate => 'Terlambat mulai hari ini';
+
+  @override
+  String dutyLateWeek(int count) {
+    return '$count minggu ini';
+  }
+
+  @override
+  String get dutyUnclosed => 'Sesi belum ditutup';
+
+  @override
+  String get dutyAttention => 'Siswa perlu perhatian';
+
+  @override
+  String get dutyToday => 'Sesi hari ini';
+
+  @override
+  String get monthlyReportTitle => 'Laporan bulanan';
+
+  @override
+  String get monthlyRebuild => 'Hitung ulang';
+
+  @override
+  String get monthlyReportRebuilt => 'Laporan dihitung ulang.';
+
+  @override
+  String get monthlyNotBuilt => 'Belum dibuat. Tekan Hitung ulang.';
+
+  @override
+  String get monthlyNewStudents => 'Siswa baru';
+
+  @override
+  String get monthlyRevenue => 'Pendapatan (tagihan lunas)';
+
+  @override
+  String get monthlyActive => 'Siswa aktif';
+
+  @override
+  String get monthlyAttendance => 'Kehadiran';
+
+  @override
+  String get monthlyHours => 'Jam mengajar';
+
+  @override
+  String get monthlyLevel => 'Level';
+
+  @override
+  String get monthlyTeacher => 'Guru';
+
+  @override
+  String get monthlyItem => 'Butir';
+
+  @override
+  String get monthlyValue => 'Nilai';
 }

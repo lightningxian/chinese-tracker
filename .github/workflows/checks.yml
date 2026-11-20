@@ -50,6 +50,8 @@ jobs:
             node "$f"
           done
       - run: node functions/pn01_agreement.js functions/fixtures/pn01_sample.csv
+      - run: node tool/test_sus_score.mjs
+      - run: node tool/test_import_questions.mjs
 
   rules:
     name: Firestore and Storage rules tests (emulators)
@@ -62,7 +64,7 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: rules-tests/package-lock.json
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 21

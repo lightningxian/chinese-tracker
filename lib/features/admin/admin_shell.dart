@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/utils/launch_params.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/constants/exercise_authoring_platform.dart';
@@ -33,7 +34,8 @@ class AdminShell extends StatefulWidget {
 }
 
 class _AdminShellState extends State<AdminShell> {
-  int _index = 0;
+  // Build 8: `?tab=N` opens a tab directly (the screenshot runner).
+  int _index = LaunchParams.takeTab(9);
 
   /// Sidebar entries; built per locale so the labels follow the UI language.
   List<AppShellDestination> _destinations(AppLocalizations l) => [

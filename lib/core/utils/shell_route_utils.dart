@@ -23,6 +23,7 @@ abstract final class ShellRouteUtils {
     // First: test routes contain words other tabs match on.
     if (location.contains('/tests')) return adminTestsTab;
     if (location.contains('/dashboard/')) return 0;
+    if (location.endsWith('/attention')) return 0;
     if (location.contains('/users')) return 1;
     if (location.contains('/exercise')) return 2;
     if (location.contains('/question-bank')) return 3;
@@ -77,6 +78,7 @@ abstract final class ShellRouteUtils {
     }
     if (location.endsWith('/progress')) return l.progressReportTitle;
     if (location.endsWith('/timetable')) return l.timetableTitle;
+    if (location.endsWith('/attention')) return l.dutyAttention;
     if (location.endsWith('/users/approval')) return l.approvalTitle;
     if (location.endsWith('/users/new')) return l.routeTitleNewUser;
     if (location.contains('/users/') && location.endsWith('/edit')) {

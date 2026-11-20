@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/utils/launch_params.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/widgets/app_shell.dart';
 import '../../core/widgets/notification_sheet.dart';
@@ -24,7 +25,8 @@ class StudentShell extends StatefulWidget {
 }
 
 class _StudentShellState extends State<StudentShell> {
-  int _index = 0;
+  // Build 8: `?tab=N` opens a tab directly (the screenshot runner).
+  int _index = LaunchParams.takeTab(6);
 
   // Built per frame so the labels follow the UI language.
   List<AppShellDestination> _destinations(AppLocalizations l) => [

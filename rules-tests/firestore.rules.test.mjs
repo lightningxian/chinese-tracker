@@ -854,3 +854,16 @@ describe("teaching day (Build 7)", () => {
     await assertFails(setDoc(doc(as("admin1"), "teacher_recaps", "teacher1_202701"), { held: 9 }));
   });
 });
+
+// Build 8: the monthly report is written by functions and read by admins.
+describe("monthly report (Build 8)", () => {
+  it("reports: admins read; nobody writes", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "reports", "202611"), { month: "202611", revenue: 1 });
+    });
+    await assertSucceeds(getDoc(doc(as("admin1"), "reports", "202611")));
+    await assertFails(getDoc(doc(as("teacher1"), "reports", "202611")));
+    await assertFails(getDoc(doc(as("student1"), "reports", "202611")));
+    await assertFails(setDoc(doc(as("admin1"), "reports", "202612"), { revenue: 9 }));
+  });
+});

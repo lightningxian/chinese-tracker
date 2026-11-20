@@ -13,6 +13,15 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-21 — Claude (BUILD chat, PC): Build 8 dashboard, trial kit, screenshots
+
+- Built Build 8 (release v0.1.26): the admin dashboard's six duty cards,
+  the monthly report, automatic checks on GitHub, the trial seed (emulator
+  and live), the question import and checklist, task sheets and SUS, the
+  screenshot pass.
+- Checked: analyzer 17 infos, `flutter test` 152 pass, rules tests, node
+  tests, flow test 91/91.
+
 ### 2026-11-21 — Claude (PLAN chat, Mac): Build 7 reviewed, Build 8 is NEXT
 
 - Pulled Build 7 (v0.1.25) and checked it on the Mac: analyzer 17 infos,

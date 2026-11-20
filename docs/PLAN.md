@@ -2082,6 +2082,44 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
+### 2026-11-21 — Build 8 Dashboard, trial kit, screenshot pass — COMMIT, release v0.1.26 (DEPLOYSTATE)
+- Built: six duty cards on the admin dashboard; `functions/reports.js` +
+  `test_reports.js`, `monthlyReport`, `rebuildMonthlyReport`, the Laporan
+  bulanan card (CSV, PDF); `.github/workflows/checks.yml`; the trial seed
+  (emulator / live / verify); `scripts/import_questions.mjs`; the trial kit
+  docs and printables; `tool/sus_score.mjs`; `tool/screenshots/run.mjs`;
+  zero results for forgotten exam attempts.
+- Must list: 1 dashboard · 2 monthly report · 3 GitHub checks · 4 trial
+  seed · 5 question checklist and import · 6 task sheets and SUS · 7
+  screenshot pass · 8 tests. All done, with these limits: the runner saves
+  13 of 15 screens (03 needs an answered practice question, 11 a typed
+  schedule form: written steps in the contact sheet); the task sheets
+  follow the proposal's screens and scenario IDs and still need a check
+  against its Table 20 (the Word file has not arrived).
+- Choices: live mode writes through firebase-admin with a service-account
+  file the owner downloads (never committed); its 30 vouchers carry
+  `trial: true` and no invoice, and the price list is written only when
+  none exists; the black-box tables are generated from the acceptance
+  walks so they follow the plan; respondents' names stay in a git-ignored
+  CSV.
+- Acceptance walk: the trial seed ran twice with the same counts; every
+  dashboard card shows a count on the emulator (2 pending, 10 unconfirmed,
+  1 late today / 2 this week, 1 unclosed, 26 needing attention, 4 today);
+  the flow test rebuilds the month and checks the revenue against the paid
+  invoices; the workflow ran on the `ci-check` branch: Node and rules jobs
+  green, the Flutter job red on the PDFium test until it learned to skip,
+  then CISTATE; the screenshot pass saved the 13 files; the import dry run
+  reported 4 questions and wrote nothing, the real run wrote them with the
+  audio on the emulator; the SUS sample scores 72.5.
+- Proof: analyzer 17 infos; `flutter test` 152 pass (+2) and 2 skipped;
+  rules tests 81 pass (+1), 1 skipped; node tests pass (+ `test_reports.js`,
+  `tool/test_sus_score.mjs`, `tool/test_import_questions.mjs`); flow test
+  91/91.
+- Owner: DEPLOYNOTE
+- Left out ("Then"): the class day picker in the buy sheet and the
+  printable day sheet. Done from "Then": the forgotten-attempt zero result,
+  the trial-day checklist, the one-page student guide.
+
 ### 2026-11-21 — Build 7 The teaching day — e2aabdb, release v0.1.25 (rules, functions and hosting live from the PC 2026-11-21 under the owner's standing go; 58 functions)
 - Built: `functions/teaching_day.js` + `test_teaching_day.js`;
   `checkInSession`, `closeSession` (one transaction, ledger, recap),

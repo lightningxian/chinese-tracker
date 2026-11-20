@@ -56,6 +56,10 @@ import '../../features/tests/test_review_screen.dart';
 import '../../features/tests/test_supervision_screen.dart';
 import '../../models/admin_dashboard_stat_kind.dart';
 import '../../models/class_session.dart';
+import '../../models/app_user.dart';
+import '../../features/progress/progress_attention_list.dart';
+import '../../l10n/l10n.dart';
+import '../widgets/shell_nested_page.dart';
 import '../../models/dashboard_stat_routes.dart';
 import '../../models/exercise.dart';
 import '../../models/teacher_dashboard_stat_kind.dart';
@@ -245,7 +249,27 @@ class AppRouter {
                 ),
                 GoRoute(
                   path: 'timetable',
-                  builder: (_, __) => const AdminTimetableScreen(embedded: true),
+                  builder: (_, state) => AdminTimetableScreen(
+                    embedded: true,
+                    initialView:
+                        state.uri.queryParameters['view'] == 'followup' ? 3 : 0,
+                  ),
+                ),
+                GoRoute(
+                  path: 'attention',
+                  builder: (context, _) => ShellNestedPage(
+                    embedded: true,
+                    title: context.l10n.dutyAttention,
+                    child: StreamBuilder<List<AppUser>>(
+                      stream: context.read<FirestoreService>().watchAllTeachers(),
+                      builder: (context, t) => ListView(
+                        padding: const EdgeInsets.all(16),
+                        children: [
+                          ProgressAttentionList(teachers: t.data ?? const []),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
                 GoRoute(
                   path: 'users/approval',

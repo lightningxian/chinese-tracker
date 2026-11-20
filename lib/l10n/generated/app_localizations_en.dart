@@ -7617,4 +7617,66 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get timetableRecap => 'Teacher recap';
+
+  @override
+  String get dutyPending => 'Pending registrations';
+
+  @override
+  String get dutyUnconfirmed => 'Unconfirmed schedules';
+
+  @override
+  String get dutyLate => 'Late check-ins today';
+
+  @override
+  String dutyLateWeek(int count) {
+    return '$count this week';
+  }
+
+  @override
+  String get dutyUnclosed => 'Unclosed sessions';
+
+  @override
+  String get dutyAttention => 'Students needing attention';
+
+  @override
+  String get dutyToday => 'Today\'s sessions';
+
+  @override
+  String get monthlyReportTitle => 'Monthly report';
+
+  @override
+  String get monthlyRebuild => 'Rebuild';
+
+  @override
+  String get monthlyReportRebuilt => 'Report rebuilt.';
+
+  @override
+  String get monthlyNotBuilt => 'Not built yet. Press Rebuild.';
+
+  @override
+  String get monthlyNewStudents => 'New students';
+
+  @override
+  String get monthlyRevenue => 'Revenue (paid invoices)';
+
+  @override
+  String get monthlyActive => 'Active students';
+
+  @override
+  String get monthlyAttendance => 'Attendance';
+
+  @override
+  String get monthlyHours => 'Teaching hours';
+
+  @override
+  String get monthlyLevel => 'Level';
+
+  @override
+  String get monthlyTeacher => 'Teacher';
+
+  @override
+  String get monthlyItem => 'Item';
+
+  @override
+  String get monthlyValue => 'Value';
 }

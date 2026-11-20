@@ -6,6 +6,50 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-21 — Claude (BUILD chat): Build 8 — dashboard, trial kit, screenshot pass
+
+**What changed**
+- **Admin dashboard:** six duty cards at the top (pending registrations,
+  unconfirmed schedules, late check-ins today and this week, unclosed
+  sessions, students needing attention, today's sessions), each opening its
+  list (`/admin/users/approval`, Timetable → Follow-up, `/admin/attention`,
+  Classes). Counts in `DutyCounts.compute` (unit-tested).
+- **Monthly report:** `monthlyReport` (1st, 01:00 Jakarta, the month before)
+  and `rebuildMonthlyReport` (admin) write `reports/{yyyyMM}`: new students,
+  revenue, active students, levels, attendance rate, teaching hours per
+  teacher (pure logic `functions/reports.js`). Laporan → **Laporan
+  bulanan** with a month picker, Rebuild, CSV and PDF. Rule: admins read,
+  nobody writes.
+- **Automatic checks on GitHub:** `.github/workflows/checks.yml` (Flutter
+  analyze and test, every `functions/test_*.js` and the tool tests, the rules
+  tests on the emulators); no secrets; a badge in `README.md`. The PDF probe
+  test skips where PDFium is missing (the Linux runner).
+- **Trial kit:** `scripts/seed_trial.py` (emulator: everything; `live`:
+  accounts and structures only through `scripts/seed_trial_live.mjs`,
+  passwords and names from git-ignored `scripts/trial/*.local.*`; `verify`);
+  `scripts/import_questions.mjs` (CSV/JSON to the bank with audio, dry run);
+  `docs/TRIAL_KIT.md` with the 731-question checklist
+  (`docs/trial/question_checklist.csv`); task sheets per role, the SUS form,
+  a student guide and the trial-day checklist in `docs/trial/`;
+  `tool/sus_score.mjs`; black-box tables from the acceptance walks
+  (`tool/trial_kit/build_kit.mjs`).
+- **Screenshot pass:** `tool/screenshots/run.mjs` saves 13 of the 15
+  proposal screens to `docs/screenshots/proposal/` with a contact sheet; the
+  other two get written steps. The emulator bundle signs in with `?as=` and
+  opens a tab with `?tab=` (emulator builds only).
+- A forgotten one-attempt exam now gets a zero result when the hourly job
+  closes it (Build 7 follow-up).
+
+**Why**
+- Build 8 of `docs/PLAN.md` §4 (backlog §10 and §13; §7's trial facts).
+
+**For review**
+- Deploy rules and functions (2 new), then hosting. The owner approves the
+  workflow (it already ran on a trial branch), runs the live trial seed when
+  the respondents are known, and fills the question bank from the checklist.
+
+---
+
 ## 2026-11-21 — Claude (BUILD chat): Build 7 — the teaching day
 
 **What changed**

@@ -20,6 +20,7 @@ import '../../services/admin_ops_report_service.dart';
 import '../../services/admin_report_export_service.dart';
 import '../../services/admin_report_service.dart';
 import '../../services/firestore_service.dart';
+import 'monthly_report_card.dart';
 
 /// Admin → Reports. Eight operational reports (attendance, balances, revenue,
 /// retention, fill rate, teacher recap, progress, overdue homework) followed
@@ -161,6 +162,9 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
                 fontSize: 14,
               ),
             ),
+            const SizedBox(height: 24),
+            // Build 8: the monthly centre report (reports/{yyyyMM}).
+            const MonthlyReportCard(),
             const SizedBox(height: 24),
             section(l.cohortStudents, _studentTiles(l, ops, export)),
             section(l.adminReportsSectionClasses, _classTiles(l, ops, export)),

@@ -29,9 +29,12 @@ String weekdayLabel(AppLocalizations l, int d) => switch (d) {
 /// (weekdays across, rooms down), a list, **New schedule** with the live
 /// conflict check, and the teachers' availability.
 class AdminTimetableScreen extends StatefulWidget {
-  const AdminTimetableScreen({super.key, this.embedded = false});
+  const AdminTimetableScreen({super.key, this.embedded = false, this.initialView = 0});
 
   final bool embedded;
+
+  /// Build 8: the dashboard opens Follow-up (3) directly.
+  final int initialView;
 
   @override
   State<AdminTimetableScreen> createState() => _AdminTimetableScreenState();
@@ -43,7 +46,7 @@ class _AdminTimetableScreenState extends State<AdminTimetableScreen> {
   late final Stream<List<AppUser>> _teachers =
       context.read<FirestoreService>().watchAllTeachers();
   late final Stream<List<String>> _rooms = RoomsService().watchRooms();
-  int _view = 0;
+  late int _view = widget.initialView;
 
   Future<void> _edit(List<AppUser> teachers, List<String> rooms, {Schedule? s}) async {
     await showDialog<void>(

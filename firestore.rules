@@ -292,6 +292,11 @@ service cloud.firestore {
         (isTeacher() && resource.data.get('teacherId', '') == request.auth.uid);
       allow write: if false;
     }
+    // Build 8: the monthly centre report (functions write; admins read).
+    match /reports/{month} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
     // Build 7: the teacher's month counters (functions only).
     match /teacher_recaps/{id} {
       allow read: if isAdmin() ||

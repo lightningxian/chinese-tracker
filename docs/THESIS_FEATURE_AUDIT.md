@@ -59,7 +59,7 @@ retake" and "P6 Admin screen to edit weights" are superseded by the table above.
 | 11 | Admin: create jadwal with clash warning + free-slot suggestions | One-off session form, no clash check | Build jadwal + `checkScheduleConflict` (Phase 2) |
 | 12 | Admin: registration approval with placement choice | Build 3: Users → **Approval** (badge), one card per pending student with the choice, the placement result, teacher and level pickers, Approve / Reject | Done (take on live) |
 | 13 | Admin: promotion verification "HSK 3 → HSK 4" with 3 passed codes | **Done (Build 2B, 2026-11-20):** Tests, **Promotion** (badge), card "陈美琳 (Kelvin Santoso) · HSK 3 (Intermediate) → HSK 4 (Intermediate)" with the codes and marks, Approve / Decline | Screenshot on the emulator or live after deploy |
-| 14 | Admin dashboard: pending registrations, unconfirmed schedules, late check-ins, unclosed sessions, students needing attention | Dashboard with totals, sign-ups, voucher alerts, finance | Rework after Phases 1–3 exist |
+| 14 | Admin dashboard: pending registrations, unconfirmed schedules, late check-ins, unclosed sessions, students needing attention | Build 8: six duty cards (and today's sessions), each opening its list | Done |
 | 15 | Admin: Pembayaran with lunas / pending / expire | Build 5: filters by status, item and month, the Rupiah total, the in-app tag | Done (take on live) |
 
 Roughly: 2 screens exist in a usable form, 5 exist partly, 8 don't exist. Taking
@@ -219,8 +219,8 @@ Status per spec item. Evidence is `file:line` in this repo.
 | P7 Status label | Done (Build 4) | Progres Baik / Perlu Perhatian / Perlu Tindak Lanjut from the warning count | `statusOf` |
 | P7 Access scoping | Done (Build 4) | Summary: own, staff, linked parent; notes written by the student's teacher or an admin; teacher dashboard lists their own students, admin filters by level and teacher | rules |
 | P7 Report screen layout | Done (Build 4) | `student_progress_report_screen.dart` in the proposal's order | StudentProgressReport |
-| **P8** monthlyReport scheduled | Missing | Admin PDFs on demand only | admin PDF exports |
-| P8 Admin dashboard (6 items) | Partly | Totals, signups chart, voucher alerts, finance (`admin_dashboard_tab.dart`) | AdminDashboardTab |
+| **P8** monthlyReport scheduled | Done (Build 8) | `monthlyReport` (1st, 01:00) + `rebuildMonthlyReport`; Laporan bulanan with CSV and PDF | reports/{yyyyMM} |
+| P8 Admin dashboard (6 items) | Done (Build 8) | `admin_duty_cards.dart` above the totals and finance | AdminDutyCards |
 | **P9** FCM notifications | Missing | In-app only, 4 events; read query likely denied | `notifications` |
 | **Rules** kunci_jawaban unreadable | Missing | Keys in readable docs | — |
 | Rules jawaban_murid create-own, no score | Done | `exercise_results` has no client write at all; `finishExercise` scores and writes (rules 2026-11-12, deploy pending) | exercise_results |
@@ -228,7 +228,7 @@ Status per spec item. Evidence is `file:line` in this repo.
 | Rules voucher/riwayat read-own | Partly | Terms OK; attendance of open sessions readable by any student | student_class_terms |
 | Rules pembayaran read-own | Partly | Own/parent OK; teachers can read all invoices | invoices |
 | Rules counters only by functions | Missing | Staff update terms/attendance from app | — |
-| **Testing** seed script | Partly | `scripts/seed_test_accounts.sh`, `seed_report_demo_data.py`, run against live | seed scripts |
+| **Testing** seed script | Done (Build 8) | `scripts/seed_trial.py` (emulator / live / verify), 35 respondents | seed_trial |
 | Testing question import (CSV/JSON + audio) | Partly | Built-in HSK paper reader (2026-11-17, Build 1B: scanned PDF → 80 slots by the HSK format, pictures, proofreading screen, answer key incl. writing, no outside service; **Build 1C 2026-11-18**: PP-OCRv5 in the browser, 79 of 80 right as read on the practice paper `H399001P` against 37 before, flags by HSK level and stray marks, tone buttons for pinyin, a proofreading record per worksheet for the thesis test chapter, **Download text** as a truth file) + AI paper reader (off on live) + paste + on-device OCR; one recording per worksheet up to 60 MB with a transcript; no CSV/JSON | Worksheet import |
 | Testing emulator rules tests | Done | `rules-tests/firestore.rules.test.mjs`, 30 pass (`npm --prefix rules-tests run test:emulator`) | rules-tests |
 | Testing reconciliation script | Done (Build 7) | `reconcileVouchers` + `tool/reconcile_vouchers.mjs` + Org settings Voucher check (VC-05) | reconcileVouchers |

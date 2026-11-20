@@ -14,6 +14,8 @@ import 'package:intl/date_symbol_data_local.dart';
 
 import 'app.dart';
 import 'core/constants/build_flags.dart';
+import 'core/constants/test_accounts.dart';
+import 'core/utils/launch_params.dart';
 import 'core/utils/emulator_guard.dart';
 import 'firebase_options.dart';
 
@@ -64,6 +66,7 @@ Future<void> main() async {
     // Clean web addresses (/login, not /#/login). Hosting rewrites every
     // path to index.html, so deep links and refreshes resolve. No-op off web.
     usePathUrlStrategy();
+    LaunchParams.capture(Uri.base);
     WidgetsFlutterBinding.ensureInitialized();
 
     FlutterError.onError = (details) {
@@ -104,6 +107,18 @@ Future<void> main() async {
         return;
       }
       resetEmulatorRetry();
+      // Build 8: the screenshot runner (tool/screenshots/run.mjs) signs in
+      // with ?as=<email> and the emulator-only password. Emulator builds
+      // only: this branch is compiled out of the live bundle.
+      final as = Uri.base.queryParameters['as'];
+      if (as != null && as.contains('@')) {
+        try {
+          await FirebaseAuth.instance.signInWithEmailAndPassword(
+              email: as, password: TestAccounts.password);
+        } catch (e) {
+          debugPrint('Screenshot sign-in failed: $e');
+        }
+      }
     }
     runApp(const ChineseTrackerApp());
   }, (error, stack) {

@@ -4388,8 +4388,42 @@ async function closeForgottenAttempts(nowMs = Date.now()) {
     const until = limit ? started + (limit + LATE_GRACE_SECONDS + 600) * 1000 :
       started + 24 * 3600 * 1000;
     if (nowMs < until) continue;
-    await d.ref.update({finishedAt: FieldValue.serverTimestamp(), closedBy: "system",
-      late: true});
+    // Close it once (a transaction, so a submit at the same moment wins or loses cleanly).
+    const won = await db.runTransaction(async (tx) => {
+      const cur = (await tx.get(d.ref)).data() || {};
+      if (cur.finishedAt) return false;
+      tx.update(d.ref, {finishedAt: FieldValue.serverTimestamp(), closedBy: "system",
+        late: true});
+      return true;
+    });
+    if (!won) continue;
+    // Build 8: a zero result, the way a late test gets 0, so it shows in
+    // the student's history and the teacher's lists.
+    try {
+      const exSnap = await db.collection(EXERCISES).doc(String(a.exerciseId || "")).get();
+      const exercise = exSnap.exists ? exSnap.data() || {} : {};
+      const items = exSnap.exists ? await loadPackageItems(exercise) : [];
+      const scored = play.scoreAttempt(items, {});
+      await db.collection(EXERCISE_RESULTS).doc(`${d.id}_closed`).set({
+        studentId: a.studentId || "",
+        exerciseId: a.exerciseId || "",
+        exerciseTitle: exercise.title || "",
+        category: a.category || "",
+        score: 0, correct: 0, total: scored.total, earned: 0, possible: scored.possible,
+        points: Object.fromEntries(Object.entries(scored.points).map(
+            ([id, p]) => [id, {...p, earned: 0, review: false}])),
+        status: "final",
+        openMarking: 0,
+        bySkill: Object.fromEntries(Object.entries(scored.bySkill).map(
+            ([skill, b]) => [skill, {correct: 0, total: b.total}])),
+        late: true,
+        closedBy: "system",
+        scoredBy: "server",
+        submittedAt: FieldValue.serverTimestamp(),
+      });
+    } catch (err) {
+      logger.error(`closeForgottenAttempts: zero result for ${d.id}`, err);
+    }
     closed += 1;
   }
   if (closed) logger.info(`closeForgottenAttempts: closed ${closed}`);
@@ -4478,4 +4512,69 @@ exports.runTeachingDayPass = onCall(async (request) => {
   const out = await teachingDayPass({nowMs});
   if (data.attempts === true) out.attempts = await closeForgottenAttempts(nowMs);
   return out;
+});
+
+// ---------------------------------------------------------------------------
+// Build 8 (docs/PLAN.md §4, Must 2): the monthly centre report, written to
+// `reports/{yyyyMM}` on the 1st at 01:00 Jakarta for the month before, and
+// rebuilt by an admin for any month. Pure logic in reports.js.
+// ---------------------------------------------------------------------------
+const reportsLogic = require("./reports");
+const REPORTS = "reports";
+
+async function buildMonthlyReport(month) {
+  const range = reportsLogic.monthRange(month);
+  const from = Timestamp.fromMillis(range.fromMs);
+  const to = Timestamp.fromMillis(range.toMs);
+  const [users, invoices, attendance, exResults, testResults, recaps] = await Promise.all([
+    db.collection(USERS).where("role", "==", "student").get(),
+    db.collection("invoices").where("status", "==", "paid").get(),
+    db.collection("attendance").where("sessionDate", ">=", range.fromDate)
+        .where("sessionDate", "<=", range.toDate).get(),
+    db.collection(EXERCISE_RESULTS).where("submittedAt", ">=", from)
+        .where("submittedAt", "<", to).get(),
+    db.collection(TEST_RESULTS).where("createdAt", ">=", from)
+        .where("createdAt", "<", to).get(),
+    db.collection(TEACHER_RECAPS).where("month", "==", month).get(),
+  ]);
+  const rows = (snap) => snap.docs.map((d) => ({id: d.id, ...(d.data() || {})}));
+  const report = reportsLogic.buildReport({
+    month,
+    students: rows(users).map((u) => ({uid: u.id, createdAtMs: millisOf(u.createdAt),
+      level: u.level || "", status: u.status || "", active: u.active})),
+    invoices: rows(invoices).map((i) => ({status: i.status, amount: i.amount,
+      paidAtMs: millisOf(i.paidAt)})),
+    attendance: rows(attendance).map((a) => ({studentId: a.studentId,
+      sessionDate: a.sessionDate, booked: a.booked, attendanceStatus: a.attendanceStatus,
+      status: a.status})),
+    exerciseResults: rows(exResults).map((x) => ({studentId: x.studentId,
+      submittedAtMs: millisOf(x.submittedAt)})),
+    testResults: rows(testResults).map((x) => ({studentId: x.studentId,
+      createdAtMs: millisOf(x.createdAt)})),
+    recaps: rows(recaps),
+  });
+  await db.collection(REPORTS).doc(month).set({...report,
+    builtAt: FieldValue.serverTimestamp()});
+  return report;
+}
+
+exports.monthlyReport = onSchedule(
+    {schedule: "0 1 1 * *", timeZone: "Asia/Jakarta", timeoutSeconds: 300},
+    async () => {
+      const month = reportsLogic.previousMonth(Date.now());
+      await buildMonthlyReport(month);
+      logger.info(`monthlyReport: ${month} written`);
+    },
+);
+
+/** Admin: (re)build the report of any month. */
+exports.rebuildMonthlyReport = onCall({timeoutSeconds: 300}, async (request) => {
+  await requireAdmin(request);
+  const month = String((request.data || {}).month || "");
+  try {
+    reportsLogic.monthRange(month);
+  } catch (e) {
+    throw new HttpsError("invalid-argument", e.message, {reason: "month"});
+  }
+  return buildMonthlyReport(month);
 });
