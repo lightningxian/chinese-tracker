@@ -13,6 +13,20 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-21 — Claude (PLAN chat, Mac): Build 7 reviewed, Build 8 is NEXT
+
+- Pulled Build 7 (v0.1.25) and checked it on the Mac: analyzer 17 infos,
+  `flutter test` 150 pass and 2 skipped, node tests (+ `test_teaching_day.js`),
+  rules tests 80 pass and 1 skipped. Live: 58 functions, 23 indexes equal
+  to the repo, the bundle carries the Schedule screen.
+- Read: the close is one idempotent transaction with a fixed-id ledger;
+  check-in, close and cancel are limited to the session's teacher or an
+  admin; jobs claim their work in transactions; the life fields are
+  function-only in the rules. The six choices are accepted; one follow-up
+  (a zero result for a forgotten exam attempt) went to Build 8's "Then".
+- Plan: Build 7 done, **Build 8 (dashboard, monthly report, GitHub checks,
+  trial kit, screenshot pass) NEXT**; the spec holds against the report.
+
 ### 2026-11-21 — Claude (BUILD chat, PC): Build 7 the teaching day
 
 - Built Build 7 (release v0.1.25): check-in with server time, the close
