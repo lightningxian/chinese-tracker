@@ -2163,7 +2163,7 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
-### 2026-11-23 — Owner requests and the After-Build-8 follow-ups — COMMIT, release v0.1.27 (functions and hosting live from the PC under the owner's standing go; 63 functions)
+### 2026-11-23 — Owner requests and the After-Build-8 follow-ups — 242e287, release v0.1.27 (functions and hosting live from the PC under the owner's standing go; 63 functions)
 - Built: timetable gap 0 by default with **Timetable rules**, **Recheck**,
   **Delete** (`deleteSchedule`); sessions start by themselves (app,
   `closeSession`, the 5-minute job); late students join until the end;
