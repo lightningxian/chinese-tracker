@@ -1590,6 +1590,39 @@ exports.deleteUserAccount = onCall(async (request) => {
   if (targetUid === callerUid) {
     throw new HttpsError("failed-precondition", "You cannot delete your own account.");
   }
+  await deleteAccountCore(targetUid, callerUid, "user.delete");
+  logger.info("deleteUserAccount", {by: callerUid, target: targetUid});
+  return {deleted: true};
+});
+
+/**
+ * Owner 2026-11-24 (App Store, Apple guideline 5.1.1(v)): a student or a
+ * parent deletes their own account from the profile tab. The app asks for
+ * the password first; the sign-in must be at most 10 minutes old. Same rules
+ * as the admin's delete: the sign-in and the profile go, results, invoices
+ * and attendance stay as the centre's records. Pending students may delete
+ * too. Teachers and admins ask an admin.
+ */
+exports.deleteMyAccount = onCall(async (request) => {
+  const auth = request.auth;
+  if (!auth) throw new HttpsError("unauthenticated", "Sign in first.");
+  const snap = await db.collection(USERS).doc(auth.uid).get();
+  const role = snap.exists ? (snap.data() || {}).role || "student" : "student";
+  if (role !== "student" && role !== "parent") {
+    throw new HttpsError("permission-denied", "Staff accounts are deleted by an admin.");
+  }
+  const authTime = Number(auth.token && auth.token.auth_time) || 0;
+  if (Date.now() / 1000 - authTime > 600) {
+    throw new HttpsError("failed-precondition", "Type your password again first.",
+        {reason: "recent-login"});
+  }
+  await deleteAccountCore(auth.uid, auth.uid, "user.delete.self");
+  logger.info("deleteMyAccount", {uid: auth.uid});
+  return {deleted: true};
+});
+
+/** Deletes the sign-in and the profile of [targetUid] (records stay). */
+async function deleteAccountCore(targetUid, actorId, action) {
   const targetSnap = await db.collection(USERS).doc(targetUid).get();
   const target = targetSnap.exists ? targetSnap.data() || {} : {};
 
@@ -1613,18 +1646,31 @@ exports.deleteUserAccount = onCall(async (request) => {
         .where("teacherId", "==", targetUid).limit(50).get();
     codes.docs.forEach((d) => batch.delete(d.ref));
   }
+  // A parent's children forget the link; a child leaves the parent's list.
+  if (target.role === "parent") {
+    const kids = await db.collection(USERS)
+        .where("linkedParentUid", "==", targetUid).limit(50).get();
+    kids.docs.forEach((d) => batch.update(d.ref, {
+      linkedParentUid: FieldValue.delete(), linkedParentName: FieldValue.delete(),
+    }));
+  }
+  if ((target.role || "student") === "student") {
+    const parents = await db.collection(USERS)
+        .where("studentIds", "array-contains", targetUid).limit(10).get();
+    parents.docs.forEach((d) => batch.update(d.ref, {
+      studentIds: FieldValue.arrayRemove(targetUid),
+    }));
+  }
   batch.set(db.collection(AUDIT_LOGS).doc(), {
-    action: "user.delete",
-    actorId: callerUid,
+    action,
+    actorId,
     targetId: targetUid,
     targetEmail: target.email || null,
     targetRole: target.role || null,
     createdAt: FieldValue.serverTimestamp(),
   });
   await batch.commit();
-  logger.info("deleteUserAccount", {by: callerUid, target: targetUid});
-  return {deleted: true};
-});
+}
 
 // Nightly backups: Firestore's own scheduled backups (daily, 7-day retention,
 // created by the owner on 2026-11-13 with

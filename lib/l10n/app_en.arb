@@ -3005,5 +3005,11 @@
   "transcribeWriting": "Writing the script… {pct}%",
   "@transcribeWriting": {"placeholders": {"pct": {"type": "int"}}},
   "transcribeDone": "Script written. Read it through and correct it before saving.",
-  "transcribeNote": "The script is written on this computer from the recording; it can mishear names and numbers, so check it against the recording."
+  "transcribeNote": "The script is written on this computer from the recording; it can mishear names and numbers, so check it against the recording.",
+  "deleteAccountTitle": "Delete my account",
+  "deleteAccountSubtitle": "Removes your sign-in and profile for good.",
+  "deleteAccountButton": "Delete account",
+  "deleteAccountBody": "Your sign-in and your profile are deleted and cannot be brought back. Sessions left on your vouchers are lost. The centre keeps the records it needs (invoices, test results and attendance). Type your password to confirm.",
+  "deleteAccountConfirm": "I understand this cannot be undone.",
+  "deleteAccountDone": "Your account has been deleted."
 }

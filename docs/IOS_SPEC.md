@@ -1,64 +1,86 @@
-# iOS for Easy Study: what it means (Q9, 2026-11-24)
+# iOS for Easy Study (Q9)
 
-The owner wants iOS. The proposal promises Android, iOS and web from one
-Flutter codebase. There are two ways to give iPhone users the app. Both use
-the same code and the same live database.
+**Owner decision 2026-11-24: option B, a real App Store app.** Option A (the
+installed web app: Safari → Share → Add to Home Screen) keeps working for
+anyone who prefers it and needs nothing.
 
-## Option A: installed web app (works today, free)
+## What is ready in the code (BUILD chat, 2026-11-24)
 
-What the user does: open https://chinese-tracker.web.app in **Safari**, tap
-**Share → Add to Home Screen**. The landing page already has an
-**Install on iPhone** button that shows these steps.
+- The iOS project builds the same Flutter app as web and Android, against
+  the same live database. The iOS app is already registered in Firebase
+  (bundle id `com.chinesetracker.chineseTracker`, its
+  `ios/Runner/GoogleService-Info.plist` is in the repo), so **nothing has to
+  be added in the Firebase console** and `flutterfire configure` stays
+  untouched.
+- App name **Easy Study**, the pencil-mascot icon (also on Android now:
+  `tool/make_app_icons.ps1`), iPhone only (it still runs on an iPad in
+  iPhone mode, and Apple then asks for no iPad screenshots), iOS 15 or newer
+  (current Firebase needs it; `ios/Podfile`).
+- Texts Apple asks for: why the app may open photos or the camera (only when
+  the user picks a file), and "no special encryption" (so App Store Connect
+  does not ask the export question at every upload).
+- Apple's rule 5.1.1(v): **Delete my account** on the student and parent
+  profile tabs and on the waiting screen (`deleteMyAccount`; the password is
+  asked again; records the centre needs stay).
+- A public **privacy policy** at https://chinese-tracker.web.app/privacy
+  (English and Indonesian, linked from the landing page footer).
+- `scripts/build_ios.sh` builds the archive on the Mac with the same settings
+  as the web and Android builds.
 
-What they get:
-- An Easy Study icon on the home screen that opens full screen, without
-  Safari's address bar (`display: standalone` in `web/manifest.json`, the
-  `apple-mobile-web-app-*` tags in `web/index.html`).
-- Every feature of the web app: classes, booking, exercises, tests, payments
-  (Midtrans opens in the same window), progress, News.
-- Updates at once with every deploy; nothing to install again.
+Not in the first iOS version, on purpose:
+- Lock-screen notifications on iOS (the in-app bell works). They need an
+  Apple push key uploaded to Firebase; the app's push code is web and
+  Android only today. A later step if the centre wants it.
+- The admin tools that read papers and recordings run in a desktop browser
+  only (as on Android).
 
-Limits:
-- Not in the App Store.
-- Phone notifications (the lock-screen kind) need iOS 16.4 or newer and the
-  app added to the home screen; the user must allow them once. The bell
-  inside the app always works.
-- Scanning papers and the transcript reader are admin tools for a computer,
-  not a phone.
+## What the owner does (in this order)
 
-Cost: none. Work: none (already live). For the book: "iOS is served as an
-installable web app (PWA)", with the steps above and a screenshot.
+1. **Apple Developer Program** (USD 99 a year) at developer.apple.com/programs.
+   - *Individual*: quick; the store shows the owner's own name as the seller.
+   - *Organization*: the store shows the centre's name, but Apple needs a
+     D-U-N-S number for the business (free, can take one to two weeks).
+   Approval can take a few days, so start now.
+2. **Xcode on the Mac**: install the full Xcode from the Mac App Store (about
+   15 GB), open it once and accept the licence, then
+   `brew install cocoapods`. In Xcode → Settings → Accounts, add the Apple ID
+   of the developer account.
+3. **Signing**: open `ios/Runner.xcworkspace` in Xcode → Runner target →
+   Signing & Capabilities → tick *Automatically manage signing* and choose
+   the team. Xcode registers the bundle id `com.chinesetracker.chineseTracker`.
+4. **App Store Connect** (appstoreconnect.apple.com) → My Apps → + → New App:
+   name *Easy Study* (or *Easy Study Mandarin* if the name is taken),
+   primary language Indonesian, bundle id `com.chinesetracker.chineseTracker`,
+   SKU e.g. `easystudy-ios`.
+5. **Build and upload** on the Mac: `scripts/build_ios.sh`, then Xcode →
+   Window → Organizer → Distribute App → App Store Connect (or Apple's
+   Transporter app with `build/ios/ipa/*.ipa`). A Claude chat on the Mac can
+   run the script; the owner signs in to Xcode.
+6. **TestFlight**: add the trial testers by email (internal testers need no
+   review; external testers get a short beta check). Testers install the
+   TestFlight app and open the invitation.
+7. **Store page**:
+   - Screenshots of an iPhone 6.9" (1320 × 2868) and 6.5" (1284 × 2778).
+     Claude can make them from the emulator.
+   - Description, keywords, support URL (the landing page), privacy policy
+     URL `https://chinese-tracker.web.app/privacy`.
+   - Age rating: 4+.
+   - *App Privacy* questions: name, email address, user content (answers,
+     notes), purchase history; all *linked to the user*, *not used for
+     tracking*.
+8. **App review notes**: a demo student account (one of the live test
+   students, password in `docs/CLAUDE_FULL_HANDOFF.md`) and two sentences:
+   "Payments are for face-to-face Mandarin lessons at our centre in
+   Surabaya, paid through Midtrans (guideline 3.1.3(e)). Account deletion:
+   Profile → Delete my account." Review usually takes one to three days.
 
-## Option B: a real App Store app (native iOS build)
+## Things to know
 
-What it needs, in order:
-1. **An Apple Developer Program account**: USD 99 a year, in the centre's or
-   the owner's name. Apple checks the identity; this can take a few days.
-2. **A Mac with the full Xcode** (the owner's Mac has an incomplete Xcode
-   today) and CocoaPods.
-3. **The iOS app added in the Firebase console** (Project settings → Add app
-   → iOS, bundle id e.g. `id.easystudy.app`) and its
-   `GoogleService-Info.plist` placed in `ios/Runner/`. The owner does this
-   by hand in the console: `flutterfire configure` must not be re-run
-   (CLAUDE.md "Never").
-4. Build the app: `flutter build ipa`, signed with the developer account.
-5. **TestFlight** for the trial testers (up to 10,000 testers, no review
-   wait beyond a short beta check).
-6. **App Store review** for the public release (usually 1–3 days). Payments
-   are for lessons taught at the centre, so Midtrans may stay (Apple's
-   in-app purchase rule does not apply to services used outside the app).
-7. A privacy policy page and the App Store screenshots and texts.
-
-What Claude can do: prepare the iOS project settings, the bundle id, icons
-and the build commands, and write the store texts. What only the owner can
-do: pay for and sign in to the Apple account, add the iOS app in the Firebase
-console, and run the build and upload on the Mac (signing needs the
-owner's Apple ID).
-
-Time: about one working day once the account is approved, plus the review.
-
-## Recommendation
-
-Option A for the trial and the seminar (it works today and the book can
-show it). Option B only if the supervisor asks for a store app or the centre
-wants one; start the Apple account early because approval can take days.
+- **Payments stay in Midtrans sandbox** until the sandbox test MT-05 passes
+  and the owner switches to production keys (CLAUDE.md "Never"). Testers can
+  "pay" with sandbox cards; real money needs the production switch first,
+  for web, Android and iOS alike.
+- Every upload needs a higher build number; `scripts/build_ios.sh` uses the
+  commit count.
+- An update to the iOS app goes through review again; the web app and the
+  data change at once as today.

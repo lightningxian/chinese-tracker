@@ -307,6 +307,17 @@ class AuthService extends ChangeNotifier {
     await user.updatePassword(newPassword);
   }
 
+  /// Owner 2026-11-24: confirms the password before deleting the account.
+  Future<void> reauthenticate(String password) async {
+    final user = _auth.currentUser;
+    final email = user?.email;
+    if (user == null || email == null || email.isEmpty) {
+      throw FirebaseAuthException(code: 'no-current-user');
+    }
+    await user.reauthenticateWithCredential(
+        EmailAuthProvider.credential(email: email, password: password));
+  }
+
   Future<AppUser> signIn({
     required String email,
     required String password,

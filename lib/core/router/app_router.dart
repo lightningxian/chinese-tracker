@@ -9,6 +9,7 @@ import '../../features/auth/register_screen.dart';
 import '../../features/auth/test_login_screen.dart';
 import '../../features/auth/complete_profile_screen.dart';
 import '../../features/auth/waiting_approval_screen.dart';
+import '../../features/legal/privacy_policy_page.dart';
 import '../../features/admin/registration_approval_view.dart';
 import '../../features/placement/placement_pages.dart';
 import '../../features/progress/student_progress_report_screen.dart';
@@ -108,6 +109,8 @@ class AppRouter {
         final onPlacement =
             location == '/placement' || location.startsWith('/placement/');
         if (onPlacement) return null;
+        // Owner 2026-11-24: the privacy policy is public (App Store).
+        if (location == '/privacy') return null;
         final onWaiting = location == '/waiting';
 
         if (!signedIn && !onPublic) return '/';
@@ -176,6 +179,10 @@ class AppRouter {
         GoRoute(
           path: '/waiting',
           builder: (_, __) => const WaitingApprovalScreen(),
+        ),
+        GoRoute(
+          path: '/privacy',
+          builder: (_, __) => const PrivacyPolicyPage(),
         ),
         // Build 3: the public placement test (no account).
         GoRoute(

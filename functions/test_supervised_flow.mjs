@@ -2023,4 +2023,31 @@ await step("owner 2026-11-24: a News post with a notification rings the bell of 
   assert.equal(await readDoc(`notifications/ann_${id}_quiet_teacher`), null, "no notice without the tick");
 });
 
+await step("owner 2026-11-24 (App Store): a student deletes their own account after a fresh sign-in; staff cannot; records stay", async () => {
+  // A fresh student linked to the seed parent.
+  const email = `selfdel_${RUN}@test.chinesetracker`;
+  const r = await fetch(`${AUTH}/accounts:signUp?key=fake`, {method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({email, password: PASSWORD, returnSecureToken: true})});
+  const j = await r.json();
+  assert.ok(j.localId, JSON.stringify(j).slice(0, 200));
+  await setDocRaw(`users/${j.localId}`, {email, name: "Self Delete", role: "student",
+    status: "active", active: true, linkedParentUid: parent.uid});
+  await patchDoc(`users/${parent.uid}`, {studentIds: {arrayValue: {values: [{stringValue: j.localId}]}}});
+  await setDocRaw(`invoices/selfdel_${RUN}`, {studentId: j.localId, amount: 1000, status: "paid"});
+  assert.equal((await call(teacher, "deleteMyAccount", {})).error.status, "PERMISSION_DENIED",
+      "staff ask an admin");
+  const me = {token: j.idToken, uid: j.localId};
+  const done = await call(me, "deleteMyAccount", {});
+  assert.ok(done.data && done.data.deleted, JSON.stringify(done.error));
+  assert.equal(await readDoc(`users/${j.localId}`), null, "the profile is gone");
+  const again = await fetch(`${AUTH}/accounts:signInWithPassword?key=fake`, {method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({email, password: PASSWORD, returnSecureToken: true})});
+  assert.ok(!again.ok, "the sign-in is gone");
+  assert.ok(await readDoc(`invoices/selfdel_${RUN}`), "the invoice stays as a record");
+  const p = await readDoc(`users/${parent.uid}`);
+  assert.ok(!(p.studentIds || []).includes(j.localId), "the parent's list forgets the child");
+});
+
 console.log(`supervised flow: ${passed} steps passed`);

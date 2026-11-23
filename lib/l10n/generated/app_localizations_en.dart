@@ -8165,4 +8165,24 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get transcribeNote =>
       'The script is written on this computer from the recording; it can mishear names and numbers, so check it against the recording.';
+
+  @override
+  String get deleteAccountTitle => 'Delete my account';
+
+  @override
+  String get deleteAccountSubtitle =>
+      'Removes your sign-in and profile for good.';
+
+  @override
+  String get deleteAccountButton => 'Delete account';
+
+  @override
+  String get deleteAccountBody =>
+      'Your sign-in and your profile are deleted and cannot be brought back. Sessions left on your vouchers are lost. The centre keeps the records it needs (invoices, test results and attendance). Type your password to confirm.';
+
+  @override
+  String get deleteAccountConfirm => 'I understand this cannot be undone.';
+
+  @override
+  String get deleteAccountDone => 'Your account has been deleted.';
 }

@@ -8131,4 +8131,24 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get transcribeNote =>
       'Naskah ditulis di komputer ini dari rekaman; nama dan angka bisa salah dengar, jadi periksa dengan rekamannya.';
+
+  @override
+  String get deleteAccountTitle => 'Hapus akun saya';
+
+  @override
+  String get deleteAccountSubtitle =>
+      'Menghapus akses masuk dan profil Anda untuk selamanya.';
+
+  @override
+  String get deleteAccountButton => 'Hapus akun';
+
+  @override
+  String get deleteAccountBody =>
+      'Akses masuk dan profil Anda dihapus dan tidak bisa dikembalikan. Sisa sesi di voucher Anda hangus. Centre menyimpan catatan yang diperlukan (tagihan, hasil tes, dan kehadiran). Ketik kata sandi Anda untuk mengonfirmasi.';
+
+  @override
+  String get deleteAccountConfirm => 'Saya mengerti ini tidak bisa dibatalkan.';
+
+  @override
+  String get deleteAccountDone => 'Akun Anda sudah dihapus.';
 }

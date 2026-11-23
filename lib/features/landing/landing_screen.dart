@@ -1592,6 +1592,18 @@ class _LandingFooter extends StatelessWidget {
                 style:
                     LandingBrand.body(size: 13, color: const Color(0xFFB8C4BE)),
               ),
+              // Owner 2026-11-24 (App Store): the privacy policy.
+              InkWell(
+                onTap: () => context.push('/privacy'),
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    'Privacy Policy · Kebijakan Privasi',
+                    style: LandingBrand.body(size: 13, color: const Color(0xFFE6ECE9))
+                        .copyWith(decoration: TextDecoration.underline),
+                  ),
+                ),
+              ),
             ],
           ),
         ],

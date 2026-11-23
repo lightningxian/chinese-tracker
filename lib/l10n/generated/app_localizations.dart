@@ -13367,6 +13367,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The script is written on this computer from the recording; it can mishear names and numbers, so check it against the recording.'**
   String get transcribeNote;
+
+  /// No description provided for @deleteAccountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete my account'**
+  String get deleteAccountTitle;
+
+  /// No description provided for @deleteAccountSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Removes your sign-in and profile for good.'**
+  String get deleteAccountSubtitle;
+
+  /// No description provided for @deleteAccountButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account'**
+  String get deleteAccountButton;
+
+  /// No description provided for @deleteAccountBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your sign-in and your profile are deleted and cannot be brought back. Sessions left on your vouchers are lost. The centre keeps the records it needs (invoices, test results and attendance). Type your password to confirm.'**
+  String get deleteAccountBody;
+
+  /// No description provided for @deleteAccountConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'I understand this cannot be undone.'**
+  String get deleteAccountConfirm;
+
+  /// No description provided for @deleteAccountDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account has been deleted.'**
+  String get deleteAccountDone;
 }
 
 class _AppLocalizationsDelegate

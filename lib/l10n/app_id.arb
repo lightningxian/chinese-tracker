@@ -2241,5 +2241,11 @@
   "transcribeLoading": "Memuat pembaca suara… {pct}% (sekali per komputer, sekitar 250 MB)",
   "transcribeWriting": "Menulis naskah… {pct}%",
   "transcribeDone": "Naskah selesai ditulis. Baca dan perbaiki sebelum menyimpan.",
-  "transcribeNote": "Naskah ditulis di komputer ini dari rekaman; nama dan angka bisa salah dengar, jadi periksa dengan rekamannya."
+  "transcribeNote": "Naskah ditulis di komputer ini dari rekaman; nama dan angka bisa salah dengar, jadi periksa dengan rekamannya.",
+  "deleteAccountTitle": "Hapus akun saya",
+  "deleteAccountSubtitle": "Menghapus akses masuk dan profil Anda untuk selamanya.",
+  "deleteAccountButton": "Hapus akun",
+  "deleteAccountBody": "Akses masuk dan profil Anda dihapus dan tidak bisa dikembalikan. Sisa sesi di voucher Anda hangus. Centre menyimpan catatan yang diperlukan (tagihan, hasil tes, dan kehadiran). Ketik kata sandi Anda untuk mengonfirmasi.",
+  "deleteAccountConfirm": "Saya mengerti ini tidak bisa dibatalkan.",
+  "deleteAccountDone": "Akun Anda sudah dihapus."
 }

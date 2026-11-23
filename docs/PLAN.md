@@ -2214,9 +2214,28 @@ Any time:
 9. iOS: the proposal promises Android, iOS and web. Today iOS means Safari
    with "add to home screen". Ask the supervisor whether that is accepted.
    **Owner 2026-11-24: wants iOS, asked for a specification** →
-   `docs/IOS_SPEC.md`.
+   `docs/IOS_SPEC.md`. **Then chose option B, an App Store app**; the code is
+   ready (icon, iOS settings, account deletion, privacy policy,
+   `scripts/build_ios.sh`); the owner's steps are in `docs/IOS_SPEC.md`.
 
 ## 6. Build reports (newest first, written by the BUILD chat)
+
+### 2026-11-24 — Ready for the App Store (Q9 option B) — COMMIT, release v0.1.30 (functions and hosting live from the PC; 68 functions)
+- Built: app icon from the mascot (iOS and Android); iOS name, iPhone only,
+  iOS 15, Podfile, permission texts; **Delete my account** for students and
+  parents (`deleteMyAccount`, shared `deleteAccountCore`); public privacy
+  policy `/privacy`; `scripts/build_ios.sh`; owner step list in
+  `docs/IOS_SPEC.md`.
+- Choices: push notifications stay off on iOS for the first version (the
+  app's push code is web and Android only; an APNs key would be needed);
+  iPhone only so no iPad screenshots or iPad review; payments stay sandbox
+  until MT-05.
+- Proof: analyzer 17 infos; `flutter test` 162 pass; flow test 104 steps
+  (new: a student deletes their own account, staff cannot, records stay);
+  emulator walk of the privacy page and deleting student29 from the
+  profile tab.
+- Left: everything on the owner's list (Apple account, Xcode, signing,
+  upload); the APK needs a rebuild on the Mac for the new icon.
 
 ### 2026-11-24 — Owner requests, third round — d04d962 + Q7 commit, release v0.1.29 (functions and hosting live from the PC under the owner's standing go; 67 functions)
 - Built: admin **News** page (post, edit, delete, audience, end date,

@@ -6,6 +6,36 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-24 — Claude (BUILD chat): ready for the App Store (Q9 option B)
+
+**What changed**
+- **App icon**: the pencil mascot on the brand's soft yellow for iOS and
+  Android (was Flutter's default logo), made by `tool/make_app_icons.ps1`.
+- **iOS project**: name *Easy Study*, iPhone only, iOS 15 or newer
+  (`ios/Podfile`, the Pods includes in `ios/Flutter/*.xcconfig`), photo and
+  camera reasons, no special encryption, `scripts/build_ios.sh` for the
+  App Store archive on the Mac. The iOS Firebase app was already
+  registered (`GoogleService-Info.plist`).
+- **Delete my account** (Apple guideline 5.1.1(v)): students and parents on
+  the profile tab, a waiting student on the waiting screen. The password is
+  asked again; the new `deleteMyAccount` refuses a sign-in older than 10
+  minutes and staff accounts. It shares `deleteAccountCore` with the admin's
+  `deleteUserAccount`, which now also clears the parent link on both sides.
+- **Privacy policy** at `/privacy` (public, English and Indonesian, always
+  light; linked from the landing page footer).
+- `docs/IOS_SPEC.md` rewritten as the owner's step list to TestFlight and
+  the App Store.
+
+**Why**
+- Owner 2026-11-24: "B: App Store app".
+
+**For review**
+- Functions 67 → 68 (`deleteMyAccount`). No rules change.
+- The Android APK built on the Mac earlier today still has the old icon;
+  rebuild it from this commit.
+
+---
+
 ## 2026-11-24 — Claude (BUILD chat): listening scripts written from the recording (Q7)
 
 **What changed**

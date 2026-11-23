@@ -52,6 +52,14 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   Publishing it (hosting deploy from the Mac, web + APK, `scripts/deploy_web.sh --no-keys`) waits for the
   owner's word in the PLAN chat.
 
+### 2026-11-24 — Claude (BUILD chat, PC): App Store preparation (Q9 option B)
+
+- Owner chose an App Store app. Built what Apple needs from the code side:
+  icon, iOS settings, in-app account deletion, a privacy policy page, and
+  a build script. Release v0.1.30 (68 functions).
+- The owner's steps (Apple Developer account, Xcode, signing, App Store
+  Connect, TestFlight) are in `docs/IOS_SPEC.md`.
+
 ### 2026-11-24 — Claude (BUILD chat, PC): owner requests, third round
 
 - Owner asked: a calmer admin dashboard; cancelled classes gone from the

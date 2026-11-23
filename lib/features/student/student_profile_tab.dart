@@ -11,6 +11,7 @@ import '../../core/widgets/app_card.dart';
 import '../../core/widgets/class_term_widgets.dart';
 import '../../core/widgets/language_toggle.dart';
 import '../../core/widgets/change_password_card.dart';
+import '../../core/widgets/delete_account_card.dart';
 import '../../core/widgets/push_setting_card.dart';
 import '../../core/widgets/theme_toggle.dart';
 import '../../core/widgets/profile_widgets.dart';
@@ -197,6 +198,8 @@ class _StudentProfileTabState extends State<StudentProfileTab> {
           const AppCard(child: TextSizeSettingRow()),
           const SizedBox(height: 16),
           const ChangePasswordCard(),
+          const SizedBox(height: 16),
+          const DeleteAccountCard(),
           const SizedBox(height: 16),
           ProfileAccountMeta(user: user),
           const SizedBox(height: 24),

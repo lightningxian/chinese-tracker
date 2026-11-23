@@ -4,6 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+
+import '../../core/widgets/delete_account_card.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme/app_theme.dart';
@@ -146,6 +148,13 @@ class _WaitingApprovalScreenState extends State<WaitingApprovalScreen> {
             },
             icon: const Icon(Icons.logout),
             label: Text(l.commonSignOut),
+          ),
+          // Owner 2026-11-24 (App Store): a waiting student may delete the
+          // account too.
+          TextButton(
+            onPressed: () => showDeleteAccountDialog(context),
+            child: Text(l.deleteAccountTitle,
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5)),
           ),
         ],
       ),
