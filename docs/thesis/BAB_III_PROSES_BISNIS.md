@@ -65,6 +65,11 @@ meminta data diri (nama, nama Mandarin, tanggal lahir, nomor telepon, dan
 pengalaman belajar), lalu mencatatnya di spreadsheet daftar murid. Penentuan
 tingkat awal dilakukan berdasarkan pengakuan calon murid atau tes singkat
 yang diberikan guru secara lisan; tidak ada tes penempatan yang terstandar.
+⟦Jam belajar murid disepakati saat pendaftaran melalui chat antara admin,
+guru, dan murid; tidak ada jadwal guru atau jadwal kelas yang tertulis, dan
+setiap perubahan jam diatur ulang lewat chat satu per satu.⟧ Jika seorang
+guru berhalangan, admin menghubungi guru lain satu per satu melalui chat
+untuk mencari pengganti, lalu memberi tahu murid yang terdaftar.
 Contoh percakapan pendaftaran ditunjukkan pada Gambar 3.1.
 
 [GAMBAR 3.1: tangkapan layar chat WhatsApp pendaftaran, nama dan nomor
@@ -73,24 +78,7 @@ disamarkan]
 Gambar 3.1
 Pendaftaran Murid melalui WhatsApp pada Sistem Lama
 
-### 3.2.2 Penjadwalan Guru dan Kelas
-
-Admin menanyakan ketersediaan setiap guru melalui chat, lalu menyusun
-jadwal kelas dan jadwal guru di spreadsheet, seperti pada Gambar 3.2. Jadwal
-tersebut dibagikan ke guru dan murid melalui grup WhatsApp. Karena tidak
-ada pengecekan otomatis, bentrok jadwal, yaitu satu guru atau satu ruang
-terpakai dua kali pada jam yang sama, sering baru diketahui menjelang kelas
-dimulai. Jika seorang guru berhalangan, admin mencari guru pengganti dengan
-menghubungi guru lain satu per satu melalui chat, lalu memberi tahu murid
-yang terdaftar. Murid mengonfirmasi kehadirannya pada kelas berikutnya juga
-melalui chat.
-
-[GAMBAR 3.2: tangkapan layar spreadsheet jadwal guru, nama disamarkan]
-
-Gambar 3.2
-Spreadsheet Jadwal Guru pada Sistem Lama
-
-### 3.2.3 Pembayaran dan Paket Sesi
+### 3.2.2 Pembayaran dan Paket Sesi
 
 Murid membayar paket kursus melalui transfer bank, lalu mengirim foto
 bukti transfer melalui WhatsApp. Admin mencocokkan bukti tersebut dengan
@@ -100,39 +88,39 @@ hadir, admin mengurangi satu sesi dari paketnya. Masa berlaku paket juga
 dipantau secara manual, sehingga paket yang sudah lewat masa berlakunya
 kadang baru diketahui belakangan.
 
-### 3.2.4 Kehadiran
+### 3.2.3 Kehadiran
 
 Guru mencatat kehadiran murid pada daftar hadir kertas di setiap
-pertemuan, seperti pada Gambar 3.3. Daftar hadir tersebut dikumpulkan ke
+pertemuan, seperti pada Gambar 3.2. Daftar hadir tersebut dikumpulkan ke
 admin secara berkala untuk diperiksa dan dipakai sebagai dasar pengurangan
 sisa sesi. Murid yang izin sebelum kelas dimulai tidak dipotong sesinya,
 sedangkan murid yang tidak hadir tanpa kabar (alpa) tetap dipotong satu
 sesi. Karena pencatatan dan pengurangan dilakukan terpisah dan manual,
 selisih antara sisa sesi menurut admin dan menurut murid kadang terjadi.
 
-[GAMBAR 3.3: foto daftar hadir kertas, nama disamarkan]
+[GAMBAR 3.2: foto daftar hadir kertas, nama disamarkan]
 
-Gambar 3.3
+Gambar 3.2
 Daftar Hadir Kertas pada Sistem Lama
 
-### 3.2.5 Latihan dan Tes Simulasi HSK
+### 3.2.4 Latihan dan Tes Simulasi HSK
 
 Soal latihan dibagikan dalam bentuk kertas atau fotokopi dan dikoreksi
 manual oleh guru. Tes simulasi HSK dikerjakan di atas kertas di Easy Study
 dengan pengawasan guru. Setelah dikoreksi, nilai per bagian (mendengarkan,
 membaca, dan menulis) dimasukkan satu per satu ke aplikasi web Nilai
-Simulasi HSK, seperti pada Gambar 3.4. Aplikasi web tersebut hanya
+Simulasi HSK, seperti pada Gambar 3.3. Aplikasi web tersebut hanya
 menyimpan nilai dan terpisah dari data murid lainnya (pendaftaran, kehadiran,
 dan paket). Setiap paket tes simulasi diberi kode tes, misalnya H3216917Z
 untuk tes HSK 3, dan setiap kode berisi soal yang berbeda. Kenaikan tingkat
 diputuskan dengan memeriksa riwayat nilai simulasi secara manual.
 
-[GAMBAR 3.4: tangkapan layar aplikasi web Nilai Simulasi HSK]
+[GAMBAR 3.3: tangkapan layar aplikasi web Nilai Simulasi HSK]
 
-Gambar 3.4
+Gambar 3.3
 Aplikasi Web Nilai Simulasi HSK pada Sistem Lama
 
-### 3.2.6 Pemantauan Perkembangan Murid
+### 3.2.5 Pemantauan Perkembangan Murid
 
 Perkembangan belajar murid tidak terdokumentasi secara terpusat. Catatan
 tentang kemampuan murid ada pada masing-masing guru, nilai simulasi ada di
@@ -151,58 +139,58 @@ untuk menggambarkan urutan langkah pada proses-proses utama.
 
 ### 3.3.1 Rich Picture
 
-Rich picture sistem lama ditunjukkan pada Gambar 3.5. Terdapat lima
+Rich picture sistem lama ditunjukkan pada Gambar 3.4. Terdapat lima
 pihak yang terlibat, yaitu calon murid, murid, admin, guru, dan pemilik usaha,
 serta empat alat bantu, yaitu WhatsApp, spreadsheet, daftar hadir kertas, dan
 aplikasi web Nilai Simulasi HSK. Hampir semua aliran informasi melewati
-admin: pendaftaran, pertanyaan jadwal, bukti transfer, konfirmasi kehadiran,
+admin: pendaftaran, pertanyaan jam belajar, bukti transfer, konfirmasi kehadiran,
 dan permintaan guru pengganti datang kepada admin melalui WhatsApp, lalu
-admin mencatatnya di spreadsheet. Guru menerima jadwal dari admin,
-mencatat kehadiran di kertas, mengoreksi latihan dan tes di kertas, lalu
+admin mencatatnya di spreadsheet. Guru menerima kabar murid baru beserta
+jam belajarnya dari admin, mencatat kehadiran di kertas, mengoreksi latihan dan tes di kertas, lalu
 menyetorkan daftar hadir dan nilai kepada admin. Pemilik usaha memperoleh
 gambaran keadaan kursus dengan bertanya kepada admin dan guru.
 
-[GAMBAR 3.5: rich picture sistem lama]
+[GAMBAR 3.4: rich picture sistem lama]
 
-Gambar 3.5
+Gambar 3.4
 Rich Picture Sistem Saat Ini
 
 ```mermaid
-%% Alat bantu menggambar Gambar 3.5 (bukan isi buku)
+%% Alat bantu menggambar Gambar 3.4 (bukan isi buku)
 flowchart LR
   CM[Calon murid] -- "tanya & daftar (WhatsApp)" --> A[Admin]
   M[Murid] -- "bukti transfer, konfirmasi hadir, izin (WhatsApp)" --> A
-  A -- "catat murid, jadwal, pembayaran, sisa sesi" --> S[(Spreadsheet)]
-  A -- "tanya ketersediaan, bagikan jadwal (WhatsApp)" --> G[Guru]
+  A -- "catat murid, pembayaran, sisa sesi" --> S[(Spreadsheet)]
+  A -- "kabari murid baru dan jam belajar, tanya kesediaan (WhatsApp)" --> G[Guru]
   G -- "daftar hadir kertas" --> K[/Daftar hadir/]
   K -- "disetor berkala" --> A
   G -- "koreksi latihan & tes di kertas" --> M
   G -- "input nilai per bagian" --> W[(Web Nilai Simulasi HSK)]
   P[Pemilik usaha] -- "bertanya" --> A
   P -- "bertanya" --> G
-  A -. "bentrok baru ketahuan menjelang kelas" .- G
+  A -. "tidak ada jadwal tertulis: pemakaian guru dan ruang tidak terpantau" .- G
 ```
 
 ### 3.3.2 Use Case Diagram Sistem Saat Ini
 
-Use case diagram sistem lama ditunjukkan pada Gambar 3.6. Aktor calon
+Use case diagram sistem lama ditunjukkan pada Gambar 3.5. Aktor calon
 murid mendaftar melalui WhatsApp. Aktor murid mengonfirmasi kehadiran,
 mengirim bukti transfer, mengerjakan latihan dan tes di kertas, dan
 menanyakan sisa sesi. Aktor guru memberi tahu ketersediaan, mencatat
 kehadiran, mengoreksi latihan dan tes, dan memasukkan nilai simulasi ke
-aplikasi web. Aktor admin mencatat pendaftaran, menyusun jadwal, mencari
+aplikasi web. Aktor admin mencatat pendaftaran, menyepakati jam belajar, mencari
 guru pengganti, mencocokkan pembayaran, menghitung sisa sesi, dan
 membuat rekap bulanan. Aktor pemilik usaha membaca rekap dan menanyakan
 perkembangan murid. Semua use case tersebut dilakukan tanpa sistem yang
 terhubung.
 
-[GAMBAR 3.6: use case diagram sistem lama]
+[GAMBAR 3.5: use case diagram sistem lama]
 
-Gambar 3.6
+Gambar 3.5
 Use Case Diagram Sistem Saat Ini
 
 ```mermaid
-%% Alat bantu menggambar Gambar 3.6 (bukan isi buku)
+%% Alat bantu menggambar Gambar 3.5 (bukan isi buku)
 flowchart LR
   subgraph Sistem lama (manual)
     U1([Mendaftar lewat WhatsApp])
@@ -215,7 +203,7 @@ flowchart LR
     U8([Koreksi latihan & tes])
     U9([Input nilai simulasi ke web])
     U10([Catat pendaftaran di spreadsheet])
-    U11([Susun jadwal di spreadsheet])
+    U11([Sepakati jam belajar lewat chat])
     U12([Cari guru pengganti])
     U13([Cocokkan bukti transfer])
     U14([Hitung sisa sesi manual])
@@ -231,24 +219,23 @@ flowchart LR
 
 ### 3.3.3 Activity Diagram Sistem Saat Ini
 
-Tiga proses utama sistem lama digambarkan dalam activity diagram, yaitu
-pendaftaran dan pembayaran, penjadwalan guru, serta tes simulasi dan
-kenaikan tingkat.
+Dua proses utama sistem lama digambarkan dalam activity diagram, yaitu
+pendaftaran dan pembayaran serta tes simulasi dan kenaikan tingkat.
 
-Gambar 3.7 menggambarkan pendaftaran dan pembayaran. Calon murid
+Gambar 3.6 menggambarkan pendaftaran dan pembayaran. Calon murid
 menghubungi admin melalui WhatsApp, admin menjawab dan meminta data,
 lalu mencatat data di spreadsheet. Admin menyebutkan harga paket, murid
 mentransfer dan mengirim foto bukti, admin memeriksa mutasi rekening; jika
 cocok, admin mencatat pembayaran dan memasukkan murid ke grup kelas,
 jika tidak cocok admin menanyakan ulang kepada murid.
 
-[GAMBAR 3.7: activity diagram pendaftaran dan pembayaran pada sistem lama]
+[GAMBAR 3.6: activity diagram pendaftaran dan pembayaran pada sistem lama]
 
-Gambar 3.7
+Gambar 3.6
 Activity Diagram Pendaftaran dan Pembayaran pada Sistem Saat Ini
 
 ```mermaid
-%% Alat bantu menggambar Gambar 3.7 (bukan isi buku); swimlane: Calon murid | Admin
+%% Alat bantu menggambar Gambar 3.6 (bukan isi buku); swimlane: Calon murid | Admin
 flowchart TD
   A1([Mulai]) --> A2[Calon murid: hubungi admin via WhatsApp]
   A2 --> A3[Admin: jawab, minta data diri]
@@ -262,48 +249,20 @@ flowchart TD
   A10 --> A11([Selesai])
 ```
 
-Gambar 3.8 menggambarkan penjadwalan guru. Admin menanyakan
-ketersediaan setiap guru melalui chat dan menunggu jawaban, menyusun
-jadwal di spreadsheet, lalu membagikannya ke grup. Jika guru atau murid
-melaporkan bentrok, admin mengubah jadwal dan membagikannya kembali.
-Jika seorang guru berhalangan pada satu pertemuan, admin menghubungi guru
-lain satu per satu sampai ada yang bersedia, lalu memberi tahu murid.
-
-[GAMBAR 3.8: activity diagram penjadwalan guru pada sistem lama]
-
-Gambar 3.8
-Activity Diagram Penjadwalan Guru pada Sistem Saat Ini
-
-```mermaid
-%% Alat bantu menggambar Gambar 3.8 (bukan isi buku); swimlane: Admin | Guru | Murid
-flowchart TD
-  B1([Mulai]) --> B2[Admin: tanya ketersediaan tiap guru via chat]
-  B2 --> B3[Guru: balas ketersediaan]
-  B3 --> B4[Admin: susun jadwal di spreadsheet]
-  B4 --> B5[Admin: bagikan ke grup WhatsApp]
-  B5 --> B6{Ada laporan bentrok?}
-  B6 -- Ya --> B7[Admin: ubah jadwal] --> B5
-  B6 -- Tidak --> B8{Guru berhalangan pada satu pertemuan?}
-  B8 -- Ya --> B9[Admin: hubungi guru lain satu per satu] --> B10{Ada yang bersedia?}
-  B10 -- Tidak --> B11[Admin: batalkan pertemuan, beri tahu murid] --> B13
-  B10 -- Ya --> B12[Admin: beri tahu murid guru pengganti] --> B13
-  B8 -- Tidak --> B13([Selesai])
-```
-
-Gambar 3.9 menggambarkan tes simulasi dan kenaikan tingkat. Guru
+Gambar 3.7 menggambarkan tes simulasi dan kenaikan tingkat. Guru
 menyiapkan lembar soal dan mengawasi tes di kelas, murid mengerjakan di
 kertas, guru mengoreksi dan menghitung nilai per bagian, lalu memasukkan
 nilai ke aplikasi web Nilai Simulasi HSK. Ketika guru menilai murid sudah
 siap, guru dan admin memeriksa riwayat nilai simulasi secara manual dan
 memutuskan kenaikan tingkat, lalu memberi tahu murid.
 
-[GAMBAR 3.9: activity diagram tes simulasi dan kenaikan tingkat pada sistem lama]
+[GAMBAR 3.7: activity diagram tes simulasi dan kenaikan tingkat pada sistem lama]
 
-Gambar 3.9
+Gambar 3.7
 Activity Diagram Tes Simulasi dan Kenaikan Tingkat pada Sistem Saat Ini
 
 ```mermaid
-%% Alat bantu menggambar Gambar 3.9 (bukan isi buku); swimlane: Guru | Murid | Admin
+%% Alat bantu menggambar Gambar 3.7 (bukan isi buku); swimlane: Guru | Murid | Admin
 flowchart TD
   C1([Mulai]) --> C2[Guru: siapkan lembar soal kode tes]
   C2 --> C3[Murid: kerjakan tes di kertas, diawasi guru]
@@ -327,7 +286,7 @@ Permasalahan pada Sistem Saat Ini
 
 | No | Masalah | Penyebab | Akibat |
 |---|---|---|---|
-| 1 | Bentrok jadwal guru dan ruang | Jadwal disusun di spreadsheet tanpa pengecekan otomatis; ketersediaan guru ditanya lewat chat | Bentrok baru diketahui menjelang kelas; kelas tertunda atau dibatalkan |
+| 1 | Tidak ada jadwal guru dan kelas | Jam belajar disepakati lewat chat tanpa jadwal tertulis; pemakaian guru dan ruang tidak tercatat di mana pun | Admin dan pemilik tidak tahu kapan guru dan ruang terpakai; setiap perubahan jam diatur ulang satu per satu lewat chat |
 | 2 | Guru pengganti sulit dicari | Tidak ada data ketersediaan dan level yang diajar tiap guru dalam satu tempat | Admin menghubungi guru satu per satu; murid terlambat diberi tahu |
 | 3 | Data murid tersebar | Pendaftaran di chat dan spreadsheet, kehadiran di kertas, nilai di aplikasi web terpisah | Data sulit dicari dan tidak sinkron antarsumber |
 | 4 | Selisih sisa sesi paket | Sisa sesi dihitung manual dari daftar hadir kertas; izin dan alpa diperlakukan berbeda tanpa catatan yang seragam | Perselisihan sisa sesi antara admin dan murid; paket kedaluwarsa tidak terpantau |

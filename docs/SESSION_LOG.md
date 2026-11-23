@@ -34,6 +34,14 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   admin asked availability by chat and kept the schedule in a spreadsheet.
 - Checks: package valid, 127 bookmarks all resolved, 2 figure relationships, list point 8 shares the list
   numbering of points 1–7. Pages after the cover are still checked by structure only (no Word on the Mac).
+- **Owner's second check (uploaded his edited book):** his edits ported into the builder (examiner lines removed
+  from the pengesahan page, sidang month, pernyataan date and the tab before "Yang Membuat Pernyataan", prodi
+  line "Prog Prof S1 Informatika"); English month names made Indonesian (JANUARI 2027, 28 Desember 2026, yellow
+  to confirm). **Old system had no teacher scheduling at all** (owner): Bab III §3.2.2 and Gambar 3.2 and 3.8
+  removed, sections and figures renumbered (rich picture is Gambar 3.4, `word/fig_3_4.png`, redrawn without the
+  schedule flows), §3.2.1 says how class times were agreed (one yellow sentence to confirm), Tabel 3.3 row 1,
+  use case and rich-picture text, Bab I §1.1 and §1.5 and both abstracts reworded. The approved proposal §IV.A
+  point 2 still describes a spreadsheet schedule; the owner should mention the correction to the supervisor.
 - **Round three and Q7 reviewed on the Mac** (d04d962 and e637636, release v0.1.29): analyzer 17 infos;
   `flutter test` 162 pass + 2 skipped; `node --check` and the 12 node tests pass; rules tests 84 pass, 1
   skipped; no tracked secrets; `firebase functions:list` 67 with `promoteStudent` and `onAnnouncementCreated`;

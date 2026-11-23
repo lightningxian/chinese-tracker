@@ -33,8 +33,8 @@ F = dict(
     co='Prof. Dr. Ir. Esther Irawati Setiawan, S.Kom., M.Kom.',
     penguji=['[ISI: nama Penguji I]', '[ISI: nama Penguji II]', '[ISI: nama Penguji III]'],
     tahun='⟦2027⟧',
-    bulan_sidang='[ISI: BULAN] ⟦2027⟧',
-    tgl_pernyataan='[ISI: tanggal sidang]',
+    bulan_sidang='⟦JANUARI 2027⟧',       # owner wrote JANUARY 2027 in Word (2026-11-24); Indonesian spelling, confirm
+    tgl_pernyataan='⟦28 Desember 2026⟧',  # owner wrote 28 December 2026 in Word; Indonesian spelling, confirm
     bulan_kata_pengantar='[ISI: bulan] ⟦2027⟧',
 )
 
@@ -303,7 +303,7 @@ def p_formula(text, number):
              b1 + math + TAB + runs('(%s)' % number) + b2)
 
 # ---------------------------------------------------------------- chapter rendering
-FIG_SIZE_CM = {'3.5': (14, 10)}            # width, height in cm; other figures 14 x 8
+FIG_SIZE_CM = {'3.4': (14, 10)}            # width, height in cm; other figures 14 x 8
 
 def render_chapter(c, title, blocks, figure_png=None):
     out = []
@@ -378,7 +378,7 @@ def render_chapter(c, title, blocks, figure_png=None):
 # ---------------------------------------------------------------- skeleton chapters IV–VIII
 SKELETON = {
     4: ('ANALISA SISTEM', '[ISI: paragraf pembuka Bab IV: bab ini menganalisis kebutuhan sistem berdasarkan fakta yang dikumpulkan di Easy Study.]', [
-        ('Pengumpulan Fakta', '[ISI: cara pengumpulan fakta: wawancara dengan admin dan empat guru, pengamatan langsung, analisis dokumen (spreadsheet jadwal, daftar hadir, catatan nilai simulasi).]', [
+        ('Pengumpulan Fakta', '[ISI: cara pengumpulan fakta: wawancara dengan admin dan empat guru, pengamatan langsung, analisis dokumen (daftar murid di spreadsheet, daftar hadir, catatan nilai simulasi).]', [
             ('Wawancara', '[ISI: tanggal, narasumber (inisial), ringkasan jawaban per topik; transkrip lengkap di Lampiran G.]'),
             ('Analisis Dokumen', '[ISI: dokumen yang dipakai saat ini dan kelemahannya, dengan Gambar 4.x tangkapan layar yang disamarkan.]')]),
         ('Identifikasi Masalah', '[ISI: daftar masalah dari Tabel 3.3 yang dipetakan ke kebutuhan sistem (Tabel 4.1).]', []),
@@ -464,7 +464,7 @@ def pengesahan():
     spec = {2: ['TUGAS AKHIR'], 4: [F['judul_lines'][0]], 5: [F['judul_lines'][1]], 8: [F['gelar']],
             13: ['Disetujui oleh Tim Penguji Tugas Akhir:'],
             14: [F['pembimbing'], '\t', '(Pembimbing)'], 15: [F['co'], '\t', '(Co-Pembimbing)'],
-            16: [F['penguji'][0], '\t', '(Penguji I)'], 17: [F['penguji'][1], '\t', '(Penguji II)'], 18: [F['penguji'][2], '\t', '(Penguji III)'],
+            16: [], 17: [], 18: [],   # owner removed the examiner lines in Word (2026-11-24); the paragraphs stay empty
             21: [F['bulan_sidang']]}
     for i in range(2, 22):
         p = raw(i)
@@ -475,11 +475,11 @@ def pengesahan():
 
 def pernyataan():
     out = []
-    spec = {26: ['Nama', '\t', ': ', F['nama']], 27: ['Fakultas/ Prodi', '\t', ': ', '%s/ %s' % (F['fakultas'], F['prodi'])],
+    spec = {26: ['Nama', '\t', ': ', F['nama']], 27: ['Fakultas/ Prodi', '\t', ': ', 'Prog Prof S1 Informatika'],   # owner's wording in Word (2026-11-24)
             28: ['NRP', '\t', ': ', F['nrp']],
             30: ['dengan ini menyatakan bahwa isi sebagian maupun keseluruhan Tugas Akhir dengan judul:'],
             32: [F['judul_lines'][0]], 33: [F['judul_lines'][1]],
-            43: ['\t', 'Surabaya, ', F['tgl_pernyataan']], 50: [F['nama']], 51: ['\t', F['nrp']]}
+            43: ['\t', 'Surabaya, ', F['tgl_pernyataan']], 44: ['\t', 'Yang Membuat Pernyataan,'], 50: [F['nama']], 51: ['\t', F['nrp']]}
     b1, b2 = bookmark('pernyataan')
     for i in range(22, 52):
         p = raw(i)
@@ -493,13 +493,13 @@ def pernyataan():
     return out
 
 ABSTRAK_ID = [
-    'Easy Study adalah lembaga kursus bahasa Mandarin di Surabaya dengan empat guru yang mengajar kelas tatap muka dari tingkat HSK 1 sampai HSK 6. Sebelum tugas akhir ini dikerjakan, pendaftaran murid, penjadwalan guru, kehadiran, pembayaran, sisa sesi paket kursus, latihan, dan nilai tes simulasi HSK dicatat secara manual dan terpisah melalui WhatsApp, spreadsheet, kertas, dan sebuah aplikasi web sederhana, sehingga bentrok jadwal sering terlambat diketahui, data tersebar, dan perkembangan belajar murid sulit dipantau.',
+    'Easy Study adalah lembaga kursus bahasa Mandarin di Surabaya dengan empat guru yang mengajar kelas tatap muka dari tingkat HSK 1 sampai HSK 6. Sebelum tugas akhir ini dikerjakan, tidak ada jadwal guru dan kelas yang tertulis, sedangkan pendaftaran murid, kehadiran, pembayaran, sisa sesi paket kursus, latihan, dan nilai tes simulasi HSK dicatat secara manual dan terpisah melalui WhatsApp, spreadsheet, kertas, dan sebuah aplikasi web sederhana, sehingga pemakaian guru dan ruang tidak terpantau, data tersebar, dan perkembangan belajar murid sulit dipantau.',
     'Tugas akhir ini merancang dan membangun Aplikasi Multiplatform Sistem Kursus Bahasa Mandarin Easy Study menggunakan Flutter dengan Firebase sebagai backend. Aplikasi ini melayani tiga peran, yaitu admin, guru, dan murid, pada web, Android, dan iOS dari satu basis kode. Fitur utamanya adalah penjadwalan guru dengan pengecekan bentrok otomatis dan penunjukan guru pengganti, pemesanan sesi kelas dan absensi digital, voucher kursus yang berkurang secara otomatis dalam satu transaksi, latihan dan tes simulasi HSK daring bertipe Listening, Reading, dan Typing yang dinilai di sisi server melalui Cloud Functions, kenaikan tingkat HSK berdasarkan kelulusan tes beserta leaderboard, tes penempatan, laporan progress murid, dan pembayaran daring melalui Midtrans.',
     'Aplikasi diuji dengan pengujian otomatis pada Firebase Emulator Suite, black-box testing, validasi fungsional dengan 24 skenario, user-based testing, dan kuesioner System Usability Scale bersama 35 responden di Easy Study. Hasilnya, ⟦24⟧ dari 24 skenario lulus, pencocokan jawaban Typing mencapai akurasi ⟦100⟧ % pada ⟦200⟧ jawaban uji, dan rata-rata skor SUS sebesar ⟦75⟧ (di atas ambang 70), sehingga aplikasi dinilai layak dipakai untuk menggantikan proses manual di Easy Study.',
 ]
 KATA_KUNCI = 'Kata kunci: Flutter, Firebase, kursus bahasa Mandarin, HSK, penjadwalan guru, voucher kursus, System Usability Scale'
 ABSTRACT_EN = [
-    'Easy Study is a Mandarin course centre in Surabaya with four teachers who teach face-to-face classes from HSK 1 to HSK 6. Before this final project, student registration, teacher scheduling, attendance, payments, the remaining sessions of course packages, exercises and HSK mock-test scores were recorded manually and separately through WhatsApp, spreadsheets, paper and a simple web page, so schedule clashes were found late, data was scattered and student progress was hard to monitor.',
+    'Easy Study is a Mandarin course centre in Surabaya with four teachers who teach face-to-face classes from HSK 1 to HSK 6. Before this final project there was no written teacher or class schedule, while student registration, attendance, payments, the remaining sessions of course packages, exercises and HSK mock-test scores were recorded manually and separately through WhatsApp, spreadsheets, paper and a simple web page, so the use of teachers and rooms was not tracked, data was scattered and student progress was hard to monitor.',
     'This final project designs and builds the Multiplatform Application for the Easy Study Mandarin Course System using Flutter with Firebase as the backend. The application serves three roles, namely admin, teacher and student, on web, Android and iOS from one code base. Its main features are teacher scheduling with automatic clash checking and substitute teachers, class session booking with digital attendance, course vouchers that are deducted automatically in one transaction, online HSK exercises and mock tests of the Listening, Reading and Typing types scored on the server through Cloud Functions, HSK level promotion based on passed tests with a leaderboard, a placement test, student progress reports and online payment through Midtrans.',
     'The application was tested with automated tests on the Firebase Emulator Suite, black-box testing, functional validation with 24 scenarios, user-based testing and the System Usability Scale questionnaire with 35 respondents at Easy Study. As a result, ⟦24⟧ of 24 scenarios passed, Typing answer matching reached an accuracy of ⟦100⟧ % on ⟦200⟧ test answers, and the mean SUS score was ⟦75⟧ (above the 70 threshold), so the application is considered fit to replace the manual process at Easy Study.',
 ]

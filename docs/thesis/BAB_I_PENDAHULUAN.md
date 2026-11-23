@@ -38,13 +38,13 @@ menentukan jadwal setiap kelas beserta guru pengajarnya; murid tidak memilih
 guru, tetapi memilih sesi kelas sesuai level dan waktu yang cocok.
 
 Sebelum aplikasi ini dibuat, proses operasional di Easy Study dijalankan
-secara manual dan terpisah-pisah. Pendaftaran murid dan konfirmasi jadwal
-dilakukan melalui pesan WhatsApp, jadwal guru disusun di spreadsheet,
-kehadiran dicatat di kertas, bukti transfer pembayaran dicek satu per satu, sisa
+secara manual dan terpisah-pisah. Pendaftaran murid dan konfirmasi kehadiran
+dilakukan melalui pesan WhatsApp, jam belajar disepakati lewat chat tanpa
+jadwal guru atau jadwal kelas yang tertulis, kehadiran dicatat di kertas, bukti transfer pembayaran dicek satu per satu, sisa
 sesi paket kursus dihitung secara manual, soal latihan dikerjakan dan dikoreksi
 di atas kertas, dan nilai tes simulasi HSK dicatat di aplikasi web terpisah yang
-bernama Nilai Simulasi HSK. Akibatnya, bentrok jadwal guru sering baru
-diketahui menjelang kelas dimulai, data murid tersebar di beberapa tempat,
+bernama Nilai Simulasi HSK. Akibatnya, pemakaian guru dan ruang tidak
+terpantau, data murid tersebar di beberapa tempat,
 pencatatan rawan salah, dan perkembangan belajar setiap murid sulit dipantau,
 baik oleh guru maupun pemilik usaha. Jika seorang guru berhalangan, admin
 harus mencari guru pengganti secara manual melalui chat. Perbandingan rinci
@@ -260,8 +260,8 @@ Penerapan setiap tahapan pada tugas akhir ini adalah sebagai berikut:
 
 1. Analisis Kebutuhan. Kebutuhan sistem dikumpulkan dengan mengamati
    proses operasional Easy Study, mewawancarai admin dan guru, menelaah
-   dokumen yang dipakai saat ini (spreadsheet jadwal, daftar hadir, catatan
-   nilai simulasi), dan membandingkan aplikasi sejenis. Hasilnya dituangkan
+   dokumen yang dipakai saat ini (daftar murid di spreadsheet, daftar hadir,
+   catatan nilai simulasi), dan membandingkan aplikasi sejenis. Hasilnya dituangkan
    dalam proposal tugas akhir yang disidangkan pada 7 Oktober 2026 dan
    diperbaiki sesuai masukan penguji. Tahapan ini dibahas pada Bab III dan
    Bab IV.
