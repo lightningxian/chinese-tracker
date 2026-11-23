@@ -2215,7 +2215,7 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
-### 2026-11-24 — Owner requests, third round — COMMIT, release v0.1.29 (functions and hosting live from the PC under the owner's standing go; 67 functions)
+### 2026-11-24 — Owner requests, third round — d04d962 + Q7 commit, release v0.1.29 (functions and hosting live from the PC under the owner's standing go; 67 functions)
 - Built: admin **News** page (post, edit, delete, audience, end date,
   optional bell notice through `onAnnouncementCreated`); calmer admin
   dashboard (Today card, four numbers, chart beside alerts, More figures
@@ -2223,8 +2223,12 @@ Any time:
   and **Promote anyway** (`promoteStudent`, Q12); `docs/IOS_SPEC.md` (Q9).
 - Owner answers: Q6 leave it; Q7 generate the listening script; Q8 rebuild
   the APK; Q9 wants iOS, specify it; Q12 the admin may just promote.
-- Left: Q7 (transcript from the recording) is the next piece in this chat;
-  Q8 needs the Mac (the release keystore is not on the PC); Q9 waits for the
+- Q7 built in the same release: **Write from the recording** in the
+  worksheet's Transcript dialog (Whisper small in the browser,
+  `web/transcribe_whisper.js`, files from `scripts/fetch_whisper.mjs`);
+  a 69-second HSK-style test dialogue was written in 32 seconds with one
+  character wrong.
+- Left: Q8 needs the Mac (the release keystore is not on the PC); Q9 waits for the
   owner's choice between the installed web app and an App Store app.
 - Proof: analyzer 17 infos; `flutter test` 162 pass and 2 skipped; node
   tests pass (manual promotion); flow test 103 steps; emulator walk of the

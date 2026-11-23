@@ -9871,7 +9871,7 @@ abstract class AppLocalizations {
   /// No description provided for @paperTranscriptHint.
   ///
   /// In en, this message translates to:
-  /// **'Type or paste what the recording says, or read the official listening script (PDF or picture). Students see it only in their review after the session.'**
+  /// **'Write it from the recording, type or paste it, or read the official listening script (PDF or picture). Students see it only in their review after the session.'**
   String get paperTranscriptHint;
 
   /// No description provided for @paperTranscriptReadFile.
@@ -13331,6 +13331,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Payments, vouchers and centre numbers'**
   String get dashMoreFiguresHint;
+
+  /// No description provided for @transcribeFromRecording.
+  ///
+  /// In en, this message translates to:
+  /// **'Write from the recording'**
+  String get transcribeFromRecording;
+
+  /// No description provided for @transcribeFromFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Write from an audio file'**
+  String get transcribeFromFile;
+
+  /// No description provided for @transcribeLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading the speech reader… {pct}% (once per computer, about 250 MB)'**
+  String transcribeLoading(int pct);
+
+  /// No description provided for @transcribeWriting.
+  ///
+  /// In en, this message translates to:
+  /// **'Writing the script… {pct}%'**
+  String transcribeWriting(int pct);
+
+  /// No description provided for @transcribeDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Script written. Read it through and correct it before saving.'**
+  String get transcribeDone;
+
+  /// No description provided for @transcribeNote.
+  ///
+  /// In en, this message translates to:
+  /// **'The script is written on this computer from the recording; it can mishear names and numbers, so check it against the recording.'**
+  String get transcribeNote;
 }
 
 class _AppLocalizationsDelegate

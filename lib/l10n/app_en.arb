@@ -2049,7 +2049,7 @@
   "paperTranscriptAdd": "Add transcript",
   "paperTranscriptEdit": "Edit transcript",
   "paperTranscriptNone": "No transcript yet. Students see it in their review after the session.",
-  "paperTranscriptHint": "Type or paste what the recording says, or read the official listening script (PDF or picture). Students see it only in their review after the session.",
+  "paperTranscriptHint": "Write it from the recording, type or paste it, or read the official listening script (PDF or picture). Students see it only in their review after the session.",
   "paperTranscriptReadFile": "Read from a file",
   "paperTranscriptSaved": "Transcript saved.",
   "paperFlagGarbled": "a choice looks misread",
@@ -2997,5 +2997,13 @@
   "dashClassesToday": "{n, plural, =0{No classes today} =1{1 class today} other{{n} classes today}}",
   "@dashClassesToday": {"placeholders": {"n": {"type": "int"}}},
   "dashMoreFigures": "More figures",
-  "dashMoreFiguresHint": "Payments, vouchers and centre numbers"
+  "dashMoreFiguresHint": "Payments, vouchers and centre numbers",
+  "transcribeFromRecording": "Write from the recording",
+  "transcribeFromFile": "Write from an audio file",
+  "transcribeLoading": "Loading the speech reader… {pct}% (once per computer, about 250 MB)",
+  "@transcribeLoading": {"placeholders": {"pct": {"type": "int"}}},
+  "transcribeWriting": "Writing the script… {pct}%",
+  "@transcribeWriting": {"placeholders": {"pct": {"type": "int"}}},
+  "transcribeDone": "Script written. Read it through and correct it before saving.",
+  "transcribeNote": "The script is written on this computer from the recording; it can mishear names and numbers, so check it against the recording."
 }

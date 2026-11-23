@@ -6091,7 +6091,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get paperTranscriptHint =>
-      'Type or paste what the recording says, or read the official listening script (PDF or picture). Students see it only in their review after the session.';
+      'Write it from the recording, type or paste it, or read the official listening script (PDF or picture). Students see it only in their review after the session.';
 
   @override
   String get paperTranscriptReadFile => 'Read from a file';
@@ -8141,4 +8141,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dashMoreFiguresHint => 'Payments, vouchers and centre numbers';
+
+  @override
+  String get transcribeFromRecording => 'Write from the recording';
+
+  @override
+  String get transcribeFromFile => 'Write from an audio file';
+
+  @override
+  String transcribeLoading(int pct) {
+    return 'Loading the speech reader… $pct% (once per computer, about 250 MB)';
+  }
+
+  @override
+  String transcribeWriting(int pct) {
+    return 'Writing the script… $pct%';
+  }
+
+  @override
+  String get transcribeDone =>
+      'Script written. Read it through and correct it before saving.';
+
+  @override
+  String get transcribeNote =>
+      'The script is written on this computer from the recording; it can mishear names and numbers, so check it against the recording.';
 }

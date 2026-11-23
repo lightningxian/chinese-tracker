@@ -1659,7 +1659,7 @@
   "paperTranscriptAdd": "Tambah transkrip",
   "paperTranscriptEdit": "Ubah transkrip",
   "paperTranscriptNone": "Belum ada transkrip. Murid melihatnya di pembahasan setelah sesi selesai.",
-  "paperTranscriptHint": "Ketik atau tempel isi rekaman, atau baca naskah resmi bagian mendengar (PDF atau gambar). Murid hanya melihatnya di pembahasan setelah sesi.",
+  "paperTranscriptHint": "Tulis dari rekaman, ketik atau tempel, atau baca naskah resmi bagian mendengar (PDF atau gambar). Murid hanya melihatnya di pembahasan setelah sesi.",
   "paperTranscriptReadFile": "Baca dari file",
   "paperTranscriptSaved": "Transkrip disimpan.",
   "paperFlagGarbled": "pilihan tampak salah baca",
@@ -2235,5 +2235,11 @@
   "dashOpenTasks": "{n} hal perlu ditindaklanjuti",
   "dashClassesToday": "{n, plural, =0{Tidak ada kelas hari ini} other{{n} kelas hari ini}}",
   "dashMoreFigures": "Angka lainnya",
-  "dashMoreFiguresHint": "Pembayaran, voucher, dan angka centre"
+  "dashMoreFiguresHint": "Pembayaran, voucher, dan angka centre",
+  "transcribeFromRecording": "Tulis dari rekaman",
+  "transcribeFromFile": "Tulis dari file audio",
+  "transcribeLoading": "Memuat pembaca suara… {pct}% (sekali per komputer, sekitar 250 MB)",
+  "transcribeWriting": "Menulis naskah… {pct}%",
+  "transcribeDone": "Naskah selesai ditulis. Baca dan perbaiki sebelum menyimpan.",
+  "transcribeNote": "Naskah ditulis di komputer ini dari rekaman; nama dan angka bisa salah dengar, jadi periksa dengan rekamannya."
 }

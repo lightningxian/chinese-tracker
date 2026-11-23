@@ -6065,7 +6065,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get paperTranscriptHint =>
-      'Ketik atau tempel isi rekaman, atau baca naskah resmi bagian mendengar (PDF atau gambar). Murid hanya melihatnya di pembahasan setelah sesi.';
+      'Tulis dari rekaman, ketik atau tempel, atau baca naskah resmi bagian mendengar (PDF atau gambar). Murid hanya melihatnya di pembahasan setelah sesi.';
 
   @override
   String get paperTranscriptReadFile => 'Baca dari file';
@@ -8107,4 +8107,28 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get dashMoreFiguresHint => 'Pembayaran, voucher, dan angka centre';
+
+  @override
+  String get transcribeFromRecording => 'Tulis dari rekaman';
+
+  @override
+  String get transcribeFromFile => 'Tulis dari file audio';
+
+  @override
+  String transcribeLoading(int pct) {
+    return 'Memuat pembaca suara… $pct% (sekali per komputer, sekitar 250 MB)';
+  }
+
+  @override
+  String transcribeWriting(int pct) {
+    return 'Menulis naskah… $pct%';
+  }
+
+  @override
+  String get transcribeDone =>
+      'Naskah selesai ditulis. Baca dan perbaiki sebelum menyimpan.';
+
+  @override
+  String get transcribeNote =>
+      'Naskah ditulis di komputer ini dari rekaman; nama dan angka bisa salah dengar, jadi periksa dengan rekamannya.';
 }

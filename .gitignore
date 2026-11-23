@@ -53,6 +53,8 @@ local_papers/
 
 # Build 1C: the paper reader's PaddleOCR files, fetched by scripts/fetch_paper_ocr.mjs
 web/ocr/
+# Owner 2026-11-24 (Q7): the listening-script writer files, fetched by scripts/fetch_whisper.mjs
+web/asr/
 
 # Build 8: trial passwords and respondent names (never committed)
 scripts/trial/*.local.*

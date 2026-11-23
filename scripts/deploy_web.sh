@@ -74,6 +74,8 @@ fi
 # The paper reader's PaddleOCR files (web/ocr/, not in git; Build 1C).
 echo "▶ Paper reader files…"
 node scripts/fetch_paper_ocr.mjs
+# The listening-script writer (web/asr/, not in git; owner 2026-11-24).
+node scripts/fetch_whisper.mjs
 echo "▶ Building web…"
 rm -rf build/web
 flutter build web --release \

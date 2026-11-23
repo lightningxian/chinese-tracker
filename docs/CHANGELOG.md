@@ -6,6 +6,34 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-24 — Claude (BUILD chat): listening scripts written from the recording (Q7)
+
+**What changed**
+- The worksheet's **Transcript** dialog has **Write from the recording**
+  (or **Write from an audio file** when the worksheet has no recording):
+  Whisper small runs in the admin's browser through transformers.js 4.3.2
+  and onnxruntime-web (`web/transcribe_whisper.js`,
+  `lib/services/listening/`). The recording is cut at quiet moments into
+  pieces of at most 29 seconds; traditional characters become simplified
+  (opencc-js); Chinese punctuation; one line per question when the
+  recording names them (第一题 …). The admin reads it through and saves.
+- `scripts/fetch_whisper.mjs` fetches the files into `web/asr/` (about
+  270 MB, pinned by SHA-256, git-ignored); `deploy_web.sh` and
+  `run_emulator_web.sh` run it. The browser downloads them once and keeps
+  them in its cache. Nothing is sent to an outside service.
+
+**Why**
+- Owner 2026-11-24, Q7: "listening scripts — generate it".
+
+**For review**
+- Measured on a 69-second HSK-style dialogue read by the Windows Mandarin
+  voice: 32 seconds on the PC, one character wrong (打巴折 for 打八折).
+  Real recordings with two voices and background sound may do worse; the
+  note under the buttons says to check names and numbers.
+- Hosting grows by about 270 MB (the model files).
+
+---
+
 ## 2026-11-24 — Claude (BUILD chat): owner requests, third round (News, calmer dashboard, promote a student)
 
 **What changed**
