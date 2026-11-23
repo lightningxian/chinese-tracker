@@ -73,17 +73,19 @@ Read docs/PLAN.md. You are the BUILD chat. Follow section 0, run Build 0 if this
 
 ## 1. Where the project stands (2026-11-20)
 
-**Live:** https://chinese-tracker.web.app, hosting at release v0.1.29
-(owner requests, third round plus the listening-script writer Q7,
-published from the PC 2026-11-24 06:03 WIB and checked from the Mac;
-Build 8 was v0.1.26 on 2026-11-21). **All eight thesis builds are
+**Live:** https://chinese-tracker.web.app, hosting at release v0.1.30
+(App Store readiness: icon, Delete my account, /privacy; functions from
+the PC, hosting from the Mac 2026-11-24 06:34 WIB with the rebuilt Android
+APK back at `/downloads/easy-study.apk`; v0.1.29 was the third round plus
+the listening-script writer Q7; Build 8 was v0.1.26 on 2026-11-21). **All eight thesis builds are
 built, reviewed and live (2026-11-21).** Firebase project
-`chinese-tracker`, Blaze plan, **67 Cloud Functions** on Node 22 and 23
+`chinese-tracker`, Blaze plan, **68 Cloud Functions** on Node 22 and 23
 composite indexes (2026-11-23: v0.1.27 added `deleteSchedule`,
 `cleanPlacementResults` and `runPlacementCleanup`; v0.1.28 added
 `importHolidays` and `setDayClosed`; 2026-11-24: v0.1.29 added
-`promoteStudent` and `onAnnouncementCreated`; the Android APK is not on
-hosting since the PC's web-only deploys, see Q8) (Builds 2B to 5 went live on 2026-11-20, Builds 6, 7
+`promoteStudent` and `onAnnouncementCreated`; v0.1.30 added
+`deleteMyAccount`. Since 7157d16 a `--web-only` deploy downloads the
+live APK first and keeps it on hosting) (Builds 2B to 5 went live on 2026-11-20, Builds 6, 7
 and 8 on 2026-11-21, each
 deployed from the PC; the PLAN chat counts the functions and indexes from
 the Mac after every build). **Owner decision 2026-11-20 (said in the BUILD

@@ -42,6 +42,15 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   schedule flows), §3.2.1 says how class times were agreed (one yellow sentence to confirm), Tabel 3.3 row 1,
   use case and rich-picture text, Bab I §1.1 and §1.5 and both abstracts reworded. The approved proposal §IV.A
   point 2 still describes a spreadsheet schedule; the owner should mention the correction to the supervisor.
+- **APK published (owner: "publish the APK"), v0.1.30 reviewed:** the APK was rebuilt from 3169334 (new pencil
+  icon) and published with `scripts/deploy_web.sh --no-keys` from the Mac at 06:34 WIB after the PC's v0.1.30
+  deploy (functions 68 with `deleteMyAccount`, /privacy). Live: `/downloads/easy-study.apk` returns 200 with the
+  APK content type (109 MB), the bundle carries the APK link, "Write from the recording" and "Delete my account",
+  the Whisper encoder is served. Checks on 3169334: analyzer 17 infos, `flutter test` 162 pass + 2 skipped,
+  `node --check` and the 12 node tests pass; `deleteMyAccount` read: signed-in student or parent only, sign-in at
+  most 10 minutes old, shared `deleteAccountCore` unlinks parent and child, records stay. The privacy page
+  publishes the centre's phone and Instagram only. 7157d16 (BUILD chat) makes `--web-only` deploys keep the
+  live APK, so no Mac redeploy is needed after a PC web deploy.
 - **Round three and Q7 reviewed on the Mac** (d04d962 and e637636, release v0.1.29): analyzer 17 infos;
   `flutter test` 162 pass + 2 skipped; `node --check` and the 12 node tests pass; rules tests 84 pass, 1
   skipped; no tracked secrets; `firebase functions:list` 67 with `promoteStudent` and `onAnnouncementCreated`;
