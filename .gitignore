@@ -56,3 +56,7 @@ web/ocr/
 
 # Build 8: trial passwords and respondent names (never committed)
 scripts/trial/*.local.*
+
+# Python bytecode (seed scripts import each other)
+__pycache__/
+*.pyc

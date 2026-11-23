@@ -6,6 +6,19 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-23 — Claude (BUILD chat): untrack Python bytecode
+
+**What changed**
+- `scripts/__pycache__/seed_emulator.cpython-313.pyc` (committed by mistake
+  in Build 8, 2b1d798) is removed from git; `.gitignore` now ignores
+  `__pycache__/` and `*.pyc`.
+
+**Why**
+- Hygiene item from the PLAN chat's Build 8 review; the owner said yes.
+
+**For review**
+- Nothing to deploy; the local file stays on disk.
+
 ## 2026-11-21 — Claude (BUILD chat): Build 8 — dashboard, trial kit, screenshot pass
 
 **What changed**
