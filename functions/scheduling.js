@@ -78,6 +78,37 @@ function validate(s, teacher) {
   return out;
 }
 
+/**
+ * Owner 2026-11-23: a class may have helper teachers besides its main
+ * teacher. Unique, not the main teacher, at most 3.
+ */
+function cleanCoTeachers(ids, primary) {
+  const out = [];
+  for (const raw of Array.isArray(ids) ? ids : []) {
+    const id = String(raw || "").trim();
+    if (!id || id.includes("/") || id === primary || out.includes(id)) continue;
+    out.push(id);
+  }
+  return out.slice(0, 3);
+}
+
+/** Every teacher of a schedule or session: the main one, then the helpers. */
+function teachersOf(x) {
+  return [x.teacherId, ...((x && x.coTeacherIds) || [])].filter(Boolean);
+}
+
+/**
+ * When the teacher-readiness switch is off (owner 2026-11-23: teachers are
+ * taken as ready all the time), free times are looked for in the centre's
+ * opening hours instead of a teacher's availability.
+ */
+const OPEN_HOURS = {startMinutes: 8 * 60, endMinutes: 21 * 60};
+function openAllWeek() {
+  const out = {};
+  for (let d = 1; d <= 7; d += 1) out[String(d)] = [{...OPEN_HOURS}];
+  return out;
+}
+
 /** Two validity periods share at least one day ('' = open-ended). */
 function periodsOverlap(a, b) {
   const aFrom = a.validFrom || "0000-01-01";
@@ -250,6 +281,9 @@ module.exports = {
   clock,
   startMs,
   overlaps,
+  cleanCoTeachers,
+  teachersOf,
+  openAllWeek,
   insideAvailability,
   validate,
   periodsOverlap,

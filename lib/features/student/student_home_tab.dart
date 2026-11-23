@@ -18,6 +18,7 @@ import '../../models/student_class_term.dart';
 import '../../models/student_progress.dart';
 import '../../services/firestore_service.dart';
 import '../timetable/student_sessions_section.dart';
+import '../announcements/announcements.dart';
 
 /// Student home, kept to about one screen: a header strip with three
 /// tiles (sessions left, exercises done with the streak, average score),
@@ -54,6 +55,8 @@ class StudentHomeTab extends StatelessWidget {
         return ListView(
           padding: const EdgeInsets.all(20),
           children: [
+            // Owner 2026-11-23: announcements (closed days, news).
+            const AnnouncementBanner(role: 'student'),
             _HeroHeader(
               student: student,
               results: results,

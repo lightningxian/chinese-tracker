@@ -7,6 +7,7 @@ import '../../l10n/l10n.dart';
 import '../../models/class_session.dart';
 import '../../services/auth_service.dart';
 import '../../services/teaching_day_service.dart';
+import '../../services/timetable_service.dart';
 
 /// Build 7: the words for a session's life status.
 String sessionStatusLabel(AppLocalizations l, String status) => switch (status) {
@@ -92,6 +93,7 @@ class SessionLifeActions extends StatefulWidget {
 
 class _SessionLifeActionsState extends State<SessionLifeActions> {
   final _service = TeachingDayService();
+  late final Stream<SchedulingRules> _rules = TimetableService().watchSettings();
   bool _busy = false;
 
   ClassSession get s => widget.session;
@@ -123,11 +125,11 @@ class _SessionLifeActionsState extends State<SessionLifeActions> {
 
   Future<void> _close() async {
     final l = context.l10n;
-    final statuses = await ConcludeClassDialog.show(context,
+    final check = await ConcludeClassDialog.showWithBoard(context,
         sessionId: s.id, sessionTitle: s.sessionTitle);
-    if (statuses == null || !mounted) return;
+    if (check == null || !mounted) return;
     await _run(() async {
-      final r = await _service.close(s.id, statuses);
+      final r = await _service.close(s.id, check.statuses, board: check);
       if (r.already) return l.closeAlreadyDone;
       return r.failed.isEmpty
           ? l.closeDone(r.credited, r.excused)
@@ -231,19 +233,25 @@ class _SessionLifeActionsState extends State<SessionLifeActions> {
     final l = context.l10n;
     final user = context.watch<AuthService>().appUser;
     final admin = user?.isAdmin == true;
-    final mine = user != null && user.uid == s.teacherId;
+    final mine = user != null &&
+        (user.uid == s.teacherId || s.coTeacherIds.contains(user.uid));
     final st = s.lifeStatus;
     final open = !s.isClosedOrCancelled;
     final canRun = admin || mine;
     // Owner 2026-11-23: the session starts by itself at its start time;
     // the teacher's check-in only records their arrival (late after 15 min).
     final showCheckIn = mine && open && s.generated && s.checkInAt == null &&
-        (st == 'scheduled' || st == 'ongoing');
+        (st == 'scheduled' || st == 'ongoing') && user.uid == s.teacherId;
     final showClose = canRun && open && st != 'needs_teacher' &&
         (st == 'ongoing' || !s.generated);
     final showSub = admin && open;
     final showCancel = open && (admin || (mine && s.scheduleId.isEmpty));
-    if (!showCheckIn && !showClose && !showSub && !showCancel) {
+    return StreamBuilder<SchedulingRules>(
+      stream: _rules,
+      builder: (context, ru) {
+    // Owner 2026-11-23: the teacher check-in only with teacher readiness on.
+    final checkIn = showCheckIn && (ru.data?.teacherReadiness ?? false);
+    if (!checkIn && !showClose && !showSub && !showCancel) {
       return const SizedBox.shrink();
     }
     return Wrap(
@@ -251,7 +259,7 @@ class _SessionLifeActionsState extends State<SessionLifeActions> {
       runSpacing: 8,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        if (showCheckIn)
+        if (checkIn)
           FilledButton.icon(
             onPressed: _busy ? null : _checkIn,
             style: _small.copyWith(backgroundColor: WidgetStatePropertyAll(AppColors.navy)),
@@ -284,6 +292,8 @@ class _SessionLifeActionsState extends State<SessionLifeActions> {
           const SizedBox(
               width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
       ],
+    );
+      },
     );
   }
 }

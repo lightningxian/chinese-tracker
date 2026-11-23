@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 
+import '../models/board_check.dart';
+
 /// Build 7 (docs/PLAN.md §4): the teaching day. Everything that changes a
 /// session's life or a voucher goes through a function: check-in, the close
 /// (one transaction with the voucher ledger), substitutes, cancellations,
@@ -147,9 +149,24 @@ class TeachingDayService {
   }
 
   /// [statuses]: studentId → `hadir` / `izin` / `alpa`.
-  Future<CloseResult> close(String sessionId, Map<String, String> statuses) async =>
-      CloseResult.fromMap(
-          await _call('closeSession', {'sessionId': sessionId, 'statuses': statuses}));
+  Future<CloseResult> close(String sessionId, Map<String, String> statuses,
+      {BoardCheck? board}) async {
+    var mismatches = 0;
+    if (board != null) {
+      final d = BoardCheck.differences(
+          statusById: statuses, board: board.board, nameById: const {}, extras: board.extras);
+      mismatches = d.presentNotSigned.length + d.signedNotPresent.length + d.notBooked.length;
+    }
+    return CloseResult.fromMap(await _call('closeSession', {
+      'sessionId': sessionId,
+      'statuses': statuses,
+      if (board != null) ...{
+        'board': board.board,
+        'boardExtras': board.extras,
+        'boardMismatches': mismatches,
+      },
+    }));
+  }
 
   Future<void> cancel(String sessionId) => _call('cancelSession', {'sessionId': sessionId});
 

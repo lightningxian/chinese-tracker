@@ -12651,7 +12651,7 @@ abstract class AppLocalizations {
   /// No description provided for @timetableFillTimes.
   ///
   /// In en, this message translates to:
-  /// **'Type the times as 16:30 to check.'**
+  /// **'Pick a teacher and a room, and type the times as 16:30, to check.'**
   String get timetableFillTimes;
 
   /// No description provided for @timetableDelete.
@@ -12737,6 +12737,426 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your weekly class: you are booked into it every week. Leave empty to book each class yourself.'**
   String get voucherClassDayHelp;
+
+  /// No description provided for @rulesIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'These rules apply to every weekly schedule and to the automatic checks.'**
+  String get rulesIntro;
+
+  /// No description provided for @rulesGapTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Break between two classes'**
+  String get rulesGapTitle;
+
+  /// No description provided for @rulesGapHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'For one teacher and for one room. 0 means a class may start right when the previous one ends.'**
+  String get rulesGapHelp;
+
+  /// No description provided for @rulesUnitMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'minutes'**
+  String get rulesUnitMinutes;
+
+  /// No description provided for @rulesMinTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimum students per class'**
+  String get rulesMinTitle;
+
+  /// No description provided for @rulesMinHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'A timetable class with fewer booked students closes by itself; the students get their session back and everyone is told. 0 switches this off.'**
+  String get rulesMinHelp;
+
+  /// No description provided for @rulesUnitStudents.
+  ///
+  /// In en, this message translates to:
+  /// **'students'**
+  String get rulesUnitStudents;
+
+  /// No description provided for @rulesCheckedBefore.
+  ///
+  /// In en, this message translates to:
+  /// **'checked'**
+  String get rulesCheckedBefore;
+
+  /// No description provided for @rulesUnitHours.
+  ///
+  /// In en, this message translates to:
+  /// **'hours before'**
+  String get rulesUnitHours;
+
+  /// No description provided for @rulesHoursTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Teaching load warning'**
+  String get rulesHoursTitle;
+
+  /// No description provided for @rulesHoursHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Show a warning when a new schedule gives a teacher more hours a week than this.'**
+  String get rulesHoursHelp;
+
+  /// No description provided for @rulesUnitHoursWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'hours / week'**
+  String get rulesUnitHoursWeek;
+
+  /// No description provided for @rulesReadinessTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Teacher availability, confirmation and recap'**
+  String get rulesReadinessTitle;
+
+  /// No description provided for @rulesReadinessHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Off: teachers are taken as ready all the time (no availability check, no confirmation, no late check-in, no recap). On: the thesis features come back.'**
+  String get rulesReadinessHelp;
+
+  /// No description provided for @rulesReadinessOn.
+  ///
+  /// In en, this message translates to:
+  /// **'On'**
+  String get rulesReadinessOn;
+
+  /// No description provided for @rulesReadinessOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off: teachers are always ready'**
+  String get rulesReadinessOff;
+
+  /// No description provided for @rulesGapInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'The break must be 0 to 180 minutes.'**
+  String get rulesGapInvalid;
+
+  /// No description provided for @rulesHoursInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'The teaching load must be 1 to 80 hours.'**
+  String get rulesHoursInvalid;
+
+  /// No description provided for @rulesMinInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'The minimum must be 0 to 30 students.'**
+  String get rulesMinInvalid;
+
+  /// No description provided for @rulesCheckInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Check 1 to 48 hours before the class.'**
+  String get rulesCheckInvalid;
+
+  /// No description provided for @holidaysTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Holidays & news'**
+  String get holidaysTab;
+
+  /// No description provided for @timetableHelpers.
+  ///
+  /// In en, this message translates to:
+  /// **'Helper teachers (up to 3)'**
+  String get timetableHelpers;
+
+  /// No description provided for @timetableHelperOf.
+  ///
+  /// In en, this message translates to:
+  /// **'You help {name}'**
+  String timetableHelperOf(String name);
+
+  /// No description provided for @holidayKindNational.
+  ///
+  /// In en, this message translates to:
+  /// **'National holiday'**
+  String get holidayKindNational;
+
+  /// No description provided for @holidayKindLeave.
+  ///
+  /// In en, this message translates to:
+  /// **'Joint leave'**
+  String get holidayKindLeave;
+
+  /// No description provided for @holidayKindCentre.
+  ///
+  /// In en, this message translates to:
+  /// **'Centre day off'**
+  String get holidayKindCentre;
+
+  /// No description provided for @holidayUndecided.
+  ///
+  /// In en, this message translates to:
+  /// **'Not decided'**
+  String get holidayUndecided;
+
+  /// No description provided for @holidayOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Classes run'**
+  String get holidayOpen;
+
+  /// No description provided for @holidayClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Closed'**
+  String get holidayClosed;
+
+  /// No description provided for @dayCloseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Close the centre on {date}?'**
+  String dayCloseTitle(String date);
+
+  /// No description provided for @dayOpenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the centre on {date}?'**
+  String dayOpenTitle(String date);
+
+  /// No description provided for @dayCloseBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Every class of that day that has not started is cancelled. Bookings and voucher sessions go back to the students, and they are told.'**
+  String get dayCloseBody;
+
+  /// No description provided for @dayOpenBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Classes run on this day. Timetable classes cancelled by an earlier closing come back (students book again).'**
+  String get dayOpenBody;
+
+  /// No description provided for @dayCloseReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason (e.g. holiday, vacation)'**
+  String get dayCloseReason;
+
+  /// No description provided for @dayCloseAnnounce.
+  ///
+  /// In en, this message translates to:
+  /// **'Post an announcement for students, parents and teachers'**
+  String get dayCloseAnnounce;
+
+  /// No description provided for @dayCloseButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Close this day'**
+  String get dayCloseButton;
+
+  /// No description provided for @dayOpenButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Classes run'**
+  String get dayOpenButton;
+
+  /// No description provided for @dayClosedDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Day closed, {n} classes cancelled.'**
+  String dayClosedDone(int n);
+
+  /// No description provided for @dayOpenedDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Day open, {n} classes back.'**
+  String dayOpenedDone(int n);
+
+  /// No description provided for @holidaysImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Load Indonesian holidays'**
+  String get holidaysImport;
+
+  /// No description provided for @holidaysImported.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} holidays added.'**
+  String holidaysImported(int n);
+
+  /// No description provided for @holidaysCloseOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Close another day'**
+  String get holidaysCloseOther;
+
+  /// No description provided for @holidaysCloseThisDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Close the centre on this day'**
+  String get holidaysCloseThisDay;
+
+  /// No description provided for @holidaysTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Holidays'**
+  String get holidaysTitle;
+
+  /// No description provided for @holidaysHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'National holidays and joint leave (SKB 3 Menteri). Decide for each day whether classes run.'**
+  String get holidaysHelp;
+
+  /// No description provided for @holidaysNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No holidays ahead.'**
+  String get holidaysNone;
+
+  /// No description provided for @announcementsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Announcements'**
+  String get announcementsTitle;
+
+  /// No description provided for @announcementsNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No announcements right now.'**
+  String get announcementsNone;
+
+  /// No description provided for @announcementNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New announcement'**
+  String get announcementNew;
+
+  /// No description provided for @announcementTitleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get announcementTitleLabel;
+
+  /// No description provided for @announcementBodyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Message'**
+  String get announcementBodyLabel;
+
+  /// No description provided for @announcementTitleMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Give the announcement a title.'**
+  String get announcementTitleMissing;
+
+  /// No description provided for @announcementForAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Everyone'**
+  String get announcementForAll;
+
+  /// No description provided for @announcementForStudents.
+  ///
+  /// In en, this message translates to:
+  /// **'Students & parents'**
+  String get announcementForStudents;
+
+  /// No description provided for @announcementForTeachers.
+  ///
+  /// In en, this message translates to:
+  /// **'Teachers'**
+  String get announcementForTeachers;
+
+  /// No description provided for @announcementUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'Shown until {date}'**
+  String announcementUntil(String date);
+
+  /// No description provided for @announcementPickDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Change date'**
+  String get announcementPickDate;
+
+  /// No description provided for @announcementPost.
+  ///
+  /// In en, this message translates to:
+  /// **'Post'**
+  String get announcementPost;
+
+  /// No description provided for @boardSigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed the board'**
+  String get boardSigned;
+
+  /// No description provided for @boardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Attendance board'**
+  String get boardTitle;
+
+  /// No description provided for @boardHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Tick each student whose name is on the board in the room. Names on the board that are not in this list go below.'**
+  String get boardHelp;
+
+  /// No description provided for @boardExtrasLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Names on the board, not in the app'**
+  String get boardExtrasLabel;
+
+  /// No description provided for @boardExtrasHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Separate with commas'**
+  String get boardExtrasHint;
+
+  /// No description provided for @boardMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'The board and the app match.'**
+  String get boardMatches;
+
+  /// No description provided for @boardDifferences.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} differences between the board and the app'**
+  String boardDifferences(int n);
+
+  /// No description provided for @boardPresentNotSigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Present here, not on the board'**
+  String get boardPresentNotSigned;
+
+  /// No description provided for @boardSignedNotPresent.
+  ///
+  /// In en, this message translates to:
+  /// **'On the board, not marked present'**
+  String get boardSignedNotPresent;
+
+  /// No description provided for @boardNotBooked.
+  ///
+  /// In en, this message translates to:
+  /// **'On the board, not booked in the app'**
+  String get boardNotBooked;
+
+  /// No description provided for @dayClosedAnnTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No classes on {date}'**
+  String dayClosedAnnTitle(String date);
+
+  /// No description provided for @dayClosedAnnBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The centre is closed on {date}. Booked sessions go back to your voucher.'**
+  String dayClosedAnnBody(String date);
 }
 
 class _AppLocalizationsDelegate

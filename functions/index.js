@@ -3695,12 +3695,23 @@ async function schedulingSettings() {
     minGapMinutes: num(d.minGapMinutes, sched.DEFAULTS.minGapMinutes),
     weeklyHoursWarning: num(d.weeklyHoursWarning, sched.DEFAULTS.weeklyHoursWarning),
     defaultCapacity: num(d.defaultCapacity, sched.DEFAULTS.defaultCapacity) || 8,
+    // Owner 2026-11-23: a class with fewer booked students closes by itself
+    // this many hours before its start (0 students = rule off). Off until
+    // the admin saves a number in Timetable rules, so live classes are not
+    // cancelled before the centre starts using bookings.
+    minStudents: num(d.minStudents, 0),
+    minStudentsHours: num(d.minStudentsHours, 3),
+    // Owner 2026-11-23: teachers are taken as ready all the time. On, the
+    // thesis's availability check, schedule confirmation, late check-in
+    // and teacher recap come back.
+    teacherReadiness: d.teacherReadiness === true,
   };
 }
 
 /** A clean schedule from the form. */
 function scheduleFromInput(data, settings) {
   const n = (v) => Math.round(Number(v));
+  const teacherId = String(data.teacherId || "").trim();
   return {
     id: String(data.id || "").trim() || null,
     className: String(data.className || "").trim().slice(0, 80),
@@ -3708,7 +3719,9 @@ function scheduleFromInput(data, settings) {
     startMinutes: n(data.startMinutes),
     endMinutes: n(data.endMinutes),
     room: String(data.room || "").trim(),
-    teacherId: String(data.teacherId || "").trim(),
+    teacherId,
+    // Owner 2026-11-23: helper teachers besides the main one.
+    coTeacherIds: sched.cleanCoTeachers(data.coTeacherIds, teacherId),
     capacity: Number.isFinite(Number(data.capacity)) && Number(data.capacity) > 0 ?
       n(data.capacity) : settings.defaultCapacity,
     level: String(data.level || "").trim(),
@@ -3718,41 +3731,86 @@ function scheduleFromInput(data, settings) {
   };
 }
 
+const docRows = (q) => (q ? q.docs.map((d) => ({id: d.id, ...(d.data() || {})})) : []);
+const uniqueById = (list) => [...new Map(list.map((x) => [x.id, x])).values()];
+
+/**
+ * One teacher's profile, schedules and future one-off sessions, as main
+ * teacher or as helper (owner 2026-11-23).
+ */
+async function teacherContext(uid, read) {
+  const snap = await read(db.collection(USERS).doc(uid));
+  const teacher = snap && snap.exists ? snap.data() || {} : null;
+  const [a, b, c, d] = await Promise.all([
+    read(db.collection(SCHEDULES).where("teacherId", "==", uid)),
+    read(db.collection(SCHEDULES).where("coTeacherIds", "array-contains", uid)),
+    read(db.collection(CLASS_SESSIONS).where("teacherId", "==", uid)),
+    read(db.collection(CLASS_SESSIONS).where("coTeacherIds", "array-contains", uid)),
+  ]);
+  const today = sched.jakartaDate(Date.now());
+  return {
+    uid,
+    teacher,
+    name: teacher ? latinName(teacher) : "",
+    schedules: uniqueById([...docRows(a), ...docRows(b)]),
+    sessions: uniqueById([...docRows(c), ...docRows(d)]).filter((x) => !x.scheduleId &&
+      String(x.sessionDate || "") >= today),
+  };
+}
+
 /** Everything the conflict check needs, read outside or inside a transaction. */
 async function scheduleContext(s, settings, read = (q) => q.get()) {
-  const teacherSnap = s.teacherId ? await read(db.collection(USERS).doc(s.teacherId)) : null;
-  const teacher = teacherSnap && teacherSnap.exists ? teacherSnap.data() || {} : null;
-  const [tSched, rSched, tSess, rSess] = await Promise.all([
-    s.teacherId ? read(db.collection(SCHEDULES).where("teacherId", "==", s.teacherId)) : null,
+  const ids = sched.teachersOf(s);
+  const people = await Promise.all(ids.map((uid) => teacherContext(uid, read)));
+  const [rSched, rSess] = await Promise.all([
     s.room ? read(db.collection(SCHEDULES).where("room", "==", s.room)) : null,
-    s.teacherId ? read(db.collection(CLASS_SESSIONS).where("teacherId", "==", s.teacherId)) : null,
     s.room ? read(db.collection(CLASS_SESSIONS).where("room", "==", s.room)) : null,
   ]);
-  const rows = (q) => (q ? q.docs.map((d) => ({id: d.id, ...(d.data() || {})})) : []);
   const today = sched.jakartaDate(Date.now());
-  const futureOneOffs = (list) => list.filter((x) => !x.scheduleId &&
-    String(x.sessionDate || "") >= today);
+  const main = people[0] || {teacher: null, name: "", schedules: [], sessions: []};
   return {
-    teacher,
+    teacher: main.teacher,
+    helpers: people.slice(1),
     ctx: {
-      teacherName: teacher ? latinName(teacher) : "",
-      teacherSchedules: rows(tSched),
-      roomSchedules: rows(rSched),
-      teacherSessions: futureOneOffs(rows(tSess)),
-      roomSessions: futureOneOffs(rows(rSess)),
-      availability: teacher && teacher.availability ? teacher.availability : null,
+      teacherName: main.name,
+      teacherSchedules: main.schedules,
+      roomSchedules: docRows(rSched),
+      teacherSessions: main.sessions,
+      roomSessions: docRows(rSess).filter((x) => !x.scheduleId &&
+        String(x.sessionDate || "") >= today),
+      availability: settings.teacherReadiness && main.teacher && main.teacher.availability ?
+        main.teacher.availability : null,
       gapMinutes: settings.minGapMinutes,
     },
   };
 }
 
-function checkResult(s, teacher, ctx, settings) {
+const activeTeacher = (t) => !!t && t.role === "teacher" && t.active !== false;
+
+function checkResult(s, teacher, ctx, settings, helpers = []) {
   const reasons = [...sched.validate(s, teacher ?
     {name: latinName(teacher), levels: teacher.levels || []} : null)];
-  if (!teacher || teacher.role !== "teacher" || teacher.active === false) {
+  if (!activeTeacher(teacher)) {
     if (s.teacherId) reasons.push({code: "teacher", text: "Pick an active teacher."});
   }
-  if (!reasons.length) reasons.push(...sched.conflicts(s, ctx));
+  for (const h of helpers) {
+    if (!activeTeacher(h.teacher)) {
+      reasons.push({code: "teacher", text: "Every helper teacher must be an active teacher."});
+    }
+  }
+  if (!reasons.length) {
+    reasons.push(...sched.conflicts(s, ctx));
+    // A helper teacher may not teach elsewhere at that time either.
+    for (const h of helpers) {
+      reasons.push(...sched.conflicts({...s, teacherId: h.uid}, {
+        teacherName: h.name, teacherSchedules: h.schedules, teacherSessions: h.sessions,
+        roomSchedules: [], roomSessions: [],
+        availability: settings.teacherReadiness && h.teacher && h.teacher.availability ?
+          h.teacher.availability : null,
+        gapMinutes: ctx.gapMinutes,
+      }));
+    }
+  }
   const warnings = [];
   const mine = ctx.teacherSchedules.filter((x) => x.id !== s.id);
   const hours = sched.weeklyHours([...mine, s]);
@@ -3764,13 +3822,16 @@ function checkResult(s, teacher, ctx, settings) {
   // One-off sessions in the period count too (seen 2026-11-23: a free time
   // was offered that a one-off class then blocked).
   const inPeriod = (d) => (!s.validFrom || d >= s.validFrom) && (!s.validTo || d <= s.validTo);
-  const oneOffs = [...ctx.teacherSessions, ...ctx.roomSessions]
+  const helperBusy = helpers.flatMap((h) => [...h.schedules, ...h.sessions]);
+  const oneOffs = [...ctx.teacherSessions, ...ctx.roomSessions,
+    ...helpers.flatMap((h) => h.sessions)]
       .filter((x) => !(x.scheduleId && x.scheduleId === s.id) && inPeriod(String(x.sessionDate || "")))
       .map((x) => ({...x, weekday: sched.weekdayOf(x.sessionDate)}));
-  const busy = [...mine, ...ctx.roomSchedules.filter((x) => x.id !== s.id), ...oneOffs];
-  const suggestions = reasons.length && ctx.availability ?
-    sched.suggestFreeSlots(ctx.availability, busy, s.weekday, length,
-        settings.minGapMinutes, 5) : [];
+  const busy = [...mine, ...ctx.roomSchedules.filter((x) => x.id !== s.id),
+    ...helperBusy.filter((x) => x.id !== s.id && x.weekday), ...oneOffs];
+  const hoursOpen = ctx.availability || sched.openAllWeek();
+  const suggestions = reasons.length ?
+    sched.suggestFreeSlots(hoursOpen, busy, s.weekday, length, settings.minGapMinutes, 5) : [];
   return {ok: reasons.length === 0, reasons, warnings, suggestions};
 }
 
@@ -3787,8 +3848,8 @@ exports.checkScheduleConflict = onCall(async (request) => {
   await requireAdmin(request);
   const settings = await schedulingSettings();
   const s = scheduleFromInput(request.data || {}, settings);
-  const {teacher, ctx} = await scheduleContext(s, settings);
-  return checkResult(s, teacher, ctx, settings);
+  const {teacher, ctx, helpers} = await scheduleContext(s, settings);
+  return checkResult(s, teacher, ctx, settings, helpers);
 });
 
 /**
@@ -3803,21 +3864,27 @@ exports.saveSchedule = onCall(async (request) => {
   const s = scheduleFromInput(request.data || {}, settings);
   const ref = s.id ? db.collection(SCHEDULES).doc(s.id) : db.collection(SCHEDULES).doc();
   const out = await db.runTransaction(async (tx) => {
-    const tLock = db.collection(SCHEDULE_LOCKS).doc(s.teacherId || "none");
-    const rLock = db.collection(SCHEDULE_LOCKS).doc(`room_${s.room.replace(/\//g, "_") || "none"}`);
-    const [tl, rl] = [await tx.get(tLock), await tx.get(rLock)];
-    const {teacher, ctx} = await scheduleContext({...s, id: ref.id}, settings, (q) => tx.get(q));
-    const result = checkResult({...s, id: ref.id}, teacher, ctx, settings);
+    // One lock per teacher (main and helpers) and one for the room.
+    const lockRefs = [...(sched.teachersOf(s).length ? sched.teachersOf(s) : ["none"]),
+      `room_${s.room.replace(/\//g, "_") || "none"}`]
+        .map((k) => db.collection(SCHEDULE_LOCKS).doc(k));
+    const locks = [];
+    for (const r of lockRefs) locks.push(await tx.get(r));
+    const {teacher, ctx, helpers} = await scheduleContext({...s, id: ref.id}, settings,
+        (q) => tx.get(q));
+    const result = checkResult({...s, id: ref.id}, teacher, ctx, settings, helpers);
     if (!result.ok) return result;
-    tx.set(tLock, {version: (Number((tl.data() || {}).version) || 0) + 1,
-      updatedAt: FieldValue.serverTimestamp()});
-    tx.set(rLock, {version: (Number((rl.data() || {}).version) || 0) + 1,
-      updatedAt: FieldValue.serverTimestamp()});
+    lockRefs.forEach((r, k) => tx.set(r, {
+      version: (Number((locks[k].data() || {}).version) || 0) + 1,
+      updatedAt: FieldValue.serverTimestamp()}));
     const {id, ...rest} = s;
     tx.set(ref, {
       ...rest,
       teacherName: teacher ? latinName(teacher) : "",
-      status: "unconfirmed",
+      coTeacherNames: helpers.map((h) => h.name),
+      // Owner 2026-11-23: with the readiness switch off a schedule needs no
+      // confirmation by the teacher.
+      status: settings.teacherReadiness ? "unconfirmed" : "confirmed",
       createdBy: uid,
       updatedAt: FieldValue.serverTimestamp(),
       ...(id ? {} : {createdAt: FieldValue.serverTimestamp()}),
@@ -3884,6 +3951,9 @@ async function generateSessionsNow({scheduleIds = null, nowMs = Date.now()} = {}
   let created = 0;
   let updated = 0;
   let booked = 0;
+  // Owner 2026-11-23: holidays are shown on the session; a day the admin
+  // closed gets its sessions as cancelled.
+  const days = await dayStates(today, sched.addDays(today, 14));
   for (const doc of snap) {
     if (!doc.exists) continue;
     const s = {id: doc.id, ...(doc.data() || {})};
@@ -3897,12 +3967,18 @@ async function generateSessionsNow({scheduleIds = null, nowMs = Date.now()} = {}
         const cur = await tx.get(ref);
         const fields = {
           scheduleId: s.id, teacherId: s.teacherId, teacherName: s.teacherName || "",
+          coTeacherIds: s.coTeacherIds || [], coTeacherNames: s.coTeacherNames || [],
           sessionDate: date, sessionTitle: s.className, startMinutes: s.startMinutes,
           endMinutes: s.endMinutes, capacity: s.capacity, room: s.room, level: s.level || "",
           mode: "offline",
         };
+        const day = days[date] || {};
         if (!cur.exists) {
-          tx.set(ref, {...fields, status: daysOff.has(date) ? "needs_teacher" : "scheduled",
+          const status = day.closed ? "cancelled" :
+            (daysOff.has(date) ? "needs_teacher" : "scheduled");
+          tx.set(ref, {...fields, status,
+            ...(day.name ? {holiday: day.name} : {}),
+            ...(day.closed ? {cancelReason: "day_closed", isOpen: false} : {}),
             // Students and parents read generated sessions of every teacher.
             generated: true,
             bookedCount: 0, isOpen: true, isConcluded: false, registrationState: "open",
@@ -3911,7 +3987,8 @@ async function generateSessionsNow({scheduleIds = null, nowMs = Date.now()} = {}
         }
         const c = cur.data() || {};
         const changed = ["startMinutes", "endMinutes", "room", "capacity", "level",
-          "teacherId", "sessionTitle"].some((k) => c[k] !== fields[k]);
+          "teacherId", "sessionTitle"].some((k) => c[k] !== fields[k]) ||
+          JSON.stringify(c.coTeacherIds || []) !== JSON.stringify(fields.coTeacherIds);
         if (!changed) return "same";
         if ((Number(c.bookedCount) || 0) === 0) {
           tx.update(ref, {...fields, updatedAt: FieldValue.serverTimestamp()});
@@ -3922,7 +3999,9 @@ async function generateSessionsNow({scheduleIds = null, nowMs = Date.now()} = {}
       });
       if (res === "created") created += 1;
       if (res === "updated") updated += 1;
-      if (res === "created") booked += await bookClassDayStudents(s.id, ref.id, nowMs);
+      if (res === "created" && !(days[date] || {}).closed) {
+        booked += await bookClassDayStudents(s.id, ref.id, nowMs);
+      }
     }
   }
   logger.info(`generateSessions: ${created} created, ${updated} updated, ${booked} booked`);
@@ -3932,9 +4011,111 @@ async function generateSessionsNow({scheduleIds = null, nowMs = Date.now()} = {}
 exports.generateSessions = onSchedule(
     {schedule: "every sunday 20:00", timeZone: "Asia/Jakarta", timeoutSeconds: 540},
     async () => {
+      await importHolidaysNow();
       await generateSessionsNow();
     },
 );
+
+// ---------------------------------------------------------------------------
+// Owner 2026-11-23: Indonesian holidays on the calendar, days the admin
+// closes (vacation), and announcements students and teachers see at home.
+const HOLIDAYS = "holidays";
+const ANNOUNCEMENTS = "announcements";
+const holidaysId = require("./holidays_id");
+
+/** `holidays/{date}` for every listed holiday from today; decisions kept. */
+async function importHolidaysNow(nowMs = Date.now()) {
+  let added = 0;
+  for (const h of holidaysId.holidaysFrom(sched.jakartaDate(nowMs))) {
+    const ref = db.collection(HOLIDAYS).doc(h.date);
+    const snap = await ref.get();
+    if (snap.exists) continue;
+    await ref.set({date: h.date, name: h.name, kind: h.kind, decision: "",
+      createdAt: FieldValue.serverTimestamp()});
+    added += 1;
+  }
+  return {added};
+}
+
+/** date → {name, closed} for the days between [from] and [to]. */
+async function dayStates(from, to) {
+  const snap = await db.collection(HOLIDAYS).where("date", ">=", from)
+      .where("date", "<=", to).get();
+  const out = {};
+  for (const d of snap.docs) {
+    const h = d.data() || {};
+    out[h.date || d.id] = {name: h.name || "", closed: h.decision === "closed"};
+  }
+  return out;
+}
+
+/** Admin: load the Indonesian holiday list into the calendar. */
+exports.importHolidays = onCall(async (request) => {
+  await requireAdmin(request);
+  return importHolidaysNow();
+});
+
+/**
+ * Admin: open or close the centre on one day. Closing cancels that day's
+ * classes that have not started (bookings and voucher sessions go back,
+ * students are told) and, with `announce`, posts an announcement for
+ * students and teachers. Opening again brings back the timetable classes
+ * the closing cancelled (no bookings; class-day students are booked again).
+ * data: {date, closed, name?, announce?, title?, body?}
+ */
+exports.setDayClosed = onCall(async (request) => {
+  const {uid, profile} = await requireAdmin(request);
+  const data = request.data || {};
+  const date = String(data.date || "").trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new HttpsError("invalid-argument", "date is YYYY-MM-DD.");
+  const closed = data.closed === true;
+  const ref = db.collection(HOLIDAYS).doc(date);
+  const cur = (await ref.get()).data() || null;
+  const name = String(data.name || "").trim().slice(0, 120) || (cur && cur.name) || "";
+  await ref.set({date, name: name || (closed ? "Centre closed" : ""),
+    kind: (cur && cur.kind) || "centre", decision: closed ? "closed" : "open",
+    decidedBy: uid, decidedAt: FieldValue.serverTimestamp()}, {merge: true});
+  const nowMs = Date.now();
+  const sessions = await db.collection(CLASS_SESSIONS).where("sessionDate", "==", date).get();
+  let cancelled = 0;
+  let reopened = 0;
+  for (const d of sessions.docs) {
+    const x = d.data() || {};
+    if (closed) {
+      if (!["scheduled", "needs_teacher"].includes(tday.effectiveStatus(x, nowMs))) continue;
+      await cancelSessionCore(d.ref, x, "day_closed");
+      cancelled += 1;
+    } else if (x.status === "cancelled" && x.cancelReason === "day_closed" && x.generated === true &&
+        nowMs < tday.atMs(x.sessionDate, x.startMinutes)) {
+      await d.ref.update({status: "scheduled", isOpen: true, bookedCount: 0,
+        cancelReason: FieldValue.delete(), cancelledAt: FieldValue.delete()});
+      await bookClassDayStudents(x.scheduleId, d.id, nowMs);
+      reopened += 1;
+    }
+  }
+  let announcementId = "";
+  if (closed && data.announce !== false) {
+    const title = String(data.title || "").trim().slice(0, 120) ||
+      `Centre closed on ${date}`;
+    const body = String(data.body || "").trim().slice(0, 1000) ||
+      `${name ? `${name}. ` : ""}There are no classes on ${date}.`;
+    const a = await db.collection(ANNOUNCEMENTS).add({title, body, audience: "all",
+      kind: "closure", date, fromDate: sched.jakartaDate(nowMs), toDate: date,
+      createdBy: uid, createdByName: latinName(profile), createdAt: FieldValue.serverTimestamp()});
+    announcementId = a.id;
+    const batch = db.batch();
+    for (const role of ["student", "teacher", "parent"]) {
+      batch.set(db.collection(NOTIFICATIONS).doc(), {kind: "announcement", title, body,
+        forRole: role, userId: "", targetRoute: `/${role}`, read: false,
+        createdAt: FieldValue.serverTimestamp()});
+    }
+    await batch.commit();
+  }
+  await writeAudit({action: closed ? "day.close" : "day.open", actorId: uid,
+    actorName: latinName(profile), targetType: "day", targetId: date,
+    detail: `${name} · ${cancelled} cancelled, ${reopened} reopened`});
+  return {date, closed, cancelled, reopened, announcementId};
+});
 
 /**
  * Books one student into the upcoming generated sessions of [scheduleId]
@@ -4102,7 +4283,8 @@ const TEACHER_RECAPS = "teacher_recaps";
 
 async function requireSessionStaff(request, session) {
   const caller = await requireStaff(request);
-  if (caller.profile.role !== "admin" && session.teacherId !== caller.uid) {
+  if (caller.profile.role !== "admin" && session.teacherId !== caller.uid &&
+      !(session.coTeacherIds || []).includes(caller.uid)) {
     throw new HttpsError("permission-denied", "This is another teacher's session.",
         {reason: "not-yours"});
   }
@@ -4202,6 +4384,12 @@ exports.closeSession = onCall(async (request) => {
   const {profile} = await requireSessionStaff(request, session);
   const byAdmin = profile.role === "admin";
   const statuses = data.statuses && typeof data.statuses === "object" ? data.statuses : {};
+  // Owner 2026-11-23: who signed the attendance board in the room, and names
+  // on the board that are not in the app; the teacher compared them.
+  const hasBoard = data.board && typeof data.board === "object";
+  const board = hasBoard ? data.board : {};
+  const boardExtras = String(data.boardExtras || "").trim().slice(0, 500);
+  const boardMismatches = Math.max(0, Math.min(99, Math.round(Number(data.boardMismatches) || 0)));
   const attSnap = await db.collection("attendance").where("sessionId", "==", ref.id).get();
   // Students added by the teacher (no booking) are charged from their
   // oldest usable term, as the old client-side close did.
@@ -4283,7 +4471,8 @@ exports.closeSession = onCall(async (request) => {
         date: FieldValue.serverTimestamp(),
       });
       tx.update(aRef, {attendanceStatus: st, sessionCredited: charged, closed: true,
-        ...(usable ? {classTermId: termId} : {})});
+        ...(usable ? {classTermId: termId} : {}),
+        ...(hasBoard ? {onBoard: board[a.studentId] === true} : {})});
     }
     for (const {ref: tRef, t, base} of Object.values(terms)) {
       // The first ledger entry remembers what was used before the ledger.
@@ -4294,6 +4483,7 @@ exports.closeSession = onCall(async (request) => {
         ...((Number(t.sessionsRemaining) || 0) <= 0 ? {status: "depleted"} : {})});
     }
     tx.update(ref, {status: "done", isConcluded: true, isOpen: false,
+      ...(hasBoard ? {boardExtras, boardMismatches} : {}),
       concludedAt: FieldValue.serverTimestamp()});
     const r = recap.exists ? recap.data() || {} : {};
     tx.set(recapRef, {teacherId: s.teacherId || "", teacherName: s.teacherName || "",
@@ -4377,7 +4567,12 @@ exports.assignSubstitute = onCall(async (request) => {
  * month recap counts it, the students are told to pick another session.
  * @return {Promise<number>} how many bookings were returned
  */
-async function cancelSessionCore(ref, session) {
+const CANCEL_TEXT = {
+  day_closed: "The centre is closed that day.",
+  too_few: "Not enough students booked it.",
+};
+
+async function cancelSessionCore(ref, session, reason = "") {
   const atts = await db.collection("attendance").where("sessionId", "==", ref.id).get();
   const told = await db.runTransaction(async (tx) => {
     const cur = (await tx.get(ref)).data() || {};
@@ -4404,6 +4599,7 @@ async function cancelSessionCore(ref, session) {
       tx.update(tRef, {sessionsBooked: Math.max(0, (Number(t.sessionsBooked) || 0) - n)});
     }
     tx.update(ref, {status: "cancelled", isOpen: false, bookedCount: 0,
+      ...(reason ? {cancelReason: reason} : {}),
       cancelledAt: FieldValue.serverTimestamp()});
     const r = recap.exists ? recap.data() || {} : {};
     tx.set(recapRef, {teacherId: cur.teacherId || "", teacherName: cur.teacherName || "",
@@ -4416,7 +4612,8 @@ async function cancelSessionCore(ref, session) {
   for (const sid of told) {
     batch.set(db.collection(NOTIFICATIONS).doc(), {kind: "session", title: "Class cancelled",
       body: `${session.sessionTitle || "Class"} ${session.sessionDate} ` +
-        `${sched.clock(session.startMinutes)} is cancelled. Your session is back; book another.`,
+        `${sched.clock(session.startMinutes)} is cancelled.` +
+        `${CANCEL_TEXT[reason] ? ` ${CANCEL_TEXT[reason]}` : ""} Your session is back; book another.`,
       forRole: "student", userId: sid, targetRoute: "/student", read: false,
       createdAt: FieldValue.serverTimestamp()});
   }
@@ -4466,9 +4663,38 @@ async function teachingDayPass({nowMs = Date.now(), reminders = true, flags = tr
   const yesterday = sched.addDays(today, -1);
   const snap = await db.collection(CLASS_SESSIONS)
       .where("sessionDate", "in", [yesterday, today]).get();
-  const out = {reminders: 0, started: 0, late: 0, unclosed: 0};
+  const out = {reminders: 0, started: 0, late: 0, unclosed: 0, tooFew: 0};
+  const settings = await schedulingSettings();
   for (const d of snap.docs) {
     const s = d.data() || {};
+    if (flags) {
+      // Owner 2026-11-23: too few students close the class N hours before.
+      const decision = tday.minStudentsDecision(s, nowMs,
+          {minStudents: settings.minStudents, hours: settings.minStudentsHours});
+      if (decision === "keep") {
+        await d.ref.update({minStudentsCheckedAt: FieldValue.serverTimestamp()});
+      } else if (decision === "cancel") {
+        await d.ref.update({minStudentsCheckedAt: FieldValue.serverTimestamp()});
+        await cancelSessionCore(d.ref, s, "too_few");
+        const teachers = sched.teachersOf(s);
+        const batch = db.batch();
+        const body = `${s.sessionTitle || "A class"} ${s.sessionDate} ` +
+          `${sched.clock(s.startMinutes)}: ${Number(s.bookedCount) || 0} booked, fewer than ` +
+          `${settings.minStudents}. The class is closed.`;
+        for (const t of teachers) {
+          batch.set(db.collection(NOTIFICATIONS).doc(), {kind: "session",
+            title: "Class closed: too few students", body, forRole: "teacher", userId: t,
+            targetRoute: "/teacher/schedule", read: false,
+            createdAt: FieldValue.serverTimestamp()});
+        }
+        batch.set(db.collection(NOTIFICATIONS).doc(), {kind: "session",
+          title: "Class closed: too few students", body, forRole: "admin", userId: "",
+          targetRoute: "/admin/timetable", read: false, createdAt: FieldValue.serverTimestamp()});
+        await batch.commit();
+        out.tooFew += 1;
+        continue;
+      }
+    }
     if (flags && s.generated === true && tday.autoStartDue(s, nowMs)) {
       // Owner 2026-11-23: the session starts by itself at its start time.
       const started = await db.runTransaction(async (tx) => {
@@ -4511,7 +4737,8 @@ async function teachingDayPass({nowMs = Date.now(), reminders = true, flags = tr
         out.reminders += 1;
       }
     }
-    if (flags && tday.lateCheckInDue(s, nowMs)) {
+    // Owner 2026-11-23: late check-in only matters with teacher readiness on.
+    if (flags && settings.teacherReadiness && tday.lateCheckInDue(s, nowMs)) {
       const flagged = await db.runTransaction(async (tx) => {
         const cur = (await tx.get(d.ref)).data() || {};
         if (!tday.lateCheckInDue(cur, nowMs)) return false;

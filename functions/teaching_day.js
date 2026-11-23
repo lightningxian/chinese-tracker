@@ -95,6 +95,22 @@ function unclosedDue(session, nowMs) {
     nowMs >= atMs(session.sessionDate, session.endMinutes) + UNCLOSED_HOURS * 3600000;
 }
 
+/**
+ * Owner 2026-11-23: a timetable class with fewer than [minStudents] booked
+ * students closes by itself [hours] before its start. Due once per session
+ * (`minStudentsCheckedAt`), only while it is still `scheduled` and before
+ * the start. minStudents 0 switches the rule off.
+ * @return {string} `skip` (not due), `cancel` (too few) or `keep`
+ */
+function minStudentsDecision(session, nowMs, {minStudents = 3, hours = 3} = {}) {
+  const min = Number(minStudents) || 0;
+  if (min <= 0 || session.generated !== true || session.minStudentsCheckedAt) return "skip";
+  if ((session.status || "scheduled") !== "scheduled" || session.isConcluded === true) return "skip";
+  const start = atMs(session.sessionDate, session.startMinutes);
+  if (nowMs >= start || nowMs < start - (Number(hours) || 0) * 3600000) return "skip";
+  return (Number(session.bookedCount) || 0) < min ? "cancel" : "keep";
+}
+
 /** The reminder goes once, in the hour before the start. */
 function reminderDue(session, nowMs) {
   const st = session.status || "scheduled";
@@ -174,6 +190,7 @@ module.exports = {
   closeDecision,
   effectiveStatus,
   autoStartDue,
+  minStudentsDecision,
   checkInDecision,
   lateCheckInDue,
   unclosedDue,

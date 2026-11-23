@@ -867,3 +867,37 @@ describe("monthly report (Build 8)", () => {
     await assertFails(setDoc(doc(as("admin1"), "reports", "202612"), { revenue: 9 }));
   });
 });
+
+// Owner requests 2026-11-23: holidays, announcements, helper teachers.
+describe("holidays, announcements, helper teachers (2026-11-23)", () => {
+  it("holidays: signed-in users read; nobody writes", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "holidays", "2027-01-01"), { date: "2027-01-01", name: "Tahun Baru", decision: "" });
+    });
+    await assertSucceeds(getDoc(doc(as("student1"), "holidays", "2027-01-01")));
+    await assertSucceeds(getDoc(doc(as("teacher1"), "holidays", "2027-01-01")));
+    await assertFails(setDoc(doc(as("admin1"), "holidays", "2027-01-01"), { decision: "closed" }));
+  });
+  it("announcements: everyone reads; only the admin writes a valid one", async () => {
+    const a = { title: "Libur", body: "Tutup", audience: "all", toDate: "2027-01-01" };
+    await assertSucceeds(setDoc(doc(as("admin1"), "announcements", "a1"), a));
+    await assertSucceeds(getDoc(doc(as("student1"), "announcements", "a1")));
+    await assertSucceeds(getDoc(doc(as("teacher1"), "announcements", "a1")));
+    await assertFails(setDoc(doc(as("teacher1"), "announcements", "a2"), a));
+    await assertFails(setDoc(doc(as("admin1"), "announcements", "a3"), { ...a, audience: "everyone" }));
+    await assertFails(setDoc(doc(as("admin1"), "announcements", "a4"), { title: "x", body: "y", audience: "all" }));
+    await assertSucceeds(deleteDoc(doc(as("admin1"), "announcements", "a1")));
+  });
+  it("a helper teacher reads the session they help in; another teacher does not", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "class_sessions", "co1"), { teacherId: "teacher1", coTeacherIds: ["teacher3"], generated: true, scheduleId: "s1", sessionDate: "2027-01-04" });
+    });
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "class_sessions", "co2"), { teacherId: "teacher1", coTeacherIds: [], generated: false, sessionDate: "2027-01-04" });
+    });
+    await assertSucceeds(getDoc(doc(as("teacher3"), "class_sessions", "co1")));
+    await assertFails(getDoc(doc(as("teacher3"), "class_sessions", "co2")));
+    await assertSucceeds(getDocs(query(collection(as("teacher3"), "class_sessions"),
+      where("coTeacherIds", "array-contains", "teacher3"))));
+  });
+});

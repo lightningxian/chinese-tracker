@@ -1309,6 +1309,14 @@ const june = {validFrom: "2027-06-01", validTo: "2027-06-30", capacity: 8, level
 const mon = (extra) => ({className: "Flow Kelas", weekday: 1, startMinutes: 960,
   endMinutes: 1050, room: "Main", ...june, ...extra});
 
+// The thesis steps run with the teacher-readiness switch on (availability,
+// confirmation, late check-in, recap) and the minimum-students rule off;
+// the owner's 2026-11-23 defaults are checked at the end.
+const RULES_THESIS = {minGapMinutes: 0, weeklyHoursWarning: 20, defaultCapacity: 8,
+  teacherReadiness: true, minStudents: 0, minStudentsHours: 3};
+const RULES_OWNER = {...RULES_THESIS, teacherReadiness: false, minStudents: 3};
+await setDocRaw("settings/scheduling", RULES_THESIS);
+
 await step("JD-01 a teacher clash, a room clash, outside availability and a foreign level are refused with the reason", async () => {
   const first = await call(admin, "saveSchedule", mon({teacherId: andrea.uid,
     className: `Flow Dasar ${RUN}`}));
@@ -1788,12 +1796,12 @@ await step("owner 2026-11-23: back-to-back classes are fine; the admin's gap is 
   assert.equal(ok.data.ok, true, JSON.stringify(ok.data));
   assert.equal((await call(admin, "checkScheduleConflict", {...b, startMinutes: 990})).data.ok, true,
       "back to back");
-  await setDocRaw("settings/scheduling", {minGapMinutes: 15, weeklyHoursWarning: 20});
+  await setDocRaw("settings/scheduling", {...RULES_THESIS, minGapMinutes: 15});
   const gap = await call(admin, "checkScheduleConflict", b);
   assert.equal(gap.data.ok, false);
   assert.ok(gap.data.reasons.every((r) => /15 minutes are needed between classes/.test(r.text)),
       JSON.stringify(gap.data.reasons));
-  await setDocRaw("settings/scheduling", {minGapMinutes: 0, weeklyHoursWarning: 20});
+  await setDocRaw("settings/scheduling", RULES_THESIS);
   const second = await call(admin, "saveSchedule", b);
   assert.ok(second.data, JSON.stringify(second.error));
   for (const id of [saved.data.scheduleId, second.data.scheduleId]) {
@@ -1868,6 +1876,112 @@ await step("follow-up: visitor details on unclaimed placement results are cleare
   }
   assert.equal((await readDoc(`placement_results/${visitor.attemptId}`)).name, "Flow Visitor",
       "a claimed result is kept");
+});
+
+// ---------------------------------------------------------------------------
+// Owner requests 2026-11-23, second round.
+await step("owner 2026-11-23: with teacher readiness off, availability is not checked and a new schedule is confirmed", async () => {
+  await setDocRaw("settings/scheduling", RULES_OWNER);
+  const late = await call(admin, "checkScheduleConflict", mon({teacherId: andrea.uid,
+    room: "Sub Room", startMinutes: 1200, endMinutes: 1290}));
+  assert.equal(late.data.ok, true, JSON.stringify(late.data));
+  const saved = await call(admin, "saveSchedule", mon({teacherId: andrea.uid, room: "Sub Room",
+    startMinutes: 1200, endMinutes: 1290, className: `Flow Ready ${RUN}`}));
+  assert.ok(saved.data, JSON.stringify(saved.error));
+  assert.equal((await readDoc(`schedules/${saved.data.scheduleId}`)).status, "confirmed");
+  assert.ok((await call(admin, "deleteSchedule", {scheduleId: saved.data.scheduleId})).data);
+});
+
+await step("owner 2026-11-23: a helper teacher is checked for clashes, is saved on the schedule and may close the class", async () => {
+  // Andrea teaches Flow Dasar on Monday 16:00-17:30 in June (JD-01).
+  const clash = await call(admin, "checkScheduleConflict", mon({teacherId: clara.uid,
+    coTeacherIds: [andrea.uid], room: "Sub Room", startMinutes: 990, endMinutes: 1080}));
+  assert.equal(clash.data.ok, false);
+  assert.ok(clash.data.reasons.some((r) => /Andrea .*already teaches Flow Dasar/.test(r.text)),
+      JSON.stringify(clash.data.reasons));
+  const saved = await call(admin, "saveSchedule", {className: `Flow Duo ${RUN}`, weekday: 7,
+    startMinutes: 600, endMinutes: 690, room: "Sub Room", teacherId: clara.uid,
+    coTeacherIds: [andrea.uid, clara.uid, andrea.uid], ...june});
+  assert.ok(saved.data, JSON.stringify(saved.error));
+  const sch = await readDoc(`schedules/${saved.data.scheduleId}`);
+  assert.deepEqual(sch.coTeacherIds, [andrea.uid], "unique, not the main teacher");
+  assert.equal(sch.coTeacherNames.length, 1);
+  assert.ok((await call(admin, "deleteSchedule", {scheduleId: saved.data.scheduleId})).data);
+  // A one-off class with Andrea as helper: Andrea may close it, Budi may not.
+  const one = `flow_duo_${RUN}`;
+  await setDocRaw(`class_sessions/${one}`, {teacherId: clara.uid, teacherName: "Clara",
+    coTeacherIds: [andrea.uid], sessionTitle: "Flow Duo", sessionDate: today7, startMinutes: 0,
+    endMinutes: 60, capacity: 8, bookedCount: 0, status: "ongoing", isOpen: true,
+    isConcluded: false, generated: false, room: "Main", createdAt: new Date()});
+  await setDocRaw(`attendance/${one}_${d27.uid}`, {sessionId: one, studentId: d27.uid,
+    teacherId: clara.uid, sessionDate: today7, sessionTitle: "Flow Duo", startMinutes: 0,
+    endMinutes: 60, attended: true, booked: false, joinedBy: "teacher", sessionCredited: false,
+    studentName: "Student 27"});
+  assert.equal(reasonOf(await call(budi, "closeSession", {sessionId: one, statuses: {}})), "not-yours");
+  const closed = await call(andrea, "closeSession", {sessionId: one,
+    statuses: {[d27.uid]: "hadir"}, board: {[d27.uid]: true}, boardExtras: "Dodi",
+    boardMismatches: 1});
+  assert.ok(closed.data, JSON.stringify(closed.error));
+  assert.equal((await readDoc(`attendance/${one}_${d27.uid}`)).onBoard, true);
+  const after = await readDoc(`class_sessions/${one}`);
+  assert.equal(after.status, "done");
+  assert.equal(after.boardExtras, "Dodi");
+  assert.equal(after.boardMismatches, 1);
+});
+
+await step("owner 2026-11-23: fewer than 3 booked students close a class 3 hours before; 3 keep it", async () => {
+  const few = `flow_few_${RUN}`;
+  const full = `flow_full_${RUN}`;
+  await session7(few, {sessionDate: juneTuesday, startMinutes: 960, endMinutes: 1050,
+    bookedCount: 0, sessionTitle: `Flow Few ${RUN}`});
+  await session7(full, {sessionDate: juneTuesday, startMinutes: 960, endMinutes: 1050,
+    bookedCount: 3, sessionTitle: `Flow Full ${RUN}`});
+  const pass = (min) => call(admin, "runTeachingDayPass", {nowMs: atMs(juneTuesday, min)});
+  assert.ok((await pass(770)).data, "more than 3 hours before: nothing");
+  assert.equal((await readDoc(`class_sessions/${few}`)).status, "scheduled");
+  const r = await pass(790);
+  assert.ok(r.data.tooFew >= 1, JSON.stringify(r.data));
+  const f = await readDoc(`class_sessions/${few}`);
+  assert.equal(f.status, "cancelled");
+  assert.equal(f.cancelReason, "too_few");
+  const k = await readDoc(`class_sessions/${full}`);
+  assert.equal(k.status, "scheduled");
+  assert.ok(k.minStudentsCheckedAt instanceof Date);
+  const told = (await queryDocs("notifications", "userId", budi.uid))
+      .filter((n) => str(n.fields, "title") === "Class closed: too few students");
+  assert.ok(told.length >= 1, "the teacher is told");
+  // With readiness off, no late check-in is flagged on the kept class.
+  await pass(980);
+  assert.notEqual((await readDoc(`class_sessions/${full}`)).lateCheckIn, true);
+});
+
+await step("owner 2026-11-23: Indonesian holidays load once; closing a day cancels its classes and posts an announcement; opening brings them back", async () => {
+  assert.equal((await call(budi, "importHolidays", {})).error.status, "PERMISSION_DENIED");
+  const first = await call(admin, "importHolidays", {});
+  assert.ok(first.data, JSON.stringify(first.error));
+  const again = await call(admin, "importHolidays", {});
+  assert.equal(again.data.added, 0, "no copies");
+  assert.equal((await readDoc("holidays/2027-03-10")).name, "Idulfitri 1448 Hijriah");
+  const day = `flow_day_${RUN}`;
+  await session7(day, {sessionDate: tomorrow7, startMinutes: 1000, endMinutes: 1090,
+    sessionTitle: `Flow Day ${RUN}`});
+  assert.equal((await call(budi, "setDayClosed", {date: tomorrow7, closed: true})).error.status,
+      "PERMISSION_DENIED");
+  const closed = await call(admin, "setDayClosed", {date: tomorrow7, closed: true,
+    name: `Flow libur ${RUN}`});
+  assert.ok(closed.data, JSON.stringify(closed.error));
+  assert.ok(closed.data.cancelled >= 1);
+  const c = await readDoc(`class_sessions/${day}`);
+  assert.equal(c.status, "cancelled");
+  assert.equal(c.cancelReason, "day_closed");
+  assert.equal((await readDoc(`holidays/${tomorrow7}`)).decision, "closed");
+  const ann = await readDoc(`announcements/${closed.data.announcementId}`);
+  assert.equal(ann.kind, "closure");
+  assert.equal(ann.toDate, tomorrow7);
+  const opened = await call(admin, "setDayClosed", {date: tomorrow7, closed: false});
+  assert.ok(opened.data.reopened >= 1, JSON.stringify(opened.data));
+  assert.equal((await readDoc(`class_sessions/${day}`)).status, "scheduled");
+  assert.equal((await readDoc(`holidays/${tomorrow7}`)).decision, "open");
 });
 
 console.log(`supervised flow: ${passed} steps passed`);

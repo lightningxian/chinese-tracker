@@ -14,6 +14,8 @@ import '../../services/firestore_service.dart';
 import '../../services/rooms_service.dart';
 import '../../services/timetable_service.dart';
 import '../teaching/admin_teaching_views.dart';
+import 'holidays_view.dart';
+import 'timetable_rules_dialog.dart';
 
 String weekdayLabel(AppLocalizations l, int d) => switch (d) {
       1 => l.weekdayMon,
@@ -46,6 +48,7 @@ class _AdminTimetableScreenState extends State<AdminTimetableScreen> {
   late final Stream<List<AppUser>> _teachers =
       context.read<FirestoreService>().watchAllTeachers();
   late final Stream<List<String>> _rooms = RoomsService().watchRooms();
+  late final Stream<SchedulingRules> _rules = _service.watchSettings();
   late int _view = widget.initialView;
 
   Future<void> _edit(List<AppUser> teachers, List<String> rooms, {Schedule? s}) async {
@@ -61,7 +64,9 @@ class _AdminTimetableScreenState extends State<AdminTimetableScreen> {
     return ShellNestedPage(
       embedded: widget.embedded,
       title: l.timetableTitle,
-      child: StreamBuilder<List<AppUser>>(
+      child: StreamBuilder<SchedulingRules>(
+        stream: _rules,
+        builder: (context, rulesSnap) => StreamBuilder<List<AppUser>>(
         stream: _teachers,
         builder: (context, tSnap) => StreamBuilder<List<String>>(
           stream: _rooms,
@@ -69,6 +74,10 @@ class _AdminTimetableScreenState extends State<AdminTimetableScreen> {
             stream: _schedules,
             builder: (context, snap) {
               final teachers = tSnap.data ?? const <AppUser>[];
+              // Owner 2026-11-23: availability and recap only with the
+              // teacher-readiness switch on (Timetable rules).
+              final ready = rulesSnap.data?.teacherReadiness ?? false;
+              final view = !ready && (_view == 2 || _view == 4) ? 0 : _view;
               final rooms = rSnap.data ?? RoomsService.defaults;
               final all = (snap.data ?? const <Schedule>[]).where((s) => s.active).toList();
               return ListView(
@@ -84,16 +93,17 @@ class _AdminTimetableScreenState extends State<AdminTimetableScreen> {
                         segments: [
                           ButtonSegment(value: 0, label: Text(l.timetableGrid)),
                           ButtonSegment(value: 1, label: Text(l.timetableList)),
-                          ButtonSegment(value: 2, label: Text(l.timetableAvailability)),
+                          ButtonSegment(value: 5, label: Text(l.holidaysTab)),
+                          if (ready)
+                            ButtonSegment(value: 2, label: Text(l.timetableAvailability)),
                           ButtonSegment(value: 3, label: Text(l.timetableFollowUp)),
-                          ButtonSegment(value: 4, label: Text(l.timetableRecap)),
+                          if (ready) ButtonSegment(value: 4, label: Text(l.timetableRecap)),
                         ],
-                        selected: {_view},
+                        selected: {view},
                         onSelectionChanged: (v) => setState(() => _view = v.first),
                       ),
                       OutlinedButton.icon(
-                        onPressed: () => showDialog<void>(
-                            context: context, builder: (_) => const _RulesDialog()),
+                        onPressed: () => TimetableRulesDialog.show(context),
                         icon: const Icon(Icons.tune, size: 18),
                         label: Text(l.timetableRules),
                       ),
@@ -106,10 +116,10 @@ class _AdminTimetableScreenState extends State<AdminTimetableScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  if (_view == 0)
+                  if (view == 0)
                     _Grid(schedules: all, rooms: rooms,
                         onTap: (s) => _edit(teachers, rooms, s: s))
-                  else if (_view == 1)
+                  else if (view == 1)
                     for (final s in all)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 8),
@@ -117,15 +127,17 @@ class _AdminTimetableScreenState extends State<AdminTimetableScreen> {
                           onTap: () => _edit(teachers, rooms, s: s),
                           child: Text(
                             '${weekdayLabel(l, s.weekday)} ${s.timeLabel} · ${s.className} · '
-                            '${s.room} · ${s.teacherName} · '
+                            '${s.room} · ${s.teachersLabel} · '
                             '${s.level.isEmpty ? l.bookingAllLevels : s.level} · '
                             '${l.timetableSeats(s.capacity)}',
                           ),
                         ),
                       )
-                  else if (_view == 2)
+                  else if (view == 5)
+                    const HolidaysView()
+                  else if (view == 2)
                     _Availability(teachers: teachers)
-                  else if (_view == 3)
+                  else if (view == 3)
                     AdminFollowUpView(schedules: all)
                   else
                     const TeacherRecapView(),
@@ -134,6 +146,7 @@ class _AdminTimetableScreenState extends State<AdminTimetableScreen> {
             },
           ),
         ),
+      ),
       ),
     );
   }
@@ -188,7 +201,7 @@ class _Grid extends StatelessWidget {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              '${s.timeLabel}\n${s.className}\n${s.teacherName}\n'
+                              '${s.timeLabel}\n${s.className}\n${s.teachersLabel}\n'
                               '${s.level.isEmpty ? l.bookingAllLevels : s.level} · '
                               '${l.timetableSeats(s.capacity)}',
                               style: const TextStyle(fontSize: 11),
@@ -290,6 +303,7 @@ class _ScheduleDialogState extends State<_ScheduleDialog> {
   late int _weekday = widget.existing?.weekday ?? 1;
   late String? _room = widget.existing?.room ?? widget.rooms.firstOrNull;
   late String? _teacher = widget.existing?.teacherId;
+  late final List<String> _helpers = [...?widget.existing?.coTeacherIds];
   late String _level = widget.existing?.level ?? '';
   ScheduleCheck? _check;
   Timer? _debounce;
@@ -325,6 +339,7 @@ class _ScheduleDialogState extends State<_ScheduleDialog> {
       'endMinutes': e,
       'room': _room,
       'teacherId': _teacher,
+      'coTeacherIds': _helpers.where((h) => h != _teacher).toList(),
       'capacity': int.tryParse(_capacity.text.trim()) ?? 8,
       'level': _level,
       'validFrom': _from.text.trim(),
@@ -489,9 +504,32 @@ class _ScheduleDialogState extends State<_ScheduleDialog> {
                 ],
                 onChanged: (v) {
                   _teacher = v;
+                  _helpers.remove(v);
                   _changed();
                 },
               ),
+              // Owner 2026-11-23: helper teachers (at most 3).
+              const SizedBox(height: 8),
+              Text(l.timetableHelpers,
+                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+              const SizedBox(height: 4),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final t in widget.teachers.where((t) => t.active && t.uid != _teacher))
+                    FilterChip(
+                      label: Text(t.staffLabel),
+                      selected: _helpers.contains(t.uid),
+                      onSelected: (on) {
+                        if (on && _helpers.length >= 3) return;
+                        setState(() => on ? _helpers.add(t.uid) : _helpers.remove(t.uid));
+                        _changed();
+                      },
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 initialValue: _room,
                 decoration: InputDecoration(labelText: l.roomsLabel),
@@ -504,6 +542,7 @@ class _ScheduleDialogState extends State<_ScheduleDialog> {
                   _changed();
                 },
               ),
+              const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 initialValue: _level,
                 decoration: InputDecoration(labelText: l.commonHskLevel),
@@ -517,6 +556,7 @@ class _ScheduleDialogState extends State<_ScheduleDialog> {
                   _changed();
                 },
               ),
+              const SizedBox(height: 8),
               Wrap(spacing: 8, children: [
                 SizedBox(
                   width: 150,
@@ -604,107 +644,6 @@ class _ScheduleDialogState extends State<_ScheduleDialog> {
         TextButton(onPressed: () => Navigator.pop(context), child: Text(l.commonCancel)),
         FilledButton(
           onPressed: _saving || _checking || (c != null && !c.ok) ? null : _save,
-          child: Text(l.roomsSave),
-        ),
-      ],
-    );
-  }
-}
-
-/// Owner 2026-11-23: the timetable's rules — how many minutes one teacher
-/// or one room needs between two classes (0 = back to back is fine) and
-/// when the weekly-hours warning shows. Read by the conflict check.
-class _RulesDialog extends StatefulWidget {
-  const _RulesDialog();
-
-  @override
-  State<_RulesDialog> createState() => _RulesDialogState();
-}
-
-class _RulesDialogState extends State<_RulesDialog> {
-  final _service = TimetableService();
-  final _gap = TextEditingController();
-  final _hours = TextEditingController();
-  bool _loaded = false;
-  bool _saving = false;
-  String? _error;
-
-  @override
-  void initState() {
-    super.initState();
-    _service.watchSettings().first.then((v) {
-      if (!mounted) return;
-      setState(() {
-        _gap.text = '${v.minGapMinutes}';
-        _hours.text = '${v.weeklyHoursWarning}';
-        _loaded = true;
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _gap.dispose();
-    _hours.dispose();
-    super.dispose();
-  }
-
-  Future<void> _save() async {
-    final gap = int.tryParse(_gap.text.trim());
-    final hours = int.tryParse(_hours.text.trim());
-    if (gap == null || gap < 0 || gap > 180 || hours == null || hours < 1 || hours > 80) {
-      setState(() => _error = context.l10n.timetableRulesInvalid);
-      return;
-    }
-    setState(() => _saving = true);
-    try {
-      await _service.saveSettings(minGapMinutes: gap, weeklyHoursWarning: hours);
-      if (mounted) Navigator.pop(context);
-    } catch (e) {
-      if (mounted) setState(() => _error = '$e');
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l = context.l10n;
-    return AlertDialog(
-      title: Text(l.timetableRules),
-      content: SizedBox(
-        width: 420,
-        child: !_loaded
-            ? const LinearProgressIndicator()
-            : Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextField(
-                    controller: _gap,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                        labelText: l.timetableGapLabel,
-                        helperText: l.timetableGapHelp,
-                        helperMaxLines: 3),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _hours,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(labelText: l.timetableHoursLabel),
-                  ),
-                  if (_error != null) ...[
-                    const SizedBox(height: 8),
-                    Text(_error!, style: TextStyle(color: AppColors.error)),
-                  ],
-                ],
-              ),
-      ),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: Text(l.commonCancel)),
-        FilledButton(
-          onPressed: _saving || !_loaded ? null : _save,
           child: Text(l.roomsSave),
         ),
       ],

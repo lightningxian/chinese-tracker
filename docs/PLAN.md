@@ -2185,6 +2185,29 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
+### 2026-11-23 — Owner requests, second round — COMMIT, release v0.1.28 (rules, functions and hosting live from the PC under the owner's standing go; 65 functions)
+- Built: Timetable rules dialog; teacher readiness switch (default off;
+  recap, availability, confirmation, late check-in hidden); helper teachers
+  (`coTeacherIds`); minimum students (job, 3 hours before, off until set);
+  Indonesian holidays (`holidays_id.js`, `importHolidays`), closing and
+  opening a day (`setDayClosed`), announcements with home banners and the
+  calendar; attendance-board compare at close; class-day picker removed from
+  the buy sheet.
+- Owner answers (AskUserQuestion): "multiple teachers" = one class, 2+
+  teachers; recap/availability/confirmation hidden behind one switch, kept
+  for the thesis; small classes close 3 hours before; board = compare
+  screen.
+- Choices: the minimum rule ships off on live (0) so classes without
+  bookings are not cancelled before the centre uses bookings; announcements
+  of a closed day are written in the admin's language; holiday dates are
+  copied from the government page, never typed from memory.
+- Proof: analyzer 17 infos; `flutter test` 160 pass and 2 skipped; node
+  tests pass (new cases for helpers, the minimum rule, the holiday list);
+  rules tests 84 pass and 1 skipped; flow test 101 steps; emulator walk of
+  the rules dialog, the schedule form, Holidays & news, closing a day and the
+  student banner.
+- Left: the open questions Q6–Q9 and Q12.
+
 ### 2026-11-23 — Owner requests and the After-Build-8 follow-ups — 242e287, release v0.1.27 (functions and hosting live from the PC under the owner's standing go; 63 functions)
 - Built: timetable gap 0 by default with **Timetable rules**, **Recheck**,
   **Delete** (`deleteSchedule`); sessions start by themselves (app,

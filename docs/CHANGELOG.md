@@ -6,6 +6,57 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-23 — Claude (BUILD chat): owner requests, second round (holidays, announcements, helper teachers)
+
+**What changed**
+- **Timetable rules** is a full dialog (`timetable_rules_dialog.dart`):
+  break between classes, minimum students per class and when it is
+  checked, the teaching-load warning, and one **teacher readiness** switch.
+- **Teacher readiness switch** (`settings/scheduling.teacherReadiness`,
+  default off, owner: "teachers are assumed ready all the time"): off hides
+  the Teacher recap and Availability tabs, the confirm button and the
+  dashboard's unconfirmed and late cards; new schedules are saved
+  `confirmed`; no availability check; no late check-in flags or teacher
+  check-in button. On brings back the thesis features (the flow test runs
+  JD-01, VC and the recap with it on).
+- **Helper teachers:** a schedule has `coTeacherIds` (up to 3) next to the
+  main teacher; each helper is checked for clashes; generated sessions carry
+  them; helpers see the class in their schedule
+  (`watchMyTeachingSessions`), may close it; rules let a helper read it.
+- **Minimum students:** `minStudentsDecision` (teaching_day.js) — the
+  5-minute job cancels a timetable class with fewer booked students than
+  `minStudents` once, `minStudentsHours` before its start (reason
+  `too_few`), tells the students, the teachers and the admin. Off (0) until
+  the admin saves a number.
+- **Holidays:** `functions/holidays_id.js` holds December 2026 and the 2027
+  SKB 3 Menteri list (18 national, 8 joint leave, copied from setneg.go.id);
+  `importHolidays` writes `holidays/{date}`; the admin decides per day
+  (Timetable → **Holidays & news**, or the calendar). `setDayClosed` closes a
+  day (classes cancelled, bookings back, announcement and notices) or opens
+  it again (timetable classes come back); generation creates sessions of a
+  closed day as cancelled and names the holiday.
+- **Announcements:** `announcements/{id}` (admin writes, everyone reads);
+  banner on the student home, the parent's first tab and the teacher
+  dashboard; the calendar shows holidays in red with the decision.
+- **Attendance board:** the close dialog has a tick per student ("signed the
+  board"), a field for names on the board that are not in the app, and a
+  live list of differences; `closeSession` stores `onBoard`,
+  `boardExtras`, `boardMismatches`.
+- The class-day picker left the buy sheet again (owner: students book any
+  class until the deadline).
+
+**Why**
+- Owner requests 2026-11-23 (second round, with answers: helper teachers;
+  hide, keep for the thesis; close 3 hours before; compare screen).
+
+**For review**
+- Rules change (holidays, announcements, helper read) and functions 63 → 65
+  (`importHolidays`, `setDayClosed`).
+- Owner on live: Timetable rules → type 3 in minimum students when bookings
+  start; Holidays & news → decide the coming holidays.
+
+---
+
 ## 2026-11-23 — Claude (BUILD chat): owner requests and the After-Build-8 follow-ups
 
 **What changed**

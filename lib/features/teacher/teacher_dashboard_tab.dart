@@ -28,6 +28,7 @@ import '../../models/student_progress.dart';
 import '../../models/teacher_dashboard_stat_kind.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
+import '../announcements/announcements.dart';
 
 class TeacherDashboardTab extends StatelessWidget {
   const TeacherDashboardTab({super.key});
@@ -205,6 +206,7 @@ class TeacherDashboardTab extends StatelessWidget {
                                         return ListView(
                                           padding: const EdgeInsets.all(20),
                                           children: [
+                                            const AnnouncementBanner(role: 'teacher'),
                                             Text(
                                               l.teacherShellNavDashboard,
                                               style: Theme.of(context)

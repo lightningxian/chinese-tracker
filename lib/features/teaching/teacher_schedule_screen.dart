@@ -23,16 +23,32 @@ String _dateKey(DateTime d) => DateFormat('yyyy-MM-dd').format(d);
 /// Build 7 (Must 1): the teacher's **Schedule**, one screen with three
 /// tabs: Today (start, attendance, close), Week (confirm, ask for a
 /// change) and Availability (Build 6's editor and days off).
-class TeacherScheduleScreen extends StatelessWidget {
+class TeacherScheduleScreen extends StatefulWidget {
   const TeacherScheduleScreen({super.key});
+
+  @override
+  State<TeacherScheduleScreen> createState() => _TeacherScheduleScreenState();
+}
+
+class _TeacherScheduleScreenState extends State<TeacherScheduleScreen> {
+  late final Stream<SchedulingRules> _rules = TimetableService().watchSettings();
 
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
     final user = context.watch<AuthService>().appUser;
     if (user == null) return const SizedBox.shrink();
+    return StreamBuilder<SchedulingRules>(
+      stream: _rules,
+      builder: (context, ru) => _tabs(context, l, user, ru.data?.teacherReadiness ?? false),
+    );
+  }
+
+  /// Owner 2026-11-23: the Availability tab only with teacher readiness on.
+  Widget _tabs(BuildContext context, AppLocalizations l, AppUser user, bool ready) {
     return DefaultTabController(
-      length: 3,
+      key: ValueKey(ready),
+      length: ready ? 3 : 2,
       child: Column(
         children: [
           Material(
@@ -43,7 +59,7 @@ class TeacherScheduleScreen extends StatelessWidget {
               tabs: [
                 Tab(text: l.scheduleTabToday),
                 Tab(text: l.scheduleTabWeek),
-                Tab(text: l.timetableAvailability),
+                if (ready) Tab(text: l.timetableAvailability),
               ],
             ),
           ),
@@ -51,11 +67,12 @@ class TeacherScheduleScreen extends StatelessWidget {
             child: TabBarView(
               children: [
                 _TodayTab(user: user),
-                _WeekTab(user: user),
-                ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [TeacherAvailabilityCard(teacher: user)],
-                ),
+                _WeekTab(user: user, ready: ready),
+                if (ready)
+                  ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [TeacherAvailabilityCard(teacher: user)],
+                  ),
               ],
             ),
           ),
@@ -75,7 +92,7 @@ class _TodayTab extends StatefulWidget {
 
 class _TodayTabState extends State<_TodayTab> {
   late final Stream<List<ClassSession>> _sessions =
-      context.read<FirestoreService>().watchTeacherSessions(widget.user.uid);
+      context.read<FirestoreService>().watchMyTeachingSessions(widget.user.uid);
   bool _printing = false;
 
   /// Follow-up 2026-11-23: the printable day sheet (booked students, boxes
@@ -218,7 +235,8 @@ class SessionDayCard extends StatelessWidget {
 }
 
 class _WeekTab extends StatefulWidget {
-  const _WeekTab({required this.user});
+  final bool ready;
+  const _WeekTab({required this.user, this.ready = false});
   final AppUser user;
 
   @override
@@ -230,7 +248,7 @@ class _WeekTabState extends State<_WeekTab> {
   final _service = TeachingDayService();
   late final Stream<List<Schedule>> _schedules = _timetable.watchSchedules();
   late final Stream<List<ClassSession>> _sessions =
-      context.read<FirestoreService>().watchTeacherSessions(widget.user.uid);
+      context.read<FirestoreService>().watchMyTeachingSessions(widget.user.uid);
   late final Stream<List<ChangeRequest>> _requests =
       _service.watchChangeRequests(teacherId: widget.user.uid);
   final Set<String> _busy = {};
@@ -312,7 +330,9 @@ class _WeekTabState extends State<_WeekTab> {
           stream: _schedules,
           builder: (context, snap) {
             final mine = (snap.data ?? const <Schedule>[])
-                .where((s) => s.active && s.teacherId == widget.user.uid)
+                .where((s) => s.active &&
+                    (s.teacherId == widget.user.uid ||
+                        s.coTeacherIds.contains(widget.user.uid)))
                 .toList();
             if (mine.isEmpty) {
               return Text(l.scheduleNoSchedules,
@@ -334,6 +354,10 @@ class _WeekTabState extends State<_WeekTab> {
                             '${weekdayLabel(l, s.weekday)} ${s.timeLabel} · ${s.className} · ${s.room}',
                             style: const TextStyle(fontWeight: FontWeight.w600),
                           ),
+                          if (s.coTeacherIds.contains(widget.user.uid))
+                            Text(l.timetableHelperOf(s.teacherName),
+                                style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                          if (widget.ready)
                           Text(
                             s.status == 'confirmed'
                                 ? l.scheduleStatusConfirmed
@@ -346,7 +370,7 @@ class _WeekTabState extends State<_WeekTab> {
                                   : AppColors.chipAmberFg,
                             ),
                           ),
-                          if (s.status != 'confirmed')
+                          if (widget.ready && s.status != 'confirmed')
                             FilledButton(
                               onPressed: _busy.contains(s.id) ? null : () => _confirm(s),
                               child: Text(l.scheduleConfirm),

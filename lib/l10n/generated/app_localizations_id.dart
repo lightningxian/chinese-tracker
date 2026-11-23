@@ -7700,7 +7700,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get timetableRecheck => 'Cek ulang';
 
   @override
-  String get timetableFillTimes => 'Ketik jam seperti 16:30 untuk mengecek.';
+  String get timetableFillTimes =>
+      'Pilih guru dan ruang, lalu ketik jam seperti 16:30, untuk mengecek.';
 
   @override
   String get timetableDelete => 'Hapus';
@@ -7751,4 +7752,244 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get voucherClassDayHelp =>
       'Kelas mingguan Anda: Anda otomatis terdaftar setiap minggu. Kosongkan untuk mendaftar sendiri tiap kelas.';
+
+  @override
+  String get rulesIntro =>
+      'Aturan ini berlaku untuk semua jadwal mingguan dan pemeriksaan otomatis.';
+
+  @override
+  String get rulesGapTitle => 'Jeda antar dua kelas';
+
+  @override
+  String get rulesGapHelp =>
+      'Untuk satu guru dan satu ruang. 0 berarti kelas boleh mulai tepat saat kelas sebelumnya selesai.';
+
+  @override
+  String get rulesUnitMinutes => 'menit';
+
+  @override
+  String get rulesMinTitle => 'Minimal siswa per kelas';
+
+  @override
+  String get rulesMinHelp =>
+      'Kelas jadwal dengan siswa terdaftar kurang dari ini ditutup otomatis; sesi siswa dikembalikan dan semua diberi tahu. 0 mematikan aturan ini.';
+
+  @override
+  String get rulesUnitStudents => 'siswa';
+
+  @override
+  String get rulesCheckedBefore => 'dicek';
+
+  @override
+  String get rulesUnitHours => 'jam sebelum';
+
+  @override
+  String get rulesHoursTitle => 'Peringatan beban mengajar';
+
+  @override
+  String get rulesHoursHelp =>
+      'Tampilkan peringatan bila jadwal baru membuat jam mengajar guru per minggu melebihi angka ini.';
+
+  @override
+  String get rulesUnitHoursWeek => 'jam / minggu';
+
+  @override
+  String get rulesReadinessTitle => 'Ketersediaan, konfirmasi, dan rekap guru';
+
+  @override
+  String get rulesReadinessHelp =>
+      'Mati: guru dianggap selalu siap (tanpa cek ketersediaan, konfirmasi, absen terlambat, dan rekap). Nyala: fitur skripsi aktif kembali.';
+
+  @override
+  String get rulesReadinessOn => 'Nyala';
+
+  @override
+  String get rulesReadinessOff => 'Mati: guru selalu siap';
+
+  @override
+  String get rulesGapInvalid => 'Jeda harus 0 sampai 180 menit.';
+
+  @override
+  String get rulesHoursInvalid => 'Beban mengajar harus 1 sampai 80 jam.';
+
+  @override
+  String get rulesMinInvalid => 'Minimal siswa harus 0 sampai 30.';
+
+  @override
+  String get rulesCheckInvalid => 'Pengecekan 1 sampai 48 jam sebelum kelas.';
+
+  @override
+  String get holidaysTab => 'Libur & info';
+
+  @override
+  String get timetableHelpers => 'Guru pendamping (maks. 3)';
+
+  @override
+  String timetableHelperOf(String name) {
+    return 'Anda mendampingi $name';
+  }
+
+  @override
+  String get holidayKindNational => 'Libur nasional';
+
+  @override
+  String get holidayKindLeave => 'Cuti bersama';
+
+  @override
+  String get holidayKindCentre => 'Libur centre';
+
+  @override
+  String get holidayUndecided => 'Belum diputuskan';
+
+  @override
+  String get holidayOpen => 'Kelas jalan';
+
+  @override
+  String get holidayClosed => 'Tutup';
+
+  @override
+  String dayCloseTitle(String date) {
+    return 'Tutup centre pada $date?';
+  }
+
+  @override
+  String dayOpenTitle(String date) {
+    return 'Buka centre pada $date?';
+  }
+
+  @override
+  String get dayCloseBody =>
+      'Semua kelas hari itu yang belum mulai dibatalkan. Pendaftaran dan sesi voucher kembali ke siswa, dan siswa diberi tahu.';
+
+  @override
+  String get dayOpenBody =>
+      'Kelas berjalan pada hari ini. Kelas jadwal yang dibatalkan karena penutupan sebelumnya kembali (siswa mendaftar lagi).';
+
+  @override
+  String get dayCloseReason => 'Alasan (mis. libur, liburan)';
+
+  @override
+  String get dayCloseAnnounce =>
+      'Kirim pengumuman ke siswa, orang tua, dan guru';
+
+  @override
+  String get dayCloseButton => 'Tutup hari ini';
+
+  @override
+  String get dayOpenButton => 'Kelas jalan';
+
+  @override
+  String dayClosedDone(int n) {
+    return 'Hari ditutup, $n kelas dibatalkan.';
+  }
+
+  @override
+  String dayOpenedDone(int n) {
+    return 'Hari dibuka, $n kelas kembali.';
+  }
+
+  @override
+  String get holidaysImport => 'Muat libur nasional';
+
+  @override
+  String holidaysImported(int n) {
+    return '$n hari libur ditambahkan.';
+  }
+
+  @override
+  String get holidaysCloseOther => 'Tutup hari lain';
+
+  @override
+  String get holidaysCloseThisDay => 'Tutup centre pada hari ini';
+
+  @override
+  String get holidaysTitle => 'Hari libur';
+
+  @override
+  String get holidaysHelp =>
+      'Libur nasional dan cuti bersama (SKB 3 Menteri). Putuskan untuk setiap hari apakah kelas berjalan.';
+
+  @override
+  String get holidaysNone => 'Tidak ada hari libur ke depan.';
+
+  @override
+  String get announcementsTitle => 'Pengumuman';
+
+  @override
+  String get announcementsNone => 'Belum ada pengumuman.';
+
+  @override
+  String get announcementNew => 'Pengumuman baru';
+
+  @override
+  String get announcementTitleLabel => 'Judul';
+
+  @override
+  String get announcementBodyLabel => 'Isi pesan';
+
+  @override
+  String get announcementTitleMissing => 'Isi judul pengumuman.';
+
+  @override
+  String get announcementForAll => 'Semua';
+
+  @override
+  String get announcementForStudents => 'Siswa & orang tua';
+
+  @override
+  String get announcementForTeachers => 'Guru';
+
+  @override
+  String announcementUntil(String date) {
+    return 'Tampil sampai $date';
+  }
+
+  @override
+  String get announcementPickDate => 'Ubah tanggal';
+
+  @override
+  String get announcementPost => 'Kirim';
+
+  @override
+  String get boardSigned => 'Tanda tangan di papan';
+
+  @override
+  String get boardTitle => 'Papan absensi';
+
+  @override
+  String get boardHelp =>
+      'Centang setiap siswa yang namanya ada di papan absensi kelas. Nama di papan yang tidak ada di daftar ini ditulis di bawah.';
+
+  @override
+  String get boardExtrasLabel => 'Nama di papan, tidak ada di aplikasi';
+
+  @override
+  String get boardExtrasHint => 'Pisahkan dengan koma';
+
+  @override
+  String get boardMatches => 'Papan dan aplikasi cocok.';
+
+  @override
+  String boardDifferences(int n) {
+    return '$n perbedaan antara papan dan aplikasi';
+  }
+
+  @override
+  String get boardPresentNotSigned => 'Hadir di sini, tidak ada di papan';
+
+  @override
+  String get boardSignedNotPresent => 'Ada di papan, tidak ditandai hadir';
+
+  @override
+  String get boardNotBooked => 'Ada di papan, tidak terdaftar di aplikasi';
+
+  @override
+  String dayClosedAnnTitle(String date) {
+    return 'Tidak ada kelas pada $date';
+  }
+
+  @override
+  String dayClosedAnnBody(String date) {
+    return 'Centre tutup pada $date. Sesi yang sudah didaftarkan kembali ke voucher Anda.';
+  }
 }

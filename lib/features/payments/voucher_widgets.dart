@@ -11,8 +11,6 @@ import '../../models/pricing_settings.dart';
 import '../../models/student_class_term.dart';
 import '../../services/firestore_service.dart';
 import '../../services/payment_service.dart';
-import '../../services/timetable_service.dart';
-import '../timetable/admin_timetable_screen.dart' show weekdayLabel;
 
 /// Build 5 (docs/PLAN.md §4, Must 2): what the buy sheet shows, as pure
 /// logic (tested in `test/voucher_purchase_test.dart`).
@@ -67,10 +65,8 @@ class _BuyVoucherSheet extends StatefulWidget {
 class _BuyVoucherSheetState extends State<_BuyVoucherSheet> {
   VoucherOffer? _picked;
 
-  /// Follow-up 2026-11-23: the weekly class the voucher books every week
-  /// ('' = no fixed day, the student books each class).
-  String _classDay = '';
-  late final Stream<List<Schedule>> _schedules = TimetableService().watchSchedules();
+  /// Owner 2026-11-23 (second round): no class day at purchase; the
+  /// student books any class until the voucher's deadline.
   bool _accepted = false;
   bool _busy = false;
   String? _error;
@@ -88,7 +84,6 @@ class _BuyVoucherSheetState extends State<_BuyVoucherSheet> {
       final created = await payments.buyVoucher(
         studentId: widget.studentId,
         priceItemId: picked.item.id,
-        classDay: _classDay,
       );
       await payments.openPayment(created.redirectUrl);
       navigator.pop();
@@ -133,36 +128,6 @@ class _BuyVoucherSheetState extends State<_BuyVoucherSheet> {
                       onTap: _busy ? null : () => setState(() => _picked = o),
                     ),
                   ),
-                const SizedBox(height: 4),
-                StreamBuilder<List<Schedule>>(
-                  stream: _schedules,
-                  builder: (context, ss) {
-                    final list =
-                        (ss.data ?? const <Schedule>[]).where((s) => s.active).toList();
-                    if (list.isEmpty) return const SizedBox.shrink();
-                    final ids = {for (final s in list) s.id};
-                    return DropdownButtonFormField<String>(
-                      key: ValueKey('buy_classday_${ids.length}'),
-                      initialValue: ids.contains(_classDay) ? _classDay : '',
-                      isExpanded: true,
-                      decoration: InputDecoration(
-                          labelText: l.voucherClassDay, helperText: l.voucherClassDayHelp,
-                          helperMaxLines: 2),
-                      items: [
-                        DropdownMenuItem(value: '', child: Text(l.voucherNoClassDay)),
-                        for (final s in list)
-                          DropdownMenuItem(
-                            value: s.id,
-                            child: Text(
-                              '${weekdayLabel(l, s.weekday)} ${s.timeLabel} · ${s.className}',
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                      ],
-                      onChanged: _busy ? null : (v) => setState(() => _classDay = v ?? ''),
-                    );
-                  },
-                ),
                 const SizedBox(height: 8),
                 Text(l.voucherTermsTitle,
                     style: const TextStyle(fontWeight: FontWeight.w700)),

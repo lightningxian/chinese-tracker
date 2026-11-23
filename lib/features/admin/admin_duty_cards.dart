@@ -83,10 +83,17 @@ class _AdminDutyCardsState extends State<AdminDutyCards> {
   late final Stream<List<ClassSession>> _sessions =
       context.read<FirestoreService>().watchAllClassSessions();
   late final Stream<List<ProgressSummary>> _summaries = ProgressService().watchSummaries();
+  late final Stream<SchedulingRules> _rules = TimetableService().watchSettings();
 
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
+    return StreamBuilder<SchedulingRules>(
+      stream: _rules,
+      builder: (context, ru) {
+    // Owner 2026-11-23: unconfirmed schedules and late check-ins only with
+    // the teacher-readiness switch on.
+    final ready = ru.data?.teacherReadiness ?? false;
     return StreamBuilder<List<Schedule>>(
       stream: _schedules,
       builder: (context, sc) => StreamBuilder<List<ClassSession>>(
@@ -112,6 +119,7 @@ class _AdminDutyCardsState extends State<AdminDutyCards> {
                   color: AppColors.chipAmberFg,
                   onTap: () => context.push('/admin/users/approval'),
                 ),
+                if (ready)
                 AdminStatCard(
                   label: l.dutyUnconfirmed,
                   value: '${c.unconfirmedSchedules}',
@@ -119,6 +127,7 @@ class _AdminDutyCardsState extends State<AdminDutyCards> {
                   color: AppColors.navy,
                   onTap: () => context.push('/admin/timetable?view=followup'),
                 ),
+                if (ready)
                 AdminStatCard(
                   label: l.dutyLate,
                   value: '${c.lateToday}',
@@ -153,6 +162,8 @@ class _AdminDutyCardsState extends State<AdminDutyCards> {
           },
         ),
       ),
+    );
+      },
     );
   }
 }

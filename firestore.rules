@@ -254,6 +254,8 @@ service cloud.firestore {
       // Parents: sessions for any teacher linked to one of their children.
       allow read: if isAdmin() ||
         (isTeacher() && resource.data.get('teacherId', '') == request.auth.uid) ||
+        // Owner 2026-11-23: a helper teacher reads the classes they help in.
+        (isTeacher() && request.auth.uid in resource.data.get('coTeacherIds', [])) ||
         // Build 6: the centre's generated timetable is open to book.
         ((isStudent() || isParent()) && resource.data.get('generated', false) == true) ||
         (isStudent() &&
@@ -309,6 +311,24 @@ service cloud.firestore {
     match /schedules/{scheduleId} {
       allow read: if isApprovedUser();
       allow write: if false;
+    }
+
+    // Owner 2026-11-23: Indonesian holidays and days the admin closed
+    // (written by importHolidays / setDayClosed), and announcements that
+    // students, parents and teachers see at home. The admin writes
+    // announcements directly; a closure announcement comes from setDayClosed.
+    match /holidays/{date} {
+      allow read: if isApprovedUser();
+      allow write: if false;
+    }
+    match /announcements/{id} {
+      allow read: if isApprovedUser();
+      allow create, update: if isAdmin() &&
+        request.resource.data.keys().hasAll(['title', 'body', 'audience', 'toDate']) &&
+        request.resource.data.title is string && request.resource.data.title.size() <= 120 &&
+        request.resource.data.body is string && request.resource.data.body.size() <= 1000 &&
+        request.resource.data.audience in ['all', 'students', 'teachers'];
+      allow delete: if isAdmin();
     }
     match /schedule_locks/{lockId} {
       allow read, write: if false;

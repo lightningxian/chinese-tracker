@@ -19,7 +19,9 @@ import '../../models/attendance_record.dart';
 import '../../models/class_session.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
+import '../../services/timetable_service.dart';
 import '../teaching/session_life.dart';
+import '../timetable/holidays_view.dart';
 
 /// Classes tab: one calendar for upcoming and past classes. Tap a day to see
 /// its classes (open or concluded) and to create a class on that date.
@@ -34,6 +36,10 @@ class _TeacherAttendanceTabState extends State<TeacherAttendanceTab> {
   CalendarFormat _format = CalendarFormat.month;
   DateTime _focusedDay = DateTime.now();
   DateTime _selectedDay = DateTime.now();
+
+  /// Owner 2026-11-23: Indonesian holidays and closed days on the calendar.
+  late final Stream<Map<String, Holiday>> _holidays = TimetableService().watchHolidays();
+  static String _dateKey(DateTime d) => DateFormat('yyyy-MM-dd').format(d);
 
   static DateTime _dayKey(DateTime d) => DateTime.utc(d.year, d.month, d.day);
 
@@ -67,7 +73,7 @@ class _TeacherAttendanceTabState extends State<TeacherAttendanceTab> {
       // Build 7: the admin sees every session, the timetable's too.
       stream: user.isAdmin
           ? context.read<FirestoreService>().watchAllClassSessions()
-          : context.read<FirestoreService>().watchTeacherSessions(teacherId),
+          : context.read<FirestoreService>().watchMyTeachingSessions(teacherId),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -89,6 +95,11 @@ class _TeacherAttendanceTabState extends State<TeacherAttendanceTab> {
         final selected = byDay[_dayKey(_selectedDay)] ?? const <ClassSession>[];
         final openCount = selected.where((s) => !s.isConcluded).length;
 
+        return StreamBuilder<Map<String, Holiday>>(
+          stream: _holidays,
+          builder: (context, hSnap) {
+        final holidays = hSnap.data ?? const <String, Holiday>{};
+        final dayHoliday = holidays[_dateKey(_selectedDay)];
         return LayoutBuilder(
           builder: (context, constraints) {
             const padding = 16.0;
@@ -135,6 +146,7 @@ class _TeacherAttendanceTabState extends State<TeacherAttendanceTab> {
                       CalendarFormat.week: l.calendarFormatWeek,
                     },
                     selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+                    holidayPredicate: (day) => holidays.containsKey(_dateKey(day)),
                     eventLoader: (day) => byDay[_dayKey(day)] ?? const [],
                     onDaySelected: (selectedDay, focusedDay) => setState(() {
                       _selectedDay = selectedDay;
@@ -162,6 +174,9 @@ class _TeacherAttendanceTabState extends State<TeacherAttendanceTab> {
                       ),
                       markersMaxCount: 3,
                       markerSize: 6,
+                      holidayTextStyle: TextStyle(
+                          color: AppColors.error, fontWeight: FontWeight.w700),
+                      holidayDecoration: const BoxDecoration(shape: BoxShape.circle),
                     ),
                     calendarBuilders: CalendarBuilders(
                       // Open classes = teal dot, concluded = grey dot.
@@ -180,6 +195,73 @@ class _TeacherAttendanceTabState extends State<TeacherAttendanceTab> {
                   ),
                 ),
                 const SizedBox(height: 16),
+                if (dayHoliday != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: AppCard(
+                      padding: const EdgeInsets.all(14),
+                      child: Wrap(
+                        spacing: 12,
+                        runSpacing: 8,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        alignment: WrapAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(dayHoliday.closed ? Icons.event_busy : Icons.celebration_outlined,
+                                  color: AppColors.error),
+                              const SizedBox(width: 10),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(dayHoliday.name,
+                                      style: const TextStyle(fontWeight: FontWeight.w800)),
+                                  Text(
+                                    '${holidayKindLabel(l, dayHoliday.kind)} · ${switch (dayHoliday.decision) {
+                                      'closed' => l.holidayClosed,
+                                      'open' => l.holidayOpen,
+                                      _ => l.holidayUndecided,
+                                    }}',
+                                    style: TextStyle(
+                                        fontSize: 12, color: AppColors.textSecondary),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          if (user.isAdmin)
+                            Wrap(spacing: 8, children: [
+                              if (!dayHoliday.closed)
+                                OutlinedButton(
+                                  style: OutlinedButton.styleFrom(
+                                      foregroundColor: AppColors.error),
+                                  onPressed: () => confirmDayDecision(context,
+                                      date: dayHoliday.date, close: true, name: dayHoliday.name),
+                                  child: Text(l.dayCloseButton),
+                                ),
+                              if (dayHoliday.decision != 'open')
+                                OutlinedButton(
+                                  onPressed: () => confirmDayDecision(context,
+                                      date: dayHoliday.date, close: false),
+                                  child: Text(l.dayOpenButton),
+                                ),
+                            ]),
+                        ],
+                      ),
+                    ),
+                  )
+                else if (user.isAdmin &&
+                    !_selectedDay.isBefore(DateTime.now().subtract(const Duration(days: 1))))
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: () => confirmDayDecision(context,
+                          date: _dateKey(_selectedDay), close: true),
+                      icon: const Icon(Icons.event_busy_outlined, size: 18),
+                      label: Text(l.holidaysCloseThisDay),
+                    ),
+                  ),
                 Row(
                   children: [
                     Expanded(
@@ -241,6 +323,8 @@ class _TeacherAttendanceTabState extends State<TeacherAttendanceTab> {
                   ),
               ],
             );
+          },
+        );
           },
         );
       },

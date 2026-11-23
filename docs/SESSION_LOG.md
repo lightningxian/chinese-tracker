@@ -13,6 +13,18 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-23 — Claude (BUILD chat, PC): owner requests, second round
+
+- Owner asked: a bigger, clearer Timetable rules dialog; several teachers
+  per class; drop the teacher recap ("teachers are always ready");
+  Indonesian holidays on the calendar with an open/closed decision; close a
+  class with fewer than 3 students; announcements on the home pages; no
+  class-day picker at purchase; compare the paper attendance board at close.
+- Built in release v0.1.28 (65 functions), see the CHANGELOG entry. The
+  minimum-students rule is off on live until the owner types a number.
+- Checked: analyzer 17 infos, `flutter test` 160 pass, rules tests 84 pass,
+  flow test 101 steps, emulator walk.
+
 ### 2026-11-23 — Claude (BUILD chat, PC): owner requests + After-Build-8 follow-ups
 
 - Owner asked (with two screenshots): delete button on the quick sign-in

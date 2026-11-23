@@ -4,6 +4,9 @@ import 'package:provider/provider.dart';
 import '../../l10n/l10n.dart';
 import '../../models/app_user.dart';
 import '../../models/attendance_record.dart';
+import '../../models/board_check.dart';
+
+export '../../models/board_check.dart';
 import '../../services/firestore_service.dart';
 import '../theme/app_theme.dart';
 
@@ -27,8 +30,17 @@ class ConcludeClassDialog extends StatefulWidget {
     BuildContext context, {
     required String sessionId,
     required String sessionTitle,
+  }) async =>
+      (await showWithBoard(context, sessionId: sessionId, sessionTitle: sessionTitle))
+          ?.statuses;
+
+  /// The statuses plus the attendance-board comparison.
+  static Future<BoardCheck?> showWithBoard(
+    BuildContext context, {
+    required String sessionId,
+    required String sessionTitle,
   }) {
-    return showDialog<Map<String, String>>(
+    return showDialog<BoardCheck>(
       context: context,
       builder: (_) => ConcludeClassDialog(
         sessionId: sessionId,
@@ -43,6 +55,16 @@ class ConcludeClassDialog extends StatefulWidget {
 
 class _ConcludeClassDialogState extends State<ConcludeClassDialog> {
   final Map<String, String> _statuses = {};
+  final Map<String, bool> _board = {};
+  final _extras = TextEditingController();
+  List<AttendanceRecord> _pending = const [];
+  Map<String, String> _names = const {};
+
+  @override
+  void dispose() {
+    _extras.dispose();
+    super.dispose();
+  }
   late final Stream<List<AppUser>> _students =
       context.read<FirestoreService>().watchAllStudents();
 
@@ -56,7 +78,7 @@ class _ConcludeClassDialogState extends State<ConcludeClassDialog> {
     return AlertDialog(
       title: Text(l.concludeTitle),
       content: SizedBox(
-        width: 460,
+        width: 560,
         child: StreamBuilder<List<AppUser>>(
           stream: _students,
           builder: (context, studentsSnap) {
@@ -100,6 +122,16 @@ class _ConcludeClassDialogState extends State<ConcludeClassDialog> {
         final charged = pending
             .where((r) => _statusFor(r) != AttendanceRecord.izin)
             .length;
+        _pending = pending;
+        _names = {for (final r in pending) r.studentId: nameOf(r)};
+        final diff = BoardCheck.differences(
+          statusById: {for (final r in pending) r.studentId: _statusFor(r)},
+          board: _board,
+          nameById: _names,
+          extras: _extras.text,
+        );
+        final diffCount = diff.presentNotSigned.length + diff.signedNotPresent.length +
+            diff.notBooked.length;
 
         return Column(
           mainAxisSize: MainAxisSize.min,
@@ -133,6 +165,16 @@ class _ConcludeClassDialogState extends State<ConcludeClassDialog> {
                     final r = pending[i];
                     return Row(
                       children: [
+                        // Owner 2026-11-23: ticked when the name is on the
+                        // attendance board in the room.
+                        Tooltip(
+                          message: l.boardSigned,
+                          child: Checkbox(
+                            value: _board[r.studentId] == true,
+                            onChanged: (v) =>
+                                setState(() => _board[r.studentId] = v ?? false),
+                          ),
+                        ),
                         Expanded(
                           child: Text(
                             nameOf(r),
@@ -175,6 +217,45 @@ class _ConcludeClassDialogState extends State<ConcludeClassDialog> {
                     fontSize: 13, fontWeight: FontWeight.w600),
               ),
             ],
+            const SizedBox(height: 12),
+            Text(l.boardTitle, style: const TextStyle(fontWeight: FontWeight.w700)),
+            Text(l.boardHelp,
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 12, height: 1.4)),
+            const SizedBox(height: 6),
+            TextField(
+              controller: _extras,
+              onChanged: (_) => setState(() {}),
+              decoration: InputDecoration(
+                isDense: true,
+                labelText: l.boardExtrasLabel,
+                hintText: l.boardExtrasHint,
+              ),
+            ),
+            const SizedBox(height: 8),
+            if (diffCount == 0)
+              Text(l.boardMatches,
+                  style: TextStyle(color: AppColors.success, fontWeight: FontWeight.w700))
+            else
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.error.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(l.boardDifferences(diffCount),
+                        style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w700)),
+                    if (diff.presentNotSigned.isNotEmpty)
+                      Text('• ${l.boardPresentNotSigned}: ${diff.presentNotSigned.join(', ')}'),
+                    if (diff.signedNotPresent.isNotEmpty)
+                      Text('• ${l.boardSignedNotPresent}: ${diff.signedNotPresent.join(', ')}'),
+                    if (diff.notBooked.isNotEmpty)
+                      Text('• ${l.boardNotBooked}: ${diff.notBooked.join(', ')}'),
+                  ],
+                ),
+              ),
           ],
         );
       },
@@ -189,8 +270,17 @@ class _ConcludeClassDialogState extends State<ConcludeClassDialog> {
         child: Text(l.commonCancel),
       ),
       FilledButton(
-        onPressed: () =>
-            Navigator.pop(context, Map<String, String>.from(_statuses)),
+        onPressed: () => Navigator.pop(
+          context,
+          BoardCheck(
+            statuses: {
+              for (final r in _pending) r.studentId: _statusFor(r),
+              ..._statuses,
+            },
+            board: {for (final r in _pending) r.studentId: _board[r.studentId] == true},
+            extras: _extras.text.trim(),
+          ),
+        ),
         child: Text(l.concludeTitle),
       ),
     ];

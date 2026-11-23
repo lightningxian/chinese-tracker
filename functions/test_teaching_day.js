@@ -50,6 +50,19 @@ assert.ok(!t.reminderDue(s, at(7, 59)), "more than an hour before");
 assert.ok(!t.reminderDue({...s, reminderSentAt: 1}, at(8, 30)));
 assert.ok(!t.reminderDue(s, at(9, 0)), "not after the start");
 
+// Owner 2026-11-23: too few students close the class 3 hours before.
+const g = {...s, generated: true, bookedCount: 2};
+assert.equal(t.minStudentsDecision(g, at(5, 59)), "skip", "more than 3 hours before");
+assert.equal(t.minStudentsDecision(g, at(6, 0)), "cancel");
+assert.equal(t.minStudentsDecision({...g, bookedCount: 3}, at(6, 0)), "keep");
+assert.equal(t.minStudentsDecision(g, at(9, 0)), "skip", "not after the start");
+assert.equal(t.minStudentsDecision({...g, minStudentsCheckedAt: 1}, at(7, 0)), "skip", "once");
+assert.equal(t.minStudentsDecision({...g, generated: false}, at(7, 0)), "skip", "one-off classes");
+assert.equal(t.minStudentsDecision(g, at(7, 0), {minStudents: 0}), "skip", "rule off");
+assert.equal(t.minStudentsDecision(g, at(7, 0), {minStudents: 2}), "keep");
+assert.equal(t.minStudentsDecision(g, at(8, 30), {minStudents: 3, hours: 1}), "cancel");
+assert.equal(t.minStudentsDecision({...g, status: "cancelled"}, at(7, 0)), "skip");
+
 // Recap and reconciliation (VC-05).
 assert.equal(t.sessionHours(s), 1.5);
 assert.equal(t.monthKey("2026-11-23"), "202611");

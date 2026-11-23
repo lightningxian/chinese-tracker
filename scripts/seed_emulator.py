@@ -727,7 +727,8 @@ def seed_build6(admin_uid, teacher_uids, student_uids):
     vouchers; then the generation job runs once."""
     # Owner 2026-11-23: back-to-back classes are fine (no gap by default).
     put("settings", "scheduling", {"minGapMinutes": 0, "weeklyHoursWarning": 20,
-        "defaultCapacity": 8})
+        "defaultCapacity": 8, "minStudents": 3, "minStudentsHours": 3,
+        "teacherReadiness": False})
     # Availability: weekday afternoons and Saturday daytime for everyone.
     avail = {str(d): [{"startMinutes": 840, "endMinutes": 1140}] for d in (1, 2, 3, 5)}
     avail["6"] = [{"startMinutes": 570, "endMinutes": 900}]

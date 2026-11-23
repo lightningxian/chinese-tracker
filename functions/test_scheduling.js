@@ -61,6 +61,20 @@ c = s.conflicts(tue2, {teacherName: "Test Teacher", teacherSchedules: [tue1],
   roomSchedules: [tue1], gapMinutes: 15});
 assert.deepEqual(c.map((x) => x.code), ["teacher", "room"]);
 assert.match(c[0].text, /\(15 minutes are needed between classes\)/);
+// Owner 2026-11-23: helper teachers.
+assert.deepEqual(s.cleanCoTeachers(["b", "a", "b", "", "x/y", "c", "d", "e"], "a"), ["b", "c", "d"]);
+assert.deepEqual(s.cleanCoTeachers(null, "a"), []);
+assert.deepEqual(s.teachersOf({teacherId: "a", coTeacherIds: ["b"]}), ["a", "b"]);
+assert.deepEqual(s.openAllWeek()["7"], [{startMinutes: 480, endMinutes: 1260}]);
+// A helper teacher who teaches elsewhere at that time clashes as a teacher.
+c = s.conflicts({...tue2, teacherId: "t9"}, {teacherName: "Helper", teacherSchedules: [tue1],
+  roomSchedules: []});
+assert.deepEqual(c, [], "no overlap with 15:00-16:30");
+c = s.conflicts({...tue2, teacherId: "t9", startMinutes: 960}, {teacherName: "Helper",
+  teacherSchedules: [tue1], roomSchedules: []});
+assert.deepEqual(c.map((x) => x.code), ["teacher"]);
+assert.match(c[0].text, /^Helper already teaches Tuesday Class 1/);
+
 // Editing a schedule does not clash with itself; another period does not clash.
 assert.deepEqual(s.conflicts({...existing, id: "x"}, {teacherSchedules: [existing],
   roomSchedules: [existing], availability: avail}), []);

@@ -36,7 +36,16 @@ class Schedule {
     required this.validTo,
     required this.active,
     required this.status,
+    this.coTeacherIds = const [],
+    this.coTeacherNames = const [],
   });
+
+  /// Owner 2026-11-23: helper teachers besides [teacherId] (at most 3).
+  final List<String> coTeacherIds;
+  final List<String> coTeacherNames;
+
+  String get teachersLabel =>
+      [if (teacherName.isNotEmpty) teacherName, ...coTeacherNames].join(', ');
 
   final String id;
   final String className;
@@ -73,6 +82,8 @@ class Schedule {
       validTo: m['validTo'] as String? ?? '',
       active: m['active'] != false,
       status: m['status'] as String? ?? '',
+      coTeacherIds: [for (final x in (m['coTeacherIds'] as List? ?? const [])) '$x'],
+      coTeacherNames: [for (final x in (m['coTeacherNames'] as List? ?? const [])) '$x'],
     );
   }
 
@@ -84,12 +95,92 @@ class Schedule {
         'endMinutes': endMinutes,
         'room': room,
         'teacherId': teacherId,
+        'coTeacherIds': coTeacherIds,
         'capacity': capacity,
         'level': level,
         'validFrom': validFrom,
         'validTo': validTo,
         'active': active,
       };
+}
+
+/// `settings/scheduling` (owner 2026-11-23): the gap between classes, the
+/// weekly-hours warning, the minimum of students and when it is checked,
+/// and the teacher-readiness switch (availability, confirmation, late
+/// check-in and recap; off = teachers are taken as ready).
+class SchedulingRules {
+  const SchedulingRules({
+    this.minGapMinutes = 0,
+    this.weeklyHoursWarning = 20,
+    this.minStudents = 0,
+    this.minStudentsHours = 3,
+    this.teacherReadiness = false,
+  });
+
+  final int minGapMinutes;
+  final int weeklyHoursWarning;
+  final int minStudents;
+  final int minStudentsHours;
+  final bool teacherReadiness;
+
+  factory SchedulingRules.fromMap(Map<String, dynamic> m) {
+    int i(String k, int f) => (m[k] as num?)?.toInt() ?? f;
+    return SchedulingRules(
+      minGapMinutes: i('minGapMinutes', 0),
+      weeklyHoursWarning: i('weeklyHoursWarning', 20),
+      minStudents: i('minStudents', 0),
+      minStudentsHours: i('minStudentsHours', 3),
+      teacherReadiness: m['teacherReadiness'] == true,
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+        'minGapMinutes': minGapMinutes,
+        'weeklyHoursWarning': weeklyHoursWarning,
+        'minStudents': minStudents,
+        'minStudentsHours': minStudentsHours,
+        'teacherReadiness': teacherReadiness,
+      };
+
+  /// Why the values cannot be saved, or null.
+  static String? invalid({
+    required int? gap,
+    required int? hours,
+    required int? minStudents,
+    required int? checkHours,
+  }) {
+    if (gap == null || gap < 0 || gap > 180) return 'gap';
+    if (hours == null || hours < 1 || hours > 80) return 'hours';
+    if (minStudents == null || minStudents < 0 || minStudents > 30) return 'min';
+    if (checkHours == null || checkHours < 1 || checkHours > 48) return 'check';
+    return null;
+  }
+}
+
+/// A day on `holidays/{date}`: a national holiday, joint leave or a day
+/// the admin closed. [decision]: '' (not decided, classes run), 'open',
+/// 'closed'.
+class Holiday {
+  const Holiday({
+    required this.date,
+    required this.name,
+    required this.kind,
+    required this.decision,
+  });
+
+  final String date;
+  final String name;
+  final String kind;
+  final String decision;
+
+  bool get closed => decision == 'closed';
+
+  factory Holiday.fromMap(String id, Map<String, dynamic> m) => Holiday(
+        date: m['date'] as String? ?? id,
+        name: m['name'] as String? ?? '',
+        kind: m['kind'] as String? ?? 'national',
+        decision: m['decision'] as String? ?? '',
+      );
 }
 
 /// The answer of `checkScheduleConflict`.
@@ -226,24 +317,49 @@ class TimetableService {
 
   /// `settings/scheduling` (admin): the minimum gap between two classes of
   /// one teacher or one room, and the weekly-hours warning.
-  Stream<({int minGapMinutes, int weeklyHoursWarning})> watchSettings() => _db
+  Stream<SchedulingRules> watchSettings() => _db
       .collection('settings')
       .doc('scheduling')
       .snapshots()
-      .map((d) {
-        final m = d.data() ?? const <String, dynamic>{};
-        return (
-          minGapMinutes: (m['minGapMinutes'] as num?)?.toInt() ?? 0,
-          weeklyHoursWarning: (m['weeklyHoursWarning'] as num?)?.toInt() ?? 20,
-        );
-      });
+      .map((d) => SchedulingRules.fromMap(d.data() ?? const <String, dynamic>{}));
 
-  Future<void> saveSettings({required int minGapMinutes, required int weeklyHoursWarning}) =>
+  Future<void> saveSettings(SchedulingRules r) =>
       _db.collection('settings').doc('scheduling').set({
-        'minGapMinutes': minGapMinutes,
-        'weeklyHoursWarning': weeklyHoursWarning,
+        ...r.toMap(),
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
+
+  // ------------------------------------------------ holidays, closed days
+
+  Stream<Map<String, Holiday>> watchHolidays() =>
+      _db.collection('holidays').snapshots().map((s) => {
+            for (final d in s.docs) d.id: Holiday.fromMap(d.id, d.data()),
+          });
+
+  Future<int> importHolidays() async {
+    final r = await _functions.httpsCallable('importHolidays').call();
+    return ((r.data as Map?)?['added'] as num?)?.toInt() ?? 0;
+  }
+
+  /// Opens or closes the centre on [date]; returns how many classes were
+  /// cancelled (closing) or brought back (opening).
+  Future<int> setDayClosed(String date,
+      {required bool closed,
+      String name = '',
+      bool announce = true,
+      String title = '',
+      String body = ''}) async {
+    final r = await _functions.httpsCallable('setDayClosed').call({
+      'date': date,
+      'closed': closed,
+      if (name.isNotEmpty) 'name': name,
+      'announce': announce,
+      if (title.isNotEmpty) 'title': title,
+      if (body.isNotEmpty) 'body': body,
+    });
+    final m = (r.data as Map?) ?? const {};
+    return ((closed ? m['cancelled'] : m['reopened']) as num?)?.toInt() ?? 0;
+  }
 
   /// Saves (the function refuses a clash; its message lists the reasons).
   Future<List<String>> save(Map<String, dynamic> input) async {

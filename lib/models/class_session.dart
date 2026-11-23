@@ -68,7 +68,25 @@ class ClassSession {
     this.unclosed = false,
     this.substituteFor = '',
     this.checkInAt,
+    this.coTeacherIds = const [],
+    this.coTeacherNames = const [],
+    this.holiday = '',
+    this.cancelReason = '',
   });
+
+  /// Owner 2026-11-23: helper teachers besides [teacherId].
+  final List<String> coTeacherIds;
+  final List<String> coTeacherNames;
+
+  /// The holiday name of the day, if any (written by the generation).
+  final String holiday;
+
+  /// `day_closed` or `too_few` when the centre cancelled it.
+  final String cancelReason;
+
+  /// Main teacher and helpers, for labels.
+  String get teachersLabel =>
+      [if (teacherName.isNotEmpty) teacherName, ...coTeacherNames].join(', ');
 
   /// Build 7: `scheduled`, `ongoing`, `done`, `cancelled`,
   /// `needs_teacher` (written by functions; empty on old one-off sessions).
@@ -159,6 +177,10 @@ class ClassSession {
       lateMinutes: (data['lateMinutes'] as num?)?.toInt() ?? 0,
       unclosed: data['unclosed'] as bool? ?? false,
       substituteFor: data['substituteFor'] as String? ?? '',
+      coTeacherIds: [for (final x in (data['coTeacherIds'] as List? ?? const [])) '$x'],
+      coTeacherNames: [for (final x in (data['coTeacherNames'] as List? ?? const [])) '$x'],
+      holiday: data['holiday'] as String? ?? '',
+      cancelReason: data['cancelReason'] as String? ?? '',
       checkInAt: (data['checkInAt'] as Timestamp?)?.toDate(),
     );
   }

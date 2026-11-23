@@ -7727,7 +7727,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get timetableRecheck => 'Recheck';
 
   @override
-  String get timetableFillTimes => 'Type the times as 16:30 to check.';
+  String get timetableFillTimes =>
+      'Pick a teacher and a room, and type the times as 16:30, to check.';
 
   @override
   String get timetableDelete => 'Delete';
@@ -7777,4 +7778,245 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get voucherClassDayHelp =>
       'Your weekly class: you are booked into it every week. Leave empty to book each class yourself.';
+
+  @override
+  String get rulesIntro =>
+      'These rules apply to every weekly schedule and to the automatic checks.';
+
+  @override
+  String get rulesGapTitle => 'Break between two classes';
+
+  @override
+  String get rulesGapHelp =>
+      'For one teacher and for one room. 0 means a class may start right when the previous one ends.';
+
+  @override
+  String get rulesUnitMinutes => 'minutes';
+
+  @override
+  String get rulesMinTitle => 'Minimum students per class';
+
+  @override
+  String get rulesMinHelp =>
+      'A timetable class with fewer booked students closes by itself; the students get their session back and everyone is told. 0 switches this off.';
+
+  @override
+  String get rulesUnitStudents => 'students';
+
+  @override
+  String get rulesCheckedBefore => 'checked';
+
+  @override
+  String get rulesUnitHours => 'hours before';
+
+  @override
+  String get rulesHoursTitle => 'Teaching load warning';
+
+  @override
+  String get rulesHoursHelp =>
+      'Show a warning when a new schedule gives a teacher more hours a week than this.';
+
+  @override
+  String get rulesUnitHoursWeek => 'hours / week';
+
+  @override
+  String get rulesReadinessTitle =>
+      'Teacher availability, confirmation and recap';
+
+  @override
+  String get rulesReadinessHelp =>
+      'Off: teachers are taken as ready all the time (no availability check, no confirmation, no late check-in, no recap). On: the thesis features come back.';
+
+  @override
+  String get rulesReadinessOn => 'On';
+
+  @override
+  String get rulesReadinessOff => 'Off: teachers are always ready';
+
+  @override
+  String get rulesGapInvalid => 'The break must be 0 to 180 minutes.';
+
+  @override
+  String get rulesHoursInvalid => 'The teaching load must be 1 to 80 hours.';
+
+  @override
+  String get rulesMinInvalid => 'The minimum must be 0 to 30 students.';
+
+  @override
+  String get rulesCheckInvalid => 'Check 1 to 48 hours before the class.';
+
+  @override
+  String get holidaysTab => 'Holidays & news';
+
+  @override
+  String get timetableHelpers => 'Helper teachers (up to 3)';
+
+  @override
+  String timetableHelperOf(String name) {
+    return 'You help $name';
+  }
+
+  @override
+  String get holidayKindNational => 'National holiday';
+
+  @override
+  String get holidayKindLeave => 'Joint leave';
+
+  @override
+  String get holidayKindCentre => 'Centre day off';
+
+  @override
+  String get holidayUndecided => 'Not decided';
+
+  @override
+  String get holidayOpen => 'Classes run';
+
+  @override
+  String get holidayClosed => 'Closed';
+
+  @override
+  String dayCloseTitle(String date) {
+    return 'Close the centre on $date?';
+  }
+
+  @override
+  String dayOpenTitle(String date) {
+    return 'Open the centre on $date?';
+  }
+
+  @override
+  String get dayCloseBody =>
+      'Every class of that day that has not started is cancelled. Bookings and voucher sessions go back to the students, and they are told.';
+
+  @override
+  String get dayOpenBody =>
+      'Classes run on this day. Timetable classes cancelled by an earlier closing come back (students book again).';
+
+  @override
+  String get dayCloseReason => 'Reason (e.g. holiday, vacation)';
+
+  @override
+  String get dayCloseAnnounce =>
+      'Post an announcement for students, parents and teachers';
+
+  @override
+  String get dayCloseButton => 'Close this day';
+
+  @override
+  String get dayOpenButton => 'Classes run';
+
+  @override
+  String dayClosedDone(int n) {
+    return 'Day closed, $n classes cancelled.';
+  }
+
+  @override
+  String dayOpenedDone(int n) {
+    return 'Day open, $n classes back.';
+  }
+
+  @override
+  String get holidaysImport => 'Load Indonesian holidays';
+
+  @override
+  String holidaysImported(int n) {
+    return '$n holidays added.';
+  }
+
+  @override
+  String get holidaysCloseOther => 'Close another day';
+
+  @override
+  String get holidaysCloseThisDay => 'Close the centre on this day';
+
+  @override
+  String get holidaysTitle => 'Holidays';
+
+  @override
+  String get holidaysHelp =>
+      'National holidays and joint leave (SKB 3 Menteri). Decide for each day whether classes run.';
+
+  @override
+  String get holidaysNone => 'No holidays ahead.';
+
+  @override
+  String get announcementsTitle => 'Announcements';
+
+  @override
+  String get announcementsNone => 'No announcements right now.';
+
+  @override
+  String get announcementNew => 'New announcement';
+
+  @override
+  String get announcementTitleLabel => 'Title';
+
+  @override
+  String get announcementBodyLabel => 'Message';
+
+  @override
+  String get announcementTitleMissing => 'Give the announcement a title.';
+
+  @override
+  String get announcementForAll => 'Everyone';
+
+  @override
+  String get announcementForStudents => 'Students & parents';
+
+  @override
+  String get announcementForTeachers => 'Teachers';
+
+  @override
+  String announcementUntil(String date) {
+    return 'Shown until $date';
+  }
+
+  @override
+  String get announcementPickDate => 'Change date';
+
+  @override
+  String get announcementPost => 'Post';
+
+  @override
+  String get boardSigned => 'Signed the board';
+
+  @override
+  String get boardTitle => 'Attendance board';
+
+  @override
+  String get boardHelp =>
+      'Tick each student whose name is on the board in the room. Names on the board that are not in this list go below.';
+
+  @override
+  String get boardExtrasLabel => 'Names on the board, not in the app';
+
+  @override
+  String get boardExtrasHint => 'Separate with commas';
+
+  @override
+  String get boardMatches => 'The board and the app match.';
+
+  @override
+  String boardDifferences(int n) {
+    return '$n differences between the board and the app';
+  }
+
+  @override
+  String get boardPresentNotSigned => 'Present here, not on the board';
+
+  @override
+  String get boardSignedNotPresent => 'On the board, not marked present';
+
+  @override
+  String get boardNotBooked => 'On the board, not booked in the app';
+
+  @override
+  String dayClosedAnnTitle(String date) {
+    return 'No classes on $date';
+  }
+
+  @override
+  String dayClosedAnnBody(String date) {
+    return 'The centre is closed on $date. Booked sessions go back to your voucher.';
+  }
 }

@@ -16,6 +16,7 @@ import '../progress/student_progress_report_screen.dart';
 import '../timetable/student_sessions_section.dart';
 import 'parent_payments_tab.dart';
 import 'parent_profile_tab.dart';
+import '../announcements/announcements.dart';
 
 class ParentShell extends StatefulWidget {
   const ParentShell({super.key});
@@ -138,7 +139,17 @@ class _ParentShellState extends State<ParentShell> {
 
     final content = switch (_index) {
       // Build 4: the overview is the selected child's progress report.
-      0 => StudentProgressReport(key: ValueKey(child.uid), studentId: child.uid),
+      0 => Column(
+          children: [
+            // Owner 2026-11-23: announcements (closed days, news).
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 16, 20, 0),
+              child: AnnouncementBanner(role: 'parent'),
+            ),
+            Expanded(
+                child: StudentProgressReport(key: ValueKey(child.uid), studentId: child.uid)),
+          ],
+        ),
       // Build 6: the child's bookable sessions (the parent books for them).
       1 => ListView(
           key: ValueKey('sessions_${child.uid}'),

@@ -1095,6 +1095,54 @@ class FirestoreService {
         .map((snap) => snap.docs.map(ClassSession.fromFirestore).toList());
   }
 
+  /// Owner 2026-11-23: the sessions a teacher teaches, as main teacher or
+  /// as helper (`coTeacherIds`). For teacher screens only; parents and
+  /// students keep [watchTeacherSessions].
+  Stream<List<ClassSession>> watchMyTeachingSessions(String uid) {
+    if (uid.isEmpty) return Stream.value(const []);
+    final helped = _db
+        .collection(AppConstants.classSessionsCollection)
+        .where('coTeacherIds', arrayContains: uid)
+        .snapshots()
+        .map((snap) => snap.docs.map(ClassSession.fromFirestore).toList());
+    late final StreamController<List<ClassSession>> out;
+    List<ClassSession> own = const [];
+    List<ClassSession> help = const [];
+    var gotOwn = false;
+    final subs = <StreamSubscription<List<ClassSession>>>[];
+    void emit() {
+      if (!gotOwn) return;
+      final byId = {for (final s in [...own, ...help]) s.id: s};
+      final list = byId.values.toList()
+        ..sort((a, b) {
+          final d = b.sessionDate.compareTo(a.sessionDate);
+          return d != 0 ? d : a.startMinutes.compareTo(b.startMinutes);
+        });
+      out.add(list);
+    }
+
+    out = StreamController<List<ClassSession>>(
+      onListen: () {
+        subs.add(watchTeacherSessions(uid).listen((v) {
+          own = v;
+          gotOwn = true;
+          emit();
+        }, onError: out.addError));
+        // A failing helper query (old rules) must not hide the own classes.
+        subs.add(helped.listen((v) {
+          help = v;
+          emit();
+        }, onError: (_) {}));
+      },
+      onCancel: () async {
+        for (final s in subs) {
+          await s.cancel();
+        }
+      },
+    );
+    return out.stream;
+  }
+
   /// Sessions across several teachers (parent calendar spanning children).
   Stream<List<ClassSession>> watchSessionsByTeacherIds(
     Iterable<String> teacherIds,
