@@ -2151,7 +2151,8 @@ wrong and it becomes a follow-up:
     (one more admin tap). Or should approval wait until the test is sat?
 12. A declined promotion recommendation stays declined for that level today
     (the BUILD chat asked). Plan: it **reopens after one more passed code**.
-    Agreed?
+    Agreed? **Owner 2026-11-24: the admin may simply promote a capable
+    student** (built: Promotion → Promote a student / Promote anyway).
 
 Before Build 4 (Build 4 is written with the answers in bold; say so if one
 is wrong):
@@ -2200,15 +2201,35 @@ Before Build 8: the trial names, devices and dates (§7 "Still needed").
 Any time:
 
 6. HSK 3.0 papers for levels 5, 6 and 7–9, and the marks per part if a paper
-   or its answer sheet prints them.
+   or its answer sheet prints them. **Owner 2026-11-24: leave it.**
 7. Do the papers come with an official listening script? With it the
    transcript is pasted or scanned; without it someone types it from the
-   recording.
+   recording. **Owner 2026-11-24: generate it** (BUILD chat: speech
+   recognition in the browser from the worksheet's recording).
 8. Android APK: rebuild and publish it now, or with the Build 2A deploy?
+   **Owner 2026-11-24: rebuild it** (the release keystore is on the Mac).
 9. iOS: the proposal promises Android, iOS and web. Today iOS means Safari
    with "add to home screen". Ask the supervisor whether that is accepted.
+   **Owner 2026-11-24: wants iOS, asked for a specification** →
+   `docs/IOS_SPEC.md`.
 
 ## 6. Build reports (newest first, written by the BUILD chat)
+
+### 2026-11-24 — Owner requests, third round — COMMIT, release v0.1.29 (functions and hosting live from the PC under the owner's standing go; 67 functions)
+- Built: admin **News** page (post, edit, delete, audience, end date,
+  optional bell notice through `onAnnouncementCreated`); calmer admin
+  dashboard (Today card, four numbers, chart beside alerts, More figures
+  folded); cancelled classes hidden on the calendar; **Promote a student**
+  and **Promote anyway** (`promoteStudent`, Q12); `docs/IOS_SPEC.md` (Q9).
+- Owner answers: Q6 leave it; Q7 generate the listening script; Q8 rebuild
+  the APK; Q9 wants iOS, specify it; Q12 the admin may just promote.
+- Left: Q7 (transcript from the recording) is the next piece in this chat;
+  Q8 needs the Mac (the release keystore is not on the PC); Q9 waits for the
+  owner's choice between the installed web app and an App Store app.
+- Proof: analyzer 17 infos; `flutter test` 162 pass and 2 skipped; node
+  tests pass (manual promotion); flow test 103 steps; emulator walk of the
+  dashboard, News (post with notice), the Promotion dialog and the student
+  banner.
 
 ### 2026-11-23 — Owner requests, second round — 545ef58, release v0.1.28 (rules, functions and hosting live from the PC under the owner's standing go; 65 functions)
 - Built: Timetable rules dialog; teacher readiness switch (default off;

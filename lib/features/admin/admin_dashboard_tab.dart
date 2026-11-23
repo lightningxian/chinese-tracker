@@ -3,7 +3,6 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_theme.dart';
-import '../../core/constants/exercise_authoring_platform.dart';
 import '../../core/utils/invoice_utils.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/responsive_card_grid.dart';
@@ -41,9 +40,6 @@ class AdminDashboardTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final firestore = context.read<FirestoreService>();
     final isWide = MediaQuery.sizeOf(context).width >= 900;
-    final canManageExercises = ExerciseAuthoringPlatform.canManageExercises(
-      context.read<AuthService>().appUser,
-    );
 
     return StreamBuilder<List<AppUser>>(
       stream: firestore.watchAllUsers(),
@@ -73,42 +69,10 @@ class AdminDashboardTab extends StatelessWidget {
                       classTerms: termsSnap.data ?? [],
                     );
 
-                    return ListView(
-                      padding: EdgeInsets.all(isWide ? 32 : 20),
+                    final greeting = context.read<AuthService>().appUser?.name ?? '';
+                    final more = Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Build 8: the proposal's six duty cards first.
-                        AdminDutyCards(
-                          users: users,
-                          onOpenClasses: () => onSwitchTab(4),
-                        ),
-                        const SizedBox(height: 20),
-                        _statsRow(context, report, invoices),
-                        const SizedBox(height: 20),
-                        if (isWide)
-                          _wideChartAndActions(
-                            context,
-                            report: report,
-                            voucherAlerts: voucherAlerts,
-                            canManageExercises: canManageExercises,
-                          )
-                        else ...[
-                          MonthlyStudentsChart(
-                            months: report.newStudentsByMonth,
-                            onTap: () => _openPlatformStat(
-                              context,
-                              AdminDashboardStatKind.newStudentsMonthly,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          AdminQuickActionsCard(
-                            onNewExercise: () => onSwitchTab(2),
-                            onNewClass: () => onSwitchTab(4),
-                            showNewExercise: canManageExercises,
-                          ),
-                          const SizedBox(height: 20),
-                          _needsAttention(context, voucherAlerts),
-                        ],
-                        const SizedBox(height: 24),
                         _FinancialSummarySection(
                           invoices: invoices,
                           studentsById: {
@@ -125,6 +89,96 @@ class AdminDashboardTab extends StatelessWidget {
                         ),
                       ],
                     );
+                    // Owner 2026-11-24: calmer — today's duties, four key
+                    // numbers, the chart beside the voucher alerts, and the
+                    // rest folded under "More figures".
+                    return ListView(
+                      padding: EdgeInsets.all(isWide ? 32 : 16),
+                      children: [
+                        Text(
+                          DateFormat('EEEE, d MMMM yyyy').format(DateTime.now()),
+                          style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                        ),
+                        if (greeting.isNotEmpty)
+                          Text(context.l10n.dashHello(greeting),
+                              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
+                        const SizedBox(height: 16),
+                        if (isWide)
+                          IntrinsicHeight(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Expanded(
+                                  flex: 5,
+                                  child: AdminDutyCards(
+                                    users: users,
+                                    onOpenClasses: () => onSwitchTab(4),
+                                  ),
+                                ),
+                                const SizedBox(width: 20),
+                                Expanded(
+                                  flex: 4,
+                                  child: _statsGrid(context, report, invoices, columns: 2),
+                                ),
+                              ],
+                            ),
+                          )
+                        else ...[
+                          AdminDutyCards(
+                            users: users,
+                            onOpenClasses: () => onSwitchTab(4),
+                          ),
+                          const SizedBox(height: 16),
+                          _statsGrid(context, report, invoices, columns: 2),
+                        ],
+                        const SizedBox(height: 24),
+                        if (isWide)
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                flex: 5,
+                                child: MonthlyStudentsChart(
+                                  months: report.newStudentsByMonth,
+                                  onTap: () => _openPlatformStat(
+                                    context,
+                                    AdminDashboardStatKind.newStudentsMonthly,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 20),
+                              Expanded(
+                                flex: 4,
+                                child: _needsAttention(context, voucherAlerts),
+                              ),
+                            ],
+                          )
+                        else ...[
+                          MonthlyStudentsChart(
+                            months: report.newStudentsByMonth,
+                            onTap: () => _openPlatformStat(
+                              context,
+                              AdminDashboardStatKind.newStudentsMonthly,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          _needsAttention(context, voucherAlerts),
+                        ],
+                        const SizedBox(height: 16),
+                        Theme(
+                          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                          child: ExpansionTile(
+                            tilePadding: EdgeInsets.zero,
+                            childrenPadding: const EdgeInsets.only(bottom: 16),
+                            title: Text(context.l10n.dashMoreFigures,
+                                style: const TextStyle(fontWeight: FontWeight.w700)),
+                            subtitle: Text(context.l10n.dashMoreFiguresHint,
+                                style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5)),
+                            children: [more],
+                          ),
+                        ),
+                      ],
+                    );
                   },
                 );
               },
@@ -135,11 +189,12 @@ class AdminDashboardTab extends StatelessWidget {
     );
   }
 
-  Widget _statsRow(
+  Widget _statsGrid(
     BuildContext context,
     AdminReportData report,
-    List<Invoice> invoices,
-  ) {
+    List<Invoice> invoices, {
+    int columns = 4,
+  }) {
     final l = context.l10n;
     final now = DateTime.now();
     final income = InvoiceUtils.paidTotalInMonth(invoices, now);
@@ -156,8 +211,8 @@ class AdminDashboardTab extends StatelessWidget {
       decimalDigits: 0,
     );
     return ResponsiveCardGrid(
-      minCardWidth: 220,
-      maxColumns: 4,
+      minCardWidth: 170,
+      maxColumns: columns,
       children: [
         AdminStatCard(
           label: l.adminDashTotalUsers,
@@ -200,44 +255,6 @@ class AdminDashboardTab extends StatelessWidget {
                 ),
           onTap: () =>
               _openPlatformStat(context, AdminDashboardStatKind.incomeMonthly),
-        ),
-      ],
-    );
-  }
-
-  Widget _wideChartAndActions(
-    BuildContext context, {
-    required AdminReportData report,
-    required List<AdminVoucherAlert> voucherAlerts,
-    required bool canManageExercises,
-  }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          flex: 2,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              MonthlyStudentsChart(
-                months: report.newStudentsByMonth,
-                onTap: () => _openPlatformStat(
-                  context,
-                  AdminDashboardStatKind.newStudentsMonthly,
-                ),
-              ),
-              const SizedBox(height: 20),
-              _needsAttention(context, voucherAlerts),
-            ],
-          ),
-        ),
-        const SizedBox(width: 24),
-        Expanded(
-          child: AdminQuickActionsCard(
-            onNewExercise: () => onSwitchTab(2),
-            onNewClass: () => onSwitchTab(4),
-            showNewExercise: canManageExercises,
-          ),
         ),
       ],
     );

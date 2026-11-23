@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_theme.dart';
-import '../../core/widgets/responsive_card_grid.dart';
+import '../../core/widgets/app_card.dart';
 import '../../l10n/l10n.dart';
 import '../../models/app_user.dart';
 import '../../models/class_session.dart';
@@ -12,7 +12,6 @@ import '../../models/progress_summary.dart';
 import '../../services/firestore_service.dart';
 import '../../services/progress_service.dart';
 import '../../services/timetable_service.dart';
-import 'admin_dashboard_widgets.dart';
 
 /// Build 8 (Must 1): the six counts of the proposal's admin dashboard.
 class DutyCounts {
@@ -108,62 +107,126 @@ class _AdminDutyCardsState extends State<AdminDutyCards> {
               summaries: su.data ?? const [],
               now: DateTime.now(),
             );
-            return ResponsiveCardGrid(
-              minCardWidth: 200,
-              maxColumns: 3,
-              children: [
-                AdminStatCard(
-                  label: l.dutyPending,
-                  value: '${c.pendingRegistrations}',
-                  icon: Icons.how_to_reg_outlined,
-                  color: AppColors.chipAmberFg,
-                  onTap: () => context.push('/admin/users/approval'),
-                ),
-                if (ready)
-                AdminStatCard(
-                  label: l.dutyUnconfirmed,
-                  value: '${c.unconfirmedSchedules}',
-                  icon: Icons.event_note_outlined,
-                  color: AppColors.navy,
-                  onTap: () => context.push('/admin/timetable?view=followup'),
-                ),
-                if (ready)
-                AdminStatCard(
-                  label: l.dutyLate,
-                  value: '${c.lateToday}',
-                  subtitle: l.dutyLateWeek(c.lateWeek),
-                  icon: Icons.timer_off_outlined,
-                  color: AppColors.error,
-                  onTap: () => context.push('/admin/timetable?view=followup'),
-                ),
-                AdminStatCard(
-                  label: l.dutyUnclosed,
-                  value: '${c.unclosed}',
-                  icon: Icons.lock_open_outlined,
-                  color: AppColors.error,
-                  onTap: () => context.push('/admin/timetable?view=followup'),
-                ),
-                AdminStatCard(
-                  label: l.dutyAttention,
-                  value: '${c.needingAttention}',
-                  icon: Icons.flag_outlined,
-                  color: AppColors.chipAmberFg,
-                  onTap: () => context.push('/admin/attention'),
-                ),
-                AdminStatCard(
-                  label: l.dutyToday,
-                  value: '${c.todaySessions}',
-                  icon: Icons.today_outlined,
-                  color: AppColors.teal,
-                  onTap: widget.onOpenClasses,
-                ),
-              ],
+            // Owner 2026-11-24: one calm card instead of six tiles. Rows
+            // with nothing to do are quiet; the header says how many classes
+            // run today.
+            final rows = <_DutyRow>[
+              _DutyRow(l.dutyPending, c.pendingRegistrations, Icons.how_to_reg_outlined,
+                  () => context.push('/admin/users/approval')),
+              if (ready)
+                _DutyRow(l.dutyUnconfirmed, c.unconfirmedSchedules, Icons.event_note_outlined,
+                    () => context.push('/admin/timetable?view=followup')),
+              if (ready)
+                _DutyRow(l.dutyLate, c.lateToday, Icons.timer_off_outlined,
+                    () => context.push('/admin/timetable?view=followup'),
+                    note: c.lateWeek > 0 ? l.dutyLateWeek(c.lateWeek) : null),
+              _DutyRow(l.dutyUnclosed, c.unclosed, Icons.lock_open_outlined,
+                  () => context.push('/admin/timetable?view=followup')),
+              _DutyRow(l.dutyAttention, c.needingAttention, Icons.flag_outlined,
+                  () => context.push('/admin/attention')),
+            ];
+            final open = rows.where((r) => r.count > 0).length;
+            return AppCard(
+              padding: const EdgeInsets.fromLTRB(20, 18, 12, 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(l.dashTodayTitle,
+                                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+                            const SizedBox(height: 2),
+                            Text(
+                              open == 0 ? l.dashAllClear : l.dashOpenTasks(open),
+                              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                            ),
+                          ],
+                        ),
+                      ),
+                      TextButton.icon(
+                        onPressed: widget.onOpenClasses,
+                        icon: const Icon(Icons.today_outlined, size: 18),
+                        label: Text(l.dashClassesToday(c.todaySessions)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  for (var k = 0; k < rows.length; k++) ...[
+                    if (k > 0) Divider(height: 1, color: AppColors.border),
+                    _DutyTile(row: rows[k]),
+                  ],
+                ],
+              ),
             );
           },
         ),
       ),
     );
       },
+    );
+  }
+}
+
+class _DutyRow {
+  const _DutyRow(this.label, this.count, this.icon, this.onTap, {this.note});
+  final String label;
+  final int count;
+  final IconData icon;
+  final VoidCallback onTap;
+  final String? note;
+}
+
+class _DutyTile extends StatelessWidget {
+  const _DutyTile({required this.row});
+  final _DutyRow row;
+
+  @override
+  Widget build(BuildContext context) {
+    final busy = row.count > 0;
+    final fg = busy ? AppColors.ink : AppColors.textSecondary;
+    return InkWell(
+      onTap: row.onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 4),
+        child: Row(
+          children: [
+            Icon(row.icon, size: 20, color: busy ? AppColors.chipAmberFg : AppColors.textSecondary),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text.rich(
+                TextSpan(children: [
+                  TextSpan(text: row.label),
+                  if (row.note != null)
+                    TextSpan(
+                      text: '  ·  ${row.note}',
+                      style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
+                    ),
+                ]),
+                style: TextStyle(color: fg, fontWeight: busy ? FontWeight.w600 : FontWeight.w400),
+              ),
+            ),
+            if (busy)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.chipAmberFg.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text('${row.count}',
+                    style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.chipAmberFg)),
+              )
+            else
+              Icon(Icons.check_circle_outline, size: 18, color: AppColors.success),
+            const SizedBox(width: 4),
+            Icon(Icons.chevron_right, size: 18, color: AppColors.textSecondary),
+          ],
+        ),
+      ),
     );
   }
 }

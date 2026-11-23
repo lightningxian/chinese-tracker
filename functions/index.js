@@ -2759,6 +2759,72 @@ exports.decidePromotion = onCall(async (request) => {
   return {status: approve ? "approved" : "declined", level: approve ? out.to : out.from};
 });
 
+/**
+ * Owner 2026-11-24 (Q12): an admin promotes a capable student straight away,
+ * with or without a recommendation (also after a decline). The level goes
+ * up, the count starts again, the history says `manual`, the student and a
+ * linked parent are told, and any open or declined recommendation at the old
+ * level is closed as `superseded`.
+ */
+exports.promoteStudent = onCall(async (request) => {
+  const {uid, profile} = await requireCaller(request);
+  if (profile.role !== "admin") {
+    throw new HttpsError("permission-denied", "Only admins promote students.");
+  }
+  const data = request.data || {};
+  const studentId = String(data.studentId || "").trim();
+  const reason = String(data.reason || "").trim().slice(0, 500);
+  if (!studentId) throw new HttpsError("invalid-argument", "studentId is required.");
+  if (!reason) throw new HttpsError("invalid-argument", "Give a reason for the promotion.");
+  const userRef = db.collection(USERS).doc(studentId);
+  const out = await db.runTransaction(async (tx) => {
+    const userSnap = await tx.get(userRef);
+    const user = userSnap.exists ? userSnap.data() || {} : null;
+    if (!user || user.role !== "student") throw new HttpsError("not-found", "Student not found.");
+    const m = promo.manualPromotion(user.level, data.toLevel);
+    if (m.error) {
+      throw new HttpsError("invalid-argument", m.error === "not-higher" ?
+        "Choose a level above the student's level." : "Choose a level.", {reason: m.error});
+    }
+    const open = await tx.get(db.collection(LEVEL_PROMOTIONS).where("studentId", "==", studentId));
+    const now = FieldValue.serverTimestamp();
+    for (const d of open.docs) {
+      const st = (d.data() || {}).status;
+      if (st === "waiting" || st === "declined") {
+        tx.update(d.ref, {status: "superseded", supersededBy: "manual", updatedAt: now});
+      }
+    }
+    tx.update(userRef, {level: m.toLevel, updatedAt: now});
+    tx.set(db.collection(PROMOTION_PROGRESS).doc(studentId), {
+      studentId, level: m.toLevel, levelKey: m.toKey, group: promo.groupOf(m.toKey),
+      next: promo.nextLevelKey(m.toKey) ? `HSK ${promo.nextLevelKey(m.toKey)}` : "",
+      count: 0, minCodes: await promotionMinCodes(), codes: [], decision: "", updatedAt: now,
+    });
+    tx.set(userRef.collection("level_history").doc(), {
+      kind: "manual", date: now, from: m.fromLevel, to: m.toLevel,
+      fromGroup: promo.groupOf(m.fromKey), toGroup: promo.groupOf(m.toKey),
+      codes: [], reason, approvedBy: uid,
+    });
+    const note = {
+      kind: "promotion", title: "Level up",
+      body: `Congratulations! ${latinName(user)} moves from ${m.fromLevel || "—"} to ${m.toLevel}.`,
+      read: false, createdAt: now,
+    };
+    tx.set(db.collection(NOTIFICATIONS).doc(),
+        {...note, forRole: "student", userId: studentId, targetRoute: "/student/tests"});
+    if (user.linkedParentUid) {
+      tx.set(db.collection(NOTIFICATIONS).doc(),
+          {...note, forRole: "parent", userId: user.linkedParentUid, targetRoute: "/parent"});
+    }
+    return {student: latinName(user), from: m.fromLevel, to: m.toLevel};
+  });
+  await writeAudit({action: "promotion.manual", actorId: uid, actorName: latinName(profile),
+    targetType: "user", targetId: studentId,
+    detail: `${out.student} · ${out.from} → ${out.to} · ${reason}`});
+  await safeRefresh(studentId, "manual promotion");
+  return {level: out.to};
+});
+
 // ---------------------------------------------------------------------------
 // Build 3 (docs/PLAN.md §4): registration approval and placement tests.
 // A self-registered student is `status: 'pending'` until an admin approves
@@ -4053,6 +4119,27 @@ async function dayStates(from, to) {
 exports.importHolidays = onCall(async (request) => {
   await requireAdmin(request);
   return importHolidaysNow();
+});
+
+/**
+ * Owner 2026-11-24: an announcement the admin posts on **News** with
+ * "also send a notification" rings the bell of everyone who sees it (one
+ * role-wide notice per role, like closing a day).
+ */
+exports.onAnnouncementCreated = onDocumentCreated(`${ANNOUNCEMENTS}/{id}`, async (event) => {
+  const a = event.data ? event.data.data() || {} : {};
+  if (a.kind === "closure" || a.notify !== true) return;
+  const roles = a.audience === "students" ? ["student", "parent"] :
+    a.audience === "teachers" ? ["teacher"] : ["student", "teacher", "parent"];
+  const batch = db.batch();
+  for (const role of roles) {
+    batch.set(db.collection(NOTIFICATIONS).doc(`ann_${event.params.id}_${role}`), {
+      kind: "announcement", title: String(a.title || "").slice(0, 120),
+      body: String(a.body || "").slice(0, 1000), forRole: role, userId: "",
+      targetRoute: `/${role}`, read: false, createdAt: FieldValue.serverTimestamp(),
+    });
+  }
+  await batch.commit();
 });
 
 /**

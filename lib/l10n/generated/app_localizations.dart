@@ -12861,7 +12861,7 @@ abstract class AppLocalizations {
   /// No description provided for @holidaysTab.
   ///
   /// In en, this message translates to:
-  /// **'Holidays & news'**
+  /// **'Holidays'**
   String get holidaysTab;
 
   /// No description provided for @timetableHelpers.
@@ -13157,6 +13157,180 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The centre is closed on {date}. Booked sessions go back to your voucher.'**
   String dayClosedAnnBody(String date);
+
+  /// No description provided for @newsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'News'**
+  String get newsTitle;
+
+  /// No description provided for @newsIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Announcements show on the home page of everyone you choose until their end date. Closing a day on the Timetable posts one here too.'**
+  String get newsIntro;
+
+  /// No description provided for @newsActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing now ({n})'**
+  String newsActive(int n);
+
+  /// No description provided for @newsPast.
+  ///
+  /// In en, this message translates to:
+  /// **'Ended ({n})'**
+  String newsPast(int n);
+
+  /// No description provided for @newsPosted.
+  ///
+  /// In en, this message translates to:
+  /// **'posted {date}'**
+  String newsPosted(String date);
+
+  /// No description provided for @newsClosure.
+  ///
+  /// In en, this message translates to:
+  /// **'Centre closed'**
+  String get newsClosure;
+
+  /// No description provided for @announcementEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit announcement'**
+  String get announcementEdit;
+
+  /// No description provided for @announcementDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this announcement?'**
+  String get announcementDeleteTitle;
+
+  /// No description provided for @announcementWhoSees.
+  ///
+  /// In en, this message translates to:
+  /// **'Who sees it'**
+  String get announcementWhoSees;
+
+  /// No description provided for @announcementNotify.
+  ///
+  /// In en, this message translates to:
+  /// **'Also send a notification'**
+  String get announcementNotify;
+
+  /// No description provided for @announcementNotifyHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'It rings the bell of everyone who sees it.'**
+  String get announcementNotifyHelp;
+
+  /// No description provided for @promoteManualHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A capable student may move up without waiting for passed codes.'**
+  String get promoteManualHint;
+
+  /// No description provided for @promoteManualButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Promote a student'**
+  String get promoteManualButton;
+
+  /// No description provided for @promoteManualHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'The level goes up at once. The student and a linked parent are told, the reason is kept in the level history, and the code count starts again.'**
+  String get promoteManualHelp;
+
+  /// No description provided for @promoteStudentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Student'**
+  String get promoteStudentLabel;
+
+  /// No description provided for @promoteLevelLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'New level'**
+  String get promoteLevelLabel;
+
+  /// No description provided for @promoteLevelFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'New level (now {level})'**
+  String promoteLevelFrom(String level);
+
+  /// No description provided for @promoteTopLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'This student is already at the highest level.'**
+  String get promoteTopLevel;
+
+  /// No description provided for @promoteReasonLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason (required)'**
+  String get promoteReasonLabel;
+
+  /// No description provided for @promoteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Promote to {level}'**
+  String promoteConfirm(String level);
+
+  /// No description provided for @promoteAnyway.
+  ///
+  /// In en, this message translates to:
+  /// **'Promote anyway'**
+  String get promoteAnyway;
+
+  /// No description provided for @promotionDeclinedList.
+  ///
+  /// In en, this message translates to:
+  /// **'Declined recommendations ({n})'**
+  String promotionDeclinedList(int n);
+
+  /// No description provided for @dashHello.
+  ///
+  /// In en, this message translates to:
+  /// **'Hello, {name}'**
+  String dashHello(String name);
+
+  /// No description provided for @dashTodayTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get dashTodayTitle;
+
+  /// No description provided for @dashAllClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing needs your action.'**
+  String get dashAllClear;
+
+  /// No description provided for @dashOpenTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'{n, plural, =1{1 thing needs your action} other{{n} things need your action}}'**
+  String dashOpenTasks(int n);
+
+  /// No description provided for @dashClassesToday.
+  ///
+  /// In en, this message translates to:
+  /// **'{n, plural, =0{No classes today} =1{1 class today} other{{n} classes today}}'**
+  String dashClassesToday(int n);
+
+  /// No description provided for @dashMoreFigures.
+  ///
+  /// In en, this message translates to:
+  /// **'More figures'**
+  String get dashMoreFigures;
+
+  /// No description provided for @dashMoreFiguresHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments, vouchers and centre numbers'**
+  String get dashMoreFiguresHint;
 }
 
 class _AppLocalizationsDelegate

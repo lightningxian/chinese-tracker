@@ -1984,4 +1984,43 @@ await step("owner 2026-11-23: Indonesian holidays load once; closing a day cance
   assert.equal((await readDoc(`holidays/${tomorrow7}`)).decision, "open");
 });
 
+await step("owner 2026-11-24 (Q12): an admin promotes a student straight away; only upwards, with a reason; the student is told", async () => {
+  await patchDoc(`users/${s26.uid}`, {level: {stringValue: "HSK 2"}});
+  assert.equal((await call(budi, "promoteStudent", {studentId: s26.uid, toLevel: "HSK 4",
+    reason: "x"})).error.status, "PERMISSION_DENIED");
+  assert.equal((await call(admin, "promoteStudent", {studentId: s26.uid, toLevel: "HSK 4"}))
+      .error.status, "INVALID_ARGUMENT", "a reason is required");
+  assert.equal((await call(admin, "promoteStudent", {studentId: s26.uid, toLevel: "HSK 1",
+    reason: "x"})).error.status, "INVALID_ARGUMENT", "only upwards");
+  const r = await call(admin, "promoteStudent", {studentId: s26.uid, toLevel: "HSK 4",
+    reason: `Very capable ${RUN}`});
+  assert.ok(r.data, JSON.stringify(r.error));
+  assert.equal((await readDoc(`users/${s26.uid}`)).level, "HSK 4");
+  const prog = await readDoc(`promotion_progress/${s26.uid}`);
+  assert.equal(prog.levelKey, "4");
+  assert.equal(prog.count, 0);
+  const hist = await listDocs(`users/${s26.uid}/level_history`);
+  assert.ok(hist.some((d) => d.fields.kind?.stringValue === "manual" &&
+    d.fields.to?.stringValue === "HSK 4"), "a manual history row");
+  const notes = await queryDocs("notifications", "userId", s26.uid);
+  assert.ok(notes.some((n) => str(n.fields, "kind") === "promotion" &&
+    /HSK 4/.test(str(n.fields, "body"))), "the student is told");
+});
+
+await step("owner 2026-11-24: a News post with a notification rings the bell of its audience only", async () => {
+  const id = `flow_ann_${RUN}`;
+  assert.equal(await writeAs(budi, `announcements/${id}_x`, {title: "x", body: "", audience: "all",
+    toDate: "2099-01-01", kind: "info", notify: true}), 403, "teachers cannot post");
+  assert.equal(await writeAs(admin, `announcements/${id}`, {title: `Flow news ${RUN}`, body: "Hello",
+    audience: "teachers", toDate: "2099-01-01", kind: "info", notify: true}), 200);
+  const note = await waitFor(() => readDoc(`notifications/ann_${id}_teacher`), "the teacher notice");
+  assert.equal(note.forRole, "teacher");
+  assert.equal(note.kind, "announcement");
+  assert.equal(await readDoc(`notifications/ann_${id}_student`), null, "students are not told");
+  await writeAs(admin, `announcements/${id}_quiet`, {title: "Quiet", body: "", audience: "all",
+    toDate: "2099-01-01", kind: "info", notify: false});
+  await new Promise((r) => setTimeout(r, 2500));
+  assert.equal(await readDoc(`notifications/ann_${id}_quiet_teacher`), null, "no notice without the tick");
+});
+
 console.log(`supervised flow: ${passed} steps passed`);

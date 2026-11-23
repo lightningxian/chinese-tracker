@@ -10,7 +10,8 @@ String _today() => DateFormat('yyyy-MM-dd').format(DateTime.now());
 
 /// Owner 2026-11-23: an announcement students, parents and teachers see on
 /// their home page (`announcements/{id}`). [kind] `closure` comes from
-/// closing a day; `info` is typed by the admin. Shown until [toDate].
+/// closing a day; `info` is typed by the admin on **News**. Shown until
+/// [toDate].
 class Announcement {
   const Announcement({
     required this.id,
@@ -20,6 +21,9 @@ class Announcement {
     required this.kind,
     required this.date,
     required this.toDate,
+    this.fromDate = '',
+    this.byName = '',
+    this.createdAt,
   });
 
   final String id;
@@ -32,7 +36,10 @@ class Announcement {
 
   /// The closed day for a closure ('' otherwise).
   final String date;
+  final String fromDate;
   final String toDate;
+  final String byName;
+  final DateTime? createdAt;
 
   bool get isClosure => kind == 'closure';
 
@@ -54,7 +61,10 @@ class Announcement {
       audience: m['audience'] as String? ?? 'all',
       kind: m['kind'] as String? ?? 'info',
       date: m['date'] as String? ?? '',
+      fromDate: m['fromDate'] as String? ?? '',
       toDate: m['toDate'] as String? ?? '',
+      byName: m['createdByName'] as String? ?? '',
+      createdAt: (m['createdAt'] as Timestamp?)?.toDate(),
     );
   }
 }
@@ -65,19 +75,29 @@ class AnnouncementService {
 
   CollectionReference<Map<String, dynamic>> get _col => _db.collection('announcements');
 
-  /// Announcements still shown today, newest first.
+  /// Announcements still shown today, soonest end first.
   Stream<List<Announcement>> watchActive() => _col
       .where('toDate', isGreaterThanOrEqualTo: _today())
       .snapshots()
       .map((s) => s.docs.map(Announcement.fromDoc).toList()
         ..sort((a, b) => a.toDate.compareTo(b.toDate)));
 
+  /// The admin's News page: the latest [limit], newest first.
+  Stream<List<Announcement>> watchRecent({int limit = 40}) => _col
+      .orderBy('createdAt', descending: true)
+      .limit(limit)
+      .snapshots()
+      .map((s) => s.docs.map(Announcement.fromDoc).toList());
+
+  /// [notify] also rings everyone's bell (the `onAnnouncementCreated`
+  /// function sends the notices).
   Future<void> add({
     required String title,
     required String body,
     required String audience,
     required String toDate,
     required String byName,
+    bool notify = false,
   }) =>
       _col.add({
         'title': title.trim(),
@@ -86,11 +106,192 @@ class AnnouncementService {
         'kind': 'info',
         'fromDate': _today(),
         'toDate': toDate,
+        'notify': notify,
         'createdByName': byName,
         'createdAt': FieldValue.serverTimestamp(),
       });
 
+  Future<void> update(
+    String id, {
+    required String title,
+    required String body,
+    required String audience,
+    required String toDate,
+  }) =>
+      _col.doc(id).update({
+        'title': title.trim(),
+        'body': body.trim(),
+        'audience': audience,
+        'toDate': toDate,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
   Future<void> delete(String id) => _col.doc(id).delete();
+}
+
+String announcementAudienceLabel(AppLocalizations l, String audience) => switch (audience) {
+      'students' => l.announcementForStudents,
+      'teachers' => l.announcementForTeachers,
+      _ => l.announcementForAll,
+    };
+
+/// New announcement, or edit [existing] (admin, News page).
+class AnnouncementDialog extends StatefulWidget {
+  const AnnouncementDialog({super.key, required this.byName, this.existing});
+
+  final String byName;
+  final Announcement? existing;
+
+  static Future<void> show(BuildContext context,
+          {required String byName, Announcement? existing}) =>
+      showDialog<void>(
+        context: context,
+        builder: (_) => AnnouncementDialog(byName: byName, existing: existing),
+      );
+
+  @override
+  State<AnnouncementDialog> createState() => _AnnouncementDialogState();
+}
+
+class _AnnouncementDialogState extends State<AnnouncementDialog> {
+  late final _title = TextEditingController(text: widget.existing?.title ?? '');
+  late final _body = TextEditingController(text: widget.existing?.body ?? '');
+  late String _audience = widget.existing?.audience ?? 'all';
+  late DateTime _until = DateTime.tryParse(widget.existing?.toDate ?? '') ??
+      DateTime.now().add(const Duration(days: 7));
+  bool _notify = true;
+  bool _saving = false;
+  String? _error;
+
+  bool get _editing => widget.existing != null;
+
+  @override
+  void dispose() {
+    _title.dispose();
+    _body.dispose();
+    super.dispose();
+  }
+
+  String _cut(String s, int max) => s.length <= max ? s : s.substring(0, max);
+
+  Future<void> _save() async {
+    final l = context.l10n;
+    final title = _cut(_title.text.trim(), 120);
+    final body = _cut(_body.text.trim(), 1000);
+    if (title.isEmpty) {
+      setState(() => _error = l.announcementTitleMissing);
+      return;
+    }
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    final until = DateFormat('yyyy-MM-dd').format(_until);
+    try {
+      final service = AnnouncementService();
+      if (_editing) {
+        await service.update(widget.existing!.id,
+            title: title, body: body, audience: _audience, toDate: until);
+      } else {
+        await service.add(
+          title: title,
+          body: body,
+          audience: _audience,
+          toDate: until,
+          byName: widget.byName,
+          notify: _notify,
+        );
+      }
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) setState(() => _error = '$e');
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    return AlertDialog(
+      title: Text(_editing ? l.announcementEdit : l.announcementNew),
+      content: SizedBox(
+        width: 560,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextField(
+                controller: _title,
+                maxLength: 120,
+                decoration: InputDecoration(labelText: l.announcementTitleLabel),
+              ),
+              TextField(
+                controller: _body,
+                maxLength: 1000,
+                minLines: 4,
+                maxLines: 8,
+                decoration: InputDecoration(labelText: l.announcementBodyLabel),
+              ),
+              const SizedBox(height: 8),
+              Text(l.announcementWhoSees,
+                  style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary)),
+              const SizedBox(height: 6),
+              SegmentedButton<String>(
+                showSelectedIcon: false,
+                segments: [
+                  ButtonSegment(value: 'all', label: Text(l.announcementForAll)),
+                  ButtonSegment(value: 'students', label: Text(l.announcementForStudents)),
+                  ButtonSegment(value: 'teachers', label: Text(l.announcementForTeachers)),
+                ],
+                selected: {_audience},
+                onSelectionChanged: (v) => setState(() => _audience = v.first),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                      child: Text(l.announcementUntil(DateFormat('yyyy-MM-dd').format(_until)))),
+                  TextButton.icon(
+                    onPressed: () async {
+                      final now = DateTime.now();
+                      final d = await showDatePicker(
+                        context: context,
+                        firstDate: now,
+                        lastDate: DateTime(now.year + 1, 12, 31),
+                        initialDate: _until.isBefore(now) ? now : _until,
+                      );
+                      if (d != null) setState(() => _until = d);
+                    },
+                    icon: const Icon(Icons.event, size: 18),
+                    label: Text(l.announcementPickDate),
+                  ),
+                ],
+              ),
+              if (!_editing)
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  value: _notify,
+                  onChanged: (v) => setState(() => _notify = v ?? true),
+                  title: Text(l.announcementNotify),
+                  subtitle: Text(l.announcementNotifyHelp),
+                ),
+              if (_error != null) Text(_error!, style: TextStyle(color: AppColors.error)),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(l.commonCancel)),
+        FilledButton(
+          onPressed: _saving ? null : _save,
+          child: Text(_editing ? l.roomsSave : l.announcementPost),
+        ),
+      ],
+    );
+  }
 }
 
 /// The home-page banner: every active announcement for [role].

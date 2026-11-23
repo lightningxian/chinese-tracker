@@ -164,8 +164,23 @@ function promotionId(uid, levelKey) {
   return `${uid}_${levelKey}`;
 }
 
+/**
+ * Owner 2026-11-24 (Q12): the admin may promote a capable student straight
+ * away. [toLevel] must be a real level above the current one (skipping
+ * levels is allowed).
+ * @return {{error: string}|{fromKey: string, toKey: string, fromLevel: string, toLevel: string}}
+ */
+function manualPromotion(fromLevel, toLevel) {
+  const fromKey = levelKeyOf(fromLevel);
+  const toKey = levelKeyOf(toLevel);
+  if (!toKey) return {error: "bad-level"};
+  if (fromKey && Number(toKey) <= Number(fromKey)) return {error: "not-higher"};
+  return {fromKey, toKey, fromLevel: fromKey ? `HSK ${fromKey}` : String(fromLevel || ""),
+    toLevel: `HSK ${toKey}`};
+}
+
 module.exports = {
   LEVELS, DEFAULT_MIN_CODES, levelKeyOf, nextLevelKey, groupOf, peerLabel,
   isFinal, isValid, isPlacement, entryOf, compareEntries, rankEntries,
-  countsAt, promotionState, promotionId,
+  countsAt, promotionState, promotionId, manualPromotion,
 };

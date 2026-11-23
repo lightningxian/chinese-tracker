@@ -7819,7 +7819,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get rulesCheckInvalid => 'Pengecekan 1 sampai 48 jam sebelum kelas.';
 
   @override
-  String get holidaysTab => 'Libur & info';
+  String get holidaysTab => 'Libur';
 
   @override
   String get timetableHelpers => 'Guru pendamping (maks. 3)';
@@ -7992,4 +7992,119 @@ class AppLocalizationsId extends AppLocalizations {
   String dayClosedAnnBody(String date) {
     return 'Centre tutup pada $date. Sesi yang sudah didaftarkan kembali ke voucher Anda.';
   }
+
+  @override
+  String get newsTitle => 'Berita';
+
+  @override
+  String get newsIntro =>
+      'Pengumuman tampil di beranda semua yang Anda pilih sampai tanggal berakhirnya. Menutup satu hari di Jadwal juga memasang pengumuman di sini.';
+
+  @override
+  String newsActive(int n) {
+    return 'Sedang tampil ($n)';
+  }
+
+  @override
+  String newsPast(int n) {
+    return 'Sudah berakhir ($n)';
+  }
+
+  @override
+  String newsPosted(String date) {
+    return 'dipasang $date';
+  }
+
+  @override
+  String get newsClosure => 'Centre tutup';
+
+  @override
+  String get announcementEdit => 'Ubah pengumuman';
+
+  @override
+  String get announcementDeleteTitle => 'Hapus pengumuman ini?';
+
+  @override
+  String get announcementWhoSees => 'Siapa yang melihat';
+
+  @override
+  String get announcementNotify => 'Kirim juga notifikasi';
+
+  @override
+  String get announcementNotifyHelp =>
+      'Lonceng notifikasi berbunyi untuk semua yang melihatnya.';
+
+  @override
+  String get promoteManualHint =>
+      'Siswa yang mampu boleh naik tanpa menunggu kode yang lulus.';
+
+  @override
+  String get promoteManualButton => 'Naikkan level siswa';
+
+  @override
+  String get promoteManualHelp =>
+      'Level langsung naik. Siswa dan orang tua yang terhubung diberi tahu, alasannya disimpan di riwayat level, dan hitungan kode mulai lagi.';
+
+  @override
+  String get promoteStudentLabel => 'Siswa';
+
+  @override
+  String get promoteLevelLabel => 'Level baru';
+
+  @override
+  String promoteLevelFrom(String level) {
+    return 'Level baru (sekarang $level)';
+  }
+
+  @override
+  String get promoteTopLevel => 'Siswa ini sudah di level tertinggi.';
+
+  @override
+  String get promoteReasonLabel => 'Alasan (wajib)';
+
+  @override
+  String promoteConfirm(String level) {
+    return 'Naikkan ke $level';
+  }
+
+  @override
+  String get promoteAnyway => 'Tetap naikkan';
+
+  @override
+  String promotionDeclinedList(int n) {
+    return 'Rekomendasi yang ditolak ($n)';
+  }
+
+  @override
+  String dashHello(String name) {
+    return 'Halo, $name';
+  }
+
+  @override
+  String get dashTodayTitle => 'Hari ini';
+
+  @override
+  String get dashAllClear => 'Tidak ada yang perlu ditindaklanjuti.';
+
+  @override
+  String dashOpenTasks(int n) {
+    return '$n hal perlu ditindaklanjuti';
+  }
+
+  @override
+  String dashClassesToday(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n kelas hari ini',
+      zero: 'Tidak ada kelas hari ini',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dashMoreFigures => 'Angka lainnya';
+
+  @override
+  String get dashMoreFiguresHint => 'Pembayaran, voucher, dan angka centre';
 }

@@ -46,6 +46,8 @@ class _TeacherAttendanceTabState extends State<TeacherAttendanceTab> {
   Map<DateTime, List<ClassSession>> _group(List<ClassSession> sessions) {
     final map = <DateTime, List<ClassSession>>{};
     for (final s in sessions) {
+      // Owner 2026-11-24: a cancelled class leaves the calendar.
+      if (s.isCancelled) continue;
       final parsed = DateTime.tryParse(s.sessionDate);
       if (parsed == null) continue;
       map.putIfAbsent(_dayKey(parsed), () => []).add(s);

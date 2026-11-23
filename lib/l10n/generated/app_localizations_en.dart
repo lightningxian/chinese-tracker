@@ -7846,7 +7846,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get rulesCheckInvalid => 'Check 1 to 48 hours before the class.';
 
   @override
-  String get holidaysTab => 'Holidays & news';
+  String get holidaysTab => 'Holidays';
 
   @override
   String get timetableHelpers => 'Helper teachers (up to 3)';
@@ -8019,4 +8019,126 @@ class AppLocalizationsEn extends AppLocalizations {
   String dayClosedAnnBody(String date) {
     return 'The centre is closed on $date. Booked sessions go back to your voucher.';
   }
+
+  @override
+  String get newsTitle => 'News';
+
+  @override
+  String get newsIntro =>
+      'Announcements show on the home page of everyone you choose until their end date. Closing a day on the Timetable posts one here too.';
+
+  @override
+  String newsActive(int n) {
+    return 'Showing now ($n)';
+  }
+
+  @override
+  String newsPast(int n) {
+    return 'Ended ($n)';
+  }
+
+  @override
+  String newsPosted(String date) {
+    return 'posted $date';
+  }
+
+  @override
+  String get newsClosure => 'Centre closed';
+
+  @override
+  String get announcementEdit => 'Edit announcement';
+
+  @override
+  String get announcementDeleteTitle => 'Delete this announcement?';
+
+  @override
+  String get announcementWhoSees => 'Who sees it';
+
+  @override
+  String get announcementNotify => 'Also send a notification';
+
+  @override
+  String get announcementNotifyHelp =>
+      'It rings the bell of everyone who sees it.';
+
+  @override
+  String get promoteManualHint =>
+      'A capable student may move up without waiting for passed codes.';
+
+  @override
+  String get promoteManualButton => 'Promote a student';
+
+  @override
+  String get promoteManualHelp =>
+      'The level goes up at once. The student and a linked parent are told, the reason is kept in the level history, and the code count starts again.';
+
+  @override
+  String get promoteStudentLabel => 'Student';
+
+  @override
+  String get promoteLevelLabel => 'New level';
+
+  @override
+  String promoteLevelFrom(String level) {
+    return 'New level (now $level)';
+  }
+
+  @override
+  String get promoteTopLevel => 'This student is already at the highest level.';
+
+  @override
+  String get promoteReasonLabel => 'Reason (required)';
+
+  @override
+  String promoteConfirm(String level) {
+    return 'Promote to $level';
+  }
+
+  @override
+  String get promoteAnyway => 'Promote anyway';
+
+  @override
+  String promotionDeclinedList(int n) {
+    return 'Declined recommendations ($n)';
+  }
+
+  @override
+  String dashHello(String name) {
+    return 'Hello, $name';
+  }
+
+  @override
+  String get dashTodayTitle => 'Today';
+
+  @override
+  String get dashAllClear => 'Nothing needs your action.';
+
+  @override
+  String dashOpenTasks(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n things need your action',
+      one: '1 thing needs your action',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String dashClassesToday(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n classes today',
+      one: '1 class today',
+      zero: 'No classes today',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dashMoreFigures => 'More figures';
+
+  @override
+  String get dashMoreFiguresHint => 'Payments, vouchers and centre numbers';
 }

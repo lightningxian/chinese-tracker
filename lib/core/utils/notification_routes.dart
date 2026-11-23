@@ -32,6 +32,8 @@ abstract final class NotificationRoutes {
           AppConstants.roleParent => '/parent',
           _ => '/teacher',
         },
+      // An announcement opens the home page, where its banner is.
+      NotificationKind.announcement => '/$role',
       NotificationKind.progress => switch (role) {
           AppConstants.roleAdmin => '/admin',
           AppConstants.roleStudent => '/student',
@@ -58,6 +60,7 @@ abstract final class NotificationRoutes {
     }
     // Build 4: a progress warning opens the student's Progress tab; staff
     // open the student's report page (its own route).
+    if (notification.kind == NotificationKind.announcement) return 0;
     if (notification.kind == NotificationKind.progress) {
       return role == AppConstants.roleStudent ? studentProgressTab : null;
     }

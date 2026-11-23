@@ -17,6 +17,7 @@ import '../teacher/teacher_attendance_tab.dart';
 import '../teacher/teacher_exercises_tab.dart';
 import '../question_bank/question_bank_bulk_import.dart';
 import '../tests/staff_tests_tab.dart';
+import '../announcements/admin_news_tab.dart';
 import 'admin_profile_tab.dart';
 import 'admin_dashboard_tab.dart';
 import 'admin_invoices_tab.dart';
@@ -35,7 +36,7 @@ class AdminShell extends StatefulWidget {
 
 class _AdminShellState extends State<AdminShell> {
   // Build 8: `?tab=N` opens a tab directly (the screenshot runner).
-  int _index = LaunchParams.takeTab(9);
+  int _index = LaunchParams.takeTab(10);
 
   /// Sidebar entries; built per locale so the labels follow the UI language.
   List<AppShellDestination> _destinations(AppLocalizations l) => [
@@ -83,6 +84,12 @@ class _AdminShellState extends State<AdminShell> {
           label: l.testsTitle,
           icon: Icons.timer_outlined,
           selectedIcon: Icons.timer,
+        ),
+        // Owner 2026-11-24: announcements for everyone.
+        AppShellDestination(
+          label: l.newsTitle,
+          icon: Icons.campaign_outlined,
+          selectedIcon: Icons.campaign,
         ),
         AppShellDestination(
           label: l.adminShellNavAccount,
@@ -223,6 +230,7 @@ class _AdminShellState extends State<AdminShell> {
           const AdminInvoicesTab(),
           const AdminReportsTab(),
           StaffTestsTab(user: user),
+          const AdminNewsTab(),
           AdminProfileTab(user: user),
         ];
 

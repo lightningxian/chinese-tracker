@@ -13,6 +13,17 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-24 — Claude (BUILD chat, PC): owner requests, third round
+
+- Owner asked: a calmer admin dashboard; cancelled classes gone from the
+  calendar; announcements on their own page for everyone; answers to Q6
+  (leave), Q7 (generate listening scripts), Q8 (rebuild the APK), Q9 (iOS,
+  specify), Q12 (the admin may just promote).
+- Built in release v0.1.29 (67 functions), see the CHANGELOG entry. iOS
+  options written in `docs/IOS_SPEC.md`.
+- Checked: analyzer 17 infos, `flutter test` 162 pass, node tests, flow
+  test 103 steps, emulator walk.
+
 ### 2026-11-23 — Claude (BUILD chat, PC): owner requests, second round
 
 - Owner asked: a bigger, clearer Timetable rules dialog; several teachers

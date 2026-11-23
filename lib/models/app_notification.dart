@@ -13,7 +13,10 @@ enum NotificationKind {
   promotion('promotion'),
 
   /// Progress warnings (Build 4), sent by the daily job.
-  progress('progress');
+  progress('progress'),
+
+  /// Owner 2026-11-23/24: a closed day or an admin's News post.
+  announcement('announcement');
 
   const NotificationKind(this.value);
 

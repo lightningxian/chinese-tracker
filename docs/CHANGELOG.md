@@ -6,6 +6,40 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-24 — Claude (BUILD chat): owner requests, third round (News, calmer dashboard, promote a student)
+
+**What changed**
+- **News** is its own admin page (sidebar, before Account;
+  `lib/features/announcements/admin_news_tab.dart`): post, edit and delete
+  announcements for everyone, students and parents, or teachers, with an end
+  date; ended ones fold away. A new post may also ring the bell
+  (`notify: true` → the new `onAnnouncementCreated` trigger writes one
+  role-wide notice per role, ids `ann_{id}_{role}`; kind `announcement`
+  opens the home tab). Timetable → **Holidays** keeps only the holidays.
+- **Admin dashboard** is calmer: a date and greeting, one **Today** card
+  (classes today plus the duty rows, quiet when nothing is open), four key
+  numbers, the new-students chart beside the voucher alerts, and the
+  payments and centre figures folded under **More figures**. The quick
+  actions card is gone (the top bar has the same buttons).
+- **Cancelled classes leave the calendar** (Classes tab day list and dots).
+- **Promote a student (Q12):** `promoteStudent` (admin; a higher level and a
+  reason are required; history kind `manual`; the student and a linked
+  parent are told; a waiting or declined recommendation is closed as
+  `superseded`). The Promotion screen has **Promote a student** and a
+  folded list of declined recommendations with **Promote anyway**. Pure
+  check `manualPromotion` in `functions/promotion.js`.
+- `docs/IOS_SPEC.md`: what iOS means (Q9), the installed web app today and
+  what an App Store app would need.
+
+**Why**
+- Owner requests 2026-11-24 and the answers to Q6–Q9 and Q12.
+
+**For review**
+- Functions 65 → 67 (`promoteStudent`, `onAnnouncementCreated`); no rules
+  change (announcements already allowed extra keys).
+
+---
+
 ## 2026-11-23 — Claude (BUILD chat): owner requests, second round (holidays, announcements, helper teachers)
 
 **What changed**

@@ -52,6 +52,26 @@ class PromotionService {
       .snapshots()
       .map((s) => s.docs.map(LevelPromotion.fromDoc).toList());
 
+  /// Declined recommendations, newest first (admin; owner 2026-11-24 may
+  /// promote anyway).
+  Stream<List<LevelPromotion>> watchDeclined({int limit = 20}) => _db
+      .collection('level_promotions')
+      .where('status', isEqualTo: 'declined')
+      .orderBy('createdAt', descending: true)
+      .limit(limit)
+      .snapshots()
+      .map((s) => s.docs.map(LevelPromotion.fromDoc).toList());
+
+  /// Owner 2026-11-24 (Q12): promote a capable student straight away to
+  /// [toLevel] (above their level). [reason] is required and kept in the
+  /// history and the audit log.
+  Future<void> promote(String studentId, {required String toLevel, required String reason}) =>
+      _functions.httpsCallable('promoteStudent').call<dynamic>({
+        'studentId': studentId,
+        'toLevel': toLevel,
+        'reason': reason.trim(),
+      });
+
   /// Build 3: the student's placement recommendation, if any.
   Stream<LevelPromotion?> watchPlacement(String uid) => _db
       .collection('level_promotions')

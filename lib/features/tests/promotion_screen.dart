@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+
+import '../../core/constants/app_constants.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
@@ -7,6 +10,7 @@ import '../../core/widgets/shell_nested_page.dart';
 import '../../l10n/l10n.dart';
 import '../../models/app_user.dart';
 import '../../models/leaderboard.dart';
+import '../../services/firestore_service.dart';
 import '../../services/promotion_service.dart';
 import 'test_labels.dart';
 import 'test_player_screen.dart' show PlacementChip;
@@ -55,6 +59,34 @@ class _PromotionScreenState extends State<PromotionScreen> {
   final _vm = PromotionViewModel();
   late final _waiting = _vm.service.watchWaiting();
   late final _minCodes = _vm.service.watchMinCodes();
+  late final _declined = _vm.service.watchDeclined();
+  bool _showDeclined = false;
+
+  /// Owner 2026-11-24 (Q12): promote straight away, optionally for one
+  /// student and level already chosen (a declined recommendation).
+  Future<void> _promote({String? studentId, String? toLevel}) async {
+    final l = context.l10n;
+    final messenger = ScaffoldMessenger.of(context);
+    final students = await context.read<FirestoreService>().watchAllStudents().first;
+    if (!mounted) return;
+    final pick = await showDialog<_PromotePick>(
+      context: context,
+      builder: (_) => _PromoteDialog(
+        students: students.where((u) => u.isStudent && !u.isPending).toList()
+          ..sort((a, b) => a.staffLabel.compareTo(b.staffLabel)),
+        studentId: studentId,
+        toLevel: toLevel,
+      ),
+    );
+    if (pick == null) return;
+    try {
+      await _vm.run('manual', () =>
+          _vm.service.promote(pick.studentId, toLevel: pick.toLevel, reason: pick.reason));
+      messenger.showSnackBar(SnackBar(content: Text(l.promotionApproved(pick.toLevel))));
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(testErrorMessage(l, e))));
+    }
+  }
 
   @override
   void dispose() {
@@ -165,6 +197,22 @@ class _PromotionScreenState extends State<PromotionScreen> {
                 );
               },
             ),
+            const SizedBox(height: 10),
+            AppCard(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              child: Row(
+                children: [
+                  Icon(Icons.rocket_launch_outlined, color: AppColors.teal),
+                  const SizedBox(width: 10),
+                  Expanded(child: Text(l.promoteManualHint)),
+                  FilledButton.icon(
+                    onPressed: _vm.busyId == 'manual' ? null : () => _promote(),
+                    icon: const Icon(Icons.trending_up, size: 18),
+                    label: Text(l.promoteManualButton),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 12),
             StreamBuilder<List<LevelPromotion>>(
               stream: _waiting,
@@ -202,9 +250,184 @@ class _PromotionScreenState extends State<PromotionScreen> {
                 );
               },
             ),
+            StreamBuilder<List<LevelPromotion>>(
+              stream: _declined,
+              builder: (context, snap) {
+                final list = snap.data ?? const <LevelPromotion>[];
+                if (list.isEmpty) return const SizedBox.shrink();
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton.icon(
+                        onPressed: () => setState(() => _showDeclined = !_showDeclined),
+                        icon: Icon(_showDeclined ? Icons.expand_less : Icons.expand_more),
+                        label: Text(l.promotionDeclinedList(list.length)),
+                      ),
+                    ),
+                    if (_showDeclined)
+                      for (final p in list)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: AppCard(
+                            padding: const EdgeInsets.fromLTRB(14, 10, 10, 10),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(AppUser.staffLabelOf(p.studentNameChinese, p.studentName),
+                                          style: const TextStyle(fontWeight: FontWeight.w700)),
+                                      Text('${p.fromLevel} → ${p.toLevel} · ${p.declineReason}',
+                                          style: TextStyle(
+                                              color: AppColors.textSecondary, fontSize: 12)),
+                                    ],
+                                  ),
+                                ),
+                                OutlinedButton(
+                                  onPressed: _vm.busyId == 'manual'
+                                      ? null
+                                      : () => _promote(studentId: p.studentId, toLevel: p.toLevel),
+                                  child: Text(l.promoteAnyway),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                  ],
+                );
+              },
+            ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _PromotePick {
+  const _PromotePick(this.studentId, this.toLevel, this.reason);
+  final String studentId;
+  final String toLevel;
+  final String reason;
+}
+
+/// Pick a student, a higher level and a reason.
+class _PromoteDialog extends StatefulWidget {
+  const _PromoteDialog({required this.students, this.studentId, this.toLevel});
+
+  final List<AppUser> students;
+  final String? studentId;
+  final String? toLevel;
+
+  @override
+  State<_PromoteDialog> createState() => _PromoteDialogState();
+}
+
+class _PromoteDialogState extends State<_PromoteDialog> {
+  final _reason = TextEditingController();
+  AppUser? _student;
+  String? _level;
+
+  @override
+  void initState() {
+    super.initState();
+    for (final u in widget.students) {
+      if (u.uid == widget.studentId) _student = u;
+    }
+    if (_student != null && _higher(_student!).contains(widget.toLevel)) {
+      _level = widget.toLevel;
+    }
+  }
+
+  @override
+  void dispose() {
+    _reason.dispose();
+    super.dispose();
+  }
+
+  static int _rank(String? level) => AppConstants.hskLevels.indexOf(level ?? '');
+
+  List<String> _higher(AppUser u) =>
+      AppConstants.hskLevels.where((lv) => _rank(lv) > _rank(u.level)).toList();
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final levels = _student == null ? const <String>[] : _higher(_student!);
+    final ok = _student != null && _level != null && _reason.text.trim().isNotEmpty;
+    return AlertDialog(
+      title: Text(l.promoteManualButton),
+      content: SizedBox(
+        width: 480,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(l.promoteManualHelp,
+                style: TextStyle(color: AppColors.textSecondary, height: 1.4)),
+            const SizedBox(height: 14),
+            Autocomplete<AppUser>(
+              initialValue: TextEditingValue(text: _student?.staffLabel ?? ''),
+              optionsBuilder: (v) {
+                final q = v.text.trim().toLowerCase();
+                return widget.students
+                    .where((u) => q.isEmpty || u.staffLabel.toLowerCase().contains(q))
+                    .take(30);
+              },
+              displayStringForOption: (u) => '${u.staffLabel} · ${u.level ?? '—'}',
+              onSelected: (u) => setState(() {
+                _student = u;
+                _level = null;
+              }),
+              fieldViewBuilder: (context, controller, focus, onSubmit) => TextField(
+                controller: controller,
+                focusNode: focus,
+                decoration: InputDecoration(
+                  labelText: l.promoteStudentLabel,
+                  prefixIcon: const Icon(Icons.search),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (_student != null && levels.isEmpty)
+              Text(l.promoteTopLevel, style: TextStyle(color: AppColors.error))
+            else
+              DropdownButtonFormField<String>(
+                initialValue: _level,
+                items: [
+                  for (final lv in levels) DropdownMenuItem(value: lv, child: Text(lv)),
+                ],
+                onChanged: _student == null ? null : (v) => setState(() => _level = v),
+                decoration: InputDecoration(
+                  labelText: _student == null
+                      ? l.promoteLevelLabel
+                      : l.promoteLevelFrom(_student!.level ?? '—'),
+                ),
+              ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _reason,
+              maxLines: 2,
+              onChanged: (_) => setState(() {}),
+              decoration: InputDecoration(labelText: l.promoteReasonLabel),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(l.commonCancel)),
+        FilledButton(
+          onPressed: ok
+              ? () => Navigator.pop(
+                  context, _PromotePick(_student!.uid, _level!, _reason.text.trim()))
+              : null,
+          child: Text(_level == null ? l.promoteManualButton : l.promoteConfirm(_level!)),
+        ),
+      ],
     );
   }
 }

@@ -99,4 +99,13 @@ const byHand = [
 assert.deepEqual(ranked.map((x) => [x.rank, x.name, x.total]), byHand);
 assert.deepEqual(ranked.map((x) => x.passed), byHand.map(([, , t]) => t >= 180));
 
-console.log("promotion: all checks passed (LV-01, LV-03, LB-01)");
+// Owner 2026-11-24 (Q12): the admin promotes straight away, only upwards.
+assert.deepEqual(p.manualPromotion("HSK 2", "HSK 4"),
+    {fromKey: "2", toKey: "4", fromLevel: "HSK 2", toLevel: "HSK 4"});
+assert.deepEqual(p.manualPromotion("HSK 3", "HSK 3"), {error: "not-higher"});
+assert.deepEqual(p.manualPromotion("HSK 5", "HSK 2"), {error: "not-higher"});
+assert.deepEqual(p.manualPromotion("HSK 1", "HSK 9"), {error: "bad-level"});
+assert.deepEqual(p.manualPromotion("", "HSK 1"),
+    {fromKey: "", toKey: "1", fromLevel: "", toLevel: "HSK 1"});
+
+console.log("promotion: all checks passed (LV-01, LV-03, LB-01, manual promotion)");
