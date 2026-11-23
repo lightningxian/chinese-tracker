@@ -13,6 +13,28 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-24 — PLAN chat (Mac): owner's first check of the Word book
+
+- **Owner corrections applied** (`docs/thesis/tools/build_book.py`, `docs/thesis/BAB_I_PENDAHULUAN.md`, book rebuilt):
+  name **WILSIN** in capitals on the cover, pengesahan, pernyataan and riwayat hidup (no longer yellow);
+  abstract numbers filled with the proposal's targets (24 scenarios, 35 respondents fixed; 24 of 24 passed,
+  100 % typing accuracy on 200 answers, SUS 75 stay yellow until the trial); Bab I §1.4 lists **Claude Code**
+  as software point 8 (owner decision: AI help is stated; the `[ISI]` note to ask the supervisor is gone).
+- **Gambar 3.5 rich picture drawn** (`docs/thesis/word/fig_3_5.png`, static SVG rendered with headless Chrome,
+  1400 × 1000, placed at 14 × 10 cm): five actors, four tools, every flow of §3.3.1, the clash mark and four
+  thought bubbles. The builder now places any `word/fig_<bab>_<n>.png` as the picture of that figure
+  (`FIG_SIZE_CM` for sizes); the other Bab III figures stay yellow boxes.
+- **Plan for Daftar Algoritma and Daftar Segmen Program** written into `docs/thesis/README.md` and as yellow
+  notes in the Bab V and VI skeleton: 8 algorithms (pseudocode of the server rules: clash check, booking,
+  close session, typing matcher, HSK marks, promotion, placement, progress warnings) and 15 program segments
+  (Flutter init and role routing, rules, scheduling, booking, close session, matcher, finishExercise,
+  promotion, Midtrans, progress, fl_chart, exercise player). Campus rules copied from the criteria file.
+- **Open with the owner:** what "3.2.2 before its not existed" means (no teacher scheduling in the old
+  system, or only no spreadsheet screenshot for Gambar 3.2); the approved proposal §IV.A point 2 says the
+  admin asked availability by chat and kept the schedule in a spreadsheet.
+- Checks: package valid, 127 bookmarks all resolved, 2 figure relationships, list point 8 shares the list
+  numbering of points 1–7. Pages after the cover are still checked by structure only (no Word on the Mac).
+
 ### 2026-11-24 — Claude (BUILD chat, PC): owner requests, third round
 
 - Owner asked: a calmer admin dashboard; cancelled classes gone from the

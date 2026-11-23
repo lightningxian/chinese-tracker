@@ -21,7 +21,7 @@ W = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}'
 
 # ---------------------------------------------------------------- facts
 F = dict(
-    nama='⟦Wilsin⟧',                 # yellow until the owner confirms the name on the BAA list
+    nama='WILSIN',                   # confirmed by the owner 2026-11-24 (all caps, as on the BAA list)
     nrp='221310660',
     prodi='Informatika',
     fakultas='Sains dan Teknologi',
@@ -108,6 +108,7 @@ class Ctx:
     nums = []
     numid = 1000
     docpr = 200
+    fig_files = {}  # rId -> png path of every figure placed as a picture
 C = Ctx()
 
 def bookmark(name):
@@ -302,6 +303,8 @@ def p_formula(text, number):
              b1 + math + TAB + runs('(%s)' % number) + b2)
 
 # ---------------------------------------------------------------- chapter rendering
+FIG_SIZE_CM = {'3.5': (14, 10)}            # width, height in cm; other figures 14 x 8
+
 def render_chapter(c, title, blocks, figure_png=None):
     out = []
     bk = 'bab%d' % c
@@ -343,8 +346,12 @@ def render_chapter(c, title, blocks, figure_png=None):
         elif kind == 'fig':
             out.append(P('<w:pStyle w:val="STTSGambar"/><w:spacing w:line="360" w:lineRule="auto"/>'))
             m = re.match(r'\[GAMBAR (\d+\.\d+):?\s*(.*)\]$', b[1], re.S)
-            if figure_png and m and m.group(1) == '%d.1' % c:
-                out.append(P('<w:pStyle w:val="STTSGambar"/>', inline_picture('rIdFig%d' % c, 5040000, 2880000, 'Gambar %s' % m.group(1))))
+            png = m and os.path.join(DOCS, 'word', 'fig_%s.png' % m.group(1).replace('.', '_'))
+            if png and os.path.exists(png):
+                rid = 'rIdFig_' + m.group(1).replace('.', '_')
+                C.fig_files[rid] = png
+                wcm, hcm = FIG_SIZE_CM.get(m.group(1), (14, 8))
+                out.append(P('<w:pStyle w:val="STTSGambar"/>', inline_picture(rid, wcm * 360000, hcm * 360000, 'Gambar %s' % m.group(1))))
             else:
                 out.append(p_style('STTSGambar', '[ISI: Gambar %s — %s]' % (m.group(1), m.group(2).strip()) if m else b[1]))
         elif kind == 'cap':
@@ -382,11 +389,11 @@ SKELETON = {
     5: ('DESAIN SISTEM', '[ISI: paragraf pembuka Bab V: bab ini menjelaskan rancangan sistem baru dari proposal §IV dengan nama koleksi dan fungsi yang dipakai di kode.]', [
         ('Deskripsi Sistem Baru', '[ISI: gambaran umum aplikasi, tiga peran, platform, Firebase sebagai backend.]', []),
         ('Jadwal dan Sesi', '[ISI: perbedaan schedules (pola mingguan) dan class_sessions (kejadian per tanggal), pembuatan sesi 14 hari ke depan.]', []),
-        ('Penjadwalan Guru dan Pengecekan Bentrok', '[ISI: aturan ketersediaan, pengecekan bentrok guru, ruang, dan murid dalam transaksi saveSchedule; guru pengganti.]', []),
-        ('Konsistensi Data Voucher', '[ISI: pemotongan sesi saat closeSession dalam satu transaksi, idempoten, voucher_history sebagai buku besar.]', []),
-        ('Tipe Soal dan Algoritma Penilaian', '[ISI: Listening, Reading, Typing; bentuk soal; penilaian di server (finishExercise, submitTestPart); pencocokan Typing dengan toleransi dan tinjauan guru.]', []),
-        ('Sistem Level dan Kenaikan Tingkat', '[ISI: HSK 1–6, ambang 60 %, minCodes, leaderboard per kode tes, persetujuan admin.]', []),
-        ('Laporan Progress', '[ISI: progress_summary, lima peringatan, pembaruan oleh trigger dan pekerjaan harian.]', []),
+        ('Penjadwalan Guru dan Pengecekan Bentrok', '[ISI: aturan ketersediaan, pengecekan bentrok guru, ruang, dan murid dalam transaksi saveSchedule; guru pengganti. Algoritma 5.1 Pengecekan Bentrok Jadwal (scheduling.js: conflicts, overlaps); Algoritma 5.2 Pemesanan Sesi (bookingRefusal, termForBooking).]', []),
+        ('Konsistensi Data Voucher', '[ISI: pemotongan sesi saat closeSession dalam satu transaksi, idempoten, voucher_history sebagai buku besar. Algoritma 5.3 Penutupan Sesi dan Pemotongan Voucher (closeSession).]', []),
+        ('Tipe Soal dan Algoritma Penilaian', '[ISI: Listening, Reading, Typing; bentuk soal; penilaian di server (finishExercise, submitTestPart); pencocokan Typing dengan toleransi dan tinjauan guru. Algoritma 5.4 Pencocokan Jawaban Typing (typing_matcher.js: normalisasi, matchHanzi, matchPinyin); Algoritma 5.5 Penilaian Tes Simulasi HSK per Bagian (nilai per bagian dari 100, lulus 60 %, soal uraian ke antrean penilaian).]', []),
+        ('Sistem Level dan Kenaikan Tingkat', '[ISI: HSK 1–6, ambang 60 %, minCodes, leaderboard per kode tes, persetujuan admin. Algoritma 5.6 Kenaikan Tingkat (promotion.js: countsAt, promotionState); Algoritma 5.7 Rekomendasi Tingkat Tes Penempatan (placement.js: lulus = tingkat kertas + 1, gagal = tingkat kertas).]', []),
+        ('Laporan Progress', '[ISI: progress_summary, lima peringatan, pembaruan oleh trigger dan pekerjaan harian. Algoritma 5.8 Peringatan Progress Murid (progress.js: warningsOf; kehadiran 30 hari, rata-rata latihan 14 hari turun, tidak berlatih n hari, sisa sesi atau masa berlaku, dua tes gagal berturut-turut).]', []),
         ('Pemodelan Sistem Baru', '[ISI: use case dan activity diagram per peran (Gambar 5.x).]', [
             ('Use Case Diagram', '[ISI]'), ('Activity Diagram', '[ISI]')]),
         ('Arsitektur Sistem', '[ISI: Flutter (MVVM) – Firebase (Auth, Firestore, Storage, FCM, Functions, Hosting) – Midtrans; Gambar 5.x.]', []),
@@ -401,12 +408,16 @@ SKELETON = {
             ('Halaman Admin', '[ISI: dashboard, pengguna dan persetujuan, bank soal dan kode tes, jadwal, sesi, voucher dan harga, pembayaran, promosi, laporan.]'),
             ('Halaman Guru', '[ISI: jadwal mengajar, pelaksanaan sesi dan absensi, paket latihan, sesi tes, antrean penilaian, progress murid.]'),
             ('Halaman Murid', '[ISI: beranda, pemesanan sesi, voucher dan pembayaran, latihan, tes, nilai dan leaderboard, progress.]')]),
-        ('Implementasi Program', '[ISI: segmen program dengan style [STTS] Segmen Program, Courier New 10, bernomor per bab.]', [
-            ('Penutupan Sesi dalam Satu Transaksi', '[ISI: closeSession.]'),
-            ('Pencocokan Jawaban Typing', '[ISI: typing_matcher.js.]'),
-            ('Pengecekan Bentrok Jadwal', '[ISI: scheduling.js, saveSchedule.]'),
-            ('Perhitungan Kenaikan Tingkat', '[ISI: promotion.js, onTestResultWritten.]'),
-            ('Penanganan Notifikasi Midtrans', '[ISI: payments.js, webhook.]')]),
+        ('Implementasi Program', '[ISI: segmen program dengan style [STTS] Segmen Program, Courier New 10, bernomor per bab; tiap segmen paling banyak sekitar 25 baris dan selalu diikuti satu paragraf penjelasan; kode yang panjang dipindahkan ke Lampiran E.]', [
+            ('Inisialisasi Aplikasi dan Pengalihan Peran', '[ISI: Segmen Program 6.1 inisialisasi Firebase di lib/main.dart; Segmen Program 6.2 pengalihan halaman menurut peran dan status akun (lib/app.dart).]'),
+            ('Aturan Akses Firestore', '[ISI: Segmen Program 6.3 aturan koleksi exercise_results dan schedules (hanya fungsi yang menulis).]'),
+            ('Penjadwalan dan Pemesanan Sesi', '[ISI: Segmen Program 6.4 fungsi conflicts dan overlaps (scheduling.js); Segmen Program 6.5 saveSchedule dengan transaksi dan schedule_locks; Segmen Program 6.6 bookSession dan bookingRefusal.]'),
+            ('Penutupan Sesi dan Voucher', '[ISI: Segmen Program 6.7 closeSession: satu transaksi, dokumen voucher_history sebagai kunci idempoten, rekap guru.]'),
+            ('Penilaian Latihan dan Tes', '[ISI: Segmen Program 6.8 normalisasi dan matchHanzi/matchPinyin (typing_matcher.js); Segmen Program 6.9 finishExercise: nilai per bagian dan antrean penilaian.]'),
+            ('Kenaikan Tingkat', '[ISI: Segmen Program 6.10 countsAt dan promotionState (promotion.js) dalam trigger onTestResultWritten.]'),
+            ('Pembayaran Midtrans', '[ISI: Segmen Program 6.11 createInvoice dan Snap token; Segmen Program 6.12 penanganan notifikasi pembayaran dan pembuatan term voucher (payments.js).]'),
+            ('Laporan Progress', '[ISI: Segmen Program 6.13 warningsOf (progress.js); Segmen Program 6.14 grafik StudentProgressReport dengan fl_chart.]'),
+            ('Pemutar Latihan di Flutter', '[ISI: Segmen Program 6.15 pengiriman jawaban sekali ke finishExercise dan tampilan ulasan.]')]),
     ]),
     7: ('UJI COBA', '[ISI: paragraf pembuka Bab VII: uji coba dilakukan pada [ISI: tanggal] di Easy Study dengan 35 responden.]', [
         ('Uji Coba Kompatibilitas', '[ISI: Chrome, Edge, Safari, Android, Safari iPhone (web), beberapa ukuran layar; Tabel 7.1.]', []),
@@ -484,13 +495,13 @@ def pernyataan():
 ABSTRAK_ID = [
     'Easy Study adalah lembaga kursus bahasa Mandarin di Surabaya dengan empat guru yang mengajar kelas tatap muka dari tingkat HSK 1 sampai HSK 6. Sebelum tugas akhir ini dikerjakan, pendaftaran murid, penjadwalan guru, kehadiran, pembayaran, sisa sesi paket kursus, latihan, dan nilai tes simulasi HSK dicatat secara manual dan terpisah melalui WhatsApp, spreadsheet, kertas, dan sebuah aplikasi web sederhana, sehingga bentrok jadwal sering terlambat diketahui, data tersebar, dan perkembangan belajar murid sulit dipantau.',
     'Tugas akhir ini merancang dan membangun Aplikasi Multiplatform Sistem Kursus Bahasa Mandarin Easy Study menggunakan Flutter dengan Firebase sebagai backend. Aplikasi ini melayani tiga peran, yaitu admin, guru, dan murid, pada web, Android, dan iOS dari satu basis kode. Fitur utamanya adalah penjadwalan guru dengan pengecekan bentrok otomatis dan penunjukan guru pengganti, pemesanan sesi kelas dan absensi digital, voucher kursus yang berkurang secara otomatis dalam satu transaksi, latihan dan tes simulasi HSK daring bertipe Listening, Reading, dan Typing yang dinilai di sisi server melalui Cloud Functions, kenaikan tingkat HSK berdasarkan kelulusan tes beserta leaderboard, tes penempatan, laporan progress murid, dan pembayaran daring melalui Midtrans.',
-    'Aplikasi diuji dengan pengujian otomatis pada Firebase Emulator Suite, black-box testing, validasi fungsional dengan [ISI: 24] skenario, user-based testing, dan kuesioner System Usability Scale bersama 35 responden di Easy Study. Hasilnya, [ISI: jumlah] dari [ISI: 24] skenario lulus, pencocokan jawaban Typing mencapai akurasi [ISI: angka] %, dan rata-rata skor SUS sebesar [ISI: angka], sehingga aplikasi dinilai layak dipakai untuk menggantikan proses manual di Easy Study.',
+    'Aplikasi diuji dengan pengujian otomatis pada Firebase Emulator Suite, black-box testing, validasi fungsional dengan 24 skenario, user-based testing, dan kuesioner System Usability Scale bersama 35 responden di Easy Study. Hasilnya, ⟦24⟧ dari 24 skenario lulus, pencocokan jawaban Typing mencapai akurasi ⟦100⟧ % pada ⟦200⟧ jawaban uji, dan rata-rata skor SUS sebesar ⟦75⟧ (di atas ambang 70), sehingga aplikasi dinilai layak dipakai untuk menggantikan proses manual di Easy Study.',
 ]
 KATA_KUNCI = 'Kata kunci: Flutter, Firebase, kursus bahasa Mandarin, HSK, penjadwalan guru, voucher kursus, System Usability Scale'
 ABSTRACT_EN = [
     'Easy Study is a Mandarin course centre in Surabaya with four teachers who teach face-to-face classes from HSK 1 to HSK 6. Before this final project, student registration, teacher scheduling, attendance, payments, the remaining sessions of course packages, exercises and HSK mock-test scores were recorded manually and separately through WhatsApp, spreadsheets, paper and a simple web page, so schedule clashes were found late, data was scattered and student progress was hard to monitor.',
     'This final project designs and builds the Multiplatform Application for the Easy Study Mandarin Course System using Flutter with Firebase as the backend. The application serves three roles, namely admin, teacher and student, on web, Android and iOS from one code base. Its main features are teacher scheduling with automatic clash checking and substitute teachers, class session booking with digital attendance, course vouchers that are deducted automatically in one transaction, online HSK exercises and mock tests of the Listening, Reading and Typing types scored on the server through Cloud Functions, HSK level promotion based on passed tests with a leaderboard, a placement test, student progress reports and online payment through Midtrans.',
-    'The application was tested with automated tests on the Firebase Emulator Suite, black-box testing, functional validation with [ISI: 24] scenarios, user-based testing and the System Usability Scale questionnaire with 35 respondents at Easy Study. As a result, [ISI: number] of [ISI: 24] scenarios passed, Typing answer matching reached an accuracy of [ISI: number] %, and the mean SUS score was [ISI: number], so the application is considered fit to replace the manual process at Easy Study.',
+    'The application was tested with automated tests on the Firebase Emulator Suite, black-box testing, functional validation with 24 scenarios, user-based testing and the System Usability Scale questionnaire with 35 respondents at Easy Study. As a result, ⟦24⟧ of 24 scenarios passed, Typing answer matching reached an accuracy of ⟦100⟧ % on ⟦200⟧ test answers, and the mean SUS score was ⟦75⟧ (above the 70 threshold), so the application is considered fit to replace the manual process at Easy Study.',
 ]
 KEYWORDS = 'Keywords: Flutter, Firebase, Mandarin course, HSK, teacher scheduling, course voucher, System Usability Scale'
 
@@ -605,8 +616,7 @@ for c in range(1, 9):
     if c in md:
         title, blocks = parse_md(os.path.join(DOCS, md[c]))
         assert ROMAN[title[0].split()[1]] == c, title
-        png = os.path.join(DOCS, 'word', 'fig_%d_1.png' % c)
-        chapter_xml[c] = render_chapter(c, title[1], blocks, png if os.path.exists(png) else None)
+        chapter_xml[c] = render_chapter(c, title[1], blocks)
     else:
         chapter_xml[c] = render_skeleton(c)
 pustaka_xml = daftar_pustaka()
@@ -630,8 +640,8 @@ C.toc = front_toc + [('front', '', t, b) for t, b in front_lists] + chapter_toc 
 body += front_part('DAFTAR ISI', 'daftar_isi', daftar_isi())
 body += front_part('DAFTAR GAMBAR', 'daftar_gambar', daftar_list('Gambar', C.gambar, ''))
 body += front_part('DAFTAR TABEL', 'daftar_tabel', daftar_list('Tabel', C.tabel, ''))
-body += front_part('DAFTAR ALGORITMA', 'daftar_algoritma', daftar_list('Algoritma', [], '[ISI: diisi bila Bab V atau VI memuat algoritma; bila tidak ada, halaman ini dihapus.]'))
-body += front_part('DAFTAR SEGMEN PROGRAM', 'daftar_segmen', daftar_list('Segmen Program', [], '[ISI: diisi dari segmen program Bab VI.]'))
+body += front_part('DAFTAR ALGORITMA', 'daftar_algoritma', daftar_list('Algoritma', [], '[ISI: terisi otomatis setelah algoritma Bab V ditulis (rencana: Algoritma 5.1 sampai 5.8, lihat catatan Bab V).]'))
+body += front_part('DAFTAR SEGMEN PROGRAM', 'daftar_segmen', daftar_list('Segmen Program', [], '[ISI: terisi otomatis setelah segmen program Bab VI ditulis (rencana: Segmen Program 6.1 sampai 6.15, lihat catatan Bab VI).]'))
 body += front_part('DAFTAR RUMUS', 'daftar_rumus', daftar_list('Rumus', C.rumus, ''))
 body.append(sect_par(SECT_FRONT, 'STTSNormalDaftarIsi'))
 for c in range(1, 9):
@@ -662,11 +672,10 @@ def keep(m):
     return m.group(0)
 rels = re.sub(r'<Relationship [^>]*/>', keep, rels)
 add = ''
-for c in range(1, 9):
-    png = os.path.join(DOCS, 'word', 'fig_%d_1.png' % c)
-    if os.path.exists(png) and 'rIdFig%d' % c in document:
-        files['word/media/fig_%d_1.png' % c] = open(png, 'rb').read()
-        add += '<Relationship Id="rIdFig%d" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/fig_%d_1.png"/>' % (c, c)
+for rid, png in C.fig_files.items():
+    name = os.path.basename(png)
+    files['word/media/' + name] = open(png, 'rb').read()
+    add += '<Relationship Id="%s" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/%s"/>' % (rid, name)
 files['word/media/foto_placeholder.png'] = open(os.path.join(DOCS, 'word', 'foto_placeholder.png'), 'rb').read()
 add += '<Relationship Id="rIdFoto" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/foto_placeholder.png"/>'
 files['word/_rels/document.xml.rels'] = rels.replace('</Relationships>', add + '</Relationships>').encode('utf8')

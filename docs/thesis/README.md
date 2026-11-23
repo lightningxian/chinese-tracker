@@ -24,21 +24,23 @@ bukan di sini; aturannya ada di `docs/THESIS_BOOK_GUIDE.md` §6.
 
 | Bab | File | Status |
 |---|---|---|
-| I Pendahuluan | `BAB_I_PENDAHULUAN.md` | Draf lengkap, 9 `[ISI]`; di Word: `word/BUKU TA Easy Study.docx` dan `word/BAB I PENDAHULUAN.docx` |
+| I Pendahuluan | `BAB_I_PENDAHULUAN.md` | Draf lengkap, 8 `[ISI]`; 1.4 menyebut Claude Code (keputusan pemilik 2026-11-24); di Word: `word/BUKU TA Easy Study.docx` dan `word/BAB I PENDAHULUAN.docx` |
 | II Teori Penunjang | `BAB_II_TEORI_PENUNJANG.md` | Draf lengkap |
-| III Proses Bisnis | `BAB_III_PROSES_BISNIS.md` | Draf lengkap, butuh foto dan angka dari pemilik |
+| III Proses Bisnis | `BAB_III_PROSES_BISNIS.md` | Draf lengkap, butuh foto dan angka dari pemilik; Gambar 3.5 (rich picture) sudah digambar: `word/fig_3_5.png` |
 | IV–VIII | belum (kerangka sub-bab ada di buku Word) | IV–VI setelah pemilik setuju struktur; VII–VIII setelah uji coba |
 | Daftar Pustaka | `DAFTAR_PUSTAKA.md` | 20 sumber proposal, urut abjad |
 
 **File Word (`word/`)**
 
-`word/BUKU TA Easy Study.docx` (2026-11-23) adalah **buku lengkap dalam satu
+`word/BUKU TA Easy Study.docx` (2026-11-24) adalah **buku lengkap dalam satu
 file** untuk diperiksa: halaman judul, pengesahan, surat pernyataan, abstrak,
 abstract, kata pengantar, daftar isi/gambar/tabel/algoritma/segmen/rumus,
 Bab I–III dari draf `.md`, kerangka Bab IV–VIII (judul sub-bab + catatan
 kuning tentang isinya), daftar pustaka, dan riwayat hidup. Nomor halaman pada
 semua daftar adalah field PAGEREF: di Word tekan **Ctrl+A lalu F9** (Word juga
-menanyakannya saat file dibuka). Dibuat oleh `tools/build_book.py`:
+menanyakannya saat file dibuka). Setiap `word/fig_<bab>_<n>.png` yang ada
+dipasang sebagai gambar untuk Gambar bab.n (ukuran di `FIG_SIZE_CM`, bawaan
+14 × 8 cm); yang belum ada tetap kotak kuning. Dibuat oleh `tools/build_book.py`:
 
 ```
 python3 -I docs/thesis/tools/build_book.py docs/thesis/local/TEMPLATE.dotx \
@@ -68,8 +70,44 @@ python3 -I docs/thesis/tools/build_bab.py docs/thesis/local/TEMPLATE.dotx \
 Setelah teks di Word diubah tangan, jangan jalankan ulang skrip untuk bab itu
 (hasilnya menimpa file Word); ubah `.md`-nya dulu bila ingin tetap sinkron.
 
-Sebelum memindahkan ke Word, tanyakan dua hal ke pembimbing: (1) daftar
-bab (delapan bab seperti buku contoh kampus, atau digabung), (2) aturan
-kampus tentang bantuan AI dalam penulisan. Draf ini disusun dengan bantuan
-Claude; keputusan tentang pernyataan keaslian ada pada pemilik dan
-pembimbing.
+Sebelum memindahkan ke Word, tanyakan ke pembimbing: (1) daftar bab
+(delapan bab seperti buku contoh kampus, atau digabung), (2) gaya kutipan
+(`[n]` seperti draf ini, atau footnote seperti kriteria kampus). Tentang
+bantuan AI: pemilik memutuskan (2026-11-24) bahwa Claude Code dicantumkan
+sebagai perangkat lunak di Bab I §1.4, poin 8; pernyataan keaslian tetap
+keputusan pemilik dan pembimbing.
+
+**Rencana algoritma (Bab V) dan segmen program (Bab VI)** (usulan chat PLAN
+2026-11-24, juga tertulis sebagai catatan kuning di buku Word; aturan
+kampus: judul TNR 12 bold rata kiri, isi Courier New 10 dengan numbering
+template, tidak boleh langsung di bawah judul sub-bab, tidak boleh memenuhi
+satu halaman, selalu diikuti paragraf; kode panjang ke Lampiran E):
+
+| No | Algoritma (Bab V, pseudocode bernomor) | Sumber |
+|---|---|---|
+| 5.1 | Pengecekan Bentrok Jadwal | `functions/scheduling.js` `conflicts`, `overlaps` |
+| 5.2 | Pemesanan Sesi | `bookingRefusal`, `termForBooking` |
+| 5.3 | Penutupan Sesi dan Pemotongan Voucher | `closeSession` (`functions/index.js`) |
+| 5.4 | Pencocokan Jawaban Typing | `functions/typing_matcher.js` |
+| 5.5 | Penilaian Tes Simulasi HSK per Bagian | `finishExercise` |
+| 5.6 | Kenaikan Tingkat | `functions/promotion.js` `countsAt`, `promotionState` |
+| 5.7 | Rekomendasi Tingkat Tes Penempatan | `functions/placement.js` |
+| 5.8 | Peringatan Progress Murid | `functions/progress.js` `warningsOf` |
+
+| No | Segmen Program (Bab VI, ≤ 25 baris + paragraf) | Sumber |
+|---|---|---|
+| 6.1 | Inisialisasi Firebase | `lib/main.dart` |
+| 6.2 | Pengalihan halaman menurut peran dan status akun | `lib/app.dart` |
+| 6.3 | Aturan akses `exercise_results` dan `schedules` | `firestore.rules` |
+| 6.4 | `conflicts` dan `overlaps` | `functions/scheduling.js` |
+| 6.5 | `saveSchedule`: transaksi dan `schedule_locks` | `functions/index.js` |
+| 6.6 | `bookSession` dan `bookingRefusal` | `functions/index.js`, `scheduling.js` |
+| 6.7 | `closeSession`: satu transaksi, kunci idempoten `voucher_history` | `functions/index.js` |
+| 6.8 | Normalisasi dan `matchHanzi` / `matchPinyin` | `functions/typing_matcher.js` |
+| 6.9 | `finishExercise`: nilai per bagian, antrean penilaian | `functions/index.js` |
+| 6.10 | `countsAt` dan `promotionState` dalam `onTestResultWritten` | `functions/promotion.js` |
+| 6.11 | `createInvoice` dan token Snap | `functions/payments.js` |
+| 6.12 | Notifikasi pembayaran dan pembuatan term voucher | `functions/payments.js` |
+| 6.13 | `warningsOf` | `functions/progress.js` |
+| 6.14 | Grafik `StudentProgressReport` (`fl_chart`) | `lib/features/...` |
+| 6.15 | Pemutar latihan: kirim jawaban sekali ke `finishExercise` | `lib/features/exercises/` |
