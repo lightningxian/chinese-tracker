@@ -24,13 +24,30 @@ bukan di sini; aturannya ada di `docs/THESIS_BOOK_GUIDE.md` §6.
 
 | Bab | File | Status |
 |---|---|---|
-| I Pendahuluan | `BAB_I_PENDAHULUAN.md` | Draf lengkap, 9 `[ISI]`; sudah di Word: `word/BAB I PENDAHULUAN.docx` |
+| I Pendahuluan | `BAB_I_PENDAHULUAN.md` | Draf lengkap, 9 `[ISI]`; di Word: `word/BUKU TA Easy Study.docx` dan `word/BAB I PENDAHULUAN.docx` |
 | II Teori Penunjang | `BAB_II_TEORI_PENUNJANG.md` | Draf lengkap |
 | III Proses Bisnis | `BAB_III_PROSES_BISNIS.md` | Draf lengkap, butuh foto dan angka dari pemilik |
-| IV–VIII | belum | IV–VI setelah pemilik setuju struktur; VII–VIII setelah uji coba |
+| IV–VIII | belum (kerangka sub-bab ada di buku Word) | IV–VI setelah pemilik setuju struktur; VII–VIII setelah uji coba |
 | Daftar Pustaka | `DAFTAR_PUSTAKA.md` | 20 sumber proposal, urut abjad |
 
 **File Word (`word/`)**
+
+`word/BUKU TA Easy Study.docx` (2026-11-23) adalah **buku lengkap dalam satu
+file** untuk diperiksa: halaman judul, pengesahan, surat pernyataan, abstrak,
+abstract, kata pengantar, daftar isi/gambar/tabel/algoritma/segmen/rumus,
+Bab I–III dari draf `.md`, kerangka Bab IV–VIII (judul sub-bab + catatan
+kuning tentang isinya), daftar pustaka, dan riwayat hidup. Nomor halaman pada
+semua daftar adalah field PAGEREF: di Word tekan **Ctrl+A lalu F9** (Word juga
+menanyakannya saat file dibuka). Dibuat oleh `tools/build_book.py`:
+
+```
+python3 -I docs/thesis/tools/build_book.py docs/thesis/local/TEMPLATE.dotx \
+  "docs/thesis/word/BUKU TA Easy Study.docx"
+```
+
+Untuk pengumpulan, kampus meminta satu file per bab; file per bab dibuat
+dengan `tools/build_bab.py` (contoh di bawah) atau dengan memecah buku lengkap
+di Word setelah teks final.
 
 `word/BAB I PENDAHULUAN.docx` (2026-11-23) adalah Bab I yang sudah dimasukkan
 ke template kampus: style `[STTS] Judul Bab`, `[STTS] Judul Sub Bab` dengan
