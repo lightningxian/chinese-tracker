@@ -35,6 +35,10 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   proposal to the code, the format rules, the PDFs, the forms (10
   consultations, 3 + 5 seminars attended, pra-seminar), the order of work
   and the inputs still owed by the owner. `docs/PLAN.md` §7 points to it.
+- Drafted Bab I Pendahuluan, Bab II Teori Penunjang and Bab III Proses
+  Bisnis in Indonesian from the proposal text (`docs/thesis/`), with the
+  Daftar Pustaka re-sorted alphabetically and Mermaid sketches as drawing
+  aids for the old-system diagrams.
 - No code, rules or functions changed. Nothing to deploy.
 
 ### 2026-11-21 — Claude (PLAN chat, Mac): Build 8 reviewed; the eight thesis builds are done

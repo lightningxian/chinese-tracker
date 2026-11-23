@@ -2897,6 +2897,11 @@ the examiners' conditions mapped to builds and chapters, the trial promise, the
 chapter plan with sources, the proposal-to-code name mapping, the format rules,
 the three PDFs, the campus forms and the order of work.
 
+**Book drafts (2026-11-23):** `docs/thesis/` holds Bab I, II and III in
+Indonesian with `[ISI: …]` placeholders for the centre's facts, plus the
+alphabetical Daftar Pustaka and a README on how to move them into the Word
+template. Bab IV to VI follow once the supervisor confirms the chapter list.
+
 **Still needed from the owner**
 
 1. The campus guide book for writing a Tugas Akhir (the criteria file says it
