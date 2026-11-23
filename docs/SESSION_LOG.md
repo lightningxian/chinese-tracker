@@ -552,6 +552,8 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   walk of every role). Backend hardening in rules, storage rules and
   functions (see the change log), rules tests 36 pass. Deployed by the owner
   in the 2026-11-13 session.
+- **Bab I in the campus template (15:20).** Owner uploaded `[TEMPLATE] BUKU TA - TESIS.dotx` and asked for Bab I in it. Built `docs/thesis/word/BAB I PENDAHULUAN.docx` with `docs/thesis/tools/build_bab.py` (stdlib Python: keeps the template's styles, numbering, headers, footers and page setup; adds per-chapter numbering for 1.3.x headings and restarting numbered lists; `[ISI]` gaps highlighted yellow; Gambar 1.1 Waterfall drawn as `word/fig_1_1.png`; unused template pictures and sample footnotes stripped). Checked: zip and XML valid, 2,318 words = the draft, page 1 rendered by QuickLook. Pages could not export a PDF (AppleEvent timeout), so pages 2+ are checked only by structure; the owner checks in Word. Template is not committed (`docs/thesis/local/` ignored).
+
 
 ## How to start on this PC
 

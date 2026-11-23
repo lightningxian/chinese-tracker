@@ -60,3 +60,6 @@ scripts/trial/*.local.*
 # Python bytecode (seed scripts import each other)
 __pycache__/
 *.pyc
+
+# Campus thesis template and other third-party files kept next to the drafts
+docs/thesis/local/
