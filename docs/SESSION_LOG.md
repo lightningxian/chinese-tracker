@@ -63,6 +63,10 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   skipped, live 65 functions and 23 indexes, bundle checked, rules diff
   read. Thesis note in PLAN §1: switch teacher readiness on before the
   trial.
+- The BUILD chat then made both trial seeds switch readiness on (381a982);
+  proven here with `firebase emulators:exec`: `seed_trial.py emulator` writes
+  `settings/scheduling` with `teacherReadiness: true`, `minStudents: 0`, gap 0.
+  The live seed is parse-checked only (needs credentials at the trial).
 - No code, rules or functions changed. Nothing to deploy.
 
 ### 2026-11-21 — Claude (PLAN chat, Mac): Build 8 reviewed; the eight thesis builds are done
