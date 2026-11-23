@@ -34,6 +34,18 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   admin asked availability by chat and kept the schedule in a spreadsheet.
 - Checks: package valid, 127 bookmarks all resolved, 2 figure relationships, list point 8 shares the list
   numbering of points 1–7. Pages after the cover are still checked by structure only (no Word on the Mac).
+- **Round three and Q7 reviewed on the Mac** (d04d962 and e637636, release v0.1.29): analyzer 17 infos;
+  `flutter test` 162 pass + 2 skipped; `node --check` and the 12 node tests pass; rules tests 84 pass, 1
+  skipped; no tracked secrets; `firebase functions:list` 67 with `promoteStudent` and `onAnnouncementCreated`;
+  live `main.dart.js` from 06:03 WIB carries "More figures", "Promote a student" and "Write from the
+  recording"; the Whisper encoder (92 MB) is served from `/asr/`. Security read: `promoteStudent` checks the
+  admin role, limits the reason, reads before it writes and closes open recommendations; the announcement
+  trigger writes one deterministic notice per role; `fetch_whisper.mjs` pins every tarball and model file by
+  SHA-256 and the browser never calls an outside service. Note for the owner: hosting grows by about 270 MB
+  and each admin browser downloads that once (Blaze bandwidth is 10 GB a month free, then USD 0.15 a GB).
+- **Q8 (APK):** the live `/downloads/easy-study.apk` is gone (the PC's web-only deploys are full snapshots);
+  the keystore is only on the Mac, so the release APK is being rebuilt here with the deploy script's defines.
+  Publishing it (hosting deploy from the Mac, web + APK) waits for the owner's word in the PLAN chat.
 
 ### 2026-11-24 — Claude (BUILD chat, PC): owner requests, third round
 
