@@ -44,8 +44,13 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   SHA-256 and the browser never calls an outside service. Note for the owner: hosting grows by about 270 MB
   and each admin browser downloads that once (Blaze bandwidth is 10 GB a month free, then USD 0.15 a GB).
 - **Q8 (APK):** the live `/downloads/easy-study.apk` is gone (the PC's web-only deploys are full snapshots);
-  the keystore is only on the Mac, so the release APK is being rebuilt here with the deploy script's defines.
-  Publishing it (hosting deploy from the Mac, web + APK) waits for the owner's word in the PLAN chat.
+  the keystore is only on the Mac, so the release APK was rebuilt here with the deploy script's defines:
+  `build/app/outputs/flutter-apk/app-release.apk`, 114 MB, 06:11 WIB, from e637636. The first two builds
+  failed with "cannot find symbol FlutterFirebaseStoragePlugin": the storage plugin's incremental Kotlin
+  output under `build/firebase_storage/` dated from October and held only the pigeon classes; `flutter clean`
+  fixed it (no code or Gradle change; `android.builtInKotlin=false` was already in `gradle.properties`).
+  Publishing it (hosting deploy from the Mac, web + APK, `scripts/deploy_web.sh --no-keys`) waits for the
+  owner's word in the PLAN chat.
 
 ### 2026-11-24 — Claude (BUILD chat, PC): owner requests, third round
 
