@@ -10,7 +10,7 @@ decisions. This app is also the owner's thesis project (see the thesis docs belo
 ## Read first
 0. `docs/PLAN.md`: current state, the build queue (item marked **NEXT**) and the two-chat workflow (PLAN chat = Fable, docs only; BUILD chat = Opus, code). A build chat starts here.
 1. `docs/CLAUDE_FULL_HANDOFF.md`: live config, what's built, architecture map.
-2. `docs/THESIS_FEATURE_AUDIT.md`: the thesis spec (`docs/THESIS_FEATURE_BACKLOG.md`, v2) compared with the code, open questions, suggested order. `docs/THESIS_PROPOSAL_ASSETS.md` lists the screenshots the proposal needs.
+2. `docs/THESIS_FEATURE_AUDIT.md`: the thesis spec (`docs/THESIS_FEATURE_BACKLOG.md`, v2) compared with the code, open questions, suggested order. `docs/THESIS_PROPOSAL_ASSETS.md` lists the screenshots the proposal needs. `docs/THESIS_BOOK_GUIDE.md` (2026-11-23) is the summary of what the book, trial and campus steps require, from the owner's own documents.
 3. `docs/SESSION_LOG.md` (newest session first) and the top of `docs/CHANGELOG.md`.
 4. `docs/BACKLOG.md` for the older non-thesis backlog.
 

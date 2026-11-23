@@ -2869,6 +2869,11 @@ trial with the 35 respondents in the second half of January; book written
 from December, finished in February; seminar registration when the window
 opens on 2027-02-22.
 
+**Full summary of the thesis requirements (2026-11-23):** `docs/THESIS_BOOK_GUIDE.md`:
+the examiners' conditions mapped to builds and chapters, the trial promise, the
+chapter plan with sources, the proposal-to-code name mapping, the format rules,
+the three PDFs, the campus forms and the order of work.
+
 **Still needed from the owner**
 
 1. The campus guide book for writing a Tugas Akhir (the criteria file says it

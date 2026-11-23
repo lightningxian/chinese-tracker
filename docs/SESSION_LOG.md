@@ -13,6 +13,20 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-23 — PLAN chat (Mac): thesis requirements summarised
+
+- Read the owner's own documents: the revised proposal packet (form F-048,
+  the four reviewers' conditions and the sidang decision of 2026-10-07 with
+  the answers, the proposal itself), the campus book kit (`CEK BUKU MANDIRI
+  V4`), the BAA PDF guide, the campus forms and a finished campus book as a
+  model.
+- Wrote `docs/THESIS_BOOK_GUIDE.md`: the contract with the examiners, the
+  trial promise, the chapter plan with sources, the name mapping from the
+  proposal to the code, the format rules, the PDFs, the forms (10
+  consultations, 3 + 5 seminars attended, pra-seminar), the order of work
+  and the inputs still owed by the owner. `docs/PLAN.md` §7 points to it.
+- No code, rules or functions changed. Nothing to deploy.
+
 ### 2026-11-21 — Claude (PLAN chat, Mac): Build 8 reviewed; the eight thesis builds are done
 
 - Pulled Build 8 (v0.1.26) and checked it on the Mac: analyzer 17 infos,
