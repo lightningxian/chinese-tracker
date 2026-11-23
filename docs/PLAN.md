@@ -2044,8 +2044,8 @@ chooses the order below and says so in the BUILD chat (code) or here
 **C. Follow-ups the builds left** (small; a BUILD session when the owner
 wants them)
 
-- Repository hygiene: remove `scripts/__pycache__/seed_emulator.cpython-313.pyc`
-  and add `__pycache__/` to `.gitignore`.
+- Repository hygiene: done 2026-11-23 (`eebd352`: the `.pyc` file left git,
+  `__pycache__/` and `*.pyc` are ignored).
 - The class day picker in the buy sheet; the printable teacher day sheet.
 - Build 3 notes: the wrong-token block for visitors is per address (a
   shared classroom router can block itself); `decideRegistration` writes
