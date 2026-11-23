@@ -68,12 +68,14 @@ class PaymentService {
   Future<CreatedInvoice> buyVoucher({
     required String studentId,
     required String priceItemId,
+    String classDay = '',
   }) async {
     try {
       final result = await _functions.httpsCallable('createInvoice').call({
         'studentId': studentId,
         'priceItemId': priceItemId,
         'acceptedTerms': true,
+        if (classDay.isNotEmpty) 'classDay': classDay,
       });
       final data = (result.data as Map).cast<String, dynamic>();
       return CreatedInvoice(

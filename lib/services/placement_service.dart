@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -103,6 +104,19 @@ class VisitorTestBackend implements TestPlayBackend {
   final FirebaseFunctions _functions;
 
   static const _storeKey = 'placement_visitor_attempt';
+  static const _deviceKey = 'placement_visitor_device';
+
+  /// A random id for this browser tab: wrong tokens are counted per tab
+  /// first, so one classroom Wi-Fi does not block every visitor.
+  static String deviceId() {
+    final have = SessionStore.read(_deviceKey);
+    if (have != null && have.isNotEmpty) return have;
+    final r = Random.secure();
+    const abc = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    final id = List.generate(20, (_) => abc[r.nextInt(abc.length)]).join();
+    SessionStore.write(_deviceKey, id);
+    return id;
+  }
   static const _resultKey = 'placement_visitor_result';
 
   /// `{attemptId, key}` of the attempt in this tab, if any.
@@ -165,7 +179,7 @@ class VisitorTestBackend implements TestPlayBackend {
   Future<TestFacts> peek(String token) async {
     final r = await _functions
         .httpsCallable('startPlacement')
-        .call({'token': token, 'peek': true});
+        .call({'token': token, 'peek': true, 'deviceId': deviceId()});
     return TestFacts.fromServer(Map<String, dynamic>.from(r.data as Map));
   }
 
@@ -179,6 +193,7 @@ class VisitorTestBackend implements TestPlayBackend {
         'token': token,
         'name': name,
         'whatsapp': whatsapp,
+        'deviceId': deviceId(),
       }))
           .data);
     }

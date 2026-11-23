@@ -30,7 +30,18 @@ assert.equal(t.checkInDecision(s, at(10, 31)).reason, "too_late");
 assert.ok(!t.lateCheckInDue(s, at(9, 14)));
 assert.ok(t.lateCheckInDue(s, at(9, 15)));
 assert.ok(!t.lateCheckInDue({...s, lateCheckIn: true}, at(9, 30)));
-assert.ok(!t.lateCheckInDue({...s, status: "ongoing"}, at(9, 30)));
+assert.ok(!t.lateCheckInDue({...s, status: "ongoing", checkInAt: 1}, at(9, 30)));
+assert.ok(t.lateCheckInDue({...s, status: "ongoing"}, at(9, 30)), "auto-started, teacher not in");
+
+// Owner 2026-11-23: a session starts by itself at its start time.
+assert.equal(t.effectiveStatus(s, at(8, 59)), "scheduled");
+assert.equal(t.effectiveStatus(s, at(9, 0)), "ongoing");
+assert.equal(t.effectiveStatus({...s, status: "cancelled"}, at(9, 30)), "cancelled");
+assert.equal(t.effectiveStatus({...s, status: "done"}, at(9, 30)), "done");
+assert.ok(!t.autoStartDue(s, at(8, 59)));
+assert.ok(t.autoStartDue(s, at(9, 0)));
+assert.ok(!t.autoStartDue({...s, status: "ongoing"}, at(9, 30)), "once");
+assert.ok(!t.autoStartDue({...s, status: "needs_teacher"}, at(9, 30)));
 assert.ok(!t.unclosedDue(s, at(12, 29)));
 assert.ok(t.unclosedDue(s, at(12, 30)));
 assert.ok(!t.unclosedDue({...s, status: "done"}, at(13, 0)));

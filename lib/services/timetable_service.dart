@@ -158,6 +158,21 @@ class BookableSession {
 
   int get seatsLeft => (capacity - bookedCount).clamp(0, capacity);
 
+  DateTime? _at(int minutes) => DateTime.tryParse(date)?.add(Duration(minutes: minutes));
+
+  /// Owner 2026-11-23: a class going on can still be joined until it ends.
+  bool get isGoingOn {
+    final s = _at(startMinutes);
+    return s != null && !DateTime.now().isBefore(s) && !hasEnded;
+  }
+
+  bool get hasEnded {
+    final e = _at(endMinutes);
+    return e != null && !DateTime.now().isBefore(e);
+  }
+
+  bool get isOver => hasEnded || status == 'done' || status == 'cancelled';
+
   factory BookableSession.fromDoc(DocumentSnapshot<Map<String, dynamic>> d) {
     final m = d.data() ?? const <String, dynamic>{};
     int i(Object? v) => (v as num?)?.toInt() ?? 0;
@@ -201,6 +216,34 @@ class TimetableService {
     final r = await _functions.httpsCallable('checkScheduleConflict').call(input);
     return ScheduleCheck.fromMap(Map<String, dynamic>.from(r.data as Map));
   }
+
+  /// Owner 2026-11-23: deletes a schedule; its future sessions are
+  /// cancelled (bookings come back). Returns how many were cancelled.
+  Future<int> delete(String scheduleId) async {
+    final r = await _functions.httpsCallable('deleteSchedule').call({'scheduleId': scheduleId});
+    return ((r.data as Map?)?['cancelled'] as num?)?.toInt() ?? 0;
+  }
+
+  /// `settings/scheduling` (admin): the minimum gap between two classes of
+  /// one teacher or one room, and the weekly-hours warning.
+  Stream<({int minGapMinutes, int weeklyHoursWarning})> watchSettings() => _db
+      .collection('settings')
+      .doc('scheduling')
+      .snapshots()
+      .map((d) {
+        final m = d.data() ?? const <String, dynamic>{};
+        return (
+          minGapMinutes: (m['minGapMinutes'] as num?)?.toInt() ?? 0,
+          weeklyHoursWarning: (m['weeklyHoursWarning'] as num?)?.toInt() ?? 20,
+        );
+      });
+
+  Future<void> saveSettings({required int minGapMinutes, required int weeklyHoursWarning}) =>
+      _db.collection('settings').doc('scheduling').set({
+        'minGapMinutes': minGapMinutes,
+        'weeklyHoursWarning': weeklyHoursWarning,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
 
   /// Saves (the function refuses a clash; its message lists the reasons).
   Future<List<String>> save(Map<String, dynamic> input) async {

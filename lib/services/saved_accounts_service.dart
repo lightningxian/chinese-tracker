@@ -121,6 +121,14 @@ class SavedAccountsService extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// After a password change: a remembered password is replaced, so the
+  /// quick sign-in keeps working.
+  Future<void> updateStoredPassword(String email, String password) async {
+    if (await hasStoredPassword(email)) {
+      await _secureStorage.write(key: _passwordKey(email), value: password);
+    }
+  }
+
   Future<String?> getStoredPassword(String email) {
     return _secureStorage.read(key: _passwordKey(email));
   }

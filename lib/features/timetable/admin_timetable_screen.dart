@@ -91,6 +91,12 @@ class _AdminTimetableScreenState extends State<AdminTimetableScreen> {
                         selected: {_view},
                         onSelectionChanged: (v) => setState(() => _view = v.first),
                       ),
+                      OutlinedButton.icon(
+                        onPressed: () => showDialog<void>(
+                            context: context, builder: (_) => const _RulesDialog()),
+                        icon: const Icon(Icons.tune, size: 18),
+                        label: Text(l.timetableRules),
+                      ),
                       FilledButton.icon(
                         onPressed: () => _edit(teachers, rooms),
                         style: FilledButton.styleFrom(backgroundColor: AppColors.navy),
@@ -288,7 +294,15 @@ class _ScheduleDialogState extends State<_ScheduleDialog> {
   ScheduleCheck? _check;
   Timer? _debounce;
   bool _saving = false;
+  bool _checking = false;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    // An existing schedule is checked as it opens.
+    if (widget.existing != null) WidgetsBinding.instance.addPostFrameCallback((_) => _runCheck());
+  }
 
   @override
   void dispose() {
@@ -318,20 +332,75 @@ class _ScheduleDialogState extends State<_ScheduleDialog> {
     };
   }
 
-  /// The check runs as the admin types (Build 6, screenshot 11).
+  /// The check runs as the admin types (Build 6, screenshot 11). Owner
+  /// 2026-11-23: an old result is cleared at once, so a fixed time never
+  /// shows the previous clash; **Recheck** runs it on demand.
   void _changed() {
-    setState(() => _error = null);
-    _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 500), () async {
-      final input = _input();
-      if (input == null) return;
-      try {
-        final c = await _service.check(input);
-        if (mounted) setState(() => _check = c);
-      } catch (e) {
-        if (mounted) setState(() => _error = '$e');
-      }
+    setState(() {
+      _error = null;
+      _check = null;
     });
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), _runCheck);
+  }
+
+  Future<void> _runCheck() async {
+    _debounce?.cancel();
+    final input = _input();
+    if (input == null) {
+      setState(() {
+        _check = null;
+        _checking = false;
+      });
+      return;
+    }
+    setState(() => _checking = true);
+    try {
+      final c = await _service.check(input);
+      // Only the answer for what is typed now counts.
+      if (mounted && _sameInput(input, _input())) setState(() => _check = c);
+    } catch (e) {
+      if (mounted) setState(() => _error = '$e');
+    } finally {
+      if (mounted) setState(() => _checking = false);
+    }
+  }
+
+  bool _sameInput(Map<String, dynamic> a, Map<String, dynamic>? b) =>
+      b != null && a.length == b.length && a.keys.every((k) => '${a[k]}' == '${b[k]}');
+
+  Future<void> _delete() async {
+    final l = context.l10n;
+    final s = widget.existing!;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l.timetableDeleteTitle),
+        content: Text(l.timetableDeleteBody(
+            '${s.className} · ${weekdayLabel(l, s.weekday)} ${s.timeLabel}')),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l.commonCancel)),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l.timetableDelete),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    setState(() => _saving = true);
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    try {
+      final n = await _service.delete(s.id);
+      navigator.pop();
+      messenger.showSnackBar(SnackBar(content: Text(l.timetableDeleted(n))));
+    } on FirebaseFunctionsException catch (e) {
+      if (mounted) setState(() => _error = e.message);
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
   }
 
   Future<void> _save() async {
@@ -469,6 +538,25 @@ class _ScheduleDialogState extends State<_ScheduleDialog> {
                 ),
               ]),
               const SizedBox(height: 12),
+              Row(
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: _checking ? null : _runCheck,
+                    icon: const Icon(Icons.refresh, size: 18),
+                    label: Text(l.timetableRecheck),
+                  ),
+                  const SizedBox(width: 10),
+                  if (_checking)
+                    const SizedBox(
+                        width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                  else if (_input() == null)
+                    Expanded(
+                      child: Text(l.timetableFillTimes,
+                          style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 8),
               if (c != null && c.ok)
                 Text(l.timetableNoClash,
                     style: TextStyle(color: AppColors.success, fontWeight: FontWeight.w700)),
@@ -506,9 +594,117 @@ class _ScheduleDialogState extends State<_ScheduleDialog> {
         ),
       ),
       actions: [
+        if (widget.existing != null)
+          TextButton.icon(
+            onPressed: _saving ? null : _delete,
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            icon: const Icon(Icons.delete_outline, size: 18),
+            label: Text(l.timetableDelete),
+          ),
         TextButton(onPressed: () => Navigator.pop(context), child: Text(l.commonCancel)),
         FilledButton(
-          onPressed: _saving || (c != null && !c.ok) ? null : _save,
+          onPressed: _saving || _checking || (c != null && !c.ok) ? null : _save,
+          child: Text(l.roomsSave),
+        ),
+      ],
+    );
+  }
+}
+
+/// Owner 2026-11-23: the timetable's rules — how many minutes one teacher
+/// or one room needs between two classes (0 = back to back is fine) and
+/// when the weekly-hours warning shows. Read by the conflict check.
+class _RulesDialog extends StatefulWidget {
+  const _RulesDialog();
+
+  @override
+  State<_RulesDialog> createState() => _RulesDialogState();
+}
+
+class _RulesDialogState extends State<_RulesDialog> {
+  final _service = TimetableService();
+  final _gap = TextEditingController();
+  final _hours = TextEditingController();
+  bool _loaded = false;
+  bool _saving = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _service.watchSettings().first.then((v) {
+      if (!mounted) return;
+      setState(() {
+        _gap.text = '${v.minGapMinutes}';
+        _hours.text = '${v.weeklyHoursWarning}';
+        _loaded = true;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _gap.dispose();
+    _hours.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final gap = int.tryParse(_gap.text.trim());
+    final hours = int.tryParse(_hours.text.trim());
+    if (gap == null || gap < 0 || gap > 180 || hours == null || hours < 1 || hours > 80) {
+      setState(() => _error = context.l10n.timetableRulesInvalid);
+      return;
+    }
+    setState(() => _saving = true);
+    try {
+      await _service.saveSettings(minGapMinutes: gap, weeklyHoursWarning: hours);
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) setState(() => _error = '$e');
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    return AlertDialog(
+      title: Text(l.timetableRules),
+      content: SizedBox(
+        width: 420,
+        child: !_loaded
+            ? const LinearProgressIndicator()
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  TextField(
+                    controller: _gap,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                        labelText: l.timetableGapLabel,
+                        helperText: l.timetableGapHelp,
+                        helperMaxLines: 3),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _hours,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(labelText: l.timetableHoursLabel),
+                  ),
+                  if (_error != null) ...[
+                    const SizedBox(height: 8),
+                    Text(_error!, style: TextStyle(color: AppColors.error)),
+                  ],
+                ],
+              ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(l.commonCancel)),
+        FilledButton(
+          onPressed: _saving || !_loaded ? null : _save,
           child: Text(l.roomsSave),
         ),
       ],

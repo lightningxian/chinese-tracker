@@ -7364,19 +7364,19 @@ class AppLocalizationsId extends AppLocalizations {
   String get changeStatusOpen => 'menunggu';
 
   @override
-  String get checkInButton => 'Mulai sesi';
+  String get checkInButton => 'Absen guru';
 
   @override
-  String get checkInDone => 'Sesi dimulai.';
+  String get checkInDone => 'Sudah absen.';
 
   @override
   String checkInDoneLate(int minutes) {
-    return 'Sesi dimulai, terlambat $minutes menit.';
+    return 'Sudah absen, terlambat $minutes menit.';
   }
 
   @override
   String get checkInTooEarly =>
-      'Terlalu awal: sesi bisa dimulai 30 menit sebelum kelas.';
+      'Terlalu awal: absen bisa 30 menit sebelum kelas.';
 
   @override
   String get checkInTooLate =>
@@ -7654,4 +7654,101 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get monthlyValue => 'Nilai';
+
+  @override
+  String get passwordChangeTitle => 'Ganti kata sandi';
+
+  @override
+  String get passwordChangeButton => 'Ganti kata sandi';
+
+  @override
+  String get passwordCurrent => 'Kata sandi sekarang';
+
+  @override
+  String get passwordNew => 'Kata sandi baru';
+
+  @override
+  String get passwordNewAgain => 'Ulangi kata sandi baru';
+
+  @override
+  String get passwordRule =>
+      'Minimal 8 karakter. Anda tetap masuk di perangkat ini.';
+
+  @override
+  String get passwordCurrentMissing => 'Ketik kata sandi sekarang.';
+
+  @override
+  String get passwordTooShort => 'Kata sandi baru minimal 8 karakter.';
+
+  @override
+  String get passwordMismatch => 'Kedua kata sandi baru tidak sama.';
+
+  @override
+  String get passwordSameAsOld => 'Kata sandi baru sama dengan yang lama.';
+
+  @override
+  String get passwordCurrentWrong => 'Kata sandi sekarang salah.';
+
+  @override
+  String get passwordTooManyTries =>
+      'Terlalu banyak percobaan. Tunggu beberapa menit lalu coba lagi.';
+
+  @override
+  String get passwordChanged => 'Kata sandi diganti.';
+
+  @override
+  String get timetableRecheck => 'Cek ulang';
+
+  @override
+  String get timetableFillTimes => 'Ketik jam seperti 16:30 untuk mengecek.';
+
+  @override
+  String get timetableDelete => 'Hapus';
+
+  @override
+  String get timetableDeleteTitle => 'Hapus jadwal ini?';
+
+  @override
+  String timetableDeleteBody(String what) {
+    return '$what\n\nSesi-sesi berikutnya dibatalkan: pendaftaran dan sesi voucher kembali ke siswa, dan siswa diberi tahu. Sesi yang sudah lewat tetap ada di laporan. Tidak bisa dibatalkan.';
+  }
+
+  @override
+  String timetableDeleted(int n) {
+    return 'Jadwal dihapus, $n sesi berikutnya dibatalkan.';
+  }
+
+  @override
+  String get timetableRules => 'Aturan jadwal';
+
+  @override
+  String get timetableGapLabel => 'Jeda antar kelas (menit)';
+
+  @override
+  String get timetableGapHelp =>
+      'Untuk satu guru dan satu ruang. 0 = kelas boleh mulai tepat saat kelas sebelumnya selesai.';
+
+  @override
+  String get timetableHoursLabel =>
+      'Peringatan bila guru mengajar lebih dari (jam per minggu)';
+
+  @override
+  String get timetableRulesInvalid =>
+      'Gunakan 0 sampai 180 menit dan 1 sampai 80 jam.';
+
+  @override
+  String get bookingGoingOn => 'Sedang berlangsung: masih bisa bergabung';
+
+  @override
+  String get bookingGoingOnBooked => 'Sedang berlangsung: Anda terdaftar';
+
+  @override
+  String get bookingJoinNow => 'Gabung sekarang';
+
+  @override
+  String get scheduleDaySheet => 'Cetak lembar hari ini';
+
+  @override
+  String get voucherClassDayHelp =>
+      'Kelas mingguan Anda: Anda otomatis terdaftar setiap minggu. Kosongkan untuk mendaftar sendiri tiap kelas.';
 }

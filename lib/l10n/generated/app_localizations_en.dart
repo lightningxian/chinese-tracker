@@ -7389,19 +7389,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get changeStatusOpen => 'waiting';
 
   @override
-  String get checkInButton => 'Start session';
+  String get checkInButton => 'Teacher check-in';
 
   @override
-  String get checkInDone => 'Session started.';
+  String get checkInDone => 'Checked in.';
 
   @override
   String checkInDoneLate(int minutes) {
-    return 'Session started, $minutes minutes late.';
+    return 'Checked in, $minutes minutes late.';
   }
 
   @override
   String get checkInTooEarly =>
-      'Too early: you can start 30 minutes before the class.';
+      'Too early: you can check in 30 minutes before the class.';
 
   @override
   String get checkInTooLate =>
@@ -7679,4 +7679,102 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get monthlyValue => 'Value';
+
+  @override
+  String get passwordChangeTitle => 'Change password';
+
+  @override
+  String get passwordChangeButton => 'Change password';
+
+  @override
+  String get passwordCurrent => 'Current password';
+
+  @override
+  String get passwordNew => 'New password';
+
+  @override
+  String get passwordNewAgain => 'New password again';
+
+  @override
+  String get passwordRule =>
+      'At least 8 characters. You stay signed in on this device.';
+
+  @override
+  String get passwordCurrentMissing => 'Type your current password.';
+
+  @override
+  String get passwordTooShort =>
+      'The new password needs at least 8 characters.';
+
+  @override
+  String get passwordMismatch => 'The two new passwords are not the same.';
+
+  @override
+  String get passwordSameAsOld =>
+      'The new password is the same as the old one.';
+
+  @override
+  String get passwordCurrentWrong => 'The current password is wrong.';
+
+  @override
+  String get passwordTooManyTries =>
+      'Too many tries. Wait a few minutes and try again.';
+
+  @override
+  String get passwordChanged => 'Password changed.';
+
+  @override
+  String get timetableRecheck => 'Recheck';
+
+  @override
+  String get timetableFillTimes => 'Type the times as 16:30 to check.';
+
+  @override
+  String get timetableDelete => 'Delete';
+
+  @override
+  String get timetableDeleteTitle => 'Delete this schedule?';
+
+  @override
+  String timetableDeleteBody(String what) {
+    return '$what\n\nIts future sessions are cancelled: bookings and voucher sessions go back to the students, who are told. Past sessions stay in the reports. This cannot be undone.';
+  }
+
+  @override
+  String timetableDeleted(int n) {
+    return 'Schedule deleted, $n future sessions cancelled.';
+  }
+
+  @override
+  String get timetableRules => 'Timetable rules';
+
+  @override
+  String get timetableGapLabel => 'Minutes needed between two classes';
+
+  @override
+  String get timetableGapHelp =>
+      'For one teacher and for one room. 0 = a class may start right when the previous one ends.';
+
+  @override
+  String get timetableHoursLabel =>
+      'Warn when a teacher teaches more than (hours a week)';
+
+  @override
+  String get timetableRulesInvalid => 'Use 0 to 180 minutes and 1 to 80 hours.';
+
+  @override
+  String get bookingGoingOn => 'Going on now: you can still join';
+
+  @override
+  String get bookingGoingOnBooked => 'Going on now: you are in';
+
+  @override
+  String get bookingJoinNow => 'Join now';
+
+  @override
+  String get scheduleDaySheet => 'Print day sheet';
+
+  @override
+  String get voucherClassDayHelp =>
+      'Your weekly class: you are booked into it every week. Leave empty to book each class yourself.';
 }

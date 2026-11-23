@@ -13,7 +13,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const JAKARTA_OFFSET_MS = 7 * 60 * 60 * 1000;
 const WEEKDAY_NAMES = ["", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
   "Saturday", "Sunday"];
-const DEFAULTS = {minGapMinutes: 15, weeklyHoursWarning: 20, defaultCapacity: 8,
+const DEFAULTS = {minGapMinutes: 0, weeklyHoursWarning: 20, defaultCapacity: 8,
   bookingCutoffMinutes: 0};
 
 function jakartaDate(ms) {
@@ -106,16 +106,19 @@ function conflicts(s, ctx) {
       `${clock(s.startMinutes)}–${clock(s.endMinutes)}.`});
   }
   const live = (x) => x.active !== false && x.id !== s.id;
+  // Owner 2026-11-23: back-to-back classes are fine; a clash that only
+  // comes from the admin's minimum gap says so.
+  const gapNote = (o) => overlaps(o, s, 0) ? "" : ` (${gap} minutes are needed between classes)`;
   for (const o of (ctx.teacherSchedules || []).filter(live)) {
     if (o.weekday === s.weekday && periodsOverlap(o, s) && overlaps(o, s, gap)) {
       out.push({code: "teacher", text: `${who} already teaches ${o.className} on ${day} ` +
-        `${clock(o.startMinutes)}–${clock(o.endMinutes)}.`});
+        `${clock(o.startMinutes)}–${clock(o.endMinutes)}${gapNote(o)}.`});
     }
   }
   for (const o of (ctx.roomSchedules || []).filter(live)) {
     if (o.weekday === s.weekday && periodsOverlap(o, s) && overlaps(o, s, gap)) {
       out.push({code: "room", text: `${s.room} is taken by ${o.className} on ${day} ` +
-        `${clock(o.startMinutes)}–${clock(o.endMinutes)}.`});
+        `${clock(o.startMinutes)}–${clock(o.endMinutes)}${gapNote(o)}.`});
     }
   }
   const inPeriod = (date) => (!s.validFrom || date >= s.validFrom) &&
@@ -125,7 +128,7 @@ function conflicts(s, ctx) {
     if (weekdayOf(x.sessionDate) === s.weekday && inPeriod(x.sessionDate) &&
         overlaps(x, s, gap)) {
       out.push({code: "teacher", text: `${who} already teaches ${x.sessionTitle || "a class"} ` +
-        `on ${x.sessionDate} ${clock(x.startMinutes)}–${clock(x.endMinutes)}.`});
+        `on ${x.sessionDate} ${clock(x.startMinutes)}–${clock(x.endMinutes)}${gapNote(x)}.`});
     }
   }
   for (const x of (ctx.roomSessions || [])) {
@@ -133,7 +136,7 @@ function conflicts(s, ctx) {
     if (weekdayOf(x.sessionDate) === s.weekday && inPeriod(x.sessionDate) &&
         overlaps(x, s, gap)) {
       out.push({code: "room", text: `${s.room} is taken by ${x.sessionTitle || "a class"} ` +
-        `on ${x.sessionDate} ${clock(x.startMinutes)}–${clock(x.endMinutes)}.`});
+        `on ${x.sessionDate} ${clock(x.startMinutes)}–${clock(x.endMinutes)}${gapNote(x)}.`});
     }
   }
   return out;
@@ -196,18 +199,18 @@ function sessionIdFor(scheduleId, date) {
  *   sessionsRemaining, sessionsBooked, deadlineDate}
  * @param {Array} booked the student's other booked sessions (same shape)
  * @param {number} nowMs
- * @param {Object} opts {studentLevel, cutoffMinutes}
+ * @param {Object} opts {studentLevel}
  * @return {string|null} full, no_sessions, expired, overlap, too_late,
  *   needs_teacher, level, closed
+ *
+ * Owner 2026-11-23: a late student may still join a class that is going
+ * on; booking closes when the class ends.
  */
 function bookingRefusal(session, term, booked, nowMs, opts = {}) {
   const st = session.status || "scheduled";
   if (st === "needs_teacher") return "needs_teacher";
-  if (st !== "scheduled" || session.isConcluded === true) return "closed";
-  const cutoff = Number(opts.cutoffMinutes) || 0;
-  if (startMs(session.sessionDate, session.startMinutes) - cutoff * 60000 <= nowMs) {
-    return "too_late";
-  }
+  if ((st !== "scheduled" && st !== "ongoing") || session.isConcluded === true) return "closed";
+  if (startMs(session.sessionDate, session.endMinutes) <= nowMs) return "too_late";
   if (session.level && opts.studentLevel && session.level !== opts.studentLevel) return "level";
   if ((Number(session.bookedCount) || 0) >= (Number(session.capacity) || 0)) return "full";
   if (!term) return "no_sessions";

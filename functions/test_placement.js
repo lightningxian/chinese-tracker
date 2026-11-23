@@ -60,4 +60,14 @@ const entry = p.menuEntry("H1PLACE", {code: "H1PLACE", level: "HSK 1"},
 assert.equal(entry.minutes, 4);
 assert.deepEqual(entry.parts.map((x) => x.questions), [3, 3]);
 
+// Follow-up 2026-11-23: visitor details are cleared after 180 days.
+const DAY = 86400000;
+const NOWR = Date.parse("2027-06-01T00:00:00Z");
+const old = {name: "Visitor", whatsapp: "0812", claimedBy: "", finishedAtMs: NOWR - 181 * DAY};
+assert.equal(p.retentionDue(old, NOWR), true);
+assert.equal(p.retentionDue({...old, finishedAtMs: NOWR - 179 * DAY}, NOWR), false);
+assert.equal(p.retentionDue({...old, claimedBy: "uid1"}, NOWR), false, "a claimed result stays");
+assert.equal(p.retentionDue({...old, name: "", whatsapp: ""}, NOWR), false, "already cleared");
+assert.equal(p.retentionDue({...old, finishedAtMs: NOWR - 40 * DAY}, NOWR, 30), true);
+
 console.log("test_placement: all passed");

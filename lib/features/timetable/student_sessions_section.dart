@@ -79,7 +79,7 @@ class _StudentSessionsSectionState extends State<StudentSessionsSection> {
           stream: _sessions,
           builder: (context, snap) {
             var rows = (snap.data ?? const <BookableSession>[])
-                .where((s) => s.date.compareTo(end) <= 0)
+                .where((s) => s.date.compareTo(end) <= 0 && !s.isOver)
                 .toList();
             if (_myLevelOnly) {
               rows = rows
@@ -181,6 +181,12 @@ class _SessionRow extends StatelessWidget {
                   ].join(' · '),
                   style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                 ),
+                if (s.isGoingOn)
+                  Text(booked ? l.bookingGoingOnBooked : l.bookingGoingOn,
+                      style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.chipAmberFg)),
                 Text(
                   noTeacher ? l.bookingNeedsTeacher : l.bookingSeatsLeft(s.seatsLeft, s.capacity),
                   style: TextStyle(
@@ -195,6 +201,8 @@ class _SessionRow extends StatelessWidget {
           const SizedBox(width: 8),
           if (busy)
             const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+          else if (booked && s.isGoingOn)
+            const Icon(Icons.check_circle, color: Colors.green)
           else if (booked)
             OutlinedButton(
               onPressed: onCancel,
@@ -205,7 +213,9 @@ class _SessionRow extends StatelessWidget {
             FilledButton(
               onPressed: full || noTeacher ? null : onBook,
               style: FilledButton.styleFrom(backgroundColor: AppColors.navy),
-              child: Text(full ? l.bookingFullShort : l.bookingBook),
+              child: Text(full
+                  ? l.bookingFullShort
+                  : (s.isGoingOn ? l.bookingJoinNow : l.bookingBook)),
             ),
         ],
       ),

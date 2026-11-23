@@ -1517,7 +1517,31 @@ await step("check-in: another teacher and a student are refused; the teacher sta
     assert.ok(s.lateMinutes >= 19, `late ${s.lateMinutes}`);
     assert.equal(s.lateCheckIn, true);
   }
-  assert.ok(reasonOf(await call(budi, "checkInSession", {sessionId: S7})), "not twice");
+  // Owner 2026-11-23: a second check-in changes nothing (the same answer).
+  const again = await call(budi, "checkInSession", {sessionId: S7});
+  assert.ok(again.data, JSON.stringify(again.error));
+  assert.equal(again.data.lateMinutes, r.data.lateMinutes);
+  assert.equal((await readDoc(`class_sessions/${S7}`)).checkInAt.getTime(), s.checkInAt.getTime());
+});
+
+await step("owner 2026-11-23: a late student joins a class that is going on; an ended class is refused", async () => {
+  if (nowMin < 15 || nowMin > 1380) return; // too close to midnight to place both classes today
+  const live = `flow7l_${RUN}`;
+  const over = `flow7o_${RUN}`;
+  await session7(live, {sessionDate: today7, startMinutes: nowMin - 10, endMinutes: nowMin + 50,
+    sessionTitle: `Flow Late ${RUN}`});
+  await session7(over, {sessionDate: today7, startMinutes: Math.max(0, nowMin - 15),
+    endMinutes: nowMin - 1, sessionTitle: `Flow Over ${RUN}`});
+  const r = await call(d27, "bookSession", {sessionId: live});
+  assert.ok(r.data, JSON.stringify(r.error));
+  assert.equal((await readDoc(`attendance/${live}_${d27.uid}`)).lateJoin, true);
+  assert.equal(reasonOf(await call(d27, "bookSession", {sessionId: over})), "too_late");
+  // Put the seat and the voucher session back for the next steps.
+  assert.ok((await call(admin, "cancelSession", {sessionId: live, reason: "flow"})).data);
+  await deleteDoc(`attendance/${live}_${d27.uid}`);
+  await setDocRaw(`student_class_terms/${term7(d27)}`, {studentId: d27.uid, packageSize: 8,
+    sessionsRemaining: 5, sessionsUsed: 3, sessionsBooked: 0, status: "active",
+    startDate: "2026-11-01", deadlineDate: "2027-12-31", createdAt: new Date()});
 });
 
 await step("VC-01 + VC-03 close (3 hadir, 1 izin, 1 alpa) while one of them books another session: both succeed, counts right", async () => {
@@ -1602,8 +1626,12 @@ await step("the job: the reminder goes once an hour before; late check-in is fla
   const lateNotes = async () => (await queryDocs("notifications", "forRole", "admin"))
       .filter((n) => str(n.fields, "title") === "Late check-in" &&
         str(n.fields, "body").includes(`Flow Hari C ${RUN}`)).length;
+  assert.equal((await readDoc(`class_sessions/${S7C}`)).status, "scheduled", "not before the start");
   await pass(980);
-  assert.equal((await readDoc(`class_sessions/${S7C}`)).lateCheckIn, true);
+  const startedC = await readDoc(`class_sessions/${S7C}`);
+  assert.equal(startedC.status, "ongoing", "owner 2026-11-23: started by itself");
+  assert.ok(startedC.autoStartedAt instanceof Date);
+  assert.equal(startedC.lateCheckIn, true, "the teacher has not checked in");
   assert.equal(await lateNotes(), 1);
   await pass(1000);
   assert.equal(await lateNotes(), 1, "flagged once");
@@ -1746,6 +1774,100 @@ await step("the seed: one admin and four teachers, the flyer's ten schedules, no
   assert.equal(teachers.length, 4);
   const flyer = (await listDocs("schedules?pageSize=300")).filter((d) => /\/sch_\d\d$/.test(d.name));
   assert.equal(flyer.length, 10);
+});
+
+// ---------------------------------------------------------------------------
+// Owner requests 2026-11-23 and the After-Build-8 follow-ups.
+await step("owner 2026-11-23: back-to-back classes are fine; the admin's gap is named; Recheck answers the same", async () => {
+  const a = {className: `Flow Back A ${RUN}`, weekday: 2, startMinutes: 900, endMinutes: 990,
+    room: "Main", teacherId: clara.uid, ...june};
+  const saved = await call(admin, "saveSchedule", a);
+  assert.ok(saved.data, JSON.stringify(saved.error));
+  const b = {...a, className: `Flow Back B ${RUN}`, startMinutes: 991, endMinutes: 1080};
+  const ok = await call(admin, "checkScheduleConflict", b);
+  assert.equal(ok.data.ok, true, JSON.stringify(ok.data));
+  assert.equal((await call(admin, "checkScheduleConflict", {...b, startMinutes: 990})).data.ok, true,
+      "back to back");
+  await setDocRaw("settings/scheduling", {minGapMinutes: 15, weeklyHoursWarning: 20});
+  const gap = await call(admin, "checkScheduleConflict", b);
+  assert.equal(gap.data.ok, false);
+  assert.ok(gap.data.reasons.every((r) => /15 minutes are needed between classes/.test(r.text)),
+      JSON.stringify(gap.data.reasons));
+  await setDocRaw("settings/scheduling", {minGapMinutes: 0, weeklyHoursWarning: 20});
+  const second = await call(admin, "saveSchedule", b);
+  assert.ok(second.data, JSON.stringify(second.error));
+  for (const id of [saved.data.scheduleId, second.data.scheduleId]) {
+    assert.ok((await call(admin, "deleteSchedule", {scheduleId: id})).data);
+  }
+});
+
+await step("owner 2026-11-23: deleting a schedule cancels its coming sessions and clears the class day; admin only", async () => {
+  const body = {className: `Flow Delete ${RUN}`, weekday: 5, startMinutes: 1080, endMinutes: 1140,
+    room: "Sub Room", teacherId: clara.uid, ...june};
+  const saved = await call(admin, "saveSchedule", body);
+  assert.ok(saved.data, JSON.stringify(saved.error));
+  const id = saved.data.scheduleId;
+  const sess = `${id}_flow`;
+  await session7(sess, {scheduleId: id, sessionDate: tomorrow7, startMinutes: 1080,
+    endMinutes: 1140, teacherId: clara.uid, sessionTitle: `Flow Delete ${RUN}`});
+  const term = `flow_del_term_${RUN}`;
+  await setDocRaw(`student_class_terms/${term}`, {studentId: d24.uid, packageSize: 8,
+    sessionsRemaining: 0, sessionsUsed: 8, sessionsBooked: 0, status: "used_up",
+    startDate: "2026-11-01", deadlineDate: "2027-12-31", classDay: id, createdAt: new Date()});
+  assert.equal((await call(budi, "deleteSchedule", {scheduleId: id})).error.status, "PERMISSION_DENIED");
+  const r = await call(admin, "deleteSchedule", {scheduleId: id});
+  assert.ok(r.data, JSON.stringify(r.error));
+  assert.equal(r.data.cancelled, 1);
+  assert.equal(r.data.classDaysCleared, 1);
+  assert.equal(await readDoc(`schedules/${id}`), null);
+  assert.equal((await readDoc(`class_sessions/${sess}`)).status, "cancelled");
+  assert.equal((await readDoc(`student_class_terms/${term}`)).classDay, undefined);
+  await deleteDoc(`student_class_terms/${term}`);
+});
+
+await step("follow-up: a voucher that gets a class day is booked into that schedule's coming sessions", async () => {
+  const coming = (await futureOf("sch_03")).length;
+  assert.ok(coming >= 1, "the seed generated sch_03 sessions");
+  await patchDoc(`student_class_terms/${term7(d20)}`, {classDay: {stringValue: "sch_03"}});
+  let mine = [];
+  for (let i = 0; i < 30 && !mine.length; i += 1) {
+    await new Promise((res) => setTimeout(res, 1000));
+    mine = (await queryDocs("attendance", "studentId", d20.uid))
+        .filter((a) => str(a.fields, "sessionId").startsWith("sch_03_") &&
+          str(a.fields, "bookedVia") === "class_day");
+  }
+  assert.ok(mine.length >= 1, "booked by the trigger");
+  const t = await readDoc(`student_class_terms/${term7(d20)}`);
+  assert.equal(t.sessionsBooked, mine.length);
+  assert.equal(reasonOf(await call(s1, "createInvoice", {studentId: s1.uid,
+    priceItemId: "package8", acceptedTerms: true, classDay: "no_such_schedule"})), "class-day");
+});
+
+await step("follow-up: decideRegistration uses the admin's minimum of codes", async () => {
+  const p = await readDoc("settings/promotion");
+  const want = p && p.minCodes ? p.minCodes : 3;
+  for (const d of await queryDocs("promotion_progress", "minCodes", want)) {
+    assert.equal(Number(d.fields.minCodes.integerValue), want);
+  }
+});
+
+await step("follow-up: visitor details on unclaimed placement results are cleared after 180 days", async () => {
+  assert.equal((await call(budi, "runPlacementCleanup", {})).error.status, "PERMISSION_DENIED");
+  const now = await call(admin, "runPlacementCleanup", {});
+  assert.ok(now.data, JSON.stringify(now.error));
+  const unclaimed = (await queryDocs("placement_results", "claimedBy", ""))
+      .filter((d) => str(d.fields, "name"));
+  assert.ok(unclaimed.length >= 1, "the flow left an unclaimed visitor result");
+  const later = await call(admin, "runPlacementCleanup", {nowMs: Date.now() + 181 * 86400000});
+  assert.ok(later.data.cleared >= unclaimed.length);
+  for (const d of unclaimed) {
+    const r = await readDoc(`placement_results/${d.id}`);
+    assert.equal(r.name, "");
+    assert.equal(r.whatsapp, "");
+    assert.ok(Number.isFinite(r.total), "the marks stay");
+  }
+  assert.equal((await readDoc(`placement_results/${visitor.attemptId}`)).name, "Flow Visitor",
+      "a claimed result is kept");
 });
 
 console.log(`supervised flow: ${passed} steps passed`);

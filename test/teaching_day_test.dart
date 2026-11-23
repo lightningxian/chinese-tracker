@@ -6,7 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 ClassSession _session({String status = '', bool concluded = false}) => ClassSession(
       id: 's',
       teacherId: 't',
-      sessionDate: '2027-01-05',
+      sessionDate: '2099-01-05',
       sessionTitle: 'A',
       startMinutes: 960,
       endMinutes: 1050,
@@ -22,7 +22,7 @@ AttendanceRecord _record({bool attended = false, bool booked = false, String sta
       sessionId: 's',
       studentId: 'u',
       teacherId: 't',
-      sessionDate: '2027-01-05',
+      sessionDate: '2099-01-05',
       sessionTitle: 'A',
       startMinutes: 960,
       endMinutes: 1050,

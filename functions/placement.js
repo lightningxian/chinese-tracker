@@ -121,7 +121,24 @@ function menuEntry(codeId, code, format, questionCounts) {
   };
 }
 
+/**
+ * Follow-up 2026-11-23 (privacy): a visitor's name and WhatsApp number on a
+ * placement result nobody claimed are cleared after [days] (default 180).
+ * The marks stay for the item analysis; a claimed result belongs to a
+ * student account and is kept.
+ * @param {Object} r the result {name, whatsapp, claimedBy, finishedAtMs}
+ */
+const RETENTION_DAYS = 180;
+function retentionDue(r, nowMs, days = RETENTION_DAYS) {
+  if (r.claimedBy) return false;
+  if (!r.name && !r.whatsapp) return false;
+  const at = Number(r.finishedAtMs) || 0;
+  return at > 0 && nowMs - at >= Number(days) * 86400000;
+}
+
 module.exports = {
+  RETENTION_DAYS,
+  retentionDue,
   CODE_ALPHABET,
   RESULT_CODE_LENGTH,
   levelKeyOf,

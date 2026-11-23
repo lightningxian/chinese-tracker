@@ -12039,25 +12039,25 @@ abstract class AppLocalizations {
   /// No description provided for @checkInButton.
   ///
   /// In en, this message translates to:
-  /// **'Start session'**
+  /// **'Teacher check-in'**
   String get checkInButton;
 
   /// No description provided for @checkInDone.
   ///
   /// In en, this message translates to:
-  /// **'Session started.'**
+  /// **'Checked in.'**
   String get checkInDone;
 
   /// No description provided for @checkInDoneLate.
   ///
   /// In en, this message translates to:
-  /// **'Session started, {minutes} minutes late.'**
+  /// **'Checked in, {minutes} minutes late.'**
   String checkInDoneLate(int minutes);
 
   /// No description provided for @checkInTooEarly.
   ///
   /// In en, this message translates to:
-  /// **'Too early: you can start 30 minutes before the class.'**
+  /// **'Too early: you can check in 30 minutes before the class.'**
   String get checkInTooEarly;
 
   /// No description provided for @checkInTooLate.
@@ -12563,6 +12563,180 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Value'**
   String get monthlyValue;
+
+  /// No description provided for @passwordChangeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Change password'**
+  String get passwordChangeTitle;
+
+  /// No description provided for @passwordChangeButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Change password'**
+  String get passwordChangeButton;
+
+  /// No description provided for @passwordCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Current password'**
+  String get passwordCurrent;
+
+  /// No description provided for @passwordNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New password'**
+  String get passwordNew;
+
+  /// No description provided for @passwordNewAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'New password again'**
+  String get passwordNewAgain;
+
+  /// No description provided for @passwordRule.
+  ///
+  /// In en, this message translates to:
+  /// **'At least 8 characters. You stay signed in on this device.'**
+  String get passwordRule;
+
+  /// No description provided for @passwordCurrentMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Type your current password.'**
+  String get passwordCurrentMissing;
+
+  /// No description provided for @passwordTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'The new password needs at least 8 characters.'**
+  String get passwordTooShort;
+
+  /// No description provided for @passwordMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'The two new passwords are not the same.'**
+  String get passwordMismatch;
+
+  /// No description provided for @passwordSameAsOld.
+  ///
+  /// In en, this message translates to:
+  /// **'The new password is the same as the old one.'**
+  String get passwordSameAsOld;
+
+  /// No description provided for @passwordCurrentWrong.
+  ///
+  /// In en, this message translates to:
+  /// **'The current password is wrong.'**
+  String get passwordCurrentWrong;
+
+  /// No description provided for @passwordTooManyTries.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many tries. Wait a few minutes and try again.'**
+  String get passwordTooManyTries;
+
+  /// No description provided for @passwordChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Password changed.'**
+  String get passwordChanged;
+
+  /// No description provided for @timetableRecheck.
+  ///
+  /// In en, this message translates to:
+  /// **'Recheck'**
+  String get timetableRecheck;
+
+  /// No description provided for @timetableFillTimes.
+  ///
+  /// In en, this message translates to:
+  /// **'Type the times as 16:30 to check.'**
+  String get timetableFillTimes;
+
+  /// No description provided for @timetableDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get timetableDelete;
+
+  /// No description provided for @timetableDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this schedule?'**
+  String get timetableDeleteTitle;
+
+  /// No description provided for @timetableDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{what}\n\nIts future sessions are cancelled: bookings and voucher sessions go back to the students, who are told. Past sessions stay in the reports. This cannot be undone.'**
+  String timetableDeleteBody(String what);
+
+  /// No description provided for @timetableDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule deleted, {n} future sessions cancelled.'**
+  String timetableDeleted(int n);
+
+  /// No description provided for @timetableRules.
+  ///
+  /// In en, this message translates to:
+  /// **'Timetable rules'**
+  String get timetableRules;
+
+  /// No description provided for @timetableGapLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Minutes needed between two classes'**
+  String get timetableGapLabel;
+
+  /// No description provided for @timetableGapHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'For one teacher and for one room. 0 = a class may start right when the previous one ends.'**
+  String get timetableGapHelp;
+
+  /// No description provided for @timetableHoursLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Warn when a teacher teaches more than (hours a week)'**
+  String get timetableHoursLabel;
+
+  /// No description provided for @timetableRulesInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Use 0 to 180 minutes and 1 to 80 hours.'**
+  String get timetableRulesInvalid;
+
+  /// No description provided for @bookingGoingOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Going on now: you can still join'**
+  String get bookingGoingOn;
+
+  /// No description provided for @bookingGoingOnBooked.
+  ///
+  /// In en, this message translates to:
+  /// **'Going on now: you are in'**
+  String get bookingGoingOnBooked;
+
+  /// No description provided for @bookingJoinNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Join now'**
+  String get bookingJoinNow;
+
+  /// No description provided for @scheduleDaySheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Print day sheet'**
+  String get scheduleDaySheet;
+
+  /// No description provided for @voucherClassDayHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Your weekly class: you are booked into it every week. Leave empty to book each class yourself.'**
+  String get voucherClassDayHelp;
 }
 
 class _AppLocalizationsDelegate

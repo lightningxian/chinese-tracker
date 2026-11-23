@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/reports/day_sheet_pdf.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../l10n/l10n.dart';
@@ -74,6 +76,31 @@ class _TodayTab extends StatefulWidget {
 class _TodayTabState extends State<_TodayTab> {
   late final Stream<List<ClassSession>> _sessions =
       context.read<FirestoreService>().watchTeacherSessions(widget.user.uid);
+  bool _printing = false;
+
+  /// Follow-up 2026-11-23: the printable day sheet (booked students, boxes
+  /// for hadir / izin / alpa, blank rows for walk-ins).
+  Future<void> _print(List<ClassSession> list) async {
+    final firestore = context.read<FirestoreService>();
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _printing = true);
+    try {
+      final classes = [
+        for (final s in list.where((s) => !s.isCancelled))
+          (session: s, records: await firestore.watchSessionAttendance(s.id).first),
+      ];
+      final doc = await DaySheetPdf.build(
+          teacherName: widget.user.staffLabel, day: DateTime.now(), classes: classes);
+      await Printing.layoutPdf(
+        onLayout: (_) async => doc.save(),
+        name: 'day_sheet_${_dateKey(DateTime.now())}.pdf',
+      );
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('$e')));
+    } finally {
+      if (mounted) setState(() => _printing = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -88,8 +115,23 @@ class _TodayTabState extends State<_TodayTab> {
         return ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            Text(DateFormat('EEEE, d MMMM yyyy').format(DateTime.now()),
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(DateFormat('EEEE, d MMMM yyyy').format(DateTime.now()),
+                      style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                ),
+                if (list.isNotEmpty)
+                  OutlinedButton.icon(
+                    onPressed: _printing ? null : () => _print(list),
+                    icon: _printing
+                        ? const SizedBox(
+                            width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Icon(Icons.print_outlined, size: 18),
+                    label: Text(l.scheduleDaySheet),
+                  ),
+              ],
+            ),
             const SizedBox(height: 10),
             if (list.isEmpty)
               Padding(

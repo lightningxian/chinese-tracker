@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/language_toggle.dart';
+import '../../core/widgets/change_password_card.dart';
 import '../../core/widgets/push_setting_card.dart';
 import '../../core/widgets/theme_toggle.dart';
 import '../../l10n/l10n.dart';
@@ -85,6 +86,8 @@ class ParentProfileTab extends StatelessWidget {
           },
         ),
         const SizedBox(height: 24),
+        const ChangePasswordCard(),
+        const SizedBox(height: 16),
         OutlinedButton.icon(
           onPressed: () => context.read<AuthService>().signOut(),
           icon: Icon(Icons.logout, color: AppColors.error),

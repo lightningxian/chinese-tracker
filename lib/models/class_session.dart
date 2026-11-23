@@ -84,10 +84,23 @@ class ClassSession {
   final String substituteFor;
   final DateTime? checkInAt;
 
-  /// The life status, with old sessions read from `isConcluded`.
-  String get lifeStatus => status.isNotEmpty
-      ? status
-      : (isConcluded ? 'done' : 'scheduled');
+  /// The life status, with old sessions read from `isConcluded`. Owner
+  /// 2026-11-23: a session starts by itself, so a `scheduled` session past
+  /// its start reads `ongoing` at once (the 5-minute job writes it too).
+  String get lifeStatus {
+    final st = status.isNotEmpty ? status : (isConcluded ? 'done' : 'scheduled');
+    if (st == 'scheduled' && hasStarted) return 'ongoing';
+    return st;
+  }
+
+  /// The start as a local date-time (the app runs in Jakarta time).
+  DateTime? get startsAt =>
+      DateTime.tryParse(sessionDate)?.add(Duration(minutes: startMinutes));
+
+  bool get hasStarted {
+    final s = startsAt;
+    return s != null && !DateTime.now().isBefore(s);
+  }
   bool get isCancelled => lifeStatus == 'cancelled';
   bool get isOngoing => lifeStatus == 'ongoing';
   bool get isClosedOrCancelled => isConcluded || isCancelled || lifeStatus == 'done';

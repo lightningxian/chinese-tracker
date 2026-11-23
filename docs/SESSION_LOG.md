@@ -13,6 +13,16 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-23 — Claude (BUILD chat, PC): owner requests + After-Build-8 follow-ups
+
+- Owner asked (with two screenshots): delete button on the quick sign-in
+  list, change own password, timetable clash at 16:31 after a 16:30 class,
+  Recheck, delete a weekly schedule, automatic session start, late students
+  joining, then "build the rest". All built in release v0.1.27 (63
+  functions): see the CHANGELOG entry of the same day.
+- Checked: analyzer 17 infos, `flutter test` 156 pass, node tests, flow
+  test 97 steps, an emulator walk of the new screens.
+
 ### 2026-11-23 — PLAN chat (Mac): thesis requirements summarised
 
 - Read the owner's own documents: the revised proposal packet (form F-048,

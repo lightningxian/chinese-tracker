@@ -2046,11 +2046,14 @@ wants them)
 
 - Repository hygiene: done 2026-11-23 (`eebd352`: the `.pyc` file left git,
   `__pycache__/` and `*.pyc` are ignored).
-- The class day picker in the buy sheet; the printable teacher day sheet.
-- Build 3 notes: the wrong-token block for visitors is per address (a
-  shared classroom router can block itself); `decideRegistration` writes
-  the default minimum of codes instead of `settings/promotion.minCodes`.
-- A retention rule for `placement_results` (visitor names and numbers).
+- Done 2026-11-23 (BUILD chat, v0.1.27): the class day picker in the buy
+  sheet; the printable teacher day sheet; visitor wrong tokens per browser
+  tab before the address; `decideRegistration` reads
+  `settings/promotion.minCodes`; `placement_results` visitor details
+  cleared after 180 days. Same release, owner requests: timetable gap 0 +
+  Timetable rules + Recheck + Delete, sessions start by themselves, late
+  students join, quick sign-in delete button, Change password for every
+  role.
 - The open questions of §5: Q6 (HSK 3.0 papers), Q7 (listening scripts),
   Q8 (APK), Q9 (iOS acceptance), Q12 (reopen a declined recommendation).
 
@@ -2159,6 +2162,26 @@ Any time:
    with "add to home screen". Ask the supervisor whether that is accepted.
 
 ## 6. Build reports (newest first, written by the BUILD chat)
+
+### 2026-11-23 — Owner requests and the After-Build-8 follow-ups — COMMIT, release v0.1.27 (functions and hosting live from the PC under the owner's standing go; 63 functions)
+- Built: timetable gap 0 by default with **Timetable rules**, **Recheck**,
+  **Delete** (`deleteSchedule`); sessions start by themselves (app,
+  `closeSession`, the 5-minute job); late students join until the end;
+  quick sign-in delete button; **Change password** for every role; the
+  class-day picker in the buy sheet and class-day booking by trigger; the
+  printable day sheet; visitor wrong tokens per tab; `minCodes` at
+  approval; placement result retention (180 days).
+- Choices: the teacher check-in stays (arrival and the late flag) but no
+  longer starts the class; booking closes at the end of the class, the
+  booking cut-off setting is gone; deleting a schedule leaves a class that
+  has already started today alone; the day sheet keeps English labels with
+  hadir / izin / alpa, like the other exports.
+- Proof: analyzer 17 infos; `flutter test` 156 pass and 2 skipped; node
+  tests pass (new cases in `test_scheduling.js`, `test_teaching_day.js`,
+  `test_placement.js`); flow test 97 steps (new: late join, auto start,
+  back-to-back and gap, delete schedule, class-day booking, minCodes,
+  placement clean-up); rules unchanged.
+- Left: the open questions Q6–Q9 and Q12 (owner decisions).
 
 ### 2026-11-21 — Build 8 Dashboard, trial kit, screenshot pass — 2b1d798 + a2575ff, release v0.1.26 (rules, functions and hosting live from the PC 2026-11-21 under the owner's standing go; 60 functions)
 - Built: six duty cards on the admin dashboard; `functions/reports.js` +

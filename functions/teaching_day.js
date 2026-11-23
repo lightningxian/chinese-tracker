@@ -44,7 +44,30 @@ function closeDecision(status, byAdmin) {
   return "not-started";
 }
 
-/** Check-in: allowed from 30 minutes before the start until the end. */
+/**
+ * Owner 2026-11-23: a session starts by itself at its start time. The
+ * status as it should be now: a `scheduled` session past its start is
+ * `ongoing` (the 5-minute job writes it; the app and the functions read it
+ * this way at once).
+ */
+function effectiveStatus(session, nowMs) {
+  const st = session.status || (session.isConcluded ? "done" : "scheduled");
+  if (st === "scheduled" && nowMs >= atMs(session.sessionDate, session.startMinutes)) {
+    return "ongoing";
+  }
+  return st;
+}
+
+/** A `scheduled` session whose start has come (the job sets it `ongoing`). */
+function autoStartDue(session, nowMs) {
+  return (session.status || "scheduled") === "scheduled" && session.isConcluded !== true &&
+    nowMs >= atMs(session.sessionDate, session.startMinutes);
+}
+
+/**
+ * The teacher's check-in (now only the teacher's arrival; the session has
+ * started by itself): from 30 minutes before the start until the end.
+ */
 function checkInDecision(session, nowMs) {
   const start = atMs(session.sessionDate, session.startMinutes);
   const end = atMs(session.sessionDate, session.endMinutes);
@@ -54,9 +77,14 @@ function checkInDecision(session, nowMs) {
   return {ok: true, lateMinutes: late > LATE_MINUTES ? late : 0};
 }
 
-/** A session still `scheduled` 15 minutes after its start (flagged once). */
+/**
+ * A session whose teacher has not checked in 15 minutes after its start
+ * (flagged once).
+ */
 function lateCheckInDue(session, nowMs) {
-  return (session.status || "scheduled") === "scheduled" && session.lateCheckIn !== true &&
+  const st = session.status || "scheduled";
+  return (st === "scheduled" || st === "ongoing") && !session.checkInAt &&
+    session.lateCheckIn !== true &&
     nowMs >= atMs(session.sessionDate, session.startMinutes) + LATE_MINUTES * 60000;
 }
 
@@ -144,6 +172,8 @@ module.exports = {
   atMs,
   closeEffect,
   closeDecision,
+  effectiveStatus,
+  autoStartDue,
   checkInDecision,
   lateCheckInDue,
   unclosedDue,

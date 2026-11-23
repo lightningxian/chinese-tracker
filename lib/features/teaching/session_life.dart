@@ -235,11 +235,12 @@ class _SessionLifeActionsState extends State<SessionLifeActions> {
     final st = s.lifeStatus;
     final open = !s.isClosedOrCancelled;
     final canRun = admin || mine;
-    final showCheckIn = canRun && open && s.generated && st == 'scheduled';
-    final start = DateTime.tryParse(s.sessionDate)?.add(Duration(minutes: s.startMinutes));
-    final started = start != null && !DateTime.now().isBefore(start);
+    // Owner 2026-11-23: the session starts by itself at its start time;
+    // the teacher's check-in only records their arrival (late after 15 min).
+    final showCheckIn = mine && open && s.generated && s.checkInAt == null &&
+        (st == 'scheduled' || st == 'ongoing');
     final showClose = canRun && open && st != 'needs_teacher' &&
-        (st == 'ongoing' || !s.generated || (admin && started));
+        (st == 'ongoing' || !s.generated);
     final showSub = admin && open;
     final showCancel = open && (admin || (mine && s.scheduleId.isEmpty));
     if (!showCheckIn && !showClose && !showSub && !showCancel) {
@@ -254,7 +255,7 @@ class _SessionLifeActionsState extends State<SessionLifeActions> {
           FilledButton.icon(
             onPressed: _busy ? null : _checkIn,
             style: _small.copyWith(backgroundColor: WidgetStatePropertyAll(AppColors.navy)),
-            icon: const Icon(Icons.play_arrow_rounded, size: 16),
+            icon: const Icon(Icons.how_to_reg_outlined, size: 16),
             label: Text(l.checkInButton),
           ),
         if (showClose)

@@ -288,6 +288,25 @@ class AuthService extends ChangeNotifier {
   Future<void> sendPasswordResetEmail(String email) =>
       _auth.sendPasswordResetEmail(email: email.trim());
 
+  /// Owner 2026-11-23: any signed-in user changes their own password.
+  /// Firebase wants a fresh sign-in first, so the current password is
+  /// checked (reauthenticate), then the new one is set.
+  /// Throws [FirebaseAuthException] (`wrong-password` /
+  /// `invalid-credential`, `weak-password`, `too-many-requests`).
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final user = _auth.currentUser;
+    final email = user?.email;
+    if (user == null || email == null || email.isEmpty) {
+      throw FirebaseAuthException(code: 'no-current-user');
+    }
+    await user.reauthenticateWithCredential(
+        EmailAuthProvider.credential(email: email, password: currentPassword));
+    await user.updatePassword(newPassword);
+  }
+
   Future<AppUser> signIn({
     required String email,
     required String password,

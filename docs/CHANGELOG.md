@@ -6,6 +6,56 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-23 — Claude (BUILD chat): owner requests and the After-Build-8 follow-ups
+
+**What changed**
+- **Timetable:** no gap between two classes by default (`minGapMinutes` 0;
+  the owner's 15:00–16:30 and 16:31–18:00 classes no longer clash). A clash
+  that only comes from a gap the admin set says "(N minutes are needed
+  between classes)". **Timetable rules** (Timetable header) edits the gap
+  and the weekly-hours warning in `settings/scheduling`. The schedule form
+  clears an old result as soon as a field changes and has a **Recheck**
+  button; the suggested free times now also avoid one-off sessions.
+  **Delete** on an existing schedule calls the new `deleteSchedule`
+  (admin): its coming sessions are cancelled (bookings and voucher sessions
+  go back), vouchers lose that class day, past sessions stay.
+- **Sessions start by themselves:** a `scheduled` session past its start
+  reads `ongoing` in the app and in `closeSession`; `checkTeacherCheckIn`
+  (now every 5 minutes) writes `ongoing` + `autoStartedAt`. The teacher's
+  button is now **Absen guru / Teacher check-in** (arrival only); late
+  check-in still flags after 15 minutes without it.
+- **Late students join:** booking stays open until the class ends
+  (`bookingRefusal`), the attendance gets `lateJoin: true`; the student
+  list shows "Going on now" and **Join now**, hides classes that ended.
+- **Quick sign-in:** a visible delete button on each saved account (long
+  press still works).
+- **Change password** card on every profile tab (admin, teacher, student,
+  parent): current password checked with `reauthenticateWithCredential`,
+  then `updatePassword`; a remembered quick sign-in password is replaced.
+- **Follow-ups (PLAN §4 "After Build 8" C):** a class-day picker in the
+  buy sheet (`createInvoice` checks the schedule, the paid term gets
+  `classDay`); `onClassTermWritten` books a voucher into the coming
+  sessions of a class day it just got (bought or set by the admin); the
+  teacher's **Print day sheet** (`lib/core/reports/day_sheet_pdf.dart`);
+  visitor wrong tokens counted per browser tab (8) before the address (40);
+  `decideRegistration` writes `settings/promotion.minCodes`; the daily
+  `cleanPlacementResults` clears visitor names and WhatsApp numbers on
+  unclaimed placement results after 180 days (`settings/placement.retentionDays`),
+  with `runPlacementCleanup` (admin) for the flow test.
+
+**Why**
+- Owner requests in the BUILD chat 2026-11-23 (screenshot of the clash,
+  quick sign-in, admin password, auto start, late join, delete schedule)
+  and "go build the rest of it".
+
+**For review**
+- Functions 60 → 63 (`deleteSchedule`, `cleanPlacementResults`,
+  `runPlacementCleanup`); no rules change. Seed: `minGapMinutes` 0.
+- On live, open Timetable → **Timetable rules** once: if it shows 15
+  (an old `settings/scheduling` doc), set 0.
+
+---
+
 ## 2026-11-23 — Claude (BUILD chat): untrack Python bytecode
 
 **What changed**

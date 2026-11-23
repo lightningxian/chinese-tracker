@@ -460,11 +460,24 @@ class _AccountTile extends StatelessWidget {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
+      // Owner 2026-11-23: a visible remove button (long-press still works).
       trailing: loading
           ? null
-          : Icon(
-              Icons.chevron_right,
-              color: AppColors.textSecondary.withValues(alpha: 0.6),
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (onRemove != null)
+                  IconButton(
+                    tooltip: context.l10n.loginRemove,
+                    onPressed: onRemove,
+                    icon: Icon(Icons.delete_outline,
+                        color: AppColors.textSecondary.withValues(alpha: 0.8)),
+                  ),
+                Icon(
+                  Icons.chevron_right,
+                  color: AppColors.textSecondary.withValues(alpha: 0.6),
+                ),
+              ],
             ),
     );
   }
