@@ -128,7 +128,7 @@ node tool/practice_paper/build.mjs               # rebuild the practice paper + 
 # Hosting deploy: ALWAYS via the script. It builds web with the live config,
 # copies the Android APK to /downloads/easy-study.apk (hosting deploys are
 # full snapshots, a bare deploy would drop the APK) and deploys.
-scripts/deploy_web.sh --web-only # until billing is enabled (free plan refuses .apk uploads)
+scripts/deploy_web.sh --web-only # web only; downloads the live APK and puts it back (2026-11-24)
 scripts/deploy_web.sh            # web + APK, reuse last APK build (needs Blaze)
 scripts/deploy_web.sh --apk      # rebuild the APK too (~6 min, needs JDK 21)
 ```

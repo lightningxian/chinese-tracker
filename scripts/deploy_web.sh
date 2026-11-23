@@ -71,6 +71,25 @@ if [[ "$MODE" != "--web-only" ]]; then
   APK_DEFINE=(--dart-define=ANDROID_APK_URL="$APK_URL")
 fi
 
+# A web-only deploy keeps the APK that is live (hosting deploys are full
+# snapshots, so leaving it out would delete /downloads/easy-study.apk; this
+# happened twice on 2026-11-23/24). It is downloaded and put back.
+KEEP_LIVE_APK=0
+if [[ "$MODE" == "--web-only" ]]; then
+  mkdir -p build/live-apk
+  LIVE_APK="build/live-apk/easy-study.apk"
+  echo "▶ Keeping the live APK…"
+  CT=$(curl -sL -o "$LIVE_APK" -w '%{content_type}' "$APK_URL" || true)
+  if [[ "$CT" == application/vnd.android.package-archive* ]]; then
+    APK_SRC="$LIVE_APK"
+    KEEP_LIVE_APK=1
+    APK_DEFINE=(--dart-define=ANDROID_APK_URL="$APK_URL")
+  else
+    rm -f "$LIVE_APK"
+    echo "  (no APK on live; the site deploys without one)"
+  fi
+fi
+
 # The paper reader's PaddleOCR files (web/ocr/, not in git; Build 1C).
 echo "▶ Paper reader files…"
 node scripts/fetch_paper_ocr.mjs
@@ -84,7 +103,7 @@ flutter build web --release \
   "${KEY_DEFINES[@]}" \
   ${APK_DEFINE[@]+"${APK_DEFINE[@]}"}   # empty-array-safe on macOS bash 3.2
 
-if [[ "$MODE" != "--web-only" ]]; then
+if [[ "$MODE" != "--web-only" || "$KEEP_LIVE_APK" == 1 ]]; then
   mkdir -p build/web/downloads
   cp "$APK_SRC" build/web/downloads/easy-study.apk
   echo "▶ APK: $(du -h build/web/downloads/easy-study.apk | cut -f1) → $APK_URL"

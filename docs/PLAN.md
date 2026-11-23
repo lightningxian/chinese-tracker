@@ -2220,7 +2220,7 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
-### 2026-11-24 — Ready for the App Store (Q9 option B) — COMMIT, release v0.1.30 (functions and hosting live from the PC; 68 functions)
+### 2026-11-24 — Ready for the App Store (Q9 option B) — 3169334, release v0.1.30 (functions and hosting live from the PC; 68 functions)
 - Built: app icon from the mascot (iOS and Android); iOS name, iPhone only,
   iOS 15, Podfile, permission texts; **Delete my account** for students and
   parents (`deleteMyAccount`, shared `deleteAccountCore`); public privacy

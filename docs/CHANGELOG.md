@@ -6,6 +6,23 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-24 — Claude (BUILD chat): web-only deploys keep the live APK
+
+**What changed**
+- `scripts/deploy_web.sh --web-only` downloads the APK that is live
+  (`/downloads/easy-study.apk`, checked by its content type) and deploys it
+  again with the web build, so the download link and its button stay.
+  Without an APK on live it deploys as before.
+
+**Why**
+- Hosting deploys are full snapshots: the PC's web-only deploys removed the
+  APK twice (2026-11-23 and 2026-11-24) until the Mac redeployed it.
+
+**For review**
+- Script only; no app, rules or functions change.
+
+---
+
 ## 2026-11-24 — Claude (BUILD chat): ready for the App Store (Q9 option B)
 
 **What changed**
