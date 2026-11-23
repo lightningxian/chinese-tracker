@@ -57,6 +57,12 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   strings in the bundle; security read of `deleteSchedule`, the placement
   retention job, the change-password flow and the visitor token limits.
   Note in PLAN §1; owner live step: Timetable rules gap 15 → 0.
+- Reviewed v0.1.28 (second round: holidays, announcements, helper
+  teachers, readiness switch, minimum students, board compare): analyzer
+  17 infos, 160 Flutter tests, node tests, rules tests 84 pass and 1
+  skipped, live 65 functions and 23 indexes, bundle checked, rules diff
+  read. Thesis note in PLAN §1: switch teacher readiness on before the
+  trial.
 - No code, rules or functions changed. Nothing to deploy.
 
 ### 2026-11-21 — Claude (PLAN chat, Mac): Build 8 reviewed; the eight thesis builds are done

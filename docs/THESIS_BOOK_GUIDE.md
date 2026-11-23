@@ -78,6 +78,13 @@ From proposal §V (pages 44 to 47 of the revised proposal):
   35, mean per role, per student level and overall; **accepted if the mean is
   above 70** (Bangor 2008). Formula: SUS = [Σ(odd − 1) + Σ(5 − even)] × 2.5.
 
+**Before the trial (added 2026-11-23):** v0.1.28 put teacher availability,
+schedule confirmation, late check-in and the teacher recap behind one
+switch, `settings/scheduling.teacherReadiness`, which ships **off**. Switch it
+on in Timetable → Timetable rules before the trial and the screenshots,
+or JD-01 and the scheduling screens the examiners asked for will not show.
+The book describes the switch in Bab V.
+
 The trial kit for all of this is already built (`docs/TRIAL_KIT.md`,
 `docs/trial/TRIAL_DAY.md`). What is missing is the day itself: people, date,
 devices, the live seed, the 731 questions typed in.

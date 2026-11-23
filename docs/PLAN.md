@@ -73,13 +73,14 @@ Read docs/PLAN.md. You are the BUILD chat. Follow section 0, run Build 0 if this
 
 ## 1. Where the project stands (2026-11-20)
 
-**Live:** https://chinese-tracker.web.app, hosting at release v0.1.27
-(owner requests and follow-ups, published from the PC 2026-11-23; Build 8
+**Live:** https://chinese-tracker.web.app, hosting at release v0.1.28
+(owner requests, two rounds, published from the PC 2026-11-23; Build 8
 was v0.1.26 on 2026-11-21). **All eight thesis builds are
 built, reviewed and live (2026-11-21).** Firebase project
-`chinese-tracker`, Blaze plan, **63 Cloud Functions** on Node 22 and 23
-composite indexes (v0.1.27 added `deleteSchedule`, `cleanPlacementResults`
-and `runPlacementCleanup` on 2026-11-23) (Builds 2B to 5 went live on 2026-11-20, Builds 6, 7
+`chinese-tracker`, Blaze plan, **65 Cloud Functions** on Node 22 and 23
+composite indexes (2026-11-23: v0.1.27 added `deleteSchedule`,
+`cleanPlacementResults` and `runPlacementCleanup`; v0.1.28 added
+`importHolidays` and `setDayClosed`) (Builds 2B to 5 went live on 2026-11-20, Builds 6, 7
 and 8 on 2026-11-21, each
 deployed from the PC; the PLAN chat counts the functions and indexes from
 the Mac after every build). **Owner decision 2026-11-20 (said in the BUILD
@@ -326,6 +327,30 @@ Mac: 63 functions with the three new names, the bundle carries Timetable
 rules, Recheck, Teacher check-in, Print day sheet and Change password. No
 tracked secrets. **Owner live step:** open Timetable → Timetable rules once;
 if the gap shows 15, set 0.
+
+**v0.1.28 (owner requests, second round) is live** (545ef58, rules,
+functions and hosting from the PC on 2026-11-23 under the owner's standing
+go) and reviewed by the PLAN chat on the Mac on 2026-11-23: analyzer 17
+infos, `flutter test` 160 pass and 2 skipped, every node and tool test
+passes, rules tests 84 pass and 1 skipped. Read: the three new rules are
+tight (a helper teacher reads only sessions whose `coTeacherIds` hold their
+uid; `holidays` has no client write; `announcements` are admin-written with
+required keys, length caps and a fixed audience list, read by approved users
+and shown only until `toDate`); `importHolidays` and `setDayClosed` are
+admin-only, idempotent and audited, closing cancels only sessions not yet
+started and reopening restores only generated sessions it had cancelled;
+helpers are clash-checked with a lock per teacher inside the `saveSchedule`
+transaction and may close their sessions; the board-compare fields are
+length-capped; the minimum-students rule ships off (0). The 2027 holiday
+dates were copied by the BUILD chat from the government list and are not
+verified by the PLAN chat; the admin decides each day anyway. Live from the
+Mac: 65 functions, 23 indexes equal to the repo, the bundle carries
+holidays, announcements, helper teachers and the readiness switch. No
+tracked secrets. **Thesis note:** `settings/scheduling.teacherReadiness`
+ships off, which hides availability, confirmation, late check-in and the
+recap; **switch it on before the trial** (Timetable → Timetable rules) so
+the JD and VC scenarios and the screenshots show them, and describe the
+switch in Bab V.
 
 **PLAN chat decision 2026-11-17** (the BUILD chat asked): an answer from a
 supervised test that needs marking goes to the teacher who opened the
