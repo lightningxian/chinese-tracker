@@ -14,6 +14,13 @@ bank, Midtrans in sandbox mode.
 | Rehearse on the emulator | `py -I scripts/seed_trial.py emulator` (twice: nothing changes the second time; `verify` prints the counts) | PC |
 | Live accounts and structures | `py -I scripts/seed_trial.py live --credentials <service-account.json>` (try `--dry-run` first) | **owner** |
 
+**Teacher readiness must be on for the trial and the screenshots** (owner
+switch since 2026-11-23, Timetable → Timetable rules): it brings back the
+availability check (JD-01), schedule confirmation, late check-in and the
+teacher recap that the proposal promises. Both seed modes turn it on
+(`settings/scheduling.teacherReadiness`); check the switch on the morning of
+the trial, and switch it off again afterwards if the centre prefers.
+
 Live mode writes the 35 accounts (`trial_admin`, `trial_teacher_1..4`,
 `trial_student_01..30`), rooms, the price list (only if none exists), the
 flyer's timetable (unconfirmed, the Sunday job generates the sessions) and one

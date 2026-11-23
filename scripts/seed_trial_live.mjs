@@ -155,6 +155,10 @@ for (const p of people) {
   await write(`users/${p.uid}`, base);
 }
 await write("settings/rooms", {names: ["Main", "Sub Room"]});
+// The thesis trial runs with teacher readiness on (availability,
+// confirmation, late check-in, recap: JD-01 and the dashboard cards);
+// merged, so the owner's other timetable rules stay.
+await write("settings/scheduling", {teacherReadiness: true});
 await write("settings/pricing", {items: [
   {id: "registration", name: "Registration (one-time)", nameChinese: "报名费", price: 100000,
     kind: "registration", sessions: 0, validDays: 0, active: true},

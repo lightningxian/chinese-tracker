@@ -60,7 +60,12 @@ def trial_extras():
         "level": "", "isOpen": False, "isConcluded": False, "generated": True,
         "scheduleId": "trial", "unclosed": True, "lateMinutes": 20,
         "createdAt": base.ts(-2)})
-    print("trial: a late check-in today, an unclosed session yesterday")
+    # The thesis trial and the proposal screenshots run with teacher
+    # readiness on (availability, confirmation, late check-in, recap).
+    base.put("settings", "scheduling", {"minGapMinutes": 0, "weeklyHoursWarning": 20,
+        "defaultCapacity": 8, "minStudents": 0, "minStudentsHours": 3,
+        "teacherReadiness": True})
+    print("trial: a late check-in today, an unclosed session yesterday; teacher readiness on")
 
 
 def verify():

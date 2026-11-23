@@ -54,6 +54,9 @@ edge cases, and any manual/deploy steps still required).
   (`importHolidays`, `setDayClosed`).
 - Owner on live: Timetable rules → type 3 in minimum students when bookings
   start; Holidays & news → decide the coming holidays.
+- Follow-up (PLAN review): both trial seeds now switch teacher readiness on
+  (`seed_trial.py emulator` and `seed_trial_live.mjs`, merged), and
+  `docs/TRIAL_KIT.md` says to check it on the trial morning.
 
 ---
 
