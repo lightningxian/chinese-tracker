@@ -73,6 +73,8 @@ flutter pub get
 flutter run -d chrome                 # no CONTENT_OWNER_ID needed locally; talks to LIVE Firebase
 flutter analyze                       # baseline: 0 errors, 0 warnings, 17 infos
 flutter test                          # 162 pass + 2 measuring tests skipped (2026-11-24)
+# Mac: after `flutter clean` the PDF probe test fails ("Native assets file not found") until a `dart run` of any
+# script importing pdfium_dart recreates .dart_tool/native_assets.yaml (2026-11-24).
 node --check functions/index.js
 node functions/test_exercise_play.js && node functions/test_reminders.js
 node functions/test_supervised_test.js          # Build 1 pure logic (TS-01, PN-05)

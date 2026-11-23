@@ -46,7 +46,7 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   icon) and published with `scripts/deploy_web.sh --no-keys` from the Mac at 06:34 WIB after the PC's v0.1.30
   deploy (functions 68 with `deleteMyAccount`, /privacy). Live: `/downloads/easy-study.apk` returns 200 with the
   APK content type (109 MB), the bundle carries the APK link, "Write from the recording" and "Delete my account",
-  the Whisper encoder is served. Checks on 3169334: analyzer 17 infos, `flutter test` 162 pass + 2 skipped,
+  the Whisper encoder is served. Checks on 3169334: analyzer 17 infos, `flutter test` 162 pass + 2 skipped (the first run after my `flutter clean` failed the PDF probe test: the clean had removed `.dart_tool/native_assets.yaml`, which the pdfium loader needs under `flutter test`; one throwaway `dart run` of a script importing `pdfium_dart` writes it again),
   `node --check` and the 12 node tests pass; `deleteMyAccount` read: signed-in student or parent only, sign-in at
   most 10 minutes old, shared `deleteAccountCore` unlinks parent and child, records stay. The privacy page
   publishes the centre's phone and Instagram only. 7157d16 (BUILD chat) makes `--web-only` deploys keep the
