@@ -73,11 +73,13 @@ Read docs/PLAN.md. You are the BUILD chat. Follow section 0, run Build 0 if this
 
 ## 1. Where the project stands (2026-11-20)
 
-**Live:** https://chinese-tracker.web.app, hosting at release v0.1.26
-(Build 8, published from the PC 2026-11-21). **All eight thesis builds are
+**Live:** https://chinese-tracker.web.app, hosting at release v0.1.27
+(owner requests and follow-ups, published from the PC 2026-11-23; Build 8
+was v0.1.26 on 2026-11-21). **All eight thesis builds are
 built, reviewed and live (2026-11-21).** Firebase project
-`chinese-tracker`, Blaze plan, **60 Cloud Functions** on Node 22 and 23
-composite indexes (Builds 2B to 5 went live on 2026-11-20, Builds 6, 7
+`chinese-tracker`, Blaze plan, **63 Cloud Functions** on Node 22 and 23
+composite indexes (v0.1.27 added `deleteSchedule`, `cleanPlacementResults`
+and `runPlacementCleanup` on 2026-11-23) (Builds 2B to 5 went live on 2026-11-20, Builds 6, 7
 and 8 on 2026-11-21, each
 deployed from the PC; the PLAN chat counts the functions and indexes from
 the Mac after every build). **Owner decision 2026-11-20 (said in the BUILD
@@ -304,6 +306,26 @@ committed and `__pycache__/` is not git-ignored. Live from the Mac: 60
 functions, 23 indexes equal to the repo, the bundle carries the monthly
 report. **Nothing is marked NEXT: the thesis builds are finished, the
 owner decides what follows ("After Build 8" in §4).**
+
+**v0.1.27 (owner requests and the After-Build-8 follow-ups) is live**
+(242e287 + d2ddbeb, functions and hosting from the PC on 2026-11-23 under
+the owner's standing go; no rules change) and reviewed by the PLAN chat on
+the Mac on 2026-11-23: analyzer 17 infos, `flutter test` 156 pass and 2
+skipped, every node and tool test passes, rules tests 81 pass and 1
+skipped. Read: `deleteSchedule` is admin-only, cancels only coming sessions
+(bookings and voucher sessions return) and writes an audit entry; the daily
+`cleanPlacementResults` clears only the name and WhatsApp number of visitor
+results nobody claimed after 180 days and keeps the marks; the emulator-only
+clock override of `runPlacementCleanup` is guarded by `FUNCTIONS_EMULATOR`;
+the change-password card re-authenticates with the current password before
+`updatePassword` and asks for 8 characters; the buy-sheet class day is
+checked against an active schedule and the id is sanitised; visitor wrong
+tokens are 8 per browser tab and 40 per address (a rotated tab id still hits
+the address cap); booking stays open until the class ends. Live from the
+Mac: 63 functions with the three new names, the bundle carries Timetable
+rules, Recheck, Teacher check-in, Print day sheet and Change password. No
+tracked secrets. **Owner live step:** open Timetable → Timetable rules once;
+if the gap shows 15, set 0.
 
 **PLAN chat decision 2026-11-17** (the BUILD chat asked): an answer from a
 supervised test that needs marking goes to the teacher who opened the

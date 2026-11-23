@@ -39,6 +39,12 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   Bisnis in Indonesian from the proposal text (`docs/thesis/`), with the
   Daftar Pustaka re-sorted alphabetically and Mermaid sketches as drawing
   aids for the old-system diagrams.
+- Reviewed v0.1.27 (BUILD chat, owner requests and the After-Build-8
+  follow-ups): analyzer 17 infos, 156 Flutter tests, node and tool tests,
+  rules tests 81 pass and 1 skipped; live 63 functions and the new
+  strings in the bundle; security read of `deleteSchedule`, the placement
+  retention job, the change-password flow and the visitor token limits.
+  Note in PLAN §1; owner live step: Timetable rules gap 15 → 0.
 - No code, rules or functions changed. Nothing to deploy.
 
 ### 2026-11-21 — Claude (PLAN chat, Mac): Build 8 reviewed; the eight thesis builds are done
