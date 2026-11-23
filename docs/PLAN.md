@@ -2185,7 +2185,7 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
-### 2026-11-23 — Owner requests, second round — COMMIT, release v0.1.28 (rules, functions and hosting live from the PC under the owner's standing go; 65 functions)
+### 2026-11-23 — Owner requests, second round — 545ef58, release v0.1.28 (rules, functions and hosting live from the PC under the owner's standing go; 65 functions)
 - Built: Timetable rules dialog; teacher readiness switch (default off;
   recap, availability, confirmation, late check-in hidden); helper teachers
   (`coTeacherIds`); minimum students (job, 3 hours before, off until set);
