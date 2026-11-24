@@ -41,6 +41,11 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   admin asked availability by chat and kept the schedule in a spreadsheet.
 - Checks: package valid, 127 bookmarks all resolved, 2 figure relationships, list point 8 shares the list
   numbering of points 1–7. Pages after the cover are still checked by structure only (no Word on the Mac).
+- **v0.1.34 (ae29dc1) reviewed on the Mac:** hosting only; analyzer 17 infos; `flutter test` 170 pass + 2
+  skipped; node tests pass; no tracked secrets; live bundle from 09:07 WIB carries "HSK Standard Course"; APK
+  still served. `storage.cors.json` (f2ca003) allows GET and HEAD from our two hosting origins and the emulator
+  bundle only; applying it is a one-time owner step (`docs/OWNER_PROCEDURES.md`), needed for the recording
+  Play button in the browser.
 - **v0.1.33 (3f1519a) reviewed on the Mac:** analyzer 17 infos; `flutter test` 168 pass + 2 skipped; node tests
   pass; rules tests 86 pass, 1 skipped; no tracked secrets; 74 functions on live (`onExerciseResultForPath`,
   `onLevelPathWritten`); APK still served. Rules read: `level_paths` staff read / admin write, `paper_drafts`

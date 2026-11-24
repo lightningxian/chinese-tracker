@@ -73,10 +73,11 @@ Read docs/PLAN.md. You are the BUILD chat. Follow section 0, run Build 0 if this
 
 ## 1. Where the project stands (2026-11-20)
 
-**Live:** https://chinese-tracker.web.app, hosting at release v0.1.33
-(scan drafts, right answers while proofreading, shuffled choices, level
-checklists; Firestore and Storage rules, functions and hosting from the PC
-2026-11-24, checked from the Mac; v0.1.32 profiles and waiting list,
+**Live:** https://chinese-tracker.web.app, hosting at release v0.1.34
+(word-order and character answers in the paper reader, the HSK Standard
+Course exercise type, recording preview; hosting only, from the PC
+2026-11-24, checked from the Mac; v0.1.33 scan drafts, shuffled choices
+and level checklists with Firestore and Storage rules; v0.1.32 profiles and waiting list,
 v0.1.31 the fourth round, v0.1.30 App Store readiness with the Android APK
 back at `/downloads/easy-study.apk`, v0.1.29 the third round plus the
 listening-script writer Q7; Build 8 was v0.1.26 on 2026-11-21). **All eight thesis builds are
