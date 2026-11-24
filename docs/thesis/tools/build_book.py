@@ -303,7 +303,8 @@ def p_formula(text, number):
              b1 + math + TAB + runs('(%s)' % number) + b2)
 
 # ---------------------------------------------------------------- chapter rendering
-FIG_SIZE_CM = {'3.1': (6.5, 13.5), '3.2': (10, 13.5), '3.3': (12, 8.1), '3.4': (14, 10), '3.5': (14, 11.8), '3.6': (14, 12.3), '3.7': (14, 10.9)}            # width, height in cm; other figures 14 x 8
+FIG_SIZE_CM = {'3.1': (6.5, 13.5), '3.2': (10, 13.5), '3.3': (12, 8.1), '3.4': (12, 6.2), '3.5': (14, 10), '3.6': (14, 11.8), '3.7': (14, 12.3), '3.8': (14, 10.9),
+               '4.1': (8, 11), '4.2': (12, 8.4), '4.3': (14, 3), '4.4': (14, 3)}            # width, height in cm; other figures 14 x 8
 
 def render_chapter(c, title, blocks, figure_png=None):
     out = []
@@ -381,7 +382,7 @@ SKELETON = {
         ('Pengumpulan Fakta', '[ISI: cara pengumpulan fakta: wawancara dengan admin dan empat guru, pengamatan langsung, analisis dokumen (daftar murid di spreadsheet, daftar hadir, catatan nilai simulasi).]', [
             ('Wawancara', '[ISI: tanggal, narasumber (inisial), ringkasan jawaban per topik; transkrip lengkap di Lampiran G.]'),
             ('Analisis Dokumen', '[ISI: dokumen yang dipakai saat ini dan kelemahannya, dengan Gambar 4.x tangkapan layar yang disamarkan.]')]),
-        ('Identifikasi Masalah', '[ISI: daftar masalah dari Tabel 3.3 yang dipetakan ke kebutuhan sistem (Tabel 4.1).]', []),
+        ('Identifikasi Masalah', '[ISI: daftar masalah dari Tabel 3.4 yang dipetakan ke kebutuhan sistem (Tabel 4.1).]', []),
         ('Perbandingan dengan Aplikasi Sejenis', '[ISI: Teach \'n Go, HelloChinese, dan Tugas Akhir Jesslyn (2024): fitur yang dibandingkan dan apa yang diambil (Tabel 4.2).]', []),
         ('Spesifikasi Kebutuhan Sistem', '[ISI: kebutuhan fungsional per peran dan kebutuhan non-fungsional (keamanan kunci jawaban, konsistensi voucher, multiplatform) dalam Tabel 4.3 sampai 4.5.]', [
             ('Kebutuhan Admin', '[ISI]'), ('Kebutuhan Guru', '[ISI]'), ('Kebutuhan Murid', '[ISI]')]),
@@ -610,7 +611,7 @@ def riwayat_hidup():
 
 # ---------------------------------------------------------------- assemble
 chapters = []   # (xml list) built first so the lists know every bookmark
-md = {1: 'BAB_I_PENDAHULUAN.md', 2: 'BAB_II_TEORI_PENUNJANG.md', 3: 'BAB_III_PROSES_BISNIS.md'}
+md = {1: 'BAB_I_PENDAHULUAN.md', 2: 'BAB_II_TEORI_PENUNJANG.md', 3: 'BAB_III_PROSES_BISNIS.md', 4: 'BAB_IV_ANALISA_SISTEM.md'}
 chapter_xml = {}
 for c in range(1, 9):
     if c in md:

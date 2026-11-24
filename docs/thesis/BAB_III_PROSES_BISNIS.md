@@ -11,28 +11,34 @@ diagram, serta permasalahan yang ditemukan.
 ## 3.1 Profil Easy Study
 
 Easy Study (易华文教中心) adalah lembaga kursus bahasa Mandarin di
-Surabaya yang berdiri sejak [ISI: tahun] dan beralamat di [ISI: alamat].
+Surabaya yang berdiri sejak ⟦1994⟧ dan beralamat di Jl. Manyar Tirtomoyo
+VII/11, Surabaya.
 Easy Study mengajarkan bahasa Mandarin secara tatap muka dari tingkat
 HSK 1 sampai HSK 6. Keenam tingkat dikelompokkan menjadi tiga level, yaitu
 Beginner (HSK 1–2), Intermediate (HSK 3–4), dan Advance (HSK 5–6). Kelas
 bersifat semi-privat dengan enam sampai delapan kursi per kelas dan
 dilaksanakan di dua ruang, yaitu ruang utama dan ruang kecil.
 
-Pada saat tugas akhir ini disusun, Easy Study dikelola oleh satu admin dan
-empat guru. Profil guru dan level yang diajarkan ditunjukkan pada Tabel 3.1,
-sedangkan sebaran murid aktif per level ditunjukkan pada Tabel 3.2. Dalam
-satu bulan Easy Study rata-rata menerima [ISI: jumlah] pembayaran paket
-kursus dan menyelenggarakan [ISI: jumlah] tes simulasi HSK.
+Pada saat tugas akhir ini disusun, Easy Study dikelola oleh satu admin (T)
+yang mengurus voucher murid, layanan pelanggan, kebutuhan murid, dan
+penyiapan materi cetak, serta empat guru (W, S, M, dan W) yang mengajar dan
+merawat materi ajar, termasuk mendigitalkan dan memperbaikinya. Profil guru
+dan level yang diajarkan ditunjukkan pada Tabel 3.1, sedangkan sebaran murid
+aktif per level ditunjukkan pada Tabel 3.2. Pada November 2026 tercatat 54
+murid aktif dengan 62 paket yang sedang berjalan (33 paket enam belas
+pertemuan dan 29 paket delapan pertemuan), sekitar seratus kehadiran murid
+per bulan pada Oktober dan November 2026, dan [ISI: jumlah] tes simulasi HSK
+per bulan.
 
 Tabel 3.1
 Guru Easy Study dan Level yang Diajarkan
 
 | No | Guru | Level yang diajarkan | Hari mengajar |
 |---|---|---|---|
-| 1 | [ISI: inisial guru 1] | [ISI] | [ISI] |
-| 2 | [ISI: inisial guru 2] | [ISI] | [ISI] |
-| 3 | [ISI: inisial guru 3] | [ISI] | [ISI] |
-| 4 | [ISI: inisial guru 4] | [ISI] | [ISI] |
+| 1 | W | [ISI] | [ISI] |
+| 2 | S | [ISI] | [ISI] |
+| 3 | M | [ISI] | [ISI] |
+| 4 | W | [ISI] | [ISI] |
 
 Tabel 3.2
 Sebaran Murid Aktif per Level
@@ -42,7 +48,7 @@ Sebaran Murid Aktif per Level
 | Beginner | HSK 1–2 | [ISI] | [ISI] |
 | Intermediate | HSK 3–4 | [ISI] | [ISI] |
 | Advance | HSK 5–6 | [ISI] | [ISI] |
-| Total | | [ISI] | [ISI] |
+| Total | | 54 | [ISI] |
 
 Murid membeli paket kursus berupa sejumlah sesi (delapan atau enam
 belas sesi) dengan masa berlaku tertentu. Pada sistem lama murid
@@ -66,7 +72,25 @@ Calon murid atau orang tuanya menghubungi admin melalui WhatsApp atau
 datang langsung ke Easy Study, sebagian setelah mengenalnya dari Instagram.
 Tidak ada kelas percobaan gratis. Admin menjelaskan kelas, biaya, dan jam
 sesi, lalu mengirim tautan Google Form pendaftaran; data diri yang diisi
-calon murid terkumpul di spreadsheet Google Form. Penentuan tingkat awal
+calon murid terkumpul di spreadsheet Google Form. Isian formulir tersebut
+dirangkum pada Tabel 3.3; di dalamnya calon murid juga memilih paket,
+tingkat awal, dan menyetujui ketentuan masa berlaku paket.
+
+Tabel 3.3
+Isian Formulir Pendaftaran Siswa Baru (Google Form)
+
+| No | Isian | Pilihan atau keterangan |
+|---|---|---|
+| 1 | Email dan tanggal masuk les | Isian bebas dan tanggal |
+| 2 | Durasi pilihan les | 16 pertemuan (24 jam) Rp3.950.000, minimal dua kali seminggu; 8 pertemuan (12 jam) Rp2.450.000, minimal sekali seminggu |
+| 3 | Mulai dari level | Basic/HSK 1 sampai HSK 6 |
+| 4 | Nama Indonesia dan nama Mandarin | Nama Mandarin dalam pinyin atau hanzi, boleh difoto |
+| 5 | Jenis kelamin, alamat, tanggal lahir | Isian bebas dan tanggal |
+| 6 | Nomor WhatsApp murid dan orang tua/wali | Beserta nama orang tua/wali |
+| 7 | Pendidikan dan nama sekolah/perusahaan | SMP, SMA, mahasiswa, pekerja, lainnya |
+| 8 | Tujuan les dan sumber informasi | Studi atau pekerjaan; Google, teman, Instagram/Facebook, seminar, keluarga, lainnya |
+| 9 | Pernyataan persetujuan | Masa berlaku paket dua bulan sejak tanggal mulai; sisa pertemuan setelah itu hangus kecuali libur resmi atau kondisi yang disetujui bersama |
+ Penentuan tingkat awal
 mengikuti keinginan calon murid: admin menanyakan apakah ia ingin mulai dari
 Beginner atau mengikuti tes singkat yang diberikan guru; tidak ada tes
 penempatan yang terstandar. Setiap murid menyepakati hari les tertentu saat
@@ -89,8 +113,10 @@ Daftar Sesi Harian di Grup WhatsApp Siswa pada Sistem Lama
 
 ### 3.2.2 Pembayaran dan Paket Sesi
 
-Murid membayar paket delapan atau enam belas sesi melalui transfer bank
-atau tunai. Untuk transfer, murid mengirim bukti transfer melalui WhatsApp
+Murid membayar paket enam belas pertemuan (Rp3.950.000) atau delapan
+pertemuan (Rp2.450.000) melalui transfer bank atau tunai; masa berlaku paket
+dua bulan sejak tanggal mulai, dan sisa pertemuan setelah itu hangus kecuali
+ada libur resmi atau kesepakatan tertentu. Untuk transfer, murid mengirim bukti transfer melalui WhatsApp
 kepada admin, dan admin meneruskannya kepada pemilik usaha. Admin kemudian
 menulis kwitansi fisik untuk murid dan mencatat paket baru pada file Excel
 voucher aktif. Sisa sesi setiap murid dihitung secara manual dari daftar
@@ -130,9 +156,9 @@ Easy Study, guru mengawasi dan memutar rekaman bagian mendengarkan. Setelah
 dikoreksi, guru menghitung nilai per bagian (mendengarkan, membaca, dan
 menulis) mengikuti format hasil HSK resmi seperti pada Gambar 3.3, dan murid
 dianggap lulus bila mencapai sekitar 60 % pada setiap bagian. Nilai per
-bagian dimasukkan satu per satu ke aplikasi web Nilai Simulasi HSK, yang
-hanya menyimpan nilai dan terpisah dari data murid lainnya (pendaftaran,
-kehadiran, dan paket). Kenaikan tingkat diputuskan guru setelah murid lulus
+bagian dimasukkan satu per satu ke aplikasi web Nilai Simulasi HSK (Gambar
+3.4), aplikasi web sederhana yang hanya menyimpan nilai per murid dan
+terpisah dari data murid lainnya (pendaftaran, kehadiran, dan paket). Kenaikan tingkat diputuskan guru setelah murid lulus
 sekitar dua sampai tiga tes simulasi dan menyelesaikan sejumlah latihan;
 murid hanya diberi tahu secara lisan bahwa ia naik ke tingkat berikutnya.
 
@@ -141,6 +167,11 @@ disamarkan]
 
 Gambar 3.3
 Format Hasil HSK Resmi yang Diikuti oleh Penilaian Tes Simulasi
+
+[GAMBAR 3.4: tangkapan layar halaman awal aplikasi web Nilai Simulasi HSK]
+
+Gambar 3.4
+Aplikasi Web Nilai Simulasi HSK pada Sistem Lama
 
 ### 3.2.5 Pemantauan Perkembangan Murid
 
@@ -161,7 +192,7 @@ untuk menggambarkan urutan langkah pada proses-proses utama.
 
 ### 3.3.1 Rich Picture
 
-Rich picture sistem lama ditunjukkan pada Gambar 3.4. Terdapat lima
+Rich picture sistem lama ditunjukkan pada Gambar 3.5. Terdapat lima
 pihak yang terlibat, yaitu calon murid, murid, admin, guru, dan pemilik usaha,
 serta empat alat bantu, yaitu WhatsApp, spreadsheet, daftar hadir kertas, dan
 aplikasi web Nilai Simulasi HSK. Hampir semua aliran informasi melewati
@@ -172,14 +203,14 @@ jam belajarnya dari admin, mencatat kehadiran di kertas, mengoreksi latihan dan 
 menyetorkan daftar hadir dan nilai kepada admin. Pemilik usaha memperoleh
 gambaran keadaan kursus dengan bertanya kepada admin dan guru.
 
-[GAMBAR 3.4: rich picture sistem lama]
+[GAMBAR 3.5: rich picture sistem lama]
 
-Gambar 3.4
+Gambar 3.5
 Rich Picture Sistem Saat Ini
 
 ### 3.3.2 Use Case Diagram Sistem Saat Ini
 
-Use case diagram sistem lama ditunjukkan pada Gambar 3.5. Aktor calon
+Use case diagram sistem lama ditunjukkan pada Gambar 3.6. Aktor calon
 murid menghubungi admin melalui WhatsApp atau datang langsung, mengisi
 Google Form data diri, dan memilih mulai dari Beginner atau mengikuti tes
 singkat. Aktor murid (beserta orang tuanya) membayar paket, mengirim bukti
@@ -196,9 +227,9 @@ Aktor pemilik usaha menerima pemberitahuan pembayaran, menanyakan
 perkembangan murid, dan membaca rekap bulanan. Semua use case tersebut
 dilakukan tanpa sistem yang terhubung.
 
-[GAMBAR 3.5: use case diagram sistem lama]
+[GAMBAR 3.6: use case diagram sistem lama]
 
-Gambar 3.5
+Gambar 3.6
 Use Case Diagram Sistem Saat Ini
 
 ### 3.3.3 Activity Diagram Sistem Saat Ini
@@ -206,7 +237,7 @@ Use Case Diagram Sistem Saat Ini
 Dua proses utama sistem lama digambarkan dalam activity diagram, yaitu
 pendaftaran dan pembayaran serta tes simulasi dan kenaikan tingkat.
 
-Gambar 3.6 menggambarkan pendaftaran dan pembayaran. Calon murid
+Gambar 3.7 menggambarkan pendaftaran dan pembayaran. Calon murid
 menghubungi admin melalui WhatsApp atau datang langsung; admin menjelaskan
 kelas, biaya, dan jam sesi, lalu mengirim tautan Google Form yang diisi calon
 murid. Admin menanyakan apakah calon murid ingin mulai dari Beginner atau
@@ -217,12 +248,12 @@ Bukti transfer dikirim kepada admin dan diteruskan kepada pemilik usaha.
 Admin menulis kwitansi fisik, mencatat paket di Excel voucher aktif, dan
 memasukkan murid ke grup WhatsApp siswa.
 
-[GAMBAR 3.6: activity diagram pendaftaran dan pembayaran pada sistem lama]
+[GAMBAR 3.7: activity diagram pendaftaran dan pembayaran pada sistem lama]
 
-Gambar 3.6
+Gambar 3.7
 Activity Diagram Pendaftaran dan Pembayaran pada Sistem Saat Ini
 
-Gambar 3.7 menggambarkan tes simulasi dan kenaikan tingkat. Guru
+Gambar 3.8 menggambarkan tes simulasi dan kenaikan tingkat. Guru
 menilai bahwa seorang murid perlu dites, karena sudah lama tidak dites atau
 sudah mencapai titik tertentu. Admin mengambil soal HSK lama yang sudah
 dicetak dari stok arsip; guru mengawasi tes dan memutar rekaman bagian
@@ -233,32 +264,33 @@ guru mencatat nilai dan menghitung tes yang sudah lulus; setelah dua sampai
 tiga tes lulus dan latihan dianggap cukup, guru menyatakan murid naik tingkat
 dan memberitahukannya secara lisan.
 
-[GAMBAR 3.7: activity diagram tes simulasi dan kenaikan tingkat pada sistem lama]
+[GAMBAR 3.8: activity diagram tes simulasi dan kenaikan tingkat pada sistem lama]
 
-Gambar 3.7
+Gambar 3.8
 Activity Diagram Tes Simulasi dan Kenaikan Tingkat pada Sistem Saat Ini
 
 ## 3.4 Permasalahan pada Sistem Saat Ini
 
 Berdasarkan uraian dan pemodelan di atas, permasalahan utama sistem lama
-dirangkum pada Tabel 3.3 beserta penyebab dan akibatnya. Permasalahan
+dirangkum pada Tabel 3.4 beserta penyebab dan akibatnya, diurutkan dari yang
+paling dirasakan oleh pemilik usaha. Permasalahan
 tersebut menjadi dasar analisis kebutuhan pada Bab IV dan dijawab oleh
 rancangan sistem baru pada Bab V.
 
-Tabel 3.3
+Tabel 3.4
 Permasalahan pada Sistem Saat Ini
 
 | No | Masalah | Penyebab | Akibat |
 |---|---|---|---|
-| 1 | Tidak ada jadwal guru dan kelas | Jam belajar disepakati lewat chat tanpa jadwal tertulis; pemakaian guru dan ruang tidak tercatat di mana pun | Admin dan pemilik tidak tahu kapan guru dan ruang terpakai; setiap perubahan jam diatur ulang satu per satu lewat chat |
-| 2 | Guru pengganti sulit dicari | Tidak ada data ketersediaan dan level yang diajar tiap guru dalam satu tempat | Admin menghubungi guru satu per satu; murid terlambat diberi tahu |
-| 3 | Data murid tersebar | Pendaftaran di chat dan spreadsheet, kehadiran di kertas, nilai di aplikasi web terpisah | Data sulit dicari dan tidak sinkron antarsumber |
-| 4 | Selisih sisa sesi paket | Sisa sesi dihitung manual dari daftar hadir kertas; izin dan alpa diperlakukan berbeda tanpa catatan yang seragam | Perselisihan sisa sesi antara admin dan murid; paket kedaluwarsa tidak terpantau |
-| 5 | Pemeriksaan pembayaran memakan waktu | Bukti transfer dicocokkan dengan mutasi rekening satu per satu | Waktu admin habis untuk pekerjaan berulang; pembayaran yang belum dicek menunda masuk kelas |
-| 6 | Koreksi latihan dan tes lambat | Latihan dan tes di kertas, dikoreksi manual, nilai diketik ulang | Umpan balik ke murid terlambat; kesalahan ketik nilai |
-| 7 | Kenaikan tingkat tidak terstandar | Riwayat nilai diperiksa manual; tidak ada aturan tertulis jumlah tes yang harus lulus | Keputusan naik tingkat berbeda antarguru; murid tidak tahu syaratnya |
-| 8 | Perkembangan murid sulit dipantau | Catatan ada pada masing-masing guru; tidak ada ringkasan per murid | Pemilik usaha dan orang tua tidak punya gambaran; murid yang tertinggal terlambat ditangani |
-| 9 | Rekap bisnis manual | Murid baru, pendapatan, dan jam mengajar direkap di akhir bulan dari beberapa sumber | Rekap terlambat dan rawan salah |
+| 1 | Guru pengganti sulit dicari | Hanya ada empat guru; ketersediaan dan level yang diajar tidak tercatat di satu tempat | Admin menghubungi guru satu per satu lewat chat; murid terlambat diberi tahu |
+| 2 | Perkembangan murid tidak terpantau | Catatan ada pada masing-masing guru; kapan murid terakhir datang hanya diketahui admin | Guru dan pemilik tidak tahu sejauh mana dan sampai kapan murid belajar; murid yang tertinggal terlambat ditangani |
+| 3 | Tidak ada rekap bulanan | Murid baru, pendapatan, dan jam mengajar tersebar di Excel, kwitansi, dan daftar hadir | Pemilik tidak punya gambaran usaha tanpa menanyai admin |
+| 4 | Tidak ada jadwal guru dan kelas | Daftar sesi dikirim manual setiap sore; pemakaian guru dan ruang tidak tercatat | Admin kadang lupa mengirim daftar sesi; murid tidak tahu kelas esok dibuka atau tidak |
+| 5 | Selisih sisa sesi paket | Sisa sesi dikurangi sehari kemudian dari daftar hadir kertas ke Excel | Perselisihan sisa sesi antara admin dan murid; masa berlaku dua bulan tidak terpantau |
+| 6 | Data murid tersebar | Google Form, Excel daftar siswa, Excel term, kertas, dan aplikasi web nilai | Data sulit dicari dan tidak sinkron antarsumber |
+| 7 | Kenaikan tingkat tidak terstandar | Keputusan guru setelah dua sampai tiga tes tanpa aturan tertulis | Syarat naik tingkat berbeda antarguru; murid tidak tahu syaratnya |
+| 8 | Koreksi latihan dan tes manual | Latihan dan tes di kertas, dikoreksi guru, nilai diketik ulang ke aplikasi web terpisah | Umpan balik lambat; pekerjaan ganda bagi guru |
+| 9 | Pencatatan pembayaran manual | Bukti transfer diteruskan lewat chat, kwitansi tulis tangan, paket dicatat di Excel | Pekerjaan berulang admin; menurut pemilik bukan masalah besar |
 
 Kesembilan masalah tersebut bermuara pada tiga hal: data yang tersebar,
 pekerjaan berulang yang dilakukan manual oleh admin, dan tidak adanya

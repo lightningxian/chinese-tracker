@@ -52,6 +52,19 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   admin asked availability by chat and kept the schedule in a spreadsheet.
 - Checks: package valid, 127 bookmarks all resolved, 2 figure relationships, list point 8 shares the list
   numbering of points 1–7. Pages after the cover are still checked by structure only (no Word on the Mac).
+- **Bab IV drafted, Bab III completed from the owner's documents (16:xx):** the owner answered the ten Bab IV
+  questions and sent the Google Form (4 screenshots), a kwitansi, the Excel "Daftar Siswa Easy Study (2024)"
+  (1,324 names since 1994; sheet Aktif 54 active students, 27 on 8 and 27 on 16 sessions) and "Rekap Absensi
+  Murid" (33 running 16-session and 29 running 8-session terms; about 100 attendances a month in Oct and Nov
+  2026), and the old score app https://student-hsk-score.netlify.app ("Nilai Simulasi HSK", so the proposal was
+  right). Bab III: address from the kwitansi header, roles of admin T and teachers W, S, M, W, Google Form
+  fields as Tabel 3.3 (prices Rp3.950.000 / Rp2.450.000, two-month validity), Gambar 3.4 = the old web app
+  (figures 3.4–3.7 became 3.5–3.8), Tabel 3.4 problems reordered by the owner's ranking. Bab IV
+  (`BAB_IV_ANALISA_SISTEM.md`): facts, document table, new students per year 2019–2026 from the Excel, package
+  table, problem-to-need mapping, comparison tables from the proposal (Teach 'n Go, HelloChinese, Jesslyn),
+  requirements per role and non-functional; Gambar 4.1–4.4 (form page, kwitansi and Excel excerpts with
+  personal data blurred). Only aggregates from the Excel files are in the book; the files themselves stay out
+  of the repo. Book: 13 figures, 13 tables, 137 bookmarks, 75 `[ISI]` left.
 - **v0.1.36 (98151f6) reviewed on the Mac:** analyzer 17 infos; `flutter test` 174 pass + 2 skipped; `node
   --check` ok; no tracked secrets; live bundle from 09:39 WIB; APK still served. **Rules tests 85 pass, 1 fail:**
   the suite still asserts that an admin cannot delete `test_codes/{id}` while the rule now says
