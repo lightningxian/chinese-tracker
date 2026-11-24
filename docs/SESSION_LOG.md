@@ -55,7 +55,8 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 - **v0.1.36 (98151f6) reviewed on the Mac:** analyzer 17 infos; `flutter test` 174 pass + 2 skipped; `node
   --check` ok; no tracked secrets; live bundle from 09:39 WIB; APK still served. **Rules tests 85 pass, 1 fail:**
   the suite still asserts that an admin cannot delete `test_codes/{id}` while the rule now says
-  `allow delete: if isAdmin()`; CI on main is red until the BUILD chat updates that test (asked). The rule is
+  `allow delete: if isAdmin()`; the BUILD chat fixed the test in 6763fb3 (admin delete succeeds, teacher delete
+  fails) and the Mac run is back to 86 pass, 0 fail, 1 skipped. The rule is
   acceptable for an admin-only action: `removeCode` checks `test_sessions`, `test_results` and
   `placement_results` (all staff-readable) and hides a used code instead of deleting it; a server-side callable
   would make that guarantee client-independent (noted to the BUILD chat).
