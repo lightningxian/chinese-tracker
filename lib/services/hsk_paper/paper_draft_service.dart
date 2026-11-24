@@ -116,6 +116,7 @@ class PaperDraftService {
         'unsure': s.unsure,
         'optionsIncomplete': s.optionsIncomplete,
         'checked': s.checked,
+        'orderSet': s.orderSet,
         'oddForm': s.oddForm,
         if (s.paperLevel != null) 'paperLevel': s.paperLevel,
         if (s.correctIndex != null) 'correctIndex': s.correctIndex,
@@ -142,6 +143,7 @@ class PaperDraftService {
       correctIndex: (m['correctIndex'] as num?)?.toInt(),
     );
     s.checked = m['checked'] == true;
+    s.orderSet = m['orderSet'] == true;
     s.oddForm = m['oddForm'] == true;
     s.paperLevel = (m['paperLevel'] as num?)?.toInt();
     return s;
@@ -190,7 +192,7 @@ class PaperDraftService {
       'edited': edited.toList(),
       'questions': draft.slots.length,
       'toCheck': draft.flagged.length,
-      'answered': draft.slots.where((s) => s.correctIndex != null).length,
+      'answered': draft.slots.where((s) => s.answered && s.form != HskForm.sentenceWithWord).length,
       'readSeconds': readSeconds,
       'engine': engine,
       'byName': byName,

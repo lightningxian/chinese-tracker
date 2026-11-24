@@ -5,6 +5,7 @@ import 'package:chinese_tracker/models/hsk_paper_draft.dart';
 import 'package:chinese_tracker/services/hsk_paper/paper_draft_service.dart';
 import 'package:chinese_tracker/services/hsk_paper/paper_image_ops.dart';
 import 'package:chinese_tracker/models/app_notification.dart';
+import 'package:chinese_tracker/models/exercise_category.dart';
 import 'package:chinese_tracker/models/exercise_skill_category.dart';
 import 'package:chinese_tracker/models/invoice.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -94,6 +95,31 @@ void main() {
       final a = QuestionAnswerViewOrders.order('q-1', 4);
       expect([...a]..sort(), [0, 1, 2, 3]);
       expect(QuestionAnswerViewOrders.order('q-1', 4), a);
+    });
+  });
+
+  group('Owner 2026-11-24 (sixth round)', () {
+    test('word order and character answers are kept and saved', () {
+      final order = HskSlot(number: 71, skill: 'writing', form: HskForm.reorder, page: 15,
+          segments: ['弟弟', '被', '雨伞', '拿走', '了']);
+      expect(order.answered, isFalse);
+      order
+        ..segments = ['雨伞', '被', '弟弟', '拿走', '了']
+        ..orderSet = true;
+      final char = HskSlot(number: 76, skill: 'writing', form: HskForm.pinyinChar, page: 16,
+          prompt: '她的头发又黑又（ ）。', keyword: 'cháng', accepted: ['长']);
+      expect(char.answered, isTrue);
+      final back = PaperDraftService.slotFromMap(PaperDraftService.slotToMap(order));
+      expect(back.orderSet, isTrue);
+      expect(back.segments.join(), '雨伞被弟弟拿走了');
+      final w = HskPaperDraft(slots: [order, char]).toAiWorksheet({15: (1000, 1400), 16: (1000, 1400)});
+      final qs = w.sections.expand((x) => x.questions).toList();
+      expect(qs[0].segments.join(), '雨伞被弟弟拿走了');
+      expect(qs[1].accepted, ['长']);
+    });
+
+    test('HSK Standard Course is a worksheet type of its own', () {
+      expect(ExerciseCategory.fromValue('hsk_standard_course'), ExerciseCategory.standardCourse);
     });
   });
 }

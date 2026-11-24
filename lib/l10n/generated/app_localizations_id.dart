@@ -8606,4 +8606,38 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get paperSaveFailedBody =>
       'Tidak ada yang hilang: lanjutkan mengedit, atau simpan pindaian sebagai draf. Mohon kirim pesan ini ke pengembang:';
+
+  @override
+  String get paperRightOrder => 'Urutan benar';
+
+  @override
+  String get paperOrderHint =>
+      'ketuk kata-kata sesuai urutan kalimat yang benar';
+
+  @override
+  String get paperOrderDone => 'sudah diatur (ketuk lagi untuk mengubah)';
+
+  @override
+  String get paperOrderReset => 'Ulangi';
+
+  @override
+  String get paperCharAnswer => 'Jawaban (karakternya)';
+
+  @override
+  String get paperCharAnswerHint =>
+      'mis. 长. Lebih dari satu jawaban? Pisahkan dengan /';
+
+  @override
+  String get exerciseCategoryStandardCourse => 'HSK Standard Course';
+
+  @override
+  String get bankAudioPlay => 'Putar rekaman';
+
+  @override
+  String get bankAudioStop => 'Berhenti';
+
+  @override
+  String bankAudioFailed(String error) {
+    return 'Rekaman tidak bisa diputar: $error';
+  }
 }

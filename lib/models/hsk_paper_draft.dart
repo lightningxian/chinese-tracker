@@ -91,6 +91,19 @@ class HskSlot {
   /// 1 = false); null until the admin marks it.
   int? correctIndex;
 
+  /// Owner 2026-11-24: word order: the admin put the words in the right
+  /// order ([segments] now holds that order, which is the answer).
+  bool orderSet = false;
+
+  /// Whether the right answer is set, for the forms that have one (free
+  /// writing is marked by a teacher and has none).
+  bool get answered => switch (form) {
+        HskForm.reorder => orderSet,
+        HskForm.pinyinChar => accepted.any((a) => a.trim().isNotEmpty),
+        HskForm.sentenceWithWord => true,
+        _ => correctIndex != null,
+      };
+
   /// Forms that have one right choice to mark.
   bool get hasChoiceAnswer =>
       form == HskForm.choice ||

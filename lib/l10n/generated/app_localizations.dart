@@ -14189,6 +14189,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Nothing is lost: keep editing, or save the scan as a draft. Please send this message to the developer:'**
   String get paperSaveFailedBody;
+
+  /// No description provided for @paperRightOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Right order'**
+  String get paperRightOrder;
+
+  /// No description provided for @paperOrderHint.
+  ///
+  /// In en, this message translates to:
+  /// **'tap the words in the order of the right sentence'**
+  String get paperOrderHint;
+
+  /// No description provided for @paperOrderDone.
+  ///
+  /// In en, this message translates to:
+  /// **'set (tap again to change)'**
+  String get paperOrderDone;
+
+  /// No description provided for @paperOrderReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Start again'**
+  String get paperOrderReset;
+
+  /// No description provided for @paperCharAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'Answer (the character)'**
+  String get paperCharAnswer;
+
+  /// No description provided for @paperCharAnswerHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. 长. More than one accepted? Separate them with /'**
+  String get paperCharAnswerHint;
+
+  /// No description provided for @exerciseCategoryStandardCourse.
+  ///
+  /// In en, this message translates to:
+  /// **'HSK Standard Course'**
+  String get exerciseCategoryStandardCourse;
+
+  /// No description provided for @bankAudioPlay.
+  ///
+  /// In en, this message translates to:
+  /// **'Play the recording'**
+  String get bankAudioPlay;
+
+  /// No description provided for @bankAudioStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get bankAudioStop;
+
+  /// No description provided for @bankAudioFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The recording could not be played: {error}'**
+  String bankAudioFailed(String error);
 }
 
 class _AppLocalizationsDelegate

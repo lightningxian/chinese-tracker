@@ -3168,5 +3168,16 @@
   "levelPathFinished": "finished",
   "levelPathToDo": "to do",
   "paperSaveFailedTitle": "The worksheet could not be saved",
-  "paperSaveFailedBody": "Nothing is lost: keep editing, or save the scan as a draft. Please send this message to the developer:"
+  "paperSaveFailedBody": "Nothing is lost: keep editing, or save the scan as a draft. Please send this message to the developer:",
+  "paperRightOrder": "Right order",
+  "paperOrderHint": "tap the words in the order of the right sentence",
+  "paperOrderDone": "set (tap again to change)",
+  "paperOrderReset": "Start again",
+  "paperCharAnswer": "Answer (the character)",
+  "paperCharAnswerHint": "e.g. 长. More than one accepted? Separate them with /",
+  "exerciseCategoryStandardCourse": "HSK Standard Course",
+  "bankAudioPlay": "Play the recording",
+  "bankAudioStop": "Stop",
+  "bankAudioFailed": "The recording could not be played: {error}",
+  "@bankAudioFailed": {"placeholders": {"error": {"type": "String"}}}
 }

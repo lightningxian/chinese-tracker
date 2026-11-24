@@ -22,6 +22,7 @@ class ExerciseCategoryChip extends StatelessWidget {
           AppColors.chipPurpleBg,
           AppColors.chipPurpleFg
         ),
+      ExerciseCategory.standardCourse => (AppColors.chipGreenBg, AppColors.teal),
     };
     return Align(
       alignment: Alignment.centerLeft,

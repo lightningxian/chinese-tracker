@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -666,6 +667,8 @@ class _ListeningAudioCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
+          // Owner 2026-11-24: hear the recording here, to check it works.
+          if (url != null) _AudioPreview(url: url),
           if (!readOnly) ...[
             OutlinedButton.icon(
               onPressed: onUpload,
@@ -899,3 +902,65 @@ class _PaperRecordCard extends StatelessWidget {
     );
   }
 }
+
+/// Play / stop the worksheet's recording on its own page.
+class _AudioPreview extends StatefulWidget {
+  const _AudioPreview({required this.url});
+  final String url;
+
+  @override
+  State<_AudioPreview> createState() => _AudioPreviewState();
+}
+
+class _AudioPreviewState extends State<_AudioPreview> {
+  final _player = AudioPlayer();
+  bool _loading = false;
+
+  @override
+  void dispose() {
+    _player.dispose();
+    super.dispose();
+  }
+
+  Future<void> _toggle() async {
+    final l = context.l10n;
+    final messenger = ScaffoldMessenger.of(context);
+    if (_player.playing) {
+      await _player.stop();
+      if (mounted) setState(() {});
+      return;
+    }
+    setState(() => _loading = true);
+    try {
+      await _player.setUrl(widget.url);
+      if (mounted) setState(() => _loading = false);
+      await _player.play();
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(l.bankAudioFailed('$e'))));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    return StreamBuilder<PlayerState>(
+      stream: _player.playerStateStream,
+      builder: (context, snap) {
+        final playing = snap.data?.playing ?? false;
+        return Padding(
+          padding: const EdgeInsets.only(right: 8),
+          child: _loading
+              ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
+              : IconButton.filledTonal(
+                  tooltip: playing ? l.bankAudioStop : l.bankAudioPlay,
+                  onPressed: _toggle,
+                  icon: Icon(playing ? Icons.stop : Icons.play_arrow),
+                ),
+        );
+      },
+    );
+  }
+}
+

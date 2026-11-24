@@ -6,6 +6,37 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-24 — Claude (BUILD chat): word-order and character answers, HSK Standard Course, recording preview
+
+**What changed**
+- **Scan paper, word order**: under the words, **Right order**: tap the
+  words in the order of the right sentence; that order becomes the answer
+  (`HskSlot.segments`, `orderSet` saved with drafts); the chip beside the
+  question shows the sentence. Editing the words clears the order.
+- **Scan paper, pinyin → character**: an **Answer (the character)** field
+  under the tone buttons (`HskSlot.accepted`; several answers separated
+  with `/`); the chip shows it.
+- Drafts count answered word-order and character questions too.
+- **New Type of exercise: HSK Standard Course** (`hsk_standard_course`),
+  for the Standard Course books and workbooks. It plays like a practice
+  exercise (any number of tries, not blocked like HSK Simulation).
+- **Worksheet recording**: a **Play** button on the worksheet's recording
+  card, so the admin hears the uploaded file before students do.
+
+**Why**
+- Owner 2026-11-24 (sixth round): "word order add answer too, also add for
+  character for pinyin … a new type called HSK Standard Course … make sure
+  the audio work".
+
+**For review**
+- No rules or functions change (hosting only). Checked on the emulator: a
+  69-second WAV uploaded to a worksheet plays from the Storage emulator
+  (Play, position moving, no error). The word-order and character fields
+  are covered by unit tests (kept and saved in drafts); the scan screen
+  itself was not walked this round (the browser pane cropped it).
+
+---
+
 ## 2026-11-24 — Claude (BUILD chat): scan drafts and answers, shuffled choices, level checklists
 
 **What changed**

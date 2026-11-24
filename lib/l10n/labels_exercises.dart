@@ -26,6 +26,7 @@ extension ExerciseCategoryL10n on ExerciseCategory {
         ExerciseCategory.quiz => l.exerciseCategoryQuiz,
         ExerciseCategory.exam => l.exerciseCategoryExam,
         ExerciseCategory.hskSimulation => l.exerciseCategoryHskSimulation,
+        ExerciseCategory.standardCourse => l.exerciseCategoryStandardCourse,
       };
 }
 

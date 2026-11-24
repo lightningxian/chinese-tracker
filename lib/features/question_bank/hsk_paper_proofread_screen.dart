@@ -874,6 +874,7 @@ class _SlotEditorState extends State<_SlotEditor> {
   late final _segments =
       TextEditingController(text: widget.slot.segments.join(' / '));
   late final _keyword = TextEditingController(text: widget.slot.keyword);
+  late final _accepted = TextEditingController(text: widget.slot.accepted.join(' / '));
 
   @override
   void dispose() {
@@ -881,6 +882,7 @@ class _SlotEditorState extends State<_SlotEditor> {
     _options.dispose();
     _segments.dispose();
     _keyword.dispose();
+    _accepted.dispose();
     super.dispose();
   }
 
@@ -983,7 +985,7 @@ class _SlotEditorState extends State<_SlotEditor> {
                   l.paperPageShort(s.page),
                   style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                 ),
-              if (s.hasChoiceAnswer) _AnswerChip(slot: s),
+              if (s.form != HskForm.sentenceWithWord) _AnswerChip(slot: s),
               if (s.missing || s.unsure || doubt != null)
                 TextButton(
                   onPressed: () {
@@ -1051,6 +1053,22 @@ class _SlotEditorState extends State<_SlotEditor> {
                       .map((w) => w.trim())
                       .where((w) => w.isNotEmpty)
                       .toList();
+                  s.orderSet = false;
+                  _changed();
+                },
+              ),
+            ],
+            if (s.form == HskForm.reorder) ...[
+              const SizedBox(height: 8),
+              _OrderAnswer(
+                key: ValueKey('order-${s.number}-${s.segments.join('|')}'),
+                slot: s,
+                onOrdered: (words) {
+                  _segments.text = words.join(' / ');
+                  setState(() {
+                    s.segments = words;
+                    s.orderSet = true;
+                  });
                   _changed();
                 },
               ),
@@ -1097,6 +1115,21 @@ class _SlotEditorState extends State<_SlotEditor> {
                         },
                       ),
                   ],
+                ),
+              ],
+              if (s.form == HskForm.pinyinChar) ...[
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _accepted,
+                  decoration: deco(l.paperCharAnswer, helper: l.paperCharAnswerHint),
+                  onChanged: (v) {
+                    setState(() => s.accepted = v
+                        .split(RegExp(r'[/,，、]'))
+                        .map((a) => a.trim())
+                        .where((a) => a.isNotEmpty)
+                        .toList());
+                    _changed();
+                  },
                 ),
               ],
             ],
@@ -1308,12 +1341,14 @@ class _AnswerChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = context.l10n;
     final i = slot.correctIndex;
-    final text = i == null
-        ? l.paperNoAnswer
-        : l.paperAnswerIs(slot.form == HskForm.trueFalse
-            ? (i == 0 ? '✓' : '✗')
-            : _letter(i));
-    final color = i == null ? AppColors.chipAmberFg : AppColors.success;
+    final String? answer = switch (slot.form) {
+      HskForm.reorder => slot.orderSet ? slot.segments.join() : null,
+      HskForm.pinyinChar => slot.accepted.where((a) => a.trim().isNotEmpty).firstOrNull,
+      HskForm.trueFalse => i == null ? null : (i == 0 ? '✓' : '✗'),
+      _ => i == null ? null : _letter(i),
+    };
+    final text = answer == null ? l.paperNoAnswer : l.paperAnswerIs(answer);
+    final color = answer == null ? AppColors.chipAmberFg : AppColors.success;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
@@ -1560,6 +1595,81 @@ class _TrueFalseAnswer extends StatelessWidget {
           label: const Text('✗'),
           selected: slot.correctIndex == 1,
           onSelected: (v) => vm.setAnswer(slot, v ? 1 : null),
+        ),
+      ],
+    );
+  }
+}
+
+
+/// Owner 2026-11-24: word order: tap the words in the right order; the
+/// order becomes the answer (the player shuffles them for students).
+class _OrderAnswer extends StatefulWidget {
+  const _OrderAnswer({super.key, required this.slot, required this.onOrdered});
+  final HskSlot slot;
+  final ValueChanged<List<String>> onOrdered;
+
+  @override
+  State<_OrderAnswer> createState() => _OrderAnswerState();
+}
+
+class _OrderAnswerState extends State<_OrderAnswer> {
+  final List<int> _picked = [];
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final words = widget.slot.segments;
+    if (words.length < 2) return const SizedBox.shrink();
+    final done = widget.slot.orderSet && _picked.isEmpty;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Text(l.paperRightOrder, style: const TextStyle(fontWeight: FontWeight.w700)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                done ? l.paperOrderDone : l.paperOrderHint,
+                style: TextStyle(
+                    fontSize: 12, color: done ? AppColors.success : AppColors.textSecondary),
+              ),
+            ),
+            if (_picked.isNotEmpty)
+              TextButton(
+                onPressed: () => setState(_picked.clear),
+                child: Text(l.paperOrderReset),
+              ),
+          ],
+        ),
+        if (_picked.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Text(
+              [for (final i in _picked) words[i]].join(),
+              style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.teal, fontSize: 16),
+            ),
+          ),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            for (var i = 0; i < words.length; i++)
+              ActionChip(
+                label: Text(words[i]),
+                onPressed: _picked.contains(i)
+                    ? null
+                    : () {
+                        setState(() => _picked.add(i));
+                        if (_picked.length == words.length) {
+                          final ordered = [for (final k in _picked) words[k]];
+                          _picked.clear();
+                          widget.onOrdered(ordered);
+                        }
+                      },
+              ),
+          ],
         ),
       ],
     );

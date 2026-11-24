@@ -13,6 +13,13 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-24 — Claude (BUILD chat, PC): word-order and character answers, Standard Course
+
+- Owner asked: an answer for word order, the character for pinyin
+  questions, a new type "HSK Standard Course" with its audio, and the audio
+  must work.
+- Release v0.1.34 (hosting only), see the CHANGELOG entry.
+
 ### 2026-11-24 — PLAN chat (Mac): owner's first check of the Word book
 
 - **Owner corrections applied** (`docs/thesis/tools/build_book.py`, `docs/thesis/BAB_I_PENDAHULUAN.md`, book rebuilt):

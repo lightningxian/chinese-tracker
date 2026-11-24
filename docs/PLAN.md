@@ -2227,6 +2227,15 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
+### 2026-11-24 — Word-order and character answers, HSK Standard Course, recording preview — COMMIT, release v0.1.34 (hosting only)
+- Built: tap-to-order answer for word order; character answer for pinyin
+  questions; new Type of exercise **HSK Standard Course** (practice);
+  Play button for a worksheet's recording.
+- Proof: analyzer 17 infos; `flutter test` 170 pass; node tests pass;
+  emulator: a 69 s recording uploaded and played on the worksheet screen.
+- Left: the scan screen with the new fields was not walked in the browser
+  this round (unit tests cover keeping and saving the answers).
+
 ### 2026-11-24 — Scan drafts and answers, shuffled choices, level checklists — 3f1519a, release v0.1.33 (rules, storage rules, functions and hosting live from the PC; 74 functions)
 - Built: clock fix; scan drafts (save, list, reopen without reading),
   answers marked while proofreading (choice rows with a tick, the paper's

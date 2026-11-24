@@ -8644,4 +8644,38 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get paperSaveFailedBody =>
       'Nothing is lost: keep editing, or save the scan as a draft. Please send this message to the developer:';
+
+  @override
+  String get paperRightOrder => 'Right order';
+
+  @override
+  String get paperOrderHint =>
+      'tap the words in the order of the right sentence';
+
+  @override
+  String get paperOrderDone => 'set (tap again to change)';
+
+  @override
+  String get paperOrderReset => 'Start again';
+
+  @override
+  String get paperCharAnswer => 'Answer (the character)';
+
+  @override
+  String get paperCharAnswerHint =>
+      'e.g. 长. More than one accepted? Separate them with /';
+
+  @override
+  String get exerciseCategoryStandardCourse => 'HSK Standard Course';
+
+  @override
+  String get bankAudioPlay => 'Play the recording';
+
+  @override
+  String get bankAudioStop => 'Stop';
+
+  @override
+  String bankAudioFailed(String error) {
+    return 'The recording could not be played: $error';
+  }
 }
