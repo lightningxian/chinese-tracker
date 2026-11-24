@@ -45,11 +45,14 @@ Sebaran Murid Aktif per Level
 | Total | | [ISI] | [ISI] |
 
 Murid membeli paket kursus berupa sejumlah sesi (delapan atau enam
-belas sesi) dengan masa berlaku tertentu, lalu mengikuti kelas pada hari dan
-jam yang sudah ditentukan untuk levelnya. Guru pengajar setiap kelas
-ditentukan oleh admin; murid tidak memilih guru. Selain kelas, Easy Study
-menyelenggarakan tes simulasi HSK secara berkala untuk mengukur kesiapan
-murid naik tingkat dan mengikuti ujian HSK resmi.
+belas sesi) dengan masa berlaku tertentu. Pada sistem lama murid
+menyepakati hari les saat mendaftar, tetapi setiap hari bebas memilih sesi
+yang cocok; dalam satu sesi biasanya dua guru mengajar bersama murid dari
+berbagai tingkat dalam satu ruang, sedangkan guru lainnya siaga dan
+mengerjakan tugas lain. Pemilik usaha tidak menangani operasional harian;
+admin meneruskan setiap pemberitahuan pembayaran kepadanya. Selain kelas,
+Easy Study menyelenggarakan tes simulasi HSK untuk mengukur kesiapan murid
+naik tingkat dan mengikuti ujian HSK resmi.
 
 ## 3.2 Deskripsi Sistem Saat Ini
 
@@ -59,18 +62,21 @@ tersebut diuraikan per kegiatan berikut.
 
 ### 3.2.1 Pendaftaran Murid
 
-Calon murid atau orang tuanya menghubungi admin melalui WhatsApp
-untuk menanyakan kelas, biaya, dan jadwal. Admin menjawab satu per satu,
-meminta data diri (nama, nama Mandarin, tanggal lahir, nomor telepon, dan
-pengalaman belajar), lalu mencatatnya di spreadsheet daftar murid. Penentuan
-tingkat awal dilakukan berdasarkan pengakuan calon murid atau tes singkat
-yang diberikan guru secara lisan; tidak ada tes penempatan yang terstandar.
-Setiap murid menyepakati hari les tertentu saat mendaftar, tetapi murid
-bebas memilih sesi lain yang lebih cocok dengan kesibukannya. Caranya, sehari
-sebelumnya admin mengirim daftar sesi ke grup WhatsApp siswa (misalnya Sesi 1
-pukul 15.00–16.30 dan Sesi 2 pukul 16.30–18.00, masing-masing delapan
-tempat), lalu murid menuliskan namanya pada sesi yang dipilih, seperti pada
-Gambar 3.1. Tidak ada jadwal guru atau jadwal kelas yang tertulis selain
+Calon murid atau orang tuanya menghubungi admin melalui WhatsApp atau
+datang langsung ke Easy Study, sebagian setelah mengenalnya dari Instagram.
+Tidak ada kelas percobaan gratis. Admin menjelaskan kelas, biaya, dan jam
+sesi, lalu mengirim tautan Google Form pendaftaran; data diri yang diisi
+calon murid terkumpul di spreadsheet Google Form. Penentuan tingkat awal
+mengikuti keinginan calon murid: admin menanyakan apakah ia ingin mulai dari
+Beginner atau mengikuti tes singkat yang diberikan guru; tidak ada tes
+penempatan yang terstandar. Setiap murid menyepakati hari les tertentu saat
+mendaftar, tetapi murid bebas memilih sesi lain yang lebih cocok dengan
+kesibukannya. Caranya, setelah kelas terakhir hari itu berakhir pukul 18.00,
+admin mengirim daftar sesi untuk hari berikutnya ke grup WhatsApp siswa
+(misalnya Sesi 1 pukul 15.00–16.30 dan Sesi 2 pukul 16.30–18.00,
+masing-masing delapan tempat), lalu murid menuliskan namanya pada sesi yang
+dipilih, seperti pada Gambar 3.1. Orang tua murid yang masih kecil ikut
+berada di grup tersebut. Tidak ada jadwal guru atau jadwal kelas yang tertulis selain
 daftar harian tersebut. Jika seorang guru berhalangan, admin menghubungi guru
 lain satu per satu melalui chat untuk mencari pengganti, lalu memberi tahu
 murid yang terdaftar.
@@ -83,12 +89,15 @@ Daftar Sesi Harian di Grup WhatsApp Siswa pada Sistem Lama
 
 ### 3.2.2 Pembayaran dan Paket Sesi
 
-Murid membayar paket kursus melalui transfer bank, lalu mengirim foto
-bukti transfer melalui WhatsApp. Admin mencocokkan bukti tersebut dengan
-mutasi rekening satu per satu dan mencatat pembayaran di spreadsheet. Sisa
-sesi setiap murid dihitung secara manual dari daftar hadir: setiap kali murid
-hadir, admin mengurangi satu sesi dari paketnya. Masa berlaku paket juga
-dipantau secara manual, sehingga paket yang sudah lewat masa berlakunya
+Murid membayar paket delapan atau enam belas sesi melalui transfer bank
+atau tunai. Untuk transfer, murid mengirim bukti transfer melalui WhatsApp
+kepada admin, dan admin meneruskannya kepada pemilik usaha. Admin kemudian
+menulis kwitansi fisik untuk murid dan mencatat paket baru pada file Excel
+voucher aktif. Sisa sesi setiap murid dihitung secara manual dari daftar
+hadir kertas: sehari setelah kelas, admin mengurangi satu sesi dari paket
+setiap murid yang hadir. Masa berlaku paket juga dipantau secara manual;
+admin mengingatkan murid lewat chat bila paketnya hampir habis atau
+mendekati akhir masa berlaku, dan paket yang sudah lewat masa berlakunya
 kadang baru diketahui belakangan.
 
 ### 3.2.3 Kehadiran
@@ -111,19 +120,27 @@ Daftar Hadir Kertas pada Sistem Lama
 ### 3.2.4 Latihan dan Tes Simulasi HSK
 
 Soal latihan dibagikan dalam bentuk kertas atau fotokopi dan dikoreksi
-manual oleh guru. Tes simulasi HSK dikerjakan di atas kertas di Easy Study
-dengan pengawasan guru. Setelah dikoreksi, nilai per bagian (mendengarkan,
-membaca, dan menulis) dimasukkan satu per satu ke aplikasi web Nilai
-Simulasi HSK, seperti pada Gambar 3.3. Aplikasi web tersebut hanya
-menyimpan nilai dan terpisah dari data murid lainnya (pendaftaran, kehadiran,
-dan paket). Setiap paket tes simulasi diberi kode tes, misalnya H3216917Z
-untuk tes HSK 3, dan setiap kode berisi soal yang berbeda. Kenaikan tingkat
-diputuskan dengan memeriksa riwayat nilai simulasi secara manual.
+manual oleh guru. Tes simulasi HSK diberikan ketika guru menilai seorang
+murid sudah mencapai titik tertentu atau sudah lama tidak dites, dengan
+sedikit keacakan agar kemampuan murid yang sebenarnya terlihat. Soalnya
+diambil dari arsip soal HSK tahun-tahun sebelumnya (sekitar empat belas tahun)
+yang dicetak dan distok oleh admin; setiap paket soal dikenali dengan kode
+tes, misalnya H3216917Z untuk HSK 3. Murid mengerjakannya di atas kertas di
+Easy Study, guru mengawasi dan memutar rekaman bagian mendengarkan. Setelah
+dikoreksi, guru menghitung nilai per bagian (mendengarkan, membaca, dan
+menulis) mengikuti format hasil HSK resmi seperti pada Gambar 3.3, dan murid
+dianggap lulus bila mencapai sekitar 60 % pada setiap bagian. Nilai per
+bagian dimasukkan satu per satu ke aplikasi web Nilai Simulasi HSK, yang
+hanya menyimpan nilai dan terpisah dari data murid lainnya (pendaftaran,
+kehadiran, dan paket). Kenaikan tingkat diputuskan guru setelah murid lulus
+sekitar dua sampai tiga tes simulasi dan menyelesaikan sejumlah latihan;
+murid hanya diberi tahu secara lisan bahwa ia naik ke tingkat berikutnya.
 
-[GAMBAR 3.3: tangkapan layar aplikasi web Nilai Simulasi HSK]
+[GAMBAR 3.3: tangkapan layar halaman hasil HSK resmi, data pribadi
+disamarkan]
 
 Gambar 3.3
-Aplikasi Web Nilai Simulasi HSK pada Sistem Lama
+Format Hasil HSK Resmi yang Diikuti oleh Penilaian Tes Simulasi
 
 ### 3.2.5 Pemantauan Perkembangan Murid
 
@@ -160,67 +177,29 @@ gambaran keadaan kursus dengan bertanya kepada admin dan guru.
 Gambar 3.4
 Rich Picture Sistem Saat Ini
 
-```mermaid
-%% Alat bantu menggambar Gambar 3.4 (bukan isi buku)
-flowchart LR
-  CM[Calon murid] -- "tanya & daftar (WhatsApp)" --> A[Admin]
-  M[Murid] -- "bukti transfer, konfirmasi hadir, izin (WhatsApp)" --> A
-  A -- "catat murid, pembayaran, sisa sesi" --> S[(Spreadsheet)]
-  A -- "kabari murid baru dan jam belajar, tanya kesediaan (WhatsApp)" --> G[Guru]
-  G -- "daftar hadir kertas" --> K[/Daftar hadir/]
-  K -- "disetor berkala" --> A
-  G -- "koreksi latihan & tes di kertas" --> M
-  G -- "input nilai per bagian" --> W[(Web Nilai Simulasi HSK)]
-  P[Pemilik usaha] -- "bertanya" --> A
-  P -- "bertanya" --> G
-  A -. "tidak ada jadwal tertulis: pemakaian guru dan ruang tidak terpantau" .- G
-```
-
 ### 3.3.2 Use Case Diagram Sistem Saat Ini
 
 Use case diagram sistem lama ditunjukkan pada Gambar 3.5. Aktor calon
-murid mendaftar melalui WhatsApp. Aktor murid mengonfirmasi kehadiran,
-mengirim bukti transfer, mengerjakan latihan dan tes di kertas, dan
-menanyakan sisa sesi. Aktor guru memberi tahu ketersediaan, mencatat
-kehadiran, mengoreksi latihan dan tes, dan memasukkan nilai simulasi ke
-aplikasi web. Aktor admin mencatat pendaftaran, menyepakati jam belajar, mencari
-guru pengganti, mencocokkan pembayaran, menghitung sisa sesi, dan
-membuat rekap bulanan. Aktor pemilik usaha membaca rekap dan menanyakan
-perkembangan murid. Semua use case tersebut dilakukan tanpa sistem yang
-terhubung.
+murid menghubungi admin melalui WhatsApp atau datang langsung, mengisi
+Google Form data diri, dan memilih mulai dari Beginner atau mengikuti tes
+singkat. Aktor murid (beserta orang tuanya) membayar paket, mengirim bukti
+transfer, menuliskan nama pada daftar sesi harian, mengikuti sesi, mengerjakan
+latihan dan tes simulasi di kertas, dan menanyakan sisa sesi. Aktor admin
+mengirim tautan Google Form, meneruskan bukti transfer kepada pemilik usaha,
+menulis kwitansi dan mencatat paket di Excel voucher, mengirim daftar sesi
+harian, mengurangi sesi dari daftar hadir kertas, mengingatkan paket yang
+hampir habis, mencetak dan menstok soal HSK lama, mencari guru pengganti,
+dan membuat rekap bulanan. Aktor guru memberi tes singkat, mengajar sesi
+bertingkat campuran, mencatat kehadiran di kertas, mengawasi tes dan memutar
+rekaman, mengoreksi, serta memutuskan kapan murid dites dan naik tingkat.
+Aktor pemilik usaha menerima pemberitahuan pembayaran, menanyakan
+perkembangan murid, dan membaca rekap bulanan. Semua use case tersebut
+dilakukan tanpa sistem yang terhubung.
 
 [GAMBAR 3.5: use case diagram sistem lama]
 
 Gambar 3.5
 Use Case Diagram Sistem Saat Ini
-
-```mermaid
-%% Alat bantu menggambar Gambar 3.5 (bukan isi buku)
-flowchart LR
-  subgraph Sistem lama (manual)
-    U1([Mendaftar lewat WhatsApp])
-    U2([Konfirmasi hadir / izin])
-    U3([Kirim bukti transfer])
-    U4([Kerjakan latihan & tes di kertas])
-    U5([Tanya sisa sesi])
-    U6([Beri tahu ketersediaan])
-    U7([Catat kehadiran di kertas])
-    U8([Koreksi latihan & tes])
-    U9([Input nilai simulasi ke web])
-    U10([Catat pendaftaran di spreadsheet])
-    U11([Sepakati jam belajar lewat chat])
-    U12([Cari guru pengganti])
-    U13([Cocokkan bukti transfer])
-    U14([Hitung sisa sesi manual])
-    U15([Buat rekap bulanan])
-    U16([Tanya perkembangan murid])
-  end
-  CM[Calon murid] --> U1
-  M[Murid] --> U2 & U3 & U4 & U5
-  G[Guru] --> U6 & U7 & U8 & U9
-  A[Admin] --> U10 & U11 & U12 & U13 & U14 & U15
-  P[Pemilik usaha] --> U15 & U16
-```
 
 ### 3.3.3 Activity Diagram Sistem Saat Ini
 
@@ -228,56 +207,36 @@ Dua proses utama sistem lama digambarkan dalam activity diagram, yaitu
 pendaftaran dan pembayaran serta tes simulasi dan kenaikan tingkat.
 
 Gambar 3.6 menggambarkan pendaftaran dan pembayaran. Calon murid
-menghubungi admin melalui WhatsApp, admin menjawab dan meminta data,
-lalu mencatat data di spreadsheet. Admin menyebutkan harga paket, murid
-mentransfer dan mengirim foto bukti, admin memeriksa mutasi rekening; jika
-cocok, admin mencatat pembayaran dan memasukkan murid ke grup kelas,
-jika tidak cocok admin menanyakan ulang kepada murid.
+menghubungi admin melalui WhatsApp atau datang langsung; admin menjelaskan
+kelas, biaya, dan jam sesi, lalu mengirim tautan Google Form yang diisi calon
+murid. Admin menanyakan apakah calon murid ingin mulai dari Beginner atau
+mengikuti tes singkat; bila memilih tes, guru memberi tes singkat lisan dan
+menentukan tingkat awal. Admin menyebutkan paket delapan atau enam belas
+sesi beserta harganya, lalu calon murid membayar dengan transfer atau tunai.
+Bukti transfer dikirim kepada admin dan diteruskan kepada pemilik usaha.
+Admin menulis kwitansi fisik, mencatat paket di Excel voucher aktif, dan
+memasukkan murid ke grup WhatsApp siswa.
 
 [GAMBAR 3.6: activity diagram pendaftaran dan pembayaran pada sistem lama]
 
 Gambar 3.6
 Activity Diagram Pendaftaran dan Pembayaran pada Sistem Saat Ini
 
-```mermaid
-%% Alat bantu menggambar Gambar 3.6 (bukan isi buku); swimlane: Calon murid | Admin
-flowchart TD
-  A1([Mulai]) --> A2[Calon murid: hubungi admin via WhatsApp]
-  A2 --> A3[Admin: jawab, minta data diri]
-  A3 --> A4[Calon murid: kirim data]
-  A4 --> A5[Admin: catat di spreadsheet, sebutkan harga paket]
-  A5 --> A6[Calon murid: transfer, kirim foto bukti]
-  A6 --> A7[Admin: cek mutasi rekening]
-  A7 --> A8{Cocok?}
-  A8 -- Tidak --> A9[Admin: tanya ulang] --> A6
-  A8 -- Ya --> A10[Admin: catat pembayaran & sisa sesi, masukkan ke grup kelas]
-  A10 --> A11([Selesai])
-```
-
 Gambar 3.7 menggambarkan tes simulasi dan kenaikan tingkat. Guru
-menyiapkan lembar soal dan mengawasi tes di kelas, murid mengerjakan di
-kertas, guru mengoreksi dan menghitung nilai per bagian, lalu memasukkan
-nilai ke aplikasi web Nilai Simulasi HSK. Ketika guru menilai murid sudah
-siap, guru dan admin memeriksa riwayat nilai simulasi secara manual dan
-memutuskan kenaikan tingkat, lalu memberi tahu murid.
+menilai bahwa seorang murid perlu dites, karena sudah lama tidak dites atau
+sudah mencapai titik tertentu. Admin mengambil soal HSK lama yang sudah
+dicetak dari stok arsip; guru mengawasi tes dan memutar rekaman bagian
+mendengarkan, sementara murid mengerjakannya di kertas. Guru mengoreksi dan
+menghitung nilai per bagian. Bila nilai belum mencapai sekitar 60 % pada
+setiap bagian, murid melanjutkan latihan dan dites ulang kemudian. Bila lulus,
+guru mencatat nilai dan menghitung tes yang sudah lulus; setelah dua sampai
+tiga tes lulus dan latihan dianggap cukup, guru menyatakan murid naik tingkat
+dan memberitahukannya secara lisan.
 
 [GAMBAR 3.7: activity diagram tes simulasi dan kenaikan tingkat pada sistem lama]
 
 Gambar 3.7
 Activity Diagram Tes Simulasi dan Kenaikan Tingkat pada Sistem Saat Ini
-
-```mermaid
-%% Alat bantu menggambar Gambar 3.7 (bukan isi buku); swimlane: Guru | Murid | Admin
-flowchart TD
-  C1([Mulai]) --> C2[Guru: siapkan lembar soal kode tes]
-  C2 --> C3[Murid: kerjakan tes di kertas, diawasi guru]
-  C3 --> C4[Guru: koreksi, hitung nilai per bagian]
-  C4 --> C5[Guru: input nilai ke web Nilai Simulasi HSK]
-  C5 --> C6{Murid dianggap siap naik?}
-  C6 -- Belum --> C7[Lanjut belajar] --> C9
-  C6 -- Ya --> C8[Guru & admin: periksa riwayat nilai manual, putuskan naik tingkat, beri tahu murid] --> C9
-  C9([Selesai])
-```
 
 ## 3.4 Permasalahan pada Sistem Saat Ini
 

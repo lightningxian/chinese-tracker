@@ -34,6 +34,18 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   admin asked availability by chat and kept the schedule in a spreadsheet.
 - Checks: package valid, 127 bookmarks all resolved, 2 figure relationships, list point 8 shares the list
   numbering of points 1–7. Pages after the cover are still checked by structure only (no Word on the Mac).
+- **Bab III finished from the owner's sixteen answers:** one admin, four teachers (two teach each session,
+  mixed levels, the rest stand by), the owner (the author's mother) only gets payment notices; registration by
+  WhatsApp or walk-in (some via Instagram), no free trial, data through a Google Form, level by the student's
+  choice (Beginner or a short oral test); packages 8 or 16 sessions by transfer or cash, transfer proof forwarded
+  to the owner, paper receipt, Excel of active vouchers, sessions deducted the next day from the paper list,
+  admin reminds about expiring packages; the admin posts tomorrow's session list after the 18:00 class; tests
+  when the teacher sees the need, printed past HSK papers (about 14 years of them), teacher supervises and
+  plays the audio, pass about 60 % per part, promotion after 2–3 passed tests plus exercises, told orally;
+  Gambar 3.3 is the official HSK result page (format reference), not the old web app. §3.1, §3.2.1, §3.2.2,
+  §3.2.4 rewritten; Gambar 3.5 (use case), 3.6 and 3.7 (activity, swimlanes) drawn as SVG and placed; the
+  Mermaid drawing aids removed. Open: does the old "Nilai Simulasi HSK" web app (project `easy-study-hsk`)
+  really exist, or were simulation scores kept on paper or in Excel? Asked in chat.
 - **v0.1.32 (6d65b92) reviewed on the Mac:** analyzer 17 infos; `flutter test` 165 pass + 2 skipped; node tests
   pass (scheduling covers the waiting list); rules tests 85 pass, 1 skipped; no tracked secrets; 72 functions on
   live (`joinWaitlist`, `leaveWaitlist`, trigger `onSessionSeatsChanged`); APK still served after the PC deploy.
