@@ -34,6 +34,14 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   admin asked availability by chat and kept the schedule in a spreadsheet.
 - Checks: package valid, 127 bookmarks all resolved, 2 figure relationships, list point 8 shares the list
   numbering of points 1–7. Pages after the cover are still checked by structure only (no Word on the Mac).
+- **v0.1.32 (6d65b92) reviewed on the Mac:** analyzer 17 infos; `flutter test` 165 pass + 2 skipped; node tests
+  pass (scheduling covers the waiting list); rules tests 85 pass, 1 skipped; no tracked secrets; 72 functions on
+  live (`joinWaitlist`, `leaveWaitlist`, trigger `onSessionSeatsChanged`); APK still served after the PC deploy.
+  Read: `waitlist/{sessionId}_{studentId}` readable by the student, a linked parent and staff only, written by
+  functions; `joinWaitlist` goes through `requireBookingCaller` and every booking check but the seat
+  (`waitlistRefusal`); the trigger books the queue in `createdAt` order with the normal booking transaction and
+  stops at "full". Nit sent to the BUILD chat: two seat changes at once could make the second attempt hit
+  "already" and send a needless "could not book you" notice.
 - **Fourth round (e3abac3, v0.1.31) reviewed on the Mac:** analyzer 17 infos; `flutter test` 165 pass + 2
   skipped; `node --check` and the 12 node tests pass (payments covers discarded invoices); no tracked secrets;
   69 functions on live with `discardInvoice` (admin only through `requireAdmin`, reason capped at 300, a paid
