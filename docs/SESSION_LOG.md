@@ -34,6 +34,12 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   admin asked availability by chat and kept the schedule in a spreadsheet.
 - Checks: package valid, 127 bookmarks all resolved, 2 figure relationships, list point 8 shares the list
   numbering of points 1–7. Pages after the cover are still checked by structure only (no Word on the Mac).
+- **Fourth round (e3abac3, v0.1.31) reviewed on the Mac:** analyzer 17 infos; `flutter test` 165 pass + 2
+  skipped; `node --check` and the 12 node tests pass (payments covers discarded invoices); no tracked secrets;
+  69 functions on live with `discardInvoice` (admin only through `requireAdmin`, reason capped at 300, a paid
+  invoice cannot be discarded, restore puts the old status back, audit written; a payment that lands on a
+  discarded invoice still credits the sessions and tells the admin). No rules change. The PC's web-only deploy
+  kept the APK (`/downloads/easy-study.apk` still the APK content type).
 - **Owner's third check:** class times in the old system = an agreed day per student, but students pick any
   session by writing their name on the daily session list the admin posts in the student WhatsApp group
   (§3.2.1 rewritten, no yellow left there); Gambar 3.1 is now that WhatsApp list (names, number and avatar
