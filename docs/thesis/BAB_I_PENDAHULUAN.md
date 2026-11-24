@@ -28,12 +28,12 @@ kecil membangun aplikasi untuk web, Android, dan iOS dari satu basis kode
 tanpa harus mengelola server sendiri.
 
 Easy Study (易华文教中心) adalah lembaga kursus bahasa Mandarin di
-Surabaya yang berdiri sejak ⟦1994⟧ dan beralamat di Jl. Manyar Tirtomoyo
+Surabaya yang berdiri sejak 1992 dan beralamat di Jl. Manyar Tirtomoyo
 VII/11, Surabaya. Easy Study memiliki empat guru bahasa Mandarin yang mengajar
 kelas tatap muka dari tingkat HSK 1 sampai HSK 6, yang dikelompokkan
 menjadi level Beginner (HSK 1–2), Intermediate (HSK 3–4), dan Advance
 (HSK 5–6). Pada saat tugas akhir ini disusun (November 2026), Easy Study
-melayani 54 murid aktif dengan [ISI: jumlah] sesi kelas per minggu. Admin
+melayani 54 murid aktif dengan sebelas sesi kelas per minggu. Admin
 menentukan jadwal setiap kelas beserta guru pengajarnya; murid tidak memilih
 guru, tetapi memilih sesi kelas sesuai level dan waktu yang cocok.
 

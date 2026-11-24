@@ -52,7 +52,12 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   admin asked availability by chat and kept the schedule in a spreadsheet.
 - Checks: package valid, 127 bookmarks all resolved, 2 figure relationships, list point 8 shares the list
   numbering of points 1–7. Pages after the cover are still checked by structure only (no Word on the Mac).
-- **Bab IV drafted, Bab III completed from the owner's documents (16:xx):** the owner answered the ten Bab IV
+- **Owner's five answers applied:** founded 1992 (records from 1994), eleven sessions a week (Mon 1, Tue 2,
+  Wed 2, Thu 1, Fri 2, Sat 3, Sun 0; a session with fewer than three students is cancelled), teacher levels
+  W1 HSK 1–3, S HSK 1–5, M HSK 5–6, W2 HSK 1–4 (Tabel 3.1 lost its "hari mengajar" column: no teacher schedule
+  in the old system), about fifty simulation tests a month, UI language stays Indonesian and English with
+  Chinese as future work. 61 `[ISI]` left (per-level student counts, Bab V–VIII notes, examiners, dates).
+- **Bab IV drafted, Bab III completed from the owner's documents:** the owner answered the ten Bab IV
   questions and sent the Google Form (4 screenshots), a kwitansi, the Excel "Daftar Siswa Easy Study (2024)"
   (1,324 names since 1994; sheet Aktif 54 active students, 27 on 8 and 27 on 16 sessions) and "Rekap Absensi
   Murid" (33 running 16-session and 29 running 8-session terms; about 100 attendances a month in Oct and Nov

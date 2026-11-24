@@ -11,7 +11,7 @@ diagram, serta permasalahan yang ditemukan.
 ## 3.1 Profil Easy Study
 
 Easy Study (易华文教中心) adalah lembaga kursus bahasa Mandarin di
-Surabaya yang berdiri sejak ⟦1994⟧ dan beralamat di Jl. Manyar Tirtomoyo
+Surabaya yang berdiri sejak 1992 dan beralamat di Jl. Manyar Tirtomoyo
 VII/11, Surabaya.
 Easy Study mengajarkan bahasa Mandarin secara tatap muka dari tingkat
 HSK 1 sampai HSK 6. Keenam tingkat dikelompokkan menjadi tiga level, yaitu
@@ -21,34 +21,34 @@ dilaksanakan di dua ruang, yaitu ruang utama dan ruang kecil.
 
 Pada saat tugas akhir ini disusun, Easy Study dikelola oleh satu admin (T)
 yang mengurus voucher murid, layanan pelanggan, kebutuhan murid, dan
-penyiapan materi cetak, serta empat guru (W, S, M, dan W) yang mengajar dan
+penyiapan materi cetak, serta empat guru (W1, S, M, dan W2) yang mengajar dan
 merawat materi ajar, termasuk mendigitalkan dan memperbaikinya. Profil guru
 dan level yang diajarkan ditunjukkan pada Tabel 3.1, sedangkan sebaran murid
 aktif per level ditunjukkan pada Tabel 3.2. Pada November 2026 tercatat 54
 murid aktif dengan 62 paket yang sedang berjalan (33 paket enam belas
 pertemuan dan 29 paket delapan pertemuan), sekitar seratus kehadiran murid
-per bulan pada Oktober dan November 2026, dan [ISI: jumlah] tes simulasi HSK
-per bulan.
+per bulan pada Oktober dan November 2026, dan sekitar lima puluh tes simulasi
+HSK per bulan.
 
 Tabel 3.1
-Guru Easy Study dan Level yang Diajarkan
+Guru Easy Study dan Tingkat yang Diajarkan
 
-| No | Guru | Level yang diajarkan | Hari mengajar |
-|---|---|---|---|
-| 1 | W | [ISI] | [ISI] |
-| 2 | S | [ISI] | [ISI] |
-| 3 | M | [ISI] | [ISI] |
-| 4 | W | [ISI] | [ISI] |
+| No | Guru | Tingkat yang diajarkan |
+|---|---|---|
+| 1 | W1 | HSK 1–3 |
+| 2 | S | HSK 1–5 |
+| 3 | M | HSK 5–6 |
+| 4 | W2 | HSK 1–4 |
 
 Tabel 3.2
-Sebaran Murid Aktif per Level
+Sebaran Murid Aktif per Level (November 2026)
 
-| Level | Tingkat | Jumlah murid aktif | Kelas per minggu |
-|---|---|---|---|
-| Beginner | HSK 1–2 | [ISI] | [ISI] |
-| Intermediate | HSK 3–4 | [ISI] | [ISI] |
-| Advance | HSK 5–6 | [ISI] | [ISI] |
-| Total | | 54 | [ISI] |
+| Level | Tingkat | Jumlah murid aktif |
+|---|---|---|
+| Beginner | HSK 1–2 | [ISI] |
+| Intermediate | HSK 3–4 | [ISI] |
+| Advance | HSK 5–6 | [ISI] |
+| Total | | 54 |
 
 Murid membeli paket kursus berupa sejumlah sesi (delapan atau enam
 belas sesi) dengan masa berlaku tertentu. Pada sistem lama murid
@@ -99,7 +99,9 @@ kesibukannya. Caranya, setelah kelas terakhir hari itu berakhir pukul 18.00,
 admin mengirim daftar sesi untuk hari berikutnya ke grup WhatsApp siswa
 (misalnya Sesi 1 pukul 15.00–16.30 dan Sesi 2 pukul 16.30–18.00,
 masing-masing delapan tempat), lalu murid menuliskan namanya pada sesi yang
-dipilih, seperti pada Gambar 3.1. Orang tua murid yang masih kecil ikut
+dipilih, seperti pada Gambar 3.1. Dalam seminggu tersedia sebelas sesi:
+Senin satu, Selasa dua, Rabu dua, Kamis satu, Jumat dua, dan Sabtu tiga;
+Minggu libur. Sebuah sesi dibatalkan bila peminatnya kurang dari tiga murid. Orang tua murid yang masih kecil ikut
 berada di grup tersebut. Tidak ada jadwal guru atau jadwal kelas yang tertulis selain
 daftar harian tersebut. Jika seorang guru berhalangan, admin menghubungi guru
 lain satu per satu melalui chat untuk mencari pengganti, lalu memberi tahu

@@ -14,7 +14,7 @@ Pengumpulan fakta dilakukan dari September sampai November 2026 dengan
 tiga cara. Pertama, pengamatan langsung: penulis adalah anggota keluarga
 pemilik Easy Study dan ikut dalam kegiatan operasional sehari-hari, sehingga
 alur kerja admin dan guru dapat diamati dari dalam. Kedua, wawancara tidak
-terstruktur dengan admin (T) dan keempat guru (W, S, M, dan W) tentang
+terstruktur dengan admin (T) dan keempat guru (W1, S, M, dan W2) tentang
 pekerjaan harian mereka dan kesulitan yang dirasakan. Ketiga, penelaahan
 dokumen yang dipakai pada sistem lama: formulir pendaftaran, daftar siswa,
 rekap absensi, kwitansi, daftar sesi di grup WhatsApp, daftar hadir kertas,
@@ -33,8 +33,11 @@ dari admin. Fakta utama yang diperoleh adalah sebagai berikut.
 
 1. Setiap sore setelah kelas terakhir berakhir pukul 18.00, admin mengirim
    daftar sesi hari berikutnya ke grup WhatsApp siswa; murid menuliskan
-   namanya pada sesi yang dipilih. Murid menyepakati hari les saat mendaftar,
-   tetapi bebas memilih sesi lain yang lebih cocok dengan kesibukannya.
+   namanya pada sesi yang dipilih. Dalam seminggu ada sebelas sesi (Senin
+   satu, Selasa dua, Rabu dua, Kamis satu, Jumat dua, Sabtu tiga), dan sesi
+   dengan peminat kurang dari tiga murid dibatalkan. Murid menyepakati hari
+   les saat mendaftar, tetapi bebas memilih sesi lain yang lebih cocok dengan
+   kesibukannya.
 2. Dalam satu sesi biasanya dua guru mengajar bersama murid dari berbagai
    tingkat dalam satu ruang; guru lainnya siaga. Tidak ada jadwal guru yang
    tertulis. Bila seorang guru berhalangan, admin mencari pengganti dengan
@@ -80,7 +83,7 @@ Dokumen Sistem Lama yang Dianalisis
 | No | Dokumen | Pengelola | Isi | Kelemahan |
 |---|---|---|---|---|
 | 1 | Formulir Pendaftaran Siswa Baru (Google Form) | Admin | Data diri, paket yang dipilih, tingkat awal, kontak orang tua, tujuan belajar, persetujuan ketentuan (Tabel 3.3) | Jawaban terkumpul di spreadsheet Google Form, lalu disalin tangan ke daftar siswa |
-| 2 | Daftar Siswa Easy Study (Excel) | Admin | 1.324 nama murid sejak 1994 dengan tanggal masuk, nama Mandarin, kontak, alamat, tanggal lahir, dan kontak orang tua; lembar Aktif berisi 54 murid aktif dengan paket dan harganya | Satu file yang disunting tangan; tidak ada riwayat perubahan; data lama dan baru bercampur |
+| 2 | Daftar Siswa Easy Study (Excel) | Admin | 1.324 nama murid sejak 1994 (kursus berdiri 1992) dengan tanggal masuk, nama Mandarin, kontak, alamat, tanggal lahir, dan kontak orang tua; lembar Aktif berisi 54 murid aktif dengan paket dan harganya | Satu file yang disunting tangan; tidak ada riwayat perubahan; data lama dan baru bercampur |
 | 3 | Rekap Absensi Murid (Excel) | Admin | Lembar paket 16 dan 8 pertemuan: satu baris per murid dengan tanggal setiap pertemuan dan sisa sesi (33 dan 29 paket berjalan pada November 2026) | Diisi sehari setelah kelas dari daftar hadir kertas; sisa sesi dihitung manual |
 | 4 | Kwitansi | Admin | Nama murid, paket (misalnya Term 16 pertemuan Rp3.950.000), tanggal | Ditulis tangan per pembayaran; tidak terhubung dengan paket di Excel |
 | 5 | Daftar sesi harian (grup WhatsApp) | Admin dan murid | Dua sesi per hari dengan delapan tempat; murid menulis namanya (Gambar 3.1) | Harus dikirim setiap sore; tidak ada batas tempat otomatis; tidak tersimpan |
