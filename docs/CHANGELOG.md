@@ -33,6 +33,8 @@ edge cases, and any manual/deploy steps still required).
 **For review**
 - Rules: `test_codes` delete is now `isAdmin()` (was `false`); the app
   decides between delete and hide. A removed code's name stays taken.
+- Rules test updated (PLAN chat review): admins may delete a code, teachers
+  may not (86 pass, 1 skipped).
 - Packages built in the Exercises tab do not check the recording yet (only
   the worksheet screen and test codes do).
 

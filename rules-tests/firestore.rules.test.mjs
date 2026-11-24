@@ -419,16 +419,18 @@ describe("supervised tests (Build 1, 2026-11-16)", () => {
     await assertFails(setDoc(doc(as("student1"), "test_formats", "x"), FORMAT));
   });
 
-  it("only admins write codes; the id is the code; codes are never deleted", async () => {
+  it("only admins write codes; the id is the code; only admins delete codes", async () => {
     await seed();
     await assertSucceeds(setDoc(doc(as("admin1"), "test_codes", "H40001"), { ...CODE, code: "H40001" }));
     await assertFails(setDoc(doc(as("admin1"), "test_codes", "H40002"), { ...CODE, code: "OTHER" }));
     await assertFails(setDoc(doc(as("admin1"), "test_codes", "H40003"), { ...CODE, code: "H40003", sheetKey: "" }));
     await assertSucceeds(updateDoc(doc(as("admin1"), "test_codes", "H31005"), { active: false }));
     await assertFails(updateDoc(doc(as("admin1"), "test_codes", "H31005"), { sheetKey: "other" }));
-    await assertFails(deleteDoc(doc(as("admin1"), "test_codes", "H31005")));
     await assertFails(setDoc(doc(as("teacher1"), "test_codes", "T1"), { ...CODE, code: "T1" }));
     await assertFails(updateDoc(doc(as("teacher1"), "test_codes", "H31005"), { active: false }));
+    await assertFails(deleteDoc(doc(as("teacher1"), "test_codes", "H31005")));
+    // Owner 2026-11-24: the app deletes only an unused code (else hides it).
+    await assertSucceeds(deleteDoc(doc(as("admin1"), "test_codes", "H31005")));
   });
 
   it("PN-04 students cannot read codes (keys and worksheet stay out of reach); staff can", async () => {
