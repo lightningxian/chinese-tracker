@@ -73,9 +73,11 @@ Read docs/PLAN.md. You are the BUILD chat. Follow section 0, run Build 0 if this
 
 ## 1. Where the project stands (2026-11-20)
 
-**Live:** https://chinese-tracker.web.app, hosting at release v0.1.35
-(the Answer key dialog opens filled with the worksheet's key; hosting only,
-from the PC 2026-11-24, checked from the Mac; v0.1.34 word-order and
+**Live:** https://chinese-tracker.web.app, hosting at release v0.1.36
+(Exam hidden from the type pickers, "Standard Course" name, recording
+required for HSK sheets, test codes removable by admins; Firestore rules
+and hosting from the PC 2026-11-24, checked from the Mac; v0.1.35 the
+pre-filled Answer key dialog; v0.1.34 word-order and
 character answers, the HSK Standard Course type, recording preview; v0.1.33 scan drafts, shuffled choices
 and level checklists with Firestore and Storage rules; v0.1.32 profiles and waiting list,
 v0.1.31 the fourth round, v0.1.30 App Store readiness with the Android APK
