@@ -260,6 +260,20 @@ function bookingRefusal(session, term, booked, nowMs, opts = {}) {
 }
 
 /**
+ * Owner 2026-11-24: may the student join the waiting list of a full class?
+ * Everything a booking checks except the free seat, before the class
+ * starts; a class with a free seat says "not_full" (book it instead).
+ */
+function waitlistRefusal(session, term, booked, nowMs, opts = {}) {
+  if (startMs(session.sessionDate, session.startMinutes) <= nowMs) return "too_late";
+  const full = (Number(session.bookedCount) || 0) >= (Number(session.capacity) || 0);
+  const r = bookingRefusal({...session, capacity: Number.MAX_SAFE_INTEGER}, term, booked, nowMs,
+      opts);
+  if (r) return r;
+  return full ? null : "not_full";
+}
+
+/**
  * The term a booking draws from: active, not past its deadline, with a
  * free session; the one ending first.
  */
@@ -293,5 +307,6 @@ module.exports = {
   sessionDates,
   sessionIdFor,
   bookingRefusal,
+  waitlistRefusal,
   termForBooking,
 };

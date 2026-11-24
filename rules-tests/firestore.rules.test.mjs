@@ -901,3 +901,16 @@ describe("holidays, announcements, helper teachers (2026-11-23)", () => {
       where("coTeacherIds", "array-contains", "teacher3"))));
   });
 });
+
+// Owner 2026-11-24: the waiting list.
+describe("waiting list (2026-11-24)", () => {
+  it("the student and staff read an entry; another student does not; nobody writes", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "waitlist", "s9_student1"), { sessionId: "s9", studentId: "student1" });
+    });
+    await assertSucceeds(getDoc(doc(as("student1"), "waitlist", "s9_student1")));
+    await assertSucceeds(getDoc(doc(as("teacher1"), "waitlist", "s9_student1")));
+    await assertFails(getDoc(doc(as("student2"), "waitlist", "s9_student1")));
+    await assertFails(setDoc(doc(as("student1"), "waitlist", "s9_student1"), { sessionId: "s9", studentId: "student1" }));
+  });
+});

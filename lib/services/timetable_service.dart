@@ -392,6 +392,23 @@ class TimetableService {
       .snapshots()
       .map((s) => {for (final d in s.docs) (d.data()['sessionId'] as String? ?? '')});
 
+  /// Owner 2026-11-24: the sessions whose waiting list the student is on.
+  Stream<Set<String>> watchMyWaitlist(String studentId) => _db
+      .collection('waitlist')
+      .where('studentId', isEqualTo: studentId)
+      .snapshots()
+      .map((s) => {for (final d in s.docs) (d.data()['sessionId'] as String? ?? '')});
+
+  Future<void> joinWaitlist(String sessionId, {String? studentId}) => _call('joinWaitlist', {
+        'sessionId': sessionId,
+        if (studentId != null) 'studentId': studentId,
+      });
+
+  Future<void> leaveWaitlist(String sessionId, {String? studentId}) => _call('leaveWaitlist', {
+        'sessionId': sessionId,
+        if (studentId != null) 'studentId': studentId,
+      });
+
   Future<void> book(String sessionId, {String? studentId}) => _call('bookSession', {
         'sessionId': sessionId,
         if (studentId != null) 'studentId': studentId,

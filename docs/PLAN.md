@@ -2224,6 +2224,15 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
+### 2026-11-24 — Profiles, waiting list, discard pop-up everywhere — COMMIT, release v0.1.32 (rules, functions and hosting live from the PC; 72 functions)
+- Built the three recommendations the owner accepted: teacher and parent
+  profile pages (every Users row opens a profile); the discard pop-up on
+  create user, one-off class, voucher and price item; a waiting list for
+  full classes that books the first one waiting when a seat opens.
+- Proof: analyzer 17 infos; `flutter test` 165 pass; node tests pass
+  (waiting-list rule); rules tests 85 pass and 1 skipped; flow test 107
+  steps (new: a cancelled seat goes to the first one waiting).
+
 ### 2026-11-24 — Owner requests, fourth round — e3abac3, release v0.1.31 (functions and hosting live from the PC; 69 functions)
 - Built: paper reader preview shows drawn boxes + page thumbnails;
   "Discard your changes?" on nine editors; Mixed skill section; discarded

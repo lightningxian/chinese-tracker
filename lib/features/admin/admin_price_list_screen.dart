@@ -10,6 +10,7 @@ import '../../l10n/labels_admin.dart';
 import '../../l10n/labels_reports.dart';
 import '../../models/pricing_settings.dart';
 import '../../services/firestore_service.dart';
+import '../../core/widgets/discard_guard.dart';
 
 /// Admin → Payments → Price list. The things a payment can be for: name,
 /// price and what the student gets. Invoices pick a row from here and the
@@ -393,8 +394,18 @@ class _PriceItemDialogState extends State<_PriceItemDialog> {
     );
   }
 
+  /// Owner 2026-11-24: what the editor held when it opened (or loaded).
+  String? _startSig;
+  String _sig() => [_name.text, _price.text, _sessions.text, _kind.name, _nameChinese.text, _validDays.text, '$_active'].join('|');
+  bool get _dirty => _startSig != null && _sig() != _startSig;
+
   @override
   Widget build(BuildContext context) {
+    if (_startSig == null && (true)) _startSig = _sig();
+    return DiscardGuard(isDirty: () => _dirty, child: _buildEditor(context));
+  }
+
+  Widget _buildEditor(BuildContext context) {
     final l = context.l10n;
     return AlertDialog(
       title: Text(
@@ -492,7 +503,7 @@ class _PriceItemDialogState extends State<_PriceItemDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.maybePop(context),
           child: Text(l.commonCancel),
         ),
         FilledButton(onPressed: _submit, child: Text(l.adminPriceSave)),

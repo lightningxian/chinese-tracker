@@ -8428,4 +8428,71 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get invoiceDiscardConfirm => 'Discard invoice';
+
+  @override
+  String get staffPhone => 'Phone';
+
+  @override
+  String get staffHoursThisMonth => 'hours taught this month';
+
+  @override
+  String get staffHoursLastMonth => 'hours taught last month';
+
+  @override
+  String get staffTabWeekly => 'Weekly classes';
+
+  @override
+  String get staffTabClasses => 'Classes';
+
+  @override
+  String get staffTabStudents => 'Students';
+
+  @override
+  String get staffNoWeekly => 'No weekly classes.';
+
+  @override
+  String get staffAsHelper => 'helper teacher';
+
+  @override
+  String get staffComing => 'Coming classes';
+
+  @override
+  String get staffRecent => 'Recent classes';
+
+  @override
+  String get staffNoClasses => 'No classes.';
+
+  @override
+  String get staffNoStudents => 'No students linked to this teacher.';
+
+  @override
+  String get parentTabChildren => 'Children';
+
+  @override
+  String get parentNoChildren => 'No child linked yet.';
+
+  @override
+  String get waitlistJoin => 'Join waiting list';
+
+  @override
+  String get waitlistLeave => 'Leave list';
+
+  @override
+  String get waitlistOn =>
+      'On the waiting list: you are booked when a seat opens';
+
+  @override
+  String get waitlistJoined => 'You are on the waiting list.';
+
+  @override
+  String get waitlistLeft => 'You left the waiting list.';
+
+  @override
+  String get waitlistNotFull => 'There is a free seat: book it.';
+
+  @override
+  String get waitlistAlready => 'Already booked.';
+
+  @override
+  String get routeTitleProfile => 'Profile';
 }

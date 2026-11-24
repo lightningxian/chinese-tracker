@@ -45,6 +45,7 @@ import '../../features/teacher/exercise_package_form_screen.dart';
 import '../../features/teacher/teacher_exercise_form_screen.dart';
 import '../../features/teacher/student_detail_screen.dart';
 import '../../features/teaching/class_detail_page.dart';
+import '../../features/admin/user_profile_pages.dart';
 import '../../features/teacher/teacher_session_form_screen.dart';
 import '../../features/tests/leaderboard_screen.dart';
 import '../../features/tests/marking_screen.dart';
@@ -302,8 +303,8 @@ class AppRouter {
                 ),
                 GoRoute(
                   path: 'users/:id',
-                  builder: (_, state) => StudentDetailScreen(
-                    studentId: state.pathParameters['id']!,
+                  builder: (_, state) => UserProfileRoute(
+                    userId: state.pathParameters['id']!,
                     embedded: true,
                   ),
                 ),

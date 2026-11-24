@@ -21,6 +21,7 @@ import '../../models/pricing_settings.dart';
 import '../../models/student_class_term.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
+import '../../core/widgets/discard_guard.dart';
 
 class AdminVoucherFormScreen extends StatefulWidget {
   const AdminVoucherFormScreen({
@@ -271,8 +272,18 @@ class _AdminVoucherFormScreenState extends State<AdminVoucherFormScreen> {
     }
   }
 
+  /// Owner 2026-11-24: what the editor held when it opened (or loaded).
+  String? _startSig;
+  String _sig() => [_notesController.text, '$_studentId', '${_invoice?.id}', '$_packageSize', '$_sessionsRemaining', '$_startDate', _classDay].join('|');
+  bool get _dirty => _startSig != null && _sig() != _startSig;
+
   @override
   Widget build(BuildContext context) {
+    if (_startSig == null && (!_loading)) _startSig = _sig();
+    return DiscardGuard(isDirty: () => !_saving && _dirty, child: _buildEditor(context));
+  }
+
+  Widget _buildEditor(BuildContext context) {
     final l = context.l10n;
     return ShellNestedPage(
       embedded: widget.embedded,

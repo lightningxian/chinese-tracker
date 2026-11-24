@@ -10,6 +10,7 @@ import '../../l10n/l10n.dart';
 import '../../models/class_session.dart';
 import '../../services/rooms_service.dart';
 import '../../services/firestore_service.dart';
+import '../../core/widgets/discard_guard.dart';
 
 class TeacherSessionFormScreen extends StatefulWidget {
   const TeacherSessionFormScreen({
@@ -171,8 +172,18 @@ class _TeacherSessionFormScreenState extends State<TeacherSessionFormScreen> {
     }
   }
 
+  /// Owner 2026-11-24: what the editor held when it opened (or loaded).
+  String? _startSig;
+  String _sig() => [_titleController.text, _capacityController.text, _roomController.text, '$_selectedDate', '$_startTime', '$_endTime', '$_isOpen', '$_mode', '$_registrationState'].join('|');
+  bool get _dirty => _startSig != null && _sig() != _startSig;
+
   @override
   Widget build(BuildContext context) {
+    if (_startSig == null && (true)) _startSig = _sig();
+    return DiscardGuard(isDirty: () => !_saving && _dirty, child: _buildEditor(context));
+  }
+
+  Widget _buildEditor(BuildContext context) {
     final l = context.l10n;
     final dateLabel = DateFormat('EEE, d MMM yyyy').format(_selectedDate);
 

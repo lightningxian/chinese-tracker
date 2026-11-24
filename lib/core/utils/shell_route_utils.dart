@@ -84,7 +84,8 @@ abstract final class ShellRouteUtils {
     if (location.contains('/users/') && location.endsWith('/edit')) {
       return l.routeTitleEditUser;
     }
-    if (location.contains('/users/')) return l.routeTitleStudent;
+    // Owner 2026-11-24: every user has a profile page.
+    if (location.contains('/users/')) return l.routeTitleProfile;
     if (location.endsWith('/vouchers/new')) return l.routeTitleNewVoucher;
     if (location.contains('/vouchers/') && location.endsWith('/edit')) {
       return l.routeTitleEditVoucher;

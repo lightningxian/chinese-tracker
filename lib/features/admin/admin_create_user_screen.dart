@@ -13,6 +13,7 @@ import '../../l10n/labels_admin.dart';
 import '../../models/app_user.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
+import '../../core/widgets/discard_guard.dart';
 
 class AdminCreateUserScreen extends StatefulWidget {
   const AdminCreateUserScreen({super.key, this.embedded = false});
@@ -120,8 +121,18 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
     };
   }
 
+  /// Owner 2026-11-24: what the editor held when it opened (or loaded).
+  String? _startSig;
+  String _sig() => [_nameIndonesianController.text, _nameChineseController.text, _whatsappController.text, _parentNameController.text, _parentPhoneController.text, _emailController.text, _passwordController.text, _role, _level, '$_termSize', (_childIds.toList()..sort()).join(',')].join('|');
+  bool get _dirty => _startSig != null && _sig() != _startSig;
+
   @override
   Widget build(BuildContext context) {
+    if (_startSig == null && (true)) _startSig = _sig();
+    return DiscardGuard(isDirty: () => !_loading && _dirty, child: _buildEditor(context));
+  }
+
+  Widget _buildEditor(BuildContext context) {
     final isWide = MediaQuery.sizeOf(context).width >= 720;
     final l = context.l10n;
 

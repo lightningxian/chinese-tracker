@@ -33,6 +33,7 @@ class _StudentSessionsSectionState extends State<StudentSessionsSection> {
   late final String _today = DateFormat('yyyy-MM-dd').format(DateTime.now());
   late final Stream<List<BookableSession>> _sessions = _service.watchUpcoming(_today);
   late final Stream<Set<String>> _mine = _service.watchMyBookings(widget.studentId);
+  late final Stream<Set<String>> _waiting = _service.watchMyWaitlist(widget.studentId);
   bool _myLevelOnly = false;
   String? _busy;
 
@@ -47,6 +48,8 @@ class _StudentSessionsSectionState extends State<StudentSessionsSection> {
       'needs_teacher' => l.bookingNeedsTeacher,
       'level' => l.bookingLevel,
       'not-yours' => l.bookingNotYours,
+      'not_full' => l.waitlistNotFull,
+      'already' => l.waitlistAlready,
       _ => l.bookingFailed,
     };
   }
@@ -72,9 +75,12 @@ class _StudentSessionsSectionState extends State<StudentSessionsSection> {
     final l = context.l10n;
     final end = DateFormat('yyyy-MM-dd').format(DateTime.now().add(const Duration(days: 14)));
     return StreamBuilder<Set<String>>(
+      stream: _waiting,
+      builder: (context, waitSnap) => StreamBuilder<Set<String>>(
       stream: _mine,
       builder: (context, mineSnap) {
         final mine = mineSnap.data ?? const <String>{};
+        final waiting = waitSnap.data ?? const <String>{};
         return StreamBuilder<List<BookableSession>>(
           stream: _sessions,
           builder: (context, snap) {
@@ -119,7 +125,16 @@ class _StudentSessionsSectionState extends State<StudentSessionsSection> {
                     child: _SessionRow(
                       session: s,
                       booked: mine.contains(s.id),
+                      waiting: waiting.contains(s.id),
                       busy: _busy == s.id,
+                      onWait: () => _run(
+                          s.id,
+                          () => _service.joinWaitlist(s.id, studentId: widget.forStudentId),
+                          l.waitlistJoined),
+                      onLeaveWait: () => _run(
+                          s.id,
+                          () => _service.leaveWaitlist(s.id, studentId: widget.forStudentId),
+                          l.waitlistLeft),
                       onBook: () => _run(
                           s.id,
                           () => _service.book(s.id, studentId: widget.forStudentId),
@@ -135,6 +150,7 @@ class _StudentSessionsSectionState extends State<StudentSessionsSection> {
           },
         );
       },
+    ),
     );
   }
 }
@@ -146,10 +162,18 @@ class _SessionRow extends StatelessWidget {
     required this.busy,
     required this.onBook,
     required this.onCancel,
+    this.waiting = false,
+    this.onWait,
+    this.onLeaveWait,
   });
 
   final BookableSession session;
   final bool booked;
+
+  /// Owner 2026-11-24: on the waiting list of this (full) class.
+  final bool waiting;
+  final VoidCallback? onWait;
+  final VoidCallback? onLeaveWait;
   final bool busy;
   final VoidCallback onBook;
   final VoidCallback onCancel;
@@ -187,6 +211,12 @@ class _SessionRow extends StatelessWidget {
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                           color: AppColors.chipAmberFg)),
+                if (waiting && !booked)
+                  Text(l.waitlistOn,
+                      style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.chipAmberFg)),
                 Text(
                   noTeacher ? l.bookingNeedsTeacher : l.bookingSeatsLeft(s.seatsLeft, s.capacity),
                   style: TextStyle(
@@ -208,6 +238,18 @@ class _SessionRow extends StatelessWidget {
               onPressed: onCancel,
               style: OutlinedButton.styleFrom(foregroundColor: AppColors.error),
               child: Text(l.bookingCancel),
+            )
+          else if (waiting)
+            OutlinedButton(
+              onPressed: onLeaveWait,
+              child: Text(l.waitlistLeave),
+            )
+          else if (full && !noTeacher && !s.isGoingOn && onWait != null)
+            // Owner 2026-11-24: a full class takes a waiting list.
+            OutlinedButton.icon(
+              onPressed: onWait,
+              icon: const Icon(Icons.hourglass_empty, size: 16),
+              label: Text(l.waitlistJoin),
             )
           else
             FilledButton(

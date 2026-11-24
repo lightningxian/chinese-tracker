@@ -2081,4 +2081,31 @@ await step("owner 2026-11-24: an admin discards an unpaid invoice with a reason,
       .error.status, "FAILED_PRECONDITION", "a paid invoice stays");
 });
 
+await step("owner 2026-11-24: a full class takes a waiting list; a cancelled seat goes to the first one waiting", async () => {
+  const sid = `flow_wl_${RUN}`;
+  for (const st of [d21, d22]) {
+    await setDocRaw(`student_class_terms/wl_${RUN}_${st.uid}`, {studentId: st.uid, packageSize: 8,
+      sessionsRemaining: 8, sessionsUsed: 0, sessionsBooked: 0, status: "active",
+      startDate: "2026-11-01", deadlineDate: "2027-12-31", createdAt: new Date()});
+  }
+  await session7(sid, {sessionDate: tomorrow7, startMinutes: 1200, endMinutes: 1290, capacity: 1,
+    sessionTitle: `Flow Waitlist ${RUN}`});
+  assert.equal((await call(d22, "joinWaitlist", {sessionId: sid})).error.details.reason, "not_full",
+      "a free seat is booked, not waited for");
+  assert.ok((await call(d21, "bookSession", {sessionId: sid})).data);
+  assert.equal((await call(d22, "bookSession", {sessionId: sid})).error.details.reason, "full");
+  const w = await call(d22, "joinWaitlist", {sessionId: sid});
+  assert.ok(w.data && w.data.waiting, JSON.stringify(w.error));
+  assert.equal(w.data.position, 1);
+  assert.equal((await call(d21, "joinWaitlist", {sessionId: sid})).error.status, "ALREADY_EXISTS");
+  assert.ok((await call(d21, "cancelBooking", {sessionId: sid})).data);
+  const att = await waitFor(() => readDoc(`attendance/${sid}_${d22.uid}`), "the waiting student booked");
+  assert.equal(att.booked, true);
+  assert.equal(att.bookedVia, "waitlist");
+  assert.equal(await readDoc(`waitlist/${sid}_${d22.uid}`), null, "off the list");
+  assert.equal((await readDoc(`class_sessions/${sid}`)).bookedCount, 1);
+  await waitFor(async () => (await notices(d22.uid, "A seat opened for you")).length > 0,
+      "the waiting student is told");
+});
+
 console.log(`supervised flow: ${passed} steps passed`);

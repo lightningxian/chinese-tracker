@@ -83,6 +83,12 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   Publishing it (hosting deploy from the Mac, web + APK, `scripts/deploy_web.sh --no-keys`) waits for the
   owner's word in the PLAN chat.
 
+### 2026-11-24 — Claude (BUILD chat, PC): profiles, waiting list
+
+- Owner said "yes, build them" to the recommendations: teacher and parent
+  profile pages, the discard pop-up on the remaining forms, and a waiting
+  list for full classes. Release v0.1.32 (72 functions).
+
 ### 2026-11-24 — Claude (BUILD chat, PC): owner requests, fourth round
 
 - Owner asked: the missing box E in the paper reader, easier page

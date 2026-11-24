@@ -134,4 +134,13 @@ assert.equal(s.termForBooking([
 ], "2026-11-23").id, "c");
 assert.equal(s.termForBooking([], "2026-11-23"), null);
 
-console.log("test_scheduling: all passed (JD-01 logic, VC-04)");
+// Owner 2026-11-24: the waiting list of a full class.
+assert.equal(s.waitlistRefusal({...sess, bookedCount: 8}, term, [], NOW), null, "full: may wait");
+assert.equal(s.waitlistRefusal(sess, term, [], NOW), "not_full", "a free seat: book it");
+assert.equal(s.waitlistRefusal({...sess, bookedCount: 8}, null, [], NOW), "no_sessions");
+assert.equal(s.waitlistRefusal({...sess, bookedCount: 8, sessionDate: "2026-11-20", startMinutes: 660,
+  endMinutes: 750}, term, [], NOW), "too_late", "not once it has started");
+assert.equal(s.waitlistRefusal({...sess, bookedCount: 8}, term, [{sessionDate: "2026-11-23",
+  startMinutes: 1000, endMinutes: 1090}], NOW), "overlap");
+
+console.log("test_scheduling: all passed (JD-01 logic, VC-04, waiting list)");

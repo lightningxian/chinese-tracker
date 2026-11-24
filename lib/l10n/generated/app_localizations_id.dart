@@ -8394,4 +8394,72 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get invoiceDiscardConfirm => 'Batalkan tagihan';
+
+  @override
+  String get staffPhone => 'Telepon';
+
+  @override
+  String get staffHoursThisMonth => 'jam mengajar bulan ini';
+
+  @override
+  String get staffHoursLastMonth => 'jam mengajar bulan lalu';
+
+  @override
+  String get staffTabWeekly => 'Kelas mingguan';
+
+  @override
+  String get staffTabClasses => 'Kelas';
+
+  @override
+  String get staffTabStudents => 'Murid';
+
+  @override
+  String get staffNoWeekly => 'Belum ada kelas mingguan.';
+
+  @override
+  String get staffAsHelper => 'guru pendamping';
+
+  @override
+  String get staffComing => 'Kelas mendatang';
+
+  @override
+  String get staffRecent => 'Kelas terakhir';
+
+  @override
+  String get staffNoClasses => 'Belum ada kelas.';
+
+  @override
+  String get staffNoStudents =>
+      'Belum ada murid yang terhubung dengan guru ini.';
+
+  @override
+  String get parentTabChildren => 'Anak';
+
+  @override
+  String get parentNoChildren => 'Belum ada anak yang terhubung.';
+
+  @override
+  String get waitlistJoin => 'Masuk daftar tunggu';
+
+  @override
+  String get waitlistLeave => 'Keluar daftar';
+
+  @override
+  String get waitlistOn =>
+      'Di daftar tunggu: otomatis terdaftar bila ada kursi kosong';
+
+  @override
+  String get waitlistJoined => 'Anda masuk daftar tunggu.';
+
+  @override
+  String get waitlistLeft => 'Anda keluar dari daftar tunggu.';
+
+  @override
+  String get waitlistNotFull => 'Masih ada kursi: silakan daftar.';
+
+  @override
+  String get waitlistAlready => 'Sudah terdaftar.';
+
+  @override
+  String get routeTitleProfile => 'Profil';
 }

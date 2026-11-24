@@ -13817,6 +13817,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Discard invoice'**
   String get invoiceDiscardConfirm;
+
+  /// No description provided for @staffPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get staffPhone;
+
+  /// No description provided for @staffHoursThisMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'hours taught this month'**
+  String get staffHoursThisMonth;
+
+  /// No description provided for @staffHoursLastMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'hours taught last month'**
+  String get staffHoursLastMonth;
+
+  /// No description provided for @staffTabWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly classes'**
+  String get staffTabWeekly;
+
+  /// No description provided for @staffTabClasses.
+  ///
+  /// In en, this message translates to:
+  /// **'Classes'**
+  String get staffTabClasses;
+
+  /// No description provided for @staffTabStudents.
+  ///
+  /// In en, this message translates to:
+  /// **'Students'**
+  String get staffTabStudents;
+
+  /// No description provided for @staffNoWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'No weekly classes.'**
+  String get staffNoWeekly;
+
+  /// No description provided for @staffAsHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'helper teacher'**
+  String get staffAsHelper;
+
+  /// No description provided for @staffComing.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming classes'**
+  String get staffComing;
+
+  /// No description provided for @staffRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent classes'**
+  String get staffRecent;
+
+  /// No description provided for @staffNoClasses.
+  ///
+  /// In en, this message translates to:
+  /// **'No classes.'**
+  String get staffNoClasses;
+
+  /// No description provided for @staffNoStudents.
+  ///
+  /// In en, this message translates to:
+  /// **'No students linked to this teacher.'**
+  String get staffNoStudents;
+
+  /// No description provided for @parentTabChildren.
+  ///
+  /// In en, this message translates to:
+  /// **'Children'**
+  String get parentTabChildren;
+
+  /// No description provided for @parentNoChildren.
+  ///
+  /// In en, this message translates to:
+  /// **'No child linked yet.'**
+  String get parentNoChildren;
+
+  /// No description provided for @waitlistJoin.
+  ///
+  /// In en, this message translates to:
+  /// **'Join waiting list'**
+  String get waitlistJoin;
+
+  /// No description provided for @waitlistLeave.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave list'**
+  String get waitlistLeave;
+
+  /// No description provided for @waitlistOn.
+  ///
+  /// In en, this message translates to:
+  /// **'On the waiting list: you are booked when a seat opens'**
+  String get waitlistOn;
+
+  /// No description provided for @waitlistJoined.
+  ///
+  /// In en, this message translates to:
+  /// **'You are on the waiting list.'**
+  String get waitlistJoined;
+
+  /// No description provided for @waitlistLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'You left the waiting list.'**
+  String get waitlistLeft;
+
+  /// No description provided for @waitlistNotFull.
+  ///
+  /// In en, this message translates to:
+  /// **'There is a free seat: book it.'**
+  String get waitlistNotFull;
+
+  /// No description provided for @waitlistAlready.
+  ///
+  /// In en, this message translates to:
+  /// **'Already booked.'**
+  String get waitlistAlready;
+
+  /// No description provided for @routeTitleProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get routeTitleProfile;
 }
 
 class _AppLocalizationsDelegate

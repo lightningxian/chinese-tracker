@@ -4,7 +4,8 @@ const {getAuth} = require("firebase-admin/auth");
 const {getFirestore, FieldValue, Timestamp} = require("firebase-admin/firestore");
 const {getMessaging} = require("firebase-admin/messaging");
 const {onCall, onRequest, HttpsError} = require("firebase-functions/v2/https");
-const {onDocumentCreated, onDocumentWritten} = require("firebase-functions/v2/firestore");
+const {onDocumentCreated, onDocumentUpdated, onDocumentWritten} =
+  require("firebase-functions/v2/firestore");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
 const {defineSecret} = require("firebase-functions/params");
 const logger = require("firebase-functions/logger");
@@ -4468,6 +4469,117 @@ exports.cancelBooking = onCall(async (request) => {
     return {cancelled: true};
   });
 });
+
+// ---------------------------------------------------------------------------
+// Owner 2026-11-24: the waiting list of a full class. A student (or a linked
+// parent) joins `waitlist/{sessionId}_{studentId}`; when a seat opens (a
+// cancellation, a student removed, more seats) the first one who can still
+// be booked is booked automatically and told. Functions write; the student,
+// the parent and staff read.
+// ---------------------------------------------------------------------------
+const WAITLIST = "waitlist";
+
+exports.joinWaitlist = onCall(async (request) => {
+  const data = request.data || {};
+  const studentId = await requireBookingCaller(request, data.studentId);
+  const sessionId = String(data.sessionId || "").trim();
+  if (!sessionId || sessionId.includes("/")) {
+    throw new HttpsError("invalid-argument", "sessionId is required.");
+  }
+  const nowMs = Date.now();
+  const [sSnap, userSnap, termsSnap, mineSnap, attSnap] = await Promise.all([
+    db.collection(CLASS_SESSIONS).doc(sessionId).get(),
+    db.collection(USERS).doc(studentId).get(),
+    db.collection(CLASS_TERMS).where("studentId", "==", studentId).get(),
+    db.collection("attendance").where("studentId", "==", studentId)
+        .where("booked", "==", true).get(),
+    db.collection("attendance").doc(`${sessionId}_${studentId}`).get(),
+  ]);
+  if (!sSnap.exists) throw new HttpsError("not-found", "Session not found.");
+  if (attSnap.exists) throw new HttpsError("already-exists", "Already booked.", {reason: "already"});
+  const session = sSnap.data() || {};
+  const user = userSnap.exists ? userSnap.data() || {} : {};
+  const terms = termsSnap.docs.map((d) => ({id: d.id, ...(d.data() || {})}));
+  const term = sched.termForBooking(terms, session.sessionDate);
+  const others = mineSnap.docs.map((d) => d.data() || {})
+      .filter((a) => a.sessionDate === session.sessionDate);
+  const refusal = sched.waitlistRefusal(session, term, others, nowMs,
+      {studentLevel: user.level || ""});
+  if (refusal) {
+    throw new HttpsError("failed-precondition", `Cannot wait: ${refusal}.`, {reason: refusal});
+  }
+  const ref = db.collection(WAITLIST).doc(`${sessionId}_${studentId}`);
+  await ref.set({sessionId, studentId, studentName: latinName(user),
+    sessionDate: session.sessionDate || "", sessionTitle: session.sessionTitle || "",
+    startMinutes: session.startMinutes || 0, createdAt: FieldValue.serverTimestamp()},
+  {merge: true});
+  const all = await db.collection(WAITLIST).where("sessionId", "==", sessionId).get();
+  return {waiting: true, position: all.size};
+});
+
+exports.leaveWaitlist = onCall(async (request) => {
+  const data = request.data || {};
+  const studentId = await requireBookingCaller(request, data.studentId);
+  const sessionId = String(data.sessionId || "").trim();
+  if (!sessionId || sessionId.includes("/")) {
+    throw new HttpsError("invalid-argument", "sessionId is required.");
+  }
+  await db.collection(WAITLIST).doc(`${sessionId}_${studentId}`).delete();
+  return {waiting: false};
+});
+
+/** Books the first waiting students into the free seats of [sessionId]. */
+async function fillFromWaitlist(sessionId) {
+  const snap = await db.collection(WAITLIST).where("sessionId", "==", sessionId).get();
+  const queue = snap.docs.sort((a, b) => {
+    const ta = (a.data().createdAt && a.data().createdAt.toMillis()) || 0;
+    const tb = (b.data().createdAt && b.data().createdAt.toMillis()) || 0;
+    return ta - tb;
+  });
+  let booked = 0;
+  for (const d of queue) {
+    const w = d.data() || {};
+    try {
+      await bookSessionTx(w.studentId, sessionId, Date.now(), "waitlist");
+      await d.ref.delete();
+      booked += 1;
+      await db.collection(NOTIFICATIONS).add({kind: "session",
+        title: "A seat opened for you",
+        body: `You were on the waiting list of ${w.sessionTitle || "a class"} ` +
+          `(${w.sessionDate} ${sched.clock(w.startMinutes || 0)}) and are now booked.`,
+        forRole: "student", userId: w.studentId, targetRoute: "/student", read: false,
+        createdAt: FieldValue.serverTimestamp()});
+    } catch (err) {
+      const reason = err && err.details && err.details.reason;
+      if (reason === "full") break;
+      // Cannot be booked any more (no sessions left, a clash, too late):
+      // off the list, and told.
+      await d.ref.delete();
+      if (reason !== "too_late" && reason !== "closed") {
+        await db.collection(NOTIFICATIONS).add({kind: "session",
+          title: "A seat opened, but we could not book you",
+          body: `${w.sessionTitle || "A class"} (${w.sessionDate}): ${reason || "refused"}.`,
+          forRole: "student", userId: w.studentId, targetRoute: "/student", read: false,
+          createdAt: FieldValue.serverTimestamp()});
+      }
+    }
+  }
+  return booked;
+}
+
+exports.onSessionSeatsChanged = onDocumentUpdated(`${CLASS_SESSIONS}/{sessionId}`,
+    async (event) => {
+      const before = event.data && event.data.before ? event.data.before.data() || {} : {};
+      const after = event.data && event.data.after ? event.data.after.data() || {} : {};
+      const free = (Number(after.capacity) || 0) - (Number(after.bookedCount) || 0);
+      if (free <= 0) return;
+      const opened = (Number(after.bookedCount) || 0) < (Number(before.bookedCount) || 0) ||
+        (Number(after.capacity) || 0) > (Number(before.capacity) || 0);
+      if (!opened) return;
+      if (!["scheduled", "ongoing", ""].includes(after.status || "")) return;
+      if (sched.startMs(after.sessionDate, after.startMinutes) <= Date.now()) return;
+      await fillFromWaitlist(event.params.sessionId);
+    });
 
 // ---------------------------------------------------------------------------
 // Build 7 (docs/PLAN.md §4): the teaching day. Confirmation and change

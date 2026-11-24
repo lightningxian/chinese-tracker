@@ -6,6 +6,40 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-24 — Claude (BUILD chat): teacher and parent profiles, waiting list, discard pop-up everywhere
+
+**What changed**
+- **Profiles for everyone** (`lib/features/admin/user_profile_pages.dart`):
+  every row in Users opens `/admin/users/:id` (`UserProfileRoute` picks the
+  page by role). A teacher (or admin): photo, contact, levels taught,
+  hours taught this month and last month, and tabs Weekly classes (own and
+  as helper), Classes (coming and recent, each opens the class page) and
+  Students. A parent: photo, contact, tabs Children (each opens the student
+  page) and Payments (the children's invoices, discarded ones left out).
+- **"Discard your changes?"** also on create user, the one-off class form,
+  the voucher form and the price item dialog (the start is taken when the
+  form has loaded).
+- **Waiting list** for a full class: `joinWaitlist` / `leaveWaitlist`
+  (the student or a linked parent; refused when a seat is free, after the
+  start, or when a booking would be refused for another reason; pure rule
+  `waitlistRefusal` in `scheduling.js`), `waitlist/{sessionId}_{studentId}`
+  (functions write; the student, a linked parent and staff read). The
+  trigger `onSessionSeatsChanged` books the first one waiting when a seat
+  opens before the start (cancellation, removal, more seats) and tells
+  them; someone who can no longer be booked leaves the list and is told.
+  The booking list shows **Join waiting list** on a full class and "On the
+  waiting list" with **Leave list**.
+
+**Why**
+- Owner 2026-11-24: "yes, build them" (the three recommendations).
+
+**For review**
+- Rules: `waitlist` read-only (test "waiting list (2026-11-24)").
+  Functions 69 → 72 (`joinWaitlist`, `leaveWaitlist`,
+  `onSessionSeatsChanged`).
+
+---
+
 ## 2026-11-24 — Claude (BUILD chat): owner requests, fourth round (class page, student profile, discarded invoices, unsaved-changes guard)
 
 **What changed**

@@ -208,14 +208,8 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
     _toggleSort(column);
   }
 
-  /// Student rows open the student page; staff and parents open the form.
-  void _openUser(AppUser user) {
-    if (user.isStudent) {
-      context.push('/admin/users/${user.uid}');
-    } else if (!user.isAdmin) {
-      context.push('/admin/users/${user.uid}/edit');
-    }
-  }
+  /// Owner 2026-11-24: every row opens the person's profile page.
+  void _openUser(AppUser user) => context.push('/admin/users/${user.uid}');
 
   /// Ticked users still in the list; admin accounts never take bulk actions.
   List<AppUser> _selectedUsers(List<AppUser> users) => [
