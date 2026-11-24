@@ -117,3 +117,21 @@ Grant it once, either way:
 Automated deploys (`--non-interactive`) skip the question, so the grant has
 to be done by hand once.
 
+## Storage bucket CORS (one-time, 2026-11-24)
+
+The web app downloads some files from Storage itself (reopening a scan
+draft's PDF, **Write from the recording**). A browser only allows that when
+the bucket sends `Access-Control-Allow-Origin`, which needs a CORS setting
+on the bucket (the file is `storage.cors.json` in the repo). Without it the
+app shows `ClientException: Failed to fetch`.
+
+Set it once in Google Cloud **Cloud Shell** (console.cloud.google.com,
+project chinese-tracker, the `>_` button at the top right):
+
+```
+echo '[{"origin":["https://chinese-tracker.web.app","https://chinese-tracker.firebaseapp.com","http://localhost:5181"],"method":["GET","HEAD"],"responseHeader":["Content-Type","Content-Length","Content-Range","Range"],"maxAgeSeconds":3600}]' > cors.json
+gcloud storage buckets update gs://chinese-tracker.firebasestorage.app --cors-file=cors.json
+```
+
+Check: `gcloud storage buckets describe gs://chinese-tracker.firebasestorage.app --format="default(cors_config)"`.
+

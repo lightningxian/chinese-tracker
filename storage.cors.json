@@ -1,0 +1,12 @@
+[
+  {
+    "origin": [
+      "https://chinese-tracker.web.app",
+      "https://chinese-tracker.firebaseapp.com",
+      "http://localhost:5181"
+    ],
+    "method": ["GET", "HEAD"],
+    "responseHeader": ["Content-Type", "Content-Length", "Content-Range", "Range"],
+    "maxAgeSeconds": 3600
+  }
+]
