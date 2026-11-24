@@ -2225,7 +2225,7 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
-### 2026-11-24 — Scan drafts and answers, shuffled choices, level checklists — COMMIT, release v0.1.33 (rules, storage rules, functions and hosting live from the PC; 74 functions)
+### 2026-11-24 — Scan drafts and answers, shuffled choices, level checklists — 3f1519a, release v0.1.33 (rules, storage rules, functions and hosting live from the PC; 74 functions)
 - Built: clock fix; scan drafts (save, list, reopen without reading),
   answers marked while proofreading (choice rows with a tick, the paper's
   matching layout, picture and true/false letters), the proofreading
