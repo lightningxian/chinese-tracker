@@ -26,7 +26,7 @@ bukan di sini; aturannya ada di `docs/THESIS_BOOK_GUIDE.md` §6.
 |---|---|---|
 | I Pendahuluan | `BAB_I_PENDAHULUAN.md` | Draf lengkap, 8 `[ISI]`; 1.4 menyebut Claude Code (keputusan pemilik 2026-11-24); di Word: `word/BUKU TA Easy Study.docx` dan `word/BAB I PENDAHULUAN.docx` |
 | II Teori Penunjang | `BAB_II_TEORI_PENUNJANG.md` | Draf lengkap |
-| III Proses Bisnis | `BAB_III_PROSES_BISNIS.md` | Draf lengkap, butuh foto dan angka dari pemilik; sistem lama **tanpa penjadwalan guru** (pemilik 2026-11-24: 3.2.2 dan Gambar 3.2/3.8 dihapus, gambar dinomori ulang); Gambar 3.4 (rich picture) sudah digambar: `word/fig_3_4.png` |
+| III Proses Bisnis | `BAB_III_PROSES_BISNIS.md` | Draf lengkap, butuh foto dan angka dari pemilik; sistem lama **tanpa penjadwalan guru** (pemilik 2026-11-24: 3.2.2 dan Gambar 3.2/3.8 dihapus, gambar dinomori ulang); Gambar 3.1–3.3 adalah foto/tangkapan layar pemilik (`word/fig_3_1.png` daftar sesi WhatsApp dengan nama dan nomor diburamkan, `fig_3_2.png` daftar hadir kertas, `fig_3_3.png` halaman nilai HSK dengan data pribadi diburamkan); Gambar 3.4 (rich picture) digambar: `word/fig_3_4.png`; use case dan activity diagram (3.5–3.7) menunggu jawaban pemilik |
 | IV–VIII | belum (kerangka sub-bab ada di buku Word) | IV–VI setelah pemilik setuju struktur; VII–VIII setelah uji coba |
 | Daftar Pustaka | `DAFTAR_PUSTAKA.md` | 20 sumber proposal, urut abjad |
 

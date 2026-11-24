@@ -303,7 +303,7 @@ def p_formula(text, number):
              b1 + math + TAB + runs('(%s)' % number) + b2)
 
 # ---------------------------------------------------------------- chapter rendering
-FIG_SIZE_CM = {'3.4': (14, 10)}            # width, height in cm; other figures 14 x 8
+FIG_SIZE_CM = {'3.1': (6.5, 13.5), '3.2': (10, 13.5), '3.3': (12, 8.1), '3.4': (14, 10)}            # width, height in cm; other figures 14 x 8
 
 def render_chapter(c, title, blocks, figure_png=None):
     out = []

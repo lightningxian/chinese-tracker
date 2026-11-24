@@ -65,18 +65,21 @@ meminta data diri (nama, nama Mandarin, tanggal lahir, nomor telepon, dan
 pengalaman belajar), lalu mencatatnya di spreadsheet daftar murid. Penentuan
 tingkat awal dilakukan berdasarkan pengakuan calon murid atau tes singkat
 yang diberikan guru secara lisan; tidak ada tes penempatan yang terstandar.
-⟦Jam belajar murid disepakati saat pendaftaran melalui chat antara admin,
-guru, dan murid; tidak ada jadwal guru atau jadwal kelas yang tertulis, dan
-setiap perubahan jam diatur ulang lewat chat satu per satu.⟧ Jika seorang
-guru berhalangan, admin menghubungi guru lain satu per satu melalui chat
-untuk mencari pengganti, lalu memberi tahu murid yang terdaftar.
-Contoh percakapan pendaftaran ditunjukkan pada Gambar 3.1.
+Setiap murid menyepakati hari les tertentu saat mendaftar, tetapi murid
+bebas memilih sesi lain yang lebih cocok dengan kesibukannya. Caranya, sehari
+sebelumnya admin mengirim daftar sesi ke grup WhatsApp siswa (misalnya Sesi 1
+pukul 15.00–16.30 dan Sesi 2 pukul 16.30–18.00, masing-masing delapan
+tempat), lalu murid menuliskan namanya pada sesi yang dipilih, seperti pada
+Gambar 3.1. Tidak ada jadwal guru atau jadwal kelas yang tertulis selain
+daftar harian tersebut. Jika seorang guru berhalangan, admin menghubungi guru
+lain satu per satu melalui chat untuk mencari pengganti, lalu memberi tahu
+murid yang terdaftar.
 
-[GAMBAR 3.1: tangkapan layar chat WhatsApp pendaftaran, nama dan nomor
-disamarkan]
+[GAMBAR 3.1: tangkapan layar daftar sesi harian di grup WhatsApp siswa, nama
+dan nomor disamarkan]
 
 Gambar 3.1
-Pendaftaran Murid melalui WhatsApp pada Sistem Lama
+Daftar Sesi Harian di Grup WhatsApp Siswa pada Sistem Lama
 
 ### 3.2.2 Pembayaran dan Paket Sesi
 
@@ -91,14 +94,16 @@ kadang baru diketahui belakangan.
 ### 3.2.3 Kehadiran
 
 Guru mencatat kehadiran murid pada daftar hadir kertas di setiap
-pertemuan, seperti pada Gambar 3.2. Daftar hadir tersebut dikumpulkan ke
+pertemuan, seperti pada Gambar 3.2: nama murid, jam masuk, dan lama belajar
+(1,5 jam untuk satu sesi atau 3 jam untuk dua sesi berturut-turut), satu
+blok per hari. Daftar hadir tersebut dikumpulkan ke
 admin secara berkala untuk diperiksa dan dipakai sebagai dasar pengurangan
 sisa sesi. Murid yang izin sebelum kelas dimulai tidak dipotong sesinya,
 sedangkan murid yang tidak hadir tanpa kabar (alpa) tetap dipotong satu
 sesi. Karena pencatatan dan pengurangan dilakukan terpisah dan manual,
 selisih antara sisa sesi menurut admin dan menurut murid kadang terjadi.
 
-[GAMBAR 3.2: foto daftar hadir kertas, nama disamarkan]
+[GAMBAR 3.2: foto daftar hadir kertas]
 
 Gambar 3.2
 Daftar Hadir Kertas pada Sistem Lama

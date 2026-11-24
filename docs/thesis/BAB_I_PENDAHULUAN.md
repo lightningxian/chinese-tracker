@@ -274,8 +274,8 @@ Penerapan setiap tahapan pada tugas akhir ini adalah sebagai berikut:
    simulasi dengan token dan penilaian di server, leaderboard dan kenaikan
    tingkat, persetujuan registrasi dan tes penempatan, laporan progress,
    voucher dan pembayaran, jadwal dan pemesanan sesi, pelaksanaan sesi,
-   serta dashboard dan laporan bulanan. Implementasi dilakukan pada
-   [ISI: bulan mulai] sampai November 2026 dan dibahas pada Bab VI.
+   serta dashboard dan laporan bulanan. Implementasi (penulisan kode) dilakukan
+   pada ⟦Agustus 2026⟧ sampai November 2026 dan dibahas pada Bab VI.
 4. Pengujian. Setiap modul diuji dengan pengujian otomatis (unit test
    Flutter, pengujian logika Cloud Functions, pengujian Firestore Security
    Rules, dan pengujian alur ujung-ke-ujung pada Firebase Emulator Suite),

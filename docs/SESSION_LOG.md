@@ -34,6 +34,14 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   admin asked availability by chat and kept the schedule in a spreadsheet.
 - Checks: package valid, 127 bookmarks all resolved, 2 figure relationships, list point 8 shares the list
   numbering of points 1–7. Pages after the cover are still checked by structure only (no Word on the Mac).
+- **Owner's third check:** class times in the old system = an agreed day per student, but students pick any
+  session by writing their name on the daily session list the admin posts in the student WhatsApp group
+  (§3.2.1 rewritten, no yellow left there); Gambar 3.1 is now that WhatsApp list (names, number and avatar
+  blurred), Gambar 3.2 the paper attendance sheet (cropped to the paper, names readable as the owner asked),
+  Gambar 3.3 the HSK score page (name, Chinese name and candidate numbers blurred); blurring done with a
+  headless-Chrome overlay (`scratchpad` only), crop with `sips`. §1.5 says implementation = coding, Agustus 2026
+  (first commit 2026-08-05, yellow) to November 2026. Use case and activity diagrams (3.5–3.7) wait for the
+  owner's answers to the questions asked in chat.
 - **Owner's second check (uploaded his edited book):** his edits ported into the builder (examiner lines removed
   from the pengesahan page, sidang month, pernyataan date and the tab before "Yang Membuat Pernyataan", prodi
   line "Prog Prof S1 Informatika"); English month names made Indonesian (JANUARI 2027, 28 Desember 2026, yellow
