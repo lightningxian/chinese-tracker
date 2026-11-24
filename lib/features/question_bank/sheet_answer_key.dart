@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/utils/answer_key_parser.dart';
+import '../../core/utils/question_import_utils.dart';
 import '../../l10n/l10n.dart';
 import '../../models/exercise_type.dart';
 import '../../models/question_bank_item.dart';
@@ -12,14 +13,16 @@ import '../../services/firestore_service.dart';
 /// letter (`1 D`, `11 √`, `41-45 ECBAD`); since Build 1B the writing
 /// questions take their answer too: `71 书被妹妹拿走了` puts that
 /// question's words in the order of the sentence, `76 长` sets the
-/// accepted character. Returns how many questions changed (null when
-/// cancelled).
+/// accepted character. Owner 2026-11-24: the box opens filled with the
+/// answers the worksheet already has ([SheetAnswerKeyPlan.keyText]), so the
+/// admin only corrects what is wrong. Returns how many questions changed
+/// (null when cancelled).
 Future<int?> showSheetAnswerKeyDialog(
   BuildContext context,
   QuestionBankSheet sheet,
 ) async {
   final l = context.l10n;
-  final controller = TextEditingController();
+  final controller = TextEditingController(text: SheetAnswerKeyPlan.keyText(sheet));
   final text = await showDialog<String>(
     context: context,
     builder: (ctx) => AlertDialog(
@@ -91,6 +94,47 @@ class SheetAnswerKeyPlan {
 
   /// Numbers whose sentence does not use exactly that question's words.
   final List<int> notMatched;
+
+  /// The key as the worksheet holds it now, in the format the dialog reads
+  /// back: choice letters five per line (`1 D  2 A  3 C …`), true/false as
+  /// √ / ×, then one line per writing answer (`71 我们一起去吧`, `76 长`).
+  /// Free writing has no key and is left out. Applying this text unchanged
+  /// changes nothing.
+  static String keyText(QuestionBankSheet sheet) {
+    final choices = <String>[];
+    final written = <String>[];
+    for (var i = 0; i < sheet.items.length; i++) {
+      final item = sheet.items[i];
+      final q = item.question;
+      final n = i + 1;
+      switch (item.type) {
+        case ExerciseType.multipleChoice ||
+              ExerciseType.listening ||
+              ExerciseType.matching ||
+              ExerciseType.readingCloze:
+          if (q.correctIndex < 0 || q.correctIndex >= q.options.length) continue;
+          final trueFalse = q.options.length == 2 &&
+              q.options.join() == QuestionImportUtils.trueFalseOptions.join();
+          final mark = trueFalse
+              ? (q.correctIndex == 0 ? '√' : '×')
+              : String.fromCharCode(65 + q.correctIndex);
+          choices.add('$n $mark');
+        case ExerciseType.composeSentences:
+          if (q.segments.length > 1) written.add('$n ${q.segments.join()}');
+        case ExerciseType.typeHanzi:
+          final first = q.options.where((o) => o.trim().isNotEmpty).firstOrNull;
+          if (first != null) written.add('$n ${first.trim()}');
+        default:
+          break;
+      }
+    }
+    final lines = <String>[
+      for (var i = 0; i < choices.length; i += 5)
+        choices.sublist(i, (i + 5).clamp(0, choices.length)).join('  '),
+      ...written,
+    ];
+    return lines.join('\n');
+  }
 
   static SheetAnswerKeyPlan of(
     QuestionBankSheet sheet, {

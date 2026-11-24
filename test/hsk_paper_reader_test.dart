@@ -316,5 +316,30 @@ void main() {
       expect(plan.fields['q3'], {'question.options': ['长']});
       expect(plan.notMatched, [4]);
     });
+
+    test('the key box opens with the answers the worksheet has (owner 2026-11-24)', () {
+      QuestionBankItem item(String id, ExerciseType type, ExerciseQuestion q, int i) =>
+          QuestionBankItem(id: id, ownerId: 'a', type: type, question: q, sheetCode: 'K', sheetIndex: i);
+      final sheet = QuestionBankSheet(key: 'K', items: [
+        item('q1', ExerciseType.listening,
+            const ExerciseQuestion(prompt: '', options: ['A', 'B', 'C', 'D'], correctIndex: 3), 0),
+        item('q2', ExerciseType.listening,
+            const ExerciseQuestion(prompt: '', options: ['对 (True)', '错 (False)'], correctIndex: 1), 1),
+        item('q3', ExerciseType.composeSentences,
+            const ExerciseQuestion(prompt: '', segments: ['我们', '一起', '去吧']), 2),
+        item('q4', ExerciseType.typeHanzi,
+            const ExerciseQuestion(prompt: '（ ）', keyword: 'cháng', options: ['长']), 3),
+        item('q5', ExerciseType.essay, const ExerciseQuestion(prompt: '写'), 4),
+      ]);
+      final text = SheetAnswerKeyPlan.keyText(sheet);
+      expect(text, '1 D  2 ×\n3 我们一起去吧\n4 长');
+      // Reading it back changes nothing.
+      final plan = SheetAnswerKeyPlan.of(sheet,
+          choices: AnswerKeyParser.parse(text), written: AnswerKeyParser.parseWritten(text));
+      expect(plan.indexes, isEmpty);
+      expect(plan.notMatched, isEmpty);
+      expect(plan.fields['q3'], {'question.segments': ['我们', '一起', '去吧']});
+      expect(plan.fields['q4'], {'question.options': ['长']});
+    });
   });
 }

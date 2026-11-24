@@ -13,6 +13,11 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-24 — Claude (BUILD chat, PC): answer key box pre-filled
+
+- Owner asked that the Answer key box show the answers the worksheet
+  already has. Release v0.1.35 (hosting only).
+
 ### 2026-11-24 — Claude (BUILD chat, PC): word-order and character answers, Standard Course
 
 - Owner asked: an answer for word order, the character for pinyin

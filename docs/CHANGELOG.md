@@ -6,6 +6,25 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-24 — Claude (BUILD chat): answer key box opens with the worksheet's answers
+
+**What changed**
+- The worksheet's **Answer key** box opens filled with the answers the
+  worksheet already has (`SheetAnswerKeyPlan.keyText`): choice letters
+  five per line, true/false as √ / ×, then one line per word-order
+  sentence and pinyin character. Free writing has no key and is left out.
+  Applying the text unchanged changes nothing (unit tested).
+
+**Why**
+- Owner 2026-11-24: "answer key need to be generated when the test already
+  have the answer".
+
+**For review**
+- Hosting only. A question that was never given an answer shows its stored
+  index (A), the same as students would be marked against.
+
+---
+
 ## 2026-11-24 — Claude (BUILD chat): word-order and character answers, HSK Standard Course, recording preview
 
 **What changed**

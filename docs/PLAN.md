@@ -2228,6 +2228,10 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
+### 2026-11-24 — Answer key box pre-filled — COMMIT, release v0.1.35 (hosting only)
+- The Answer key dialog opens with the worksheet's current key; the text
+  reads back to the same answers. `flutter test` 171 pass; analyzer 17 infos.
+
 ### 2026-11-24 — Word-order and character answers, HSK Standard Course, recording preview — COMMIT, release v0.1.34 (hosting only)
 - Built: tap-to-order answer for word order; character answer for pinyin
   questions; new Type of exercise **HSK Standard Course** (practice);
