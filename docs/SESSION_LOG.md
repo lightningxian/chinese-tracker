@@ -72,6 +72,11 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   warnings, 25 collections with fields, access rules, 74 functions by area), Gambar 5.1–5.9 drawn as SVG
   (architecture, use cases per role, four activity diagrams, sitemap). Tabel 3.2 filled (22 / 24 / 8 of 54).
   Book: 22 figures, 26 tables, 8 algorithms, 4 formulas, 166 bookmarks, 41 `[ISI]` left.
+- **v0.1.38 (a987075) reviewed on the Mac:** hosting only; analyzer 17 infos; `flutter test` 174 pass + 2
+  skipped; no functions or rules change (74 on live); no new tracked secrets; live `main.dart.js` carries the new
+  snackbar text; APK still served (114,190,060 bytes). Scan paper now hands a file without `第 a-b 题` blocks to
+  `reviewWorksheetFile`; the admin/web gate still holds in `WorksheetImportService.extractTextFromWorksheet`
+  (`ensureSupported()`), and Scan paper itself is admin-only. Known cost: a scan with no text layer is OCR'd twice.
 - **v0.1.37 (3c06be8) reviewed on the Mac:** hosting only; analyzer 17 infos; `flutter test` 174 pass + 2
   skipped; no tracked secrets; live bundle from 10:31 WIB; APK still served. The audio picker's new extensions
   map to `audio/*` types, which the Storage rule for question-bank media already accepts.

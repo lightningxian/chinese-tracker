@@ -73,9 +73,9 @@ Read docs/PLAN.md. You are the BUILD chat. Follow section 0, run Build 0 if this
 
 ## 1. Where the project stands (2026-11-20)
 
-**Live:** https://chinese-tracker.web.app, hosting at release v0.1.37
-(more audio file types for recordings; hosting only, from the PC
-2026-11-24, checked from the Mac; v0.1.36 Exam hidden, "Standard Course",
+**Live:** https://chinese-tracker.web.app, hosting at release v0.1.38
+(Scan paper hands a non-HSK file to the worksheet reader; hosting only, from the PC
+2026-11-24, checked from the Mac; v0.1.37 more audio file types for recordings; v0.1.36 Exam hidden, "Standard Course",
 recording required for HSK sheets, test codes removable by admins with a
 rules change; v0.1.35 the pre-filled Answer key dialog; v0.1.34 word-order and
 character answers, the HSK Standard Course type, recording preview; v0.1.33 scan drafts, shuffled choices
