@@ -563,7 +563,7 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
                   labelText: l.bankFiltersTypeOfExercise,
                 ),
                 items: [
-                  for (final c in ExerciseCategory.values)
+                  for (final c in ExerciseCategory.choices(_category))
                     DropdownMenuItem(value: c, child: Text(c.localized(l))),
                 ],
                 onChanged: (c) => setState(() => _category = c ?? _category),

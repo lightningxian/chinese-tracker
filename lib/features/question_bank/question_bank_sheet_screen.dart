@@ -75,8 +75,10 @@ class QuestionBankSheetScreen extends StatelessWidget {
                 // code; the form opens with this worksheet filled in.
                 if (canManageBank && sheet.isSheet) ...[
                   OutlinedButton.icon(
-                    onPressed: () => context.push(
-                        '/admin/tests/codes/new?sheet=${Uri.encodeComponent(sheet.key!)}'),
+                    onPressed: () => sheet.missingRecording
+                        ? _needRecording(context)
+                        : context.push(
+                            '/admin/tests/codes/new?sheet=${Uri.encodeComponent(sheet.key!)}'),
                     icon: const Icon(Icons.qr_code_2_outlined, size: 18),
                     label: Text(l.testsCreateCode),
                   ),
@@ -86,7 +88,9 @@ class QuestionBankSheetScreen extends StatelessWidget {
                 if (ExerciseAuthoringPlatform.canManageExercises(user) &&
                     sheet.category != ExerciseCategory.hskSimulation)
                   FilledButton.icon(
-                    onPressed: () => _assignSheet(context, sheet),
+                    onPressed: () => sheet.missingRecording
+                        ? _needRecording(context)
+                        : _assignSheet(context, sheet),
                     icon: const Icon(Icons.assignment_ind_outlined, size: 18),
                     label: Text(l.bankSheetAssignThis),
                     style:
@@ -332,6 +336,10 @@ class QuestionBankSheetScreen extends StatelessWidget {
 
   /// One exercise with just this worksheet, published, then the student
   /// picker. Assigning the same sheet again reuses that exercise.
+  void _needRecording(BuildContext context) =>
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.bankRecordingRequired)));
+
   Future<void> _assignSheet(
       BuildContext context, QuestionBankSheet sheet) async {
     final l = context.l10n;
@@ -635,11 +643,13 @@ class _ListeningAudioCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = context.l10n;
     final url = sheet.sectionAudioUrl;
+    final required = sheet.missingRecording;
     return AppCard(
       padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
       child: Row(
         children: [
-          Icon(Icons.headphones_outlined, color: AppColors.navy),
+          Icon(required ? Icons.headset_off_outlined : Icons.headphones_outlined,
+              color: required ? AppColors.error : AppColors.navy),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -663,6 +673,16 @@ class _ListeningAudioCard extends StatelessWidget {
                     height: 1.4,
                   ),
                 ),
+                if (required)
+                  Text(
+                    l.bankRecordingRequired,
+                    style: TextStyle(
+                      color: AppColors.error,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      height: 1.4,
+                    ),
+                  ),
               ],
             ),
           ),
@@ -772,7 +792,7 @@ class _SheetEditDialogState extends State<_SheetEditDialog> {
                 helperText: l.bankSheetCategoryHelper,
               ),
               items: [
-                for (final c in ExerciseCategory.values)
+                for (final c in ExerciseCategory.choices(_category))
                   DropdownMenuItem(value: c, child: Text(c.localized(l))),
               ],
               onChanged: (c) => setState(() => _category = c ?? _category),

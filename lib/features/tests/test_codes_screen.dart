@@ -107,6 +107,11 @@ class TestCodesScreen extends StatelessWidget {
                           value: c.active,
                           onChanged: (v) => service.setCodeActive(c.id, v),
                         ),
+                        IconButton(
+                          tooltip: l.testsRemoveCode,
+                          icon: Icon(Icons.delete_outline, color: AppColors.error),
+                          onPressed: () => _remove(context, service, c),
+                        ),
                       ],
                     ),
                   ),
@@ -116,6 +121,37 @@ class TestCodesScreen extends StatelessWidget {
         },
       ),
     );
+  }
+}
+
+/// Owner 2026-11-24: remove a code. An unused code is deleted; a code with
+/// sessions or results is hidden and switched off instead (results point at
+/// it), so its name stays taken.
+Future<void> _remove(BuildContext context, TestService service, TestCode c) async {
+  final l = context.l10n;
+  final messenger = ScaffoldMessenger.of(context);
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(l.testsRemoveCodeTitle(c.code)),
+      content: Text(l.testsRemoveCodeBody),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l.commonCancel)),
+        FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+          onPressed: () => Navigator.pop(ctx, true),
+          child: Text(l.testsRemoveCodeConfirm),
+        ),
+      ],
+    ),
+  );
+  if (ok != true) return;
+  try {
+    final deleted = await service.removeCode(c.id);
+    messenger.showSnackBar(SnackBar(
+        content: Text(deleted ? l.testsCodeRemoved(c.code) : l.testsCodeRemovedKept(c.code))));
+  } catch (e) {
+    messenger.showSnackBar(SnackBar(content: Text('$e')));
   }
 }
 
@@ -262,11 +298,17 @@ class TestCodeFormViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Owner 2026-11-24: a new code needs the HSK / Standard Course
+  /// worksheet's listening recording first.
+  bool get sheetNeedsRecording =>
+      !isEditing && (sheet?.missingRecording ?? false);
+
   bool get canSave =>
       !saving &&
       TestCode.normalize(code).isNotEmpty &&
       (sheetKey ?? '').isNotEmpty &&
-      parts.isNotEmpty;
+      parts.isNotEmpty &&
+      !sheetNeedsRecording;
 
   TestCode _build() => TestCode(
         id: editId ?? TestCode.normalize(code),
@@ -408,6 +450,14 @@ class _TestCodeForm extends StatelessWidget {
                   ],
                   onChanged: vm.isEditing ? null : vm.pickSheet,
                 ),
+                if (vm.sheetNeedsRecording)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(
+                      l.bankRecordingRequired,
+                      style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w600),
+                    ),
+                  ),
                 const SizedBox(height: 14),
                 TextFormField(
                   key: ValueKey('code-${vm.isEditing}-${vm.partsVersion > 0}'),

@@ -3175,9 +3175,21 @@
   "paperOrderReset": "Start again",
   "paperCharAnswer": "Answer (the character)",
   "paperCharAnswerHint": "e.g. 长. More than one accepted? Separate them with /",
-  "exerciseCategoryStandardCourse": "HSK Standard Course",
+  "exerciseCategoryStandardCourse": "Standard Course",
   "bankAudioPlay": "Play the recording",
   "bankAudioStop": "Stop",
   "bankAudioFailed": "The recording could not be played: {error}",
-  "@bankAudioFailed": {"placeholders": {"error": {"type": "String"}}}
+  "@bankAudioFailed": {"placeholders": {"error": {"type": "String"}}},
+  "bankTypeHsk": "HSK",
+  "bankNeedsRecording": "No listening recording yet",
+  "bankRecordingRequired": "Required: HSK and Standard Course worksheets need their listening recording before a test code or an assignment.",
+  "testsRemoveCode": "Remove code",
+  "testsRemoveCodeTitle": "Remove {code}?",
+  "@testsRemoveCodeTitle": {"placeholders": {"code": {"type": "String"}}},
+  "testsRemoveCodeBody": "Students can no longer use this code. An unused code is deleted. A code that was already used is hidden and switched off; its results stay and its name stays taken.",
+  "testsRemoveCodeConfirm": "Remove",
+  "testsCodeRemoved": "{code} removed.",
+  "@testsCodeRemoved": {"placeholders": {"code": {"type": "String"}}},
+  "testsCodeRemovedKept": "{code} removed. It was already used, so its results are kept and the name stays taken.",
+  "@testsCodeRemovedKept": {"placeholders": {"code": {"type": "String"}}}
 }

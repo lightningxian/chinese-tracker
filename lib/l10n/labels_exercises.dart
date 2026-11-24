@@ -1,6 +1,7 @@
 import '../models/exercise_category.dart';
 import '../models/exercise_skill_category.dart';
 import '../models/exercise_type.dart';
+import '../models/question_bank_item.dart';
 import 'generated/app_localizations.dart';
 
 /// Translated names for the exercise enums. The models keep their English
@@ -37,5 +38,15 @@ extension ExerciseSkillCategoryL10n on ExerciseSkillCategory {
         ExerciseSkillCategory.typing => l.skillCategoryTyping,
         ExerciseSkillCategory.speaking => l.skillCategorySpeaking,
         ExerciseSkillCategory.mixed => l.skillCategoryMixed,
+      };
+}
+
+/// Owner 2026-11-24: HSK and Standard Course papers show the paper kind in
+/// the "Question type" column ([QuestionBankSheet.typeLabel]).
+extension QuestionBankSheetTypeL10n on QuestionBankSheet {
+  String typeLocalized(AppLocalizations l) => switch (category) {
+        ExerciseCategory.hskSimulation => l.bankTypeHsk,
+        ExerciseCategory.standardCourse => l.exerciseCategoryStandardCourse,
+        _ => type.localized(l),
       };
 }

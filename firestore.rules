@@ -681,8 +681,9 @@ service cloud.firestore {
 
     // The doc id is the code itself (upper case), so a duplicate code is a
     // write to an existing doc, which the app refuses in a transaction and
-    // the rules refuse by keeping `code` equal to the id. Codes are never
-    // deleted (results point at them); admins deactivate them instead.
+    // the rules refuse by keeping `code` equal to the id. Owner 2026-11-24:
+    // admins may remove a code; the app deletes only an unused one (no
+    // session or result) and hides a used one (`removed: true`, inactive).
     match /test_codes/{codeId} {
       allow read: if isStaff();
       allow create: if isAdmin() &&
@@ -693,7 +694,7 @@ service cloud.firestore {
       allow update: if isAdmin() &&
         request.resource.data.get('code', '') == codeId &&
         request.resource.data.get('sheetKey', '') == resource.data.get('sheetKey', '');
-      allow delete: if false;
+      allow delete: if isAdmin();
     }
 
     // Sessions, attempts and results are written only by the functions

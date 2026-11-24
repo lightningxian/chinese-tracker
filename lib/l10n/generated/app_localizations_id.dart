@@ -8628,7 +8628,7 @@ class AppLocalizationsId extends AppLocalizations {
       'mis. 长. Lebih dari satu jawaban? Pisahkan dengan /';
 
   @override
-  String get exerciseCategoryStandardCourse => 'HSK Standard Course';
+  String get exerciseCategoryStandardCourse => 'Standard Course';
 
   @override
   String get bankAudioPlay => 'Putar rekaman';
@@ -8639,5 +8639,40 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String bankAudioFailed(String error) {
     return 'Rekaman tidak bisa diputar: $error';
+  }
+
+  @override
+  String get bankTypeHsk => 'HSK';
+
+  @override
+  String get bankNeedsRecording => 'Belum ada rekaman listening';
+
+  @override
+  String get bankRecordingRequired =>
+      'Wajib: lembar HSK dan Standard Course perlu rekaman listening sebelum dibuat kode tes atau ditugaskan.';
+
+  @override
+  String get testsRemoveCode => 'Hapus kode';
+
+  @override
+  String testsRemoveCodeTitle(String code) {
+    return 'Hapus $code?';
+  }
+
+  @override
+  String get testsRemoveCodeBody =>
+      'Siswa tidak bisa memakai kode ini lagi. Kode yang belum dipakai dihapus. Kode yang sudah dipakai disembunyikan dan dimatikan; hasilnya tetap ada dan namanya tetap terpakai.';
+
+  @override
+  String get testsRemoveCodeConfirm => 'Hapus';
+
+  @override
+  String testsCodeRemoved(String code) {
+    return '$code dihapus.';
+  }
+
+  @override
+  String testsCodeRemovedKept(String code) {
+    return '$code dihapus. Kode ini sudah dipakai, jadi hasilnya disimpan dan namanya tetap terpakai.';
   }
 }

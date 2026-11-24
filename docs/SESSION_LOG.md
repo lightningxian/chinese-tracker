@@ -13,6 +13,12 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-24 — Claude (BUILD chat, PC): Exam hidden, Standard Course, recording required, remove test codes
+
+- Owner asked: remove Exam, rename to Standard Course, question type HSK,
+  listening required for HSK and Standard Course, a remove button on test
+  codes. Release v0.1.36 (rules and hosting).
+
 ### 2026-11-24 — Claude (BUILD chat, PC): answer key box pre-filled
 
 - Owner asked that the Answer key box show the answers the worksheet

@@ -8666,7 +8666,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'e.g. 长. More than one accepted? Separate them with /';
 
   @override
-  String get exerciseCategoryStandardCourse => 'HSK Standard Course';
+  String get exerciseCategoryStandardCourse => 'Standard Course';
 
   @override
   String get bankAudioPlay => 'Play the recording';
@@ -8677,5 +8677,40 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String bankAudioFailed(String error) {
     return 'The recording could not be played: $error';
+  }
+
+  @override
+  String get bankTypeHsk => 'HSK';
+
+  @override
+  String get bankNeedsRecording => 'No listening recording yet';
+
+  @override
+  String get bankRecordingRequired =>
+      'Required: HSK and Standard Course worksheets need their listening recording before a test code or an assignment.';
+
+  @override
+  String get testsRemoveCode => 'Remove code';
+
+  @override
+  String testsRemoveCodeTitle(String code) {
+    return 'Remove $code?';
+  }
+
+  @override
+  String get testsRemoveCodeBody =>
+      'Students can no longer use this code. An unused code is deleted. A code that was already used is hidden and switched off; its results stay and its name stays taken.';
+
+  @override
+  String get testsRemoveCodeConfirm => 'Remove';
+
+  @override
+  String testsCodeRemoved(String code) {
+    return '$code removed.';
+  }
+
+  @override
+  String testsCodeRemovedKept(String code) {
+    return '$code removed. It was already used, so its results are kept and the name stays taken.';
   }
 }

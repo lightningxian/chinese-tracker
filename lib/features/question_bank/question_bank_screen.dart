@@ -74,7 +74,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
         sheet.title,
         sheet.isSheet ? sheet.code : '',
         sheet.category.localized(l),
-        sheet.type.localized(l),
+        sheet.typeLocalized(l),
         sheet.level ?? '',
         sheet.count,
         sheet.usageCount,
@@ -121,7 +121,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
     final l = context.l10n;
     final category = await _pickOption<ExerciseCategory>(
       title: l.bankTypeOfExerciseFor(_countLabel(l, picked)),
-      options: [for (final c in ExerciseCategory.values) (c, c.localized(l))],
+      options: [for (final c in ExerciseCategory.choices()) (c, c.localized(l))],
       initial: picked.first.category,
     );
     if (category == null || !mounted) return;
@@ -314,7 +314,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
     sorted.sort((a, b) {
       final cmp = switch (col) {
         'title' => a.title.toLowerCase().compareTo(b.title.toLowerCase()),
-        'type' => a.type.label.compareTo(b.type.label),
+        'type' => a.typeLabel.compareTo(b.typeLabel),
         'category' => a.category.index.compareTo(b.category.index),
         'level' => (a.level ?? '').compareTo(b.level ?? ''),
         'count' => a.count.compareTo(b.count),
@@ -529,16 +529,29 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
       AppTableColumn(
         id: 'category',
         label: l.bankFiltersTypeOfExercise,
-        width: 140,
+        width: 170,
         sortable: true,
-        cell: (sheet) => ExerciseCategoryChip(category: sheet.category),
+        cell: (sheet) => Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(child: ExerciseCategoryChip(category: sheet.category)),
+            if (sheet.missingRecording)
+              Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: Tooltip(
+                  message: l.bankNeedsRecording,
+                  child: Icon(Icons.headset_off_outlined, size: 18, color: AppColors.error),
+                ),
+              ),
+          ],
+        ),
       ),
       AppTableColumn(
         id: 'type',
         label: l.bankFiltersQuestionType,
         width: 150,
         sortable: true,
-        cell: (sheet) => Text(sheet.type.localized(l)),
+        cell: (sheet) => Text(sheet.typeLocalized(l)),
       ),
       AppTableColumn(
         id: 'level',
@@ -734,7 +747,8 @@ class _SheetCard extends StatelessWidget {
                   children: [
                     if (sheet.isSheet) _Chip(label: sheet.code),
                     _Chip(label: sheet.category.localized(l)),
-                    _Chip(label: sheet.type.localized(l)),
+                    _Chip(label: sheet.typeLocalized(l)),
+                    if (sheet.missingRecording) _Chip(label: l.bankNeedsRecording),
                     if (sheet.level != null && sheet.level!.isNotEmpty)
                       _Chip(label: sheet.level!),
                     if (sheet.isSheet)

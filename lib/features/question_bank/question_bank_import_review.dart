@@ -216,7 +216,7 @@ class _QuestionBankImportReviewScreenState
                             isDense: true,
                           ),
                           items: [
-                            for (final c in ExerciseCategory.values)
+                            for (final c in ExerciseCategory.choices(_category))
                               DropdownMenuItem(
                                   value: c, child: Text(c.localized(l))),
                           ],

@@ -2385,8 +2385,17 @@
   "paperOrderReset": "Ulangi",
   "paperCharAnswer": "Jawaban (karakternya)",
   "paperCharAnswerHint": "mis. 长. Lebih dari satu jawaban? Pisahkan dengan /",
-  "exerciseCategoryStandardCourse": "HSK Standard Course",
+  "exerciseCategoryStandardCourse": "Standard Course",
   "bankAudioPlay": "Putar rekaman",
   "bankAudioStop": "Berhenti",
-  "bankAudioFailed": "Rekaman tidak bisa diputar: {error}"
+  "bankAudioFailed": "Rekaman tidak bisa diputar: {error}",
+  "bankTypeHsk": "HSK",
+  "bankNeedsRecording": "Belum ada rekaman listening",
+  "bankRecordingRequired": "Wajib: lembar HSK dan Standard Course perlu rekaman listening sebelum dibuat kode tes atau ditugaskan.",
+  "testsRemoveCode": "Hapus kode",
+  "testsRemoveCodeTitle": "Hapus {code}?",
+  "testsRemoveCodeBody": "Siswa tidak bisa memakai kode ini lagi. Kode yang belum dipakai dihapus. Kode yang sudah dipakai disembunyikan dan dimatikan; hasilnya tetap ada dan namanya tetap terpakai.",
+  "testsRemoveCodeConfirm": "Hapus",
+  "testsCodeRemoved": "{code} dihapus.",
+  "testsCodeRemovedKept": "{code} dihapus. Kode ini sudah dipakai, jadi hasilnya disimpan dan namanya tetap terpakai."
 }

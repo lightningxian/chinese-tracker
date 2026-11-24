@@ -104,7 +104,7 @@ class QuestionBankFilterBar extends StatelessWidget {
             value: filter.category,
             width: wide ? 180 : null,
             items: [
-              for (final c in ExerciseCategory.values) (c, c.localized(l)),
+              for (final c in ExerciseCategory.choices(filter.category)) (c, c.localized(l)),
             ],
             onChanged: (v) => onChanged(filter.copyWith(category: v)),
           ),

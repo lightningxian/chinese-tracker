@@ -81,11 +81,41 @@ class TestService implements TestPlayBackend {
 
   // ------------------------------------------------------------------ codes
 
+  /// Removed codes (owner 2026-11-24) are left out.
   Stream<List<TestCode>> watchCodes() => _db
       .collection(codesCollection)
       .snapshots()
-      .map((s) => s.docs.map(TestCode.fromDoc).toList()
+      .map((s) => s.docs
+          .where((d) => d.data()['removed'] != true)
+          .map(TestCode.fromDoc)
+          .toList()
         ..sort((a, b) => a.code.compareTo(b.code)));
+
+  /// Owner 2026-11-24: deletes a code nobody has used; a used code (a
+  /// session, a result or a visitor placement result points at it) is
+  /// switched off and hidden instead. Returns true when it was deleted.
+  Future<bool> removeCode(String codeId) async {
+    Future<bool> used(String collection) async => (await _db
+            .collection(collection)
+            .where('codeId', isEqualTo: codeId)
+            .limit(1)
+            .get())
+        .docs
+        .isNotEmpty;
+    final ref = _db.collection(codesCollection).doc(codeId);
+    if (await used(sessionsCollection) ||
+        await used(resultsCollection) ||
+        await used('placement_results')) {
+      await ref.update({
+        'active': false,
+        'removed': true,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      return false;
+    }
+    await ref.delete();
+    return true;
+  }
 
   /// Creates a code; refuses a code that already exists.
   Future<void> createCode(TestCode code, {required String createdBy}) async {

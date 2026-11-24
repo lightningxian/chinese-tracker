@@ -14229,7 +14229,7 @@ abstract class AppLocalizations {
   /// No description provided for @exerciseCategoryStandardCourse.
   ///
   /// In en, this message translates to:
-  /// **'HSK Standard Course'**
+  /// **'Standard Course'**
   String get exerciseCategoryStandardCourse;
 
   /// No description provided for @bankAudioPlay.
@@ -14249,6 +14249,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The recording could not be played: {error}'**
   String bankAudioFailed(String error);
+
+  /// No description provided for @bankTypeHsk.
+  ///
+  /// In en, this message translates to:
+  /// **'HSK'**
+  String get bankTypeHsk;
+
+  /// No description provided for @bankNeedsRecording.
+  ///
+  /// In en, this message translates to:
+  /// **'No listening recording yet'**
+  String get bankNeedsRecording;
+
+  /// No description provided for @bankRecordingRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Required: HSK and Standard Course worksheets need their listening recording before a test code or an assignment.'**
+  String get bankRecordingRequired;
+
+  /// No description provided for @testsRemoveCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove code'**
+  String get testsRemoveCode;
+
+  /// No description provided for @testsRemoveCodeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {code}?'**
+  String testsRemoveCodeTitle(String code);
+
+  /// No description provided for @testsRemoveCodeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Students can no longer use this code. An unused code is deleted. A code that was already used is hidden and switched off; its results stay and its name stays taken.'**
+  String get testsRemoveCodeBody;
+
+  /// No description provided for @testsRemoveCodeConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get testsRemoveCodeConfirm;
+
+  /// No description provided for @testsCodeRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'{code} removed.'**
+  String testsCodeRemoved(String code);
+
+  /// No description provided for @testsCodeRemovedKept.
+  ///
+  /// In en, this message translates to:
+  /// **'{code} removed. It was already used, so its results are kept and the name stays taken.'**
+  String testsCodeRemovedKept(String code);
 }
 
 class _AppLocalizationsDelegate

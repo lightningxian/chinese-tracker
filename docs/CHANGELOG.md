@@ -6,6 +6,38 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-24 — Claude (BUILD chat): Standard Course name, Exam hidden, recording required, remove test codes
+
+**What changed**
+- **Type of exercise**: Exam is no longer offered in any picker or filter
+  (`ExerciseCategory.choices`); a worksheet that is already Exam keeps it.
+  "HSK Standard Course" is now called **Standard Course** (stored value
+  unchanged: `hsk_standard_course`).
+- **Question type** column (and CSV, sort, phone cards): an HSK Simulation
+  sheet shows **HSK**, a Standard Course sheet shows **Standard Course**
+  (`QuestionBankSheet.typeLabel` / `typeLocalized`).
+- **Listening recording required** for HSK and Standard Course worksheets
+  (`missingRecording`): a red headset icon in the bank list, a red note on
+  the worksheet's recording card, and **Create test code** / **Assign this
+  worksheet** / saving a new test code are refused until it is uploaded.
+- **Test codes: Remove** button. A code nobody used (no `test_sessions`,
+  `test_results` or `placement_results` with its `codeId`) is deleted; a
+  used one is switched off and hidden (`removed: true`) so its results
+  stay. `watchCodes` leaves removed codes out.
+
+**Why**
+- Owner 2026-11-24 (seventh round): remove Exam, call it Standard Course,
+  question type HSK, HSK / Standard Course must have listening, no remove
+  button on test codes.
+
+**For review**
+- Rules: `test_codes` delete is now `isAdmin()` (was `false`); the app
+  decides between delete and hide. A removed code's name stays taken.
+- Packages built in the Exercises tab do not check the recording yet (only
+  the worksheet screen and test codes do).
+
+---
+
 ## 2026-11-24 — Claude (BUILD chat): answer key box opens with the worksheet's answers
 
 **What changed**

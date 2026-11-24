@@ -2228,6 +2228,14 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
+### 2026-11-24 — Standard Course name, Exam hidden, recording required, remove test codes — COMMIT, release v0.1.36 (rules and hosting)
+- Built: Exam hidden from pickers; "Standard Course"; question type HSK /
+  Standard Course; listening recording required before a test code or an
+  assignment; Remove on test codes (delete if unused, else hide).
+- Proof: analyzer 17 infos; `flutter test` 174 pass.
+- Left: the package editor does not check the recording; the UI was not
+  walked in the browser this round.
+
 ### 2026-11-24 — Answer key box pre-filled — COMMIT, release v0.1.35 (hosting only)
 - The Answer key dialog opens with the worksheet's current key; the text
   reads back to the same answers. `flutter test` 171 pass; analyzer 17 infos.

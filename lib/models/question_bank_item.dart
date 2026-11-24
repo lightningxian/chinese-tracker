@@ -260,6 +260,19 @@ class QuestionBankSheet {
   String? get level => first.level;
   ExerciseCategory get category => first.category;
 
+  /// Owner 2026-11-24: an HSK or Standard Course worksheet without its
+  /// listening recording (no test code or assignment until it has one).
+  bool get missingRecording =>
+      isSheet && category.needsRecording && sectionAudioUrl == null;
+
+  /// The "Question type" column: HSK and Standard Course papers mix every
+  /// kind of question, so they show the paper kind instead.
+  String get typeLabel => switch (category) {
+        ExerciseCategory.hskSimulation => 'HSK',
+        ExerciseCategory.standardCourse => 'Standard Course',
+        _ => type.label,
+      };
+
   /// Part headings in sheet order, without repeats.
   List<String> get sections => [
         for (final item in items)

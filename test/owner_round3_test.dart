@@ -8,6 +8,9 @@ import 'package:chinese_tracker/models/app_notification.dart';
 import 'package:chinese_tracker/models/exercise_category.dart';
 import 'package:chinese_tracker/models/exercise_skill_category.dart';
 import 'package:chinese_tracker/models/invoice.dart';
+import 'package:chinese_tracker/models/exercise.dart';
+import 'package:chinese_tracker/models/exercise_type.dart';
+import 'package:chinese_tracker/models/question_bank_item.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 AppNotification _n(String role) => AppNotification(
@@ -120,6 +123,40 @@ void main() {
 
     test('HSK Standard Course is a worksheet type of its own', () {
       expect(ExerciseCategory.fromValue('hsk_standard_course'), ExerciseCategory.standardCourse);
+    });
+  });
+
+  group('Owner 2026-11-24 (seventh round)', () {
+    QuestionBankSheet sheet(ExerciseCategory c, {String? audio}) => QuestionBankSheet(key: 'K', items: [
+          QuestionBankItem(
+            id: 'q1',
+            ownerId: 'a',
+            type: ExerciseType.listening,
+            question: const ExerciseQuestion(prompt: '', options: ['A', 'B']),
+            category: c,
+            sheetCode: 'K',
+            sheetIndex: 0,
+            sectionAudioUrl: audio,
+          ),
+        ]);
+
+    test('Exam is no longer offered, but an Exam sheet keeps it', () {
+      expect(ExerciseCategory.choices(), isNot(contains(ExerciseCategory.exam)));
+      expect(ExerciseCategory.choices(ExerciseCategory.exam), contains(ExerciseCategory.exam));
+      expect(ExerciseCategory.standardCourse.label, 'Standard Course');
+    });
+
+    test('HSK and Standard Course sheets show the paper kind as question type', () {
+      expect(sheet(ExerciseCategory.hskSimulation).typeLabel, 'HSK');
+      expect(sheet(ExerciseCategory.standardCourse).typeLabel, 'Standard Course');
+      expect(sheet(ExerciseCategory.exercise).typeLabel, ExerciseType.listening.label);
+    });
+
+    test('HSK and Standard Course sheets need their recording', () {
+      expect(sheet(ExerciseCategory.hskSimulation).missingRecording, isTrue);
+      expect(sheet(ExerciseCategory.standardCourse).missingRecording, isTrue);
+      expect(sheet(ExerciseCategory.hskSimulation, audio: 'https://a/x.mp3').missingRecording, isFalse);
+      expect(sheet(ExerciseCategory.exercise).missingRecording, isFalse);
     });
   });
 }

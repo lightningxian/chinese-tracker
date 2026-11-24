@@ -515,7 +515,7 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
               ),
               items: [
                 DropdownMenuItem(value: null, child: Text(l.bankFiltersAll)),
-                for (final c in ExerciseCategory.values)
+                for (final c in ExerciseCategory.choices(_categoryFilter))
                   DropdownMenuItem(value: c, child: Text(c.localized(l))),
               ],
               onChanged: (v) => setState(() => _categoryFilter = v),
