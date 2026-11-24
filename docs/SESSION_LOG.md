@@ -13,6 +13,11 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-24 — Claude (BUILD chat, PC): .mpeg recordings accepted
+
+- Owner's H326202Z recording (`.mp3.mpeg`) was refused; the picker now
+  accepts it. Release v0.1.37 (hosting only).
+
 ### 2026-11-24 — Claude (BUILD chat, PC): Exam hidden, Standard Course, recording required, remove test codes
 
 - Owner asked: remove Exam, rename to Standard Course, question type HSK,

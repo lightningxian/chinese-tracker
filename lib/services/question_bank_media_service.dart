@@ -18,7 +18,12 @@ class QuestionBankMediaService {
   static const maxAudioBytes = 60 * 1024 * 1024;
 
   static const _imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-  static const _audioExtensions = ['mp3', 'wav', 'm4a', 'ogg'];
+  /// Owner 2026-11-24: an MP3 saved as `.mpeg` (some browsers and phones
+  /// name downloads that way) is accepted too and stored as `audio/mpeg`.
+  static const audioExtensions = [
+    'mp3', 'mpeg', 'mpga', 'wav', 'm4a', 'aac', 'ogg', 'oga', 'opus', 'webm',
+  ];
+  static const _audioExtensions = audioExtensions;
 
   static int _maxFor(String contentType) =>
       contentType.startsWith('audio/') ? maxAudioBytes : maxImageBytes;
@@ -121,10 +126,12 @@ class QuestionBankMediaService {
       'gif' => 'image/gif',
       'webp' => 'image/webp',
       'jpg' || 'jpeg' => 'image/jpeg',
-      'mp3' => 'audio/mpeg',
+      'mp3' || 'mpeg' || 'mpga' => 'audio/mpeg',
       'wav' => 'audio/wav',
       'm4a' => 'audio/mp4',
-      'ogg' => 'audio/ogg',
+      'aac' => 'audio/aac',
+      'ogg' || 'oga' || 'opus' => 'audio/ogg',
+      'webm' => 'audio/webm',
       _ => 'application/octet-stream',
     };
   }

@@ -13,6 +13,7 @@ import '../../models/question_bank_item.dart';
 import '../../services/firestore_service.dart';
 import '../../services/hsk_paper/hsk_paper_reader.dart';
 import '../../services/listening/transcriber.dart';
+import '../../services/question_bank_media_service.dart';
 import '../../core/widgets/discard_guard.dart';
 
 /// The **Transcript** of a worksheet's recording (Build 1B): typed or
@@ -146,7 +147,7 @@ class _TranscriptDialogState extends State<_TranscriptDialog> {
     if (url == null) {
       final picked = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: const ['mp3', 'm4a', 'wav', 'ogg', 'aac', 'webm'],
+        allowedExtensions: QuestionBankMediaService.audioExtensions,
         withData: true,
       );
       bytes = picked?.files.firstOrNull?.bytes;

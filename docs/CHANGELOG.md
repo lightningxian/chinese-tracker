@@ -6,6 +6,25 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-24 — Claude (BUILD chat): recordings saved as .mpeg are accepted
+
+**What changed**
+- The recording picker (worksheet listening recording, question audio,
+  listening-script writer) accepts `.mpeg`, `.mpga`, `.aac`, `.oga`,
+  `.opus` and `.webm` besides `.mp3`, `.wav`, `.m4a`, `.ogg`
+  (`QuestionBankMediaService.audioExtensions`); `.mpeg` / `.mpga` are
+  stored as `audio/mpeg`.
+
+**Why**
+- Owner 2026-11-24: the H326202Z recording was downloaded as
+  `H326202Z.mp3.mpeg` (an MP3, 42 MB) and the listening part refused it.
+
+**For review**
+- Hosting only. Emulator: the owner's 42 MB file uploaded to an HSK sheet
+  and played (35 min long, playing, no error). The 60 MB limit is unchanged.
+
+---
+
 ## 2026-11-24 — Claude (BUILD chat): Standard Course name, Exam hidden, recording required, remove test codes
 
 **What changed**

@@ -2230,6 +2230,10 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
+### 2026-11-24 — Recordings saved as .mpeg accepted — COMMIT, release v0.1.37 (hosting only)
+- The audio picker accepts `.mpeg` and other common audio endings; the
+  owner's 42 MB H326202Z recording uploaded and played on the emulator.
+
 ### 2026-11-24 — Standard Course name, Exam hidden, recording required, remove test codes — COMMIT, release v0.1.36 (rules and hosting)
 - Built: Exam hidden from pickers; "Standard Course"; question type HSK /
   Standard Course; listening recording required before a test code or an
