@@ -57,6 +57,15 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   admin asked availability by chat and kept the schedule in a spreadsheet.
 - Checks: package valid, 127 bookmarks all resolved, 2 figure relationships, list point 8 shares the list
   numbering of points 1–7. Pages after the cover are still checked by structure only (no Word on the Mac).
+- **Bab V drafted (owner: "go"):** `BAB_V_DESAIN_SISTEM.md` from proposal §IV.B–H and the code as built
+  (collections, functions, settings switches, waiting list, level checklists, placement, Standard Course):
+  12 sub-chapters, Algoritma 5.1–5.8 as numbered pseudocode in the campus format (builder renders
+  `Algoritma x.y` blocks with the template's `01:` numbering and lists them in Daftar Algoritma; the same for
+  `Segmen Program` blocks later), Rumus 5.1–5.2 as equations, Tabel 5.1–5.13 (jadwal vs sesi, checks, voucher
+  example, exercise vs test, question forms, matcher examples, levels, HSK formats, promotion example,
+  warnings, 25 collections with fields, access rules, 74 functions by area), Gambar 5.1–5.9 drawn as SVG
+  (architecture, use cases per role, four activity diagrams, sitemap). Tabel 3.2 filled (22 / 24 / 8 of 54).
+  Book: 22 figures, 26 tables, 8 algorithms, 4 formulas, 166 bookmarks, 41 `[ISI]` left.
 - **v0.1.37 (3c06be8) reviewed on the Mac:** hosting only; analyzer 17 infos; `flutter test` 174 pass + 2
   skipped; no tracked secrets; live bundle from 10:31 WIB; APK still served. The audio picker's new extensions
   map to `audio/*` types, which the Storage rule for question-bank media already accepts.

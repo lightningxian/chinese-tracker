@@ -45,9 +45,9 @@ Sebaran Murid Aktif per Level (November 2026)
 
 | Level | Tingkat | Jumlah murid aktif |
 |---|---|---|
-| Beginner | HSK 1–2 | [ISI] |
-| Intermediate | HSK 3–4 | [ISI] |
-| Advance | HSK 5–6 | [ISI] |
+| Beginner | HSK 1–2 | 22 |
+| Intermediate | HSK 3–4 | 24 |
+| Advance | HSK 5–6 | 8 |
 | Total | | 54 |
 
 Murid membeli paket kursus berupa sejumlah sesi (delapan atau enam

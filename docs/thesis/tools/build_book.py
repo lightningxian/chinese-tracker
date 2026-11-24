@@ -109,6 +109,8 @@ class Ctx:
     numid = 1000
     docpr = 200
     fig_files = {}  # rId -> png path of every figure placed as a picture
+    algoritma = []  # (number, title, bookmark)
+    segmen = []     # (number, title, bookmark)
 C = Ctx()
 
 def bookmark(name):
@@ -234,10 +236,14 @@ def parse_md(path):
             while i < len(lines) and lines[i].strip() and re.match(r'^\s+\S', lines[i]):
                 cont.append(lines[i].strip()); i += 1
             blocks.append((kind, first, ' '.join(cont))); continue
-        para = [ln.strip()]; i += 1
+        para = [ln.strip()]; raw = [ln.rstrip()]; i += 1
         while i < len(lines) and lines[i].strip() and not re.match(r'^(#|\||```|\d+\. |- |[a-c]\. [A-Z])', lines[i]):
-            para.append(lines[i].strip()); i += 1
+            para.append(lines[i].strip()); raw.append(lines[i].rstrip()); i += 1
         text = ' '.join(para)
+        mc = re.fullmatch(r'(Algoritma|Segmen Program) (\d+\.\d+)', para[0])
+        if mc and len(para) >= 3:
+            body = [re.sub(r'^\d{2}: ?', '', l) for l in raw[2:]]
+            blocks.append(('code', mc.group(1), mc.group(2), para[1], body)); continue
         mf = re.fullmatch(r'(.*\S)\s{3,}\((\d+\.\d+)\)', text)
         if text.startswith('[GAMBAR'):
             blocks.append(('fig', text))
@@ -291,7 +297,9 @@ OMML = {
     '2.1': mr('S=1−') + mfrac(mr('d'), mr('n')),
     '2.2': mr('Skor SUS', True) + mr('=') + mr('[') + mr('∑') + mr('(') + mr('skor ganjil', True) + mr('−1)+') + mr('∑') + mr('(5−') + mr('skor genap', True) + mr(')]×2,5'),
 }
-RUMUS_NAMES = {'2.1': 'Nilai Kemiripan Jawaban Typing', '2.2': 'Skor System Usability Scale'}
+RUMUS_NAMES = {'2.1': 'Nilai Kemiripan Jawaban Typing', '2.2': 'Skor System Usability Scale', '5.1': 'Sisa Sesi yang Dapat Dipesan', '5.2': 'Nilai Bagian Tes'}
+OMML['5.1'] = mr('Sisa dapat dipesan', True) + mr('=') + mr('sessionsRemaining', True) + mr('−') + mr('sessionsBooked', True)
+OMML['5.2'] = mr('Nilai bagian', True) + mr('=') + mfrac(mr('poin diperoleh', True), mr('poin maksimal', True)) + mr('×100')
 def p_formula(text, number):
     body = OMML.get(number)
     if body is None:
@@ -302,9 +310,30 @@ def p_formula(text, number):
     return P('<w:pStyle w:val="STTSRumus"/><w:tabs><w:tab w:val="clear" w:pos="2552"/><w:tab w:val="clear" w:pos="7655"/><w:tab w:val="right" w:pos="7938"/></w:tabs><w:ind w:firstLine="1134"/>',
              b1 + math + TAB + runs('(%s)' % number) + b2)
 
+
+# ---------------------------------------------------------------- algorithms and program segments (campus Tabel 8)
+A_ALGO_ID = 22   # the template's "01:" numbering (decimalZero, Courier New 10) used by Algoritma 3.1
+A_SEG_ID = 29    # the same numbering bound to the segment style (template numId 19)
+def p_code(kind, number, title, lines):
+    """Caption in the template style, then one numbered line per pseudocode or code line, then a blank line."""
+    bk = ('algoritma_' if kind == 'Algoritma' else 'segmen_') + number.replace('.', '_')
+    b1, b2 = bookmark(bk)
+    cap_style = 'STTSAlgoritma' if kind == 'Algoritma' else 'STTSSegmenProgram'
+    body_style = 'STTSAlgoritmaContent' if kind == 'Algoritma' else 'STTSSegmenProgramContent'
+    out = [P('<w:pStyle w:val="%s"/><w:keepNext/>' % cap_style, b1 + runs('%s %s %s' % (kind, number, title)) + b2)]
+    num = new_num(A_ALGO_ID if kind == 'Algoritma' else A_SEG_ID)
+    for ln in lines:
+        lead = len(ln) - len(ln.lstrip(' '))
+        text = '\u00a0' * lead + ln.lstrip(' ')
+        out.append(P('<w:pStyle w:val="%s"/><w:keepNext/><w:numPr><w:ilvl w:val="0"/><w:numId w:val="%d"/></w:numPr><w:ind w:left="567" w:hanging="567"/>' % (body_style, num), runs(text)))
+    out.append(p_empty())
+    (C.algoritma if kind == 'Algoritma' else C.segmen).append((number, title, bk))
+    return out
+
 # ---------------------------------------------------------------- chapter rendering
 FIG_SIZE_CM = {'3.1': (6.5, 13.5), '3.2': (10, 13.5), '3.3': (12, 8.1), '3.4': (12, 6.2), '3.5': (14, 10), '3.6': (14, 11.8), '3.7': (14, 12.3), '3.8': (14, 10.9),
-               '4.1': (8, 11), '4.2': (12, 8.4), '4.3': (14, 3), '4.4': (14, 3)}            # width, height in cm; other figures 14 x 8
+               '4.1': (8, 11), '4.2': (12, 8.4), '4.3': (14, 3), '4.4': (14, 3),
+               '5.1': (14, 9), '5.2': (14, 9.5), '5.3': (14, 9.5), '5.4': (14, 9.5), '5.5': (14, 10), '5.6': (14, 11), '5.7': (14, 11), '5.8': (14, 9.5), '5.9': (14, 10)}            # width, height in cm; other figures 14 x 8
 
 def render_chapter(c, title, blocks, figure_png=None):
     out = []
@@ -373,6 +402,8 @@ def render_chapter(c, title, blocks, figure_png=None):
             out.append(p_style('STTSTabel'))
         elif kind == 'formula':
             out.append(p_formula(b[1], b[2]))
+        elif kind == 'code':
+            out += p_code(*b[1:])
         prev = kind
     return out
 
@@ -611,7 +642,7 @@ def riwayat_hidup():
 
 # ---------------------------------------------------------------- assemble
 chapters = []   # (xml list) built first so the lists know every bookmark
-md = {1: 'BAB_I_PENDAHULUAN.md', 2: 'BAB_II_TEORI_PENUNJANG.md', 3: 'BAB_III_PROSES_BISNIS.md', 4: 'BAB_IV_ANALISA_SISTEM.md'}
+md = {1: 'BAB_I_PENDAHULUAN.md', 2: 'BAB_II_TEORI_PENUNJANG.md', 3: 'BAB_III_PROSES_BISNIS.md', 4: 'BAB_IV_ANALISA_SISTEM.md', 5: 'BAB_V_DESAIN_SISTEM.md'}
 chapter_xml = {}
 for c in range(1, 9):
     if c in md:
@@ -641,8 +672,8 @@ C.toc = front_toc + [('front', '', t, b) for t, b in front_lists] + chapter_toc 
 body += front_part('DAFTAR ISI', 'daftar_isi', daftar_isi())
 body += front_part('DAFTAR GAMBAR', 'daftar_gambar', daftar_list('Gambar', C.gambar, ''))
 body += front_part('DAFTAR TABEL', 'daftar_tabel', daftar_list('Tabel', C.tabel, ''))
-body += front_part('DAFTAR ALGORITMA', 'daftar_algoritma', daftar_list('Algoritma', [], '[ISI: terisi otomatis setelah algoritma Bab V ditulis (rencana: Algoritma 5.1 sampai 5.8, lihat catatan Bab V).]'))
-body += front_part('DAFTAR SEGMEN PROGRAM', 'daftar_segmen', daftar_list('Segmen Program', [], '[ISI: terisi otomatis setelah segmen program Bab VI ditulis (rencana: Segmen Program 6.1 sampai 6.15, lihat catatan Bab VI).]'))
+body += front_part('DAFTAR ALGORITMA', 'daftar_algoritma', daftar_list('Algoritma', C.algoritma, '[ISI: terisi otomatis setelah algoritma Bab V ditulis.]'))
+body += front_part('DAFTAR SEGMEN PROGRAM', 'daftar_segmen', daftar_list('Segmen Program', C.segmen, '[ISI: terisi otomatis setelah segmen program Bab VI ditulis.]'))
 body += front_part('DAFTAR RUMUS', 'daftar_rumus', daftar_list('Rumus', C.rumus, ''))
 body.append(sect_par(SECT_FRONT, 'STTSNormalDaftarIsi'))
 for c in range(1, 9):
