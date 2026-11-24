@@ -2224,7 +2224,7 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
-### 2026-11-24 — Profiles, waiting list, discard pop-up everywhere — COMMIT, release v0.1.32 (rules, functions and hosting live from the PC; 72 functions)
+### 2026-11-24 — Profiles, waiting list, discard pop-up everywhere — 6d65b92, release v0.1.32 (rules, functions and hosting live from the PC; 72 functions)
 - Built the three recommendations the owner accepted: teacher and parent
   profile pages (every Users row opens a profile); the discard pop-up on
   create user, one-off class, voucher and price item; a waiting list for
