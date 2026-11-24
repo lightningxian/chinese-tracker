@@ -45,6 +45,7 @@ class HskSlot {
     this.missing = false,
     this.unsure = false,
     this.optionsIncomplete = false,
+    this.correctIndex,
   })  : options = options ?? [],
         segments = segments ?? [],
         accepted = accepted ?? [],
@@ -84,6 +85,19 @@ class HskSlot {
 
   /// The admin pressed "Looks right": a [doubt] no longer flags the slot.
   bool checked = false;
+
+  /// Owner 2026-11-24: the right answer, marked while proofreading (the
+  /// index of a choice, a letter of a shared list or picture, 0 = true and
+  /// 1 = false); null until the admin marks it.
+  int? correctIndex;
+
+  /// Forms that have one right choice to mark.
+  bool get hasChoiceAnswer =>
+      form == HskForm.choice ||
+      form == HskForm.matching ||
+      form == HskForm.wordBank ||
+      form == HskForm.picture ||
+      form == HskForm.trueFalse;
 
   static final _cjk = RegExp(r'[㐀-鿿]');
   static final _toneMark = RegExp(r'[āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]');
@@ -247,6 +261,7 @@ class HskPaperDraft {
         page: slot.page < 1 ? 1 : slot.page,
         prompt: slot.prompt.trim(),
         options: [for (final o in slot.options) o.trim()],
+        correctIndex: slot.correctIndex,
         segments: [
           for (final s in slot.segments)
             if (s.trim().isNotEmpty) s.trim(),

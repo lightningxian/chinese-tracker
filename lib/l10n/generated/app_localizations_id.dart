@@ -8462,4 +8462,148 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get routeTitleProfile => 'Profil';
+
+  @override
+  String get paperNoAnswer => 'Belum ada jawaban';
+
+  @override
+  String paperAnswerIs(String letter) {
+    return 'Jawaban: $letter';
+  }
+
+  @override
+  String get paperChoicesTick => 'Pilihan: centang yang benar';
+
+  @override
+  String get paperAddChoice => 'Tambah pilihan';
+
+  @override
+  String get paperRemoveChoice => 'Hapus pilihan ini';
+
+  @override
+  String get paperSharedChoices => 'Pilihan untuk bagian ini (A, B, C…)';
+
+  @override
+  String get paperRightAnswer => 'Jawaban benar';
+
+  @override
+  String get paperLeaveTitle => 'Tinggalkan pindaian ini?';
+
+  @override
+  String get paperLeaveBody =>
+      'Soal-soal belum masuk bank soal. Simpan pindaian sebagai draf untuk diselesaikan nanti, atau buang.';
+
+  @override
+  String get paperSaveDraft => 'Simpan draf';
+
+  @override
+  String get paperDraftSaved =>
+      'Draf tersimpan. Buka lagi dari Pindaian belum selesai di bank soal.';
+
+  @override
+  String paperDraftFailed(String error) {
+    return 'Draf tidak bisa disimpan: $error';
+  }
+
+  @override
+  String get paperDraftsTitle => 'Pindaian belum selesai';
+
+  @override
+  String get paperDraftsNone => 'Tidak ada pindaian yang belum selesai.';
+
+  @override
+  String paperDraftsButton(int n) {
+    return 'Pindaian belum selesai ($n)';
+  }
+
+  @override
+  String paperDraftLine(int questions, int toCheck, int answered, String date) {
+    return '$questions soal · $toCheck perlu dicek · $answered sudah ada jawaban · $date';
+  }
+
+  @override
+  String get paperDraftOpen => 'Buka';
+
+  @override
+  String get paperDraftDeleteTitle => 'Hapus pindaian yang belum selesai ini?';
+
+  @override
+  String paperBankSaveFailed(String error) {
+    return 'Bank soal menolak penyimpanan: $error';
+  }
+
+  @override
+  String get levelPathsTitle => 'Daftar syarat naik level';
+
+  @override
+  String get levelPathsHelp =>
+      'Yang harus diselesaikan murid untuk naik level. Level yang punya daftar memakainya sebagai ganti hitungan kode tes; bila semuanya selesai, murid muncul di sini untuk Anda setujui.';
+
+  @override
+  String get levelPathNone =>
+      'Belum ada daftar: hitungan kode tes yang dipakai';
+
+  @override
+  String levelPathCount(int n) {
+    return '$n butir';
+  }
+
+  @override
+  String get levelPathEdit => 'Ubah';
+
+  @override
+  String levelPathEditorTitle(String from, String to) {
+    return 'Dari $from ke $to';
+  }
+
+  @override
+  String get levelPathEditorHelp =>
+      'Tambahkan latihan dan tes yang harus diselesaikan murid. Untuk latihan, Anda boleh meminta nilai minimum.';
+
+  @override
+  String get levelPathEmpty => 'Belum ada.';
+
+  @override
+  String get levelPathAddExercise => 'Tambah latihan';
+
+  @override
+  String get levelPathAddTest => 'Tambah kode tes';
+
+  @override
+  String get levelPathMinScore => 'Syarat';
+
+  @override
+  String get levelPathJustFinish => 'cukup selesai';
+
+  @override
+  String get levelPathPassTest => 'lulus tes';
+
+  @override
+  String get levelPathUp => 'Naikkan';
+
+  @override
+  String levelPathProgressTitle(String from, String to, int done, int total) {
+    return '$from → $to: $done dari $total selesai';
+  }
+
+  @override
+  String get levelPathPassed => 'lulus';
+
+  @override
+  String levelPathScoreNeeded(int best, int min) {
+    return 'terbaik $best% · perlu $min%';
+  }
+
+  @override
+  String get levelPathFinished => 'selesai';
+
+  @override
+  String get levelPathToDo => 'belum';
+
+  @override
+  String get paperSaveFailedTitle => 'Lembar soal tidak bisa disimpan';
+
+  @override
+  String get paperSaveFailedBody =>
+      'Tidak ada yang hilang: lanjutkan mengedit, atau simpan pindaian sebagai draf. Mohon kirim pesan ini ke pengembang:';
 }

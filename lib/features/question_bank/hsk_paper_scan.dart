@@ -12,6 +12,7 @@ import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/hsk_paper/hsk_paper_import.dart';
 import '../../services/hsk_paper/hsk_paper_reader.dart';
+import '../../services/hsk_paper/paper_draft_service.dart';
 import '../../services/question_bank_media_service.dart';
 import '../teacher/widgets/worksheet_import_progress_dialog.dart';
 import 'hsk_paper_proofread_screen.dart';
@@ -92,7 +93,6 @@ Future<String?> runHskPaperScan(
     );
     return null;
   }
-  final media = context.read<QuestionBankMediaService>();
   final vm = HskPaperProofreadViewModel(
     pages: pages,
     draft: draft,
@@ -101,7 +101,66 @@ Future<String?> runHskPaperScan(
     readSeconds: readSeconds,
     engine: reader.engineUsed,
   );
-  final result = await Navigator.of(context).push<HskProofreadResult>(
+  return _proofreadAndSave(context, vm, ownerId: ownerId, readSeconds: readSeconds);
+}
+
+/// Owner 2026-11-24: opens an unfinished scan again (no reading: the pages
+/// are drawn from its PDF) on the proofreading screen.
+Future<String?> resumePaperDraft(
+  BuildContext context, {
+  required String ownerId,
+  required String draftId,
+}) async {
+  final l = context.l10n;
+  final progress = ValueNotifier(WorksheetImportStage.reading(0, detail: l.paperOpening));
+  unawaited(showWorksheetImportProgress(
+    context: context,
+    fileName: l.paperDraftsTitle,
+    progress: progress,
+  ));
+  LoadedPaperDraft loaded;
+  try {
+    loaded = await PaperDraftService().load(draftId, onPage: (page, count) {
+      progress.value = WorksheetImportStage.reading(
+        (page - 1) / count,
+        detail: l.paperReadingPage(page, count),
+      );
+    });
+  } catch (e) {
+    if (context.mounted) {
+      Navigator.of(context, rootNavigator: true).pop();
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l.paperReadFailed('$e'))));
+    }
+    return null;
+  }
+  if (!context.mounted) return null;
+  Navigator.of(context, rootNavigator: true).pop();
+  final vm = HskPaperProofreadViewModel(
+    pages: loaded.pages,
+    draft: loaded.draft,
+    pdfBytes: loaded.pdfBytes,
+    fileName: loaded.fileName,
+    readSeconds: loaded.readSeconds,
+    engine: loaded.engine,
+  )
+    ..draftId = loaded.id
+    ..edited.addAll(loaded.edited)
+    ..drawnBoxes.addAll(loaded.drawnBoxes);
+  return _proofreadAndSave(context, vm, ownerId: ownerId, readSeconds: loaded.readSeconds);
+}
+
+Future<String?> _proofreadAndSave(
+  BuildContext context,
+  HskPaperProofreadViewModel vm, {
+  required String ownerId,
+  required int readSeconds,
+}) async {
+  final l = context.l10n;
+  final media = context.read<QuestionBankMediaService>();
+  // Owner 2026-11-24: over the whole window (inside the admin frame its
+  // right side, with Save, fell off the screen).
+  final result = await Navigator.of(context, rootNavigator: true).push<HskProofreadResult>(
     MaterialPageRoute(
       fullscreenDialog: true,
       builder: (_) => HskPaperProofreadScreen(
@@ -116,11 +175,34 @@ Future<String?> runHskPaperScan(
       ),
     ),
   );
-  vm.dispose();
-  if (result == null || !context.mounted) return null;
+  if (result == null || !context.mounted) {
+    vm.dispose();
+    return null;
+  }
 
   final firestore = context.read<FirestoreService>();
-  await firestore.addQuestionBankItems(result.items);
+  try {
+    await firestore.addQuestionBankItems(result.items);
+  } catch (e) {
+    // Owner 2026-11-24: keep the work when the bank refuses the save.
+    final draftId = vm.draftId;
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        duration: const Duration(seconds: 12),
+        content: Text(l.paperBankSaveFailed('$e')),
+      ));
+    }
+    debugPrint('HSK paper reader: bank save failed: $e (draft $draftId)');
+    return null;
+  }
+  final draftId = vm.draftId;
+  if (draftId != null) {
+    try {
+      await PaperDraftService().delete(draftId);
+    } catch (_) {
+      // The draft stays in the list; it can be deleted there.
+    }
+  }
   final code = result.items.isEmpty ? null : result.items.first.sheetCode;
   debugPrint('HSK paper reader: saved ${result.items.length} questions; '
       '${result.untouched} of ${result.total} needed no correction; '
@@ -164,4 +246,80 @@ Future<String?> runHskPaperScan(
     await showSheetAnswerKeyDialog(context, sheet);
   }
   return code;
+}
+
+
+/// Owner 2026-11-24: **Unfinished scans**: open a draft again or delete it.
+Future<void> showPaperDrafts(BuildContext context, {required String ownerId}) async {
+  final l = context.l10n;
+  final service = PaperDraftService();
+  final picked = await showDialog<String>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(l.paperDraftsTitle),
+      content: SizedBox(
+        width: 560,
+        child: StreamBuilder<List<PaperDraftInfo>>(
+          stream: service.watchDrafts(),
+          builder: (ctx, snap) {
+            final list = snap.data ?? const <PaperDraftInfo>[];
+            if (!snap.hasData) return const LinearProgressIndicator();
+            if (list.isEmpty) return Text(l.paperDraftsNone);
+            return ListView(
+              shrinkWrap: true,
+              children: [
+                for (final d in list)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.description_outlined),
+                    title: Text(d.code.isEmpty ? d.fileName : '${d.code} · ${d.fileName}'),
+                    subtitle: Text(l.paperDraftLine(
+                      d.questions,
+                      d.toCheck,
+                      d.answered,
+                      d.savedAt == null ? '' : MaterialLocalizations.of(ctx).formatShortDate(d.savedAt!),
+                    )),
+                    trailing: Wrap(
+                      spacing: 4,
+                      children: [
+                        IconButton(
+                          tooltip: l.timetableDelete,
+                          icon: const Icon(Icons.delete_outline),
+                          onPressed: () async {
+                            final ok = await showDialog<bool>(
+                              context: ctx,
+                              builder: (c2) => AlertDialog(
+                                title: Text(l.paperDraftDeleteTitle),
+                                actions: [
+                                  TextButton(
+                                      onPressed: () => Navigator.pop(c2, false),
+                                      child: Text(l.commonCancel)),
+                                  FilledButton(
+                                      onPressed: () => Navigator.pop(c2, true),
+                                      child: Text(l.timetableDelete)),
+                                ],
+                              ),
+                            );
+                            if (ok == true) await service.delete(d.id);
+                          },
+                        ),
+                        FilledButton(
+                          onPressed: () => Navigator.pop(ctx, d.id),
+                          child: Text(l.paperDraftOpen),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l.teacherAttClose)),
+      ],
+    ),
+  );
+  if (picked == null || !context.mounted) return;
+  await resumePaperDraft(context, ownerId: ownerId, draftId: picked);
 }

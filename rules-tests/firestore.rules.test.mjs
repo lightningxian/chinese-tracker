@@ -914,3 +914,14 @@ describe("waiting list (2026-11-24)", () => {
     await assertFails(setDoc(doc(as("student1"), "waitlist", "s9_student1"), { sessionId: "s9", studentId: "student1" }));
   });
 });
+
+// Owner 2026-11-24: unfinished paper scans.
+describe("paper drafts (2026-11-24)", () => {
+  it("only admins read and write a draft", async () => {
+    await assertSucceeds(setDoc(doc(as("admin1"), "paper_drafts", "d1"), { fileName: "H.pdf" }));
+    await assertSucceeds(getDoc(doc(as("admin1"), "paper_drafts", "d1")));
+    await assertFails(getDoc(doc(as("teacher1"), "paper_drafts", "d1")));
+    await assertFails(setDoc(doc(as("teacher1"), "paper_drafts", "d2"), { fileName: "x" }));
+    await assertFails(getDoc(doc(as("student1"), "paper_drafts", "d1")));
+  });
+});

@@ -103,6 +103,14 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   Publishing it (hosting deploy from the Mac, web + APK, `scripts/deploy_web.sh --no-keys`) waits for the
   owner's word in the PLAN chat.
 
+### 2026-11-24 — Claude (BUILD chat, PC): scan drafts and answers, level checklists
+
+- Owner asked: the clock does not move; drafts of unfinished scans; the
+  save error; the right answer beside each question; choices as proper
+  multiple choice with a tick; shuffled choices; the paper's matching
+  layout; X asks first; a level checklist with a progress bar.
+- Release v0.1.33 (74 functions), see the CHANGELOG entry.
+
 ### 2026-11-24 — Claude (BUILD chat, PC): profiles, waiting list
 
 - Owner said "yes, build them" to the recommendations: teacher and parent

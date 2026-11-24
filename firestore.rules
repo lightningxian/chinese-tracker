@@ -321,6 +321,16 @@ service cloud.firestore {
       allow read: if isApprovedUser();
       allow write: if false;
     }
+    // Owner 2026-11-24: one checklist per level (admin writes; the
+    // functions copy each student's progress into promotion_progress).
+    match /level_paths/{levelKey} {
+      allow read: if isStaff();
+      allow write: if isAdmin();
+    }
+    // Owner 2026-11-24: unfinished paper scans (admin only, like scanning).
+    match /paper_drafts/{id} {
+      allow read, write: if isAdmin();
+    }
     // Owner 2026-11-24: the waiting list of a full class (functions write).
     match /waitlist/{id} {
       allow read: if isApprovedUser() && (

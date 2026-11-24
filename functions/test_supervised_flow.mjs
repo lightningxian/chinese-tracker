@@ -2108,4 +2108,30 @@ await step("owner 2026-11-24: a full class takes a waiting list; a cancelled sea
       "the waiting student is told");
 });
 
+await step("owner 2026-11-24: a level checklist replaces the code count; finishing it recommends the next level", async () => {
+  const ex = `flow_ex_${RUN}`;
+  await patchDoc(`users/${s26.uid}`, {level: {stringValue: "HSK 5"}});
+  await setDocRaw("level_paths/5", {level: "HSK 5", items: [
+    {kind: "exercise", id: ex, title: "Flow practice", minScore: 60}]});
+  const p0 = await waitFor(async () => {
+    const p = await readDoc(`promotion_progress/${s26.uid}`);
+    return p && p.mode === "path" && p.total === 1 ? p : null;
+  }, "the checklist progress", 30000);
+  assert.equal(p0.done, 0);
+  await setDocRaw(`exercise_results/flow_er1_${RUN}`, {studentId: s26.uid, exerciseId: ex,
+    score: 50, status: "final", submittedAt: new Date()});
+  await setDocRaw(`exercise_results/flow_er2_${RUN}`, {studentId: s26.uid, exerciseId: ex,
+    score: 80, status: "final", submittedAt: new Date()});
+  const p1 = await waitFor(async () => {
+    const p = await readDoc(`promotion_progress/${s26.uid}`);
+    return p && p.done === 1 ? p : null;
+  }, "the exercise counted", 30000);
+  assert.equal(p1.items[0].best, 80);
+  const rec = await waitFor(() => readDoc(`level_promotions/${s26.uid}_5`), "the recommendation");
+  assert.equal(rec.status, "waiting");
+  assert.equal(rec.path, true);
+  assert.equal(rec.toLevel, "HSK 6");
+  await deleteDoc("level_paths/5");
+});
+
 console.log(`supervised flow: ${passed} steps passed`);

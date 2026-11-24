@@ -6,6 +6,53 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-24 — Claude (BUILD chat): scan drafts and answers, shuffled choices, level checklists
+
+**What changed**
+- **Dashboard clock** ticks (its timer was a lazy `late final` and never
+  started; same for the next-class countdown).
+- **Scan paper**:
+  - the proofreading screen opens over the whole window (`rootNavigator`)
+    so the Save buttons are never off the screen (the AI-scan review too);
+  - X always asks: Keep editing / Discard / **Save draft**; a **Save draft**
+    button in the bar; drafts are `paper_drafts/{id}` (questions, answers,
+    boxes, corrections) with the PDF in Storage
+    `paper_drafts/{uid}/{id}.pdf` (admin only); **Unfinished scans (n)** in
+    the question bank opens one again (the pages are drawn from the PDF, no
+    reading) or deletes it; saving the worksheet deletes the draft;
+  - each question shows **Answer: B** / **No answer yet**; own choices are
+    rows with a tick on the right one; a matching or word-bank block shows
+    its A, B, C… list once like the paper, and each question picks its
+    letter; picture questions pick a letter; true/false picks ✓ or ✗;
+    the answer is saved with the question (`HskSlot.correctIndex`);
+  - a failed save shows the whole error (to copy) and offers Save draft.
+- **Shuffled choices**: students see text multiple-choice answers in a
+  random order (stable per question; the answer sent is the original
+  index); lettered lists and picture choices keep their letters.
+- **Level checklists** (replaces the test-code count for a level that has
+  one): Promotion → **Level checklists**, per level a list of exercises
+  (optional minimum score) and test codes (`level_paths/{levelKey}`,
+  admin writes, staff read). `syncPromotion` uses `promo.pathProgress`;
+  `promotion_progress` carries `mode: path`, `done`, `total`, `items`; a
+  finished checklist writes the waiting recommendation. New triggers
+  `onExerciseResultForPath` and `onLevelPathWritten`. The student's Tests
+  tab shows the progress bar and the ticked list.
+- Waiting list: a second trigger run that finds the student already booked
+  no longer tells them "could not book" (PLAN chat review).
+
+**Why**
+- Owner 2026-11-24 (fifth round); answers: shuffle the choice order; the
+  checklist replaces the codes; exercises and test codes on it; the save
+  error showed an error message.
+
+**For review**
+- Rules: `level_paths`, `paper_drafts` (Firestore), `paper_drafts` (Storage).
+  Functions 72 → 74.
+- The owner's save error did not happen with the practice paper on the
+  emulator (saved 80 questions); the error dialog now shows the message.
+
+---
+
 ## 2026-11-24 — Claude (BUILD chat): teacher and parent profiles, waiting list, discard pop-up everywhere
 
 **What changed**

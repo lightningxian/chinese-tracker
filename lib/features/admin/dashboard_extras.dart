@@ -18,12 +18,20 @@ class DashboardClock extends StatefulWidget {
 }
 
 class _DashboardClockState extends State<DashboardClock> {
-  late final Timer _timer =
-      Timer.periodic(const Duration(seconds: 1), (_) => setState(() {}));
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    // Started here: a `late final` timer would never start (lazy).
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
+    });
+  }
 
   @override
   void dispose() {
-    _timer.cancel();
+    _timer?.cancel();
     super.dispose();
   }
 
@@ -63,12 +71,19 @@ class NextClassCountdown extends StatefulWidget {
 }
 
 class _NextClassCountdownState extends State<NextClassCountdown> {
-  late final Timer _timer =
-      Timer.periodic(const Duration(seconds: 30), (_) => setState(() {}));
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted) setState(() {});
+    });
+  }
 
   @override
   void dispose() {
-    _timer.cancel();
+    _timer?.cancel();
     super.dispose();
   }
 

@@ -18,6 +18,7 @@ import '../../models/question_bank_item.dart';
 import '../../services/auth_service.dart';
 import '../../services/hsk_paper/hsk_paper_import.dart';
 import '../../services/hsk_paper/hsk_paper_reader.dart';
+import '../../services/hsk_paper/paper_draft_service.dart';
 import '../../services/hsk_paper/paper_image_ops.dart';
 import '../../services/hsk_paper/paper_truth.dart';
 import '../../core/widgets/discard_guard.dart';
@@ -64,6 +65,32 @@ class HskPaperProofreadViewModel extends ChangeNotifier {
 
   int selectedPage = 1;
   bool onlyFlagged = false;
+
+  /// Owner 2026-11-24: the draft this scan is kept in (null until saved).
+  String? draftId;
+  bool savingDraft = false;
+
+  Future<void> saveDraft(String byName) async {
+    savingDraft = true;
+    notifyListeners();
+    try {
+      draftId = await PaperDraftService().save(
+        id: draftId,
+        draft: draft,
+        pages: pages,
+        pdfBytes: pdfBytes,
+        fileName: fileName,
+        edited: edited,
+        drawnBoxes: drawnBoxes,
+        readSeconds: readSeconds,
+        engine: engine,
+        byName: byName,
+      );
+    } finally {
+      savingDraft = false;
+      notifyListeners();
+    }
+  }
   bool saving = false;
   String savingDetail = '';
 
@@ -122,6 +149,33 @@ class HskPaperProofreadViewModel extends ChangeNotifier {
   void nextPage(int step) {
     final n = (selectedPage + step).clamp(1, pages.length);
     if (n != selectedPage || onlyFlagged) showPage(n);
+  }
+
+  /// Owner 2026-11-24: a block of matching (or word-bank) questions shares
+  /// one lettered list, shown once like on the paper.
+  List<String> sharedOptions(HskSlot slot) {
+    for (final s in draft.slots) {
+      if (s.section == slot.section && s.form == slot.form && s.options.isNotEmpty) {
+        return s.options;
+      }
+    }
+    return slot.options;
+  }
+
+  void setSharedOptions(HskSlot slot, List<String> options) {
+    for (final s in draft.slots) {
+      if (s.section == slot.section && s.form == slot.form) {
+        s.options = [...options];
+        s.optionsIncomplete = false;
+        edited.add(s.number);
+      }
+    }
+    notifyListeners();
+  }
+
+  void setAnswer(HskSlot slot, int? index) {
+    slot.correctIndex = index;
+    changed(slot);
   }
 
   /// New picture boxes for every picture question of [pageNumber].
@@ -302,13 +356,93 @@ class _ProofreadView extends StatelessWidget {
         duration: DateTime.now().difference(vm.startedAt),
       ));
     } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('$e')));
+      // Owner 2026-11-24: show the whole error (to copy) and keep the work.
+      messenger.hideCurrentSnackBar();
+      if (!context.mounted) return;
+      final draft = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(l.paperSaveFailedTitle),
+          content: SizedBox(
+            width: 520,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(l.paperSaveFailedBody),
+                const SizedBox(height: 10),
+                SelectableText('$e',
+                    style: TextStyle(color: AppColors.error, fontFamily: 'monospace', fontSize: 12)),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l.discardKeepEditing)),
+            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l.paperSaveDraft)),
+          ],
+        ),
+      );
+      if (draft == true && context.mounted) await _saveDraft(context);
     }
   }
 
   @override
   Widget build(BuildContext context) =>
-      DiscardGuard(isDirty: () => context.read<HskPaperProofreadViewModel>().edited.isNotEmpty || context.read<HskPaperProofreadViewModel>().drawnBoxes.isNotEmpty, child: _buildEditor(context));
+      // Owner 2026-11-24: a scan is unsaved work as soon as it is read;
+      // leaving asks: keep editing, save as a draft, or discard.
+      PopScope<Object?>(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) async {
+          if (didPop) return;
+          final vm = context.read<HskPaperProofreadViewModel>();
+          if (vm.saving) return;
+          final navigator = Navigator.of(context);
+          final choice = await _askLeave(context);
+          if (choice == 'discard') {
+            navigator.pop();
+          } else if (choice == 'draft' && context.mounted) {
+            if (await _saveDraft(context)) navigator.pop();
+          }
+        },
+        child: _buildEditor(context),
+      );
+
+  Future<String?> _askLeave(BuildContext context) {
+    final l = context.l10n;
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l.paperLeaveTitle),
+        content: Text(l.paperLeaveBody),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l.discardKeepEditing)),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, 'discard'),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: Text(l.discardConfirm),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, 'draft'),
+            child: Text(l.paperSaveDraft),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<bool> _saveDraft(BuildContext context) async {
+    final l = context.l10n;
+    final vm = context.read<HskPaperProofreadViewModel>();
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await vm.saveDraft(context.read<AuthService>().appUser?.name ?? '');
+      messenger.showSnackBar(SnackBar(content: Text(l.paperDraftSaved)));
+      return true;
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(l.paperDraftFailed('$e'))));
+      return false;
+    }
+  }
 
   Widget _buildEditor(BuildContext context) {
     final l = context.l10n;
@@ -335,7 +469,18 @@ class _ProofreadView extends StatelessWidget {
               style: TextStyle(color: AppColors.textSecondary),
             ),
           ),
-        for (final s in slots)
+        for (final (i, s) in slots.indexed) ...[
+          if ((s.form == HskForm.matching || s.form == HskForm.wordBank) &&
+              (i == 0 ||
+                  slots[i - 1].section != s.section ||
+                  slots[i - 1].form != s.form))
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _SharedChoicesCard(
+                key: ValueKey('shared-${s.section}-${s.form}'),
+                slot: s,
+              ),
+            ),
           Padding(
             padding: const EdgeInsets.only(bottom: 10),
             child: _SlotEditor(
@@ -346,6 +491,7 @@ class _ProofreadView extends StatelessWidget {
                   : null,
             ),
           ),
+        ],
       ],
     );
     final pageView = _PageView(page: vm.page, wide: wide);
@@ -366,6 +512,17 @@ class _ProofreadView extends StatelessWidget {
               icon: const Icon(Icons.rule_outlined),
               tooltip: l.paperCompareTruth,
             ),
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: OutlinedButton.icon(
+              onPressed: vm.saving || vm.savingDraft ? null : () => _saveDraft(context),
+              icon: vm.savingDraft
+                  ? const SizedBox(
+                      width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Icon(Icons.bookmark_add_outlined, size: 18),
+              label: Text(l.paperSaveDraft),
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 12),
             child: FilledButton.icon(
@@ -769,9 +926,6 @@ class _SlotEditorState extends State<_SlotEditor> {
   Widget build(BuildContext context) {
     final l = context.l10n;
     final s = widget.slot;
-    final usesOptions = s.form == HskForm.choice ||
-        s.form == HskForm.matching ||
-        s.form == HskForm.wordBank;
     final doubt = s.checked ? null : s.doubt;
     InputDecoration deco(String label, {String? helper}) => InputDecoration(
           labelText: label,
@@ -829,6 +983,7 @@ class _SlotEditorState extends State<_SlotEditor> {
                   l.paperPageShort(s.page),
                   style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                 ),
+              if (s.hasChoiceAnswer) _AnswerChip(slot: s),
               if (s.missing || s.unsure || doubt != null)
                 TextButton(
                   onPressed: () {
@@ -857,6 +1012,8 @@ class _SlotEditorState extends State<_SlotEditor> {
                 ),
               ],
             ),
+            const SizedBox(height: 8),
+            _LetterAnswer(slot: s, count: s.pictures.length),
           ] else ...[
             if (s.form != HskForm.reorder)
               TextField(
@@ -869,22 +1026,20 @@ class _SlotEditorState extends State<_SlotEditor> {
                   _changed();
                 },
               ),
-            if (usesOptions) ...[
+            if (s.form == HskForm.choice) ...[
               const SizedBox(height: 8),
-              TextField(
-                controller: _options,
-                minLines: 2,
-                maxLines: 8,
-                decoration: deco(l.paperOptions, helper: l.paperOptionsHint),
-                onChanged: (v) {
-                  s.options = v.split('\n').map((o) => o.trim()).toList();
-                  while (s.options.isNotEmpty && s.options.last.isEmpty) {
-                    s.options.removeLast();
-                  }
-                  s.optionsIncomplete = false;
-                  _changed();
-                },
+              _ChoiceRows(key: ValueKey('choices-${s.number}'), slot: s),
+            ],
+            if (s.form == HskForm.matching || s.form == HskForm.wordBank) ...[
+              const SizedBox(height: 8),
+              _LetterAnswer(
+                slot: s,
+                count: context.watch<HskPaperProofreadViewModel>().sharedOptions(s).length,
               ),
+            ],
+            if (s.form == HskForm.trueFalse) ...[
+              const SizedBox(height: 8),
+              _TrueFalseAnswer(slot: s),
             ],
             if (s.form == HskForm.reorder) ...[
               TextField(
@@ -1135,6 +1290,276 @@ class _BoxEditorDialogState extends State<_BoxEditorDialog> {
         FilledButton(
           onPressed: () => Navigator.pop(context, _boxes),
           child: Text(l.paperUseBoxes(_boxes.length)),
+        ),
+      ],
+    );
+  }
+}
+
+
+String _letter(int i) => String.fromCharCode(65 + i);
+
+/// "Answer: B" (green) or "No answer yet" (amber) beside the number.
+class _AnswerChip extends StatelessWidget {
+  const _AnswerChip({required this.slot});
+  final HskSlot slot;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final i = slot.correctIndex;
+    final text = i == null
+        ? l.paperNoAnswer
+        : l.paperAnswerIs(slot.form == HskForm.trueFalse
+            ? (i == 0 ? '✓' : '✗')
+            : _letter(i));
+    final color = i == null ? AppColors.chipAmberFg : AppColors.success;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(text,
+          style: TextStyle(color: color, fontWeight: FontWeight.w800, fontSize: 11.5)),
+    );
+  }
+}
+
+/// Owner 2026-11-24: the choices of a question as rows, the right one
+/// ticked, like a multiple-choice question.
+class _ChoiceRows extends StatefulWidget {
+  const _ChoiceRows({super.key, required this.slot});
+  final HskSlot slot;
+
+  @override
+  State<_ChoiceRows> createState() => _ChoiceRowsState();
+}
+
+class _ChoiceRowsState extends State<_ChoiceRows> {
+  late final List<TextEditingController> _rows = [
+    for (final o in widget.slot.options) TextEditingController(text: o),
+  ];
+
+  @override
+  void dispose() {
+    for (final c in _rows) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  void _push() {
+    final vm = context.read<HskPaperProofreadViewModel>();
+    widget.slot.options = [for (final c in _rows) c.text.trim()];
+    widget.slot.optionsIncomplete = false;
+    vm.changed(widget.slot);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final vm = context.read<HskPaperProofreadViewModel>();
+    final s = widget.slot;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(l.paperChoicesTick, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+        const SizedBox(height: 4),
+        for (var i = 0; i < _rows.length; i++)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Row(
+              children: [
+                Checkbox(
+                  value: s.correctIndex == i,
+                  onChanged: (v) => setState(() => vm.setAnswer(s, v == true ? i : null)),
+                ),
+                SizedBox(
+                  width: 22,
+                  child: Text(_letter(i), style: const TextStyle(fontWeight: FontWeight.w800)),
+                ),
+                Expanded(
+                  child: TextField(
+                    controller: _rows[i],
+                    decoration: const InputDecoration(isDense: true, border: OutlineInputBorder()),
+                    onChanged: (_) => _push(),
+                  ),
+                ),
+                IconButton(
+                  tooltip: l.paperRemoveChoice,
+                  onPressed: () => setState(() {
+                    _rows.removeAt(i).dispose();
+                    if (s.correctIndex == i) {
+                      s.correctIndex = null;
+                    } else if ((s.correctIndex ?? -1) > i) {
+                      s.correctIndex = s.correctIndex! - 1;
+                    }
+                    _push();
+                  }),
+                  icon: const Icon(Icons.close, size: 18),
+                ),
+              ],
+            ),
+          ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: () => setState(() {
+              _rows.add(TextEditingController());
+              _push();
+            }),
+            icon: const Icon(Icons.add, size: 18),
+            label: Text(l.paperAddChoice),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Owner 2026-11-24: the shared lettered list of a matching (or word-bank)
+/// block, once, like on the paper; each question then picks its letter.
+class _SharedChoicesCard extends StatefulWidget {
+  const _SharedChoicesCard({super.key, required this.slot});
+  final HskSlot slot;
+
+  @override
+  State<_SharedChoicesCard> createState() => _SharedChoicesCardState();
+}
+
+class _SharedChoicesCardState extends State<_SharedChoicesCard> {
+  late final List<TextEditingController> _rows = [
+    for (final o in context.read<HskPaperProofreadViewModel>().sharedOptions(widget.slot))
+      TextEditingController(text: o),
+  ];
+
+  @override
+  void dispose() {
+    for (final c in _rows) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  void _push() => context
+      .read<HskPaperProofreadViewModel>()
+      .setSharedOptions(widget.slot, [for (final c in _rows) c.text.trim()]);
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final s = widget.slot;
+    return AppCard(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(l.paperSharedChoices, style: const TextStyle(fontWeight: FontWeight.w800)),
+          if (s.section.isNotEmpty)
+            Text(s.section, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+          const SizedBox(height: 8),
+          for (var i = 0; i < _rows.length; i++)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 26,
+                    child: Text(_letter(i),
+                        style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.teal)),
+                  ),
+                  Expanded(
+                    child: TextField(
+                      controller: _rows[i],
+                      decoration:
+                          const InputDecoration(isDense: true, border: OutlineInputBorder()),
+                      onChanged: (_) => _push(),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: l.paperRemoveChoice,
+                    onPressed: () => setState(() {
+                      _rows.removeAt(i).dispose();
+                      _push();
+                    }),
+                    icon: const Icon(Icons.close, size: 18),
+                  ),
+                ],
+              ),
+            ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () => setState(() {
+                _rows.add(TextEditingController());
+                _push();
+              }),
+              icon: const Icon(Icons.add, size: 18),
+              label: Text(l.paperAddChoice),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The right letter of a picture or shared-list question.
+class _LetterAnswer extends StatelessWidget {
+  const _LetterAnswer({required this.slot, required this.count});
+  final HskSlot slot;
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final vm = context.read<HskPaperProofreadViewModel>();
+    return Row(
+      children: [
+        Text(l.paperRightAnswer, style: const TextStyle(fontWeight: FontWeight.w700)),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (var i = 0; i < count; i++)
+                ChoiceChip(
+                  label: Text(_letter(i)),
+                  selected: slot.correctIndex == i,
+                  onSelected: (v) => vm.setAnswer(slot, v ? i : null),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TrueFalseAnswer extends StatelessWidget {
+  const _TrueFalseAnswer({required this.slot});
+  final HskSlot slot;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final vm = context.read<HskPaperProofreadViewModel>();
+    return Row(
+      children: [
+        Text(l.paperRightAnswer, style: const TextStyle(fontWeight: FontWeight.w700)),
+        const SizedBox(width: 10),
+        ChoiceChip(
+          label: const Text('✓'),
+          selected: slot.correctIndex == 0,
+          onSelected: (v) => vm.setAnswer(slot, v ? 0 : null),
+        ),
+        const SizedBox(width: 6),
+        ChoiceChip(
+          label: const Text('✗'),
+          selected: slot.correctIndex == 1,
+          onSelected: (v) => vm.setAnswer(slot, v ? 1 : null),
         ),
       ],
     );

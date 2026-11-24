@@ -8495,4 +8495,153 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get routeTitleProfile => 'Profile';
+
+  @override
+  String get paperNoAnswer => 'No answer yet';
+
+  @override
+  String paperAnswerIs(String letter) {
+    return 'Answer: $letter';
+  }
+
+  @override
+  String get paperChoicesTick => 'Choices: tick the right one';
+
+  @override
+  String get paperAddChoice => 'Add a choice';
+
+  @override
+  String get paperRemoveChoice => 'Remove this choice';
+
+  @override
+  String get paperSharedChoices => 'Choices for this part (A, B, C…)';
+
+  @override
+  String get paperRightAnswer => 'Right answer';
+
+  @override
+  String get paperLeaveTitle => 'Leave this scan?';
+
+  @override
+  String get paperLeaveBody =>
+      'The questions are not in the bank yet. Save the scan as a draft to finish it later, or discard it.';
+
+  @override
+  String get paperSaveDraft => 'Save draft';
+
+  @override
+  String get paperDraftSaved =>
+      'Draft saved. Open it again from Unfinished scans in the question bank.';
+
+  @override
+  String paperDraftFailed(String error) {
+    return 'Could not save the draft: $error';
+  }
+
+  @override
+  String get paperDraftsTitle => 'Unfinished scans';
+
+  @override
+  String get paperDraftsNone => 'No unfinished scans.';
+
+  @override
+  String paperDraftsButton(int n) {
+    return 'Unfinished scans ($n)';
+  }
+
+  @override
+  String paperDraftLine(int questions, int toCheck, int answered, String date) {
+    return '$questions questions · $toCheck to check · $answered answered · $date';
+  }
+
+  @override
+  String get paperDraftOpen => 'Open';
+
+  @override
+  String get paperDraftDeleteTitle => 'Delete this unfinished scan?';
+
+  @override
+  String paperBankSaveFailed(String error) {
+    return 'The question bank refused the save: $error';
+  }
+
+  @override
+  String get levelPathsTitle => 'Level checklists';
+
+  @override
+  String get levelPathsHelp =>
+      'What a student must finish to move up. A level with a checklist uses it instead of the test-code count; when everything is done, the student appears here for you to approve.';
+
+  @override
+  String get levelPathNone => 'No checklist: the test-code count is used';
+
+  @override
+  String levelPathCount(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n items',
+      one: '1 item',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get levelPathEdit => 'Edit';
+
+  @override
+  String levelPathEditorTitle(String from, String to) {
+    return 'From $from to $to';
+  }
+
+  @override
+  String get levelPathEditorHelp =>
+      'Add the exercises and tests a student must finish. For an exercise you may ask for a minimum score.';
+
+  @override
+  String get levelPathEmpty => 'Nothing yet.';
+
+  @override
+  String get levelPathAddExercise => 'Add an exercise';
+
+  @override
+  String get levelPathAddTest => 'Add a test code';
+
+  @override
+  String get levelPathMinScore => 'Needs';
+
+  @override
+  String get levelPathJustFinish => 'just finish';
+
+  @override
+  String get levelPathPassTest => 'pass the test';
+
+  @override
+  String get levelPathUp => 'Move up';
+
+  @override
+  String levelPathProgressTitle(String from, String to, int done, int total) {
+    return '$from → $to: $done of $total done';
+  }
+
+  @override
+  String get levelPathPassed => 'passed';
+
+  @override
+  String levelPathScoreNeeded(int best, int min) {
+    return 'best $best% · needs $min%';
+  }
+
+  @override
+  String get levelPathFinished => 'finished';
+
+  @override
+  String get levelPathToDo => 'to do';
+
+  @override
+  String get paperSaveFailedTitle => 'The worksheet could not be saved';
+
+  @override
+  String get paperSaveFailedBody =>
+      'Nothing is lost: keep editing, or save the scan as a draft. Please send this message to the developer:';
 }

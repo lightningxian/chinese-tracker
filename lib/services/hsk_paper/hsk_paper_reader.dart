@@ -128,6 +128,58 @@ class HskPaperReader {
     }
   }
 
+  /// Owner 2026-11-24 (scan drafts): the pages drawn and cleaned again from
+  /// the PDF, with no reading; [boxes] are the picture boxes kept with the
+  /// draft (found again on a page that has none kept).
+  static Future<List<PaperPage>> renderPdf(
+    Uint8List bytes, {
+    required Map<int, List<PixelBox>> boxes,
+    void Function(int page, int count)? onPage,
+  }) async {
+    final doc = await PdfDocument.openData(bytes);
+    try {
+      final count = doc.pages.length;
+      final out = <PaperPage>[];
+      for (var i = 0; i < count; i++) {
+        onPage?.call(i + 1, count);
+        final page = doc.pages[i];
+        final scale = renderWidth / page.width;
+        const w = renderWidth;
+        final h = (page.height * scale).round().clamp(1, 6000);
+        final rendered = await page.render(
+          width: w,
+          height: h,
+          fullWidth: page.width * scale,
+          fullHeight: page.height * scale,
+          backgroundColor: 0xffffffff,
+        );
+        if (rendered == null) {
+          throw HskPaperReaderException('Could not draw page ${i + 1}.');
+        }
+        final rgba = Uint8List.fromList(rendered.pixels);
+        for (var k = 0; k < rgba.length; k += 4) {
+          final b = rgba[k];
+          rgba[k] = rgba[k + 2];
+          rgba[k + 2] = b;
+        }
+        final pw = rendered.width, ph = rendered.height;
+        rendered.dispose();
+        final gray = PaperImageOps.cleanToGray(rgba);
+        out.add(PaperPage(
+          number: i + 1,
+          width: pw,
+          height: ph,
+          text: '',
+          png: encodeGrayPng(gray, pw, ph),
+          pictureBoxes: boxes[i + 1] ?? PaperImageOps.findPictureBoxes(gray, pw, ph),
+        ));
+      }
+      return out;
+    } finally {
+      await doc.dispose();
+    }
+  }
+
   /// Cleans, reads and analyses one rendered page.
   Future<PaperPage> readPage(
     RgbaPage page, {

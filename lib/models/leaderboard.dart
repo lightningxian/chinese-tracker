@@ -200,7 +200,19 @@ class PromotionProgress {
     required this.minCodes,
     required this.codes,
     this.decision = '',
+    this.mode = 'codes',
+    this.done = 0,
+    this.total = 0,
+    this.items = const [],
   });
+
+  /// Owner 2026-11-24: `path` when the level has a checklist (it replaces
+  /// the code count), else `codes`.
+  final String mode;
+  final int done;
+  final int total;
+  final List<PathProgressItem> items;
+  bool get usesPath => mode == 'path';
 
   final String level;
   final String next;
@@ -224,5 +236,40 @@ class PromotionProgress {
             PromotionCode.fromMap(Map<String, dynamic>.from(c as Map)),
         ],
         decision: m['decision'] as String? ?? '',
+        mode: m['mode'] as String? ?? 'codes',
+        done: (m['done'] as num?)?.round() ?? 0,
+        total: (m['total'] as num?)?.round() ?? 0,
+        items: [
+          for (final i in (m['items'] as List? ?? const []))
+            PathProgressItem.fromMap(Map<String, dynamic>.from(i as Map)),
+        ],
+      );
+}
+
+/// One line of a student's level checklist (written by the functions).
+class PathProgressItem {
+  const PathProgressItem({
+    required this.kind,
+    required this.id,
+    required this.title,
+    required this.done,
+    this.minScore = 0,
+    this.best,
+  });
+
+  final String kind;
+  final String id;
+  final String title;
+  final bool done;
+  final int minScore;
+  final int? best;
+
+  factory PathProgressItem.fromMap(Map<String, dynamic> m) => PathProgressItem(
+        kind: m['kind'] as String? ?? 'exercise',
+        id: m['id'] as String? ?? '',
+        title: m['title'] as String? ?? '',
+        done: m['done'] == true,
+        minScore: (m['minScore'] as num?)?.round() ?? 0,
+        best: (m['best'] as num?)?.round(),
       );
 }

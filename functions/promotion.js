@@ -179,7 +179,41 @@ function manualPromotion(fromLevel, toLevel) {
     toLevel: `HSK ${toKey}`};
 }
 
+/**
+ * Owner 2026-11-24: a level's checklist ("to go from HSK 1 to HSK 2, finish
+ * these"), set by the admin in `level_paths/{levelKey}`. It replaces the
+ * test-code count for a level that has one. An exercise item is done with
+ * a final result at or above its minimum score (0 = finished); a test item
+ * with a final, valid, passed, non-placement result of that code.
+ * @param {Array} items [{kind: "exercise"|"test", id, title, minScore}]
+ * @param {Array} exerciseResults `exercise_results` of the student
+ * @param {Array} testRows [{result, code}] of the student
+ */
+function pathProgress(items, exerciseResults, testRows) {
+  const list = (items || []).filter((i) => i && (i.kind === "exercise" || i.kind === "test") &&
+    String(i.id || ""));
+  const out = list.map((i) => {
+    const id = String(i.id);
+    if (i.kind === "exercise") {
+      const min = Math.max(0, Number(i.minScore) || 0);
+      const scores = (exerciseResults || [])
+          .filter((r) => r && r.exerciseId === id && r.status !== "pending_marking")
+          .map((r) => Number(r.score) || 0);
+      const best = scores.length ? Math.max(...scores) : null;
+      return {kind: "exercise", id, title: String(i.title || ""), minScore: min, best,
+        done: best !== null && best >= min};
+    }
+    const passed = (testRows || []).some(({result, code}) => result &&
+      result.codeId === id && isFinal(result) && isValid(result) &&
+      !isPlacement(result, code) && result.passed === true);
+    return {kind: "test", id, title: String(i.title || ""), done: passed};
+  });
+  const done = out.filter((x) => x.done).length;
+  return {items: out, done, total: out.length, complete: out.length > 0 && done === out.length};
+}
+
 module.exports = {
+  pathProgress,
   LEVELS, DEFAULT_MIN_CODES, levelKeyOf, nextLevelKey, groupOf, peerLabel,
   isFinal, isValid, isPlacement, entryOf, compareEntries, rankEntries,
   countsAt, promotionState, promotionId, manualPromotion,

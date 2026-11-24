@@ -2225,6 +2225,22 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
+### 2026-11-24 — Scan drafts and answers, shuffled choices, level checklists — COMMIT, release v0.1.33 (rules, storage rules, functions and hosting live from the PC; 74 functions)
+- Built: clock fix; scan drafts (save, list, reopen without reading),
+  answers marked while proofreading (choice rows with a tick, the paper's
+  matching layout, picture and true/false letters), the proofreading
+  screen over the whole window, a clear save-error dialog; shuffled
+  text choices; level checklists that replace the code count.
+- Owner answers (AskUserQuestion): shuffle the choice order; the checklist
+  replaces the codes; exercises and test codes; the save showed an error.
+- Proof: analyzer 17 infos; `flutter test` 168 pass; node tests pass
+  (level checklist); rules tests; flow test 108 steps (new: a level
+  checklist recommends the next level); emulator walk: two full scans of
+  the practice paper (save to the bank, draft save and reopen, the
+  matching layout, the leave dialog).
+- Left: the owner's exact save error on live (not reproduced; the new
+  dialog shows it).
+
 ### 2026-11-24 — Profiles, waiting list, discard pop-up everywhere — 6d65b92, release v0.1.32 (rules, functions and hosting live from the PC; 72 functions)
 - Built the three recommendations the owner accepted: teacher and parent
   profile pages (every Users row opens a profile); the discard pop-up on

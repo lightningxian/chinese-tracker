@@ -11,6 +11,7 @@ import '../../models/leaderboard.dart';
 import '../../models/test_track.dart';
 import '../../services/promotion_service.dart';
 import '../../services/test_service.dart';
+import 'level_paths.dart';
 import 'promotion_screen.dart' show levelGroupName;
 
 /// The student's **Tests** place: type the token from the teacher, continue
@@ -317,6 +318,26 @@ class _ProgressCard extends StatelessWidget {
     final min = p?.minCodes ?? 3;
     final next = p?.next ?? '';
     final group = levelGroupName(l, level);
+    // Owner 2026-11-24: the level's checklist replaces the code count.
+    if (p != null && p.usesPath && next.isNotEmpty) {
+      return AppCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            LevelPathProgress(progress: p),
+            const SizedBox(height: 6),
+            Text(
+              p.declined
+                  ? l.promotionNotYetStudent(next)
+                  : p.done >= p.total
+                      ? l.promotionWaitingForAdmin(next)
+                      : l.promotionTowards(next),
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+            ),
+          ],
+        ),
+      );
+    }
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

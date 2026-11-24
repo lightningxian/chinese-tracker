@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 
@@ -45,6 +46,19 @@ class _QuestionAnswerViewState extends State<QuestionAnswerView> {
 
   PlayQuestion get _question => widget.question;
   int? get _selectedIndex => widget.answer?.index;
+
+  /// Owner 2026-11-24: text choices come in a shuffled order, the same for
+  /// a question every time it is shown in this app session (by question id).
+  /// The answer sent is still the original index.
+  static final Map<String, List<int>> _orders = {};
+
+  static List<int> choiceOrder(String questionId, int count, {int? seed}) {
+    final cached = _orders[questionId];
+    if (cached != null && cached.length == count) return cached;
+    final order = List<int>.generate(count, (i) => i)
+      ..shuffle(Random(seed ?? questionId.hashCode ^ DateTime.now().millisecondsSinceEpoch));
+    return _orders[questionId] = order;
+  }
   List<String> get _composeOrder => widget.answer?.order ?? const [];
 
   /// The segments not used yet, in their shuffled order.
@@ -143,7 +157,9 @@ class _QuestionAnswerViewState extends State<QuestionAnswerView> {
         if (question.hasPictureOptions)
           _buildPictureOptions(question)
         else
-          ...List.generate(options.length, (i) {
+          ...List.generate(options.length, (k) {
+            // k = the place on screen, i = the original choice.
+            final i = choiceOrder(question.id, options.length)[k];
             final selected = _selectedIndex == i;
             return Padding(
               padding: const EdgeInsets.only(bottom: 10),
@@ -163,7 +179,7 @@ class _QuestionAnswerViewState extends State<QuestionAnswerView> {
                       const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                   child: Row(
                     children: [
-                      OptionLetter(index: i, selected: selected, size: 32),
+                      OptionLetter(index: k, selected: selected, size: 32),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
@@ -655,4 +671,10 @@ class OptionLetter extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The shuffled order of a question's choices (tests read it).
+abstract final class QuestionAnswerViewOrders {
+  static List<int> order(String questionId, int count) =>
+      _QuestionAnswerViewState.choiceOrder(questionId, count);
 }

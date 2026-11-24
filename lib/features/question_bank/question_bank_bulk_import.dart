@@ -194,7 +194,7 @@ Future<List<QuestionBankItem>?> confirmAndInsertQuestionBankItems(
   List<QuestionBankItem> existingBank = const [],
 }) async {
   final l = context.l10n;
-  final decision = await Navigator.of(context).push<QuestionBankImportDecision>(
+  final decision = await Navigator.of(context, rootNavigator: true).push<QuestionBankImportDecision>(
     MaterialPageRoute(
       fullscreenDialog: true,
       builder: (_) => QuestionBankImportReviewScreen(

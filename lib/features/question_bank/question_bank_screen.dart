@@ -19,6 +19,7 @@ import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../core/widgets/exercise_category_chip.dart';
 import 'question_bank_ai_import.dart';
+import '../../services/hsk_paper/paper_draft_service.dart';
 import 'hsk_paper_scan.dart';
 import 'question_bank_bulk_import.dart';
 import 'question_bank_editor.dart';
@@ -43,6 +44,8 @@ class QuestionBankScreen extends StatefulWidget {
 }
 
 class _QuestionBankScreenState extends State<QuestionBankScreen> {
+  /// Owner 2026-11-24: unfinished scans (drafts).
+  late final Stream<List<PaperDraftInfo>> _drafts = PaperDraftService().watchDrafts();
   QuestionBankFilter _filter = const QuestionBankFilter();
   String? _sortColumnId;
   bool _sortAscending = true;
@@ -348,6 +351,20 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
           rows: () => _visible.map((s) => _csvRow(l, s)).toList(),
         ),
         const SizedBox(width: 8),
+        // Owner 2026-11-24: scans saved as drafts.
+        if (canManageBank)
+          StreamBuilder<List<PaperDraftInfo>>(
+            stream: _drafts,
+            builder: (context, snap) {
+              final n = snap.data?.length ?? 0;
+              if (n == 0) return const SizedBox.shrink();
+              return TextButton.icon(
+                onPressed: () => showPaperDrafts(context, ownerId: ownerId),
+                icon: const Icon(Icons.bookmark_outline, size: 18),
+                label: Text(l.paperDraftsButton(n)),
+              );
+            },
+          ),
         if (canWriteOwn) ...[
           TextButton.icon(
             onPressed: () => _openEditor(ownerId: ownerId),

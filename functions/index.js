@@ -2689,10 +2689,13 @@ async function syncPromotion(uid) {
   if ((user.role || "student") !== "student") return;
   const levelKey = promo.levelKeyOf(user.level);
   if (!levelKey) return;
-  const [minCodes, resultsSnap] = await Promise.all([
+  const [minCodes, resultsSnap, pathSnap] = await Promise.all([
     promotionMinCodes(),
     db.collection(TEST_RESULTS).where("studentId", "==", uid).get(),
+    db.collection(LEVEL_PATHS).doc(levelKey).get(),
   ]);
+  // Owner 2026-11-24: a level with a checklist uses it instead of the count.
+  const pathItems = pathSnap.exists ? (pathSnap.data() || {}).items || [] : [];
   const codeIds = [...new Set(resultsSnap.docs
       .map((d) => (d.data() || {}).codeId).filter(Boolean))];
   const codes = {};
@@ -2705,6 +2708,12 @@ async function syncPromotion(uid) {
     return {result, code: codes[result.codeId] || {}};
   });
   const state = promo.promotionState(rows, levelKey, minCodes);
+  let path = null;
+  if (pathItems.length) {
+    const exSnap = await db.collection(EXERCISE_RESULTS).where("studentId", "==", uid).get();
+    path = promo.pathProgress(pathItems, exSnap.docs.map((d) => d.data() || {}), rows);
+    state.reached = state.next !== null && path.complete;
+  }
   const passedCodes = state.codes.map((id) => {
     const r = rows.find((x) => x.result.codeId === id).result;
     return {codeId: id, code: r.code || id, total: Number(r.total) || 0,
@@ -2728,6 +2737,7 @@ async function syncPromotion(uid) {
         fromKey: levelKey, toKey: state.next,
         fromLevel: `HSK ${levelKey}`, toLevel: `HSK ${state.next}`,
         codes: passedCodes, count: state.count, minCodes: state.minCodes,
+        ...(path ? {path: true, done: path.done, total: path.total} : {path: false}),
         status: "waiting",
         ...(fresh ? {createdAt: FieldValue.serverTimestamp()} : {}),
         updatedAt: FieldValue.serverTimestamp(),
@@ -2736,7 +2746,9 @@ async function syncPromotion(uid) {
         tx.set(db.collection(NOTIFICATIONS).doc(), {
           kind: "promotion",
           title: "Promotion to check",
-          body: `${latinName(user)} passed ${state.count} codes at HSK ${levelKey}: ` +
+          body: path ?
+            `${latinName(user)} finished the HSK ${levelKey} checklist: ready for HSK ${state.next}.` :
+            `${latinName(user)} passed ${state.count} codes at HSK ${levelKey}: ` +
             `ready for HSK ${state.next}.`,
           forRole: "admin",
           userId: "",
@@ -2759,9 +2771,43 @@ async function syncPromotion(uid) {
     studentId: uid, level: `HSK ${levelKey}`, levelKey,
     group: promo.groupOf(levelKey), next: state.next ? `HSK ${state.next}` : "",
     count: state.count, minCodes: state.minCodes, codes: passedCodes, decision,
+    mode: path ? "path" : "codes",
+    done: path ? path.done : 0, total: path ? path.total : 0,
+    items: path ? path.items : [],
     updatedAt: FieldValue.serverTimestamp(),
   });
 }
+
+// Owner 2026-11-24: the level checklists (`level_paths/{levelKey}`, admin
+// writes). An exercise result or a changed checklist refreshes the progress.
+const LEVEL_PATHS = "level_paths";
+
+exports.onExerciseResultForPath = onDocumentWritten(`${EXERCISE_RESULTS}/{resultId}`,
+    async (event) => {
+      const after = event.data && event.data.after.exists ? event.data.after.data() : null;
+      const before = event.data && event.data.before.exists ? event.data.before.data() : null;
+      const r = after || before;
+      if (!r || !r.studentId) return;
+      const levelKey = promo.levelKeyOf((await db.collection(USERS).doc(r.studentId).get())
+          .get("level"));
+      if (!levelKey) return;
+      const pathSnap = await db.collection(LEVEL_PATHS).doc(levelKey).get();
+      if (!pathSnap.exists || !((pathSnap.data() || {}).items || []).length) return;
+      await syncPromotion(r.studentId);
+    });
+
+exports.onLevelPathWritten = onDocumentWritten(`${LEVEL_PATHS}/{levelKey}`, async (event) => {
+  const key = event.params.levelKey;
+  const students = await db.collection(USERS).where("role", "==", "student")
+      .where("level", "==", `HSK ${key}`).get();
+  for (const d of students.docs) {
+    try {
+      await syncPromotion(d.id);
+    } catch (err) {
+      logger.warn(`level path resync ${d.id}: ${err.message}`);
+    }
+  }
+});
 
 exports.onTestResultWritten = onDocumentWritten(`${TEST_RESULTS}/{resultId}`, async (event) => {
   const before = event.data && event.data.before.exists ? event.data.before.data() : null;
@@ -4552,6 +4598,11 @@ async function fillFromWaitlist(sessionId) {
     } catch (err) {
       const reason = err && err.details && err.details.reason;
       if (reason === "full") break;
+      // Two triggers close together: the other run booked them already.
+      if (reason === "already") {
+        await d.ref.delete();
+        continue;
+      }
       // Cannot be booked any more (no sessions left, a clash, too late):
       // off the list, and told.
       await d.ref.delete();

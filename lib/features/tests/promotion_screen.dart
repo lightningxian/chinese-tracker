@@ -12,6 +12,7 @@ import '../../models/app_user.dart';
 import '../../models/leaderboard.dart';
 import '../../services/firestore_service.dart';
 import '../../services/promotion_service.dart';
+import 'level_paths.dart';
 import 'test_labels.dart';
 import 'test_player_screen.dart' show PlacementChip;
 
@@ -197,6 +198,9 @@ class _PromotionScreenState extends State<PromotionScreen> {
                 );
               },
             ),
+            const SizedBox(height: 10),
+            // Owner 2026-11-24: one checklist per level.
+            const LevelPathsCard(),
             const SizedBox(height: 10),
             AppCard(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),

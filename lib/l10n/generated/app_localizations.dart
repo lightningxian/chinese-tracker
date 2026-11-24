@@ -13949,6 +13949,246 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Profile'**
   String get routeTitleProfile;
+
+  /// No description provided for @paperNoAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'No answer yet'**
+  String get paperNoAnswer;
+
+  /// No description provided for @paperAnswerIs.
+  ///
+  /// In en, this message translates to:
+  /// **'Answer: {letter}'**
+  String paperAnswerIs(String letter);
+
+  /// No description provided for @paperChoicesTick.
+  ///
+  /// In en, this message translates to:
+  /// **'Choices: tick the right one'**
+  String get paperChoicesTick;
+
+  /// No description provided for @paperAddChoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a choice'**
+  String get paperAddChoice;
+
+  /// No description provided for @paperRemoveChoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove this choice'**
+  String get paperRemoveChoice;
+
+  /// No description provided for @paperSharedChoices.
+  ///
+  /// In en, this message translates to:
+  /// **'Choices for this part (A, B, C…)'**
+  String get paperSharedChoices;
+
+  /// No description provided for @paperRightAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'Right answer'**
+  String get paperRightAnswer;
+
+  /// No description provided for @paperLeaveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave this scan?'**
+  String get paperLeaveTitle;
+
+  /// No description provided for @paperLeaveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The questions are not in the bank yet. Save the scan as a draft to finish it later, or discard it.'**
+  String get paperLeaveBody;
+
+  /// No description provided for @paperSaveDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Save draft'**
+  String get paperSaveDraft;
+
+  /// No description provided for @paperDraftSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft saved. Open it again from Unfinished scans in the question bank.'**
+  String get paperDraftSaved;
+
+  /// No description provided for @paperDraftFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save the draft: {error}'**
+  String paperDraftFailed(String error);
+
+  /// No description provided for @paperDraftsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unfinished scans'**
+  String get paperDraftsTitle;
+
+  /// No description provided for @paperDraftsNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No unfinished scans.'**
+  String get paperDraftsNone;
+
+  /// No description provided for @paperDraftsButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Unfinished scans ({n})'**
+  String paperDraftsButton(int n);
+
+  /// No description provided for @paperDraftLine.
+  ///
+  /// In en, this message translates to:
+  /// **'{questions} questions · {toCheck} to check · {answered} answered · {date}'**
+  String paperDraftLine(int questions, int toCheck, int answered, String date);
+
+  /// No description provided for @paperDraftOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get paperDraftOpen;
+
+  /// No description provided for @paperDraftDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this unfinished scan?'**
+  String get paperDraftDeleteTitle;
+
+  /// No description provided for @paperBankSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The question bank refused the save: {error}'**
+  String paperBankSaveFailed(String error);
+
+  /// No description provided for @levelPathsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Level checklists'**
+  String get levelPathsTitle;
+
+  /// No description provided for @levelPathsHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'What a student must finish to move up. A level with a checklist uses it instead of the test-code count; when everything is done, the student appears here for you to approve.'**
+  String get levelPathsHelp;
+
+  /// No description provided for @levelPathNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No checklist: the test-code count is used'**
+  String get levelPathNone;
+
+  /// No description provided for @levelPathCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{n, plural, =1{1 item} other{{n} items}}'**
+  String levelPathCount(int n);
+
+  /// No description provided for @levelPathEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get levelPathEdit;
+
+  /// No description provided for @levelPathEditorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'From {from} to {to}'**
+  String levelPathEditorTitle(String from, String to);
+
+  /// No description provided for @levelPathEditorHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Add the exercises and tests a student must finish. For an exercise you may ask for a minimum score.'**
+  String get levelPathEditorHelp;
+
+  /// No description provided for @levelPathEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing yet.'**
+  String get levelPathEmpty;
+
+  /// No description provided for @levelPathAddExercise.
+  ///
+  /// In en, this message translates to:
+  /// **'Add an exercise'**
+  String get levelPathAddExercise;
+
+  /// No description provided for @levelPathAddTest.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a test code'**
+  String get levelPathAddTest;
+
+  /// No description provided for @levelPathMinScore.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs'**
+  String get levelPathMinScore;
+
+  /// No description provided for @levelPathJustFinish.
+  ///
+  /// In en, this message translates to:
+  /// **'just finish'**
+  String get levelPathJustFinish;
+
+  /// No description provided for @levelPathPassTest.
+  ///
+  /// In en, this message translates to:
+  /// **'pass the test'**
+  String get levelPathPassTest;
+
+  /// No description provided for @levelPathUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Move up'**
+  String get levelPathUp;
+
+  /// No description provided for @levelPathProgressTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{from} → {to}: {done} of {total} done'**
+  String levelPathProgressTitle(String from, String to, int done, int total);
+
+  /// No description provided for @levelPathPassed.
+  ///
+  /// In en, this message translates to:
+  /// **'passed'**
+  String get levelPathPassed;
+
+  /// No description provided for @levelPathScoreNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'best {best}% · needs {min}%'**
+  String levelPathScoreNeeded(int best, int min);
+
+  /// No description provided for @levelPathFinished.
+  ///
+  /// In en, this message translates to:
+  /// **'finished'**
+  String get levelPathFinished;
+
+  /// No description provided for @levelPathToDo.
+  ///
+  /// In en, this message translates to:
+  /// **'to do'**
+  String get levelPathToDo;
+
+  /// No description provided for @paperSaveFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The worksheet could not be saved'**
+  String get paperSaveFailedTitle;
+
+  /// No description provided for @paperSaveFailedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing is lost: keep editing, or save the scan as a draft. Please send this message to the developer:'**
+  String get paperSaveFailedBody;
 }
 
 class _AppLocalizationsDelegate

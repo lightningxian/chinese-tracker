@@ -1,5 +1,9 @@
 import 'package:chinese_tracker/core/utils/notification_routes.dart';
 import 'package:chinese_tracker/features/announcements/announcements.dart';
+import 'package:chinese_tracker/features/student/widgets/question_answer_view.dart';
+import 'package:chinese_tracker/models/hsk_paper_draft.dart';
+import 'package:chinese_tracker/services/hsk_paper/paper_draft_service.dart';
+import 'package:chinese_tracker/services/hsk_paper/paper_image_ops.dart';
 import 'package:chinese_tracker/models/app_notification.dart';
 import 'package:chinese_tracker/models/exercise_skill_category.dart';
 import 'package:chinese_tracker/models/invoice.dart';
@@ -51,6 +55,45 @@ void main() {
     test('a discarded invoice is read back as discarded and is not payable', () {
       expect(InvoiceStatus.fromValue('discarded'), InvoiceStatus.discarded);
       expect(InvoiceStatus.discarded.isFinal, isTrue);
+    });
+  });
+
+  group('Owner 2026-11-24 (fifth round)', () {
+    test('a scanned question with its right answer survives a draft', () {
+      final slot = HskSlot(
+        number: 41,
+        skill: 'reading',
+        section: '二、阅读 · 第一部分 · 第41-45题',
+        form: HskForm.matching,
+        page: 8,
+        prompt: '最近真是越来越冷了。（ ）',
+        options: ['我也不知道', '是啊', '街道两边'],
+        pictures: [const PixelBox(1, 2, 30, 40)],
+        correctIndex: 1,
+      )..checked = true;
+      final back = PaperDraftService.slotFromMap(PaperDraftService.slotToMap(slot));
+      expect(back.number, 41);
+      expect(back.form, HskForm.matching);
+      expect(back.options, slot.options);
+      expect(back.correctIndex, 1);
+      expect(back.checked, isTrue);
+      expect(back.pictures.single.x1, 30);
+      expect(back.hasChoiceAnswer, isTrue);
+    });
+
+    test('a scanned answer reaches the saved question', () {
+      final draft = HskPaperDraft(slots: [
+        HskSlot(number: 1, skill: 'reading', form: HskForm.choice, page: 1,
+            prompt: 'Q', options: ['a', 'b', 'c'], correctIndex: 2),
+      ]);
+      final w = draft.toAiWorksheet({1: (1000, 1400)});
+      expect(w.sections.single.questions.single.correctIndex, 2);
+    });
+
+    test('shuffled choices: every choice once, the same order each time', () {
+      final a = QuestionAnswerViewOrders.order('q-1', 4);
+      expect([...a]..sort(), [0, 1, 2, 3]);
+      expect(QuestionAnswerViewOrders.order('q-1', 4), a);
     });
   });
 }

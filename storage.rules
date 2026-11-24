@@ -73,6 +73,14 @@ service firebase.storage {
     // Question-bank media (images/audio per question). Staff write; signed-in read.
     // A paper's official recording may be up to 60 MB (Build 1B); every
     // other file (pictures) stays under 10 MB.
+    // Owner 2026-11-24: the PDF of an unfinished paper scan (admin only).
+    match /paper_drafts/{uid}/{fileName} {
+      allow read, delete: if isAdmin();
+      allow write: if isAdmin() &&
+        request.resource.contentType == 'application/pdf' &&
+        request.resource.size < 60 * 1024 * 1024;
+    }
+
     match /question_bank_media/{ownerId}/{fileName} {
       allow read: if isSignedIn();
 

@@ -108,4 +108,28 @@ assert.deepEqual(p.manualPromotion("HSK 1", "HSK 9"), {error: "bad-level"});
 assert.deepEqual(p.manualPromotion("", "HSK 1"),
     {fromKey: "", toKey: "1", fromLevel: "", toLevel: "HSK 1"});
 
-console.log("promotion: all checks passed (LV-01, LV-03, LB-01, manual promotion)");
+// Owner 2026-11-24: the level checklist replaces the code count.
+const items = [
+  {kind: "exercise", id: "ex1", title: "Practice 1"},
+  {kind: "exercise", id: "ex2", title: "Practice 2", minScore: 70},
+  {kind: "test", id: "T1", title: "H1 test"},
+];
+const ex = [
+  {exerciseId: "ex1", score: 40},
+  {exerciseId: "ex2", score: 65},
+  {exerciseId: "ex2", score: 90, status: "pending_marking"},
+];
+let pp = p.pathProgress(items, ex, []);
+assert.equal(pp.total, 3);
+assert.equal(pp.done, 1, "ex1 finished; ex2 below 70 (the 90 is not marked yet); no test");
+assert.equal(pp.complete, false);
+assert.equal(pp.items[1].best, 65);
+pp = p.pathProgress(items, [...ex, {exerciseId: "ex2", score: 75}],
+    [{result: {codeId: "T1", passed: true}, code: {}}]);
+assert.equal(pp.done, 3);
+assert.equal(pp.complete, true);
+assert.equal(p.pathProgress(items, ex, [{result: {codeId: "T1", passed: true, valid: false}, code: {}}])
+    .items[2].done, false, "an invalid result does not count");
+assert.equal(p.pathProgress([], ex, []).complete, false, "an empty checklist is never complete");
+
+console.log("promotion: all checks passed (LV-01, LV-03, LB-01, manual promotion, level checklist)");
