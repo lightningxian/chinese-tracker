@@ -70,10 +70,10 @@ service firebase.storage {
       allow delete: if isSignedIn() && isStaff();
     }
 
-    // Question-bank media (images/audio per question). Staff write; signed-in read.
-    // A paper's official recording may be up to 60 MB (Build 1B); every
-    // other file (pictures) stays under 10 MB.
     // Owner 2026-11-24: the PDF of an unfinished paper scan (admin only).
+    // Like every isAdmin()/isStaff() rule here, it reads the user's profile
+    // in Firestore: on live this needs the one-time cross-service grant
+    // (docs/OWNER_PROCEDURES.md, "Storage rules that read Firestore").
     match /paper_drafts/{uid}/{fileName} {
       allow read, delete: if isAdmin();
       allow write: if isAdmin() &&
@@ -81,6 +81,9 @@ service firebase.storage {
         request.resource.size < 60 * 1024 * 1024;
     }
 
+    // Question-bank media (images/audio per question). Staff write; signed-in read.
+    // A paper's official recording may be up to 60 MB (Build 1B); every
+    // other file (pictures) stays under 10 MB.
     match /question_bank_media/{ownerId}/{fileName} {
       allow read: if isSignedIn();
 

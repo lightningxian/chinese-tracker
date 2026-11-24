@@ -96,3 +96,24 @@ Storage files (photos, worksheets, recordings) are not in this backup; they
 live in the Storage bucket, which Google keeps. The NAS copy in
 `docs/NAS_BACKUP_SETUP.md` is optional and, for Firestore, would now need a
 manual `gcloud firestore export`.
+
+## Storage rules that read Firestore (one-time grant, 2026-11-24)
+
+The Storage rules check "is this person an admin / staff?" by reading
+`users/{uid}` in Firestore (`firestore.get`). On the live project Google
+allows this only after the Storage service agent has the role **Firebase
+Rules Firestore Service Agent**. Without it, every staff upload is refused
+with `firebase_storage/unauthorized` (scan drafts, scanned pictures,
+question pictures and recordings, materials). The emulator does not need it.
+
+Grant it once, either way:
+
+1. On the PC, in a terminal: `firebase deploy --only storage --project
+   chinese-tracker` and answer **Y** when it asks to grant the role.
+2. Or in Google Cloud console → IAM → **Grant access**: principal
+   `service-345172802163@gcp-sa-firebasestorage.iam.gserviceaccount.com`,
+   role **Firebase Rules Firestore Service Agent**.
+
+Automated deploys (`--non-interactive`) skip the question, so the grant has
+to be done by hand once.
+
