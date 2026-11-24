@@ -57,6 +57,9 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   admin asked availability by chat and kept the schedule in a spreadsheet.
 - Checks: package valid, 127 bookmarks all resolved, 2 figure relationships, list point 8 shares the list
   numbering of points 1–7. Pages after the cover are still checked by structure only (no Word on the Mac).
+- **v0.1.37 (3c06be8) reviewed on the Mac:** hosting only; analyzer 17 infos; `flutter test` 174 pass + 2
+  skipped; no tracked secrets; live bundle from 10:31 WIB; APK still served. The audio picker's new extensions
+  map to `audio/*` types, which the Storage rule for question-bank media already accepts.
 - **Owner's five answers applied:** founded 1992 (records from 1994), eleven sessions a week (Mon 1, Tue 2,
   Wed 2, Thu 1, Fri 2, Sat 3, Sun 0; a session with fewer than three students is cancelled), teacher levels
   W1 HSK 1–3, S HSK 1–5, M HSK 5–6, W2 HSK 1–4 (Tabel 3.1 lost its "hari mengajar" column: no teacher schedule
