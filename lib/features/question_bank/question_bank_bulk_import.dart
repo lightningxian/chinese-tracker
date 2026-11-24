@@ -10,6 +10,7 @@ import '../../l10n/labels_exercises.dart';
 import '../../models/exercise_type.dart';
 import '../../models/question_bank_item.dart';
 import '../../services/firestore_service.dart';
+import '../teacher/worksheet_import_review_screen.dart';
 import '../teacher/worksheet_scan_flow.dart';
 import 'question_bank_import_review.dart';
 import 'question_bank_import_utils.dart';
@@ -154,7 +155,17 @@ Future<List<String>?> runQuestionBankWorksheetImport(
 }) async {
   final result = await scanWorksheet(context);
   if (result == null || !context.mounted) return null;
+  return addReviewedWorksheetToBank(context, ownerId: ownerId, result: result);
+}
 
+/// The questions of a reviewed worksheet scan into the bank (the bank's
+/// review screen offers to replace a sheet that is already there). Returns
+/// the sheet codes added, or null.
+Future<List<String>?> addReviewedWorksheetToBank(
+  BuildContext context, {
+  required String ownerId,
+  required WorksheetImportReviewResult result,
+}) async {
   final items = QuestionBankImportUtils.fromParseResult(
     result: result.parseResult!,
     ownerId: ownerId,

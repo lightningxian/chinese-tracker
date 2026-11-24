@@ -13,6 +13,12 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-24 — Claude (BUILD chat, PC): Scan paper reads worksheets
+
+- Owner: all ten sample worksheets gave "No questions were found" on Scan
+  paper. Scan paper now hands non-HSK files to the worksheet reader.
+  Release v0.1.38 (hosting only).
+
 ### 2026-11-24 — Claude (BUILD chat, PC): .mpeg recordings accepted
 
 - Owner's H326202Z recording (`.mp3.mpeg`) was refused; the picker now

@@ -1985,6 +1985,7 @@
   "paperReadFailed": "The paper could not be read: {error}",
   "@paperReadFailed": {"placeholders": {"error": {"type": "String"}}},
   "paperNothingFound": "No questions were found in this file.",
+  "paperReadAsWorksheet": "This is not an HSK paper: reading it as a worksheet.",
   "paperProofreadTitle": "Check the reading · {code}",
   "@paperProofreadTitle": {"placeholders": {"code": {"type": "String"}}},
   "paperSaveWorksheet": "Save worksheet",

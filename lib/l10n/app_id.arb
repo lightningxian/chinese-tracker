@@ -1608,6 +1608,7 @@
   "paperReadingPage": "Membaca halaman {page} dari {count}",
   "paperReadFailed": "Kertas soal tidak bisa dibaca: {error}",
   "paperNothingFound": "Tidak ada soal yang ditemukan di file ini.",
+  "paperReadAsWorksheet": "Ini bukan kertas HSK: dibaca sebagai lembar latihan.",
   "paperProofreadTitle": "Periksa hasil baca · {code}",
   "paperSaveWorksheet": "Simpan lembar soal",
   "paperUnsavableTitle": "Beberapa soal belum bisa disimpan",

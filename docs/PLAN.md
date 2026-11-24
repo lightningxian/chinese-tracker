@@ -2230,6 +2230,10 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
+### 2026-11-24 — Scan paper falls back to the worksheet reader — COMMIT, release v0.1.38 (hosting only)
+- A PDF that is not an HSK paper goes to the worksheet reader instead of
+  "No questions were found". Checked on the emulator with 210001 and 210002.
+
 ### 2026-11-24 — Recordings saved as .mpeg accepted — COMMIT, release v0.1.37 (hosting only)
 - The audio picker accepts `.mpeg` and other common audio endings; the
   owner's 42 MB H326202Z recording uploaded and played on the emulator.

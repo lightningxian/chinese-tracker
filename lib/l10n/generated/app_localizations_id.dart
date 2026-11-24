@@ -5878,6 +5878,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get paperNothingFound => 'Tidak ada soal yang ditemukan di file ini.';
 
   @override
+  String get paperReadAsWorksheet =>
+      'Ini bukan kertas HSK: dibaca sebagai lembar latihan.';
+
+  @override
   String paperProofreadTitle(String code) {
     return 'Periksa hasil baca · $code';
   }

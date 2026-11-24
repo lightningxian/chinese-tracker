@@ -15,7 +15,9 @@ import '../../services/hsk_paper/hsk_paper_reader.dart';
 import '../../services/hsk_paper/paper_draft_service.dart';
 import '../../services/question_bank_media_service.dart';
 import '../teacher/widgets/worksheet_import_progress_dialog.dart';
+import '../teacher/worksheet_scan_flow.dart';
 import 'hsk_paper_proofread_screen.dart';
+import 'question_bank_bulk_import.dart';
 import 'sheet_answer_key.dart';
 
 /// **Scan paper** (Build 1B): the built-in reader. The admin picks the
@@ -88,10 +90,22 @@ Future<String?> runHskPaperScan(
 
   final draft = HskPaperImport.draftFrom(pages);
   if (draft.slots.isEmpty) {
+    // Not an HSK paper (no `第 a-b 题` blocks): one of the centre's own
+    // worksheets (fill in, true/false, word order…). The worksheet reader
+    // knows those forms (docs/WORKSHEET_FORMS.md), so the same file goes
+    // there instead of stopping here.
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l.paperNothingFound)),
+      SnackBar(content: Text(l.paperReadAsWorksheet)),
     );
-    return null;
+    final result =
+        await reviewWorksheetFile(context, bytes: bytes, fileName: file.name);
+    if (result == null || !context.mounted) return null;
+    final codes = await addReviewedWorksheetToBank(
+      context,
+      ownerId: ownerId,
+      result: result,
+    );
+    return codes == null || codes.isEmpty ? null : codes.first;
   }
   final vm = HskPaperProofreadViewModel(
     pages: pages,

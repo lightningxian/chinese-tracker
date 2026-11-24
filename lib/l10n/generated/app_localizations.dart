@@ -9561,6 +9561,12 @@ abstract class AppLocalizations {
   /// **'No questions were found in this file.'**
   String get paperNothingFound;
 
+  /// No description provided for @paperReadAsWorksheet.
+  ///
+  /// In en, this message translates to:
+  /// **'This is not an HSK paper: reading it as a worksheet.'**
+  String get paperReadAsWorksheet;
+
   /// No description provided for @paperProofreadTitle.
   ///
   /// In en, this message translates to:

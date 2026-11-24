@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -41,12 +42,23 @@ Future<WorksheetImportReviewResult?> scanWorksheet(BuildContext context) async {
     );
     return null;
   }
+  return reviewWorksheetFile(context, bytes: bytes, fileName: file.name);
+}
 
+/// Read a worksheet file already in memory (text layer first, OCR for a
+/// scan) and open the review. Also used by **Scan paper** when the file is
+/// a centre worksheet rather than an HSK paper.
+Future<WorksheetImportReviewResult?> reviewWorksheetFile(
+  BuildContext context, {
+  required Uint8List bytes,
+  required String fileName,
+}) async {
+  final l = context.l10n;
   final progress = ValueNotifier(WorksheetImportStage.prepare());
   unawaited(
     showWorksheetImportProgress(
       context: context,
-      fileName: file.name,
+      fileName: fileName,
       progress: progress,
     ),
   );
@@ -55,7 +67,7 @@ Future<WorksheetImportReviewResult?> scanWorksheet(BuildContext context) async {
     final text =
         await context.read<WorksheetImportService>().extractTextFromWorksheet(
               bytes: bytes,
-              fileName: file.name,
+              fileName: fileName,
               onProgress: (s) => progress.value = s,
             );
     progress.value = WorksheetImportStage.analyze();
@@ -71,7 +83,7 @@ Future<WorksheetImportReviewResult?> scanWorksheet(BuildContext context) async {
         fullscreenDialog: true,
         builder: (_) => WorksheetImportReviewScreen(
           extractedText: text,
-          fileName: file.name,
+          fileName: fileName,
         ),
       ),
     );

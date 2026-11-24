@@ -5905,6 +5905,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paperNothingFound => 'No questions were found in this file.';
 
   @override
+  String get paperReadAsWorksheet =>
+      'This is not an HSK paper: reading it as a worksheet.';
+
+  @override
   String paperProofreadTitle(String code) {
     return 'Check the reading · $code';
   }

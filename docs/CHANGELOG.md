@@ -6,6 +6,34 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-24 — Claude (BUILD chat): Scan paper reads the centre's worksheets too
+
+**What changed**
+- **Scan paper** (the big button in the question bank) used to stop with
+  "No questions were found in this file." when the PDF was not an HSK
+  paper (no `第 a-b 题` blocks). It now says "This is not an HSK paper:
+  reading it as a worksheet." and passes the same file to the worksheet
+  reader (the one behind **Scan without AI**), which knows the centre's
+  forms (`docs/WORKSHEET_FORMS.md`): fill in with a word bank, true/false,
+  word order, reading, type the hanzi, picture sentence, matching.
+  The usual review and "Check before adding" screens follow, with answers
+  filled from the bundled key when the sheet is one of the samples.
+- `reviewWorksheetFile` (worksheet_scan_flow.dart) and
+  `addReviewedWorksheetToBank` (question_bank_bulk_import.dart) were split
+  out of the old functions so both buttons share them.
+
+**Why**
+- Owner 2026-11-24: every file in CONTOH LATIHAN SOAL gave "No questions
+  were found" on Scan paper.
+
+**For review**
+- Hosting only. Emulator: 210001-RDG (10 questions, 10 answers from the
+  key, added to the bank) and 210002-RDG (10 true/false, 10 answers).
+- A scanned worksheet with no text layer (510001-CRT) is read twice: once
+  by the HSK reader, then by the worksheet reader's OCR.
+
+---
+
 ## 2026-11-24 — Claude (BUILD chat): recordings saved as .mpeg are accepted
 
 **What changed**
