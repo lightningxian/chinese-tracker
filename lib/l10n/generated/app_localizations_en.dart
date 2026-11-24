@@ -3322,7 +3322,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get teacherAttEdit => 'Edit';
 
   @override
-  String get teacherAttAdd => 'Add';
+  String get teacherAttAdd => 'Add a student';
 
   @override
   String get teacherAttAtCapacity => 'Class is at capacity.';
@@ -8185,4 +8185,247 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deleteAccountDone => 'Your account has been deleted.';
+
+  @override
+  String get skillCategoryMixed => 'Mixed';
+
+  @override
+  String get sessionStatusEnded => 'Ended';
+
+  @override
+  String get announcementNoEnd => 'No end date (shown until you delete it)';
+
+  @override
+  String get announcementSetDate => 'Set an end date';
+
+  @override
+  String get announcementClearDate => 'No end date';
+
+  @override
+  String get newsOpened => 'Classes run';
+
+  @override
+  String get dayOpenAnnounce =>
+      'Tell students, parents and teachers that classes run';
+
+  @override
+  String dayOpenedAnnTitle(String date) {
+    return 'Classes run on $date';
+  }
+
+  @override
+  String dayOpenedAnnBody(String date) {
+    return 'the centre is open on $date and classes run as usual.';
+  }
+
+  @override
+  String get dashNewsTitle => 'Latest news';
+
+  @override
+  String get dashNewsAll => 'All news';
+
+  @override
+  String dashNextClass(String time, String title, String inText) {
+    return 'Next class $time $title · $inText';
+  }
+
+  @override
+  String dashInMinutes(int n) {
+    return 'in $n min';
+  }
+
+  @override
+  String dashInHours(int h, int m) {
+    return 'in $h h $m min';
+  }
+
+  @override
+  String dashClassGoingOn(String title) {
+    return '$title is going on now';
+  }
+
+  @override
+  String get paperPrevPage => 'Previous page';
+
+  @override
+  String get paperNextPage => 'Next page';
+
+  @override
+  String paperPageOf(int page, int count) {
+    return 'Page $page of $count';
+  }
+
+  @override
+  String get discardTitle => 'Discard your changes?';
+
+  @override
+  String get discardBody =>
+      'You changed something here and have not saved it. If you leave now, the changes are lost.';
+
+  @override
+  String get discardKeepEditing => 'Keep editing';
+
+  @override
+  String get discardConfirm => 'Discard';
+
+  @override
+  String get invoiceStatusDiscarded => 'Discarded';
+
+  @override
+  String get invoiceDiscardMenu => 'Discard…';
+
+  @override
+  String get invoiceDiscardTitle => 'Discard this invoice?';
+
+  @override
+  String invoiceDiscardBody(String number, String student, String amount) {
+    return '$number for $student, $amount. It leaves the list and the student no longer sees it. It is kept with your reason under Discarded invoices, where you can restore it.';
+  }
+
+  @override
+  String get invoiceDiscardReason => 'Reason (required)';
+
+  @override
+  String get invoiceDiscarded => 'Invoice discarded.';
+
+  @override
+  String get invoiceRestored => 'Invoice restored.';
+
+  @override
+  String get invoiceRestore => 'Restore';
+
+  @override
+  String invoiceActiveList(int n) {
+    return 'Invoices ($n)';
+  }
+
+  @override
+  String invoiceDiscardedList(int n) {
+    return 'Discarded invoices ($n)';
+  }
+
+  @override
+  String get invoiceDiscardedNone => 'No discarded invoices.';
+
+  @override
+  String invoiceDiscardedWhy(String reason) {
+    return 'Reason: $reason';
+  }
+
+  @override
+  String get classOpenDetails => 'Details';
+
+  @override
+  String get classDetailTitle => 'Class';
+
+  @override
+  String get classInfoRoom => 'Room';
+
+  @override
+  String get classInfoTeachers => 'Teachers';
+
+  @override
+  String get classInfoLevel => 'Level';
+
+  @override
+  String get classInfoSeats => 'Seats';
+
+  @override
+  String classInfoSeatsValue(int booked, int capacity) {
+    return '$booked of $capacity booked';
+  }
+
+  @override
+  String get classInfoKind => 'Kind';
+
+  @override
+  String get classKindTimetable => 'Weekly timetable';
+
+  @override
+  String get classKindOneOff => 'One-off class';
+
+  @override
+  String get classInfoHoliday => 'Holiday';
+
+  @override
+  String get classAllLevels => 'All levels';
+
+  @override
+  String get studentTabOverview => 'Overview';
+
+  @override
+  String get studentTabClasses => 'Classes';
+
+  @override
+  String get studentTabHistory => 'History';
+
+  @override
+  String get studentTabLearning => 'Learning';
+
+  @override
+  String get studentUpcomingClasses => 'Booked classes';
+
+  @override
+  String get studentInactive => 'Inactive';
+
+  @override
+  String get studentMemberSince => 'Member since';
+
+  @override
+  String get studentReportPdf => 'PDF report';
+
+  @override
+  String get activityAttended => 'Attended';
+
+  @override
+  String get activityExcused => 'Excused';
+
+  @override
+  String get activityAbsent => 'Absent';
+
+  @override
+  String get activityBooked => 'Booked';
+
+  @override
+  String get activityCancelled => 'Class cancelled';
+
+  @override
+  String activityPractice(String title, int score) {
+    return 'Practice: $title · $score%';
+  }
+
+  @override
+  String activityTest(String code, int total, int max) {
+    return 'Test $code: $total of $max';
+  }
+
+  @override
+  String get activityPassed => 'passed';
+
+  @override
+  String get activityNotPassed => 'not passed';
+
+  @override
+  String activityPaid(String amount) {
+    return 'Paid $amount';
+  }
+
+  @override
+  String activityLevel(String from, String to) {
+    return 'Level $from → $to';
+  }
+
+  @override
+  String get activityNone => 'Nothing yet.';
+
+  @override
+  String get activityNoUpcoming => 'No booked classes ahead.';
+
+  @override
+  String activityShowMore(int n) {
+    return 'Show more ($n left)';
+  }
+
+  @override
+  String get invoiceDiscardConfirm => 'Discard invoice';
 }

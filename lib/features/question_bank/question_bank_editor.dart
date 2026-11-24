@@ -12,6 +12,7 @@ import '../../models/exercise_type.dart';
 import '../../models/question_bank_item.dart';
 import '../../services/firestore_service.dart';
 import '../../services/question_bank_media_service.dart';
+import '../../core/widgets/discard_guard.dart';
 
 /// Opens the question editor as a bottom sheet. [existing] edits that
 /// question; [sheet] adds a new question to that worksheet (type, level, skill
@@ -121,6 +122,7 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
       }
     }
     _ensureOptionControllers();
+    _startSig = _sig();
   }
 
   void _loadQuestion(QuestionBankItem e) {
@@ -446,8 +448,16 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
     }
   }
 
+  /// Owner 2026-11-24: what the editor held when it opened (or loaded).
+  String? _startSig;
+  String _sig() => [_type.name, _skill.name, _category.name, _level, '$_correctIndex', _imageUrl, _audioUrl, _promptController.text, _tagsController.text, _keywordController.text, _blankController.text, _explanationController.text, _sourceController.text, _sourceMinutesController.text, _linesController.text, for (final c in _optionControllers) c.text, ..._optionImageUrls].join('|');
+  bool get _dirty => _startSig != null && _sig() != _startSig;
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      DiscardGuard(isDirty: () => !_saving && _dirty, child: _buildEditor(context));
+
+  Widget _buildEditor(BuildContext context) {
     final l = context.l10n;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     final sheet = widget.sheet;
@@ -535,7 +545,7 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
                       isExpanded: true,
                       decoration: InputDecoration(labelText: l.bankEditorSkill),
                       items: [
-                        for (final c in ExerciseSkillCategory.values)
+                        for (final c in ExerciseSkillCategory.forQuestions)
                           DropdownMenuItem(
                               value: c, child: Text(c.localized(l))),
                       ],

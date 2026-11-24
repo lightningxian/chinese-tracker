@@ -44,14 +44,15 @@ Future<bool> confirmDayDecision(BuildContext context,
                   controller: reason,
                   decoration: InputDecoration(labelText: l.dayCloseReason),
                 ),
-                CheckboxListTile(
-                  contentPadding: EdgeInsets.zero,
-                  controlAffinity: ListTileControlAffinity.leading,
-                  value: announce,
-                  onChanged: (v) => setLocal(() => announce = v ?? true),
-                  title: Text(l.dayCloseAnnounce),
-                ),
               ],
+              // Owner 2026-11-24: opening a holiday is announced too.
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                controlAffinity: ListTileControlAffinity.leading,
+                value: announce,
+                onChanged: (v) => setLocal(() => announce = v ?? true),
+                title: Text(close ? l.dayCloseAnnounce : l.dayOpenAnnounce),
+              ),
             ],
           ),
         ),
@@ -75,8 +76,14 @@ Future<bool> confirmDayDecision(BuildContext context,
         closed: close,
         name: why,
         announce: announce,
-        title: l.dayClosedAnnTitle(_pretty(date)),
-        body: why.isEmpty ? l.dayClosedAnnBody(_pretty(date)) : '$why. ${l.dayClosedAnnBody(_pretty(date))}');
+        title: close ? l.dayClosedAnnTitle(_pretty(date)) : l.dayOpenedAnnTitle(_pretty(date)),
+        body: close
+            ? (why.isEmpty
+                ? l.dayClosedAnnBody(_pretty(date))
+                : '$why. ${l.dayClosedAnnBody(_pretty(date))}')
+            : (name.isEmpty
+                ? l.dayOpenedAnnBody(_pretty(date))
+                : '$name: ${l.dayOpenedAnnBody(_pretty(date))}'));
     messenger.showSnackBar(SnackBar(content: Text(close ? l.dayClosedDone(n) : l.dayOpenedDone(n))));
     return true;
   } on FirebaseFunctionsException catch (e) {

@@ -316,10 +316,15 @@ class _TeacherAttendanceTabState extends State<TeacherAttendanceTab> {
                     minCardWidth: 340,
                     children: [
                       for (final session in selected)
-                        _TeacherClassCard(
+                        TeacherClassCard(
                           key: ValueKey(session.id),
                           session: session,
                           historyMode: session.isConcluded,
+                          // Owner 2026-11-24: tap a class to open its page.
+                          compact: true,
+                          onOpen: () => context.push(user.isAdmin
+                              ? '/admin/session/${session.id}'
+                              : '/teacher/session/${session.id}'),
                         ),
                     ],
                   ),
@@ -334,21 +339,27 @@ class _TeacherAttendanceTabState extends State<TeacherAttendanceTab> {
   }
 }
 
-class _TeacherClassCard extends StatefulWidget {
-  const _TeacherClassCard({
+/// One class: compact on the calendar (tap → the class page), full on the
+/// class page (actions, add a student, the students).
+class TeacherClassCard extends StatefulWidget {
+  const TeacherClassCard({
     super.key,
     required this.session,
     required this.historyMode,
+    this.compact = false,
+    this.onOpen,
   });
 
   final ClassSession session;
   final bool historyMode;
+  final bool compact;
+  final VoidCallback? onOpen;
 
   @override
-  State<_TeacherClassCard> createState() => _TeacherClassCardState();
+  State<TeacherClassCard> createState() => TeacherClassCardState();
 }
 
-class _TeacherClassCardState extends State<_TeacherClassCard> {
+class TeacherClassCardState extends State<TeacherClassCard> {
   bool _deleting = false;
   final Set<String> _busyStudentIds = {};
 
@@ -608,6 +619,7 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
       children: [
         AppCard(
           padding: const EdgeInsets.all(14),
+          onTap: widget.compact ? widget.onOpen : null,
           child: StreamBuilder<List<AppUser>>(
             stream: firestore.watchAllStudents(),
             builder: (context, studentsSnap) {
@@ -713,6 +725,31 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
                           _statusPill(concluded),
                         ],
                       ),
+                      if (widget.compact) ...[
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                [
+                                  if ((session.room ?? '').isNotEmpty) session.room!,
+                                  if (session.teachersLabel.isNotEmpty) session.teachersLabel,
+                                ].join(' · '),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                    color: AppColors.textSecondary, fontSize: 12),
+                              ),
+                            ),
+                            Text(l.classOpenDetails,
+                                style: TextStyle(
+                                    color: AppColors.teal,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12.5)),
+                            Icon(Icons.chevron_right, size: 18, color: AppColors.teal),
+                          ],
+                        ),
+                      ] else ...[
                       const SizedBox(height: 10),
                       Wrap(
                         spacing: 8,
@@ -890,6 +927,7 @@ class _TeacherClassCardState extends State<_TeacherClassCard> {
                             );
                           }).toList(),
                         ),
+                      ],
                     ],
                   );
                 },

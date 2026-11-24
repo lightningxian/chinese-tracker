@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../l10n/l10n.dart';
+import '../../core/widgets/discard_guard.dart';
 
 String _today() => DateFormat('yyyy-MM-dd').format(DateTime.now());
 
@@ -42,6 +43,14 @@ class Announcement {
   final DateTime? createdAt;
 
   bool get isClosure => kind == 'closure';
+
+  /// Owner 2026-11-24: a holiday on which classes run after all.
+  bool get isOpened => kind == 'opened';
+
+  /// Owner 2026-11-24: "shown until" is optional; no end date is stored as
+  /// [noEnd] so the "still shown" query keeps working.
+  static const noEnd = '9999-12-31';
+  bool get hasEnd => toDate != noEnd;
 
   /// Whether a user with [role] sees it ([role] as in `users.role`).
   bool shownTo(String role) => switch (audience) {
@@ -129,6 +138,14 @@ class AnnouncementService {
   Future<void> delete(String id) => _col.doc(id).delete();
 }
 
+IconData announcementIcon(Announcement a) => a.isClosure
+    ? Icons.event_busy
+    : a.isOpened
+        ? Icons.event_available
+        : Icons.campaign_outlined;
+
+Color announcementColor(Announcement a) => a.isClosure ? AppColors.error : AppColors.teal;
+
 String announcementAudienceLabel(AppLocalizations l, String audience) => switch (audience) {
       'students' => l.announcementForStudents,
       'teachers' => l.announcementForTeachers,
@@ -157,13 +174,21 @@ class _AnnouncementDialogState extends State<AnnouncementDialog> {
   late final _title = TextEditingController(text: widget.existing?.title ?? '');
   late final _body = TextEditingController(text: widget.existing?.body ?? '');
   late String _audience = widget.existing?.audience ?? 'all';
-  late DateTime _until = DateTime.tryParse(widget.existing?.toDate ?? '') ??
-      DateTime.now().add(const Duration(days: 7));
+  // Owner 2026-11-24: no end date unless the admin picks one.
+  late DateTime? _until = widget.existing == null || !widget.existing!.hasEnd
+      ? null
+      : DateTime.tryParse(widget.existing!.toDate);
   bool _notify = true;
   bool _saving = false;
   String? _error;
 
   bool get _editing => widget.existing != null;
+
+  @override
+  void initState() {
+    super.initState();
+    _startSig = _sig();
+  }
 
   @override
   void dispose() {
@@ -186,7 +211,7 @@ class _AnnouncementDialogState extends State<AnnouncementDialog> {
       _saving = true;
       _error = null;
     });
-    final until = DateFormat('yyyy-MM-dd').format(_until);
+    final until = _until == null ? Announcement.noEnd : DateFormat('yyyy-MM-dd').format(_until!);
     try {
       final service = AnnouncementService();
       if (_editing) {
@@ -210,8 +235,16 @@ class _AnnouncementDialogState extends State<AnnouncementDialog> {
     }
   }
 
+  /// Owner 2026-11-24: what the editor held when it opened (or loaded).
+  String? _startSig;
+  String _sig() => [_title.text, _body.text, _audience, '$_until'].join('|');
+  bool get _dirty => _startSig != null && _sig() != _startSig;
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      DiscardGuard(isDirty: () => _dirty, child: _buildEditor(context));
+
+  Widget _buildEditor(BuildContext context) {
     final l = context.l10n;
     return AlertDialog(
       title: Text(_editing ? l.announcementEdit : l.announcementNew),
@@ -252,20 +285,30 @@ class _AnnouncementDialogState extends State<AnnouncementDialog> {
               Row(
                 children: [
                   Expanded(
-                      child: Text(l.announcementUntil(DateFormat('yyyy-MM-dd').format(_until)))),
+                      child: Text(_until == null
+                          ? l.announcementNoEnd
+                          : l.announcementUntil(DateFormat('yyyy-MM-dd').format(_until!)))),
+                  if (_until != null)
+                    IconButton(
+                      tooltip: l.announcementClearDate,
+                      onPressed: () => setState(() => _until = null),
+                      icon: const Icon(Icons.close, size: 18),
+                    ),
                   TextButton.icon(
                     onPressed: () async {
                       final now = DateTime.now();
                       final d = await showDatePicker(
                         context: context,
                         firstDate: now,
-                        lastDate: DateTime(now.year + 1, 12, 31),
-                        initialDate: _until.isBefore(now) ? now : _until,
+                        lastDate: DateTime(now.year + 2, 12, 31),
+                        initialDate: _until == null || _until!.isBefore(now)
+                            ? now.add(const Duration(days: 7))
+                            : _until!,
                       );
                       if (d != null) setState(() => _until = d);
                     },
                     icon: const Icon(Icons.event, size: 18),
-                    label: Text(l.announcementPickDate),
+                    label: Text(_until == null ? l.announcementSetDate : l.announcementPickDate),
                   ),
                 ],
               ),
@@ -284,7 +327,7 @@ class _AnnouncementDialogState extends State<AnnouncementDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: Text(l.commonCancel)),
+        TextButton(onPressed: () => Navigator.maybePop(context), child: Text(l.commonCancel)),
         FilledButton(
           onPressed: _saving ? null : _save,
           child: Text(_editing ? l.roomsSave : l.announcementPost),
@@ -329,8 +372,7 @@ class _AnnouncementBannerState extends State<AnnouncementBanner> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(a.isClosure ? Icons.event_busy : Icons.campaign_outlined,
-                            color: a.isClosure ? AppColors.error : AppColors.teal),
+                        Icon(announcementIcon(a), color: announcementColor(a)),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
@@ -342,10 +384,12 @@ class _AnnouncementBannerState extends State<AnnouncementBanner> {
                                 const SizedBox(height: 2),
                                 Text(a.body, style: const TextStyle(height: 1.4)),
                               ],
-                              const SizedBox(height: 4),
-                              Text(l.announcementUntil(a.toDate),
-                                  style: TextStyle(
-                                      fontSize: 11, color: AppColors.textSecondary)),
+                              if (a.hasEnd) ...[
+                                const SizedBox(height: 4),
+                                Text(l.announcementUntil(a.toDate),
+                                    style: TextStyle(
+                                        fontSize: 11, color: AppColors.textSecondary)),
+                              ],
                             ],
                           ),
                         ),

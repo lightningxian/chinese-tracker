@@ -49,6 +49,9 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
 
   // Build 5: filters and the total of the filtered rows (screenshot 15).
   InvoiceStatus? _statusFilter;
+
+  /// Owner 2026-11-24: show the Discarded invoices instead of the table.
+  bool _showDiscarded = false;
   String? _itemFilter;
   String? _monthFilter;
 
@@ -194,8 +197,12 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
                   if (snap.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   }
-                  final invoices = snap.data ?? [];
-                  if (invoices.isEmpty) {
+                  final everything = snap.data ?? [];
+                  final discarded = everything.where((i) => i.isDiscarded).toList()
+                    ..sort((a, b) => (b.discardedAt ?? DateTime(0))
+                        .compareTo(a.discardedAt ?? DateTime(0)));
+                  final invoices = everything.where((i) => !i.isDiscarded).toList();
+                  if (everything.isEmpty) {
                     return EmptyState(
                       icon: Icons.receipt_long_outlined,
                       title: l.adminInvoicesEmptyTitle,
@@ -211,6 +218,26 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
                   return ListView(
                     padding: const EdgeInsets.all(20),
                     children: [
+                      Row(
+                        children: [
+                          ChoiceChip(
+                            label: Text(l.invoiceActiveList(invoices.length)),
+                            selected: !_showDiscarded,
+                            onSelected: (_) => setState(() => _showDiscarded = false),
+                          ),
+                          const SizedBox(width: 8),
+                          ChoiceChip(
+                            avatar: const Icon(Icons.delete_sweep_outlined, size: 18),
+                            label: Text(l.invoiceDiscardedList(discarded.length)),
+                            selected: _showDiscarded,
+                            onSelected: (_) => setState(() => _showDiscarded = true),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      if (_showDiscarded)
+                        _discardedList(context, l, discarded)
+                      else ...[
                       _filters(l, invoices),
                       const SizedBox(height: 12),
                       AppDataTable<Invoice>(
@@ -227,6 +254,7 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
                               : null,
                         ),
                       ),
+                      ],
                     ],
                   );
                 },
@@ -275,7 +303,10 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
         drop<InvoiceStatus>(
           l.profileWidgetStatus,
           _statusFilter,
-          {for (final s in InvoiceStatus.values) s: s.localized(l)},
+          {
+            for (final s in InvoiceStatus.values)
+              if (s != InvoiceStatus.discarded) s: s.localized(l)
+          },
           (v) => setState(() => _statusFilter = v),
         ),
         drop<String>(l.adminInvoicesColItem, _itemFilter, items,
@@ -406,6 +437,7 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
               invoice.isOverdue ? AppColors.error : AppColors.brandYellow,
             InvoiceStatus.failed => AppColors.error,
             InvoiceStatus.expired => AppColors.textSecondary,
+            InvoiceStatus.discarded => AppColors.textSecondary,
           },
         ),
       ),
@@ -414,7 +446,7 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
         label: '',
         width: 56,
         alignment: Alignment.centerRight,
-        cell: (invoice) => invoice.isPending
+        cell: (invoice) => !invoice.isPaid && !invoice.isDiscarded
             ? PopupMenuButton<String>(
                 tooltip: l.adminUsersColActions,
                 icon: const Icon(Icons.more_vert, size: 20),
@@ -422,20 +454,22 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
                   switch (action) {
                     case 'paid':
                       _recordPayment(context, invoice);
-                    case 'delete':
-                      _deleteInvoice(context, invoice);
+                    case 'discard':
+                      _discardInvoice(context, invoice);
                   }
                 },
                 itemBuilder: (_) => [
-                  PopupMenuItem(
-                    value: 'paid',
-                    child: Text(l.adminInvoicesMarkPaidMenu),
-                  ),
-                  if (!invoice.isOnline)
+                  if (invoice.isPending)
                     PopupMenuItem(
-                      value: 'delete',
-                      child: Text(l.adminInvoicesDeletePending),
+                      value: 'paid',
+                      child: Text(l.adminInvoicesMarkPaidMenu),
                     ),
+                  // Owner 2026-11-24: remove with a reason (kept on the
+                  // Discarded list) instead of deleting.
+                  PopupMenuItem(
+                    value: 'discard',
+                    child: Text(l.invoiceDiscardMenu),
+                  ),
                 ],
               )
             : const SizedBox.shrink(),
@@ -480,41 +514,128 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
     }
   }
 
-  Future<void> _deleteInvoice(BuildContext context, Invoice invoice) async {
+  /// Owner 2026-11-24: discard with a reason (`discardInvoice`).
+  Future<void> _discardInvoice(BuildContext context, Invoice invoice) async {
     final l = context.l10n;
+    final reason = TextEditingController();
     final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l.adminInvoicesDeleteTitle),
-        content: Text(
-          l.adminInvoicesDeleteBody(
-            invoice.invoiceNumber,
-            invoice.itemLocalized(l),
-            _studentLabel(invoice) ?? invoice.studentId,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => AlertDialog(
+          title: Text(l.invoiceDiscardTitle),
+          content: SizedBox(
+            width: 460,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(l.invoiceDiscardBody(
+                  invoice.invoiceNumber,
+                  _studentLabel(invoice) ?? invoice.studentId,
+                  formatRupiah(invoice.amount),
+                )),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: reason,
+                  autofocus: true,
+                  maxLength: 300,
+                  maxLines: 3,
+                  onChanged: (_) => setLocal(() {}),
+                  decoration: InputDecoration(
+                    labelText: l.invoiceDiscardReason,
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
           ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l.commonCancel)),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+              onPressed: reason.text.trim().isEmpty ? null : () => Navigator.pop(ctx, true),
+              child: Text(l.invoiceDiscardConfirm),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l.commonCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-            child: Text(l.termDelete),
-          ),
-        ],
       ),
     );
     if (ok != true || !context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
     try {
-      await context.read<FirestoreService>().deleteInvoice(invoice.id);
+      await context.read<FirestoreService>().discardInvoice(invoice.id, reason: reason.text);
+      messenger.showSnackBar(SnackBar(content: Text(l.invoiceDiscarded)));
     } catch (e) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l.adminInvoicesDeleteFailed('$e'))),
+      messenger.showSnackBar(SnackBar(content: Text(l.adminInvoicesDeleteFailed('$e'))));
+    }
+  }
+
+  Future<void> _restoreInvoice(BuildContext context, Invoice invoice) async {
+    final l = context.l10n;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await context.read<FirestoreService>().discardInvoice(invoice.id, restore: true);
+      messenger.showSnackBar(SnackBar(content: Text(l.invoiceRestored)));
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(l.adminInvoicesDeleteFailed('$e'))));
+    }
+  }
+
+  /// The Discarded invoices list: number, student, amount, reason, who.
+  Widget _discardedList(BuildContext context, AppLocalizations l, List<Invoice> list) {
+    if (list.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(24),
+        child: Text(l.invoiceDiscardedNone,
+            textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSecondary)),
       );
     }
+    return Column(
+      children: [
+        for (final inv in list)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: AppCard(
+              padding: const EdgeInsets.fromLTRB(16, 12, 10, 12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.delete_sweep_outlined, color: AppColors.textSecondary),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${inv.invoiceNumber} · ${_studentLabel(inv) ?? inv.studentId} · ${formatRupiah(inv.amount)}',
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(l.invoiceDiscardedWhy(inv.discardReason),
+                            style: const TextStyle(height: 1.4)),
+                        const SizedBox(height: 2),
+                        Text(
+                          [
+                            inv.itemLocalized(l),
+                            if (inv.discardedByName.isNotEmpty) inv.discardedByName,
+                            if (inv.discardedAt != null)
+                              DateFormat('d MMM yyyy HH:mm').format(inv.discardedAt!),
+                          ].join(' · '),
+                          style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                        ),
+                      ],
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => _restoreInvoice(context, inv),
+                    child: Text(l.invoiceRestore),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
   }
 
   Future<void> _openCreateInvoice(BuildContext context) async {
@@ -640,6 +761,7 @@ class _StatusChip extends StatelessWidget {
       InvoiceStatus.pending => AppColors.navy,
       InvoiceStatus.expired => AppColors.textSecondary,
       InvoiceStatus.failed => AppColors.error,
+      InvoiceStatus.discarded => AppColors.textSecondary,
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

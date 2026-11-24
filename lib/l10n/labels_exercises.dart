@@ -35,5 +35,6 @@ extension ExerciseSkillCategoryL10n on ExerciseSkillCategory {
         ExerciseSkillCategory.listening => l.skillCategoryListening,
         ExerciseSkillCategory.typing => l.skillCategoryTyping,
         ExerciseSkillCategory.speaking => l.skillCategorySpeaking,
+        ExerciseSkillCategory.mixed => l.skillCategoryMixed,
       };
 }

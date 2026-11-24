@@ -59,11 +59,16 @@ class SessionStatusChips extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = context.l10n;
     final st = session.lifeStatus;
+    // Owner 2026-11-24: a class past its end that nobody closed is not
+    // "ongoing" any more.
+    final ended = st == 'ongoing' && session.hasEnded;
     return Wrap(
       spacing: 6,
       runSpacing: 6,
       children: [
-        _chip(sessionStatusLabel(l, st), _statusColor(st)),
+        ended
+            ? _chip(l.sessionStatusEnded, AppColors.chipAmberFg)
+            : _chip(sessionStatusLabel(l, st), _statusColor(st)),
         if (session.lateCheckIn || session.lateMinutes > 0)
           _chip(
               session.lateMinutes > 0

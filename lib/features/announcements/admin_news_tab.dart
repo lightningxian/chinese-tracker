@@ -97,7 +97,7 @@ class _AdminNewsTabState extends State<AdminNewsTab> {
               for (final a in active)
                 _NewsCard(
                   announcement: a,
-                  onEdit: a.isClosure
+                  onEdit: a.isClosure || a.isOpened
                       ? null
                       : () => AnnouncementDialog.show(context, byName: _byName, existing: a),
                   onDelete: () => _delete(a),
@@ -156,7 +156,7 @@ class _NewsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = context.l10n;
     final a = announcement;
-    final accent = a.isClosure ? AppColors.error : AppColors.teal;
+    final accent = announcementColor(a);
     final posted = a.createdAt == null ? '' : DateFormat('d MMM yyyy').format(a.createdAt!);
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -168,7 +168,7 @@ class _NewsCard extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(a.isClosure ? Icons.event_busy : Icons.campaign_outlined, color: accent),
+              Icon(announcementIcon(a), color: accent),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -187,9 +187,10 @@ class _NewsCard extends StatelessWidget {
                       children: [
                         _Pill(text: announcementAudienceLabel(l, a.audience), color: accent),
                         if (a.isClosure) _Pill(text: l.newsClosure, color: AppColors.error),
+                        if (a.isOpened) _Pill(text: l.newsOpened, color: AppColors.teal),
                         Text(
                           [
-                            l.announcementUntil(a.toDate),
+                            a.hasEnd ? l.announcementUntil(a.toDate) : l.announcementNoEnd,
                             if (posted.isNotEmpty) l.newsPosted(posted),
                             if (a.byName.isNotEmpty) a.byName,
                           ].join(' · '),

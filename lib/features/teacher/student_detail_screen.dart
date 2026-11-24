@@ -24,6 +24,7 @@ import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/student_report_service.dart';
 import '../evaluations/student_evaluations_section.dart';
+import 'student_activity.dart';
 
 /// One student on one page: profile and contact, vouchers (class terms),
 /// payments, attendance, evaluations, practice results and lesson progress.
@@ -45,6 +46,14 @@ class StudentDetailScreen extends StatefulWidget {
 class _StudentDetailScreenState extends State<StudentDetailScreen> {
   bool _exporting = false;
 
+  /// Owner 2026-11-24: the page is a profile card and four tabs.
+  int _tab = 0;
+
+  /// Fetched once (a tab change must not reload the page); fetched again
+  /// after a new photo.
+  late Future<AppUser?> _user =
+      context.read<FirestoreService>().getUser(widget.studentId);
+
   Future<void> _exportReport(AppUser student) async {
     setState(() => _exporting = true);
     try {
@@ -65,13 +74,225 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
     }
   }
 
+  /// Owner 2026-11-24: the compact profile: photo (the admin may change it),
+  /// names, level, contact, and the report buttons.
+  Widget _profileCard(BuildContext context, AppUser student, bool isAdmin, {bool wide = true}) {
+    final l = context.l10n;
+    if (!wide) return _compactCard(context, student, isAdmin);
+    return AppCard(
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: ProfilePhotoAvatar(
+              user: student,
+              size: 88,
+              backgroundColor: AppColors.teal,
+              canEdit: isAdmin,
+              onPhotoChanged: (_) => setState(() =>
+                  _user = context.read<FirestoreService>().getUser(widget.studentId)),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            student.displayNameIndonesian,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+          ),
+          if (student.displayNameChinese != null)
+            Text(
+              student.displayNameChinese!,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 15),
+            ),
+          const SizedBox(height: 8),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              if (student.level != null) HskBadge(label: student.level!),
+              StatusPill(
+                label: l.studentDetailLessonsPerTerm(student.lessonsPerTerm),
+                color: AppColors.textSecondary,
+              ),
+              if (!student.active)
+                StatusPill(label: l.studentInactive, color: AppColors.error),
+            ],
+          ),
+          const SizedBox(height: 14),
+          const Divider(height: 1),
+          const SizedBox(height: 10),
+          ProfileInfoRow(label: l.commonEmail, value: student.email, icon: Icons.mail_outline),
+          if (student.displayWhatsapp != null)
+            ProfileInfoRow(
+              label: 'WhatsApp',
+              value: student.displayWhatsapp!,
+              icon: Icons.chat_outlined,
+            ),
+          if (student.parentName != null)
+            ProfileInfoRow(
+              label: l.identityParentName,
+              value: student.parentName!,
+              icon: Icons.family_restroom_outlined,
+            ),
+          if (student.parentPhone != null)
+            ProfileInfoRow(
+              label: l.identityParentPhone,
+              value: student.parentPhone!,
+              icon: Icons.phone_outlined,
+            ),
+          if (student.createdAt != null)
+            ProfileInfoRow(
+              label: l.studentMemberSince,
+              value: DateFormat('d MMM yyyy').format(student.createdAt!),
+              icon: Icons.calendar_today_outlined,
+            ),
+          const SizedBox(height: 12),
+          FilledButton.icon(
+            onPressed: () =>
+                context.push('${GoRouterState.of(context).uri.path}/progress'),
+            icon: const Icon(Icons.insights_outlined, size: 18),
+            label: Text(l.progressReportTitle),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              if (isAdmin) ...[
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => context.push('/admin/users/${widget.studentId}/edit'),
+                    icon: const Icon(Icons.edit_outlined, size: 18),
+                    label: Text(l.studentDetailEditProfile),
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _exporting ? null : () => _exportReport(student),
+                  icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
+                  label: Text(l.studentReportPdf),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Owner 2026-11-24: on a narrower screen the profile is one row.
+  Widget _compactCard(BuildContext context, AppUser student, bool isAdmin) {
+    final l = context.l10n;
+    Widget fact(IconData icon, String text) => Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 15, color: AppColors.textSecondary),
+            const SizedBox(width: 5),
+            Text(text, style: const TextStyle(fontSize: 13)),
+          ],
+        );
+    return AppCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ProfilePhotoAvatar(
+                user: student,
+                size: 64,
+                backgroundColor: AppColors.teal,
+                canEdit: isAdmin,
+                onPhotoChanged: (_) => setState(() =>
+                    _user = context.read<FirestoreService>().getUser(widget.studentId)),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      [
+                        student.displayNameIndonesian,
+                        if (student.displayNameChinese != null) student.displayNameChinese!,
+                      ].join('  '),
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                    ),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        if (student.level != null) HskBadge(label: student.level!),
+                        StatusPill(
+                          label: l.studentDetailLessonsPerTerm(student.lessonsPerTerm),
+                          color: AppColors.textSecondary,
+                        ),
+                        if (!student.active)
+                          StatusPill(label: l.studentInactive, color: AppColors.error),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 16,
+                      runSpacing: 6,
+                      children: [
+                        fact(Icons.mail_outline, student.email),
+                        if (student.displayWhatsapp != null)
+                          fact(Icons.chat_outlined, student.displayWhatsapp!),
+                        if (student.parentName != null || student.parentPhone != null)
+                          fact(Icons.family_restroom_outlined,
+                              [student.parentName, student.parentPhone].whereType<String>().join(' · ')),
+                        if (student.createdAt != null)
+                          fact(Icons.calendar_today_outlined,
+                              '${l.studentMemberSince} ${DateFormat('d MMM yyyy').format(student.createdAt!)}'),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              FilledButton.icon(
+                onPressed: () =>
+                    context.push('${GoRouterState.of(context).uri.path}/progress'),
+                icon: const Icon(Icons.insights_outlined, size: 18),
+                label: Text(l.progressReportTitle),
+              ),
+              if (isAdmin)
+                OutlinedButton.icon(
+                  onPressed: () => context.push('/admin/users/${widget.studentId}/edit'),
+                  icon: const Icon(Icons.edit_outlined, size: 18),
+                  label: Text(l.studentDetailEditProfile),
+                ),
+              OutlinedButton.icon(
+                onPressed: _exporting ? null : () => _exportReport(student),
+                icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
+                label: Text(l.studentReportPdf),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
     final firestore = context.read<FirestoreService>();
 
     return FutureBuilder(
-      future: firestore.getUser(widget.studentId),
+      future: _user,
       builder: (context, userSnap) {
         if (userSnap.connectionState == ConnectionState.waiting) {
           return const Scaffold(
@@ -94,26 +315,6 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
         return ShellNestedPage(
           embedded: widget.embedded,
           title: student.staffLabel,
-          actions: [
-            if (isAdmin)
-              IconButton(
-                onPressed: () =>
-                    context.push('/admin/users/${widget.studentId}/edit'),
-                tooltip: l.studentDetailEditProfile,
-                icon: const Icon(Icons.edit_outlined),
-              ),
-            IconButton(
-              onPressed: _exporting ? null : () => _exportReport(student),
-              tooltip: l.studentDetailExportReport,
-              icon: _exporting
-                  ? const SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.picture_as_pdf_outlined),
-            ),
-          ],
           child: StreamBuilder(
             stream: firestore.watchLessons(contentOwnerId),
             builder: (context, lessonsSnap) {
@@ -131,164 +332,28 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
                     termSize: student.lessonsPerTerm,
                   );
 
-                  return ListView(
-                    padding: const EdgeInsets.all(20),
-                    children: [
-                      AppCard(
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            AppUserAvatar(
-                              initials: userInitials(
-                                student.displayNameIndonesian,
-                              ),
-                              size: 56,
-                              backgroundColor: AppColors.teal,
-                              photoUrl: student.photoUrl,
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    student.displayNameIndonesian,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleLarge
-                                        ?.copyWith(
-                                          fontWeight: FontWeight.w700,
-                                          color: AppColors.navy,
-                                        ),
-                                  ),
-                                  if (student.displayNameChinese != null) ...[
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      student.displayNameChinese!,
-                                      style: TextStyle(
-                                        color: AppColors.textSecondary,
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ],
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    student.email,
-                                    style: TextStyle(
-                                      color: AppColors.textSecondary,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Wrap(
-                                    spacing: 8,
-                                    runSpacing: 6,
-                                    children: [
-                                      if (student.level != null)
-                                        HskBadge(label: student.level!),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 3,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.surface,
-                                          borderRadius:
-                                              BorderRadius.circular(6),
-                                          border: Border.all(
-                                            color: AppColors.border,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          l.studentDetailLessonsPerTerm(
-                                            student.lessonsPerTerm,
-                                          ),
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w600,
-                                            color: AppColors.textSecondary,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (student.displayWhatsapp != null ||
-                          student.parentName != null ||
-                          student.parentPhone != null) ...[
-                        const SizedBox(height: 12),
-                        AppCard(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                l.studentDetailContact,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleSmall
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.navy,
-                                    ),
-                              ),
-                              const SizedBox(height: 12),
-                              if (student.displayWhatsapp != null)
-                                ProfileInfoRow(
-                                  label: 'WhatsApp',
-                                  value: student.displayWhatsapp!,
-                                  icon: Icons.chat_outlined,
-                                ),
-                              if (student.parentName != null)
-                                ProfileInfoRow(
-                                  label: l.identityParentName,
-                                  value: student.parentName!,
-                                  icon: Icons.family_restroom_outlined,
-                                ),
-                              if (student.parentPhone != null)
-                                ProfileInfoRow(
-                                  label: l.identityParentPhone,
-                                  value: student.parentPhone!,
-                                  icon: Icons.phone_outlined,
-                                ),
-                            ],
-                          ),
-                        ),
+                  final wide = MediaQuery.sizeOf(context).width >= 1100;
+                  final card = _profileCard(context, student, isAdmin, wide: wide);
+                  final tabs = [
+                    l.studentTabOverview,
+                    l.studentTabClasses,
+                    l.studentTabHistory,
+                    l.studentTabLearning,
+                  ];
+                  final tabBar = SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: SegmentedButton<int>(
+                      showSelectedIcon: false,
+                      segments: [
+                        for (var i = 0; i < tabs.length; i++)
+                          ButtonSegment(value: i, label: Text(tabs[i])),
                       ],
-                      const SizedBox(height: 12),
-                      // Build 4: the progress report page.
-                      AppCard(
-                        child: FilledButton.icon(
-                          onPressed: () => context.push(
-                              '${GoRouterState.of(context).uri.path}/progress'),
-                          icon: const Icon(Icons.insights_outlined),
-                          label: Text(l.progressReportTitle),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.navy,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      AppCard(
-                        child: OutlinedButton.icon(
-                          onPressed:
-                              _exporting ? null : () => _exportReport(student),
-                          icon: const Icon(Icons.picture_as_pdf_outlined),
-                          label: Text(l.studentDetailExportReportPdf),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.navy,
-                            side: BorderSide(color: AppColors.border),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
+                      selected: {_tab},
+                      onSelectionChanged: (v) => setState(() => _tab = v.first),
+                    ),
+                  );
+                  final section = <Widget>[
+                    if (_tab == 0) ...[
                       StudentClassTermSection(
                         studentId: widget.studentId,
                         showAddButton: true,
@@ -300,13 +365,23 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
                         studentId: widget.studentId,
                         firestore: firestore,
                       ),
+                    ],
+                    if (_tab == 1) ...[
+                      SectionHeader(title: l.studentUpcomingClasses),
+                      StudentUpcomingClasses(
+                        studentId: widget.studentId,
+                        onOpen: (id) => context.push(
+                            isAdmin ? '/admin/session/$id' : '/teacher/session/$id'),
+                      ),
                       const SizedBox(height: 24),
                       SectionHeader(title: l.studentDetailAttendance),
                       _AttendanceSection(
                         studentId: widget.studentId,
                         firestore: firestore,
                       ),
-                      const SizedBox(height: 24),
+                    ],
+                    if (_tab == 2) StudentActivityTimeline(studentId: widget.studentId),
+                    if (_tab == 3) ...[
                       StudentEvaluationsSection(
                         studentId: widget.studentId,
                         teacherId: context.read<AuthService>().appUser?.uid ??
@@ -336,6 +411,36 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
                             child: TermProgressCard(term: term),
                           ),
                         ),
+                    ],
+                  ];
+                  if (wide) {
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          width: 340,
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.fromLTRB(20, 20, 0, 20),
+                            child: card,
+                          ),
+                        ),
+                        Expanded(
+                          child: ListView(
+                            padding: const EdgeInsets.all(20),
+                            children: [tabBar, const SizedBox(height: 16), ...section],
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+                  return ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      card,
+                      const SizedBox(height: 16),
+                      tabBar,
+                      const SizedBox(height: 16),
+                      ...section,
                     ],
                   );
                 },

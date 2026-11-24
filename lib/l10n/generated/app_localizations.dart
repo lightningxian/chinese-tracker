@@ -5411,7 +5411,7 @@ abstract class AppLocalizations {
   /// No description provided for @teacherAttAdd.
   ///
   /// In en, this message translates to:
-  /// **'Add'**
+  /// **'Add a student'**
   String get teacherAttAdd;
 
   /// No description provided for @teacherAttAtCapacity.
@@ -13403,6 +13403,420 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your account has been deleted.'**
   String get deleteAccountDone;
+
+  /// No description provided for @skillCategoryMixed.
+  ///
+  /// In en, this message translates to:
+  /// **'Mixed'**
+  String get skillCategoryMixed;
+
+  /// No description provided for @sessionStatusEnded.
+  ///
+  /// In en, this message translates to:
+  /// **'Ended'**
+  String get sessionStatusEnded;
+
+  /// No description provided for @announcementNoEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'No end date (shown until you delete it)'**
+  String get announcementNoEnd;
+
+  /// No description provided for @announcementSetDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Set an end date'**
+  String get announcementSetDate;
+
+  /// No description provided for @announcementClearDate.
+  ///
+  /// In en, this message translates to:
+  /// **'No end date'**
+  String get announcementClearDate;
+
+  /// No description provided for @newsOpened.
+  ///
+  /// In en, this message translates to:
+  /// **'Classes run'**
+  String get newsOpened;
+
+  /// No description provided for @dayOpenAnnounce.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell students, parents and teachers that classes run'**
+  String get dayOpenAnnounce;
+
+  /// No description provided for @dayOpenedAnnTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Classes run on {date}'**
+  String dayOpenedAnnTitle(String date);
+
+  /// No description provided for @dayOpenedAnnBody.
+  ///
+  /// In en, this message translates to:
+  /// **'the centre is open on {date} and classes run as usual.'**
+  String dayOpenedAnnBody(String date);
+
+  /// No description provided for @dashNewsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest news'**
+  String get dashNewsTitle;
+
+  /// No description provided for @dashNewsAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All news'**
+  String get dashNewsAll;
+
+  /// No description provided for @dashNextClass.
+  ///
+  /// In en, this message translates to:
+  /// **'Next class {time} {title} · {inText}'**
+  String dashNextClass(String time, String title, String inText);
+
+  /// No description provided for @dashInMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'in {n} min'**
+  String dashInMinutes(int n);
+
+  /// No description provided for @dashInHours.
+  ///
+  /// In en, this message translates to:
+  /// **'in {h} h {m} min'**
+  String dashInHours(int h, int m);
+
+  /// No description provided for @dashClassGoingOn.
+  ///
+  /// In en, this message translates to:
+  /// **'{title} is going on now'**
+  String dashClassGoingOn(String title);
+
+  /// No description provided for @paperPrevPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous page'**
+  String get paperPrevPage;
+
+  /// No description provided for @paperNextPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Next page'**
+  String get paperNextPage;
+
+  /// No description provided for @paperPageOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {page} of {count}'**
+  String paperPageOf(int page, int count);
+
+  /// No description provided for @discardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard your changes?'**
+  String get discardTitle;
+
+  /// No description provided for @discardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You changed something here and have not saved it. If you leave now, the changes are lost.'**
+  String get discardBody;
+
+  /// No description provided for @discardKeepEditing.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep editing'**
+  String get discardKeepEditing;
+
+  /// No description provided for @discardConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get discardConfirm;
+
+  /// No description provided for @invoiceStatusDiscarded.
+  ///
+  /// In en, this message translates to:
+  /// **'Discarded'**
+  String get invoiceStatusDiscarded;
+
+  /// No description provided for @invoiceDiscardMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard…'**
+  String get invoiceDiscardMenu;
+
+  /// No description provided for @invoiceDiscardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard this invoice?'**
+  String get invoiceDiscardTitle;
+
+  /// No description provided for @invoiceDiscardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{number} for {student}, {amount}. It leaves the list and the student no longer sees it. It is kept with your reason under Discarded invoices, where you can restore it.'**
+  String invoiceDiscardBody(String number, String student, String amount);
+
+  /// No description provided for @invoiceDiscardReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason (required)'**
+  String get invoiceDiscardReason;
+
+  /// No description provided for @invoiceDiscarded.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice discarded.'**
+  String get invoiceDiscarded;
+
+  /// No description provided for @invoiceRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice restored.'**
+  String get invoiceRestored;
+
+  /// No description provided for @invoiceRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get invoiceRestore;
+
+  /// No description provided for @invoiceActiveList.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoices ({n})'**
+  String invoiceActiveList(int n);
+
+  /// No description provided for @invoiceDiscardedList.
+  ///
+  /// In en, this message translates to:
+  /// **'Discarded invoices ({n})'**
+  String invoiceDiscardedList(int n);
+
+  /// No description provided for @invoiceDiscardedNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No discarded invoices.'**
+  String get invoiceDiscardedNone;
+
+  /// No description provided for @invoiceDiscardedWhy.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason: {reason}'**
+  String invoiceDiscardedWhy(String reason);
+
+  /// No description provided for @classOpenDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get classOpenDetails;
+
+  /// No description provided for @classDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Class'**
+  String get classDetailTitle;
+
+  /// No description provided for @classInfoRoom.
+  ///
+  /// In en, this message translates to:
+  /// **'Room'**
+  String get classInfoRoom;
+
+  /// No description provided for @classInfoTeachers.
+  ///
+  /// In en, this message translates to:
+  /// **'Teachers'**
+  String get classInfoTeachers;
+
+  /// No description provided for @classInfoLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Level'**
+  String get classInfoLevel;
+
+  /// No description provided for @classInfoSeats.
+  ///
+  /// In en, this message translates to:
+  /// **'Seats'**
+  String get classInfoSeats;
+
+  /// No description provided for @classInfoSeatsValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{booked} of {capacity} booked'**
+  String classInfoSeatsValue(int booked, int capacity);
+
+  /// No description provided for @classInfoKind.
+  ///
+  /// In en, this message translates to:
+  /// **'Kind'**
+  String get classInfoKind;
+
+  /// No description provided for @classKindTimetable.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly timetable'**
+  String get classKindTimetable;
+
+  /// No description provided for @classKindOneOff.
+  ///
+  /// In en, this message translates to:
+  /// **'One-off class'**
+  String get classKindOneOff;
+
+  /// No description provided for @classInfoHoliday.
+  ///
+  /// In en, this message translates to:
+  /// **'Holiday'**
+  String get classInfoHoliday;
+
+  /// No description provided for @classAllLevels.
+  ///
+  /// In en, this message translates to:
+  /// **'All levels'**
+  String get classAllLevels;
+
+  /// No description provided for @studentTabOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get studentTabOverview;
+
+  /// No description provided for @studentTabClasses.
+  ///
+  /// In en, this message translates to:
+  /// **'Classes'**
+  String get studentTabClasses;
+
+  /// No description provided for @studentTabHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get studentTabHistory;
+
+  /// No description provided for @studentTabLearning.
+  ///
+  /// In en, this message translates to:
+  /// **'Learning'**
+  String get studentTabLearning;
+
+  /// No description provided for @studentUpcomingClasses.
+  ///
+  /// In en, this message translates to:
+  /// **'Booked classes'**
+  String get studentUpcomingClasses;
+
+  /// No description provided for @studentInactive.
+  ///
+  /// In en, this message translates to:
+  /// **'Inactive'**
+  String get studentInactive;
+
+  /// No description provided for @studentMemberSince.
+  ///
+  /// In en, this message translates to:
+  /// **'Member since'**
+  String get studentMemberSince;
+
+  /// No description provided for @studentReportPdf.
+  ///
+  /// In en, this message translates to:
+  /// **'PDF report'**
+  String get studentReportPdf;
+
+  /// No description provided for @activityAttended.
+  ///
+  /// In en, this message translates to:
+  /// **'Attended'**
+  String get activityAttended;
+
+  /// No description provided for @activityExcused.
+  ///
+  /// In en, this message translates to:
+  /// **'Excused'**
+  String get activityExcused;
+
+  /// No description provided for @activityAbsent.
+  ///
+  /// In en, this message translates to:
+  /// **'Absent'**
+  String get activityAbsent;
+
+  /// No description provided for @activityBooked.
+  ///
+  /// In en, this message translates to:
+  /// **'Booked'**
+  String get activityBooked;
+
+  /// No description provided for @activityCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Class cancelled'**
+  String get activityCancelled;
+
+  /// No description provided for @activityPractice.
+  ///
+  /// In en, this message translates to:
+  /// **'Practice: {title} · {score}%'**
+  String activityPractice(String title, int score);
+
+  /// No description provided for @activityTest.
+  ///
+  /// In en, this message translates to:
+  /// **'Test {code}: {total} of {max}'**
+  String activityTest(String code, int total, int max);
+
+  /// No description provided for @activityPassed.
+  ///
+  /// In en, this message translates to:
+  /// **'passed'**
+  String get activityPassed;
+
+  /// No description provided for @activityNotPassed.
+  ///
+  /// In en, this message translates to:
+  /// **'not passed'**
+  String get activityNotPassed;
+
+  /// No description provided for @activityPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid {amount}'**
+  String activityPaid(String amount);
+
+  /// No description provided for @activityLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Level {from} → {to}'**
+  String activityLevel(String from, String to);
+
+  /// No description provided for @activityNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing yet.'**
+  String get activityNone;
+
+  /// No description provided for @activityNoUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'No booked classes ahead.'**
+  String get activityNoUpcoming;
+
+  /// No description provided for @activityShowMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Show more ({n} left)'**
+  String activityShowMore(int n);
+
+  /// No description provided for @invoiceDiscardConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard invoice'**
+  String get invoiceDiscardConfirm;
 }
 
 class _AppLocalizationsDelegate

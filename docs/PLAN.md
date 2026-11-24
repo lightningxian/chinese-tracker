@@ -2222,6 +2222,19 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
+### 2026-11-24 — Owner requests, fourth round — COMMIT, release v0.1.31 (functions and hosting live from the PC; 69 functions)
+- Built: paper reader preview shows drawn boxes + page thumbnails;
+  "Discard your changes?" on nine editors; Mixed skill section; discarded
+  invoices with reason and restore (`discardInvoice`); optional News end
+  date and holiday open/close notices; dashboard clock, next-class
+  countdown and latest news; compact class cards opening a class page;
+  student page with profile card, photo and tabs including History.
+- Proof: analyzer 17 infos; `flutter test` 165 pass; node tests pass
+  (discarded invoices); flow test 106 steps (new: reopened holiday notice,
+  discard and restore an invoice); emulator walk of the dashboard, class
+  page, student page, discarding an invoice.
+- Left: the owner's Apple steps (`docs/IOS_SPEC.md`).
+
 ### 2026-11-24 — Ready for the App Store (Q9 option B) — 3169334, release v0.1.30 (functions and hosting live from the PC; 68 functions)
 - Built: app icon from the mascot (iOS and Android); iOS name, iPhone only,
   iOS 15, Podfile, permission texts; **Delete my account** for students and

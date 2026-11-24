@@ -12,6 +12,7 @@ import '../../models/progress_summary.dart';
 import '../../services/firestore_service.dart';
 import '../../services/progress_service.dart';
 import '../../services/timetable_service.dart';
+import 'dashboard_extras.dart';
 
 /// Build 8 (Must 1): the six counts of the proposal's admin dashboard.
 class DutyCounts {
@@ -23,6 +24,7 @@ class DutyCounts {
     required this.unclosed,
     required this.needingAttention,
     required this.todaySessions,
+    this.todayList = const [],
   });
 
   final int pendingRegistrations;
@@ -32,6 +34,9 @@ class DutyCounts {
   final int unclosed;
   final int needingAttention;
   final int todaySessions;
+
+  /// Today's sessions that are not cancelled (the countdown).
+  final List<ClassSession> todayList;
 
   static String _key(DateTime d) => DateFormat('yyyy-MM-dd').format(d);
 
@@ -62,6 +67,7 @@ class DutyCounts {
       needingAttention:
           summaries.where((s) => s.status != ProgressStatus.good).length,
       todaySessions: live.where((s) => s.sessionDate == today).length,
+      todayList: live.where((s) => s.sessionDate == today).toList(),
     );
   }
 }
@@ -144,6 +150,8 @@ class _AdminDutyCardsState extends State<AdminDutyCards> {
                               open == 0 ? l.dashAllClear : l.dashOpenTasks(open),
                               style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
                             ),
+                            // Owner 2026-11-24: a countdown to the next class.
+                            NextClassCountdown(sessions: c.todayList),
                           ],
                         ),
                       ),

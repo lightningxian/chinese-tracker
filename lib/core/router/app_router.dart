@@ -44,7 +44,7 @@ import '../../features/teacher/teacher_shell.dart';
 import '../../features/teacher/exercise_package_form_screen.dart';
 import '../../features/teacher/teacher_exercise_form_screen.dart';
 import '../../features/teacher/student_detail_screen.dart';
-import '../../features/teacher/teacher_session_detail_screen.dart';
+import '../../features/teaching/class_detail_page.dart';
 import '../../features/teacher/teacher_session_form_screen.dart';
 import '../../features/tests/leaderboard_screen.dart';
 import '../../features/tests/marking_screen.dart';
@@ -370,7 +370,7 @@ class AppRouter {
                 ),
                 GoRoute(
                   path: 'session/:id',
-                  builder: (context, state) => TeacherSessionDetailScreen(
+                  builder: (context, state) => ClassDetailPage(
                     sessionId: state.pathParameters['id']!,
                     embedded: true,
                   ),
@@ -593,7 +593,7 @@ class AppRouter {
                 ),
                 GoRoute(
                   path: 'session/:id',
-                  builder: (context, state) => TeacherSessionDetailScreen(
+                  builder: (context, state) => ClassDetailPage(
                     sessionId: state.pathParameters['id']!,
                     embedded: true,
                   ),

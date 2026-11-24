@@ -14,6 +14,7 @@ extension InvoiceStatusLabels on InvoiceStatus {
         InvoiceStatus.paid => l.adminInvoicesStatusPaid,
         InvoiceStatus.expired => l.historyStatusExpired,
         InvoiceStatus.failed => l.adminInvoicesStatusFailed,
+        InvoiceStatus.discarded => l.invoiceStatusDiscarded,
       };
 }
 

@@ -69,6 +69,15 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   Publishing it (hosting deploy from the Mac, web + APK, `scripts/deploy_web.sh --no-keys`) waits for the
   owner's word in the PLAN chat.
 
+### 2026-11-24 — Claude (BUILD chat, PC): owner requests, fourth round
+
+- Owner asked: the missing box E in the paper reader, easier page
+  browsing, a pop-up before discarding edits, a Mixed skill section,
+  discarding invoices with a reason, optional News end date and holiday
+  notices, a class page, a compact student profile with photo and
+  history, news and a clock on the dashboard.
+- Built in release v0.1.31 (69 functions), see the CHANGELOG entry.
+
 ### 2026-11-24 — Claude (BUILD chat, PC): App Store preparation (Q9 option B)
 
 - Owner chose an App Store app. Built what Apple needs from the code side:

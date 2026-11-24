@@ -817,7 +817,7 @@ class _SheetEditDialogState extends State<_SheetEditDialog> {
                     isExpanded: true,
                     decoration: InputDecoration(labelText: l.bankEditorSkill),
                     items: [
-                      for (final c in ExerciseSkillCategory.values)
+                      for (final c in ExerciseSkillCategory.forQuestions)
                         DropdownMenuItem(value: c, child: Text(c.localized(l))),
                     ],
                     onChanged: (c) => setState(() => _skill = c ?? _skill),

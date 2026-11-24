@@ -13,6 +13,7 @@ import '../../models/question_bank_item.dart';
 import '../../services/firestore_service.dart';
 import '../../services/hsk_paper/hsk_paper_reader.dart';
 import '../../services/listening/transcriber.dart';
+import '../../core/widgets/discard_guard.dart';
 
 /// The **Transcript** of a worksheet's recording (Build 1B): typed or
 /// pasted, read from the official listening script (PDF or image) with
@@ -236,7 +237,10 @@ class _TranscriptDialogState extends State<_TranscriptDialog> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      DiscardGuard(isDirty: () => !_reading && _text.text != widget.initial, child: _buildEditor(context));
+
+  Widget _buildEditor(BuildContext context) {
     final l = context.l10n;
     return AlertDialog(
       title: Text(l.paperTranscript),
@@ -295,7 +299,7 @@ class _TranscriptDialogState extends State<_TranscriptDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.maybePop(context),
           child: Text(l.commonCancel),
         ),
         FilledButton(

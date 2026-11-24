@@ -119,6 +119,12 @@ class ClassSession {
     final s = startsAt;
     return s != null && !DateTime.now().isBefore(s);
   }
+  /// Owner 2026-11-24: past its end time.
+  bool get hasEnded {
+    final d = DateTime.tryParse(sessionDate);
+    return d != null && !DateTime.now().isBefore(d.add(Duration(minutes: endMinutes)));
+  }
+
   bool get isCancelled => lifeStatus == 'cancelled';
   bool get isOngoing => lifeStatus == 'ongoing';
   bool get isClosedOrCancelled => isConcluded || isCancelled || lifeStatus == 'done';

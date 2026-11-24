@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 import '../theme/app_theme.dart';
 
@@ -66,7 +65,8 @@ class ShellNestedPage extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
+          // maybePop: an editor's DiscardGuard may ask first.
+          onPressed: () => Navigator.maybePop(context),
         ),
         title: Text(
           title,

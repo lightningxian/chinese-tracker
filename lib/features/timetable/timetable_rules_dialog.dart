@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../l10n/l10n.dart';
 import '../../services/timetable_service.dart';
+import '../../core/widgets/discard_guard.dart';
 
 /// Owner 2026-11-23: the timetable's rules in one dialog — the gap between
 /// two classes, the weekly-hours warning, the minimum of students (and when
@@ -42,6 +43,7 @@ class _TimetableRulesDialogState extends State<TimetableRulesDialog> {
         _readiness = v.teacherReadiness;
         _loaded = true;
       });
+      _startSig = _sig();
     });
   }
 
@@ -87,8 +89,16 @@ class _TimetableRulesDialogState extends State<TimetableRulesDialog> {
     }
   }
 
+  /// Owner 2026-11-24: what the editor held when it opened (or loaded).
+  String? _startSig;
+  String _sig() => [_gap.text, _hours.text, _min.text, _check.text, '$_readiness'].join('|');
+  bool get _dirty => _startSig != null && _sig() != _startSig;
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      DiscardGuard(isDirty: () => _dirty, child: _buildEditor(context));
+
+  Widget _buildEditor(BuildContext context) {
     final l = context.l10n;
     final width = MediaQuery.sizeOf(context).width;
     return Dialog(
@@ -111,7 +121,7 @@ class _TimetableRulesDialogState extends State<TimetableRulesDialog> {
                   ),
                   IconButton(
                     tooltip: l.commonCancel,
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () => Navigator.maybePop(context),
                     icon: const Icon(Icons.close),
                   ),
                 ],
@@ -188,7 +198,7 @@ class _TimetableRulesDialogState extends State<TimetableRulesDialog> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
-                      onPressed: () => Navigator.pop(context), child: Text(l.commonCancel)),
+                      onPressed: () => Navigator.maybePop(context), child: Text(l.commonCancel)),
                   const SizedBox(width: 8),
                   FilledButton.icon(
                     onPressed: _saving || !_loaded ? null : _save,

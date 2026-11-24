@@ -20,6 +20,7 @@ import '../../services/hsk_paper/hsk_paper_import.dart';
 import '../../services/hsk_paper/hsk_paper_reader.dart';
 import '../../services/hsk_paper/paper_image_ops.dart';
 import '../../services/hsk_paper/paper_truth.dart';
+import '../../core/widgets/discard_guard.dart';
 
 /// ViewModel of the proofreading screen: the pages the reader saw, the
 /// draft being corrected, the page on show and the save.
@@ -111,8 +112,21 @@ class HskPaperProofreadViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Owner 2026-11-24: the boxes the admin drew, by page; the page preview
+  /// shows these instead of the reader's first guess.
+  final Map<int, List<PixelBox>> drawnBoxes = {};
+
+  /// The picture boxes to draw on [page].
+  List<PixelBox> boxesFor(PaperPage page) => drawnBoxes[page.number] ?? page.pictureBoxes;
+
+  void nextPage(int step) {
+    final n = (selectedPage + step).clamp(1, pages.length);
+    if (n != selectedPage || onlyFlagged) showPage(n);
+  }
+
   /// New picture boxes for every picture question of [pageNumber].
   void setPictures(int pageNumber, List<PixelBox> boxes) {
+    drawnBoxes[pageNumber] = [...boxes];
     for (final s in draft.slots) {
       if (s.form == HskForm.picture && s.picturePage == pageNumber) {
         s.pictures = [...boxes];
@@ -293,7 +307,10 @@ class _ProofreadView extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      DiscardGuard(isDirty: () => context.read<HskPaperProofreadViewModel>().edited.isNotEmpty || context.read<HskPaperProofreadViewModel>().drawnBoxes.isNotEmpty, child: _buildEditor(context));
+
+  Widget _buildEditor(BuildContext context) {
     final l = context.l10n;
     final vm = context.watch<HskPaperProofreadViewModel>();
     final draft = vm.draft;
@@ -331,7 +348,7 @@ class _ProofreadView extends StatelessWidget {
           ),
       ],
     );
-    final pageView = _PageView(page: vm.page);
+    final pageView = _PageView(page: vm.page, wide: wide);
     return Scaffold(
       backgroundColor: AppColors.surface,
       appBar: AppBar(
@@ -485,16 +502,114 @@ class _CountChip extends StatelessWidget {
   }
 }
 
-/// The page picture with a page picker; picture boxes drawn on it.
+/// The page picture with a page picker; picture boxes drawn on it. Owner
+/// 2026-11-24: on a wide screen the pages are a column of thumbnails beside
+/// the picture (like a PDF viewer), with previous / next buttons.
 class _PageView extends StatelessWidget {
-  const _PageView({required this.page});
+  const _PageView({required this.page, required this.wide});
 
   final PaperPage page;
+  final bool wide;
 
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
     final vm = context.watch<HskPaperProofreadViewModel>();
+    bool flagged(int n) => vm.draft.flagged.any((s) => s.page == n);
+    final picture = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                tooltip: l.paperPrevPage,
+                onPressed: vm.selectedPage > 1 ? () => vm.nextPage(-1) : null,
+                icon: const Icon(Icons.chevron_left),
+              ),
+              Text(l.paperPageOf(vm.selectedPage, vm.pages.length),
+                  style: const TextStyle(fontWeight: FontWeight.w700)),
+              IconButton(
+                tooltip: l.paperNextPage,
+                onPressed: vm.selectedPage < vm.pages.length ? () => vm.nextPage(1) : null,
+                icon: const Icon(Icons.chevron_right),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: InteractiveViewer(
+            maxScale: 5,
+            child: Center(child: _BoxedPage(page: page, boxes: vm.boxesFor(page))),
+          ),
+        ),
+      ],
+    );
+    if (wide) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            width: 104,
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+              itemCount: vm.pages.length,
+              itemBuilder: (context, i) {
+                final p = vm.pages[i];
+                final selected = !vm.onlyFlagged && p.number == vm.selectedPage;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: InkWell(
+                    onTap: () => vm.showPage(p.number),
+                    borderRadius: BorderRadius.circular(6),
+                    child: Column(
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: selected ? AppColors.teal : AppColors.border,
+                              width: selected ? 3 : 1,
+                            ),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: AspectRatio(
+                            aspectRatio: p.width / p.height,
+                            child: Image.memory(p.png,
+                                fit: BoxFit.fill, gaplessPlayback: true, cacheWidth: 160),
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            if (flagged(p.number))
+                              Padding(
+                                padding: const EdgeInsets.only(right: 3),
+                                child: Icon(Icons.error_outline,
+                                    size: 13, color: AppColors.chipAmberFg),
+                              ),
+                            Text('${p.number}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
+                                  color: selected ? AppColors.teal : AppColors.textSecondary,
+                                )),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          VerticalDivider(width: 1, color: AppColors.border),
+          Expanded(child: picture),
+        ],
+      );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -510,7 +625,7 @@ class _PageView extends StatelessWidget {
                   child: ChoiceChip(
                     label: Text(l.paperPageShort(p.number)),
                     selected: !vm.onlyFlagged && p.number == vm.selectedPage,
-                    avatar: vm.draft.flagged.any((s) => s.page == p.number)
+                    avatar: flagged(p.number)
                         ? Icon(Icons.error_outline,
                             size: 16, color: AppColors.chipAmberFg)
                         : null,
@@ -520,12 +635,7 @@ class _PageView extends StatelessWidget {
             ],
           ),
         ),
-        Expanded(
-          child: InteractiveViewer(
-            maxScale: 5,
-            child: Center(child: _BoxedPage(page: page, boxes: page.pictureBoxes)),
-          ),
-        ),
+        Expanded(child: picture),
       ],
     );
   }
@@ -648,7 +758,9 @@ class _SlotEditorState extends State<_SlotEditor> {
     final vm = context.read<HskPaperProofreadViewModel>();
     final boxes = await showDialog<List<PixelBox>>(
       context: context,
-      builder: (_) => _BoxEditorDialog(page: page, initial: widget.slot.pictures),
+      builder: (_) => _BoxEditorDialog(
+          page: page,
+          initial: widget.slot.pictures.isNotEmpty ? widget.slot.pictures : vm.boxesFor(page)),
     );
     if (boxes != null) vm.setPictures(page.number, boxes);
   }
@@ -918,6 +1030,9 @@ class _BoxEditorDialog extends StatefulWidget {
 }
 
 class _BoxEditorDialogState extends State<_BoxEditorDialog> {
+  static String _boxSig(List<PixelBox> b) =>
+      b.map((x) => '${x.x0},${x.y0},${x.width},${x.height}').join(';');
+
   late List<PixelBox> _boxes = [...widget.initial];
   int? _selected;
   Offset? _start;
@@ -936,7 +1051,10 @@ class _BoxEditorDialogState extends State<_BoxEditorDialog> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      DiscardGuard(isDirty: () => _boxSig(_boxes) != _boxSig(widget.initial), child: _buildEditor(context));
+
+  Widget _buildEditor(BuildContext context) {
     final l = context.l10n;
     final page = widget.page;
     final size = MediaQuery.sizeOf(context);
@@ -1011,7 +1129,7 @@ class _BoxEditorDialogState extends State<_BoxEditorDialog> {
           label: Text(l.paperDeleteBox),
         ),
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.maybePop(context),
           child: Text(l.commonCancel),
         ),
         FilledButton(

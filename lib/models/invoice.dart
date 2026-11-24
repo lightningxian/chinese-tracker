@@ -32,7 +32,11 @@ enum InvoiceStatus {
   pending('pending'),
   paid('paid'),
   expired('expired'),
-  failed('failed');
+  failed('failed'),
+
+  /// Owner 2026-11-24: removed by the admin with a reason (`discardInvoice`);
+  /// kept on Invoices → Discarded invoices, hidden from students and parents.
+  discarded('discarded');
 
   const InvoiceStatus(this.value);
 
@@ -52,6 +56,7 @@ enum InvoiceStatus {
         InvoiceStatus.paid => 'Paid',
         InvoiceStatus.expired => 'Expired',
         InvoiceStatus.failed => 'Failed',
+        InvoiceStatus.discarded => 'Discarded',
       };
 }
 
@@ -67,6 +72,9 @@ class Invoice {
     this.currency = 'IDR',
     required this.status,
     required this.dueDate,
+    this.discardReason = '',
+    this.discardedByName = '',
+    this.discardedAt,
     this.midtransOrderId,
     this.snapToken,
     this.redirectUrl,
@@ -101,6 +109,12 @@ class Invoice {
   final int amount;
   final String currency;
   final InvoiceStatus status;
+
+  /// Owner 2026-11-24: why the admin discarded it, who, when.
+  final String discardReason;
+  final String discardedByName;
+  final DateTime? discardedAt;
+  bool get isDiscarded => status == InvoiceStatus.discarded;
 
   /// `yyyy-MM-dd`
   final String dueDate;
@@ -188,6 +202,9 @@ class Invoice {
       currency: data['currency'] as String? ?? 'IDR',
       status: InvoiceStatus.fromValue(data['status'] as String?),
       dueDate: _dateString(data['dueDate']),
+      discardReason: data['discardReason'] as String? ?? '',
+      discardedByName: data['discardedByName'] as String? ?? '',
+      discardedAt: (data['discardedAt'] as Timestamp?)?.toDate(),
       midtransOrderId: data['midtransOrderId'] as String?,
       snapToken: data['snapToken'] as String?,
       redirectUrl: data['redirectUrl'] as String?,

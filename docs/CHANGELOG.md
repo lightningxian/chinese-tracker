@@ -6,6 +6,57 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-24 — Claude (BUILD chat): owner requests, fourth round (class page, student profile, discarded invoices, unsaved-changes guard)
+
+**What changed**
+- **Paper reader**: the page preview draws the picture boxes the admin
+  drew (it kept showing the reader's first guess, so a new box E never
+  appeared; saving already used the drawn boxes). Wide screens get a
+  column of page thumbnails beside the picture, plus previous / next.
+- **Unsaved changes** (`lib/core/widgets/discard_guard.dart`): Cancel, the
+  back arrow and a tap outside ask "Discard your changes?" when something
+  changed, in the proofreading screen, the picture boxes, the transcript,
+  the bank question editor, the exercise form, the user edit page, the
+  schedule form, the timetable rules and the announcement dialog. The
+  shell's back arrow uses `Navigator.maybePop`.
+- **Exercises**: a **Mixed** skill section (exercises only; a single bank
+  question keeps one skill).
+- **Invoices**: **Discard…** with a required reason (`discardInvoice`,
+  admin; not for paid invoices) instead of deleting; a **Discarded
+  invoices** list with the reason, who and when, and **Restore**.
+  Discarded invoices are hidden from students, parents and teachers. A
+  discarded online invoice that is paid anyway is credited and the admins
+  are told (`payments.creditDecision`).
+- **News**: "shown until" is optional (no end date = `9999-12-31`, shown
+  until deleted). Deciding a holiday posts one announcement for that day:
+  closed → "No classes", opened → "Classes run" (kind `opened`); the latest
+  decision replaces the earlier notice.
+- **Dashboard**: a live clock next to the date, a countdown to the next
+  class in the Today card, and **Latest news** (last five) beside the
+  voucher alerts. Fixed the number cards spilling over the next row.
+- **Classes**: the calendar cards are compact and open a **class page**
+  (`/admin/session/:id`, `/teacher/session/:id`, `class_detail_page.dart`):
+  date, room, teachers, level, seats, kind, holiday, then close, substitute,
+  cancel, edit, **Add a student** (was "Add") and the students. A class past
+  its end that nobody closed shows **Ended** instead of Ongoing.
+- **Student page** (Users → a student): a compact profile card (photo the
+  admin can change, names, level, contact, member since, report buttons)
+  and four tabs: Overview (vouchers, payments), Classes (booked classes
+  ahead, attendance), **History** (classes, practice, tests, level changes
+  and payments in one list, `student_activity.dart`), Learning
+  (evaluations, practice, lessons).
+
+**Why**
+- Owner requests 2026-11-24 (fourth round).
+
+**For review**
+- Functions 68 → 69 (`discardInvoice`); `setDayClosed` now also announces
+  an opened holiday. No rules change.
+- `TeacherSessionDetailScreen` is no longer routed (replaced by the class
+  page); the file stays until the next clean-up.
+
+---
+
 ## 2026-11-24 — Claude (BUILD chat): web-only deploys keep the live APK
 
 **What changed**

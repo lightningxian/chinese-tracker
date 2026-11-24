@@ -983,6 +983,52 @@ function paidAuditDetail(credited, ref) {
  * Admin records a payment made by hand (cash or bank transfer at the centre).
  * Same crediting as the Midtrans webhook, in one transaction, idempotent.
  */
+/**
+ * Owner 2026-11-24: the admin removes an invoice that should not be paid
+ * (a mistake, a duplicate, a cancelled purchase) with a reason. It is not
+ * deleted: status `discarded`, kept with the reason on Invoices →
+ * **Discarded invoices**, hidden from the student and the parent. `restore`
+ * puts it back as it was. A paid invoice cannot be discarded.
+ * data: {invoiceId, reason?, restore?}
+ */
+exports.discardInvoice = onCall(async (request) => {
+  const {uid, profile} = await requireAdmin(request);
+  const data = request.data || {};
+  const invoiceId = String(data.invoiceId || "").trim();
+  const restore = data.restore === true;
+  const reason = String(data.reason || "").trim().slice(0, 300);
+  if (!invoiceId) throw new HttpsError("invalid-argument", "invoiceId is required.");
+  const ref = db.collection(INVOICES).doc(invoiceId);
+  const out = await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) throw new HttpsError("not-found", "Invoice not found.");
+    const inv = snap.data() || {};
+    const refusal = payments.discardRefusal(inv, restore, reason);
+    if (refusal) {
+      throw new HttpsError("failed-precondition", {
+        "paid": "A paid invoice cannot be discarded.",
+        "already": "This invoice is already discarded.",
+        "reason": "Give a reason.",
+        "not-discarded": "This invoice is not discarded.",
+      }[refusal], {reason: refusal});
+    }
+    const now = FieldValue.serverTimestamp();
+    if (restore) {
+      tx.update(ref, {status: inv.statusBeforeDiscard || "pending", restoredAt: now,
+        restoredBy: uid, updatedAt: now});
+    } else {
+      tx.update(ref, {status: "discarded", statusBeforeDiscard: inv.status || "pending",
+        discardReason: reason, discardedBy: uid, discardedByName: latinName(profile),
+        discardedAt: now, updatedAt: now});
+    }
+    return inv;
+  });
+  await writeAudit({action: restore ? "invoice.restore" : "invoice.discard", actorId: uid,
+    actorName: latinName(profile), targetType: "invoice", targetId: invoiceId,
+    detail: `${out.invoiceNumber || invoiceId} · ${out.amount || 0}` + (reason ? ` · ${reason}` : "")});
+  return {status: restore ? (out.statusBeforeDiscard || "pending") : "discarded"};
+});
+
 exports.markInvoicePaid = onCall(async (request) => {
   const auth = request.auth;
   if (!auth) {
@@ -1109,12 +1155,14 @@ exports.midtransNotification = onRequest(
     // transaction that performs the flip returns the payload to notify.
     let credited = null;
     let amountMismatch = false;
+    let paidAfterDiscard = false;
     const pricing = await loadPricing();
     const {termValidDays} = pricing;
     await db.runTransaction(async (tx) => {
       const snap = await tx.get(invoiceRef);
       const invoice = snap.data() || {};
       const decision = payments.creditDecision(invoice, newStatus, grossAmount);
+      paidAfterDiscard = invoice.status === "discarded" && decision === "credit";
       // Idempotent — don't reprocess a final invoice (MT-03).
       if (decision === "ignore-final" || decision === "no-change") return;
       // A settlement for a different amount than the invoice is not
@@ -1145,6 +1193,15 @@ exports.midtransNotification = onRequest(
     if (credited) {
       // Best-effort — the sessions are already credited atomically above.
       await notifyInvoicePaid(credited.invoice, credited.packageSize);
+      if (paidAfterDiscard) {
+        // Owner 2026-11-24: the buyer paid an invoice the admin had discarded.
+        await db.collection(NOTIFICATIONS).add({kind: "session",
+          title: "A discarded invoice was paid",
+          body: `${credited.invoice.invoiceNumber || orderId} was paid through Midtrans after it ` +
+            "was discarded. The sessions were credited; check it on Invoices.",
+          forRole: "admin", userId: "", targetRoute: "/admin", read: false,
+          createdAt: FieldValue.serverTimestamp()});
+      }
       await writeAudit({
         action: "invoice.paid",
         actorId: "system",
@@ -4227,13 +4284,22 @@ exports.setDayClosed = onCall(async (request) => {
     }
   }
   let announcementId = "";
-  if (closed && data.announce !== false) {
+  // Owner 2026-11-24: the latest decision replaces an earlier closing or
+  // opening announcement of the same day, and opening a holiday is
+  // announced too ("classes run").
+  const old = await db.collection(ANNOUNCEMENTS).where("date", "==", date).get();
+  for (const d of old.docs) {
+    const k = (d.data() || {}).kind;
+    if (k === "closure" || k === "opened") await d.ref.delete();
+  }
+  if (data.announce !== false && (closed || cur)) {
     const title = String(data.title || "").trim().slice(0, 120) ||
-      `Centre closed on ${date}`;
+      (closed ? `Centre closed on ${date}` : `Classes run on ${date}`);
     const body = String(data.body || "").trim().slice(0, 1000) ||
-      `${name ? `${name}. ` : ""}There are no classes on ${date}.`;
+      (closed ? `${name ? `${name}. ` : ""}There are no classes on ${date}.` :
+        `${name ? `${name}: ` : ""}the centre is open and classes run as usual.`);
     const a = await db.collection(ANNOUNCEMENTS).add({title, body, audience: "all",
-      kind: "closure", date, fromDate: sched.jakartaDate(nowMs), toDate: date,
+      kind: closed ? "closure" : "opened", date, fromDate: sched.jakartaDate(nowMs), toDate: date,
       createdBy: uid, createdByName: latinName(profile), createdAt: FieldValue.serverTimestamp()});
     announcementId = a.id;
     const batch = db.batch();

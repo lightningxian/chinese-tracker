@@ -3310,7 +3310,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get teacherAttEdit => 'Ubah';
 
   @override
-  String get teacherAttAdd => 'Tambah';
+  String get teacherAttAdd => 'Tambah murid';
 
   @override
   String get teacherAttAtCapacity => 'Kelas sudah penuh.';
@@ -8151,4 +8151,247 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get deleteAccountDone => 'Akun Anda sudah dihapus.';
+
+  @override
+  String get skillCategoryMixed => 'Campuran';
+
+  @override
+  String get sessionStatusEnded => 'Selesai waktunya';
+
+  @override
+  String get announcementNoEnd => 'Tanpa tanggal akhir (tampil sampai dihapus)';
+
+  @override
+  String get announcementSetDate => 'Atur tanggal akhir';
+
+  @override
+  String get announcementClearDate => 'Tanpa tanggal akhir';
+
+  @override
+  String get newsOpened => 'Kelas tetap berjalan';
+
+  @override
+  String get dayOpenAnnounce =>
+      'Beri tahu murid, orang tua, dan guru bahwa kelas tetap berjalan';
+
+  @override
+  String dayOpenedAnnTitle(String date) {
+    return 'Kelas tetap berjalan pada $date';
+  }
+
+  @override
+  String dayOpenedAnnBody(String date) {
+    return 'centre buka pada $date dan kelas berjalan seperti biasa.';
+  }
+
+  @override
+  String get dashNewsTitle => 'Berita terbaru';
+
+  @override
+  String get dashNewsAll => 'Semua berita';
+
+  @override
+  String dashNextClass(String time, String title, String inText) {
+    return 'Kelas berikutnya $time $title · $inText';
+  }
+
+  @override
+  String dashInMinutes(int n) {
+    return '$n menit lagi';
+  }
+
+  @override
+  String dashInHours(int h, int m) {
+    return '$h jam $m menit lagi';
+  }
+
+  @override
+  String dashClassGoingOn(String title) {
+    return '$title sedang berlangsung';
+  }
+
+  @override
+  String get paperPrevPage => 'Halaman sebelumnya';
+
+  @override
+  String get paperNextPage => 'Halaman berikutnya';
+
+  @override
+  String paperPageOf(int page, int count) {
+    return 'Halaman $page dari $count';
+  }
+
+  @override
+  String get discardTitle => 'Buang perubahan?';
+
+  @override
+  String get discardBody =>
+      'Anda mengubah sesuatu di sini dan belum menyimpannya. Bila keluar sekarang, perubahannya hilang.';
+
+  @override
+  String get discardKeepEditing => 'Lanjut mengedit';
+
+  @override
+  String get discardConfirm => 'Buang';
+
+  @override
+  String get invoiceStatusDiscarded => 'Dibatalkan';
+
+  @override
+  String get invoiceDiscardMenu => 'Batalkan…';
+
+  @override
+  String get invoiceDiscardTitle => 'Batalkan tagihan ini?';
+
+  @override
+  String invoiceDiscardBody(String number, String student, String amount) {
+    return '$number untuk $student, $amount. Tagihan keluar dari daftar dan murid tidak melihatnya lagi. Tagihan disimpan dengan alasan Anda di Tagihan dibatalkan, dan dapat dipulihkan.';
+  }
+
+  @override
+  String get invoiceDiscardReason => 'Alasan (wajib)';
+
+  @override
+  String get invoiceDiscarded => 'Tagihan dibatalkan.';
+
+  @override
+  String get invoiceRestored => 'Tagihan dipulihkan.';
+
+  @override
+  String get invoiceRestore => 'Pulihkan';
+
+  @override
+  String invoiceActiveList(int n) {
+    return 'Tagihan ($n)';
+  }
+
+  @override
+  String invoiceDiscardedList(int n) {
+    return 'Tagihan dibatalkan ($n)';
+  }
+
+  @override
+  String get invoiceDiscardedNone => 'Tidak ada tagihan yang dibatalkan.';
+
+  @override
+  String invoiceDiscardedWhy(String reason) {
+    return 'Alasan: $reason';
+  }
+
+  @override
+  String get classOpenDetails => 'Detail';
+
+  @override
+  String get classDetailTitle => 'Kelas';
+
+  @override
+  String get classInfoRoom => 'Ruang';
+
+  @override
+  String get classInfoTeachers => 'Guru';
+
+  @override
+  String get classInfoLevel => 'Level';
+
+  @override
+  String get classInfoSeats => 'Kursi';
+
+  @override
+  String classInfoSeatsValue(int booked, int capacity) {
+    return '$booked dari $capacity terisi';
+  }
+
+  @override
+  String get classInfoKind => 'Jenis';
+
+  @override
+  String get classKindTimetable => 'Jadwal mingguan';
+
+  @override
+  String get classKindOneOff => 'Kelas sekali';
+
+  @override
+  String get classInfoHoliday => 'Hari libur';
+
+  @override
+  String get classAllLevels => 'Semua level';
+
+  @override
+  String get studentTabOverview => 'Ringkasan';
+
+  @override
+  String get studentTabClasses => 'Kelas';
+
+  @override
+  String get studentTabHistory => 'Riwayat';
+
+  @override
+  String get studentTabLearning => 'Belajar';
+
+  @override
+  String get studentUpcomingClasses => 'Kelas yang dipesan';
+
+  @override
+  String get studentInactive => 'Nonaktif';
+
+  @override
+  String get studentMemberSince => 'Anggota sejak';
+
+  @override
+  String get studentReportPdf => 'Laporan PDF';
+
+  @override
+  String get activityAttended => 'Hadir';
+
+  @override
+  String get activityExcused => 'Izin';
+
+  @override
+  String get activityAbsent => 'Alpa';
+
+  @override
+  String get activityBooked => 'Dipesan';
+
+  @override
+  String get activityCancelled => 'Kelas dibatalkan';
+
+  @override
+  String activityPractice(String title, int score) {
+    return 'Latihan: $title · $score%';
+  }
+
+  @override
+  String activityTest(String code, int total, int max) {
+    return 'Tes $code: $total dari $max';
+  }
+
+  @override
+  String get activityPassed => 'lulus';
+
+  @override
+  String get activityNotPassed => 'belum lulus';
+
+  @override
+  String activityPaid(String amount) {
+    return 'Bayar $amount';
+  }
+
+  @override
+  String activityLevel(String from, String to) {
+    return 'Level $from → $to';
+  }
+
+  @override
+  String get activityNone => 'Belum ada.';
+
+  @override
+  String get activityNoUpcoming => 'Belum ada kelas yang dipesan.';
+
+  @override
+  String activityShowMore(int n) {
+    return 'Tampilkan lagi ($n lagi)';
+  }
+
+  @override
+  String get invoiceDiscardConfirm => 'Batalkan tagihan';
 }

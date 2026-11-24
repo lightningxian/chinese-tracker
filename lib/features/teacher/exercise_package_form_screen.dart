@@ -21,6 +21,7 @@ import '../question_bank/question_bank_filters.dart';
 import '../question_bank/question_bank_sheet_screen.dart';
 import '../question_bank/question_bank_text.dart';
 import 'exercise_assign_dialog.dart';
+import '../../core/widgets/discard_guard.dart';
 
 /// An exercise built from the question bank: a title, a level and a list of
 /// worksheets (and single questions). Students never get a copy; the
@@ -72,6 +73,12 @@ class _ExercisePackageFormScreenState extends State<ExercisePackageFormScreen> {
   bool _seededFromBank = false;
 
   bool get _isEditing => widget.exercise != null;
+
+  @override
+  void initState() {
+    super.initState();
+    _startSig = _sig();
+  }
 
   @override
   void dispose() {
@@ -166,8 +173,16 @@ class _ExercisePackageFormScreenState extends State<ExercisePackageFormScreen> {
     });
   }
 
+  /// Owner 2026-11-24: what the editor held when it opened (or loaded).
+  String? _startSig;
+  String _sig() => [_title.text, _instructions.text, _timeLimit.text, _level, _skill.name, '$_published', _sheets.join(','), _questionIds.join(',')].join('|');
+  bool get _dirty => _startSig != null && _sig() != _startSig;
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      DiscardGuard(isDirty: () => !_saving && _dirty, child: _buildEditor(context));
+
+  Widget _buildEditor(BuildContext context) {
     final l = context.l10n;
     final firestore = context.read<FirestoreService>();
     return ShellNestedPage(
@@ -182,7 +197,10 @@ class _ExercisePackageFormScreenState extends State<ExercisePackageFormScreen> {
             // during build (the text field would paint one stale frame).
             _seededFromBank = true;
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) setState(() => _followFirstSheet(bank));
+              if (!mounted) return;
+              setState(() => _followFirstSheet(bank));
+              // The title filled from the bank is not an edit.
+              _startSig = _sig();
             });
           }
           final byKey = {

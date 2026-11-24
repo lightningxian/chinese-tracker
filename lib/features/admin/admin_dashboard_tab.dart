@@ -19,6 +19,7 @@ import '../../services/firestore_service.dart';
 import 'admin_centre_metrics_section.dart';
 import 'admin_dashboard_widgets.dart';
 import 'admin_duty_cards.dart';
+import 'dashboard_extras.dart';
 
 class AdminDashboardTab extends StatelessWidget {
   const AdminDashboardTab({
@@ -69,7 +70,8 @@ class AdminDashboardTab extends StatelessWidget {
                       classTerms: termsSnap.data ?? [],
                     );
 
-                    final greeting = context.read<AuthService>().appUser?.name ?? '';
+                    final greeting =
+                        context.read<AuthService>().appUser?.name ?? '';
                     final more = Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -95,33 +97,32 @@ class AdminDashboardTab extends StatelessWidget {
                     return ListView(
                       padding: EdgeInsets.all(isWide ? 32 : 16),
                       children: [
-                        Text(
-                          DateFormat('EEEE, d MMMM yyyy').format(DateTime.now()),
-                          style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
-                        ),
+                        const DashboardClock(),
                         if (greeting.isNotEmpty)
                           Text(context.l10n.dashHello(greeting),
-                              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
+                              style: const TextStyle(
+                                  fontSize: 24, fontWeight: FontWeight.w800)),
                         const SizedBox(height: 16),
                         if (isWide)
-                          IntrinsicHeight(
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Expanded(
-                                  flex: 5,
-                                  child: AdminDutyCards(
-                                    users: users,
-                                    onOpenClasses: () => onSwitchTab(4),
-                                  ),
+                          // No IntrinsicHeight: the number grid measures itself
+                          // with a LayoutBuilder (it spilled over the next row).
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                flex: 5,
+                                child: AdminDutyCards(
+                                  users: users,
+                                  onOpenClasses: () => onSwitchTab(4),
                                 ),
-                                const SizedBox(width: 20),
-                                Expanded(
-                                  flex: 4,
-                                  child: _statsGrid(context, report, invoices, columns: 2),
-                                ),
-                              ],
-                            ),
+                              ),
+                              const SizedBox(width: 20),
+                              Expanded(
+                                flex: 4,
+                                child: _statsGrid(context, report, invoices,
+                                    columns: 2),
+                              ),
+                            ],
                           )
                         else ...[
                           AdminDutyCards(
@@ -149,7 +150,16 @@ class AdminDashboardTab extends StatelessWidget {
                               const SizedBox(width: 20),
                               Expanded(
                                 flex: 4,
-                                child: _needsAttention(context, voucherAlerts),
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    DashboardNewsCard(
+                                        onOpenNews: () => onSwitchTab(9)),
+                                    const SizedBox(height: 20),
+                                    _needsAttention(context, voucherAlerts),
+                                  ],
+                                ),
                               ),
                             ],
                           )
@@ -162,18 +172,24 @@ class AdminDashboardTab extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 20),
+                          DashboardNewsCard(onOpenNews: () => onSwitchTab(9)),
+                          const SizedBox(height: 20),
                           _needsAttention(context, voucherAlerts),
                         ],
                         const SizedBox(height: 16),
                         Theme(
-                          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                          data: Theme.of(context)
+                              .copyWith(dividerColor: Colors.transparent),
                           child: ExpansionTile(
                             tilePadding: EdgeInsets.zero,
                             childrenPadding: const EdgeInsets.only(bottom: 16),
                             title: Text(context.l10n.dashMoreFigures,
-                                style: const TextStyle(fontWeight: FontWeight.w700)),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w700)),
                             subtitle: Text(context.l10n.dashMoreFiguresHint,
-                                style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5)),
+                                style: TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 12.5)),
                             children: [more],
                           ),
                         ),
@@ -328,6 +344,7 @@ class _FinancialSummarySection extends StatelessWidget {
         ? inv.studentName!
         : inv.invoiceNumber;
   }
+
   final List<StudentClassTerm> terms;
   final VoidCallback onOpenPayments;
   final VoidCallback onOpenVouchers;

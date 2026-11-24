@@ -2050,4 +2050,35 @@ await step("owner 2026-11-24 (App Store): a student deletes their own account af
   assert.ok(!(p.studentIds || []).includes(j.localId), "the parent's list forgets the child");
 });
 
+await step("owner 2026-11-24: a reopened holiday is announced as 'classes run' and replaces the closing notice", async () => {
+  const anns = await queryDocs("announcements", "date", tomorrow7);
+  const kinds = anns.map((x) => str(x.fields, "kind"));
+  assert.ok(kinds.includes("opened"), JSON.stringify(kinds));
+  assert.ok(!kinds.includes("closure"), "the closing notice of that day is gone");
+});
+
+await step("owner 2026-11-24: an admin discards an unpaid invoice with a reason, may restore it; a paid one cannot be discarded", async () => {
+  const id = `flow_disc_${RUN}`;
+  await setDocRaw(`invoices/${id}`, {invoiceNumber: `INV-${RUN}`, studentId: s1.uid,
+    amount: 5000, status: "pending", paymentMethod: "manual", item: "other"});
+  assert.equal((await call(teacher, "discardInvoice", {invoiceId: id, reason: "x"})).error.status,
+      "PERMISSION_DENIED");
+  assert.equal((await call(admin, "discardInvoice", {invoiceId: id})).error.status,
+      "FAILED_PRECONDITION", "a reason is required");
+  const done = await call(admin, "discardInvoice", {invoiceId: id, reason: "Duplicate"});
+  assert.ok(done.data, JSON.stringify(done.error));
+  let inv = await readDoc(`invoices/${id}`);
+  assert.equal(inv.status, "discarded");
+  assert.equal(inv.discardReason, "Duplicate");
+  assert.equal(inv.statusBeforeDiscard, "pending");
+  const back = await call(admin, "discardInvoice", {invoiceId: id, restore: true});
+  assert.ok(back.data, JSON.stringify(back.error));
+  inv = await readDoc(`invoices/${id}`);
+  assert.equal(inv.status, "pending");
+  await setDocRaw(`invoices/${id}_paid`, {invoiceNumber: `INV-${RUN}-P`, studentId: s1.uid,
+    amount: 5000, status: "paid"});
+  assert.equal((await call(admin, "discardInvoice", {invoiceId: `${id}_paid`, reason: "x"}))
+      .error.status, "FAILED_PRECONDITION", "a paid invoice stays");
+});
+
 console.log(`supervised flow: ${passed} steps passed`);

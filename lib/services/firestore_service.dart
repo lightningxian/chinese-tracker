@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -1208,6 +1209,13 @@ class FirestoreService {
     );
   }
 
+  /// Owner 2026-11-24: the class detail page follows the session live.
+  Stream<ClassSession?> watchClassSession(String sessionId) => _db
+      .collection(AppConstants.classSessionsCollection)
+      .doc(sessionId)
+      .snapshots()
+      .map((d) => d.exists ? ClassSession.fromFirestore(d) : null);
+
   Future<ClassSession?> getClassSession(String sessionId) async {
     final doc = await _db
         .collection(AppConstants.classSessionsCollection)
@@ -1878,12 +1886,21 @@ class FirestoreService {
   /// Invoices for one student (student self-view or parent/staff scoped view).
   Stream<List<Invoice>> watchStudentInvoices(String studentId) {
     if (studentId.isEmpty) return Stream.value(const []);
+    // Owner 2026-11-24: discarded invoices are not shown here (admin only).
     return _mapInvoices(
       _db
           .collection(AppConstants.invoicesCollection)
           .where('studentId', isEqualTo: studentId),
-    );
+    ).map((list) => list.where((i) => !i.isDiscarded).toList());
   }
+
+  /// Owner 2026-11-24: discard an invoice with a reason, or restore it.
+  Future<void> discardInvoice(String invoiceId, {String reason = '', bool restore = false}) =>
+      FirebaseFunctions.instance.httpsCallable('discardInvoice').call<dynamic>({
+        'invoiceId': invoiceId,
+        if (reason.trim().isNotEmpty) 'reason': reason.trim(),
+        if (restore) 'restore': true,
+      });
 
   /// Invoices owned by a teacher (their students).
   Stream<List<Invoice>> watchTeacherInvoices(String teacherId) {
@@ -1892,7 +1909,7 @@ class FirestoreService {
       _db
           .collection(AppConstants.invoicesCollection)
           .where('teacherId', isEqualTo: teacherId),
-    );
+    ).map((list) => list.where((i) => !i.isDiscarded).toList());
   }
 
   // ---------------------------------------------------------------------------

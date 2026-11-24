@@ -4,7 +4,11 @@ enum ExerciseSkillCategory {
   reading('reading', 'Reading'),
   listening('listening', 'Listening'),
   typing('typing', 'Typing (Writing)'),
-  speaking('speaking', 'Speaking');
+  speaking('speaking', 'Speaking'),
+
+  /// Owner 2026-11-24: an exercise that mixes skills. Exercises only; a
+  /// question in the bank keeps one skill.
+  mixed('mixed', 'Mixed');
 
   const ExerciseSkillCategory(this.value, this.label);
 
@@ -17,6 +21,10 @@ enum ExerciseSkillCategory {
       orElse: () => ExerciseSkillCategory.reading,
     );
   }
+
+  /// The skills a single question can have (no Mixed).
+  static List<ExerciseSkillCategory> get forQuestions =>
+      values.where((c) => c != mixed).toList();
 
   /// Default skill section when creating from an exercise type.
   static ExerciseSkillCategory forExerciseType(ExerciseType type) {

@@ -12,6 +12,7 @@ import '../../l10n/l10n.dart';
 import '../../l10n/labels_admin.dart';
 import '../../models/app_user.dart';
 import '../../services/firestore_service.dart';
+import '../../core/widgets/discard_guard.dart';
 
 class AdminEditUserScreen extends StatefulWidget {
   const AdminEditUserScreen({
@@ -85,6 +86,7 @@ class _AdminEditUserScreenState extends State<AdminEditUserScreen> {
       _termSize = user.termSize ?? AppConstants.defaultTermSize;
       _loading = false;
     });
+    _startSig = _sig();
   }
 
   Future<void> _save() async {
@@ -129,8 +131,16 @@ class _AdminEditUserScreenState extends State<AdminEditUserScreen> {
     }
   }
 
+  /// Owner 2026-11-24: what the editor held when it opened (or loaded).
+  String? _startSig;
+  String _sig() => [_nameIndonesianController.text, _nameChineseController.text, _whatsappController.text, _parentNameController.text, _parentPhoneController.text, _level, (_levels.toList()..sort()).join(','), '$_termSize'].join('|');
+  bool get _dirty => _startSig != null && _sig() != _startSig;
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      DiscardGuard(isDirty: () => !_saving && _dirty, child: _buildEditor(context));
+
+  Widget _buildEditor(BuildContext context) {
     final user = _user;
     final l = context.l10n;
 

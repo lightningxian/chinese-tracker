@@ -51,7 +51,11 @@ function invoiceStatusFor(transactionStatus, fraudStatus) {
  */
 function creditDecision(invoice, newStatus, grossAmount) {
   const status = (invoice || {}).status || "pending";
-  if (status !== "pending") return "ignore-final";
+  // Owner 2026-11-24: an invoice the admin discarded that the buyer pays
+  // anyway is credited (the money is real); any other news about it is
+  // ignored.
+  if (status === "discarded" && newStatus !== "paid") return "ignore-final";
+  if (status !== "pending" && status !== "discarded") return "ignore-final";
   if (!newStatus) return "no-change";
   if (newStatus !== "paid") return "flip";
   if (Math.round(Number(grossAmount)) !== Math.round(Number((invoice || {}).amount))) {
@@ -119,7 +123,21 @@ function buyerRole(caller, callerUid, studentId) {
   return "";
 }
 
+/**
+ * Owner 2026-11-24: may [invoice] be discarded (or [restore]d)? Returns an
+ * error code or "".
+ */
+function discardRefusal(invoice, restore, reason) {
+  const status = (invoice || {}).status || "pending";
+  if (restore) return status === "discarded" ? "" : "not-discarded";
+  if (status === "paid") return "paid";
+  if (status === "discarded") return "already";
+  if (!String(reason || "").trim()) return "reason";
+  return "";
+}
+
 module.exports = {
+  discardRefusal,
   TERMS_VERSION,
   signatureFor,
   signatureOk,

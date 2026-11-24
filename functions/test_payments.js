@@ -72,4 +72,15 @@ assert.equal(p.buyerRole({role: "parent", studentIds: ["s1"]}, "p1", "s1"), "par
 assert.equal(p.buyerRole({role: "parent", studentIds: ["s1"]}, "p1", "s2"), "");
 assert.equal(p.buyerRole({role: "teacher"}, "t1", "s2"), "staff");
 
-console.log("test_payments: all passed (MT-01, MT-02, MT-03, MT-04)");
+// Owner 2026-11-24: discarded invoices.
+assert.equal(p.creditDecision({status: "discarded", amount: 100}, "paid", 100), "credit",
+    "a discarded invoice paid anyway is credited");
+assert.equal(p.creditDecision({status: "discarded", amount: 100}, "expired", 100), "ignore-final");
+assert.equal(p.discardRefusal({status: "paid"}, false, "x"), "paid");
+assert.equal(p.discardRefusal({status: "pending"}, false, " "), "reason");
+assert.equal(p.discardRefusal({status: "discarded"}, false, "x"), "already");
+assert.equal(p.discardRefusal({status: "expired"}, false, "duplicate"), "");
+assert.equal(p.discardRefusal({status: "pending"}, true, ""), "not-discarded");
+assert.equal(p.discardRefusal({status: "discarded"}, true, ""), "");
+
+console.log("test_payments: all passed (MT-01, MT-02, MT-03, MT-04, discarded invoices)");

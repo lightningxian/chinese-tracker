@@ -16,6 +16,7 @@ import '../../services/timetable_service.dart';
 import '../teaching/admin_teaching_views.dart';
 import 'holidays_view.dart';
 import 'timetable_rules_dialog.dart';
+import '../../core/widgets/discard_guard.dart';
 
 String weekdayLabel(AppLocalizations l, int d) => switch (d) {
       1 => l.weekdayMon,
@@ -314,6 +315,7 @@ class _ScheduleDialogState extends State<_ScheduleDialog> {
   @override
   void initState() {
     super.initState();
+    _startSig = _sig();
     // An existing schedule is checked as it opens.
     if (widget.existing != null) WidgetsBinding.instance.addPostFrameCallback((_) => _runCheck());
   }
@@ -432,8 +434,16 @@ class _ScheduleDialogState extends State<_ScheduleDialog> {
     }
   }
 
+  /// Owner 2026-11-24: what the editor held when it opened (or loaded).
+  String? _startSig;
+  String _sig() => [_name.text, _start.text, _end.text, _capacity.text, _from.text, _to.text, '$_weekday', '$_room', '$_teacher', _helpers.join(','), _level].join('|');
+  bool get _dirty => _startSig != null && _sig() != _startSig;
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      DiscardGuard(isDirty: () => _dirty, child: _buildEditor(context));
+
+  Widget _buildEditor(BuildContext context) {
     final l = context.l10n;
     final c = _check;
     return AlertDialog(
@@ -641,7 +651,7 @@ class _ScheduleDialogState extends State<_ScheduleDialog> {
             icon: const Icon(Icons.delete_outline, size: 18),
             label: Text(l.timetableDelete),
           ),
-        TextButton(onPressed: () => Navigator.pop(context), child: Text(l.commonCancel)),
+        TextButton(onPressed: () => Navigator.maybePop(context), child: Text(l.commonCancel)),
         FilledButton(
           onPressed: _saving || _checking || (c != null && !c.ok) ? null : _save,
           child: Text(l.roomsSave),
