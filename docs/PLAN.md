@@ -73,20 +73,22 @@ Read docs/PLAN.md. You are the BUILD chat. Follow section 0, run Build 0 if this
 
 ## 1. Where the project stands (2026-11-20)
 
-**Live:** https://chinese-tracker.web.app, hosting at release v0.1.32
-(teacher and parent profile pages, waiting list for full classes, discard
-pop-ups; rules, functions and hosting from the PC 2026-11-24, checked from
-the Mac; v0.1.31 was the fourth round, v0.1.30 App Store readiness with the
-Android APK back at `/downloads/easy-study.apk`, v0.1.29 the third round
-plus the listening-script writer Q7; Build 8 was v0.1.26 on 2026-11-21). **All eight thesis builds are
+**Live:** https://chinese-tracker.web.app, hosting at release v0.1.33
+(scan drafts, right answers while proofreading, shuffled choices, level
+checklists; Firestore and Storage rules, functions and hosting from the PC
+2026-11-24, checked from the Mac; v0.1.32 profiles and waiting list,
+v0.1.31 the fourth round, v0.1.30 App Store readiness with the Android APK
+back at `/downloads/easy-study.apk`, v0.1.29 the third round plus the
+listening-script writer Q7; Build 8 was v0.1.26 on 2026-11-21). **All eight thesis builds are
 built, reviewed and live (2026-11-21).** Firebase project
-`chinese-tracker`, Blaze plan, **72 Cloud Functions** on Node 22 and 23
+`chinese-tracker`, Blaze plan, **74 Cloud Functions** on Node 22 and 23
 composite indexes (2026-11-23: v0.1.27 added `deleteSchedule`,
 `cleanPlacementResults` and `runPlacementCleanup`; v0.1.28 added
 `importHolidays` and `setDayClosed`; 2026-11-24: v0.1.29 added
 `promoteStudent` and `onAnnouncementCreated`; v0.1.30 added
 `deleteMyAccount`; v0.1.31 added `discardInvoice`; v0.1.32 added
-`joinWaitlist`, `leaveWaitlist` and `onSessionSeatsChanged`. Since 7157d16 a
+`joinWaitlist`, `leaveWaitlist` and `onSessionSeatsChanged`; v0.1.33 added
+`onExerciseResultForPath` and `onLevelPathWritten`. Since 7157d16 a
 `--web-only` deploy downloads the live APK first and keeps it on hosting,
 proven by the v0.1.31 deploy) (Builds 2B to 5 went live on 2026-11-20, Builds 6, 7
 and 8 on 2026-11-21, each

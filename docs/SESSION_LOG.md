@@ -34,6 +34,12 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   admin asked availability by chat and kept the schedule in a spreadsheet.
 - Checks: package valid, 127 bookmarks all resolved, 2 figure relationships, list point 8 shares the list
   numbering of points 1–7. Pages after the cover are still checked by structure only (no Word on the Mac).
+- **v0.1.33 (3f1519a) reviewed on the Mac:** analyzer 17 infos; `flutter test` 168 pass + 2 skipped; node tests
+  pass; rules tests 86 pass, 1 skipped; no tracked secrets; 74 functions on live (`onExerciseResultForPath`,
+  `onLevelPathWritten`); APK still served. Rules read: `level_paths` staff read / admin write, `paper_drafts`
+  admin only, Storage `paper_drafts/{uid}/{file}` admin only with PDF type and a 60 MB cap. `pathProgress` is pure
+  (exercise item = best final score at or above its minimum, test item = a final, valid, passed, non-placement
+  result of that code); the triggers only call `syncPromotion`. The waitlist "already" nit is fixed.
 - **Bab III finished from the owner's sixteen answers:** one admin, four teachers (two teach each session,
   mixed levels, the rest stand by), the owner (the author's mother) only gets payment notices; registration by
   WhatsApp or walk-in (some via Instagram), no free trial, data through a Google Form, level by the student's
