@@ -2222,7 +2222,7 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
-### 2026-11-24 — Owner requests, fourth round — COMMIT, release v0.1.31 (functions and hosting live from the PC; 69 functions)
+### 2026-11-24 — Owner requests, fourth round — e3abac3, release v0.1.31 (functions and hosting live from the PC; 69 functions)
 - Built: paper reader preview shows drawn boxes + page thumbnails;
   "Discard your changes?" on nine editors; Mixed skill section; discarded
   invoices with reason and restore (`discardInvoice`); optional News end
