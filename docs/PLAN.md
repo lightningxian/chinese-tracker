@@ -2471,6 +2471,8 @@ paged).
    line in `startExercise`/`finishExercise` and the package form). I
    recommend (a), and (b) only if the owner wants practice runs outside the
    supervised sessions.
+   **Owner answer 2026-11-26: (a) "Keep in Tests".** HSK Simulation
+   packages stay refused; the test-code retakes are next, after the rule.
 2. Test-code retakes (rule) — still waiting, as planned.
 
 **Inventory for session 2** (screens that draw a collection; from the code
