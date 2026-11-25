@@ -6,6 +6,60 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-26 — Claude (BUILD chat): Build 9 session 1 — paged lists, report periods, leaderboard export, exam retakes
+
+**What changed**
+- **9A shared paging:** `lib/core/paging/` (`DateRangeSel` and `MonthPeriod`
+  in Jakarta days, `PagedController` = cursor pages of 25 with a count
+  aggregation, `fetchAll` for exports up to 5,000 rows) and
+  `lib/core/widgets/paging_bars.dart` (`DateRangeBar`, `PagerBar`,
+  `PagedListBody`, `MonthPeriodBar`). The **audit log** uses them: date range
+  (default this month), action filter (`AuditActionGroup`, `whereIn`), CSV of
+  the chosen range. Opening it reads 26 documents instead of 200. New index
+  `audit_logs (action, createdAt desc)`.
+- **9B reports over a period:** one from-month to-month bar on the Reports
+  tab (this month, last 3 months, this year). The centre report reads the
+  `reports/{yyyyMM}` of every month: one line per month (a missing month says
+  "Not built" with its own Rebuild button and is left out of the total), a
+  total line, a revenue chart, CSV and PDF with "Period: …".
+  `MonthlyReport.merge` (Dart) and `mergeReports` (functions/reports.js) sum
+  counts and money and recompute the attendance rate from the summed hadir
+  and alpa. `buildReport` also takes `from`/`to` and sums teacher recaps by
+  teacher. The twelve report cards and PDFs follow the period and print it.
+- **9C leaderboard:** every row shows the finish time (Jakarta, "WIB");
+  board rows carry a `rankKey` (`promotion.js` `rankKeyOf`), so the board is
+  read 25 rows a page with exact shared ranks across page breaks; staff get
+  CSV, PDF and Share PDF; a student gets **Share my result** (a card with their
+  own row only) and their own place pinned on every page. New admin callable
+  `rebuildLeaderboards` (Org settings → **Rebuild leaderboards**). Until it is
+  pressed once, boards with old rows are ranked from one read (nobody drops
+  off). The student Tests tab reads its "Rank n of m" with two counts instead
+  of the whole board. Privacy policy: the staff export and the share card.
+- **9D retakes (packages):** a timed exam package (`exam`, `hsk_simulation`)
+  may be sat again: numbered attempts (`attemptNo` on the attempt and on
+  `exercise_results`), one open attempt at a time (a reload resumes it), each
+  with its own server clock. The start screen lists earlier attempts (date,
+  score, marks per part) and offers **Start attempt n**. Pure logic
+  `attemptPlan` / `attemptHistory` in `functions/exercise_play.js`.
+- Emulator seed: 70 audit entries and a 28-student board on code `H3BOARD`.
+
+**Why**
+- The supervisor's review on 2026-11-25 (owner's points 10–13, `docs/PLAN.md`
+  §4 Build 9). Session 1 = the four things the supervisor named.
+
+**For review**
+- Functions changed (`startExercise`, `finishExercise`, `onTestResultWritten`
+  via `boardEntryOf`, `monthlyReport` via `buildReport`, new
+  `rebuildLeaderboards`: 75 functions). Index added. **Rules unchanged.**
+- HSK Simulation packages are still refused by `startExercise` (owner
+  decision 2026-11-16: simulations run as test codes). Retakes therefore reach
+  students through exam packages today; see the open question in PLAN §6.
+- Owner after the deploy: Org settings → **Rebuild leaderboards** once.
+- Tests: `flutter test` 202 pass + 2 skipped; node suites green; analyzer
+  16 infos (one fewer).
+
+---
+
 ## 2026-11-25 — Claude (BUILD chat): recheck of v0.1.38–v0.1.40, four fixes
 
 **What changed**

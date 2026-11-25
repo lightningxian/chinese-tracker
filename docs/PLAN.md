@@ -2439,6 +2439,79 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
+### 2026-11-26 — Build 9, session 1 (9A shared pieces + audit log, 9B, 9C, 9D packages) — release v0.1.42
+
+**Done.** Must 1 (shared pieces, used by the audit log, the leaderboard and
+the Reports tab), 2, 4, 5, 6 (for exam packages, see question 1), 7 (seed
+for the audit log and a board), 8 (tests). Must 3 (Payments, Users, History,
+marking queue) is session 2 with the rest of the inventory below.
+
+Checked on the emulator: audit log "1–25 of 47", page 2 "26–47 of 47", 26
+documents read per page; Reports with the month bar and a "Not built" month;
+leaderboard H3BOARD as admin (ranks 1,1,3,3,…, rank 25 shared across the page
+break, CSV / PDF / Share PDF) and as student27 (Chinese names only, own place
+pinned at rank 27, Share my result, no export); exam package as student1:
+attempt 1 (50 %), start screen "Attempt 1 · 50 %", **Start attempt 2** with a
+fresh 10-minute clock, then both attempts listed and **Start attempt 3**.
+
+Deployed: functions (75), the audit index, hosting. Rules unchanged.
+Owner: Org settings → **Rebuild leaderboards** once (old board rows get
+their `rankKey`; until then a board is ranked from one read, correct but not
+paged).
+
+**Questions for the owner (through the PLAN chat):**
+1. **HSK Simulation packages.** Owner decision 2026-11-16 (§ decisions, item
+   5) makes `startExercise` refuse HSK Simulation packages: simulations run
+   only as test codes. So "sit an HSK simulation again" reaches students
+   only through the test-code part of 9D, which waits for the owner. The
+   package retakes are built for every timed package and work today for exam
+   packages. Options: (a) keep simulations in Tests only and build the
+   test-code retakes (PLAN's recommended rule: first valid sitting counts);
+   (b) also allow HSK Simulation packages as timed practice with retakes (one
+   line in `startExercise`/`finishExercise` and the package form). I
+   recommend (a), and (b) only if the owner wants practice runs outside the
+   supervised sessions.
+2. Test-code retakes (rule) — still waiting, as planned.
+
+**Inventory for session 2** (screens that draw a collection; from the code
+at `ad86562`). "Client" = the whole collection is streamed and sorted or
+filtered in the browser today.
+
+| Role | Screen | Collection | Order today | Pager | Date range |
+|---|---|---|---|---|---|
+| admin | Users (role chips, Approval) | users | client by name | yes | createdAt |
+| admin | Approval (reads all users) | users (status) | client | yes (use `watchRegistrations`) | createdAt |
+| admin | Payments (invoices) | invoices | client createdAt | yes | createdAt |
+| admin | Vouchers | student_class_terms | client | yes | createdAt |
+| admin | **Audit log** | audit_logs | createdAt desc | **done** | **done** |
+| admin | News | announcements | createdAt desc, limit 40 | yes | createdAt |
+| admin | Timetable follow-up | schedule_change_requests + all class_sessions | client | yes | createdAt / sessionDate |
+| admin/teacher | Test codes | test_codes | client | no (small) | — |
+| admin/teacher | Test sessions | test_sessions (openedBy) | client | yes | createdAt |
+| admin/teacher | Test results | test_results (openedBy) | client | yes | finishedAt |
+| admin | Promotions (declined) | level_promotions | createdAt desc, limit 20 | yes | createdAt |
+| admin/teacher | Marking queue | marking_items | createdAt desc, limit 200 | yes | createdAt |
+| admin/teacher | Question bank (whole bank) | question_bank | createdAt desc | yes, per worksheet | createdAt |
+| admin/teacher | Exercise packages (+ all results, assignments) | exercises | client | yes | createdAt |
+| admin/teacher | Leaderboard | leaderboards/…/entries | rankKey | **done** | — |
+| teacher | Students (6 full collections) | users + 5 | client | yes | — |
+| teacher | Grades | grades | createdAt desc | yes | createdAt |
+| teacher/admin | Attendance calendar | class_sessions | sessionDate | by month already | sessionDate |
+| teacher/admin | Student activity timeline | attendance, results, invoices | client, "show more" | yes | per kind |
+| student | Progress (exercise results) | exercise_results | client | yes | submittedAt |
+| student/parent | Transcript | grades, results, quiz, evaluations | client | yes | createdAt |
+| student | Tests (results) | test_results | client | yes | finishedAt |
+| student | Class history | attendance | client | yes | sessionDate |
+| student/parent | Payments | invoices | client | yes | createdAt |
+| all | Bell list | notifications (2 queries) | client, take 12 | yes | createdAt |
+
+Small by nature, left as they are: rooms, price list, settings, formats,
+levels, level paths, holidays, days off, schedules, week calendar, duty
+cards, one session's attendance, lessons, placement menu, paper drafts.
+Indexes missing today for session 2: notifications, test results/sessions
+(openedBy/studentId + time), voucher_history, student_class_terms,
+schedule_change_requests, users (role + name).
+
 ### 2026-11-25 — Recheck of v0.1.38–v0.1.40, four fixes — COMMIT, release v0.1.41 (hosting only)
 - Checked: CI green on every push; analyzer 17 infos; `flutter test` 186
   pass; all node tests; rules tests 86 pass + 1 skipped; live
