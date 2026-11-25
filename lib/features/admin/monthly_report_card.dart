@@ -438,17 +438,12 @@ class _MonthlyReportCardState extends State<MonthlyReportCard> {
                     dataRowMaxHeight: 40,
                     columnSpacing: 18,
                     columns: [
-                      for (final h in _monthHeader()) DataColumn(label: Text(h)),
                       const DataColumn(label: SizedBox.shrink()),
+                      for (final h in _monthHeader()) DataColumn(label: Text(h)),
                     ],
                     rows: [
                       for (final e in data.entries)
                         DataRow(cells: [
-                          for (final c in _monthRow(_monthLabel(e.key), e.value))
-                            DataCell(Text(c,
-                                style: e.value == null
-                                    ? TextStyle(color: AppColors.textSecondary)
-                                    : null)),
                           DataCell(IconButton(
                             tooltip: l.monthlyRebuild,
                             onPressed: _busy.contains(e.key) ? null : () => _rebuild(e.key),
@@ -461,13 +456,18 @@ class _MonthlyReportCardState extends State<MonthlyReportCard> {
                                     size: 18,
                                     color: e.value == null ? AppColors.teal : null),
                           )),
+                          for (final c in _monthRow(_monthLabel(e.key), e.value))
+                            DataCell(Text(c,
+                                style: e.value == null
+                                    ? TextStyle(color: AppColors.textSecondary)
+                                    : null)),
                         ]),
                       if (total != null && data.length > 1)
                         DataRow(cells: [
+                          const DataCell(SizedBox.shrink()),
                           for (final c in _monthRow(l.monthlyTotal, total))
                             DataCell(Text(c,
                                 style: const TextStyle(fontWeight: FontWeight.w700))),
-                          const DataCell(SizedBox.shrink()),
                         ]),
                     ],
                   ),

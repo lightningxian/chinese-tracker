@@ -34,6 +34,7 @@ class ExerciseResultTile extends StatelessWidget {
             : l.commonExerciseFallback;
     final submittedAt = result.submittedAt;
     final meta = [
+      if (result.attemptNo != null) l.resultAttemptNo(result.attemptNo!),
       if (submittedAt != null)
         DateFormat('d MMM yyyy, HH:mm', l.localeName).format(submittedAt),
       if (result.hasCounts) l.resultCorrectOf(result.correct!, result.total!),

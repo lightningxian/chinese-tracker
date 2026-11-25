@@ -121,6 +121,27 @@ assert.strictEqual(play.isOneAttempt("hsk_simulation"), true);
 assert.strictEqual(play.isOneAttempt("quiz"), false);
 assert.strictEqual(play.isOneAttempt(undefined), false);
 
+// Build 9D: a timed exam may be sat again; numbered attempts, one open.
+assert.deepStrictEqual(play.attemptPlan(null, false), {action: "create", attemptNo: 1});
+assert.deepStrictEqual(play.attemptPlan(null, true), {action: "create", attemptNo: 1});
+const open1 = {attemptNo: 1, startedAt: 1};
+assert.deepStrictEqual(play.attemptPlan(open1, true), {action: "resume", attemptNo: 1},
+    "an open attempt is resumed, never doubled");
+const done1 = {attemptNo: 1, startedAt: 1, finishedAt: 2};
+assert.deepStrictEqual(play.attemptPlan(done1, false), {action: "refuse", attemptNo: 1});
+assert.deepStrictEqual(play.attemptPlan(done1, true), {action: "restart", attemptNo: 2},
+    "the second attempt");
+assert.deepStrictEqual(play.attemptPlan({startedAt: 1, finishedAt: 2}, true),
+    {action: "restart", attemptNo: 2}, "an attempt from before Build 9D counts as 1");
+assert.deepStrictEqual(play.attemptPlan({attemptNo: 2, finishedAt: 3}, true).attemptNo, 3);
+assert.deepStrictEqual(
+    play.attemptHistory([
+      {attemptNo: 2, score: 80, earned: 8, possible: 10, submittedAtMs: 20},
+      {score: 50}, // a practice result without a number is not listed
+      {attemptNo: 1, score: 0, late: true, submittedAtMs: 10},
+    ]).map((a) => [a.attemptNo, a.score, a.late]),
+    [[1, 0, true], [2, 80, false]]);
+
 // Standard Course (owner 2026-11-25): the context text goes out once per
 // run of questions that share it.
 const ctx = "1. 买水果\n大明：今天下午你去哪儿？";

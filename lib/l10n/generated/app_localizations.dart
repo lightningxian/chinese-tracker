@@ -14601,7 +14601,7 @@ abstract class AppLocalizations {
   /// No description provided for @auditGroupProgress.
   ///
   /// In en, this message translates to:
-  /// **'Progress rebuilds'**
+  /// **'Rebuilds (progress, leaderboards)'**
   String get auditGroupProgress;
 
   /// No description provided for @monthlyActiveEnd.
@@ -14699,6 +14699,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Issued in period'**
   String get adminReportsIssuedInPeriod;
+
+  /// No description provided for @leaderboardShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share PDF'**
+  String get leaderboardShare;
+
+  /// No description provided for @leaderboardShareMine.
+  ///
+  /// In en, this message translates to:
+  /// **'Share my result'**
+  String get leaderboardShareMine;
+
+  /// No description provided for @leaderboardYourPlace.
+  ///
+  /// In en, this message translates to:
+  /// **'Your place'**
+  String get leaderboardYourPlace;
+
+  /// No description provided for @orgRebuildLeaderboards.
+  ///
+  /// In en, this message translates to:
+  /// **'Rebuild leaderboards'**
+  String get orgRebuildLeaderboards;
+
+  /// No description provided for @orgRebuildLeaderboardsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Writes every board row again from the test results (needed once after the Build 9 update, so the boards can be paged).'**
+  String get orgRebuildLeaderboardsHint;
+
+  /// No description provided for @orgRebuildLeaderboardsDone.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} results written to the boards again.'**
+  String orgRebuildLeaderboardsDone(int count);
+
+  /// No description provided for @exercisePlayAttemptsInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Each attempt has its own clock. When you have finished, you may start a new attempt; every attempt is kept with its number.'**
+  String get exercisePlayAttemptsInfo;
+
+  /// No description provided for @exercisePlayEarlierAttempts.
+  ///
+  /// In en, this message translates to:
+  /// **'Your earlier attempts'**
+  String get exercisePlayEarlierAttempts;
+
+  /// No description provided for @exercisePlayStartAttempt.
+  ///
+  /// In en, this message translates to:
+  /// **'Start attempt {n}'**
+  String exercisePlayStartAttempt(int n);
+
+  /// No description provided for @resultAttemptNo.
+  ///
+  /// In en, this message translates to:
+  /// **'Attempt {n}'**
+  String resultAttemptNo(int n);
 }
 
 class _AppLocalizationsDelegate

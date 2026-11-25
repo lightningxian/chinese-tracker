@@ -1,3 +1,4 @@
+import 'package:chinese_tracker/features/tests/leaderboard_export.dart';
 import 'package:chinese_tracker/models/leaderboard.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -34,5 +35,33 @@ void main() {
     expect(levelGroupOf('HSK 4'), LevelGroup.intermediate);
     expect(levelGroupOf('HSK 6'), LevelGroup.advance);
     expect(levelGroupOf('YCT'), isNull);
+  });
+
+  // Build 9C: the paged board's order key and the export rows.
+  test('the rank prefix is the same string the functions write', () {
+    expect(LeaderboardEntry.rankPrefixOf(300, null), '099700-99999999');
+    expect(LeaderboardEntry.rankPrefixOf(0, 59), '100000-00000059');
+    final a = _e('a', 250, 3100, 1), b = _e('b', 250, 3400, 1), c = _e('c', 280, 3600, 1);
+    final byPrefix = [a, b, c]..sort((x, y) => x.rankPrefix.compareTo(y.rankPrefix));
+    expect(byPrefix.map((x) => x.studentId), ['c', 'a', 'b']);
+  });
+
+  test('the finish time is shown in Jakarta time, and the export has one row per student', () {
+    final e = _e('a', 250, 3100, 5); // 09:05 UTC
+    expect(LeaderboardExport.finishedText(e), '20 Nov 2026, 16:05 WIB');
+    final board = LeaderboardEntry.ranked([
+      e,
+      const LeaderboardEntry(
+        studentId: 'b', name: '王', total: 280, max: 300, passed: true, seconds: 3000,
+        parts: [LeaderboardPart(skill: 'listening', mark: 90, maxScore: 100)],
+      ),
+    ]);
+    final sk = LeaderboardExport.skills(board);
+    expect(sk, ['listening']);
+    expect(LeaderboardExport.header(sk, (s) => s),
+        ['Rank', 'Name', 'listening', 'Total', 'Max', 'Passed', 'Finished at']);
+    final rows = LeaderboardExport.rows(board, sk, (x) => 'staff:${x.name}');
+    expect(rows.first.take(6).toList(), [1, 'staff:王', 90, 280, 300, 'yes']);
+    expect(rows.last[2], '');
   });
 }

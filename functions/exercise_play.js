@@ -345,12 +345,50 @@ function isOneAttempt(category) {
   return ONE_ATTEMPT.has(String(category || ""));
 }
 
+/**
+ * Build 9D (supervisor 2026-11-25): a timed exam package may be sat again.
+ * Attempts are numbered; one attempt is open at a time. What a start does
+ * with the attempt document `exercise_attempts/{exerciseId}_{uid}`:
+ * create (first start), resume (open attempt, same clock), restart (the
+ * last one is finished and the student asked for a new one) or refuse
+ * (finished, and no new attempt was asked for).
+ * @param {Object|null} existing the attempt document, or null
+ * @param {boolean} newAttempt the student pressed "Start attempt n"
+ * @return {{action: string, attemptNo: number}}
+ */
+function attemptPlan(existing, newAttempt) {
+  if (!existing) return {action: "create", attemptNo: 1};
+  const no = Math.max(1, Math.floor(Number(existing.attemptNo) || 1));
+  if (!existing.finishedAt) return {action: "resume", attemptNo: no};
+  if (newAttempt === true) return {action: "restart", attemptNo: no + 1};
+  return {action: "refuse", attemptNo: no};
+}
+
+/** Earlier attempts for the start screen, oldest first (Build 9D). */
+function attemptHistory(results) {
+  return (results || [])
+      .filter((r) => r && Number(r.attemptNo) >= 1)
+      .map((r) => ({
+        attemptNo: Number(r.attemptNo),
+        submittedAtMs: Number(r.submittedAtMs) || null,
+        score: Number(r.score) || 0,
+        earned: Number(r.earned) || 0,
+        possible: Number(r.possible) || 0,
+        late: r.late === true,
+        status: r.status || "final",
+        bySkill: r.bySkill && typeof r.bySkill === "object" ? r.bySkill : {},
+      }))
+      .sort((a, b) => a.attemptNo - b.attemptNo);
+}
+
 module.exports = {
   TEACHER_MARKED,
   pointsOf,
   totalsOf,
   packageCategory,
   isOneAttempt,
+  attemptPlan,
+  attemptHistory,
   orderPackageItems,
   stripQuestion,
   shareContext,

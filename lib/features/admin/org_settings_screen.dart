@@ -9,6 +9,7 @@ import '../../l10n/l10n.dart';
 import '../../models/org_settings.dart';
 import '../../services/firestore_service.dart';
 import '../../services/progress_service.dart';
+import '../../services/promotion_service.dart';
 import '../../services/rooms_service.dart';
 import '../teaching/admin_teaching_views.dart';
 
@@ -124,6 +125,8 @@ class OrgSettingsScreen extends StatelessWidget {
               // Build 4: rebuild every student's progress summary (once
               // after the deploy; the functions keep them after that).
               const _RebuildSummariesCard(),
+              const SizedBox(height: 12),
+              const _RebuildSummariesCard(leaderboards: true),
               const SizedBox(height: 10),
               // Build 7: vouchers against the ledger (VC-05).
               const ReconcileVouchersCard(),
@@ -365,7 +368,10 @@ class _RoomsCardState extends State<_RoomsCard> {
 }
 
 class _RebuildSummariesCard extends StatefulWidget {
-  const _RebuildSummariesCard();
+  const _RebuildSummariesCard({this.leaderboards = false});
+
+  /// Build 9C: the same card for **Rebuild leaderboards**.
+  final bool leaderboards;
 
   @override
   State<_RebuildSummariesCard> createState() => _RebuildSummariesCardState();
@@ -379,8 +385,14 @@ class _RebuildSummariesCardState extends State<_RebuildSummariesCard> {
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _busy = true);
     try {
-      final n = await ProgressService().rebuildAll();
-      messenger.showSnackBar(SnackBar(content: Text(l.progressRebuilt(n))));
+      if (widget.leaderboards) {
+        final n = await PromotionService().rebuildLeaderboards();
+        messenger.showSnackBar(
+            SnackBar(content: Text(l.orgRebuildLeaderboardsDone(n))));
+      } else {
+        final n = await ProgressService().rebuildAll();
+        messenger.showSnackBar(SnackBar(content: Text(l.progressRebuilt(n))));
+      }
     } catch (e) {
       messenger.showSnackBar(SnackBar(
         content: Text('$e'),
@@ -407,9 +419,15 @@ class _RebuildSummariesCardState extends State<_RebuildSummariesCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(l.progressRebuildTitle,
+                Text(
+                    widget.leaderboards
+                        ? l.orgRebuildLeaderboards
+                        : l.progressRebuildTitle,
                     style: const TextStyle(fontWeight: FontWeight.w700)),
-                Text(l.progressRebuildHint,
+                Text(
+                    widget.leaderboards
+                        ? l.orgRebuildLeaderboardsHint
+                        : l.progressRebuildHint,
                     style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
               ],
             ),

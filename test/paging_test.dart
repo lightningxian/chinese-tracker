@@ -132,7 +132,7 @@ void main() {
   test('every audit action the functions write has a filter group', () {
     final src = File('functions/index.js').readAsStringSync();
     final written = <String>{
-      for (final m in RegExp(r'"((?:invoice|test|promotion|registration|schedule|day|progress)\.[a-z.]+)"')
+      for (final m in RegExp(r'"((?:invoice|test|promotion|registration|schedule|day|progress|leaderboard)\.[a-z.]+)"')
           .allMatches(src))
         m.group(1)!,
     }..removeWhere((a) => a.endsWith('.'));

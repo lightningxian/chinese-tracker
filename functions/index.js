@@ -1456,47 +1456,68 @@ exports.startExercise = onCall(async (request) => {
   if (data.peek === true) {
     const snap = oneAttempt ? await attemptRef.get() : null;
     const attempt = snap && snap.exists ? snap.data() || {} : null;
+    // Build 9D: the earlier attempts, for the start screen.
+    let attempts = [];
+    if (oneAttempt) {
+      const done = await db.collection(EXERCISE_RESULTS)
+          .where("studentId", "==", uid)
+          .where("exerciseId", "==", exerciseId)
+          .get();
+      attempts = play.attemptHistory(done.docs.map((d) => {
+        const r = d.data() || {};
+        return {...r, submittedAtMs: millisOf(r.submittedAt)};
+      }));
+    }
     return {
       ...meta,
       started: attempt !== null,
       finished: !!(attempt && attempt.finishedAt),
-      remainingSeconds: attempt ? remainingSecondsOf(attempt, limitSeconds) : null,
+      attemptNo: attempt ? Math.max(1, Number(attempt.attemptNo) || 1) : 0,
+      attempts,
+      remainingSeconds: attempt && !attempt.finishedAt ?
+        remainingSecondsOf(attempt, limitSeconds) : null,
     };
   }
 
   let remainingSeconds = null;
+  let attemptNo = null;
   if (oneAttempt) {
-    // One attempt: the first start writes the attempt with the server time;
-    // a reload resumes the same clock; a finished attempt cannot be reopened.
+    // Timed exam: the first start writes the attempt with the server time;
+    // a reload resumes the same clock. Build 9D: a finished attempt is not
+    // reopened, but the student may start a new, numbered one
+    // (`newAttempt: true`), each with its own clock; one open at a time.
     const attempt = await db.runTransaction(async (tx) => {
       const snap = await tx.get(attemptRef);
-      if (snap.exists) {
-        const existing = snap.data() || {};
-        if (existing.finishedAt) {
-          throw new HttpsError(
-              "failed-precondition", "This exam allows one attempt.",
-              {reason: "already-attempted"},
-          );
-        }
-        return existing;
+      const existing = snap.exists ? snap.data() || {} : null;
+      const plan = play.attemptPlan(existing, data.newAttempt === true);
+      if (plan.action === "resume") return {...existing, attemptNo: plan.attemptNo};
+      if (plan.action === "refuse") {
+        throw new HttpsError(
+            "failed-precondition", "This attempt is finished. Start a new attempt.",
+            {reason: "already-attempted", attemptNo: plan.attemptNo},
+        );
       }
       const fresh = {
         studentId: uid,
         exerciseId,
         category,
+        attemptNo: plan.attemptNo,
         startedAt: FieldValue.serverTimestamp(),
         ...(limitSeconds ? {timeLimitSeconds: limitSeconds} : {}),
       };
+      // A full set: the finish marks of the attempt before are cleared.
       tx.set(attemptRef, fresh);
       return {...fresh, startedAt: Timestamp.now()};
     });
     remainingSeconds = remainingSecondsOf(attempt, limitSeconds);
+    attemptNo = attempt.attemptNo;
   }
 
   return {
     ...meta,
     questions: play.shareContext(items.map(play.stripQuestion)),
     remainingSeconds,
+    attemptNo,
   };
 });
 
@@ -1543,6 +1564,7 @@ exports.finishExercise = onCall(async (request) => {
 
   // One attempt: close it (no second submit) and apply the server clock.
   let late = false;
+  let attemptNo = null;
   if (oneAttempt) {
     const attemptRef =
       db.collection(EXERCISE_ATTEMPTS).doc(`${exerciseId}_${uid}`);
@@ -1562,6 +1584,7 @@ exports.finishExercise = onCall(async (request) => {
         );
       }
       late = isLate(attempt, limitSeconds);
+      attemptNo = Math.max(1, Number(attempt.attemptNo) || 1);
       tx.update(attemptRef, {
         finishedAt: FieldValue.serverTimestamp(),
         ...(late ? {late: true} : {}),
@@ -1609,6 +1632,7 @@ exports.finishExercise = onCall(async (request) => {
     bySkill: result.bySkill,
     ...(durationSeconds === null ? {} : {durationSeconds}),
     ...(late ? {late: true} : {}),
+    ...(attemptNo === null ? {} : {attemptNo}),
     scoredBy: "server",
     submittedAt: FieldValue.serverTimestamp(),
   });
@@ -1629,7 +1653,7 @@ exports.finishExercise = onCall(async (request) => {
     }
   }
   await batch.commit();
-  return {...result, late, status, resultId: resultRef.id};
+  return {...result, late, status, resultId: resultRef.id, attemptNo};
 });
 
 /**
@@ -2657,7 +2681,7 @@ async function syncLeaderboardEntry(codeId, uid, result) {
   if (!codeId || !uid) return;
   const codeSnap = await db.collection(TEST_CODES).doc(codeId).get();
   const code = codeSnap.exists ? codeSnap.data() || {} : {};
-  const entry = result ? promo.entryOf(result, code) : null;
+  const entry = result ? promo.boardEntryOf(result, code) : null;
   const board = db.collection(LEADERBOARDS).doc(codeId);
   const ref = board.collection("entries").doc(uid);
   if (!entry) {
@@ -3777,6 +3801,33 @@ exports.rebuildProgressSummaries = onCall({timeoutSeconds: 540}, async (request)
   await writeAudit({action: "progress.rebuild", actorId: uid, actorName: latinName(profile),
     targetType: "progress_summary", targetId: "all", detail: `${done} of ${ids.length}`});
   return {students: ids.length, rebuilt: done};
+});
+
+/**
+ * Build 9C: writes every board entry again from `test_results` (adds the
+ * `rankKey` the paged board reads, and `finishedAt` where it was missing).
+ * Admin only; safe to run twice.
+ */
+exports.rebuildLeaderboards = onCall({timeoutSeconds: 540}, async (request) => {
+  const {uid, profile} = await requireCaller(request);
+  if (profile.role !== "admin") {
+    throw new HttpsError("permission-denied", "Only admins rebuild the leaderboards.");
+  }
+  const snap = await db.collection(TEST_RESULTS).get();
+  let done = 0;
+  for (const d of snap.docs) {
+    const r = d.data() || {};
+    if (!r.codeId || !r.studentId) continue;
+    try {
+      await syncLeaderboardEntry(r.codeId, r.studentId, r);
+      done += 1;
+    } catch (err) {
+      logger.error(`rebuildLeaderboards: ${d.id}`, err);
+    }
+  }
+  await writeAudit({action: "leaderboard.rebuild", actorId: uid, actorName: latinName(profile),
+    targetType: "leaderboard", targetId: "all", detail: `${done} of ${snap.size}`});
+  return {results: snap.size, rebuilt: done};
 });
 
 // ---------------------------------------------------------------------------

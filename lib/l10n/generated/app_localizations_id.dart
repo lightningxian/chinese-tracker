@@ -8851,7 +8851,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get auditGroupDay => 'Hari ditutup atau dibuka';
 
   @override
-  String get auditGroupProgress => 'Penyusunan ulang progres';
+  String get auditGroupProgress =>
+      'Penyusunan ulang (progres, papan peringkat)';
 
   @override
   String get monthlyActiveEnd => 'Murid aktif (bulan terakhir periode)';
@@ -8906,4 +8907,42 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get adminReportsIssuedInPeriod => 'Terbit dalam periode';
+
+  @override
+  String get leaderboardShare => 'Bagikan PDF';
+
+  @override
+  String get leaderboardShareMine => 'Bagikan hasil saya';
+
+  @override
+  String get leaderboardYourPlace => 'Posisi Anda';
+
+  @override
+  String get orgRebuildLeaderboards => 'Susun ulang papan peringkat';
+
+  @override
+  String get orgRebuildLeaderboardsHint =>
+      'Menulis ulang setiap baris papan peringkat dari hasil tes (perlu sekali setelah pembaruan Build 9, agar papan dapat dibagi per halaman).';
+
+  @override
+  String orgRebuildLeaderboardsDone(int count) {
+    return '$count hasil ditulis ulang ke papan peringkat.';
+  }
+
+  @override
+  String get exercisePlayAttemptsInfo =>
+      'Setiap percobaan punya waktunya sendiri. Setelah selesai, Anda boleh memulai percobaan baru; setiap percobaan disimpan dengan nomornya.';
+
+  @override
+  String get exercisePlayEarlierAttempts => 'Percobaan Anda sebelumnya';
+
+  @override
+  String exercisePlayStartAttempt(int n) {
+    return 'Mulai percobaan ke-$n';
+  }
+
+  @override
+  String resultAttemptNo(int n) {
+    return 'Percobaan ke-$n';
+  }
 }

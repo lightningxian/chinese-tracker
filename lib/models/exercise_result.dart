@@ -20,6 +20,7 @@ class ExerciseResult {
     this.exerciseTitle,
     this.category,
     this.late = false,
+    this.attemptNo,
   });
 
   final String id;
@@ -45,6 +46,9 @@ class ExerciseResult {
   /// One-attempt exam submitted after its clock ran out: scored 0.
   final bool late;
 
+  /// Build 9D: which attempt of a timed exam package (null for practice).
+  final int? attemptNo;
+
   bool get hasCounts => correct != null && total != null && total! > 0;
 
   factory ExerciseResult.fromFirestore(
@@ -65,6 +69,7 @@ class ExerciseResult {
       category:
           category is String ? ExerciseCategory.fromValue(category) : null,
       late: data['late'] == true,
+      attemptNo: (data['attemptNo'] as num?)?.toInt(),
     );
   }
 }

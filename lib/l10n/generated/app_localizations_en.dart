@@ -8889,7 +8889,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get auditGroupDay => 'Days closed or opened';
 
   @override
-  String get auditGroupProgress => 'Progress rebuilds';
+  String get auditGroupProgress => 'Rebuilds (progress, leaderboards)';
 
   @override
   String get monthlyActiveEnd => 'Active students (last month of the period)';
@@ -8952,4 +8952,42 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminReportsIssuedInPeriod => 'Issued in period';
+
+  @override
+  String get leaderboardShare => 'Share PDF';
+
+  @override
+  String get leaderboardShareMine => 'Share my result';
+
+  @override
+  String get leaderboardYourPlace => 'Your place';
+
+  @override
+  String get orgRebuildLeaderboards => 'Rebuild leaderboards';
+
+  @override
+  String get orgRebuildLeaderboardsHint =>
+      'Writes every board row again from the test results (needed once after the Build 9 update, so the boards can be paged).';
+
+  @override
+  String orgRebuildLeaderboardsDone(int count) {
+    return '$count results written to the boards again.';
+  }
+
+  @override
+  String get exercisePlayAttemptsInfo =>
+      'Each attempt has its own clock. When you have finished, you may start a new attempt; every attempt is kept with its number.';
+
+  @override
+  String get exercisePlayEarlierAttempts => 'Your earlier attempts';
+
+  @override
+  String exercisePlayStartAttempt(int n) {
+    return 'Start attempt $n';
+  }
+
+  @override
+  String resultAttemptNo(int n) {
+    return 'Attempt $n';
+  }
 }

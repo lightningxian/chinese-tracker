@@ -254,6 +254,7 @@ def main():
     seed_build4(admin_uid, teacher_uids, student_uids, student_names)
     seed_build5(admin_uid, student_uids, student_names)
     seed_build6(admin_uid, teacher_uids, student_uids)
+    seed_build9(admin_uid, student_uids, student_names)
 
     # Notifications and settings
     put("notifications", "n_1", {"kind": "registration", "title": "New student registered",
@@ -767,6 +768,43 @@ def seed_build6(admin_uid, teacher_uids, student_uids):
               "sessions generated for 14 days")
     except SystemExit as e:
         print(f"Build 6: generation skipped: {e}")
+
+
+
+# ---------------------------------------------------------------- Build 9
+# Enough rows to see page 2: 70 audit entries (most this month), and a
+# board of 28 students on code H3BOARD (written by onTestResultWritten
+# with its rankKey). Ties on purpose: equal total and seconds share a rank.
+BOARD_CODE = "H3BOARD"
+
+
+def seed_build9(admin_uid, student_uids, student_names):
+    actions = ["invoice.created", "invoice.paid", "test.session.open", "test.session.close",
+               "promotion.approve", "registration.approve", "schedule.create", "day.close"]
+    for i in range(70):
+        days = -(i % 40) if i < 60 else -(45 + i)
+        put("audit_logs", f"b9_log_{i:02d}", {
+            "action": actions[i % len(actions)], "actorId": admin_uid, "actorName": "Admin Seed",
+            "targetType": "seed", "targetId": f"t{i}", "detail": f"Seed entry {i + 1}",
+            "createdAt": ts(days, 8 + i % 10)})
+    put("test_codes", BOARD_CODE, {
+        "code": BOARD_CODE, "family": "hsk", "level": "HSK 3", "levelKey": "3",
+        "sheetKey": SHEET, "formatId": "hsk-3", "releaseYear": 2021, "active": True,
+        "countsForPromotion": False, "createdBy": admin_uid, "createdAt": ts(-12)})
+    n = min(28, len(student_uids))
+    for i in range(n):
+        total = 290 - (i // 2) * 9          # pairs share a total
+        latin = student_names[i] if i < len(student_names) else f"Student {i + 1}"
+        put("test_results", f"{BOARD_CODE}_{student_uids[i]}", {
+            "codeId": BOARD_CODE, "code": BOARD_CODE, "studentId": student_uids[i],
+            "family": "hsk", "level": "HSK 3", "levelKey": "3", "total": total, "max": 300,
+            "passMark": 180, "passed": total >= 180, "valid": True, "status": "final",
+            "studentName": latin, "studentNameChinese": f"学生{i + 1}",
+            "durationSeconds": 3000 + (i // 2) * 10, "finishedAt": ts(-10 + i % 5, 9 + i % 8),
+            "parts": [{"skill": "listening", "mark": total // 3, "maxScore": 100},
+                      {"skill": "reading", "mark": total // 3, "maxScore": 100},
+                      {"skill": "writing", "mark": total - 2 * (total // 3), "maxScore": 100}]})
+    print(f"Build 9: 70 audit entries, board {BOARD_CODE} with {n} results")
 
 
 if __name__ == "__main__":

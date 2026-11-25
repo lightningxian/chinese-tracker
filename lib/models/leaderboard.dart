@@ -14,6 +14,7 @@ class LeaderboardEntry {
     this.seconds,
     this.finishedAt,
     this.rank = 0,
+    this.rankKey,
   });
 
   final String studentId;
@@ -25,6 +26,25 @@ class LeaderboardEntry {
   final int? seconds;
   final DateTime? finishedAt;
   final int rank;
+
+  /// Build 9C: the board order as one string (written by the functions).
+  final String? rankKey;
+
+  /// The part of [rankKey] a shared rank depends on (total and seconds).
+  /// Twin of `rankPrefix` in functions/promotion.js.
+  static String rankPrefixOf(int total, int? seconds) {
+    final t = (100000 - total).clamp(0, 999999).toString().padLeft(6, '0');
+    final s = seconds == null
+        ? '99999999'
+        : seconds.clamp(0, 99999999).toString().padLeft(8, '0');
+    return '$t-$s';
+  }
+
+  String get rankPrefix => rankPrefixOf(total, seconds);
+
+  /// When the result was finished, in Jakarta time ("d MMM yyyy, HH:mm").
+  DateTime? get finishedAtJakarta =>
+      finishedAt?.toUtc().add(const Duration(hours: 7));
 
   factory LeaderboardEntry.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final m = doc.data() ?? const {};
@@ -40,6 +60,7 @@ class LeaderboardEntry {
       passed: m['passed'] == true,
       seconds: (m['seconds'] as num?)?.round(),
       finishedAt: (m['finishedAt'] as Timestamp?)?.toDate(),
+      rankKey: m['rankKey'] as String?,
     );
   }
 
@@ -53,6 +74,7 @@ class LeaderboardEntry {
         seconds: seconds,
         finishedAt: finishedAt,
         rank: r,
+        rankKey: rankKey,
       );
 
   /// Board order (the same as functions/promotion.js): total high to low,

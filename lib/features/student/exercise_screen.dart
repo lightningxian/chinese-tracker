@@ -4,6 +4,7 @@ import 'dart:math' show max;
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
 
@@ -17,9 +18,11 @@ import '../../l10n/l10n.dart';
 import '../../models/exercise.dart';
 import '../../models/exercise_category.dart';
 import '../../models/exercise_type.dart';
+import '../../models/test_track.dart';
 import '../../services/auth_service.dart';
 import '../../services/exercise_play_service.dart';
 import '../../services/firestore_service.dart';
+import '../tests/test_labels.dart';
 import 'widgets/question_answer_view.dart';
 
 /// Plays one exercise. Questions come from an [ExercisePlaySession]: for a
@@ -129,16 +132,11 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
       if (exercise.isPackage) {
         final peek = await ExercisePlayService().peek(exercise);
         if (!mounted) return;
-        if (peek.oneAttempt && peek.finished) {
-          setState(() {
-            _attemptUsed = true;
-            _loading = false;
-          });
-          return;
-        }
-        if (peek.oneAttempt && !peek.started) {
+        if (peek.oneAttempt && (!peek.started || peek.finished)) {
           // Exams start on the student's go, so the clock does not run
-          // while they read the start screen.
+          // while they read the start screen. Build 9D: a finished exam
+          // shows the same screen with "Start attempt n" and the earlier
+          // attempts.
           setState(() {
             _peek = peek;
             _pendingExercise = exercise;
@@ -167,8 +165,9 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   }
 
   /// Fetches the questions and starts the clock.
-  Future<void> _openSession(Exercise exercise) async {
-    final session = await ExercisePlayService().start(exercise);
+  Future<void> _openSession(Exercise exercise, {bool newAttempt = false}) async {
+    final session =
+        await ExercisePlayService().start(exercise, newAttempt: newAttempt);
     if (!mounted) return;
     setState(() {
       _session = session;
@@ -209,9 +208,10 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   Future<void> _startExam() async {
     final exercise = _pendingExercise;
     if (exercise == null || _loading) return;
+    final newAttempt = _peek?.finished == true;
     setState(() => _loading = true);
     try {
-      await _openSession(exercise);
+      await _openSession(exercise, newAttempt: newAttempt);
     } on FirebaseFunctionsException catch (e) {
       if (!mounted) return;
       _showLoadFailure(e);
@@ -493,8 +493,8 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                 ),
                 const SizedBox(height: 8),
                 _IntroLine(
-                  icon: Icons.looks_one_outlined,
-                  text: l.exercisePlayOneAttempt,
+                  icon: Icons.replay_outlined,
+                  text: l.exercisePlayAttemptsInfo,
                 ),
                 if (minutes != null)
                   _IntroLine(
@@ -505,13 +505,27 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                   icon: Icons.list_alt_outlined,
                   text: l.exercisePlayQuestionCount(peek.questionCount),
                 ),
+                if (peek.attempts.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    l.exercisePlayEarlierAttempts,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  for (final a in peek.attempts) _AttemptLine(attempt: a),
+                ],
                 const SizedBox(height: 20),
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton.icon(
                     onPressed: _startExam,
                     icon: const Icon(Icons.play_arrow_rounded),
-                    label: Text(l.exercisePlayStart),
+                    label: Text(peek.finished
+                        ? l.exercisePlayStartAttempt(peek.nextAttemptNo)
+                        : l.exercisePlayStart),
                   ),
                 ),
               ],
@@ -559,7 +573,10 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
       correctCount: result.correct,
       totalCount: result.total,
       primaryLabel: l.exercisePlayDone,
-      subtitle: result.late
+      // Build 9D: which attempt of a timed exam this was.
+      subtitle: result.attemptNo != null && !result.late && !result.pendingMarking
+          ? '${l.resultAttemptNo(result.attemptNo!)} · ${_exercise!.title}'
+          : result.late
           ? l.exercisePlayLateSubtitle
           : result.pendingMarking
               ? l.playPendingSubtitle
@@ -1179,6 +1196,60 @@ class _IntroLine extends StatelessWidget {
           Icon(icon, size: 20, color: AppColors.teal),
           const SizedBox(width: 10),
           Expanded(child: Text(text, style: const TextStyle(height: 1.4))),
+        ],
+      ),
+    );
+  }
+}
+
+/// Build 9D: one earlier attempt on the exam start screen: number, date,
+/// score and the marks per part.
+class _AttemptLine extends StatelessWidget {
+  const _AttemptLine({required this.attempt});
+
+  final AttemptSummary attempt;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final a = attempt;
+    final when = a.submittedAt == null
+        ? ''
+        : DateFormat('d MMM yyyy, HH:mm', l.localeName).format(a.submittedAt!);
+    String skill(String key) {
+      for (final t in TestSkill.values) {
+        if (t.value == key) return t.localized(l);
+      }
+      return key;
+    }
+
+    final parts = [
+      for (final e in a.bySkill.entries) '${skill(e.key)} ${e.value.scaled}',
+    ].join(' · ');
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 92,
+            child: Text(l.resultAttemptNo(a.attemptNo),
+                style: const TextStyle(fontWeight: FontWeight.w600)),
+          ),
+          Expanded(
+            child: Text(
+              [
+                when,
+                a.late
+                    ? l.resultLate
+                    : a.pendingMarking
+                        ? l.playPendingSubtitle
+                        : '${a.score}%',
+                if (parts.isNotEmpty) parts,
+              ].where((x) => x.isNotEmpty).join(' · '),
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+            ),
+          ),
         ],
       ),
     );

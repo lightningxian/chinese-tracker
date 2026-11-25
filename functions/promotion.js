@@ -93,6 +93,31 @@ function entryOf(result, code) {
   };
 }
 
+/** [entryOf] with its `rankKey` (Build 9C). */
+function boardEntryOf(result, code) {
+  const e = entryOf(result, code);
+  return e ? {...e, rankKey: rankKeyOf(e)} : null;
+}
+
+/**
+ * Build 9C: the board order as one string, so the board can be read a page
+ * at a time (`orderBy("rankKey")`). Same order as [compareEntries].
+ * `rankPrefix` (total and seconds) is what a shared rank depends on; the
+ * Flutter twin is `LeaderboardEntry.rankPrefixOf` (lib/models/leaderboard.dart).
+ */
+function rankPrefix(total, seconds) {
+  const t = String(Math.max(0, 100000 - Math.round(Number(total) || 0))).padStart(6, "0");
+  const s = seconds === null || seconds === undefined || !Number.isFinite(Number(seconds)) ?
+    "99999999" : String(Math.max(0, Math.round(Number(seconds)))).padStart(8, "0");
+  return `${t}-${s}`;
+}
+
+function rankKeyOf(entry) {
+  const f = entry.finishedAtMs === null || entry.finishedAtMs === undefined ?
+    "999999999999999" : String(Math.max(0, entry.finishedAtMs)).padStart(15, "0");
+  return `${rankPrefix(entry.total, entry.seconds)}-${f}-${entry.studentId || ""}`;
+}
+
 /** Board order: total high to low, then fewer seconds, then earlier finish. */
 function compareEntries(a, b) {
   if (b.total !== a.total) return b.total - a.total;
@@ -215,6 +240,7 @@ function pathProgress(items, exerciseResults, testRows) {
 module.exports = {
   pathProgress,
   LEVELS, DEFAULT_MIN_CODES, levelKeyOf, nextLevelKey, groupOf, peerLabel,
-  isFinal, isValid, isPlacement, entryOf, compareEntries, rankEntries,
+  isFinal, isValid, isPlacement, entryOf, boardEntryOf, rankPrefix, rankKeyOf,
+  compareEntries, rankEntries,
   countsAt, promotionState, promotionId, manualPromotion,
 };

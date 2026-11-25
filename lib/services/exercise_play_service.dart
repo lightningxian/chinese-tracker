@@ -228,6 +228,8 @@ class ExercisePeek {
     this.started = false,
     this.finished = false,
     this.remainingSeconds,
+    this.attemptNo = 0,
+    this.attempts = const [],
   });
 
   final ExerciseCategory category;
@@ -240,6 +242,14 @@ class ExercisePeek {
   final bool finished;
   final int? remainingSeconds;
 
+  /// Build 9D: the number of the latest attempt (0 = never started) and the
+  /// earlier attempts' results, oldest first.
+  final int attemptNo;
+  final List<AttemptSummary> attempts;
+
+  /// The number the next new attempt gets.
+  int get nextAttemptNo => attemptNo + 1;
+
   factory ExercisePeek.fromServer(Map<String, dynamic> m) => ExercisePeek(
         category: ExerciseCategory.fromValue(m['category'] as String?),
         oneAttempt: m['oneAttempt'] == true,
@@ -248,7 +258,62 @@ class ExercisePeek {
         started: m['started'] == true,
         finished: m['finished'] == true,
         remainingSeconds: (m['remainingSeconds'] as num?)?.toInt(),
+        attemptNo: (m['attemptNo'] as num?)?.toInt() ?? 0,
+        attempts: [
+          for (final a in (m['attempts'] as List? ?? const []))
+            if (a is Map) AttemptSummary.fromServer(Map<String, dynamic>.from(a)),
+        ],
       );
+}
+
+/// Build 9D: one earlier attempt of a timed exam package.
+class AttemptSummary {
+  const AttemptSummary({
+    required this.attemptNo,
+    required this.score,
+    required this.earned,
+    required this.possible,
+    this.submittedAt,
+    this.late = false,
+    this.pendingMarking = false,
+    this.bySkill = const {},
+  });
+
+  final int attemptNo;
+  final int score;
+  final int earned;
+  final int possible;
+  final DateTime? submittedAt;
+  final bool late;
+  final bool pendingMarking;
+  final Map<String, SkillScore> bySkill;
+
+  factory AttemptSummary.fromServer(Map<String, dynamic> m) {
+    final skills = <String, SkillScore>{};
+    final raw = m['bySkill'];
+    if (raw is Map) {
+      for (final e in raw.entries) {
+        final v = e.value;
+        if (v is Map) {
+          skills['${e.key}'] = SkillScore(
+            correct: (v['correct'] as num?)?.toInt() ?? 0,
+            total: (v['total'] as num?)?.toInt() ?? 0,
+          );
+        }
+      }
+    }
+    final ms = (m['submittedAtMs'] as num?)?.toInt();
+    return AttemptSummary(
+      attemptNo: (m['attemptNo'] as num?)?.toInt() ?? 0,
+      score: (m['score'] as num?)?.toInt() ?? 0,
+      earned: (m['earned'] as num?)?.toInt() ?? 0,
+      possible: (m['possible'] as num?)?.toInt() ?? 0,
+      submittedAt: ms == null ? null : DateTime.fromMillisecondsSinceEpoch(ms),
+      late: m['late'] == true,
+      pendingMarking: m['status'] == 'pending_marking',
+      bySkill: skills,
+    );
+  }
 }
 
 /// Right answers out of the questions of one skill (HSK part).
@@ -271,7 +336,11 @@ class PlayResult {
     this.late = false,
     this.bySkill = const {},
     this.pendingMarking = false,
+    this.attemptNo,
   });
+
+  /// Build 9D: which attempt of a timed exam this was (null for practice).
+  final int? attemptNo;
 
   /// Build 2A: some answers wait for a teacher; the score is not final.
   final bool pendingMarking;
@@ -340,11 +409,12 @@ class ExercisePlayService {
   /// (`permission-denied` when the exercise is not assigned to the student,
   /// `failed-precondition` with details `reason: already-attempted`) or
   /// [LegacyExerciseException].
-  Future<ExercisePlaySession> start(Exercise exercise) async {
+  Future<ExercisePlaySession> start(Exercise exercise,
+      {bool newAttempt = false}) async {
     if (!exercise.isPackage) throw const LegacyExerciseException();
     final result = await _functions
         .httpsCallable('startExercise')
-        .call({'exerciseId': exercise.id});
+        .call({'exerciseId': exercise.id, if (newAttempt) 'newAttempt': true});
     final data = Map<String, dynamic>.from(result.data as Map);
     final questions =
         PlayQuestion.listFromServer(data['questions'] as List? ?? const []);
@@ -437,6 +507,7 @@ class _ServerSession extends _AnswerStore {
       late: m['late'] == true,
       bySkill: bySkill,
       pendingMarking: m['status'] == 'pending_marking',
+      attemptNo: (m['attemptNo'] as num?)?.toInt(),
     );
   }
 }

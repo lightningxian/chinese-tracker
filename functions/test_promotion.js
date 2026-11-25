@@ -99,6 +99,20 @@ const byHand = [
 assert.deepEqual(ranked.map((x) => [x.rank, x.name, x.total]), byHand);
 assert.deepEqual(ranked.map((x) => x.passed), byHand.map(([, , t]) => t >= 180));
 
+// Build 9C: sorting by rankKey gives the same board, so it can be paged.
+const boardRows = entries.map((x) => ({...x, rankKey: p.rankKeyOf(x)}));
+assert.deepEqual(
+    [...boardRows].sort((a, b) => (a.rankKey < b.rankKey ? -1 : 1)).map((x) => x.name),
+    ranked.map((x) => x.name));
+// A shared rank = 1 + the rows whose prefix is smaller (庚 and 丙: 5).
+const prefix = (x) => p.rankPrefix(x.total, x.seconds);
+const rankOf = (x) => 1 + boardRows.filter((y) => y.rankKey < prefix(x)).length;
+for (const x of ranked) assert.equal(rankOf(x), x.rank, x.name);
+assert.equal(p.rankPrefix(300, null), "099700-99999999");
+assert.equal(p.rankPrefix(0, 59), "100000-00000059");
+assert.ok(p.boardEntryOf(result("A", 200, {}), code("A")).rankKey.startsWith("099800-"));
+assert.equal(p.boardEntryOf(result("A", 200, {valid: false}), code("A")), null);
+
 // Owner 2026-11-24 (Q12): the admin promotes straight away, only upwards.
 assert.deepEqual(p.manualPromotion("HSK 2", "HSK 4"),
     {fromKey: "2", toKey: "4", fromLevel: "HSK 2", toLevel: "HSK 4"});

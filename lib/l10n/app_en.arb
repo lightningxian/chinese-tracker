@@ -3251,7 +3251,7 @@
   "auditGroupRegistration": "Registrations",
   "auditGroupSchedule": "Timetable",
   "auditGroupDay": "Days closed or opened",
-  "auditGroupProgress": "Progress rebuilds",
+  "auditGroupProgress": "Rebuilds (progress, leaderboards)",
   "monthlyActiveEnd": "Active students (last month of the period)",
   "monthlyMonth": "Month",
   "monthlyRevenueShort": "Revenue",
@@ -3270,5 +3270,18 @@
   "adminReportsNewInPeriod": "New in period",
   "adminReportsInPeriod": "In period",
   "adminReportsMonths": "Months",
-  "adminReportsIssuedInPeriod": "Issued in period"
+  "adminReportsIssuedInPeriod": "Issued in period",
+  "leaderboardShare": "Share PDF",
+  "leaderboardShareMine": "Share my result",
+  "leaderboardYourPlace": "Your place",
+  "orgRebuildLeaderboards": "Rebuild leaderboards",
+  "orgRebuildLeaderboardsHint": "Writes every board row again from the test results (needed once after the Build 9 update, so the boards can be paged).",
+  "orgRebuildLeaderboardsDone": "{count} results written to the boards again.",
+  "@orgRebuildLeaderboardsDone": {"placeholders": {"count": {"type": "int"}}},
+  "exercisePlayAttemptsInfo": "Each attempt has its own clock. When you have finished, you may start a new attempt; every attempt is kept with its number.",
+  "exercisePlayEarlierAttempts": "Your earlier attempts",
+  "exercisePlayStartAttempt": "Start attempt {n}",
+  "@exercisePlayStartAttempt": {"placeholders": {"n": {"type": "int"}}},
+  "resultAttemptNo": "Attempt {n}",
+  "@resultAttemptNo": {"placeholders": {"n": {"type": "int"}}}
 }

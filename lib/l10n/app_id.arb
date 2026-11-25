@@ -2447,7 +2447,7 @@
   "auditGroupRegistration": "Pendaftaran",
   "auditGroupSchedule": "Jadwal",
   "auditGroupDay": "Hari ditutup atau dibuka",
-  "auditGroupProgress": "Penyusunan ulang progres",
+  "auditGroupProgress": "Penyusunan ulang (progres, papan peringkat)",
   "monthlyActiveEnd": "Murid aktif (bulan terakhir periode)",
   "monthlyMonth": "Bulan",
   "monthlyRevenueShort": "Pendapatan",
@@ -2463,5 +2463,15 @@
   "adminReportsNewInPeriod": "Baru dalam periode",
   "adminReportsInPeriod": "Dalam periode",
   "adminReportsMonths": "Bulan",
-  "adminReportsIssuedInPeriod": "Terbit dalam periode"
+  "adminReportsIssuedInPeriod": "Terbit dalam periode",
+  "leaderboardShare": "Bagikan PDF",
+  "leaderboardShareMine": "Bagikan hasil saya",
+  "leaderboardYourPlace": "Posisi Anda",
+  "orgRebuildLeaderboards": "Susun ulang papan peringkat",
+  "orgRebuildLeaderboardsHint": "Menulis ulang setiap baris papan peringkat dari hasil tes (perlu sekali setelah pembaruan Build 9, agar papan dapat dibagi per halaman).",
+  "orgRebuildLeaderboardsDone": "{count} hasil ditulis ulang ke papan peringkat.",
+  "exercisePlayAttemptsInfo": "Setiap percobaan punya waktunya sendiri. Setelah selesai, Anda boleh memulai percobaan baru; setiap percobaan disimpan dengan nomornya.",
+  "exercisePlayEarlierAttempts": "Percobaan Anda sebelumnya",
+  "exercisePlayStartAttempt": "Mulai percobaan ke-{n}",
+  "resultAttemptNo": "Percobaan ke-{n}"
 }

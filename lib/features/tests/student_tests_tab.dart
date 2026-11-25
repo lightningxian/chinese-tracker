@@ -400,24 +400,30 @@ class _ProgressCard extends StatelessWidget {
 
 /// "Rank 2 of 15" on a code's board (the student may read boards of codes
 /// they sat).
-class _RankText extends StatelessWidget {
+class _RankText extends StatefulWidget {
   const _RankText({required this.codeId, required this.uid});
 
   final String codeId;
   final String uid;
 
   @override
+  State<_RankText> createState() => _RankTextState();
+}
+
+class _RankTextState extends State<_RankText> {
+  // Build 9C: the own row and two counts, not the whole board.
+  late final _place = PromotionService().myPlace(widget.codeId, widget.uid);
+
+  @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    return StreamBuilder<List<LeaderboardEntry>>(
-      stream: PromotionService().watchLeaderboard(codeId),
+    return FutureBuilder<({LeaderboardEntry entry, int total})?>(
+      future: _place,
       builder: (context, snap) {
-        final list = snap.data;
-        if (list == null) return const SizedBox.shrink();
-        final mine = list.where((e) => e.studentId == uid).firstOrNull;
+        final mine = snap.data;
         if (mine == null) return const SizedBox.shrink();
         return Text(
-          l.leaderboardRankOf(mine.rank, list.length),
+          l.leaderboardRankOf(mine.entry.rank, mine.total),
           style: TextStyle(color: AppColors.teal, fontWeight: FontWeight.w700, fontSize: 12),
         );
       },
