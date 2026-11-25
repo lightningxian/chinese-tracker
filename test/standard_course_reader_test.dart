@@ -223,6 +223,26 @@ void main() {
     expect(list.map((q) => q.context), ['TEXT', 'TEXT', '', '']);
   });
 
+  test('a review in two blocks numbers on after the workbook, once', () {
+    final d = QuestionImportUtils.parseHskPaper([
+      '标准教程2 练习册\n三、书写\n第1-2题：连词成句\n1. 去 我 想\n2. 贵 太 了',
+      '四、复习\n第1-1题：根据课文内容填空\n1. 大明 ＿＿ 去商店。\n'
+          '第2-2题：根据课文内容填空\n2. 小红 ＿＿ 买苹果，＿＿ 回家。',
+    ]);
+    expect(d.slots.map((s) => s.number), [1, 2, 3, 4]);
+    expect(d.slots.where((s) => s.missing), isEmpty);
+    expect(d.slots[2].prompt, '大明____去商店。');
+    expect(d.slots[3].section, '四、复习 · 第2-2题');
+    expect(d.slots[3].blankCount, 2);
+  });
+
+  test('blanks are counted the way the player draws them', () {
+    final slot = HskSlot(number: 1, skill: 'writing', form: HskForm.fillBlanks,
+        prompt: '他（ ）去过____。');
+    expect(slot.blankCount, 2);
+    expect(ExerciseType.blankMark.allMatches(slot.prompt).length, 2);
+  });
+
   test('an HSK paper reads a tab as a space and has no context', () {
     final d = QuestionImportUtils.parseHskPaper([
       '一、听力\n第1-2题\n1. ★ 他想\t买苹果。 （ ）\n2. ★ 西瓜很便宜。 （ ）',

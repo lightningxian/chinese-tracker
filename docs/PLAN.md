@@ -2230,6 +2230,19 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
+### 2026-11-25 — Recheck of v0.1.38–v0.1.40, four fixes — COMMIT, release v0.1.41 (hosting only)
+- Checked: CI green on every push; analyzer 17 infos; `flutter test` 186
+  pass; all node tests; rules tests 86 pass + 1 skipped; live
+  `main.dart.js` = build, OCR script = repo, APK / privacy / OCR model 200,
+  74 functions.
+- Fixed (from an independent review): review numbering with two blocks,
+  one blank count everywhere, digits in a blanks key line, essay line
+  breaks in the result review.
+- Still open (recommendations sent to the PLAN chat): the public repository
+  with the live test password in two docs; teacher-marked 组词 items count
+  10 points each; lesson text not in the test-code player; package editor
+  does not check the recording.
+
 ### 2026-11-25 — Fill in the blanks for the Standard Course review — COMMIT, release v0.1.40 (functions and hosting)
 - Review questions take one answer per blank (proofreading, answer key,
   editor) and are checked blank by blank; checked on the emulator.

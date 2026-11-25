@@ -180,12 +180,19 @@ class SheetAnswerKeyPlan {
         case ExerciseType.typeHanzi:
           fields[item.id] = {'question.options': [entry.value.trim()]};
         case ExerciseType.fillBlanks:
-          fields[item.id] = {
-            'question.options': [
-              for (final a in entry.value.split(RegExp(r'\s*[|｜]\s*')))
-                if (a.trim().isNotEmpty) a.trim(),
-            ],
-          };
+          final answers = [
+            for (final a in entry.value.split(RegExp(r'\s*[|｜]\s*')))
+              if (a.trim().isNotEmpty) a.trim(),
+          ];
+          // One answer per blank, as the player draws them; else it is
+          // listed as not matched and nothing is changed.
+          final blanks =
+              ExerciseType.blankMark.allMatches(item.question.prompt).length;
+          if (answers.length != blanks) {
+            notMatched.add(entry.key);
+          } else {
+            fields[item.id] = {'question.options': answers};
+          }
         default:
           break;
       }

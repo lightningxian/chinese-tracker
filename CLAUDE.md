@@ -61,7 +61,7 @@ decisions. This app is also the owner's thesis project (see the thesis docs belo
 ## Conventions
 - **Commit author:** `GIT_AUTHOR_NAME="Wilsin Kuonadi" GIT_AUTHOR_EMAIL=wilsinkarimunwkk@gmail.com`
   (and matching `GIT_COMMITTER_*`) per commit. Don't change global git config.
-- **Push notes:** each commit body has a 2–6 bullet plain-language summary. For milestones and deploys, also `gh release create vX.Y.Z` with the same summary (latest: v0.1.40).
+- **Push notes:** each commit body has a 2–6 bullet plain-language summary. For milestones and deploys, also `gh release create vX.Y.Z` with the same summary (latest: v0.1.41).
 - **Change log:** after any code, rules, functions or config change, add an entry at the **top** of `docs/CHANGELOG.md` (What changed / Why / For review).
 - **Session log:** when a session ships something, add a dated entry at the top of `docs/SESSION_LOG.md`. Update `docs/THESIS_FEATURE_AUDIT.md` status when a spec item is finished.
 - **Scoped invariants:** `.claude/rules/*.md` (auth and link codes, exercise authoring admin/web-only, worksheet import web-only). Read the matching file before editing those areas.
@@ -74,7 +74,7 @@ decisions. This app is also the owner's thesis project (see the thesis docs belo
 flutter pub get
 flutter run -d chrome                 # no CONTENT_OWNER_ID needed locally; talks to LIVE Firebase
 flutter analyze                       # baseline: 0 errors, 0 warnings, 17 infos
-flutter test                          # 184 pass + 2 measuring tests skipped (2026-11-25)
+flutter test                          # 186 pass + 2 measuring tests skipped (2026-11-25)
 # Mac: after `flutter clean` the PDF probe test fails ("Native assets file not found") until a `dart run` of any
 # script importing pdfium_dart recreates .dart_tool/native_assets.yaml (2026-11-24).
 node --check functions/index.js

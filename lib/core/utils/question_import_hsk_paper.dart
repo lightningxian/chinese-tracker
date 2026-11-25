@@ -140,7 +140,10 @@ class _HskPaperParser {
             final a = int.parse(lead.group(1)!);
             final b = int.parse(lead.group(2)!);
             if (b >= a) {
-              offset = a <= maxEnd ? maxEnd : 0;
+              // Numbers that start again below what was read (the review
+              // part) follow on after the last one; later blocks of the same
+              // part keep that shift (第1-2题 → 55-56, 第3-4题 → 57-58).
+              if (a + offset <= maxEnd) offset = maxEnd - a + 1;
               final kind = _kindOf(lead.group(3)!, skillHeading);
               final section = [
                 if (skillHeading.isNotEmpty) skillHeading,

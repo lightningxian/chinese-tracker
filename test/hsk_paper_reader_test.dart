@@ -357,6 +357,14 @@ void main() {
           choices: const {}, written: AnswerKeyParser.parseWritten('$text\n2 走'));
       expect(plan.fields['q1'], {'question.options': ['想', '要/想']});
       expect(plan.fields['q2'], {'question.options': ['走']});
+      // Digits stay inside a blank's answer; a wrong number of answers
+      // changes nothing and is reported.
+      expect(AnswerKeyParser.parseWritten('1 两点 | 3点\n2 长'),
+          {1: '两点 | 3点', 2: '长'});
+      final wrong = SheetAnswerKeyPlan.of(sheet,
+          choices: const {}, written: {1: '想'});
+      expect(wrong.fields, isEmpty);
+      expect(wrong.notMatched, [1]);
     });
   });
 }

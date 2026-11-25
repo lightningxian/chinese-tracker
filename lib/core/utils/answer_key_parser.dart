@@ -46,6 +46,11 @@ abstract final class AnswerKeyParser {
     return out;
   }
 
+  static final _blanksLine = RegExp(
+    r'^\s*(\d{1,3})\s*[.．、:：)]?\s*([^\n]*[|｜][^\n]*)$',
+    multiLine: true,
+  );
+
   static final _written = RegExp(
     r'(\d{1,3})\s*[.．、:：)]?\s*([一-鿿][^\d\n]*)',
   );
@@ -56,7 +61,13 @@ abstract final class AnswerKeyParser {
   /// 对 / 错 stays a true/false mark for [parse].
   static Map<int, String> parseWritten(String text) {
     final out = <int, String>{};
-    for (final m in _written.allMatches(text)) {
+    // Fill in the blanks (`56 两点 | 3点`): the whole line, digits too.
+    var rest = text;
+    for (final m in _blanksLine.allMatches(text)) {
+      out[int.parse(m.group(1)!)] = m.group(2)!.trim();
+      rest = rest.replaceFirst(m.group(0)!, '');
+    }
+    for (final m in _written.allMatches(rest)) {
       final value = m.group(2)!.trim();
       if (value.isEmpty || value == '对' || value == '错') continue;
       out[int.parse(m.group(1)!)] = value;

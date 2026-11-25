@@ -1,6 +1,7 @@
 import '../core/constants/hsk_characters.dart';
 import '../services/hsk_paper/paper_image_ops.dart';
 import 'ai_worksheet.dart';
+import 'exercise_type.dart';
 
 /// Forms of a question on an HSK paper; the same names the AI reader uses
 /// ([AiQuestion.type]), so a draft saves through the same path.
@@ -128,8 +129,9 @@ class HskSlot {
       form == HskForm.picture ||
       form == HskForm.trueFalse;
 
-  /// Blanks in [prompt] (`____`), for [HskForm.fillBlanks].
-  int get blankCount => RegExp(r'_{2,}|＿+').allMatches(prompt).length;
+  /// Blanks in [prompt] for [HskForm.fillBlanks], counted the way the
+  /// player draws its boxes ([ExerciseType.blankMark]).
+  int get blankCount => ExerciseType.blankMark.allMatches(prompt).length;
 
   static final _cjk = RegExp(r'[㐀-鿿]');
   static final _toneMark = RegExp(r'[āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]');

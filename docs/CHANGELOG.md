@@ -6,6 +6,35 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-25 — Claude (BUILD chat): recheck of v0.1.38–v0.1.40, four fixes
+
+**What changed**
+- Standard Course reader: a review part with two or more blocks
+  (`第1-2题`, then `第3-4题`) was shifted twice (59–60 instead of 57–58,
+  with two empty slots in between). Now only a block that starts again
+  below the numbers already read is moved on (`question_import_hsk_paper.dart`).
+- Fill in the blanks: proofreading, the answer-key box and the player now
+  count blanks the same way (`ExerciseType.blankMark`: `____` and empty
+  brackets). The answer-key box refuses a line with the wrong number of
+  answers (listed as not matched) instead of saving it.
+- Answer-key box: a fill-in-the-blanks line keeps digits (`56 两点 | 3点`);
+  before, `3点` was cut off and read as a key for question 3
+  (`AnswerKeyParser._blanksLine`).
+- Result review: only fill-in-the-blanks answers are joined with " / ";
+  an essay keeps its line breaks.
+
+**Why**
+- Owner 2026-11-25: "recheck everything". An independent review of the
+  three releases found these; no answer-key leak, crash or HSK-path change
+  was found (the HSK practice paper reads the same with the old and new
+  OCR script).
+
+**For review**
+- Hosting only. Tests: 186 pass; node tests, rules tests (86 + 1 skipped)
+  and the live checks green.
+
+---
+
 ## 2026-11-25 — Claude (BUILD chat): Standard Course review gets its answers (fill in the blanks)
 
 **What changed**

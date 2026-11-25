@@ -933,7 +933,10 @@ class _ReviewTile extends StatelessWidget {
     final order = a.order;
     if (order != null) return order.join(' ');
     // Fill in the blanks: one line per blank.
-    return a.text?.split('\n').join(' / ');
+    if (question.type == ExerciseType.fillBlanks) {
+      return a.text?.split('\n').join(' / ');
+    }
+    return a.text;
   }
 
   String? _correctAnswer(AppLocalizations l) {

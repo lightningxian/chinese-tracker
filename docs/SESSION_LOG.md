@@ -13,6 +13,11 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-25 — Claude (BUILD chat, PC): recheck and four fixes
+
+- Owner asked to recheck everything and send recommendations to the PLAN
+  chat. All checks green; four small bugs fixed (v0.1.41, hosting only).
+
 ### 2026-11-25 — Claude (BUILD chat, PC): review answers (fill in the blanks)
 
 - Owner has the review answers: new type Fill in the blanks, one answer
