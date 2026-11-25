@@ -22,6 +22,7 @@ abstract final class AdminOpsReportsPdf {
     DateTime generatedAt,
     List<pw.Widget> body, {
     bool landscape = false,
+    String period = '',
   }) async {
     final doc = pw.Document(theme: await ReportPdfFonts.loadTheme());
     doc.addPage(
@@ -43,7 +44,10 @@ abstract final class AdminOpsReportsPdf {
           ),
           pw.SizedBox(height: 4),
           pw.Text(
-            'Generated ${DateFormat('d MMM yyyy, HH:mm', 'en_US').format(generatedAt)}',
+            [
+              if (period.isNotEmpty) 'Period: $period',
+              'Generated ${DateFormat('d MMM yyyy, HH:mm', 'en_US').format(generatedAt)}',
+            ].join(' · '),
             style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
           ),
           pw.SizedBox(height: 14),
@@ -116,6 +120,7 @@ abstract final class AdminOpsReportsPdf {
   static Future<pw.Document> attendance(AdminOpsReportData d) => _doc(
         'Attendance per student per month',
         d.generatedAt,
+        period: d.periodLabelEn,
         [
           _note('Hadir = present, Izin = excused (not charged), Alpa = absent. '
               'Open classes are not counted until they are concluded.'),
@@ -157,6 +162,7 @@ abstract final class AdminOpsReportsPdf {
     return _doc(
       'Term balance alerts',
       d.generatedAt,
+      period: d.periodLabelEn,
       [
         _note('${t.activeTerms} active terms. '
             '${t.count(TermAlertKind.lowBalance)} with 2 or fewer sessions left, '
@@ -196,6 +202,7 @@ abstract final class AdminOpsReportsPdf {
     return _doc(
       'Revenue per month',
       d.generatedAt,
+      period: d.periodLabelEn,
       landscape: true,
       [
         _h('Paid invoices, last 6 months (by payment date)'),
@@ -259,6 +266,7 @@ abstract final class AdminOpsReportsPdf {
     return _doc(
       'New students & retention',
       d.generatedAt,
+      period: d.periodLabelEn,
       [
         _note(
             'Active = account active and (a class term with sessions left, or a '
@@ -289,6 +297,7 @@ abstract final class AdminOpsReportsPdf {
     return _doc(
       'Class fill rate',
       d.generatedAt,
+      period: d.periodLabelEn,
       [
         _h('Per month (joined seats / capacity)'),
         _table(
@@ -338,6 +347,7 @@ abstract final class AdminOpsReportsPdf {
   static Future<pw.Document> teacherRecap(AdminOpsReportData d) => _doc(
         'Teacher recap per month',
         d.generatedAt,
+        period: d.periodLabelEn,
         landscape: true,
         [
           _note('Hours and students count concluded classes only. Attendance = '
@@ -374,6 +384,7 @@ abstract final class AdminOpsReportsPdf {
   static Future<pw.Document> progressByLevel(AdminOpsReportData d) => _doc(
         'Student progress per HSK level',
         d.generatedAt,
+        period: d.periodLabelEn,
         [
           _note('Active students only. Done = assigned exercises with at least '
               'one submission; score = average of each student\'s best scores.'),
@@ -435,6 +446,7 @@ abstract final class AdminOpsReportsPdf {
     return _doc(
       'Overdue homework per teacher',
       d.generatedAt,
+      period: d.periodLabelEn,
       [
         _note(
             '${o.total} overdue of ${o.open} open assignments. Grouped by the '

@@ -37,3 +37,31 @@ class AuditLog {
     );
   }
 }
+
+/// Build 9A: the audit log's action filter. Each group lists the actions
+/// `writeAudit` writes in `functions/index.js` (a test keeps them in step).
+enum AuditActionGroup {
+  invoice(['invoice.created', 'invoice.paid', 'invoice.discard', 'invoice.restore']),
+  test([
+    'test.session.open',
+    'test.session.close',
+    'test.result.valid',
+    'test.result.invalid',
+    'test.attempt.reset',
+  ]),
+  promotion([
+    'promotion.approve',
+    'promotion.decline',
+    'promotion.approve.placement',
+    'promotion.decline.placement',
+    'promotion.manual',
+  ]),
+  registration(['registration.approve', 'registration.reject']),
+  schedule(['schedule.create', 'schedule.update', 'schedule.delete']),
+  day(['day.close', 'day.open']),
+  progress(['progress.rebuild']);
+
+  const AuditActionGroup(this.actions);
+
+  final List<String> actions;
+}

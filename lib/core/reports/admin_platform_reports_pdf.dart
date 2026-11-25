@@ -44,6 +44,7 @@ abstract final class AdminPlatformReportsPdf {
   static Future<pw.Document> userRoster({
     required List<AppUser> users,
     required DateTime generatedAt,
+    String period = '',
   }) async {
     final doc = pw.Document();
     final sorted = [...users]
@@ -57,7 +58,7 @@ abstract final class AdminPlatformReportsPdf {
           _title('${AppConstants.brandName} — User roster'),
           pw.SizedBox(height: 4),
           _subtitle(
-              'Generated ${DateFormat('d MMM yyyy, HH:mm', 'en_US').format(generatedAt)}'),
+              '${period.isEmpty ? '' : 'Period: $period · '}Generated ${DateFormat('d MMM yyyy, HH:mm', 'en_US').format(generatedAt)}'),
           pw.SizedBox(height: 12),
           _subtitle('Total users: ${users.length}'),
           pw.SizedBox(height: 16),
@@ -107,6 +108,7 @@ abstract final class AdminPlatformReportsPdf {
   static Future<pw.Document> registrationGrowth({
     required AdminReportData report,
     required DateTime generatedAt,
+    String period = '',
   }) async {
     final doc = pw.Document();
     final maxMonth = report.newStudentsByMonth.fold<int>(
@@ -122,7 +124,7 @@ abstract final class AdminPlatformReportsPdf {
           _title('${AppConstants.brandName} — Monthly registration & growth'),
           pw.SizedBox(height: 4),
           _subtitle(
-              'Generated ${DateFormat('d MMM yyyy, HH:mm', 'en_US').format(generatedAt)}'),
+              '${period.isEmpty ? '' : 'Period: $period · '}Generated ${DateFormat('d MMM yyyy, HH:mm', 'en_US').format(generatedAt)}'),
           pw.SizedBox(height: 16),
           _section('Summary'),
           pw.SizedBox(height: 8),
@@ -195,6 +197,7 @@ abstract final class AdminPlatformReportsPdf {
     required Map<String, AppUser> usersById,
     required List<MonthlyCount> vouchersIssuedByMonth,
     required DateTime generatedAt,
+    String period = '',
   }) async {
     final doc = pw.Document();
     final sorted = [...terms]
@@ -212,7 +215,7 @@ abstract final class AdminPlatformReportsPdf {
           _title('${AppConstants.brandName} — Vouchers & monthly packages'),
           pw.SizedBox(height: 4),
           _subtitle(
-              'Generated ${DateFormat('d MMM yyyy, HH:mm', 'en_US').format(generatedAt)}'),
+              '${period.isEmpty ? '' : 'Period: $period · '}Generated ${DateFormat('d MMM yyyy, HH:mm', 'en_US').format(generatedAt)}'),
           pw.SizedBox(height: 12),
           _subtitle('Packages tracked: ${terms.length}'),
           pw.SizedBox(height: 16),
@@ -305,6 +308,7 @@ abstract final class AdminPlatformReportsPdf {
   static Future<pw.Document> worksheetInventory({
     required AdminReportData report,
     required DateTime generatedAt,
+    String period = '',
   }) async {
     final doc = pw.Document();
     final skillHeaders =
@@ -318,7 +322,7 @@ abstract final class AdminPlatformReportsPdf {
           _title('${AppConstants.brandName} — Worksheet inventory'),
           pw.SizedBox(height: 4),
           _subtitle(
-            'Generated ${DateFormat('d MMM yyyy, HH:mm', 'en_US').format(generatedAt)}',
+            '${period.isEmpty ? '' : 'Period: $period · '}Generated ${DateFormat('d MMM yyyy, HH:mm', 'en_US').format(generatedAt)}',
           ),
           pw.SizedBox(height: 12),
           _subtitle(

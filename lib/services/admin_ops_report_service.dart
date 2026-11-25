@@ -33,6 +33,24 @@ class ReportMonth implements Comparable<ReportMonth> {
           ReportMonth.of(DateTime(now.year, now.month - i, 1)),
       ];
 
+  /// Build 9B: every month from [from] to [to], both included.
+  static List<ReportMonth> range(DateTime from, DateTime to) => [
+        for (var d = DateTime(from.year, from.month);
+            !d.isAfter(DateTime(to.year, to.month));
+            d = DateTime(d.year, d.month + 1))
+          ReportMonth.of(d),
+      ];
+
+  /// "March 2026 – December 2026" (English, for the PDF headers).
+  static String periodLabelEn(List<ReportMonth> months) {
+    if (months.isEmpty) return '';
+    String f(ReportMonth m) =>
+        DateFormat('MMMM yyyy', 'en_US').format(DateTime(m.year, m.month));
+    return months.length == 1
+        ? f(months.first)
+        : '${f(months.first)} – ${f(months.last)}';
+  }
+
   bool contains(DateTime? d) => d != null && d.year == year && d.month == month;
 
   @override
@@ -407,6 +425,7 @@ class OverdueHomeworkReport {
 class AdminOpsReportData {
   const AdminOpsReportData({
     required this.generatedAt,
+    required this.months,
     required this.attendance,
     required this.termAlerts,
     required this.revenue,
@@ -418,6 +437,9 @@ class AdminOpsReportData {
   });
 
   final DateTime generatedAt;
+
+  /// Build 9B: the months of the chosen period (oldest first).
+  final List<ReportMonth> months;
   final List<AttendanceMonth> attendance;
   final TermAlertsReport termAlerts;
   final RevenueReport revenue;
@@ -426,6 +448,9 @@ class AdminOpsReportData {
   final List<TeacherRecapMonth> teacherRecap;
   final List<LevelProgressRow> progressByLevel;
   final OverdueHomeworkReport overdueHomework;
+
+  /// "Period: March 2026 – December 2026" for the PDF headers.
+  String get periodLabelEn => ReportMonth.periodLabelEn(months);
 }
 
 /// Pure calculations for the eight operational reports on the admin Reports
@@ -444,41 +469,50 @@ abstract final class AdminOpsReportService {
     required List<ExerciseAssignment> assignments,
     required List<ExerciseResult> results,
     DateTime? now,
+    List<ReportMonth>? months,
   }) {
     final at = now ?? DateTime.now();
+    final ms = months == null || months.isEmpty
+        ? ReportMonth.last(monthsShown, at)
+        : months;
     final usersById = {for (final u in users) u.uid: u};
     final students = users.where((u) => u.isStudent).toList();
     return AdminOpsReportData(
       generatedAt: at,
+      months: ms,
       attendance: attendanceByMonth(
         attendance: attendance,
         sessions: sessions,
         usersById: usersById,
         now: at,
+        months: ms,
       ),
       termAlerts: termAlerts(
         classTerms: classTerms,
         usersById: usersById,
         now: at,
       ),
-      revenue: revenue(invoices: invoices, now: at),
+      revenue: revenue(invoices: invoices, now: at, monthList: ms),
       retention: retention(
         students: students,
         classTerms: classTerms,
         attendance: attendance,
         now: at,
+        monthList: ms,
       ),
       fillRate: fillRate(
         sessions: sessions,
         attendance: attendance,
         usersById: usersById,
         now: at,
+        monthList: ms,
       ),
       teacherRecap: teacherRecap(
         sessions: sessions,
         attendance: attendance,
         users: users,
         now: at,
+        monthList: ms,
       ),
       progressByLevel: progressByLevel(
         students: students,
@@ -531,11 +565,12 @@ abstract final class AdminOpsReportService {
     required List<ClassSession> sessions,
     required Map<String, AppUser> usersById,
     required DateTime now,
+    List<ReportMonth>? months,
   }) {
     final concluded =
         sessions.where((s) => s.isConcluded).map((s) => s.id).toSet();
     final known = sessions.map((s) => s.id).toSet();
-    final months = ReportMonth.last(monthsShown, now);
+    months ??= ReportMonth.last(monthsShown, now);
     final out = <AttendanceMonth>[];
     for (final month in months) {
       final counts = <String, List<int>>{}; // studentId -> [hadir, izin, alpa]
@@ -638,9 +673,10 @@ abstract final class AdminOpsReportService {
   static RevenueReport revenue({
     required List<Invoice> invoices,
     required DateTime now,
+    List<ReportMonth>? monthList,
   }) {
     final months = <RevenueMonth>[];
-    for (final month in ReportMonth.last(monthsShown, now)) {
+    for (final month in monthList ?? ReportMonth.last(monthsShown, now)) {
       var p8 = 0, p16 = 0, book = 0, other = 0, count = 0;
       for (final inv in invoices) {
         if (!inv.isPaid) continue;
@@ -692,6 +728,7 @@ abstract final class AdminOpsReportService {
     required DateTime now,
     int activeWindowDays = 30,
     int eligibleAfterDays = 60,
+    List<ReportMonth>? monthList,
   }) {
     final withTerm = classTerms
         .where((t) => t.isActive && t.isValidOnDateWithin(now))
@@ -714,7 +751,7 @@ abstract final class AdminOpsReportService {
         (withTerm.contains(s.uid) || recentlyAttended.contains(s.uid));
 
     final cohorts = <CohortRow>[];
-    for (final month in ReportMonth.last(monthsShown, now)) {
+    for (final month in monthList ?? ReportMonth.last(monthsShown, now)) {
       final joined =
           students.where((s) => month.contains(s.createdAt)).toList();
       cohorts.add(
@@ -746,13 +783,14 @@ abstract final class AdminOpsReportService {
     required List<AttendanceRecord> attendance,
     required Map<String, AppUser> usersById,
     required DateTime now,
+    List<ReportMonth>? monthList,
   }) {
     final joinedBySession = <String, int>{};
     for (final r in attendance) {
       joinedBySession[r.sessionId] = (joinedBySession[r.sessionId] ?? 0) + 1;
     }
     final out = <FillRateMonth>[];
-    for (final month in ReportMonth.last(monthsShown, now)) {
+    for (final month in monthList ?? ReportMonth.last(monthsShown, now)) {
       final rows = sessions
           .where((s) => month.contains(DateTime.tryParse(s.sessionDate)))
           .map(
@@ -780,6 +818,7 @@ abstract final class AdminOpsReportService {
     required List<AppUser> users,
     required DateTime now,
     int months = 3,
+    List<ReportMonth>? monthList,
   }) {
     final usersById = {for (final u in users) u.uid: u};
     final concludedIds =
@@ -790,7 +829,7 @@ abstract final class AdminOpsReportService {
       recordsBySession.putIfAbsent(r.sessionId, () => []).add(r);
     }
     final out = <TeacherRecapMonth>[];
-    for (final month in ReportMonth.last(months, now)) {
+    for (final month in monthList ?? ReportMonth.last(months, now)) {
       final byTeacher = <String, _TeacherAcc>{};
       for (final s in sessions) {
         if (!month.contains(DateTime.tryParse(s.sessionDate))) continue;

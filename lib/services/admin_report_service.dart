@@ -4,6 +4,7 @@ import '../models/app_user.dart';
 import '../models/exercise.dart';
 import '../models/exercise_skill_category.dart';
 import '../models/student_class_term.dart';
+import 'admin_ops_report_service.dart' show ReportMonth;
 
 class MonthlyCount {
   const MonthlyCount({required this.label, required this.count});
@@ -90,6 +91,7 @@ abstract final class AdminReportService {
     required List<AppUser> users,
     required List<Exercise> exercises,
     required List<StudentClassTerm> classTerms,
+    List<ReportMonth>? months,
   }) {
     final allStudents = users.where((u) => u.isStudent).toList();
     final activeStudents = allStudents.where((u) => u.active).toList();
@@ -112,9 +114,9 @@ abstract final class AdminReportService {
       totalExercises: exercises.where((e) => e.isPublished).length,
       totalWorksheets: exercises.length,
       lowVouchers: lowVouchers,
-      newStudentsByMonth: _newStudentsByMonth(allStudents),
+      newStudentsByMonth: _newStudentsByMonth(allStudents, months),
       hskBands: _hskBands(activeStudents),
-      vouchersIssuedByMonth: _vouchersIssuedByMonth(classTerms),
+      vouchersIssuedByMonth: _vouchersIssuedByMonth(classTerms, months),
       worksheetInventory: worksheetInventory,
     );
   }
@@ -170,18 +172,22 @@ abstract final class AdminReportService {
     return rows;
   }
 
-  static List<MonthlyCount> _newStudentsByMonth(List<AppUser> students) {
+  static List<MonthlyCount> _newStudentsByMonth(
+      List<AppUser> students, List<ReportMonth>? months) {
     return _countsByMonth(
       students,
+      months: months,
       dateFor: (student) => student.createdAt,
     );
   }
 
   static List<MonthlyCount> _vouchersIssuedByMonth(
     List<StudentClassTerm> terms,
+    List<ReportMonth>? months,
   ) {
     return _countsByMonth(
       terms,
+      months: months,
       dateFor: (term) {
         final parsed = DateTime.tryParse(term.startDate);
         return parsed ?? term.createdAt;
@@ -192,20 +198,22 @@ abstract final class AdminReportService {
   static List<MonthlyCount> _countsByMonth<T>(
     List<T> items, {
     required DateTime? Function(T item) dateFor,
+    List<ReportMonth>? months,
   }) {
     final now = DateTime.now();
-    final months = <MonthlyCount>[];
-    for (var i = 5; i >= 0; i--) {
-      final month = DateTime(now.year, now.month - i, 1);
+    final buckets = months ?? ReportMonth.last(6, now);
+    final out = <MonthlyCount>[];
+    for (final m in buckets) {
+      final month = DateTime(m.year, m.month, 1);
       final label = _monthLabel(month);
       final count = items.where((item) {
         final date = dateFor(item);
         if (date == null) return false;
         return date.year == month.year && date.month == month.month;
       }).length;
-      months.add(MonthlyCount(label: label, count: count));
+      out.add(MonthlyCount(label: label, count: count));
     }
-    return months;
+    return out;
   }
 
   static String _monthLabel(DateTime month) {

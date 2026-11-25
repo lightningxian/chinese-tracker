@@ -14429,6 +14429,276 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{code} removed. It was already used, so its results are kept and the name stays taken.'**
   String testsCodeRemovedKept(String code);
+
+  /// No description provided for @rangeToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get rangeToday;
+
+  /// No description provided for @rangeLast7.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 7 days'**
+  String get rangeLast7;
+
+  /// No description provided for @rangeThisMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get rangeThisMonth;
+
+  /// No description provided for @rangeLastMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Last month'**
+  String get rangeLastMonth;
+
+  /// No description provided for @rangeThisYear.
+  ///
+  /// In en, this message translates to:
+  /// **'This year'**
+  String get rangeThisYear;
+
+  /// No description provided for @rangeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All dates'**
+  String get rangeAll;
+
+  /// No description provided for @rangeCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose dates…'**
+  String get rangeCustom;
+
+  /// No description provided for @pagingNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No rows'**
+  String get pagingNone;
+
+  /// No description provided for @pagingSpan.
+  ///
+  /// In en, this message translates to:
+  /// **'{from}–{to}'**
+  String pagingSpan(int from, int to);
+
+  /// No description provided for @pagingSpanOf.
+  ///
+  /// In en, this message translates to:
+  /// **'{from}–{to} of {total}'**
+  String pagingSpanOf(int from, int to, int total);
+
+  /// No description provided for @pagingPrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous page'**
+  String get pagingPrevious;
+
+  /// No description provided for @pagingNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next page'**
+  String get pagingNext;
+
+  /// No description provided for @pagingPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {n}'**
+  String pagingPage(int n);
+
+  /// No description provided for @pagingRowsPerPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Rows per page'**
+  String get pagingRowsPerPage;
+
+  /// No description provided for @pagingRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get pagingRefresh;
+
+  /// No description provided for @pagingError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load this list: {error}'**
+  String pagingError(String error);
+
+  /// No description provided for @pagingEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing in this period'**
+  String get pagingEmptyTitle;
+
+  /// No description provided for @pagingEmptySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose another date range or filter.'**
+  String get pagingEmptySubtitle;
+
+  /// No description provided for @pagingExportCapped.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the first {count} rows were exported. Choose a shorter date range for the rest.'**
+  String pagingExportCapped(int count);
+
+  /// No description provided for @pagingExportCsv.
+  ///
+  /// In en, this message translates to:
+  /// **'Export CSV (date range)'**
+  String get pagingExportCsv;
+
+  /// No description provided for @auditFilterAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Action'**
+  String get auditFilterAction;
+
+  /// No description provided for @auditGroupAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All actions'**
+  String get auditGroupAll;
+
+  /// No description provided for @auditGroupInvoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoices and payments'**
+  String get auditGroupInvoice;
+
+  /// No description provided for @auditGroupTest.
+  ///
+  /// In en, this message translates to:
+  /// **'Tests'**
+  String get auditGroupTest;
+
+  /// No description provided for @auditGroupPromotion.
+  ///
+  /// In en, this message translates to:
+  /// **'Promotions'**
+  String get auditGroupPromotion;
+
+  /// No description provided for @auditGroupRegistration.
+  ///
+  /// In en, this message translates to:
+  /// **'Registrations'**
+  String get auditGroupRegistration;
+
+  /// No description provided for @auditGroupSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Timetable'**
+  String get auditGroupSchedule;
+
+  /// No description provided for @auditGroupDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Days closed or opened'**
+  String get auditGroupDay;
+
+  /// No description provided for @auditGroupProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress rebuilds'**
+  String get auditGroupProgress;
+
+  /// No description provided for @monthlyActiveEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'Active students (last month of the period)'**
+  String get monthlyActiveEnd;
+
+  /// No description provided for @monthlyMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Month'**
+  String get monthlyMonth;
+
+  /// No description provided for @monthlyRevenueShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Revenue'**
+  String get monthlyRevenueShort;
+
+  /// No description provided for @monthlyPaidShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid invoices'**
+  String get monthlyPaidShort;
+
+  /// No description provided for @monthlyNotBuiltShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Not built'**
+  String get monthlyNotBuiltShort;
+
+  /// No description provided for @monthlyPeriodLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Period: {period}'**
+  String monthlyPeriodLine(String period);
+
+  /// No description provided for @monthlyTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get monthlyTotal;
+
+  /// No description provided for @monthlyMissingMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 month has no report yet. Press its Rebuild button; it is left out of the total.} other{{count} months have no report yet. Press their Rebuild buttons; they are left out of the total.}}'**
+  String monthlyMissingMonths(int count);
+
+  /// No description provided for @periodLast3Months.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 3 months'**
+  String get periodLast3Months;
+
+  /// No description provided for @periodFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'From'**
+  String get periodFrom;
+
+  /// No description provided for @periodTo.
+  ///
+  /// In en, this message translates to:
+  /// **'to'**
+  String get periodTo;
+
+  /// No description provided for @adminReportsPeriodSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Figures for {period}. Every PDF covers the same period.'**
+  String adminReportsPeriodSubtitle(String period);
+
+  /// No description provided for @adminReportsNewInPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'New in period'**
+  String get adminReportsNewInPeriod;
+
+  /// No description provided for @adminReportsInPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'In period'**
+  String get adminReportsInPeriod;
+
+  /// No description provided for @adminReportsMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'Months'**
+  String get adminReportsMonths;
+
+  /// No description provided for @adminReportsIssuedInPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Issued in period'**
+  String get adminReportsIssuedInPeriod;
 }
 
 class _AppLocalizationsDelegate

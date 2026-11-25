@@ -8793,4 +8793,163 @@ class AppLocalizationsEn extends AppLocalizations {
   String testsCodeRemovedKept(String code) {
     return '$code removed. It was already used, so its results are kept and the name stays taken.';
   }
+
+  @override
+  String get rangeToday => 'Today';
+
+  @override
+  String get rangeLast7 => 'Last 7 days';
+
+  @override
+  String get rangeThisMonth => 'This month';
+
+  @override
+  String get rangeLastMonth => 'Last month';
+
+  @override
+  String get rangeThisYear => 'This year';
+
+  @override
+  String get rangeAll => 'All dates';
+
+  @override
+  String get rangeCustom => 'Choose dates…';
+
+  @override
+  String get pagingNone => 'No rows';
+
+  @override
+  String pagingSpan(int from, int to) {
+    return '$from–$to';
+  }
+
+  @override
+  String pagingSpanOf(int from, int to, int total) {
+    return '$from–$to of $total';
+  }
+
+  @override
+  String get pagingPrevious => 'Previous page';
+
+  @override
+  String get pagingNext => 'Next page';
+
+  @override
+  String pagingPage(int n) {
+    return 'Page $n';
+  }
+
+  @override
+  String get pagingRowsPerPage => 'Rows per page';
+
+  @override
+  String get pagingRefresh => 'Refresh';
+
+  @override
+  String pagingError(String error) {
+    return 'Could not load this list: $error';
+  }
+
+  @override
+  String get pagingEmptyTitle => 'Nothing in this period';
+
+  @override
+  String get pagingEmptySubtitle => 'Choose another date range or filter.';
+
+  @override
+  String pagingExportCapped(int count) {
+    return 'Only the first $count rows were exported. Choose a shorter date range for the rest.';
+  }
+
+  @override
+  String get pagingExportCsv => 'Export CSV (date range)';
+
+  @override
+  String get auditFilterAction => 'Action';
+
+  @override
+  String get auditGroupAll => 'All actions';
+
+  @override
+  String get auditGroupInvoice => 'Invoices and payments';
+
+  @override
+  String get auditGroupTest => 'Tests';
+
+  @override
+  String get auditGroupPromotion => 'Promotions';
+
+  @override
+  String get auditGroupRegistration => 'Registrations';
+
+  @override
+  String get auditGroupSchedule => 'Timetable';
+
+  @override
+  String get auditGroupDay => 'Days closed or opened';
+
+  @override
+  String get auditGroupProgress => 'Progress rebuilds';
+
+  @override
+  String get monthlyActiveEnd => 'Active students (last month of the period)';
+
+  @override
+  String get monthlyMonth => 'Month';
+
+  @override
+  String get monthlyRevenueShort => 'Revenue';
+
+  @override
+  String get monthlyPaidShort => 'Paid invoices';
+
+  @override
+  String get monthlyNotBuiltShort => 'Not built';
+
+  @override
+  String monthlyPeriodLine(String period) {
+    return 'Period: $period';
+  }
+
+  @override
+  String get monthlyTotal => 'Total';
+
+  @override
+  String monthlyMissingMonths(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count months have no report yet. Press their Rebuild buttons; they are left out of the total.',
+      one:
+          '1 month has no report yet. Press its Rebuild button; it is left out of the total.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get periodLast3Months => 'Last 3 months';
+
+  @override
+  String get periodFrom => 'From';
+
+  @override
+  String get periodTo => 'to';
+
+  @override
+  String adminReportsPeriodSubtitle(String period) {
+    return 'Figures for $period. Every PDF covers the same period.';
+  }
+
+  @override
+  String get adminReportsNewInPeriod => 'New in period';
+
+  @override
+  String get adminReportsInPeriod => 'In period';
+
+  @override
+  String get adminReportsMonths => 'Months';
+
+  @override
+  String get adminReportsIssuedInPeriod => 'Issued in period';
 }

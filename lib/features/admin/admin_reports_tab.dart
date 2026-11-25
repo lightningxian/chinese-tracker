@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/paging/date_range.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
+import '../../core/widgets/paging_bars.dart';
 import '../../core/utils/money_format.dart';
 import '../../core/widgets/responsive_card_grid.dart';
 import '../../l10n/l10n.dart';
@@ -44,6 +46,12 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
   List<ExerciseAssignment>? _assignments;
   List<ExerciseResult>? _results;
   Object? _error;
+
+  /// Build 9B: one period for the whole tab; default this month.
+  MonthPeriod _period = MonthPeriod.thisMonth();
+
+  List<ReportMonth> get _months =>
+      ReportMonth.range(_period.from, _period.to);
 
   bool get _ready =>
       _users != null &&
@@ -105,10 +113,12 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
     }
 
     final export = context.read<AdminReportExportService>();
+    final months = _months;
     final report = AdminReportService.build(
       users: _users!,
       exercises: _exercises!,
       classTerms: _terms!,
+      months: months,
     );
     final ops = AdminOpsReportService.build(
       users: _users!,
@@ -119,8 +129,10 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
       invoices: _invoices!,
       assignments: _assignments!,
       results: _results!,
+      months: months,
     );
-    final month = ops.attendance.last.month.label;
+    final periodText =
+        _period.describe(Localizations.localeOf(context).toLanguageTag());
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -156,15 +168,21 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
             ),
             const SizedBox(height: 6),
             Text(
-              l.adminReportsSubtitle(month),
+              l.adminReportsPeriodSubtitle(periodText),
               style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 14,
               ),
             ),
-            const SizedBox(height: 24),
-            // Build 8: the monthly centre report (reports/{yyyyMM}).
-            const MonthlyReportCard(),
+            const SizedBox(height: 14),
+            MonthPeriodBar(
+              value: _period,
+              onChanged: (p) => setState(() => _period = p),
+            ),
+            const SizedBox(height: 18),
+            // Build 8: the monthly centre report (reports/{yyyyMM});
+            // Build 9B: merged over the period.
+            MonthlyReportCard(period: _period),
             const SizedBox(height: 24),
             section(l.cohortStudents, _studentTiles(l, ops, export)),
             section(l.adminReportsSectionClasses, _classTiles(l, ops, export)),
@@ -184,8 +202,15 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
     AdminOpsReportData ops,
     AdminReportExportService export,
   ) {
-    final attendance = ops.attendance.last;
+    // Build 9B: the figures add up over every month of the period.
+    final attStudents = {
+      for (final m in ops.attendance) ...m.rows.map((r) => r.studentId),
+    }.length;
+    final hadir = ops.attendance.fold(0, (s, m) => s + m.hadir);
+    final attTotal = ops.attendance.fold(0, (s, m) => s + m.total);
+    final alpa = ops.attendance.fold(0, (s, m) => s + m.alpa);
     final retention = ops.retention;
+    final newInPeriod = retention.cohorts.fold(0, (s, c) => s + c.joined);
     final levels = ops.progressByLevel;
     final students = levels.fold(0, (s, lv) => s + lv.studentCount);
     final assigned = levels.fold(0, (s, lv) => s + lv.assigned);
@@ -197,25 +222,28 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
         title: l.adminReportsAttendanceTitle,
         description: l.adminReportsAttendanceDesc,
         stats: [
-          (l.cohortStudents, '${attendance.rows.length}'),
-          (l.attendancePresent, '${attendance.presentPercent}%'),
-          (l.adminReportsAlpa, '${attendance.alpa}'),
+          (l.cohortStudents, '$attStudents'),
+          (
+            l.attendancePresent,
+            attTotal == 0 ? '—' : '${(hadir * 100 / attTotal).round()}%'
+          ),
+          (l.adminReportsAlpa, '$alpa'),
         ],
-        onExport: () => export.exportPdf(AdminExportReport.attendanceMonthly),
+        onExport: () => export.exportPdf(months: _months, AdminExportReport.attendanceMonthly),
       ),
       _ReportTile(
         number: 4,
         title: l.adminReportsRetentionTitle,
         description: l.adminReportsRetentionDesc,
         stats: [
-          (l.adminReportsNewThisMonth, '${retention.newThisMonth}'),
+          (l.adminReportsNewInPeriod, '$newInPeriod'),
           (
             l.historyStatusActive,
             '${retention.activeStudents} / ${retention.totalStudents}'
           ),
           (l.adminReportsRetention, '${retention.retentionPercent}%'),
         ],
-        onExport: () => export.exportPdf(AdminExportReport.studentRetention),
+        onExport: () => export.exportPdf(months: _months, AdminExportReport.studentRetention),
       ),
       _ReportTile(
         number: 7,
@@ -232,7 +260,7 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
             '${levels.fold(0, (s, lv) => s + lv.inactive)}'
           ),
         ],
-        onExport: () => export.exportPdf(AdminExportReport.progressByLevel),
+        onExport: () => export.exportPdf(months: _months, AdminExportReport.progressByLevel),
       ),
       _ReportTile(
         number: 8,
@@ -243,7 +271,7 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
           (l.adminReportsOpen, '${overdue.open}'),
           (l.adminReportsTeachers, '${overdue.groups.length}'),
         ],
-        onExport: () => export.exportPdf(AdminExportReport.overdueHomework),
+        onExport: () => export.exportPdf(months: _months, AdminExportReport.overdueHomework),
       ),
     ];
   }
@@ -253,32 +281,39 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
     AdminOpsReportData ops,
     AdminReportExportService export,
   ) {
-    final fill = ops.fillRate.last;
-    final recap = ops.teacherRecap.last;
-    final held = recap.rows.fold(0, (s, r) => s + r.concluded);
-    final hours = recap.rows.fold(0.0, (s, r) => s + r.teachingHours);
+    final classes = ops.fillRate.fold(0, (s, m) => s + m.classes);
+    final capacity = ops.fillRate.fold(0, (s, m) => s + m.capacity);
+    final joined = ops.fillRate.fold(0, (s, m) => s + m.joined);
+    final empty = ops.fillRate.fold(0, (s, m) => s + m.empty);
+    final recapRows = ops.teacherRecap.expand((m) => m.rows).toList();
+    final teachers = recapRows.map((r) => r.teacherId).toSet().length;
+    final held = recapRows.fold(0, (s, r) => s + r.concluded);
+    final hours = recapRows.fold(0.0, (s, r) => s + r.teachingHours);
     return [
       _ReportTile(
         number: 5,
         title: l.adminReportsFillRateTitle,
         description: l.adminReportsFillRateDesc,
         stats: [
-          (l.adminReportsClasses, '${fill.classes}'),
-          (l.commonFull, '${fill.fillPercent}%'),
-          (l.adminReportsEmpty, '${fill.empty}'),
+          (l.adminReportsClasses, '$classes'),
+          (
+            l.commonFull,
+            capacity == 0 ? '—' : '${(joined * 100 / capacity).round()}%'
+          ),
+          (l.adminReportsEmpty, '$empty'),
         ],
-        onExport: () => export.exportPdf(AdminExportReport.classFillRate),
+        onExport: () => export.exportPdf(months: _months, AdminExportReport.classFillRate),
       ),
       _ReportTile(
         number: 6,
         title: l.adminReportsTeacherRecapTitle,
         description: l.adminReportsTeacherRecapDesc,
         stats: [
-          (l.adminReportsTeachers, '${recap.rows.length}'),
+          (l.adminReportsTeachers, '$teachers'),
           (l.adminReportsClassesHeld, '$held'),
           (l.adminReportsHours, hours.toStringAsFixed(1)),
         ],
-        onExport: () => export.exportPdf(AdminExportReport.teacherRecap),
+        onExport: () => export.exportPdf(months: _months, AdminExportReport.teacherRecap),
       ),
     ];
   }
@@ -290,6 +325,7 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
   ) {
     final alerts = ops.termAlerts;
     final revenue = ops.revenue;
+    final paidInPeriod = revenue.months.fold(0, (s, m) => s + m.total);
     return [
       _ReportTile(
         number: 2,
@@ -309,18 +345,18 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
             '${alerts.count(TermAlertKind.expiredWithBalance)}'
           ),
         ],
-        onExport: () => export.exportPdf(AdminExportReport.termBalanceAlerts),
+        onExport: () => export.exportPdf(months: _months, AdminExportReport.termBalanceAlerts),
       ),
       _ReportTile(
         number: 3,
         title: l.adminReportsRevenueTitle,
         description: l.adminReportsRevenueDesc,
         stats: [
-          (l.adminReportsThisMonth, formatRupiah(revenue.thisMonth.total)),
+          (l.adminReportsInPeriod, formatRupiah(paidInPeriod)),
           (l.adminReportsUnpaid, formatRupiah(revenue.outstandingAmount)),
           (l.cohortOverdue, '${revenue.overdue.length}'),
         ],
-        onExport: () => export.exportPdf(AdminExportReport.revenueMonthly),
+        onExport: () => export.exportPdf(months: _months, AdminExportReport.revenueMonthly),
       ),
     ];
   }
@@ -330,13 +366,10 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
     AdminReportData report,
     AdminReportExportService export,
   ) {
-    final thisMonthVouchers = report.vouchersIssuedByMonth.isEmpty
-        ? 0
-        : report.vouchersIssuedByMonth.last.count;
-    final thisMonthStudents = report.newStudentsByMonth.isEmpty
-        ? 0
-        : report.newStudentsByMonth.last.count;
-    final sixMonths = report.newStudentsByMonth.fold(0, (s, m) => s + m.count);
+    final vouchersInPeriod =
+        report.vouchersIssuedByMonth.fold(0, (s, m) => s + m.count);
+    final studentsInPeriod =
+        report.newStudentsByMonth.fold(0, (s, m) => s + m.count);
     return [
       _ReportTile(
         number: 9,
@@ -347,17 +380,17 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
           (l.adminDashActiveMurid, '${report.activeStudents}'),
           (l.adminDashInactive, '${report.inactiveUsers}'),
         ],
-        onExport: () => export.exportPdf(AdminExportReport.userRoster),
+        onExport: () => export.exportPdf(months: _months, AdminExportReport.userRoster),
       ),
       _ReportTile(
         number: 10,
         title: l.adminReportsGrowthTitle,
         description: l.adminReportsGrowthDesc,
         stats: [
-          (l.adminReportsThisMonth, '$thisMonthStudents'),
-          (l.adminReportsLastSixMonths, '$sixMonths'),
+          (l.adminReportsInPeriod, '$studentsInPeriod'),
+          (l.adminReportsMonths, '${report.newStudentsByMonth.length}'),
         ],
-        onExport: () => export.exportPdf(AdminExportReport.registrationGrowth),
+        onExport: () => export.exportPdf(months: _months, AdminExportReport.registrationGrowth),
       ),
       _ReportTile(
         number: 11,
@@ -366,9 +399,9 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
         stats: [
           (l.adminReportsPackages, '${_terms!.length}'),
           (l.adminReportsLowBalance, '${report.lowVouchers}'),
-          (l.adminReportsIssuedThisMonth, '$thisMonthVouchers'),
+          (l.adminReportsIssuedInPeriod, '$vouchersInPeriod'),
         ],
-        onExport: () => export.exportPdf(AdminExportReport.voucherSessions),
+        onExport: () => export.exportPdf(months: _months, AdminExportReport.voucherSessions),
       ),
       _ReportTile(
         number: 12,
@@ -382,7 +415,7 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
             '${report.totalWorksheets - report.totalExercises}'
           ),
         ],
-        onExport: () => export.exportPdf(AdminExportReport.worksheetInventory),
+        onExport: () => export.exportPdf(months: _months, AdminExportReport.worksheetInventory),
       ),
     ];
   }

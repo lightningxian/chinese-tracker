@@ -32,6 +32,12 @@ class AdminReportExportService {
 
   final FirestoreService _firestore;
 
+  /// Build 9B: the months of the period chosen on the Reports tab.
+  List<ReportMonth>? _months;
+
+  String get _period =>
+      _months == null ? '' : ReportMonth.periodLabelEn(_months!);
+
   Future<AdminReportData> _buildReport() async {
     final users = await _firestore.watchAllUsers().first;
     final exercises = await _firestore.watchAllExercises().first;
@@ -41,6 +47,7 @@ class AdminReportExportService {
       users: users,
       exercises: exercises,
       classTerms: classTerms,
+      months: _months,
     );
   }
 
@@ -55,10 +62,13 @@ class AdminReportExportService {
       invoices: await f.watchAllInvoices().first,
       assignments: await f.watchAllExerciseAssignments().first,
       results: await f.watchAllExerciseResults().first,
+      months: _months,
     );
   }
 
-  Future<void> exportPdf(AdminExportReport type) async {
+  Future<void> exportPdf(AdminExportReport type,
+      {List<ReportMonth>? months}) async {
+    _months = months;
     final doc = await _document(type, DateTime.now());
     await Printing.layoutPdf(
       onLayout: (_) async => doc.save(),
@@ -91,11 +101,13 @@ class AdminReportExportService {
         return AdminPlatformReportsPdf.userRoster(
           users: await _firestore.watchAllUsers().first,
           generatedAt: generatedAt,
+          period: _period,
         );
       case AdminExportReport.registrationGrowth:
         return AdminPlatformReportsPdf.registrationGrowth(
           report: await _buildReport(),
           generatedAt: generatedAt,
+          period: _period,
         );
       case AdminExportReport.voucherSessions:
         final users = await _firestore.watchAllUsers().first;
@@ -105,11 +117,13 @@ class AdminReportExportService {
           usersById: {for (final u in users) u.uid: u},
           vouchersIssuedByMonth: report.vouchersIssuedByMonth,
           generatedAt: generatedAt,
+          period: _period,
         );
       case AdminExportReport.worksheetInventory:
         return AdminPlatformReportsPdf.worksheetInventory(
           report: await _buildReport(),
           generatedAt: generatedAt,
+          period: _period,
         );
     }
   }

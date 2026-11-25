@@ -22,6 +22,17 @@ function monthRange(month) {
   return {fromMs, toMs, fromDate: `${y}-${mm}-01`, toDate: `${y}-${mm}-${String(last).padStart(2, "0")}`};
 }
 
+/**
+ * Build 9B: from-month to to-month (both `yyyyMM`, both included) as one
+ * range of the same shape as [monthRange].
+ */
+function periodRange(from, to) {
+  const a = monthRange(from);
+  const b = monthRange(to);
+  if (b.toMs <= a.fromMs) throw new Error(`period ${from}–${to} ends before it starts`);
+  return {fromMs: a.fromMs, toMs: b.toMs, fromDate: a.fromDate, toDate: b.toDate};
+}
+
 /** The month before the one that holds [nowMs] (Jakarta), as `yyyyMM`. */
 function previousMonth(nowMs) {
   const d = new Date(nowMs + JAKARTA_OFFSET_MS);
@@ -35,7 +46,7 @@ const inDay = (day, r) => typeof day === "string" && day >= r.fromDate && day <=
 
 /**
  * @param {Object} input
- * @param {string} input.month yyyyMM
+ * @param {string} input.month yyyyMM (or input.from + input.to, Build 9B)
  * @param {Array} input.students {uid, createdAtMs, level, status, active}
  * @param {Array} input.invoices {status, amount, paidAtMs}
  * @param {Array} input.attendance {studentId, sessionDate, booked, attendanceStatus, status}
@@ -44,9 +55,9 @@ const inDay = (day, r) => typeof day === "string" && day >= r.fromDate && day <=
  * @param {Array} input.recaps teacher_recaps docs of the month {teacherId, teacherName, hours, held}
  * @return {Object} the report
  */
-function buildReport({month, students = [], invoices = [], attendance = [],
+function buildReport({month, from, to, students = [], invoices = [], attendance = [],
   exerciseResults = [], testResults = [], recaps = []}) {
-  const r = monthRange(month);
+  const r = from ? periodRange(from, to || from) : monthRange(month);
   const studentIds = new Set(students.map((s) => s.uid));
   const newStudents = students.filter((s) => inMs(s.createdAtMs, r)).length;
   const paid = invoices.filter((i) => i.status === "paid" && inMs(i.paidAtMs, r));
@@ -85,14 +96,10 @@ function buildReport({month, students = [], invoices = [], attendance = [],
   }
   const attendanceRate = hadir + alpa > 0 ? Math.round((hadir / (hadir + alpa)) * 1000) / 10 : null;
 
-  const teachers = recaps
-      .filter((x) => x.teacherId)
-      .map((x) => ({teacherId: x.teacherId, teacherName: x.teacherName || "",
-        held: Number(x.held) || 0, hours: Math.round((Number(x.hours) || 0) * 10) / 10}))
-      .sort((a, b) => a.teacherName.localeCompare(b.teacherName));
+  const teachers = mergeTeachers(recaps);
 
   return {
-    month,
+    month: month || `${from}-${to || from}`,
     newStudents,
     revenue,
     paidInvoices: paid.length,
@@ -104,4 +111,50 @@ function buildReport({month, students = [], invoices = [], attendance = [],
   };
 }
 
-module.exports = {monthRange, previousMonth, buildReport};
+/** Teacher rows summed per teacher (one recap per teacher and month). */
+function mergeTeachers(rows) {
+  const by = new Map();
+  for (const x of rows || []) {
+    if (!x || !x.teacherId) continue;
+    const t = by.get(x.teacherId) || {teacherId: x.teacherId, teacherName: "", held: 0, hours: 0};
+    t.teacherName = x.teacherName || t.teacherName;
+    t.held += Number(x.held) || 0;
+    t.hours += Number(x.hours) || 0;
+    by.set(x.teacherId, t);
+  }
+  return [...by.values()]
+      .map((t) => ({...t, hours: Math.round(t.hours * 10) / 10}))
+      .sort((a, b) => a.teacherName.localeCompare(b.teacherName));
+}
+
+/**
+ * Build 9B: the reports of several months as one. Counts and money are
+ * summed; the attendance rate is recomputed from the summed hadir and alpa
+ * (never an average of rates); end-of-period figures (active students,
+ * levels) come from the last month. `reports` must be oldest first. The
+ * Flutter twin is `MonthlyReport.merge` (lib/features/admin/monthly_report_card.dart).
+ */
+function mergeReports(reports) {
+  const list = (reports || []).filter(Boolean);
+  if (!list.length) return null;
+  const sum = (f) => list.reduce((t, x) => t + (Number(f(x)) || 0), 0);
+  const hadir = sum((x) => x.attendance && x.attendance.hadir);
+  const izin = sum((x) => x.attendance && x.attendance.izin);
+  const alpa = sum((x) => x.attendance && x.attendance.alpa);
+  const teachers = mergeTeachers(list.flatMap((x) => x.teachers || []));
+  const last = list[list.length - 1];
+  return {
+    month: `${list[0].month}-${last.month}`,
+    newStudents: sum((x) => x.newStudents),
+    revenue: sum((x) => x.revenue),
+    paidInvoices: sum((x) => x.paidInvoices),
+    activeStudents: Number(last.activeStudents) || 0,
+    levels: {...(last.levels || {})},
+    attendance: {hadir, izin, alpa,
+      rate: hadir + alpa > 0 ? Math.round((hadir / (hadir + alpa)) * 1000) / 10 : null},
+    teachers,
+    teachingHours: Math.round(teachers.reduce((t, x) => t + x.hours, 0) * 10) / 10,
+  };
+}
+
+module.exports = {monthRange, periodRange, previousMonth, buildReport, mergeReports};

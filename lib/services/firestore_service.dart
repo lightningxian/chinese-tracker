@@ -8,6 +8,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../core/paging/date_range.dart';
+import '../core/paging/paged_controller.dart';
 import '../core/constants/app_constants.dart';
 import '../core/constants/exercise_authoring_platform.dart';
 import '../core/errors/class_term_errors.dart';
@@ -2344,13 +2346,16 @@ class FirestoreService {
   // Audit log (Tier 3 · Phase 2) — read-only for admins; writes via Functions.
   // ---------------------------------------------------------------------------
 
-  Stream<List<AuditLog>> watchAuditLogs({int limit = 200}) {
-    return _db
-        .collection(AppConstants.auditLogsCollection)
-        .orderBy('createdAt', descending: true)
-        .limit(limit)
-        .snapshots()
-        .map((snap) => snap.docs.map(AuditLog.fromFirestore).toList());
+  /// Build 9A: the audit log, one page at a time, newest first, within
+  /// [range] and (optionally) one action group. Index: action + createdAt.
+  PageSource<AuditLog> auditLogSource(DateRangeSel range,
+      {AuditActionGroup? group}) {
+    Query<Map<String, dynamic>> q =
+        _db.collection(AppConstants.auditLogsCollection);
+    if (group != null) q = q.where('action', whereIn: group.actions);
+    q = applyDateRange(
+        q.orderBy('createdAt', descending: true), 'createdAt', range);
+    return FirestorePageSource(q, AuditLog.fromFirestore);
   }
 
   // ---------------------------------------------------------------------------

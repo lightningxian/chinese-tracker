@@ -8755,4 +8755,155 @@ class AppLocalizationsId extends AppLocalizations {
   String testsCodeRemovedKept(String code) {
     return '$code dihapus. Kode ini sudah dipakai, jadi hasilnya disimpan dan namanya tetap terpakai.';
   }
+
+  @override
+  String get rangeToday => 'Hari ini';
+
+  @override
+  String get rangeLast7 => '7 hari terakhir';
+
+  @override
+  String get rangeThisMonth => 'Bulan ini';
+
+  @override
+  String get rangeLastMonth => 'Bulan lalu';
+
+  @override
+  String get rangeThisYear => 'Tahun ini';
+
+  @override
+  String get rangeAll => 'Semua tanggal';
+
+  @override
+  String get rangeCustom => 'Pilih tanggal…';
+
+  @override
+  String get pagingNone => 'Tidak ada baris';
+
+  @override
+  String pagingSpan(int from, int to) {
+    return '$from–$to';
+  }
+
+  @override
+  String pagingSpanOf(int from, int to, int total) {
+    return '$from–$to dari $total';
+  }
+
+  @override
+  String get pagingPrevious => 'Halaman sebelumnya';
+
+  @override
+  String get pagingNext => 'Halaman berikutnya';
+
+  @override
+  String pagingPage(int n) {
+    return 'Halaman $n';
+  }
+
+  @override
+  String get pagingRowsPerPage => 'Baris per halaman';
+
+  @override
+  String get pagingRefresh => 'Muat ulang';
+
+  @override
+  String pagingError(String error) {
+    return 'Daftar ini tidak dapat dimuat: $error';
+  }
+
+  @override
+  String get pagingEmptyTitle => 'Tidak ada data pada periode ini';
+
+  @override
+  String get pagingEmptySubtitle => 'Pilih rentang tanggal atau filter lain.';
+
+  @override
+  String pagingExportCapped(int count) {
+    return 'Hanya $count baris pertama yang diekspor. Pilih rentang tanggal yang lebih pendek untuk sisanya.';
+  }
+
+  @override
+  String get pagingExportCsv => 'Ekspor CSV (rentang tanggal)';
+
+  @override
+  String get auditFilterAction => 'Aksi';
+
+  @override
+  String get auditGroupAll => 'Semua aksi';
+
+  @override
+  String get auditGroupInvoice => 'Tagihan dan pembayaran';
+
+  @override
+  String get auditGroupTest => 'Tes';
+
+  @override
+  String get auditGroupPromotion => 'Kenaikan level';
+
+  @override
+  String get auditGroupRegistration => 'Pendaftaran';
+
+  @override
+  String get auditGroupSchedule => 'Jadwal';
+
+  @override
+  String get auditGroupDay => 'Hari ditutup atau dibuka';
+
+  @override
+  String get auditGroupProgress => 'Penyusunan ulang progres';
+
+  @override
+  String get monthlyActiveEnd => 'Murid aktif (bulan terakhir periode)';
+
+  @override
+  String get monthlyMonth => 'Bulan';
+
+  @override
+  String get monthlyRevenueShort => 'Pendapatan';
+
+  @override
+  String get monthlyPaidShort => 'Tagihan lunas';
+
+  @override
+  String get monthlyNotBuiltShort => 'Belum dibuat';
+
+  @override
+  String monthlyPeriodLine(String period) {
+    return 'Periode: $period';
+  }
+
+  @override
+  String get monthlyTotal => 'Total';
+
+  @override
+  String monthlyMissingMonths(int count) {
+    return '$count bulan belum punya laporan. Tekan tombol Buat ulang pada bulan itu; bulan tersebut tidak dihitung dalam total.';
+  }
+
+  @override
+  String get periodLast3Months => '3 bulan terakhir';
+
+  @override
+  String get periodFrom => 'Dari';
+
+  @override
+  String get periodTo => 'sampai';
+
+  @override
+  String adminReportsPeriodSubtitle(String period) {
+    return 'Angka untuk $period. Setiap PDF memakai periode yang sama.';
+  }
+
+  @override
+  String get adminReportsNewInPeriod => 'Baru dalam periode';
+
+  @override
+  String get adminReportsInPeriod => 'Dalam periode';
+
+  @override
+  String get adminReportsMonths => 'Bulan';
+
+  @override
+  String get adminReportsIssuedInPeriod => 'Terbit dalam periode';
 }
