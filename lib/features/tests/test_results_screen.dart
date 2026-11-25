@@ -140,7 +140,12 @@ class _ResultRow extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${r.code} · $date',
+                  [
+                    r.code,
+                    date,
+                    if (sittingLabel(l, r.sittingNo, repeat: r.isRepeat).isNotEmpty)
+                      sittingLabel(l, r.sittingNo, repeat: r.isRepeat),
+                  ].join(' · '),
                   style:
                       TextStyle(color: AppColors.textSecondary, fontSize: 12),
                 ),
@@ -389,7 +394,8 @@ class TestResultScreen extends StatelessWidget {
                           if (!staff)
                             OutlinedButton.icon(
                               onPressed: () => context.push(
-                                  '/student/test-review/${Uri.encodeComponent(r.codeId)}'),
+                                  '/student/test-review/${Uri.encodeComponent(r.codeId)}'
+                                  '?result=${Uri.encodeComponent(r.id)}'),
                               icon: const Icon(Icons.menu_book_outlined),
                               label: Text(l.testsOpenReview),
                             ),

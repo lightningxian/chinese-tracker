@@ -2473,5 +2473,8 @@
   "exercisePlayAttemptsInfo": "Setiap percobaan punya waktunya sendiri. Setelah selesai, Anda boleh memulai percobaan baru; setiap percobaan disimpan dengan nomornya.",
   "exercisePlayEarlierAttempts": "Percobaan Anda sebelumnya",
   "exercisePlayStartAttempt": "Mulai percobaan ke-{n}",
-  "resultAttemptNo": "Percobaan ke-{n}"
+  "resultAttemptNo": "Percobaan ke-{n}",
+  "testsSitting": "Ujian ke-{n}",
+  "testsSittingRepeat": "Ujian ke-{n} · latihan",
+  "testsRepeatIntro": "Ini ujian ke-{n} Anda untuk tes ini. Ujian pertama yang dihitung untuk papan peringkat dan kenaikan level; yang ini latihan."
 }

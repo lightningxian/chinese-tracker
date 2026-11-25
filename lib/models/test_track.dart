@@ -573,10 +573,21 @@ class TestResult {
     this.leftCount = 0,
     this.finishedAt,
     this.placement = false,
+    this.sittingNo = 1,
+    this.counts,
   });
 
   /// Build 3: sat in a placement session (off the board and the count).
   final bool placement;
+
+  /// Build 9D: which sitting of this code (1 = the first).
+  final int sittingNo;
+
+  /// Build 9D: false = a practice repeat (the first valid sitting counts);
+  /// null = not stamped yet (results from before Build 9D count).
+  final bool? counts;
+
+  bool get isRepeat => counts == false;
 
   final String id;
   final String codeId;
@@ -638,6 +649,8 @@ class TestResult {
       resultNumber: m['resultNumber'] as String? ?? '',
       releaseYear: (m['releaseYear'] as num?)?.toInt(),
       leftCount: (m['leftCount'] as num?)?.toInt() ?? 0,
+      sittingNo: (m['sittingNo'] as num?)?.toInt() ?? 1,
+      counts: m['counts'] as bool?,
       finishedAt: (m['finishedAt'] as Timestamp?)?.toDate(),
       placement: m['placement'] == true,
     );

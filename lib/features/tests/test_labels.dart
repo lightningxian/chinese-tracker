@@ -54,3 +54,10 @@ String testErrorMessage(AppLocalizations l, Object error) {
   }
   return '$error';
 }
+
+/// Build 9D: "Sitting 2 · practice" (a repeat) or "Sitting 2" (it counts,
+/// because the first sitting was invalid); empty for the first sitting.
+String sittingLabel(AppLocalizations l, int sittingNo, {bool repeat = false}) {
+  if (sittingNo <= 1 && !repeat) return '';
+  return repeat ? l.testsSittingRepeat(sittingNo) : l.testsSitting(sittingNo);
+}

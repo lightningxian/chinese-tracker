@@ -8945,4 +8945,19 @@ class AppLocalizationsId extends AppLocalizations {
   String resultAttemptNo(int n) {
     return 'Percobaan ke-$n';
   }
+
+  @override
+  String testsSitting(int n) {
+    return 'Ujian ke-$n';
+  }
+
+  @override
+  String testsSittingRepeat(int n) {
+    return 'Ujian ke-$n · latihan';
+  }
+
+  @override
+  String testsRepeatIntro(int n) {
+    return 'Ini ujian ke-$n Anda untuk tes ini. Ujian pertama yang dihitung untuk papan peringkat dan kenaikan level; yang ini latihan.';
+  }
 }

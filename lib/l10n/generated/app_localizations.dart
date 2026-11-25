@@ -14759,6 +14759,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Attempt {n}'**
   String resultAttemptNo(int n);
+
+  /// No description provided for @testsSitting.
+  ///
+  /// In en, this message translates to:
+  /// **'Sitting {n}'**
+  String testsSitting(int n);
+
+  /// No description provided for @testsSittingRepeat.
+  ///
+  /// In en, this message translates to:
+  /// **'Sitting {n} · practice'**
+  String testsSittingRepeat(int n);
+
+  /// No description provided for @testsRepeatIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'This is your sitting {n} of this test. Your first sitting is the one that counts for the leaderboard and promotion; this one is practice.'**
+  String testsRepeatIntro(int n);
 }
 
 class _AppLocalizationsDelegate

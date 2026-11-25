@@ -113,6 +113,22 @@ assert.equal(p.rankPrefix(0, 59), "100000-00000059");
 assert.ok(p.boardEntryOf(result("A", 200, {}), code("A")).rankKey.startsWith("099800-"));
 assert.equal(p.boardEntryOf(result("A", 200, {valid: false}), code("A")), null);
 
+// Build 9D: the first valid sitting counts; repeats are practice.
+const sit = (codeId, n, total, extra = {}) => ({codeId, sittingNo: n, total,
+  finishedAt: new Date(Date.UTC(2026, 10, n, 9)), valid: true, status: "final", ...extra});
+const s1 = sit("A", 1, 150), s2 = sit("A", 2, 250), b1 = sit("B", 1, 200);
+assert.equal(p.countingSittings([s2, s1, b1]).get("A"), s1, "a better repeat never counts");
+assert.equal(p.countingSittings([s2, s1]).get("A").total, 150);
+const s1bad = sit("A", 1, 290, {valid: false});
+assert.equal(p.countingSittings([s1bad, s2]).get("A"), s2, "an invalid first gives way");
+const s1pending = sit("A", 1, 0, {status: "pending_marking"});
+assert.equal(p.countingSittings([s1pending, s2]).get("A"), s1pending, "pending still counts");
+assert.equal(p.countingSittings([{codeId: "C", total: 1}]).get("C").total, 1,
+    "results from before Build 9D are sitting 1");
+assert.deepEqual(p.countingOnly([s1, s2, b1]), [s1, b1]);
+assert.equal(p.sittingNoOf({}), 1);
+assert.equal(p.sittingNoOf({sittingNo: 3}), 3);
+
 // Owner 2026-11-24 (Q12): the admin promotes straight away, only upwards.
 assert.deepEqual(p.manualPromotion("HSK 2", "HSK 4"),
     {fromKey: "2", toKey: "4", fromLevel: "HSK 2", toLevel: "HSK 4"});

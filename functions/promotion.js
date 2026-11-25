@@ -93,6 +93,40 @@ function entryOf(result, code) {
   };
 }
 
+/**
+ * Build 9D (owner 2026-11-26, "first sitting counts"): a student may sit a
+ * code again in a new session; the **first valid sitting** is the one that
+ * counts for the board, the promotion count and placement. Later sittings
+ * are kept as practice repeats. A pending first sitting still counts (it
+ * becomes final when marked); an invalid one gives way to the next.
+ * @param {Array<Object>} results the student's `test_results` of any codes
+ * @return {Map<string, Object>} codeId → the counting result
+ */
+function sittingNoOf(r) {
+  const n = Math.floor(Number(r && r.sittingNo) || 1);
+  return n >= 1 ? n : 1;
+}
+
+function countingSittings(results) {
+  const by = new Map();
+  for (const r of results || []) {
+    if (!r || !r.codeId || r.valid === false) continue;
+    const cur = by.get(r.codeId);
+    const key = [sittingNoOf(r), millis(r.finishedAt) || 0];
+    const curKey = cur ? [sittingNoOf(cur), millis(cur.finishedAt) || 0] : null;
+    if (!cur || key[0] < curKey[0] || (key[0] === curKey[0] && key[1] < curKey[1])) {
+      by.set(r.codeId, r);
+    }
+  }
+  return by;
+}
+
+/** Only the counting sitting of each code (for counts and the board). */
+function countingOnly(results) {
+  const by = countingSittings(results);
+  return (results || []).filter((r) => r && by.get(r.codeId) === r);
+}
+
 /** [entryOf] with its `rankKey` (Build 9C). */
 function boardEntryOf(result, code) {
   const e = entryOf(result, code);
@@ -241,6 +275,7 @@ module.exports = {
   pathProgress,
   LEVELS, DEFAULT_MIN_CODES, levelKeyOf, nextLevelKey, groupOf, peerLabel,
   isFinal, isValid, isPlacement, entryOf, boardEntryOf, rankPrefix, rankKeyOf,
+  sittingNoOf, countingSittings, countingOnly,
   compareEntries, rankEntries,
   countsAt, promotionState, promotionId, manualPromotion,
 };

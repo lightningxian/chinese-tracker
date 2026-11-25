@@ -111,6 +111,14 @@ class TestResultCard extends StatelessWidget {
             const SizedBox(height: 6),
             Center(child: PlacementChip(label: l.placementTestLabel)),
           ],
+          // Build 9D: a later sitting says so; a repeat is practice.
+          if (sittingLabel(l, r.sittingNo, repeat: r.isRepeat).isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Center(
+              child: PlacementChip(
+                  label: sittingLabel(l, r.sittingNo, repeat: r.isRepeat)),
+            ),
+          ],
           const SizedBox(height: 14),
           Table(
             border: TableBorder.all(color: line),

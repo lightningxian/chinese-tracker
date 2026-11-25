@@ -92,6 +92,8 @@ const s3 = await signIn("student3@test.chinesetracker");
 for (const s of [s1, s2, s3]) {
   await deleteDoc(`test_attempts/${CODE}_${s.uid}`);
   await deleteDoc(`test_results/${CODE}_${s.uid}`);
+  await deleteDoc(`test_attempts/${CODE}_${s.uid}_s2`);
+  await deleteDoc(`test_results/${CODE}_${s.uid}_s2`);
 }
 
 let session;
@@ -262,6 +264,55 @@ await step("once the session is closed the review opens: answers, keys, explanat
   assert.ok(first.review.explanation.length > 0);
   assert.deepEqual(first.answer, {index: 0});
   assert.ok(r.data.recordings["0"].endsWith("hsk3_listening.wav"));
+});
+
+// Build 9D (owner 2026-11-26, "first sitting counts"): a new session lets a
+// student sit the code again; the first valid sitting keeps counting.
+await step("LV-02 a new session allows sitting 2: a practice repeat, sitting 1 still counts", async () => {
+  const first = await readDoc(`test_results/${CODE}_${s1.uid}`);
+  const again = (await call(teacher, "openTestSession", {codeId: CODE})).data;
+  const peek = await call(s1, "startTest", {token: again.token, peek: true});
+  assert.ok(peek.data, JSON.stringify(peek.error));
+  assert.equal(peek.data.sittingNo, 2);
+  assert.equal(peek.data.repeat, true);
+  const st = await call(s1, "startTest", {token: again.token});
+  assert.ok(st.data, JSON.stringify(st.error));
+  assert.equal(st.data.attemptId, `${CODE}_${s1.uid}_s2`);
+  assert.equal(st.data.sittingNo, 2);
+  // Resume by code finds sitting 2, not the finished sitting 1.
+  const resumed = await call(s1, "startTest", {codeId: CODE});
+  assert.equal(resumed.data.attemptId, `${CODE}_${s1.uid}_s2`);
+  for (let part = 0; part < 3; part++) {
+    const r = await call(s1, "submitTestPart", {codeId: CODE, partIndex: part, answers: {}});
+    assert.ok(r.data, JSON.stringify(r.error));
+    if (part === 2) assert.equal(r.data.resultId, `${CODE}_${s1.uid}_s2`);
+  }
+  const second = await readDoc(`test_results/${CODE}_${s1.uid}_s2`);
+  assert.equal(second.sittingNo, 2);
+  await waitFor(async () => (await readDoc(`test_results/${CODE}_${s1.uid}_s2`)).counts === false,
+      "sitting 2 marked as a repeat");
+  await waitFor(async () => (await readDoc(`test_results/${CODE}_${s1.uid}`)).counts === true,
+      "sitting 1 marked as counting");
+  const e = await waitFor(() => readDoc(`leaderboards/${CODE}/entries/${s1.uid}`), "the board entry");
+  assert.equal(e.total, first.total, "the board keeps sitting 1");
+  // The same session never gives a third sitting.
+  const third = await call(s1, "startTest", {token: again.token});
+  assert.equal(reasonOf(third), "already-attempted");
+  await call(teacher, "closeTestSession", {sessionId: again.sessionId});
+  const review = await call(s1, "getTestReview", {codeId: CODE, resultId: `${CODE}_${s1.uid}`});
+  assert.ok(review.data, JSON.stringify(review.error));
+  assert.deepEqual(review.data.items[0].answer, {index: 0}, "the review of sitting 1");
+  const review2 = await call(s1, "getTestReview", {codeId: CODE});
+  assert.equal(review2.data.items[0].answer, null, "the latest sitting: nothing answered");
+});
+
+await step("LV-02 only the latest sitting can be reset; sitting 1 is back as the only one", async () => {
+  const one = await call(admin, "resetTestAttempt", {resultId: `${CODE}_${s1.uid}`, reason: "flow"});
+  assert.equal(reasonOf(one), "not-latest");
+  const two = await call(admin, "resetTestAttempt", {resultId: `${CODE}_${s1.uid}_s2`, reason: "flow"});
+  assert.ok(two.data, JSON.stringify(two.error));
+  assert.equal(await readDoc(`test_results/${CODE}_${s1.uid}_s2`), null);
+  assert.equal((await readDoc(`test_attempts/${CODE}_${s1.uid}`)).latestSitting, 1);
 });
 
 await step("mark invalid needs a reason; invalid never passes; valid again restores", async () => {

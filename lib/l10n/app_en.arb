@@ -3283,5 +3283,11 @@
   "exercisePlayStartAttempt": "Start attempt {n}",
   "@exercisePlayStartAttempt": {"placeholders": {"n": {"type": "int"}}},
   "resultAttemptNo": "Attempt {n}",
-  "@resultAttemptNo": {"placeholders": {"n": {"type": "int"}}}
+  "@resultAttemptNo": {"placeholders": {"n": {"type": "int"}}},
+  "testsSitting": "Sitting {n}",
+  "@testsSitting": {"placeholders": {"n": {"type": "int"}}},
+  "testsSittingRepeat": "Sitting {n} · practice",
+  "@testsSittingRepeat": {"placeholders": {"n": {"type": "int"}}},
+  "testsRepeatIntro": "This is your sitting {n} of this test. Your first sitting is the one that counts for the leaderboard and promotion; this one is practice.",
+  "@testsRepeatIntro": {"placeholders": {"n": {"type": "int"}}}
 }

@@ -526,6 +526,16 @@ class _StartScreen extends StatelessWidget {
                       child: PlacementChip(label: l.placementTestLabel),
                     ),
                   ),
+                // Build 9D: a second sitting of the same code is practice.
+                if (f.sittingNo > 1)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Text(
+                      l.testsRepeatIntro(f.sittingNo),
+                      style: TextStyle(
+                          color: AppColors.chipAmberFg, fontWeight: FontWeight.w600),
+                    ),
+                  ),
                 Text(
                   chineseExamType(f.family, f.levelKey),
                   style: TextStyle(

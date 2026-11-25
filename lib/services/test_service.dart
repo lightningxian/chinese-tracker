@@ -343,11 +343,13 @@ class TestService implements TestPlayBackend {
     }
   }
 
-  /// The review of a finished test, once its session is closed.
-  Future<TestReview> review(String codeId) async {
-    final r = await _functions
-        .httpsCallable('getTestReview')
-        .call({'codeId': codeId});
+  /// The review of a finished test, once its session is closed. Build 9D:
+  /// [resultId] picks one sitting (default: the latest).
+  Future<TestReview> review(String codeId, {String? resultId}) async {
+    final r = await _functions.httpsCallable('getTestReview').call({
+      'codeId': codeId,
+      if (resultId != null && resultId.isNotEmpty) 'resultId': resultId,
+    });
     return TestReview.fromServer(Map<String, dynamic>.from(r.data as Map));
   }
 
@@ -467,10 +469,14 @@ class TestFacts {
     this.releaseYear,
     this.started = false,
     this.placement = false,
+    this.sittingNo = 1,
   });
 
   /// Build 3: a placement test (the start screen and the card say so).
   final bool placement;
+
+  /// Build 9D: the sitting this start opens (2+ = a practice repeat).
+  final int sittingNo;
 
   final String codeId;
   final String code;
@@ -500,6 +506,7 @@ class TestFacts {
         releaseYear: (m['releaseYear'] as num?)?.toInt(),
         started: m['started'] == true,
         placement: m['placement'] == true,
+        sittingNo: (m['sittingNo'] as num?)?.toInt() ?? 1,
       );
 }
 

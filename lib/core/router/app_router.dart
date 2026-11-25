@@ -755,6 +755,7 @@ class AppRouter {
               path: 'test-review/:codeId',
               builder: (_, state) => TestReviewScreen(
                 codeId: state.pathParameters['codeId']!,
+                resultId: state.uri.queryParameters['result'],
               ),
             ),
             GoRoute(

@@ -1918,6 +1918,28 @@ async function recordWrongToken(uid) {
 }
 
 /** The open session a token belongs to, or null. */
+/**
+ * Build 9D: sitting 1 lives at `{codeId}_{uid}` (attempt and result), a
+ * later sitting n at `{codeId}_{uid}_s{n}`. The sitting-1 attempt keeps
+ * `latestSitting`, so every call finds the student's current sitting.
+ */
+function sittingId(codeId, uid, n) {
+  return n > 1 ? `${codeId}_${uid}_s${n}` : `${codeId}_${uid}`;
+}
+
+async function currentSitting(codeId, uid, tx = null) {
+  const headRef = db.collection(TEST_ATTEMPTS).doc(sittingId(codeId, uid, 1));
+  const headSnap = tx ? await tx.get(headRef) : await headRef.get();
+  const head = headSnap.exists ? headSnap.data() || {} : null;
+  const latest = head ? Math.max(1, Math.floor(Number(head.latestSitting) || 1)) : 1;
+  if (latest === 1) {
+    return {id: headRef.id, ref: headRef, data: head, headRef, head, latest};
+  }
+  const ref = db.collection(TEST_ATTEMPTS).doc(sittingId(codeId, uid, latest));
+  const snap = tx ? await tx.get(ref) : await ref.get();
+  return {id: ref.id, ref, data: snap.exists ? snap.data() || {} : null, headRef, head, latest};
+}
+
 async function sessionForToken(token) {
   const snap = await db.collection(TEST_SESSIONS)
       .where("token", "==", token).where("status", "==", "open").limit(1).get();
@@ -2009,6 +2031,8 @@ function writeTestResult(writer, {attemptId, attempt, codeId, code, format, spli
     openMarking: scored.open,
     resultNumber: tests.resultNumber(attemptId, nowMs),
     leftCount: Number(attempt.leftCount) || 0,
+    // Build 9D: which sitting of this code (1 = the first; see `counts`).
+    sittingNo: Math.max(1, Number(attempt.sittingNo) || 1),
     // Build 3: placement results stay off the board and the count.
     placement: attempt.placement === true || code.placement === true ||
       !!(session && session.placement === true),
@@ -2129,41 +2153,57 @@ exports.startTest = onCall(async (request) => {
   }
 
   const {code, format} = await loadTestCode(codeId);
-  const attemptId = `${codeId}_${uid}`;
-  const attemptRef = db.collection(TEST_ATTEMPTS).doc(attemptId);
-  const existingSnap = await attemptRef.get();
-  const existing = existingSnap.exists ? existingSnap.data() || {} : null;
-  if (existing && existing.finishedAt) {
+  const cur = await currentSitting(codeId, uid);
+  const existing = cur.data;
+  // Build 9D (owner 2026-11-26): a finished student may sit the code again,
+  // only in a new session opened by staff (a new token). The first valid
+  // sitting counts; this one is a practice repeat.
+  const newSitting = !!(existing && existing.finishedAt && session &&
+    sessionRef.id !== existing.sessionId);
+  if (existing && existing.finishedAt && !newSitting) {
     throw new HttpsError("failed-precondition", "You have already sat this test.",
         {reason: "already-attempted", codeId});
   }
-  if (!existing && !session) {
+  const fresh = !existing || newSitting;
+  if (fresh && !session) {
     throw new HttpsError("not-found", "Type the token from your teacher.",
         {reason: "no-attempt"});
   }
-  if (!existing && millisOf(session.joinUntil) < nowMs) {
+  if (fresh && millisOf(session.joinUntil) < nowMs) {
     throw new HttpsError("deadline-exceeded",
         "The time to join has ended. Ask for a new token.", {reason: "join-closed"});
   }
-  if (!existing && code.active === false) {
+  if (fresh && code.active === false) {
     throw new HttpsError("failed-precondition", "This test code is not active.");
   }
 
-  const partClocks = existing ?
+  const partClocks = !fresh ?
     existing.partClocks !== false : session.partClocks !== false;
-  const placement = existing ? existing.placement === true : session.placement === true;
+  const placement = !fresh ? existing.placement === true : session.placement === true;
   const facts = testFacts(codeId, code, format, partClocks, placement);
+  const nextSitting = newSitting ? cur.latest + 1 : (existing ? cur.latest : 1);
   if (data.peek === true) {
-    return {...facts, started: !!existing, finished: false};
+    return {...facts, started: !fresh, finished: false,
+      sittingNo: nextSitting, repeat: nextSitting > 1};
   }
 
   const split = await loadTestParts(code, format);
   const out = await db.runTransaction(async (tx) => {
-    const snap = await tx.get(attemptRef);
-    let attempt = snap.exists ? snap.data() || {} : null;
+    const now = await currentSitting(codeId, uid, tx);
+    let attemptId = now.id;
+    let attemptRef = now.ref;
+    let attempt = now.data;
+    let sittingNo = now.latest;
     if (attempt && attempt.finishedAt) {
-      throw new HttpsError("failed-precondition", "You have already sat this test.",
-          {reason: "already-attempted", codeId});
+      if (!(sessionRef && sessionRef.id !== attempt.sessionId)) {
+        throw new HttpsError("failed-precondition", "You have already sat this test.",
+            {reason: "already-attempted", codeId});
+      }
+      sittingNo = now.latest + 1;
+      attemptId = sittingId(codeId, uid, sittingNo);
+      attemptRef = db.collection(TEST_ATTEMPTS).doc(attemptId);
+      attempt = null;
+      tx.update(now.headRef, {latestSitting: sittingNo});
     }
     if (!attempt) {
       const startedTs = Timestamp.fromMillis(nowMs);
@@ -2178,6 +2218,7 @@ exports.startTest = onCall(async (request) => {
         supervisorName: session.openedByName || "",
         partClocks,
         placement,
+        sittingNo,
         partIndex: 0,
         partCount: tests.clockFormat(format, partClocks).parts.length,
         partStartedAt: [startedTs],
@@ -2189,7 +2230,7 @@ exports.startTest = onCall(async (request) => {
         startedAt: startedTs,
       };
       tx.set(attemptRef, attempt);
-      return {attempt, finished: false};
+      return {attempt, attemptId, finished: false};
     }
     const adv = advanceExpiredParts(attempt, format, nowMs);
     if (adv.finished) {
@@ -2202,7 +2243,7 @@ exports.startTest = onCall(async (request) => {
       });
       writeTestResult(tx, {attemptId, attempt: closed, codeId, code, format, split,
         session: sSnap && sSnap.exists ? sSnap.data() : null});
-      return {attempt: closed, finished: true};
+      return {attempt: closed, attemptId, finished: true};
     }
     if (adv.changed) {
       const startedTs = adv.partStartedAt[adv.partIndex];
@@ -2212,11 +2253,12 @@ exports.startTest = onCall(async (request) => {
       });
       attempt = {...attempt, partIndex: adv.partIndex, partStartedAt: adv.partStartedAt};
     }
-    return {attempt, finished: false};
+    return {attempt, attemptId, finished: false};
   });
 
-  if (out.finished) return {...facts, finished: true, resultId: attemptId};
-  return {...facts, finished: false, attemptId,
+  if (out.finished) return {...facts, finished: true, resultId: out.attemptId};
+  return {...facts, finished: false, attemptId: out.attemptId,
+    sittingNo: Number(out.attempt.sittingNo) || 1,
     ...partPayload(split, format, out.attempt, Date.now())};
 });
 
@@ -2235,8 +2277,8 @@ exports.submitTestPart = onCall(async (request) => {
     throw new HttpsError("invalid-argument", "partIndex is required.");
   }
   const split = await loadTestParts(code, format);
-  const attemptId = `${codeId}_${uid}`;
-  const attemptRef = db.collection(TEST_ATTEMPTS).doc(attemptId);
+  // Build 9D: the student's current sitting.
+  const {id: attemptId, ref: attemptRef} = await currentSitting(codeId, uid);
 
   const out = await db.runTransaction(async (tx) => {
     const snap = await tx.get(attemptRef);
@@ -2311,7 +2353,7 @@ exports.reportTestEvent = onCall(async (request) => {
   const type = data.type === "back" ? "back" : "left";
   const codeId = tests.normalizeTestCode(data.codeId);
   if (!codeId) throw new HttpsError("invalid-argument", "codeId is required.");
-  const ref = db.collection(TEST_ATTEMPTS).doc(`${codeId}_${uid}`);
+  const {ref} = await currentSitting(codeId, uid);
   return db.runTransaction(async (tx) => {
     const snap = await tx.get(ref);
     if (!snap.exists) return {recorded: false};
@@ -2496,8 +2538,15 @@ exports.setTestResultValidity = onCall(async (request) => {
 exports.getTestReview = onCall(async (request) => {
   const {uid} = await requireStudent(request);
   const {id: codeId, code, format} = await loadTestCode((request.data || {}).codeId);
-  const attemptSnap = await db.collection(TEST_ATTEMPTS).doc(`${codeId}_${uid}`).get();
+  // Build 9D: the review of one sitting (`resultId`), else the current one.
+  const wanted = String((request.data || {}).resultId || "").trim();
+  const reviewId = wanted && (wanted === sittingId(codeId, uid, 1) ||
+    wanted.startsWith(`${codeId}_${uid}_s`)) ? wanted : (await currentSitting(codeId, uid)).id;
+  const attemptSnap = await db.collection(TEST_ATTEMPTS).doc(reviewId).get();
   const attempt = attemptSnap.exists ? attemptSnap.data() || {} : null;
+  if (attempt && attempt.studentId !== uid) {
+    throw new HttpsError("permission-denied", "This is not your test.");
+  }
   if (!attempt || !attempt.finishedAt) {
     throw new HttpsError("failed-precondition", "Finish the test first.",
         {reason: "not-finished"});
@@ -2522,7 +2571,7 @@ exports.getTestReview = onCall(async (request) => {
   // Build 2A: the teacher's marks replace the machine's points.
   const marks = {};
   const queue = await db.collection(MARKING_ITEMS)
-      .where("resultId", "==", `${codeId}_${uid}`).get();
+      .where("resultId", "==", reviewId).get();
   for (const d of queue.docs) {
     const m = d.data() || {};
     marks[m.questionId] = m.status === "marked" ?
@@ -2646,9 +2695,26 @@ exports.resetTestAttempt = onCall(async (request) => {
     throw new HttpsError("not-found", "Nothing to reset.");
   }
   const r = resultSnap.exists ? resultSnap.data() || {} : {};
+  // Build 9D: only the latest sitting can be reset (sitting 1 carries the
+  // pointer to the later ones); the pointer steps back one.
+  const a = attemptSnap.exists ? attemptSnap.data() || {} : {};
+  const codeId = r.codeId || a.codeId || "";
+  const studentId = r.studentId || a.studentId || "";
+  const n = Math.max(1, Number(r.sittingNo || a.sittingNo) || 1);
+  let headRef = null;
+  if (codeId && studentId) {
+    const cur = await currentSitting(codeId, studentId);
+    if (cur.head && cur.latest !== n) {
+      throw new HttpsError("failed-precondition",
+          "Only the latest sitting can be reset. Reset the later sittings first.",
+          {reason: "not-latest"});
+    }
+    if (n > 1) headRef = cur.headRef;
+  }
   const batch = db.batch();
   batch.delete(resultRef);
   batch.delete(attemptRef);
+  if (headRef) batch.update(headRef, {latestSitting: n - 1});
   queue.docs.forEach((d) => batch.delete(d.ref));
   await batch.commit();
   await writeAudit({action: "test.attempt.reset", actorId: uid,
@@ -2720,17 +2786,15 @@ async function syncPromotion(uid) {
   ]);
   // Owner 2026-11-24: a level with a checklist uses it instead of the count.
   const pathItems = pathSnap.exists ? (pathSnap.data() || {}).items || [] : [];
-  const codeIds = [...new Set(resultsSnap.docs
-      .map((d) => (d.data() || {}).codeId).filter(Boolean))];
+  // Build 9D: a repeat sitting never counts toward promotion.
+  const countingDocs = promo.countingOnly(resultsSnap.docs.map((d) => d.data() || {}));
+  const codeIds = [...new Set(countingDocs.map((x) => x.codeId).filter(Boolean))];
   const codes = {};
   await Promise.all(codeIds.map(async (id) => {
     const s = await db.collection(TEST_CODES).doc(id).get();
     codes[id] = s.exists ? s.data() || {} : {};
   }));
-  const rows = resultsSnap.docs.map((d) => {
-    const result = d.data() || {};
-    return {result, code: codes[result.codeId] || {}};
-  });
+  const rows = countingDocs.map((result) => ({result, code: codes[result.codeId] || {}}));
   const state = promo.promotionState(rows, levelKey, minCodes);
   let path = null;
   if (pathItems.length) {
@@ -2838,11 +2902,38 @@ exports.onTestResultWritten = onDocumentWritten(`${TEST_RESULTS}/{resultId}`, as
   const after = event.data && event.data.after.exists ? event.data.after.data() : null;
   const r = after || before;
   if (!r) return;
-  await syncLeaderboardEntry(r.codeId, r.studentId, after);
+  // Build 9D: the first valid sitting of the code counts; later sittings
+  // are practice. Each result carries `counts` (written here only when it
+  // changes, so this trigger settles after one more run).
+  const counting = await markCountingSittings(r.codeId, r.studentId);
+  await syncLeaderboardEntry(r.codeId, r.studentId, counting ? counting.data : null);
   await syncPromotion(r.studentId);
-  if (after) await syncPlacement(event.params.resultId, after);
+  if (after && counting && counting.id === event.params.resultId) {
+    await syncPlacement(event.params.resultId, after);
+  }
   await safeRefresh(r.studentId, "test result");
 });
+
+/** Stamps `counts` on every sitting of one code; returns the counting one. */
+async function markCountingSittings(codeId, uid) {
+  if (!codeId || !uid) return null;
+  const snap = await db.collection(TEST_RESULTS)
+      .where("studentId", "==", uid).where("codeId", "==", codeId).get();
+  const rows = snap.docs.map((d) => ({id: d.id, ref: d.ref, data: d.data() || {}}));
+  const chosen = promo.countingSittings(rows.map((x) => x.data)).get(codeId) || null;
+  const batch = db.batch();
+  let writes = 0;
+  for (const x of rows) {
+    const counts = x.data === chosen;
+    if (x.data.counts !== counts) {
+      batch.update(x.ref, {counts});
+      writes += 1;
+    }
+  }
+  if (writes) await batch.commit();
+  const hit = rows.find((x) => x.data === chosen);
+  return hit ? {id: hit.id, data: hit.data} : null;
+}
 
 /**
  * Admin: approve or decline a waiting promotion. Approve moves `users.level`
@@ -3815,11 +3906,17 @@ exports.rebuildLeaderboards = onCall({timeoutSeconds: 540}, async (request) => {
   }
   const snap = await db.collection(TEST_RESULTS).get();
   let done = 0;
+  const seen = new Set();
   for (const d of snap.docs) {
     const r = d.data() || {};
     if (!r.codeId || !r.studentId) continue;
+    const key = `${r.codeId}|${r.studentId}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
     try {
-      await syncLeaderboardEntry(r.codeId, r.studentId, r);
+      // Build 9D: the board shows the counting (first valid) sitting.
+      const counting = await markCountingSittings(r.codeId, r.studentId);
+      await syncLeaderboardEntry(r.codeId, r.studentId, counting ? counting.data : null);
       done += 1;
     } catch (err) {
       logger.error(`rebuildLeaderboards: ${d.id}`, err);

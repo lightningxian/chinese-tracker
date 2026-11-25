@@ -13,6 +13,7 @@ import '../../services/promotion_service.dart';
 import '../../services/test_service.dart';
 import 'level_paths.dart';
 import 'promotion_screen.dart' show levelGroupName;
+import 'test_labels.dart' show sittingLabel;
 
 /// The student's **Tests** place: type the token from the teacher, continue
 /// a test after a reload, and the list of the student's own results.
@@ -207,7 +208,16 @@ class _StudentTestsTabState extends State<StudentTestsTab> {
                                     color: AppColors.navy,
                                   ),
                                 ),
-                                if (r.valid && !r.isPendingMarking)
+                                if (sittingLabel(l, r.sittingNo, repeat: r.isRepeat).isNotEmpty)
+                                  Text(
+                                    sittingLabel(l, r.sittingNo, repeat: r.isRepeat),
+                                    style: TextStyle(
+                                      color: AppColors.chipAmberFg,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                if (r.valid && !r.isPendingMarking && !r.isRepeat)
                                   _RankText(codeId: r.codeId, uid: widget.student.uid),
                                 if (r.finishedAt != null)
                                   Text(

@@ -791,12 +791,17 @@ def seed_build9(admin_uid, student_uids, student_names):
         "code": BOARD_CODE, "family": "hsk", "level": "HSK 3", "levelKey": "3",
         "sheetKey": SHEET, "formatId": "hsk-3", "releaseYear": 2021, "active": True,
         "countsForPromotion": False, "createdBy": admin_uid, "createdAt": ts(-12)})
-    n = min(28, len(student_uids))
+    # Students 13-18 are shaped for the progress warnings (Build 4) and
+    # stay off this board; four rows without an account fill it to 28.
+    people = [(uid, student_names[i] if i < len(student_names) else f"Student {i + 1}")
+              for i, uid in enumerate(student_uids) if not 12 <= i <= 17]
+    people += [(f"board_guest_{k}", f"Guest {k}") for k in range(1, 5)]
+    n = min(28, len(people))
     for i in range(n):
         total = 290 - (i // 2) * 9          # pairs share a total
-        latin = student_names[i] if i < len(student_names) else f"Student {i + 1}"
-        put("test_results", f"{BOARD_CODE}_{student_uids[i]}", {
-            "codeId": BOARD_CODE, "code": BOARD_CODE, "studentId": student_uids[i],
+        uid, latin = people[i]
+        put("test_results", f"{BOARD_CODE}_{uid}", {
+            "codeId": BOARD_CODE, "code": BOARD_CODE, "studentId": uid,
             "family": "hsk", "level": "HSK 3", "levelKey": "3", "total": total, "max": 300,
             "passMark": 180, "passed": total >= 180, "valid": True, "status": "final",
             "studentName": latin, "studentNameChinese": f"学生{i + 1}",

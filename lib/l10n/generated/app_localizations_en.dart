@@ -8990,4 +8990,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String resultAttemptNo(int n) {
     return 'Attempt $n';
   }
+
+  @override
+  String testsSitting(int n) {
+    return 'Sitting $n';
+  }
+
+  @override
+  String testsSittingRepeat(int n) {
+    return 'Sitting $n · practice';
+  }
+
+  @override
+  String testsRepeatIntro(int n) {
+    return 'This is your sitting $n of this test. Your first sitting is the one that counts for the leaderboard and promotion; this one is practice.';
+  }
 }

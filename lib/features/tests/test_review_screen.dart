@@ -14,16 +14,20 @@ import 'test_labels.dart';
 /// explanation; recordings can be replayed. Opens once the teacher has
 /// ended the session. There is never a retake.
 class TestReviewScreen extends StatefulWidget {
-  const TestReviewScreen({super.key, required this.codeId});
+  const TestReviewScreen({super.key, required this.codeId, this.resultId});
 
   final String codeId;
+
+  /// Build 9D: the sitting to review (default: the latest).
+  final String? resultId;
 
   @override
   State<TestReviewScreen> createState() => _TestReviewScreenState();
 }
 
 class _TestReviewScreenState extends State<TestReviewScreen> {
-  late final Future<TestReview> _review = TestService().review(widget.codeId);
+  late final Future<TestReview> _review =
+      TestService().review(widget.codeId, resultId: widget.resultId);
   final _player = AudioPlayer();
   String? _loaded;
 
