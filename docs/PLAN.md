@@ -3495,10 +3495,45 @@ because of the wide margins and the 1.5 spacing.
 | Daftar Pustaka, Riwayat Hidup | 3 | 3 |
 | Total | 104 | 113 |
 
-Bab VI is 4 pages over its first target. The remaining cuts (Bab VI by 3,
-Bab III by 2, Bab IV by 1) wait for the owner's answer on whether the limit
-of 120 counts the front pages: if it does, the printed pages must stay near
-100 and the cuts go deeper. Bab V must not grow when its diagrams come.
+**Owner's answers 2026-11-26** (to the PLAN chat's questions)
+
+- **The limit of 120 pages counts the front pages.** So the whole file from
+  the cover to the Riwayat Hidup stays at 120 physical pages or fewer. The
+  appendices are taken as outside the count (the campus template has its own
+  appendix files, one of them "Tampilan Program"); to be confirmed with the
+  supervisor.
+- Bab V diagrams and the drawing tool: the owner asked for recommendations
+  (given 2026-11-26: the UML set drawn by the PLAN chat; his pick is open).
+- The demonstration video is made **on the emulator**. The PLAN chat can
+  make it: headless Chrome on the Mac records an MP4 from a canvas with no
+  extra software (tested 2026-11-26), so the video is a scripted walk
+  through the emulator with caption text and no voice. It is made after
+  Build 9 is complete, because the pages change.
+- Presentation, article and poster: later. Rebuild leaderboards on live:
+  later.
+
+**Budget for 120 physical pages** (replaces the targets above)
+
+| Part | Pages now | Target |
+|---|---|---|
+| Front pages | 19 | 18 |
+| I Pendahuluan | 10 | 10 |
+| II Teori Penunjang | 15 | 14 |
+| III Proses Bisnis | 14 | 12 |
+| IV Analisa Sistem | 13 | 11 |
+| V Desain Sistem | 26 | 22 |
+| VI Implementasi | 20 | 13 |
+| VII Uji Coba | 2 (headings only) | 13 |
+| VIII Penutup | 1 (headings only) | 3 |
+| Daftar Pustaka, Riwayat Hidup | 3 | 3 |
+| Total | 123 | 119 |
+
+How the pages are won: Bab VI keeps 12 screenshots and 6 program segments;
+Bab V moves its three long tables (collections, access rules, the function
+list) to an appendix and shows diagrams in their place; the black-box
+tables of Bab VII go to their appendix with a summary table in the chapter;
+Bab II, III and IV are tuned last (figure sizes and page breaks), when every
+chapter exists and Word can count the pages after each change.
 
 **Daftar Isi page numbers: no fault in the builder.** The first automation
 run showed page 8 on every BAB line because the fields were refreshed before
