@@ -20,12 +20,17 @@ class _HskRawItem {
 
 /// A `第 a-b 题` block of the paper.
 class _HskRange {
-  _HskRange(this.start, this.end, this.section, this.page);
+  _HskRange(this.start, this.end, this.section, this.page, {this.kind});
 
   final int start;
   final int end;
   final String section;
   final int page;
+
+  /// Standard Course: the form every question of the block has, read from
+  /// the block's instruction (`连词成句` → word order); null = decide per
+  /// question as on an HSK paper.
+  final String? kind;
 
   /// Lettered choices shared by the block (sentences A–F, word bank).
   final List<String> sharedOptionLines = [];
@@ -40,13 +45,45 @@ class _HskRange {
 /// `S1.` for `51.`), and every number the level's format expects gets a
 /// slot even when no line was read for it.
 class _HskPaperParser {
-  _HskPaperParser(this.pages);
+  _HskPaperParser(List<String> pages, {this.fileName = ''})
+      : standardCourse = _isStandardCourse(pages),
+        pages = [
+          // The reader marks a wide gap between two columns with a tab;
+          // an HSK paper reads as before (a tab is a space), a Standard
+          // Course workbook splits two questions printed on one line.
+          for (final p in pages)
+            _isStandardCourse(pages)
+                ? p
+                    .replaceAll(RegExp(r'\t(?=\s*\d{1,2}\s*[\.．、])'), '\n')
+                    .replaceAll('\t', ' ')
+                : p.replaceAll('\t', ' '),
+        ],
+        rawPages = pages;
 
   final List<String> pages;
 
+  /// The page texts as read (tabs kept), for the textbook columns.
+  final List<String> rawPages;
+
+  /// Owner 2026-11-25: a lesson of HSK Standard Course (标准教程), textbook
+  /// pages and workbook pages, instead of an HSK paper.
+  final bool standardCourse;
+  final String fileName;
+
+  static final _scMark = RegExp(r'标\s*准\s*教\s*程|Standard\s+Course');
+  static bool _isStandardCourse(List<String> pages) =>
+      pages.any((p) => _scMark.hasMatch(p));
+
   static final _range = RegExp(r'第\s*(\d{1,2})\s*[-–—~～]\s*(\d{1,2})\s*题');
   static final _skillHeading =
-      RegExp(r'^\s*([一二三四])\s*[、，,.．]?\s*(听\s*力|阅\s*读|书\s*写)');
+      RegExp(r'^\s*([一二三四五])\s*[、，,.．]?\s*(听\s*力|阅\s*读|书\s*写|复\s*习)');
+  // Standard Course: the instruction after `第 1-5 题：`, and lines that
+  // are only the page header or the English instruction.
+  static final _rangeLead = RegExp(r'^\s*第\s*(\d{1,2})\s*[-–—~～]\s*(\d{1,2})\s*题\s*[:：]?\s*(.*)$');
+  static final _scNoise = RegExp(
+      r'标\s*准\s*教\s*程|Standard\s+Course|Workbook|^\s*Q[a-z]*\s*[a-z]*\s*\d|^\s*Qu?e?st?i?o?n',
+      caseSensitive: false);
+  static final _englishTitle = RegExp(r"^[A-Z][A-Za-z'’ ,!?]{6,}$");
   static final _partHeading = RegExp(r'^\s*第\s*([一二三四五])\s*部\s*分');
   static final _numbered = RegExp(
       r'^\s*[(（]?\s*([0-9OoSsIl|Zz]{1,2})\s*(?:[\.．、，,:：)）]|\s+(?=\S))\s*(.*)$');
@@ -78,7 +115,7 @@ class _HskPaperParser {
   };
 
   HskPaperDraft build() {
-    final (code, level) = _codeAndLevel();
+    final (code, level) = standardCourse ? _courseCodeAndLevel() : _codeAndLevel();
     final ranges = <_HskRange>[];
     var skillHeading = '';
     var partHeading = '';
@@ -87,12 +124,43 @@ class _HskPaperParser {
     var inExample = false;
     var pendingPinyin = '';
 
+    // Standard Course: the review part numbers from 1 again; its numbers
+    // follow on after the last one (`四、复习 第1-2题` → 55, 56).
+    var maxEnd = 0;
+    var offset = 0;
     for (var p = 0; p < pages.length; p++) {
       final pageNo = p + 1;
       for (final raw in pages[p].split('\n')) {
         final line = raw.trim();
         if (line.isEmpty) continue;
         final joined = QuestionImportUtils.joinCjkSpaces(line);
+        if (standardCourse) {
+          final lead = _rangeLead.firstMatch(joined);
+          if (lead != null) {
+            final a = int.parse(lead.group(1)!);
+            final b = int.parse(lead.group(2)!);
+            if (b >= a) {
+              offset = a <= maxEnd ? maxEnd : 0;
+              final kind = _kindOf(lead.group(3)!, skillHeading);
+              final section = [
+                if (skillHeading.isNotEmpty) skillHeading,
+                if (partHeading.isNotEmpty) partHeading,
+                '第$a-$b题',
+              ].join(' · ');
+              current = _HskRange(a + offset, b + offset, section, pageNo,
+                  kind: kind)
+                ..expected = a + offset;
+              ranges.add(current);
+              if (b + offset > maxEnd) maxEnd = b + offset;
+              item = null;
+              inExample = false;
+              pendingPinyin = '';
+            }
+            continue;
+          }
+          final marks = _markers(line);
+          if (marks.isEmpty && _scNoise.hasMatch(line)) continue;
+        }
 
         final skill = _skillHeading.firstMatch(joined);
         if (skill != null) {
@@ -135,9 +203,10 @@ class _HskPaperParser {
         }
 
         final numbered = _numbered.firstMatch(line);
-        final number = numbered == null ? null : _readNumber(numbered.group(1)!);
+        final read = numbered == null ? null : _readNumber(numbered.group(1)!);
+        final number = read == null ? null : read + offset;
         if (number != null) {
-          final assigned = _assign(current, number);
+          final assigned = _assign(current, number, anyOrder: standardCourse);
           if (assigned != null) {
             inExample = false;
             item = _HskRawItem(assigned.$1, pageNo, unsure: assigned.$2);
@@ -187,7 +256,73 @@ class _HskPaperParser {
       }
     }
 
-    return _toDraft(code, level, ranges);
+    final draft = _toDraft(code, level, ranges);
+    if (!standardCourse) return draft;
+    // A bracket the engine read twice (`（ ））`).
+    for (final slot in draft.slots) {
+      slot.prompt = slot.prompt.replaceAll(RegExp(r'（ ）\s*[)）]'), '（ ）');
+    }
+    final firstRangePage = ranges.isEmpty ? pages.length + 1 : ranges.first.page;
+    draft
+      ..standardCourse = true
+      ..title = [
+        'Standard Course${level == null ? '' : ' $level'}',
+        if (_lessonTitle() case final t?) t,
+      ].join(' · ')
+      ..context = StandardCourseText.fromPages(
+          [for (var i = 0; i < firstRangePage - 1 && i < rawPages.length; i++) rawPages[i]]);
+    return draft;
+  }
+
+  /// The form of a Standard Course block from its instruction.
+  static String? _kindOf(String instruction, String skillHeading) {
+    final t = instruction.replaceAll(RegExp(r'\s'), '');
+    if (t.contains('图片') && skillHeading.contains('听')) return HskForm.picture;
+    if (t.contains('判断对错')) return HskForm.trueFalse;
+    if (t.contains('问答') || t.contains('配对')) return HskForm.matching;
+    if (t.contains('连词成句')) return HskForm.reorder;
+    if (t.contains('看拼音')) return HskForm.pinyinChar;
+    if (t.contains('辨认汉字')) return HskForm.charPair;
+    if (t.contains('组词') || t.contains('课文') || skillHeading.contains('复习')) {
+      return HskForm.open;
+    }
+    if (t.contains('词语填空') || t.contains('选词填空')) return HskForm.wordBank;
+    if (t.contains('选择正确答案')) return HskForm.choice;
+    return null;
+  }
+
+  /// `标准教程 3` → level 3; the code from the file name's lesson number
+  /// (`Bab 1.pdf` → `SC3-01`), else empty (the file name is used).
+  (String, int?) _courseCodeAndLevel() {
+    int? level;
+    for (final page in pages) {
+      final m = RegExp(r'标\s*准\s*教\s*程\s*(\d)|Standard\s+Course\s*(\d)')
+          .firstMatch(page);
+      if (m != null) {
+        level = int.tryParse(m.group(1) ?? m.group(2)!);
+        break;
+      }
+    }
+    if (level != null && (level < 1 || level > 6)) level = null;
+    final lesson = RegExp(r'(\d{1,2})').firstMatch(fileName.split('/').last);
+    final code = level == null || lesson == null
+        ? ''
+        : 'SC$level-${lesson.group(1)!.padLeft(2, '0')}';
+    return (code, level);
+  }
+
+  /// The lesson's Chinese title: the line printed above its English title
+  /// (`周末你有什么打算` above `What's your plan for the weekend`).
+  String? _lessonTitle() {
+    for (final page in pages) {
+      final lines = page.split('\n').map((l) => l.trim()).toList();
+      for (var i = 1; i < lines.length; i++) {
+        if (!_englishTitle.hasMatch(lines[i])) continue;
+        final prev = QuestionImportUtils.joinCjkSpaces(lines[i - 1]);
+        if (RegExp(r'^[一-鿿]{3,16}$').hasMatch(prev)) return prev;
+      }
+    }
+    return null;
   }
 
   /// Digits of a printed number, with the engine's usual misreads.
@@ -204,7 +339,17 @@ class _HskPaperParser {
   /// The number a numbered line stands for in its block: the printed one
   /// when it fits, else the next free one (marked unsure); null when the
   /// block is full (a stray line).
-  static (int, bool)? _assign(_HskRange range, int printed) {
+  static (int, bool)? _assign(_HskRange range, int printed,
+      {bool anyOrder = false}) {
+    // A workbook prints some blocks in two columns (51 | 53, then 52 | 54):
+    // a number of the block not used yet is taken as printed.
+    if (anyOrder &&
+        printed >= range.start &&
+        printed <= range.end &&
+        !range.items.any((it) => it.number == printed)) {
+      if (printed >= range.expected) range.expected = printed + 1;
+      return (printed, false);
+    }
     if (range.expected > range.end) return null;
     // At most two lines can be lost between two read ones; a bigger jump
     // is a misread digit (or a stray mark on a picture page).
@@ -311,7 +456,7 @@ class _HskPaperParser {
 
   HskPaperDraft _toDraft(String code, int? level, List<_HskRange> ranges) {
     // Questions per skill from the level's standard format.
-    final format = level == null
+    final format = level == null || standardCourse
         ? null
         : standardTestFormats()
             .where((f) => f.family == TestFamily.hsk && f.levelKey == '$level')
@@ -330,6 +475,10 @@ class _HskPaperParser {
     } else {
       for (final r in ranges) {
         if (r.end > total) total = r.end;
+        if (standardCourse) {
+          final skill = _skillFromSection(r.section);
+          expected[skill] = (expected[skill] ?? 0) + r.end - r.start + 1;
+        }
       }
     }
 
@@ -430,7 +579,7 @@ class _HskPaperParser {
 
   static String _skillFromSection(String section) {
     if (section.contains('听力')) return 'listening';
-    if (section.contains('书写')) return 'writing';
+    if (section.contains('书写') || section.contains('复习')) return 'writing';
     return 'reading';
   }
 
@@ -457,6 +606,10 @@ class _HskPaperParser {
         .replaceFirst(RegExp(r'^[\s，,、.．:：]+'), '')
         .trim());
     final cjkCount = _cjk.allMatches(joined).length;
+
+    if (standardCourse && range?.kind != null) {
+      if (_fillCourse(slot, raw, range!, joined, text, own, shared)) return;
+    }
 
     if (slot.skill == 'writing') {
       if (raw.pinyin.isNotEmpty || joined.contains('（ ）')) {
@@ -519,6 +672,60 @@ class _HskPaperParser {
     }
     slot.form = HskForm.choice;
     slot.prompt = joined;
+  }
+
+  static final _pairAtEnd =
+      RegExp(r'[（(]\s*([一-鿿])\s*[、，,/]\s*([一-鿿])\s*[)）]\s*$');
+
+  /// A Standard Course question whose form its block gives; false = the
+  /// HSK rules decide.
+  bool _fillCourse(
+    HskSlot slot,
+    _HskRawItem raw,
+    _HskRange range,
+    String joined,
+    String text,
+    Map<String, String> own,
+    Map<String, String> shared,
+  ) {
+    String blanks(String t) => t.replaceAll(RegExp(r'＿+'), '____');
+    switch (range.kind) {
+      case HskForm.charPair:
+        // Two blanks and two characters (`（很、跟）`): pick the order.
+        final pair = _pairAtEnd.firstMatch(joined);
+        final prompt = blanks(joined.replaceFirst(_pairAtEnd, '').trim());
+        slot.form = HskForm.choice;
+        slot.prompt = prompt;
+        if (pair != null) {
+          final a = pair.group(1)!, b = pair.group(2)!;
+          slot.options = ['$a … $b', '$b … $a'];
+        } else {
+          slot.options = ['', ''];
+          slot.optionsIncomplete = true;
+        }
+        if ('____'.allMatches(prompt).length != 2) slot.unsure = true;
+        return true;
+      case HskForm.open:
+        // Many right answers (make words, fill in from the text): a
+        // teacher marks them.
+        slot.form = HskForm.open;
+        slot.prompt = blanks(joined);
+        return true;
+      case HskForm.reorder:
+        slot.form = HskForm.reorder;
+        slot.segments = [
+          for (final t in text.split(RegExp(r'\s+')))
+            if (t.replaceAll(RegExp(r'["“”‘’「」。，,.·\-]'), '').isNotEmpty)
+              t.replaceAll(RegExp(r'["“”‘’「」]'), ''),
+        ];
+        return true;
+      case HskForm.picture:
+        slot.form = HskForm.picture;
+        slot.picturePage = range.page;
+        return true;
+      default:
+        return false;
+    }
   }
 
   /// A gap with words after it (not only the answer bracket at the end).

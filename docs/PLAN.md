@@ -2230,6 +2230,15 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
+### 2026-11-25 — Standard Course scanner — COMMIT, release v0.1.39 (functions and hosting)
+- Built: Scan paper reads a Standard Course lesson (textbook + workbook)
+  into one Standard Course worksheet; block forms from the instruction
+  lines; open answers to teacher marking; lesson text for students.
+- Proof: analyzer 17 infos; `flutter test` 182 pass; node tests green; HSK
+  practice paper 79 of 80; owner's Bab 1 end to end on the emulator.
+- Left: the test-code player does not show the lesson text; OCR misses a
+  few blanks (flagged for proofreading).
+
 ### 2026-11-24 — Scan paper falls back to the worksheet reader — COMMIT, release v0.1.38 (hosting only)
 - A PDF that is not an HSK paper goes to the worksheet reader instead of
   "No questions were found". Checked on the emulator with 210001 and 210002.

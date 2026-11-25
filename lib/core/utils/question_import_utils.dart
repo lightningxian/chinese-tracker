@@ -6,6 +6,7 @@ import 'worksheet_text_normalizer.dart';
 
 // Whole HSK papers read by the built-in reader (Build 1B).
 part 'question_import_hsk_paper.dart';
+part 'question_import_standard_course.dart';
 
 class ParsedMcQuestion {
   const ParsedMcQuestion({
@@ -156,8 +157,9 @@ abstract final class QuestionImportUtils {
   /// the built-in reader returns them): parts, numbers, forms. Every number
   /// the level's standard format expects gets a slot, also when the reader
   /// missed its line. See `question_import_hsk_paper.dart`.
-  static HskPaperDraft parseHskPaper(List<String> pageTexts) =>
-      _HskPaperParser(pageTexts).build();
+  static HskPaperDraft parseHskPaper(List<String> pageTexts,
+          {String fileName = ''}) =>
+      _HskPaperParser(pageTexts, fileName: fileName).build();
 
   /// Removes the spaces the OCR engine puts between Chinese characters
   /// (and around Chinese punctuation); Latin words keep theirs.

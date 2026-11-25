@@ -6,6 +6,62 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-25 — Claude (BUILD chat): Scan paper reads HSK Standard Course lessons
+
+**What changed**
+- **Scan paper** recognises a Standard Course lesson (标准教程 / Standard
+  Course on a page). Level from `标准教程 3`, code from the file name
+  (`Bab 1.pdf` → `SC3-01`), title `Standard Course 3 · <lesson title>`.
+  Saved as one **Standard Course** worksheet (`hsk_standard_course`) with
+  its parts (听力 / 阅读 / 书写 / 复习), not the HSK format.
+- Each block takes its form from its instruction line (判断对错 true/false,
+  选择合适的问答 matching, 词语填空 word bank, 连词成句 word order, 看拼音
+  pinyin → character, 辨认汉字 two blanks → a choice of the two orders
+  `跟 … 很` / `很 … 跟`, 组词 and 根据课文 → **open answer**).
+- **Open answers** (make words, fill in from the text) are saved as free
+  writing (`essay`), so a teacher marks them (10 points, marking queue).
+- The review part numbers from 1 again; its questions follow on (55, 56).
+  Two questions printed side by side (51 | 53) are both read.
+- **Lesson text**: the textbook pages before the workbook (dialogues with
+  headings, new words with pinyin and meaning) become one text,
+  `StandardCourseText` (`question_import_standard_course.dart`). The admin
+  corrects it on the proofreading screen (folded card at the top), and on
+  the worksheet screen (**Lesson text** card, `setQuestionBankContext`).
+  Stored as `context` on every question of the sheet.
+- Students: a **Lesson text** button above the question opens the text in
+  a sheet while they answer. `stripQuestion` sends `context`;
+  `shareContext` sends it once per run of questions (`contextSame: true`
+  after), the client carries it forward (`PlayQuestion.listFromServer`).
+- Paper OCR (`web/paper_ocr_paddle.js`): blank lines `____` are read as
+  `＿＿` (also the rule just under a line box); a wide gap between two
+  columns becomes a tab; the side tab printed down the right edge is
+  dropped. The HSK practice paper still reads 79 of 80; tabs are spaces on
+  the HSK path.
+
+**Why**
+- Owner 2026-11-25: "a special scanner same like HSK simulation" for
+  Standard Course (reading, listening and text for context). Owner
+  answers: textbook pages = context text; recording 01 = workbook
+  listening; open answers marked by a teacher; one worksheet per Bab;
+  answers marked while proofreading; 46–50 = pick the order; same Scan
+  paper button.
+
+**For review**
+- Functions: `startExercise`, `startTest`, `submitTestPart`,
+  `startPlacement`, `submitPlacementPart`, `getTestReview` (the new
+  `context` field and `shareContext`). Hosting.
+- Emulator: the owner's Bab 1 (10 pages) read in about 60 s: 56 questions
+  (listening 20, reading 15, writing 21), pictures A–F cut, saved as
+  `SC3-01`; as student1 the package shows **Lesson text** and the server
+  sent the text once. A few OCR slips stay in the lesson text and in
+  46–54 (blanks not seen); the proofreading screen flags those.
+- The supervised test player (test codes) does not show the lesson text
+  yet; practice packages do.
+- No book text is committed: the test uses a made-up lesson; the PDF
+  stays in git-ignored `local_papers/`.
+
+---
+
 ## 2026-11-24 — Claude (BUILD chat): Scan paper reads the centre's worksheets too
 
 **What changed**

@@ -88,7 +88,7 @@ Future<String?> runHskPaperScan(
   if (!context.mounted) return null;
   Navigator.of(context, rootNavigator: true).pop();
 
-  final draft = HskPaperImport.draftFrom(pages);
+  final draft = HskPaperImport.draftFrom(pages, fileName: file.name);
   if (draft.slots.isEmpty) {
     // Not an HSK paper (no `第 a-b 题` blocks): one of the centre's own
     // worksheets (fill in, true/false, word order…). The worksheet reader

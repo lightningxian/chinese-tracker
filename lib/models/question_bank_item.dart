@@ -30,6 +30,7 @@ class QuestionBankItem {
     this.section,
     this.sectionAudioUrl,
     this.transcript,
+    this.context,
     this.paperRecord,
     this.usageCount = 0,
     this.lastUsedAt,
@@ -75,6 +76,11 @@ class QuestionBankItem {
   /// with `FirestoreService.setQuestionBankTranscript`, never by [toMap].
   /// Students only receive it from `getTestReview` after the session.
   final String? transcript;
+
+  /// Standard Course (owner 2026-11-25): the textbook dialogues and new
+  /// words the questions are about. Kept on every question of the sheet;
+  /// the player shows it while those questions are open (it is no key).
+  final String? context;
 
   /// How the scanned paper was read and proofread (Build 1C), on every
   /// question of a worksheet made with **Scan paper**.
@@ -142,6 +148,7 @@ class QuestionBankItem {
       section: data['section'] as String?,
       sectionAudioUrl: data['sectionAudioUrl'] as String?,
       transcript: data['transcript'] as String?,
+      context: data['context'] as String?,
       paperRecord: data['paperRecord'] is Map
           ? PaperProofRecord.fromMap(
               Map<String, dynamic>.from(data['paperRecord'] as Map))
@@ -171,6 +178,7 @@ class QuestionBankItem {
         if (section != null && section!.isNotEmpty) 'section': section,
         if (sectionAudioUrl != null && sectionAudioUrl!.isNotEmpty)
           'sectionAudioUrl': sectionAudioUrl,
+        if (context != null && context!.trim().isNotEmpty) 'context': context,
         if (paperRecord != null) 'paperRecord': paperRecord!.toMap(),
         'usageCount': usageCount,
         if (sourceExerciseId != null && sourceExerciseId!.isNotEmpty)
@@ -214,6 +222,7 @@ class QuestionBankItem {
       section: section ?? this.section,
       sectionAudioUrl: sectionAudioUrl ?? this.sectionAudioUrl,
       transcript: transcript,
+      context: context,
       paperRecord: paperRecord ?? this.paperRecord,
       usageCount: usageCount ?? this.usageCount,
       lastUsedAt: lastUsedAt ?? this.lastUsedAt,
@@ -301,6 +310,15 @@ class QuestionBankSheet {
   String? get transcript {
     for (final item in items) {
       final t = item.transcript;
+      if (t != null && t.trim().isNotEmpty) return t;
+    }
+    return null;
+  }
+
+  /// Standard Course: the textbook text of the sheet, if any.
+  String? get context {
+    for (final item in items) {
+      final t = item.context;
       if (t != null && t.trim().isNotEmpty) return t;
     }
     return null;

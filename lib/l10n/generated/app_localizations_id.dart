@@ -5882,6 +5882,41 @@ class AppLocalizationsId extends AppLocalizations {
       'Ini bukan kertas HSK: dibaca sebagai lembar latihan.';
 
   @override
+  String get paperFormOpen => 'Jawaban bebas (dinilai guru)';
+
+  @override
+  String get paperContextTitle => 'Teks pelajaran untuk siswa';
+
+  @override
+  String get paperContextEmpty =>
+      'Teks buku tidak ditemukan. Ketik atau tempel di sini, atau biarkan kosong.';
+
+  @override
+  String paperContextLines(int count) {
+    return '$count baris · buka untuk memperbaiki';
+  }
+
+  @override
+  String get paperContextHint =>
+      'Dialog dan kosakata baru dari buku. Siswa bisa membuka teks ini saat menjawab. Perbaiki hasil baca yang salah sebelum menyimpan.';
+
+  @override
+  String get exercisePlayLessonText => 'Teks pelajaran';
+
+  @override
+  String get bankContextTitle => 'Teks pelajaran';
+
+  @override
+  String get bankContextNone =>
+      'Belum ada teks pelajaran. Siswa hanya melihat soal.';
+
+  @override
+  String get bankContextEdit => 'Ubah teks pelajaran';
+
+  @override
+  String get bankContextSaved => 'Teks pelajaran disimpan.';
+
+  @override
   String paperProofreadTitle(String code) {
     return 'Periksa hasil baca · $code';
   }

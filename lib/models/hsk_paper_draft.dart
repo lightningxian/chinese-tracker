@@ -14,6 +14,14 @@ abstract final class HskForm {
   static const pinyinChar = 'write_hanzi';
   static const sentenceWithWord = 'sentence_with_word';
 
+  /// Standard Course (owner 2026-11-25): many right answers (make words,
+  /// fill in from the textbook text); a teacher marks it.
+  static const open = 'open_answer';
+
+  /// Standard Course block kind only (never a slot's form): two blanks and
+  /// two characters to place; saved as a [choice] of the two orders.
+  static const charPair = 'char_pair';
+
   static const all = [
     picture,
     trueFalse,
@@ -23,6 +31,7 @@ abstract final class HskForm {
     reorder,
     pinyinChar,
     sentenceWithWord,
+    open,
   ];
 }
 
@@ -100,7 +109,7 @@ class HskSlot {
   bool get answered => switch (form) {
         HskForm.reorder => orderSet,
         HskForm.pinyinChar => accepted.any((a) => a.trim().isNotEmpty),
-        HskForm.sentenceWithWord => true,
+        HskForm.sentenceWithWord || HskForm.open => true,
         _ => correctIndex != null,
       };
 
@@ -189,6 +198,7 @@ class HskSlot {
       (form == HskForm.picture && pictures.length < 2) ||
       (form == HskForm.reorder && segments.length < 2) ||
       (form == HskForm.pinyinChar && keyword.trim().isEmpty) ||
+      (form == HskForm.open && prompt.trim().isEmpty) ||
       ((form == HskForm.choice ||
               form == HskForm.matching ||
               form == HskForm.wordBank) &&
@@ -203,11 +213,21 @@ class HskPaperDraft {
     this.title = '',
     required this.slots,
     Map<String, int>? expected,
+    this.standardCourse = false,
+    this.context = '',
   }) : expected = expected ?? {};
 
   String code;
   int? level;
   String title;
+
+  /// Owner 2026-11-25: a Standard Course lesson (saved as a Standard
+  /// Course worksheet, not an HSK simulation).
+  bool standardCourse;
+
+  /// Standard Course: the textbook dialogues and new words, shown to the
+  /// students while they answer (edited on the proofreading screen).
+  String context;
   final List<HskSlot> slots;
 
   /// Questions per skill the format expects (`listening` → 40).
@@ -310,8 +330,9 @@ class HskPaperDraft {
       title: title,
       code: code,
       hskLevel: level,
-      category: 'hsk_simulation',
+      category: standardCourse ? 'hsk_standard_course' : 'hsk_simulation',
       sections: sections,
+      context: standardCourse ? context.trim() : '',
     );
   }
 }

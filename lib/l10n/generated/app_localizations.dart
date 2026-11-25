@@ -9567,6 +9567,66 @@ abstract class AppLocalizations {
   /// **'This is not an HSK paper: reading it as a worksheet.'**
   String get paperReadAsWorksheet;
 
+  /// No description provided for @paperFormOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open answer (a teacher marks it)'**
+  String get paperFormOpen;
+
+  /// No description provided for @paperContextTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Lesson text for the students'**
+  String get paperContextTitle;
+
+  /// No description provided for @paperContextEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No textbook text was found. Type or paste it here, or leave it empty.'**
+  String get paperContextEmpty;
+
+  /// No description provided for @paperContextLines.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} lines · open to correct'**
+  String paperContextLines(int count);
+
+  /// No description provided for @paperContextHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The textbook dialogues and new words. Students can open this text while they answer. Correct what the reader got wrong before saving.'**
+  String get paperContextHint;
+
+  /// No description provided for @exercisePlayLessonText.
+  ///
+  /// In en, this message translates to:
+  /// **'Lesson text'**
+  String get exercisePlayLessonText;
+
+  /// No description provided for @bankContextTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Lesson text'**
+  String get bankContextTitle;
+
+  /// No description provided for @bankContextNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No lesson text. Students only see the questions.'**
+  String get bankContextNone;
+
+  /// No description provided for @bankContextEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit lesson text'**
+  String get bankContextEdit;
+
+  /// No description provided for @bankContextSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Lesson text saved.'**
+  String get bankContextSaved;
+
   /// No description provided for @paperProofreadTitle.
   ///
   /// In en, this message translates to:

@@ -1495,7 +1495,7 @@ exports.startExercise = onCall(async (request) => {
 
   return {
     ...meta,
-    questions: items.map(play.stripQuestion),
+    questions: play.shareContext(items.map(play.stripQuestion)),
     remainingSeconds,
   };
 });
@@ -1843,7 +1843,7 @@ function partPayload(split, format, attempt, nowMs) {
     partIndex: index,
     partCount: clock.parts.length,
     skill: part ? part.skill : "reading",
-    questions: items.map(play.stripQuestion),
+    questions: play.shareContext(items.map(play.stripQuestion)),
     secondsLeft: tests.secondsLeft(startedMs, seconds, nowMs),
     partSeconds: seconds,
     elapsedSeconds: tests.elapsedSeconds(startedMs, nowMs),

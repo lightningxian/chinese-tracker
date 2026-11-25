@@ -69,6 +69,7 @@ abstract final class QuestionBankAiImportUtils {
           sheetTitle: title,
           sheetIndex: out.length,
           section: section.title.isEmpty ? null : section.title,
+          context: worksheet.context.isEmpty ? null : worksheet.context,
         ));
       }
     }
@@ -197,6 +198,14 @@ abstract final class QuestionBankAiImportUtils {
             keyword: q.keyword,
             options: q.accepted,
           ),
+        );
+      case 'open_answer':
+        // Standard Course (owner 2026-11-25): many right answers, so a
+        // teacher marks it (free writing).
+        if (q.prompt.isEmpty) return null;
+        return (
+          ExerciseType.essay,
+          ExerciseQuestion(prompt: q.prompt, imageUrl: imageUrl),
         );
       case 'sentence_with_word':
         if (q.keyword.isEmpty) return null;

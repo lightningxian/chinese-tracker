@@ -5909,6 +5909,41 @@ class AppLocalizationsEn extends AppLocalizations {
       'This is not an HSK paper: reading it as a worksheet.';
 
   @override
+  String get paperFormOpen => 'Open answer (a teacher marks it)';
+
+  @override
+  String get paperContextTitle => 'Lesson text for the students';
+
+  @override
+  String get paperContextEmpty =>
+      'No textbook text was found. Type or paste it here, or leave it empty.';
+
+  @override
+  String paperContextLines(int count) {
+    return '$count lines · open to correct';
+  }
+
+  @override
+  String get paperContextHint =>
+      'The textbook dialogues and new words. Students can open this text while they answer. Correct what the reader got wrong before saving.';
+
+  @override
+  String get exercisePlayLessonText => 'Lesson text';
+
+  @override
+  String get bankContextTitle => 'Lesson text';
+
+  @override
+  String get bankContextNone =>
+      'No lesson text. Students only see the questions.';
+
+  @override
+  String get bankContextEdit => 'Edit lesson text';
+
+  @override
+  String get bankContextSaved => 'Lesson text saved.';
+
+  @override
   String paperProofreadTitle(String code) {
     return 'Check the reading · $code';
   }

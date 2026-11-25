@@ -111,6 +111,9 @@ function stripQuestion(item) {
     skill: String(item.skillCategory || ""),
     section: String(item.section || ""),
     sectionAudioUrl: String(item.sectionAudioUrl || ""),
+    // Standard Course (owner 2026-11-25): the textbook text the questions
+    // are about, read while answering (no key).
+    context: String(item.context || ""),
   };
   const optionImages = Array.isArray(q.optionImageUrls) ?
     q.optionImageUrls.map(String) : [];
@@ -145,6 +148,24 @@ function stripQuestion(item) {
     default:
       return {...base, options: (q.options || []).map(String), ...withImages};
   }
+}
+
+/**
+ * Sends a worksheet's context text once: a question with the same text as
+ * the one before it gets `context: ""` and `contextSame: true` (the client
+ * carries the text forward), so a 56-question lesson does not send the
+ * textbook 56 times.
+ * @param {Array<Object>} questions stripped questions in play order
+ * @return {Array<Object>}
+ */
+function shareContext(questions) {
+  let last = "";
+  return questions.map((q) => {
+    const text = String(q.context || "");
+    if (text && text === last) return {...q, context: "", contextSame: true};
+    last = text;
+    return q;
+  });
 }
 
 /**
@@ -309,6 +330,7 @@ module.exports = {
   isOneAttempt,
   orderPackageItems,
   stripQuestion,
+  shareContext,
   checkAnswer,
   scoreAttempt,
   seededShuffle,

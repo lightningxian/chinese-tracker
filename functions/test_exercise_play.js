@@ -121,4 +121,22 @@ assert.strictEqual(play.isOneAttempt("hsk_simulation"), true);
 assert.strictEqual(play.isOneAttempt("quiz"), false);
 assert.strictEqual(play.isOneAttempt(undefined), false);
 
+// Standard Course (owner 2026-11-25): the context text goes out once per
+// run of questions that share it.
+const ctx = "1. 买水果\n大明：今天下午你去哪儿？";
+const withCtx = [
+  play.stripQuestion({...mc0, context: ctx}),
+  play.stripQuestion({...mc, context: ctx}),
+  play.stripQuestion(single),
+  play.stripQuestion({...compose, context: ctx}),
+];
+assert.strictEqual(withCtx[0].context, ctx);
+assert.strictEqual(play.stripQuestion(single).context, "");
+const shared = play.shareContext(withCtx);
+assert.strictEqual(shared[0].context, ctx);
+assert.deepStrictEqual([shared[1].context, shared[1].contextSame], ["", true]);
+assert.strictEqual(shared[2].context, "");
+assert.ok(!shared[2].contextSame, "no text is not 'the same text'");
+assert.strictEqual(shared[3].context, ctx, "sent again after a question without it");
+
 console.log("exercise_play: all checks passed");

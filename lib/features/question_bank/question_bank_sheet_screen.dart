@@ -24,6 +24,7 @@ import 'question_bank_editor.dart';
 import 'question_bank_pictures.dart';
 import 'question_bank_text.dart';
 import 'sheet_answer_key.dart';
+import 'sheet_context.dart';
 import 'sheet_transcript.dart';
 
 /// One worksheet in the bank: its questions in sheet order with the stored
@@ -150,6 +151,10 @@ class QuestionBankSheetScreen extends StatelessWidget {
                       sheet: sheet,
                       readOnly: !canEdit,
                     ),
+                    if (SheetContextCard.shows(sheet)) ...[
+                      const SizedBox(height: 12),
+                      SheetContextCard(sheet: sheet, readOnly: !canEdit),
+                    ],
                     if (canManageBank && sheet.paperRecord != null) ...[
                       const SizedBox(height: 12),
                       _PaperRecordCard(record: sheet.paperRecord!),

@@ -165,7 +165,48 @@
     return text;
   }
 
-  async function readLine(page, bbox) {
+  // Thin horizontal rules on the whole page (the blanks of a workbook):
+  // [x0, x1, y] of each, shorter than a quarter of the page and longer
+  // than [minLen]. A line box often stops above its blank, so the line
+  // reader also gets the rules just under it.
+  function rulesOf(canvas) {
+    var W = canvas.width, H = canvas.height;
+    var px = canvas.getContext('2d', {willReadFrequently: true}).getImageData(0, 0, W, H).data;
+    var gray = new Uint8Array(W * H);
+    for (var i = 0; i < W * H; i++) gray[i] = px[i * 4];
+    var minLen = Math.round(W * 0.025), maxLen = Math.round(W * 0.28);
+    var out = [];
+    for (var y = 1; y < H; y++) {
+      var s = -1;
+      for (var x = 0; x <= W; x++) {
+        var dark = x < W && gray[y * W + x] < INK;
+        if (dark && s < 0) s = x;
+        if (dark || s < 0) continue;
+        var a = s, b = x - 1;
+        s = -1;
+        var len = b - a + 1;
+        if (len < minLen || len > maxLen) continue;
+        var above = 0, below = 0, k;
+        for (k = a; k <= b; k++) if (gray[(y - 1) * W + k] < INK) above++;
+        if (above > len * 0.5) continue;
+        var thick = 1;
+        while (y + thick < H && thick <= 6) {
+          var n = 0;
+          for (k = a; k <= b; k++) if (gray[(y + thick) * W + k] < INK) n++;
+          if (n < len * 0.8) break;
+          thick++;
+        }
+        if (thick > 6) continue;
+        if (y + thick < H) for (k = a; k <= b; k++) if (gray[(y + thick) * W + k] < INK) below++;
+        if (below > len * 0.5) continue;
+        out.push({x0: a, x1: b, y: y, gray: gray, W: W});
+      }
+    }
+    return out;
+  }
+
+  async function readLine(page, bbox, pageRules) {
+    var pageW = page.width;
     var pad = 6;
     var x0 = Math.max(0, bbox.x0 - pad), y0 = Math.max(0, bbox.y0 - pad);
     var x1 = Math.min(page.width, bbox.x1 + pad), y1 = Math.min(page.height, bbox.y1 + pad);
@@ -220,12 +261,12 @@
       var e = extent(r[0], r[1]);
       return r[1] - r[0] + 1 <= inkH * 0.38 && e[1] - e[0] + 1 >= inkH * 0.6;
     }
-    var pairs = [];
+    var marks = [];
     for (var j = 0; j + 1 < runs.length; j++) {
       var gapIn = runs[j + 1][0] - runs[j][1];
       if (isBar(runs[j]) && isBar(runs[j + 1]) && gapIn >= inkH * 0.3 && gapIn <= inkH * 4 &&
           curve(runs[j][0], runs[j][1]) <= -bend && curve(runs[j + 1][0], runs[j + 1][1]) >= bend) {
-        pairs.push([runs[j][0], runs[j + 1][1]]);
+        marks.push([runs[j][0], runs[j + 1][1], '（ ）']);
         for (y = 0; y < h; y++) for (x = runs[j][0]; x <= runs[j + 1][1]; x++) gray[y * w + x] = 255;
         lg.fillStyle = '#fff';
         lg.fillRect(runs[j][0], 0, runs[j + 1][1] - runs[j][0] + 1, h);
@@ -233,13 +274,76 @@
       }
     }
 
+    // Blanks to fill in (Standard Course workbooks, 2026-11-25): a long
+    // thin rule in the lower half of the line. The rule is wiped so it no
+    // longer glues the words around it into one piece; an empty one (no
+    // ink above it) is put back as `＿＿`.
+    var minRule = Math.max(20, Math.round(inkH * 1.3));
+    var thin = Math.max(3, Math.round(inkH * 0.25));
+    for (y = Math.round(top + inkH * 0.55); y < h; y++) {
+      var rs = -1;
+      for (x = 0; x <= w; x++) {
+        var dark = x < w && gray[y * w + x] < INK;
+        if (dark && rs < 0) rs = x;
+        if (dark || rs < 0) continue;
+        var ra = rs, rb = x - 1;
+        rs = -1;
+        if (rb - ra + 1 < minRule) continue;
+        // Only from the rule's top row (the row above is mostly blank).
+        var above = 0;
+        for (var xx = ra; xx <= rb; xx++) if (y > 0 && gray[(y - 1) * w + xx] < INK) above++;
+        if (above > (rb - ra + 1) * 0.5) continue;
+        // How many rows the rule is thick (most of its columns dark).
+        var thick = 0;
+        for (var yy = y; yy < h && thick <= thin; yy++) {
+          var n = 0;
+          for (xx = ra; xx <= rb; xx++) if (gray[yy * w + xx] < INK) n++;
+          if (n < (rb - ra + 1) * 0.8) break;
+          thick++;
+        }
+        if (thick < 1 || thick > thin) continue;
+        var inked = 0;
+        for (xx = ra; xx <= rb; xx++) {
+          for (yy = top; yy < y - 1; yy++) if (gray[yy * w + xx] < INK) { inked++; break; }
+        }
+        for (yy = y; yy < y + thick; yy++) for (xx = ra; xx <= rb; xx++) gray[yy * w + xx] = 255;
+        lg.fillStyle = '#fff';
+        lg.fillRect(ra, y, rb - ra + 1, thick);
+        if (inked < (rb - ra + 1) * 0.12) marks.push([ra, rb, '＿＿']);
+      }
+    }
+    // Rules just under the line box (outside the crop): blanks too, when
+    // nothing is written above them inside the line.
+    var lineH = bbox.y1 - bbox.y0;
+    (pageRules || []).forEach(function (r) {
+      if (r.y < y1 || r.y > bbox.y1 + lineH * 0.7) return;
+      if (r.x0 < x0 || r.x1 > x1) return;
+      if (r.x1 - r.x0 + 1 < lineH * 1.3) return;
+      var inked = 0;
+      for (var xx = r.x0; xx <= r.x1; xx++) {
+        for (var yy = bbox.y0; yy < bbox.y1; yy++) if (r.gray[yy * r.W + xx] < INK) { inked++; break; }
+      }
+      if (inked < (r.x1 - r.x0 + 1) * 0.12) marks.push([r.x0 - x0, r.x1 - x0, '＿＿']);
+    });
+    marks.sort(function (p, q) { return p[0] - q[0]; });
+
     var parts = [];
     var open = false;
     var nextPair = 0;
+    var prevEnd = -1;
     var chunks = chunksOf(gray, w, h, Math.max(8, Math.round(inkH * 0.42)));
     for (var c = 0; c < chunks.length; c++) {
       var a = chunks[c][0], b = chunks[c][1];
-      while (nextPair < pairs.length && pairs[nextPair][1] < a) { parts.push('（ ）'); nextPair++; }
+      while (nextPair < marks.length && marks[nextPair][1] < a) {
+        parts.push(marks[nextPair][2]); prevEnd = marks[nextPair][1]; nextPair++;
+      }
+      // The side tab of a textbook page (the lesson title printed down the
+      // right edge) glued to a line: a short piece at the far right.
+      if (x0 + a > pageW * 0.915 && b - a < inkH * 2.5) continue;
+      // A wide gap between two columns (text | new words) becomes a tab,
+      // so the parser can tell the columns apart.
+      if (prevEnd >= 0 && a - prevEnd > inkH * 2.2 && parts.length) parts.push('\t');
+      prevEnd = b;
       var ex = extent(a, b), cw0 = b - a + 1, ch0 = ex[1] - ex[0] + 1;
       // A single bracket between wide gaps.
       if (cw0 <= inkH * 0.3 && ch0 >= inkH * 0.55 && Math.abs(curve(a, b)) >= bend) {
@@ -266,9 +370,9 @@
       if (/^[a-f]$/.test(t)) t = t.toUpperCase(); // a choice letter
       if (t) parts.push(t);
     }
-    while (nextPair < pairs.length) { parts.push('（ ）'); nextPair++; }
+    while (nextPair < marks.length) { parts.push(marks[nextPair][2]); nextPair++; }
     // A bracket left open had its closing half glued to the next word.
-    return parts.join(' ').replace(/（ (?!）)/g, '（ ） ');
+    return parts.join(' ').replace(/（ (?!）)/g, '（ ） ').replace(/ ?\t ?/g, '\t');
   }
 
   // Reads one cleaned page (canvas): Tesseract finds the lines, the model
@@ -280,9 +384,11 @@
       var worker = await lineFinder();
       var r = await worker.recognize(canvas, {}, {blocks: true});
       var lines = linesOf(r.data.blocks);
+      var pageRules = rulesOf(canvas);
       var out = [];
       for (var i = 0; i < lines.length; i++) {
-        var t = await readLine(canvas, lines[i].bbox);
+        if (lines[i].bbox.x0 > canvas.width * 0.915) continue;
+        var t = await readLine(canvas, lines[i].bbox, pageRules);
         out.push(t.trim() ? t : lines[i].text);
         if (typeof onProgress === 'function') {
           try { onProgress('recognizing text', (i + 1) / lines.length); } catch (e) {}

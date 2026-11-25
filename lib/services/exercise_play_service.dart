@@ -33,7 +33,12 @@ class PlayQuestion {
     this.keywords = const [],
     this.sourceText = '',
     this.sourceSeconds = 0,
+    this.context = '',
   });
+
+  /// Standard Course (owner 2026-11-25): the textbook dialogues and new
+  /// words this question is about; empty for other worksheets.
+  final String context;
 
   /// Free writing (essay): words to use, and a text shown for
   /// [sourceSeconds] before it is hidden (HSK 6). None of these is a key.
@@ -98,7 +103,26 @@ class PlayQuestion {
         sourceSeconds: (m['sourceSeconds'] as num?)?.toInt() ?? 0,
         section: m['section'] as String? ?? '',
         sectionAudioUrl: m['sectionAudioUrl'] as String? ?? '',
+        context: m['context'] as String? ?? '',
       );
+
+  /// The server sends a worksheet's context once (`contextSame` on the
+  /// questions after it): the text is carried forward here.
+  static List<PlayQuestion> listFromServer(List raw) {
+    var last = '';
+    return [
+      for (final q in raw)
+        () {
+          final m = Map<String, dynamic>.from(q as Map);
+          if (m['contextSame'] == true) {
+            m['context'] = last;
+          } else {
+            last = m['context'] as String? ?? '';
+          }
+          return PlayQuestion.fromServer(m);
+        }(),
+    ];
+  }
 }
 
 /// What the student answered: exactly one of the three fields is set.
@@ -322,10 +346,8 @@ class ExercisePlayService {
         .httpsCallable('startExercise')
         .call({'exerciseId': exercise.id});
     final data = Map<String, dynamic>.from(result.data as Map);
-    final questions = (data['questions'] as List? ?? const [])
-        .map(
-            (q) => PlayQuestion.fromServer(Map<String, dynamic>.from(q as Map)))
-        .toList();
+    final questions =
+        PlayQuestion.listFromServer(data['questions'] as List? ?? const []);
     return _ServerSession(
       exercise: exercise,
       questions: questions,

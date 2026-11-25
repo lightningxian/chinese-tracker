@@ -276,6 +276,42 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     if (_currentIndex > 0) _goTo(_currentIndex - 1);
   }
 
+  /// Standard Course (owner 2026-11-25): the textbook text of the lesson,
+  /// read while answering; closing it keeps the answers as they are.
+  void _showContext(String text) {
+    final l = context.l10n;
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (ctx) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.7,
+        minChildSize: 0.3,
+        maxChildSize: 0.95,
+        builder: (ctx, controller) => ListView(
+          controller: controller,
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+          children: [
+            Text(
+              l.exercisePlayLessonText,
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+                color: AppColors.navy,
+              ),
+            ),
+            const SizedBox(height: 12),
+            SelectableText(
+              text,
+              style: AppTextStyles.question.copyWith(height: 1.8),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _next() {
     if (_currentIndex + 1 < _questions.length) {
       _goTo(_currentIndex + 1);
@@ -599,6 +635,17 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
             ),
           ),
           const SizedBox(height: 16),
+        ],
+        if (question.context.isNotEmpty) ...[
+          Align(
+            alignment: Alignment.centerLeft,
+            child: OutlinedButton.icon(
+              onPressed: () => _showContext(question.context),
+              icon: const Icon(Icons.menu_book_outlined, size: 18),
+              label: Text(l.exercisePlayLessonText),
+            ),
+          ),
+          const SizedBox(height: 12),
         ],
         if (question.section.isNotEmpty) ...[
           Text(

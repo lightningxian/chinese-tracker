@@ -176,6 +176,8 @@ class PaperDraftService {
       'level': draft.level,
       'title': draft.title,
       'expected': draft.expected,
+      'standardCourse': draft.standardCourse,
+      'context': draft.context,
       'slots': [for (final s in draft.slots) slotToMap(s)],
       'pages': [
         for (final p in pages)
@@ -192,7 +194,9 @@ class PaperDraftService {
       'edited': edited.toList(),
       'questions': draft.slots.length,
       'toCheck': draft.flagged.length,
-      'answered': draft.slots.where((s) => s.answered && s.form != HskForm.sentenceWithWord).length,
+      'answered': draft.slots
+          .where((s) => s.answered && s.form != HskForm.sentenceWithWord && s.form != HskForm.open)
+          .length,
       'readSeconds': readSeconds,
       'engine': engine,
       'byName': byName,
@@ -222,6 +226,8 @@ class PaperDraftService {
       code: m['code'] as String? ?? '',
       level: (m['level'] as num?)?.toInt(),
       title: m['title'] as String? ?? '',
+      standardCourse: m['standardCourse'] == true,
+      context: m['context'] as String? ?? '',
       slots: [
         for (final s in (m['slots'] as List? ?? const []))
           slotFromMap(Map<String, dynamic>.from(s as Map)),

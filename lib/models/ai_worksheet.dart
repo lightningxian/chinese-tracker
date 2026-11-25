@@ -130,9 +130,14 @@ class AiWorksheet {
     this.hskLevel,
     this.category = '',
     this.sections = const [],
+    this.context = '',
   });
 
   final String title;
+
+  /// Standard Course: the textbook text shown to the students while they
+  /// answer; empty otherwise.
+  final String context;
 
   /// Code printed on the paper (`H326202Z`), empty when none.
   final String code;
@@ -140,7 +145,7 @@ class AiWorksheet {
   /// 1–6, null when the paper does not say.
   final int? hskLevel;
 
-  /// `exercise`, `quiz`, `exam` or `hsk_simulation`.
+  /// `exercise`, `quiz`, `exam`, `hsk_simulation` or `hsk_standard_course`.
   final String category;
   final List<AiSection> sections;
 

@@ -596,6 +596,26 @@ class FirestoreService {
     }
   }
 
+  /// Standard Course (owner 2026-11-25): the lesson text of a worksheet,
+  /// kept on every question of it; empty removes it.
+  Future<void> setQuestionBankContext(Iterable<String> ids, String text) async {
+    final list = ids.toList();
+    for (var i = 0; i < list.length; i += 400) {
+      final batch = _db.batch();
+      for (final id in list.skip(i).take(400)) {
+        batch.update(
+          _db.collection(AppConstants.questionBankCollection).doc(id),
+          {
+            'context':
+                text.trim().isEmpty ? FieldValue.delete() : text.trim(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          },
+        );
+      }
+      await batch.commit();
+    }
+  }
+
   Future<void> reorderQuestionBankSheet(List<String> ids) async {
     final batch = _db.batch();
     for (final (i, id) in ids.indexed) {

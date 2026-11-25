@@ -13,6 +13,13 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-25 — Claude (BUILD chat, PC): Standard Course scanner
+
+- Owner sent Bab 1 of HSK Standard Course 3 (textbook + workbook) and its
+  recording, asked for a scanner like the HSK one. Seven questions asked
+  and answered (see CHANGELOG). Built and released as v0.1.39
+  (functions and hosting).
+
 ### 2026-11-24 — Claude (BUILD chat, PC): Scan paper reads worksheets
 
 - Owner: all ten sample worksheets gave "No questions were found" on Scan

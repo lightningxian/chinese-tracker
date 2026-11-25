@@ -97,6 +97,11 @@ class HskPaperProofreadViewModel extends ChangeNotifier {
   /// Slots the admin edited (the report counts the untouched ones).
   final Set<int> edited = {};
 
+  /// Standard Course: the lesson text as the admin corrected it.
+  void setContext(String text) {
+    draft.context = text;
+  }
+
   PaperPage get page => pages[(selectedPage - 1).clamp(0, pages.length - 1)];
 
   /// The slots on show, by number: every flagged one (and every one the
@@ -453,6 +458,10 @@ class _ProofreadView extends StatelessWidget {
     final list = ListView(
       padding: const EdgeInsets.all(12),
       children: [
+        if (draft.standardCourse) ...[
+          _ContextCard(draft: draft),
+          const SizedBox(height: 10),
+        ],
         if (!vm.onlyFlagged && vm.unplaced.isNotEmpty) ...[
           Text(
             l.paperUnplaced(vm.unplaced.map((s) => s.number).join(', ')),
@@ -570,6 +579,70 @@ class _ProofreadView extends StatelessWidget {
   }
 }
 
+/// Standard Course (owner 2026-11-25): the textbook dialogues and new words
+/// the reader found, shown to the students while they answer. Folded until
+/// opened; the admin corrects it here before saving.
+class _ContextCard extends StatefulWidget {
+  const _ContextCard({required this.draft});
+
+  final HskPaperDraft draft;
+
+  @override
+  State<_ContextCard> createState() => _ContextCardState();
+}
+
+class _ContextCardState extends State<_ContextCard> {
+  late final _text = TextEditingController(text: widget.draft.context);
+
+  @override
+  void dispose() {
+    _text.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final empty = widget.draft.context.trim().isEmpty;
+    return AppCard(
+      padding: EdgeInsets.zero,
+      child: ExpansionTile(
+        leading: Icon(Icons.menu_book_outlined, color: AppColors.navy),
+        title: Text(
+          l.paperContextTitle,
+          style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.navy),
+        ),
+        subtitle: Text(
+          empty ? l.paperContextEmpty : l.paperContextLines(
+              widget.draft.context.trim().split('\n').length),
+          style: TextStyle(
+            fontSize: 12,
+            color: empty ? AppColors.chipAmberFg : AppColors.textSecondary,
+          ),
+        ),
+        childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+        children: [
+          TextField(
+            controller: _text,
+            minLines: 8,
+            maxLines: 24,
+            decoration: InputDecoration(
+              helperText: l.paperContextHint,
+              helperMaxLines: 3,
+              border: const OutlineInputBorder(),
+              isDense: true,
+            ),
+            onChanged: (v) {
+              context.read<HskPaperProofreadViewModel>().setContext(v);
+              if (v.trim().isEmpty != empty) setState(() {});
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// "Listening 40 of 40 · … · to check: n · not read: 12, 27".
 class _CountsBar extends StatelessWidget {
   const _CountsBar({required this.draft});
@@ -601,7 +674,10 @@ class _CountsBar extends StatelessWidget {
           children: [
             Text(
               [
-                if (draft.level != null) 'HSK ${draft.level}',
+                if (draft.standardCourse)
+                  '${l.exerciseCategoryStandardCourse}${draft.level == null ? '' : ' ${draft.level}'}'
+                else if (draft.level != null)
+                  'HSK ${draft.level}',
                 if (draft.code.isNotEmpty) draft.code,
               ].join(' · '),
               style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.navy),
@@ -908,6 +984,7 @@ class _SlotEditorState extends State<_SlotEditor> {
         HskForm.reorder => l.paperFormReorder,
         HskForm.pinyinChar => l.paperFormPinyinChar,
         HskForm.sentenceWithWord => l.paperFormSentenceWithWord,
+        HskForm.open => l.paperFormOpen,
         _ => l.paperFormChoice,
       };
 
@@ -985,7 +1062,8 @@ class _SlotEditorState extends State<_SlotEditor> {
                   l.paperPageShort(s.page),
                   style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                 ),
-              if (s.form != HskForm.sentenceWithWord) _AnswerChip(slot: s),
+              if (s.form != HskForm.sentenceWithWord && s.form != HskForm.open)
+                _AnswerChip(slot: s),
               if (s.missing || s.unsure || doubt != null)
                 TextButton(
                   onPressed: () {

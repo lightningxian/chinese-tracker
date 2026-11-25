@@ -18,9 +18,11 @@ import 'paper_image_ops.dart';
 abstract final class HskPaperImport {
   /// Parts and slots from the page texts; picture questions get the
   /// picture boxes of their page as choices A, B, C…
-  static HskPaperDraft draftFrom(List<PaperPage> pages) {
-    final draft =
-        QuestionImportUtils.parseHskPaper([for (final p in pages) p.text]);
+  static HskPaperDraft draftFrom(List<PaperPage> pages, {String fileName = ''}) {
+    final draft = QuestionImportUtils.parseHskPaper(
+      [for (final p in pages) p.text],
+      fileName: fileName,
+    );
     assignPictures(draft, pages);
     return draft;
   }
