@@ -2283,7 +2283,8 @@ Packages (build now):
 - The progress summary keeps counting every final result (the Build 4
   rule). No change there.
 
-Test codes (build last; **wait for the owner's yes**, asked 2026-11-25):
+Test codes (**owner's answer 2026-11-26, given in the BUILD chat: "First
+sitting counts"**; being built after session 1):
 
 - Recommended rule: a student may sit the same code again, but only in a
   **new session** opened by staff. Sittings are numbered. **The first
@@ -3479,14 +3480,25 @@ One page of this book holds about 250 words, less than the usual estimate,
 because of the wide margins and the 1.5 spacing.
 
 **After the rework of Bab II and Bab VI** (`f1b5d61`, Word on the PC,
-2026-11-26): 123 physical pages; BAB I on page 1, BAB VIII on 101, the
-Daftar Pustaka on 102, so about 104 printed pages to the Riwayat Hidup with
-Bab VII and VIII still as headings (3 pages). Bab I to VI take about 98
-pages, 4 more than the budget. With Bab VII at 16 and Bab VIII at 3 the book
-would reach about 120, the top of the limit. So: Bab III and IV give back
-3 pages, Bab V must not grow when its diagrams come, and Bab VII aims at
-14. The page on which each BAB starts is still wanted for the exact
-picture.
+2026-11-26): 123 physical pages, 19 of them front pages, 104 printed.
+
+| Part | Pages now | Target |
+|---|---|---|
+| I Pendahuluan | 10 | 10 |
+| II Teori Penunjang | 15 | 15 |
+| III Proses Bisnis | 14 | 12 |
+| IV Analisa Sistem | 13 | 12 |
+| V Desain Sistem | 26 | 26 |
+| VI Implementasi | 20 | 17 |
+| VII Uji Coba | 2 (headings only) | 15 |
+| VIII Penutup | 1 (headings only) | 3 |
+| Daftar Pustaka, Riwayat Hidup | 3 | 3 |
+| Total | 104 | 113 |
+
+Bab VI is 4 pages over its first target. The remaining cuts (Bab VI by 3,
+Bab III by 2, Bab IV by 1) wait for the owner's answer on whether the limit
+of 120 counts the front pages: if it does, the printed pages must stay near
+100 and the cuts go deeper. Bab V must not grow when its diagrams come.
 
 **Daftar Isi page numbers: no fault in the builder.** The first automation
 run showed page 8 on every BAB line because the fields were refreshed before

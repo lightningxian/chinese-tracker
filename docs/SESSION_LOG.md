@@ -66,6 +66,13 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   languages. Approved. Open for the owner: Rebuild leaderboards once, and the
   rule for sitting an HSK simulation again (simulations run only as test
   codes since 2026-11-16, so package retakes reach exam packages only).
+- **Owner's rule for sitting a test code again (2026-11-26, in the BUILD
+  chat): the first valid sitting counts** for the leaderboard, the promotion
+  count and placement; later sittings are kept and marked as repeats. He also
+  keeps HSK simulations in Tests only. Recorded in `docs/PLAN.md` §4, Build 9D.
+- **Pages per chapter after the rework (Word):** I 10, II 15, III 14, IV 13,
+  V 26, VI 20, VII 2, VIII 1, then the Daftar Pustaka and Riwayat Hidup; the
+  budget table in §7 has the targets.
 - **Book in Word after the rework:** 123 physical pages, about 104 printed;
   the Daftar Isi numbers are right once the pages are laid out before the
   fields are refreshed (no builder fault).
