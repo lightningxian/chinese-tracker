@@ -2447,6 +2447,22 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
+### 2026-11-26 — Build 9D test-code retakes (owner: "Keep in Tests", "First sitting counts") — release v0.1.43
+
+- A student sits a code again only in a **new session** (new token); the
+  same session refuses ("already-attempted"). Sitting n>1 lives at
+  `{codeId}_{uid}_s{n}`; sitting 1 keeps its ids and `latestSitting`.
+- The first valid sitting counts for the board, the promotion count and
+  placement; repeats carry `counts: false` and show "Sitting n · practice".
+  Invalid first → the next valid one counts; pending first still counts.
+- Reset works on the latest sitting only; the review opens per sitting.
+- Checked: promotion pure tests, supervised flow 110 steps (2 new:
+  sitting 2 through a new session with the board unchanged and both
+  reviews, reset rules), flutter test 202. Deployed functions + hosting.
+  Rules and indexes unchanged.
+- Still open in Build 9: session 2 (the rest of the inventory, §6 table
+  below).
+
 ### 2026-11-26 — Build 9, session 1 (9A shared pieces + audit log, 9B, 9C, 9D packages) — release v0.1.42
 
 **Done.** Must 1 (shared pieces, used by the audit log, the leaderboard and

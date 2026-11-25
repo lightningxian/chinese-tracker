@@ -6,6 +6,44 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-26 — Claude (BUILD chat): Build 9D test codes — a second sitting, the first counts
+
+**What changed**
+- A student may sit a test code again, but only through a **new session**
+  opened by staff (a new token; the same session never gives a second
+  sitting). Sittings are numbered: sitting 1 keeps the ids
+  `{codeId}_{uid}` (attempt and result), sitting n uses
+  `{codeId}_{uid}_s{n}`; the sitting-1 attempt carries `latestSitting`, so
+  resume, submit, events and the review always find the current sitting
+  (`currentSitting` in functions/index.js).
+- **The first valid sitting counts** (owner 2026-11-26) for the leaderboard,
+  the promotion count and a placement recommendation; later sittings are
+  kept with their result card as practice (`counts: false` on the result,
+  stamped by `onTestResultWritten`; pure rule `countingSittings` in
+  functions/promotion.js). An invalid first sitting gives way to the next;
+  a first sitting waiting for marking still counts.
+- `resetTestAttempt` resets only the latest sitting and steps the pointer
+  back; `getTestReview` takes an optional `resultId` (one sitting).
+- App: "Sitting 2 · practice" on the student's and staff's result lists
+  and the result card; the start screen says a repeat is practice; each
+  result's **Open review** opens that sitting. No rank line for a repeat.
+
+**Why**
+- Supervisor point 12 ("HSK simulation should be able to be tested multiple
+  times"); owner answers 2026-11-26: "Keep in Tests", "First sitting counts".
+
+**For review**
+- Functions only (startTest, submitTestPart, reportTestEvent, getTestReview,
+  resetTestAttempt, onTestResultWritten, syncPromotion, rebuildLeaderboards)
+  and hosting. **Rules unchanged** (attempt and result reads already check
+  `studentId`). No new function, no new index.
+- Tests: promotion pure tests (first sitting, invalid first, pending first,
+  old results); supervised flow test 110 steps with two new LV-02 steps
+  (sitting 2 through a new session, board keeps sitting 1, review per
+  sitting, reset only the latest); `flutter test` 202 pass.
+
+---
+
 ## 2026-11-26 — Claude (BUILD chat): Build 9 session 1 — paged lists, report periods, leaderboard export, exam retakes
 
 **What changed**

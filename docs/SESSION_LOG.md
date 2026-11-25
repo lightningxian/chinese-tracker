@@ -97,6 +97,13 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   owner: password reset first (docs/OWNER_PROCEDURES.md §C), the Standard Course live walk, the 组词 points decision.
 - Book: 59 figures, 28 tables, 17 segments, 8 algorithms, 4 formulas. Seen while shooting: the student's
   class page lists classmates by first name, not by Chinese name (owner decision 2026-11-16); told the BUILD chat.
+### 2026-11-26 — Claude (BUILD chat, PC): test-code retakes (Build 9D)
+
+- Owner answered in the BUILD chat: HSK simulations stay in Tests; for a
+  code sat again, the first sitting counts. Built and released v0.1.43
+  (functions + hosting): a second sitting through a new session, marked as
+  practice; board, promotion and placement keep the first valid sitting.
+
 ### 2026-11-26 — Claude (BUILD chat, PC): Build 9 session 1
 
 - Supervisor's app remarks (PLAN §4 Build 9): paged audit log with a date
