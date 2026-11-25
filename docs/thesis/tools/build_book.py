@@ -17,6 +17,16 @@ import xml.etree.ElementTree as ET
 HERE = os.path.dirname(os.path.abspath(__file__))
 DOCS = os.path.dirname(HERE)                      # docs/thesis
 TEMPLATE, OUT = sys.argv[1], sys.argv[2]
+
+# Private facts for the Riwayat Hidup (birth date, home address, schools).
+# The repository is public, so they never go into git: they live in
+# docs/thesis/local/riwayat.json (git-ignored) and are used only when the
+# output file is written inside docs/thesis/local/. A book built into
+# docs/thesis/word/ keeps the [ISI] marks.
+import json
+_PRIV_PATH = os.path.join(DOCS, 'local', 'riwayat.json')
+_LOCAL_OUT = os.path.abspath(OUT).startswith(os.path.join(DOCS, 'local') + os.sep)
+PRIV = json.load(open(_PRIV_PATH, encoding='utf8')) if (_LOCAL_OUT and os.path.exists(_PRIV_PATH)) else {}
 W = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}'
 
 # ---------------------------------------------------------------- facts
@@ -630,17 +640,17 @@ def riwayat_hidup():
     out.append(photo)
     t = raw(401)
     t = re.sub(r'<w:p(?: [^>]*)?>(?:(?!</w:p>).)*Ten Chittapon Leechaiyapornkul.*?</w:p>', lambda m: rebuild_par(m.group(0), [F['nama']]), t, flags=re.S)
-    t = re.sub(r'<w:p(?: [^>]*)?>(?:(?!</w:p>).)*Jl\. SMTown.*?</w:p>', lambda m: rebuild_par(m.group(0), ['[ISI: alamat asal]']), t, flags=re.S)
-    t = re.sub(r'<w:p(?: [^>]*)?>(?:(?!</w:p>).)*Bangkok, 28 Februari 1996.*?</w:p>', lambda m: rebuild_par(m.group(0), ['[ISI: tempat, tanggal lahir]']), t, flags=re.S)
+    t = re.sub(r'<w:p(?: [^>]*)?>(?:(?!</w:p>).)*SMTown.*?</w:p>', lambda m: rebuild_par(m.group(0), [PRIV.get('alamat', '[ISI: alamat asal]')]), t, flags=re.S)
+    t = re.sub(r'<w:p(?: [^>]*)?>(?:(?!</w:p>).)*Bangkok, 28 Februari 1996.*?</w:p>', lambda m: rebuild_par(m.group(0), [PRIV.get('ttl', '[ISI: tempat, tanggal lahir]')]), t, flags=re.S)
     out.append(t)
     out.append(p_judulbab())
     out.append(raw(403))
-    for years, school in [('[ISI: tahun]', '[ISI: SD]'), ('[ISI: tahun]', '[ISI: SMP]'), ('[ISI: tahun]', '[ISI: SMA]'), ('2022 – ⟦2027⟧', 'Institut Sains dan Teknologi Terpadu Surabaya, Surabaya')]:
+    for years, school in [tuple(x) for x in PRIV.get('sekolah', [['[ISI: tahun]', '[ISI: SD]'], ['[ISI: tahun]', '[ISI: SMP]'], ['[ISI: tahun]', '[ISI: SMA]']])] + [('2021 – ⟦2027⟧', 'Institut Sains dan Teknologi Terpadu Surabaya, Surabaya')]:   # owner 2026-11-25: started in 2021
         out.append(P('<w:pStyle w:val="ListParagraph"/><w:numPr><w:ilvl w:val="0"/><w:numId w:val="12"/></w:numPr><w:tabs><w:tab w:val="left" w:pos="2835"/></w:tabs><w:ind w:left="426" w:hanging="426"/>', runs(years) + TAB + runs(school)))
     out.append(p_body('(Program Studi S1 Informatika)', '<w:ind w:left="2835" w:firstLine="0"/>'))
     out.append(p_empty())
     out.append(rebuild_par(raw(403), ['Pengalaman Kerja:']))
-    out.append(P('<w:pStyle w:val="ListParagraph"/><w:numPr><w:ilvl w:val="0"/><w:numId w:val="12"/></w:numPr><w:tabs><w:tab w:val="left" w:pos="2835"/></w:tabs><w:ind w:left="426" w:hanging="426"/>', runs('[ISI: tahun]') + TAB + runs('[ISI: pekerjaan atau tulis "–" bila belum ada]')))
+    out.append(P('<w:pStyle w:val="ListParagraph"/><w:numPr><w:ilvl w:val="0"/><w:numId w:val="12"/></w:numPr><w:tabs><w:tab w:val="left" w:pos="2835"/></w:tabs><w:ind w:left="426" w:hanging="426"/>', runs(PRIV.get('kerja_tahun', '[ISI: tahun]')) + TAB + runs(PRIV.get('kerja', '[ISI: pekerjaan atau tulis "–" bila belum ada]'))))
     return out
 
 # ---------------------------------------------------------------- assemble

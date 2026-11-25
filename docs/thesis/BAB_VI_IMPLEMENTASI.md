@@ -35,7 +35,7 @@ Lingkungan Implementasi
 | Pembayaran | Midtrans Snap (sandbox selama pengembangan) dengan notifikasi HTTP ke Cloud Functions |
 | Pembaca naskah dan transkrip | PaddleOCR PP-OCRv5 mobile melalui onnxruntime-web; Whisper small melalui transformers.js; keduanya berjalan di peramban admin |
 | Pengujian | flutter test (174 pengujian), pengujian logika murni Node.js per modul, pengujian Firestore Security Rules pada emulator, GitHub Actions pada setiap push |
-| Alat pengembangan | Claude Code sebagai asisten pemrograman, Git dan GitHub, Firebase CLI dan Emulator Suite, Visual Studio Code |
+| Alat pengembangan | Visual Studio Code, Git dan GitHub, Firebase CLI dan Emulator Suite |
 
 Antarmuka setiap peran mengikuti desain pada Bab V: halaman masuk dan
 pendaftaran memakai warna merek pusat kursus (hijau dan kuning), sedangkan

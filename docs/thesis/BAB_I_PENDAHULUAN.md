@@ -237,10 +237,6 @@ Pembuatan aplikasi ini menggunakan perangkat lunak berikut:
 7. Peramban Google Chrome, Microsoft Edge, dan Safari untuk menguji versi
    web, serta Microsoft Word dan draw.io untuk menyusun buku dan
    diagram.
-8. Claude Code dari Anthropic sebagai asisten pemrograman berbasis AI,
-   yang membantu menulis dan memeriksa kode, skrip pengujian otomatis,
-   dan dokumentasi teknis. Seluruh rancangan, keputusan, dan pemeriksaan
-   hasil tetap dilakukan oleh penulis.
 
 ## 1.5 Metodologi
 

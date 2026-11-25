@@ -24,7 +24,7 @@ bukan di sini; aturannya ada di `docs/THESIS_BOOK_GUIDE.md` §6.
 
 | Bab | File | Status |
 |---|---|---|
-| I Pendahuluan | `BAB_I_PENDAHULUAN.md` | Draf lengkap, 8 `[ISI]`; 1.4 menyebut Claude Code (keputusan pemilik 2026-11-24); di Word: `word/BUKU TA Easy Study.docx` dan `word/BAB I PENDAHULUAN.docx` |
+| I Pendahuluan | `BAB_I_PENDAHULUAN.md` | Draf lengkap, 8 `[ISI]`; 1.4 tanpa alat bantu AI (permintaan pembimbing 2026-11-25); di Word: `word/BUKU TA Easy Study.docx` dan `word/BAB I PENDAHULUAN.docx` |
 | II Teori Penunjang | `BAB_II_TEORI_PENUNJANG.md` | Draf lengkap |
 | III Proses Bisnis | `BAB_III_PROSES_BISNIS.md` | Draf lengkap, butuh foto dan angka dari pemilik; sistem lama **tanpa penjadwalan guru** (pemilik 2026-11-24: 3.2.2 dan Gambar 3.2/3.8 dihapus, gambar dinomori ulang); Gambar 3.1–3.3 adalah foto/tangkapan layar pemilik (`word/fig_3_1.png` daftar sesi WhatsApp dengan nama dan nomor diburamkan, `fig_3_2.png` daftar hadir kertas, `fig_3_3.png` halaman nilai HSK dengan data pribadi diburamkan); Gambar 3.4 aplikasi web Nilai Simulasi HSK (tangkapan layar), 3.5 (rich picture), 3.6 (use case), 3.7 dan 3.8 (activity) digambar dari jawaban pemilik 2026-11-24 (`word/fig_3_4.png` sampai `fig_3_8.png`, sumber SVG di scratchpad chat PLAN) |
 | IV Analisa Sistem | `BAB_IV_ANALISA_SISTEM.md` | Draf lengkap dari jawaban pemilik 2026-11-24 dan dokumen asli (Google Form, Excel daftar siswa dan rekap absensi, kwitansi); Gambar 4.1–4.4 di `word/` (data pribadi diburamkan) |
@@ -82,9 +82,22 @@ Setelah teks di Word diubah tangan, jangan jalankan ulang skrip untuk bab itu
 Sebelum memindahkan ke Word, tanyakan ke pembimbing: (1) daftar bab
 (delapan bab seperti buku contoh kampus, atau digabung), (2) gaya kutipan
 (`[n]` seperti draf ini, atau footnote seperti kriteria kampus). Tentang
-bantuan AI: pemilik memutuskan (2026-11-24) bahwa Claude Code dicantumkan
-sebagai perangkat lunak di Bab I §1.4, poin 8; pernyataan keaslian tetap
-keputusan pemilik dan pembimbing.
+bantuan AI: pembimbing meminta (2026-11-25) agar buku tidak menyebut alat
+bantu AI sama sekali; Bab I §1.4 dan Tabel 6.1 sudah disesuaikan, dan bab
+berikutnya mengikuti aturan yang sama.
+
+**Masukan pembimbing 2026-11-25** (rinci di `docs/PLAN.md` §7): Bab II
+diperpanjang dengan gambar; Bab V memakai banyak diagram; Bab VI hanya bagian
+penting (boleh video demonstrasi); tebal buku 100 sampai 120 halaman; lima
+tujuan pada Bab I §1.2 dijawab lima butir kesimpulan pada Bab VIII §8.1 dengan
+urutan yang sama.
+
+**Riwayat Hidup:** tanggal lahir dan alamat tidak masuk git (repositori
+publik). Data ada di `local/riwayat.json` (kunci `ttl`, `alamat`, `sekolah`
+sebagai daftar `[tahun, nama]`, `kerja_tahun`, `kerja`) dan hanya dipakai bila
+berkas keluaran ditulis ke `local/`:
+`python3 -I docs/thesis/tools/build_book.py "docs/thesis/local/[TEMPLATE] BUKU TA - TESIS.dotx" "docs/thesis/local/BUKU TA Easy Study.docx"`.
+Buku di `word/` tetap memakai tanda `[ISI]` pada bagian itu.
 
 **Algoritma dan segmen program di `.md`:** blok `Algoritma 5.1` (baris judul,
 lalu baris `01: …`) dan `Segmen Program 6.1` dirender `build_book.py` dengan

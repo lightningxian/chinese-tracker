@@ -13,6 +13,30 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-25 — Claude (PLAN chat, Mac): supervisor's review, Build 9 planned
+
+- **The supervisor reviewed the app and the book** (owner's message, 13
+  points). Points 10 to 13 are about the app and became **Build 9** in
+  `docs/PLAN.md` §4, marked NEXT: paged lists with a date range on every long
+  list (audit log named), reports over a period of months, leaderboard time
+  stamps with export and share, HSK simulation packages that can be sat again.
+  The test-code part of the retakes waits for the owner's answer (first
+  sitting counts, recommended, or best sitting counts).
+- **Points 1 to 9 are about the book and the seminar** (`docs/PLAN.md` §7,
+  with a page budget for the limit of 100 to 120 pages): Bab II longer with
+  figures, Bab V with many diagrams, Bab VI only the important parts, five
+  conclusions for the five objectives; later a presentation, the Artikel
+  Ilmiah and a poster.
+- **Done in the book today:** every mention of the AI coding tool is removed
+  (Bab I §1.4 item 8, Tabel 6.1), as the supervisor asked; the Riwayat Hidup
+  takes the owner's birth data and address from the git-ignored
+  `docs/thesis/local/riwayat.json` and only for a book built into
+  `docs/thesis/local/` (the repository is public); the ITS years start in
+  2021. Fixed on the way: the template's sample address ("Jl. SMTown …") was
+  still in the Riwayat Hidup because the match failed across two runs.
+- Asked the BUILD chat for the real page count from Word on the PC (the Mac
+  has no Word; Pages could not be driven).
+
 ### 2026-11-25 — Claude (PLAN chat, Mac): Bab VI Implementasi drafted
 
 - `docs/thesis/BAB_VI_IMPLEMENTASI.md`: 6.1 Implementasi Desain (Tabel 6.1 lingkungan; Gambar 6.1–6.37, one

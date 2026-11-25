@@ -323,6 +323,10 @@ functions, 23 indexes equal to the repo, the bundle carries the monthly
 report. **Nothing is marked NEXT: the thesis builds are finished, the
 owner decides what follows ("After Build 8" in §4).**
 
+**2026-11-25: Build 9 is marked NEXT** (paged lists with a date range,
+reports over a period, leaderboard export and time stamps, HSK simulation
+retakes): the supervisor's four remarks about the app, §4.
+
 **v0.1.27 (owner requests and the After-Build-8 follow-ups) is live**
 (242e287 + d2ddbeb, functions and hosting from the PC on 2026-11-23 under
 the owner's standing go; no rules change) and reviewed by the PLAN chat on
@@ -2068,7 +2072,7 @@ dates (§7), and fills the question bank from the checklist.
 All eight thesis builds are live (v0.1.16 to v0.1.26, 60 functions), two
 months ahead of the calendar in §7. **Nothing is marked NEXT**: the owner
 chooses the order below and says so in the BUILD chat (code) or here
-(docs).
+(docs). Since 2026-11-25 **Build 9** (below) is marked NEXT.
 
 **A. The owner's live tasks, in order** (details in the §1 table)
 
@@ -2125,6 +2129,209 @@ of the old tools, the trial dates and devices, the supervisor's dates);
 each build's acceptance walk becomes a black-box table; the scenario IDs
 (§3) become the functional validation chapter; `docs/screenshots/proposal/`
 supplies the figures.
+
+### Build 9 — Paged lists, period reports, leaderboard export, simulation retakes — **NEXT** (owner 2026-11-25, from the supervisor's review)
+
+The supervisor looked at the app and the book on 2026-11-25. Four of the
+thirteen remarks are about the app (the owner's points 10 to 13); the other
+nine are about the book and the seminar (§7). The owner asked the PLAN chat
+to plan these four and hand them to the BUILD chat.
+
+**What the supervisor asked, in the owner's words**
+
+- 10: "reports need what we call range date, and pagination, include it in
+  every page, so it doesn't bloat the website."
+- 11: "Leaderboard can be exported, shared, and every entry needs a
+  timestamp."
+- 12: "HSK simulation should be able to be tested multiple times."
+- 13: "Audit logs also need pagination. Every page that has a long list
+  should have pagination and range date. Reports need range date, like from
+  March to December."
+
+**What the code does today** (read on `1c45cf0`)
+
+- No list pages through a cursor: `startAfter` appears nowhere in `lib/`,
+  `.limit(` nine times, and there is no date-range picker. Lists are streams
+  over a whole query, drawn in one `ListView`.
+- Audit log: `FirestoreService.watchAuditLogs(limit: 200)`, one list
+  (`lib/features/admin/audit_logs_screen.dart`).
+- Reports tab (`lib/features/admin/admin_reports_tab.dart`): every card is
+  fixed to the current month; the centre report reads one `reports/{yyyyMM}`
+  (`monthly_report_card.dart`); twelve PDF exports in
+  `AdminExportReport`.
+- Leaderboard (`lib/features/tests/leaderboard_screen.dart`): an entry
+  already stores `finishedAt` and `seconds`; the row shows the working time
+  but no date; no export.
+- Packages: `ONE_ATTEMPT = {exam, hsk_simulation}` in
+  `functions/exercise_play.js`; the attempt is
+  `exercise_attempts/{exerciseId}_{uid}`; a second start is refused ("This
+  exam allows one attempt.").
+- Test codes: the attempt is `test_attempts/{codeId}_{uid}`; a second
+  sitting is refused ("You have already sat this test."); staff can wipe a
+  sitting with `resetTestAttempt`. Students see the review after a test, so
+  a second sitting of the same paper is easier than the first.
+
+**9A. Paged lists with a date range (points 10 and 13)**
+
+Build three shared pieces once, then use them on every long list.
+
+1. A paging controller (ViewModel) over a Firestore query: page size 25
+   (choice of 10 / 25 / 50), `startAfterDocument` cursors, next, previous,
+   reload, and the total from the count aggregation, shown as "1–25 of
+   312". It reads only the page on screen. Slicing a full download in
+   memory does not count: the point is fewer reads and a lighter page.
+2. A date range bar: presets (today, 7 days, this month, last month, this
+   year, all) and a custom from–to with `showDateRangePicker`. Dates are
+   Asia/Jakarta and both ends are included. Default: this month. The choice
+   is kept while the page is open.
+3. A pager bar: previous, "page n", next, rows per page, the count.
+
+Rules for using them:
+
+- A list that can pass 25 rows gets the pager. A list ordered by a date
+  also gets the date range bar. Lists that are small by nature stay as they
+  are (rooms, price list, the week calendar, a level checklist, the six
+  duty cards, the today lists on the dashboards).
+- A paged list is fetched, not streamed. It reloads after the page's own
+  writes and has a refresh button.
+- Search must still find a row that is not on the current page. Where a
+  page has a search box, make the search a query (for names: a stored
+  lower-case field with a prefix query, back-filled once), not a filter
+  over the visible page.
+- An export (CSV or PDF) follows the chosen date range, not the visible
+  page. It reads the range in batches, with a ceiling of 5,000 rows and a
+  message when the ceiling is reached.
+- Every new (filter, date order) pair needs its composite index in
+  `firestore.indexes.json`. Queries must keep the limits the rules already
+  demand (a teacher's own students, a student's own rows).
+
+Pages. The BUILD chat first lists every screen that draws a collection
+query and puts the table in its report (screen, collection, order field,
+pager yes/no, date range yes/no). Expected at least:
+
+- Admin: Users (each role chip and Approval), Payments, Vouchers and
+  voucher history, **Audit log** (date range and an action filter), News,
+  Timetable follow-up, Teacher recap, test codes, test results, sessions
+  list, decided promotions, marking queue, question bank (worksheets and
+  questions), exercise packages, placement results, the bell list.
+- Teacher: students, marking queue, exercise results, test sessions and
+  results, packages, own question bank.
+- Student and parent: History, exercise results, test results, payments,
+  the bell list.
+
+**9B. Reports over a period (points 10 and 13)**
+
+- The Reports tab gets one period bar for the whole tab: from month to
+  month (for example March 2026 to December 2026), with presets this
+  month, last 3 months, this year. Default: this month, so the tab opens as
+  it does today.
+- The centre report merges the `reports/{yyyyMM}` documents of the period:
+  counts and money are summed, rates are recomputed from summed numerators
+  and denominators (never an average of percentages), end-of-period
+  figures (active students, open vouchers) come from the last month. It
+  shows one line per month, a total line, and the chart per month. If
+  `buildReport` does not store a numerator or denominator that the merge
+  needs, add it and rebuild the old months with `rebuildMonthlyReport`.
+- A month in the period with no report shows "not built" with the rebuild
+  button; it is not silently counted as zero.
+- The other report cards and their twelve exports follow the same period
+  wherever their data has a date. Every PDF and CSV prints the period in
+  its header ("Periode: Maret 2026 – Desember 2026").
+- The merge is a pure function with tests: the merge of three months
+  equals one build over the same three months for every summed figure.
+
+**9C. Leaderboard: time stamp, export, share (point 11)**
+
+- Every row shows when the result was finished (`finishedAt`, Jakarta
+  time, date and hour) next to the working time. If old entries lack the
+  field, rebuild them from `test_results` (one admin callable or a
+  script).
+- Export, staff only (admin; a teacher for the codes they may see): CSV
+  and PDF with rank, name (staff format), marks per part, total, passed,
+  finished at; the header carries the code, the paper level, and the time
+  of the export. Use the `pdf` and `printing` packages already in
+  `pubspec.yaml`.
+- Share: staff share the PDF through the device share sheet
+  (`Printing.sharePdf`; on the web this is a download). A student gets
+  **Share my result**: a card with their own rank, their own name, marks,
+  date and the code. It carries no other student's name.
+- Not built: a public link to a board. It would need public read access to
+  student names.
+- The board itself is paged (25 per page) and keeps the student's own row
+  visible.
+- `/privacy` must stay true: add the sentence about staff exports if the
+  policy lists what staff can take out of the app.
+
+**9D. HSK simulation can be sat again (point 12)**
+
+Packages (build now):
+
+- A package of type HSK Simulation (and old Exam sheets) is no longer one
+  attempt. Each start is a new attempt with its own server clock. Only one
+  attempt can be open at a time; coming back resumes it. When it is
+  finished or its time is over, the start screen offers a new attempt and
+  lists the earlier ones (date, total, marks per part).
+- `exercise_results` carries `attemptNo`; the result card says which
+  attempt it is. A late attempt is still 0, as today.
+- The progress summary keeps counting every final result (the Build 4
+  rule). No change there.
+
+Test codes (build last; **wait for the owner's yes**, asked 2026-11-25):
+
+- Recommended rule: a student may sit the same code again, but only in a
+  **new session** opened by staff. Sittings are numbered. **The first
+  valid sitting is the one that counts** for the leaderboard, the
+  promotion count and a placement recommendation; later sittings are kept
+  with their result card and marked as repeats in the student's and the
+  staff's lists. Reason: the student has seen the review, so a repeat is
+  practice, not a measurement.
+- The other possible rule is "best sitting counts". It is simpler to
+  explain but lets a student pass a paper by repeating it, which weakens
+  the promotion rule of the proposal (three different codes).
+- `resetTestAttempt` stays for a broken sitting and removes only that
+  sitting. Visitor placement stays one sitting per result code.
+
+**Must list**
+
+1. The three shared pieces exist once and are used by every page below; no
+   page has its own copy of paging code.
+2. Audit log: pager, date range, action filter; opening the page reads 25
+   documents, not 200 (shown with the network panel or the emulator's
+   request log).
+3. Payments, Users, History and the marking queue are paged; search on
+   Users finds a student who is not on the first page.
+4. Reports tab: the period March to December gives one line per month and
+   a total; the PDF prints the period; the merge test passes.
+5. Leaderboard rows show date and hour; CSV and PDF export work for admin
+   and teacher; a student sees **Share my result** and no export of the
+   board.
+6. A student finishes an HSK Simulation package, starts it again, and both
+   results are in the history with attempt numbers; an open attempt is
+   resumed, not doubled.
+7. Emulator seed: enough rows to see page 2 on the audit log, Payments and
+   a leaderboard (`scripts/seed_emulator.py` or the trial seed).
+8. Tests: analyzer baseline unchanged; `flutter test`, the node suites and
+   the rules tests pass; `test_exercise_play.js` covers the second
+   attempt; the supervised flow test still passes, with new steps when the
+   test-code part is built.
+
+**Then list**
+
+- Roll the pager out to every remaining screen of the inventory.
+- The test-code part of 9D, after the owner's answer.
+- Indonesian and English strings for every new label.
+
+**Size and order.** More than one session. Session 1: the shared pieces,
+Audit log, Reports period, the leaderboard (9C) and package retakes: these
+are the four things the supervisor named. Session 2: the rest of the
+inventory. Indexes and functions deploy from the PC as usual; say in the
+report whether rules changed.
+
+**One favour for the book** (five minutes, PC only): open
+`docs/thesis/word/BUKU TA Easy Study.docx` with Word (COM automation is
+fine), refresh the fields, and report the total page count and the page on
+which each BAB, the Daftar Pustaka and the Riwayat Hidup start. The
+supervisor set a limit of 100 to 120 pages and the Mac has no Word.
 
 ### After the thesis builds — extras for the centre
 
@@ -3152,6 +3359,44 @@ the three PDFs, the campus forms and the order of work.
 Indonesian with `[ISI: …]` placeholders for the centre's facts, plus the
 alphabetical Daftar Pustaka and a README on how to move them into the Word
 template. Bab IV to VI follow once the supervisor confirms the chapter list.
+
+**Supervisor's review of the book, 2026-11-25** (the owner's points 1 to 9;
+points 10 to 13 are Build 9 in §4)
+
+| # | Remark | What it means for the work |
+|---|---|---|
+| 1 | Teori Penunjang is too short; diagrams or pictures may be added | Bab II grows from about 9 to about 14 pages; it has no figure today, so each main theory gets one drawn figure (own drawings, source cited) |
+| 2 | Desain Sistem must use many diagrams | Bab V: text and tables give way to diagrams; the owner answers the PLAN chat's questions first (which diagram kinds the supervisor expects) |
+| 3 | Implementasi: only the important parts; a demonstration video is allowed | Bab VI shrinks from 37 screenshots and 17 segments to the parts the examiners asked about; the full set moves to an appendix or a video with a QR code |
+| 4 | 100 pages or more, 120 at most | A page budget per chapter (below); the exact count comes from Word on the PC |
+| 5 | Every mention of Claude Code is removed | Done 2026-11-25: Bab I §1.4 item 8 and the Bab VI tools row are gone; this replaces the owner's decision of 2026-11-24 |
+| 6 | Five objectives, so five conclusions | Bab VIII §8.1 gets exactly five points, one per objective of Bab I §1.2, in the same order, each with its proof from Bab VII |
+| 7 | A presentation for the seminar | Later; the PLAN chat asks the owner what it needs (length, template, live demo or video) |
+| 8 | Artikel Ilmiah, a summary of the book | Later, on the campus article template in `CEK BUKU MANDIRI V4`, after Bab VII |
+| 9 | A poster | Later; the campus size and template are needed |
+
+**Page budget** (Bab I to VIII; an estimate from word and figure counts until
+Word gives the real numbers; open question whether the 120 includes the
+front pages)
+
+| Bab | Now (estimate) | Target |
+|---|---|---|
+| I Pendahuluan | 8 | 8 |
+| II Teori Penunjang | 9 | 14 |
+| III Proses Bisnis | 13 | 12 |
+| IV Analisa Sistem | 12 | 11 |
+| V Desain Sistem | 25 | 28 |
+| VI Implementasi | 40 | 16 |
+| VII Uji Coba | not written | 16 |
+| VIII Penutup | not written | 3 |
+| Total | about 107 before Bab VII and VIII | about 108 |
+
+**Riwayat Hidup:** the owner gave the birth place and date, the home
+address and the starting year (2021) on 2026-11-25. The repository is
+public, so the birth date and address are not committed: they are in
+`docs/thesis/local/riwayat.json` (git-ignored) and only a book built into
+`docs/thesis/local/` carries them. Still missing: primary, junior and senior
+school with years, work experience, a photo.
 
 **Still needed from the owner**
 
