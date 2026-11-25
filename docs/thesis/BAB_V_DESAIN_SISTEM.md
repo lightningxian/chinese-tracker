@@ -225,7 +225,7 @@ Tipe dan Bentuk Soal
 |---|---|---|
 | Mendengarkan | Pilihan ganda dengan teks atau gambar; benar atau salah; mencocokkan | Otomatis |
 | Membaca | Isian rumpang; mencocokkan kalimat; pemahaman bacaan pilihan ganda; mengurutkan kalimat | Otomatis |
-| Menulis | Mengetik pinyin dari hanzi; mengetik hanzi dari pinyin; melengkapi hanzi; menyusun kata menjadi kalimat; menulis kalimat dari gambar; esai | Otomatis dengan toleransi (Algoritma 5.4); kalimat dari gambar dan esai dinilai guru |
+| Menulis | Mengetik pinyin dari hanzi; mengetik hanzi dari pinyin; melengkapi hanzi; mengisi beberapa rumpang dalam satu kalimat (satu jawaban per rumpang); menyusun kata menjadi kalimat; menulis kalimat dari gambar; esai | Otomatis dengan toleransi (Algoritma 5.4); soal beberapa rumpang dinilai per rumpang dan mendapat bagian rumpang yang benar; kalimat dari gambar dan esai dinilai guru |
 
 Murid menjawab seluruh soal lebih dahulu dan mengirim sekali; fungsi
 finishExercise memeriksa seluruh jawaban dengan kunci yang hanya dapat
@@ -235,7 +235,9 @@ melainkan dengan Algoritma 5.4 yang menerima tanda baca lebar penuh, tanda
 baca akhir, hanzi tradisional, dan nada pinyin berupa angka maupun tanda;
 jawaban yang hampir benar mendapat setengah poin dan ditandai agar guru
 meninjaunya, sedangkan soal menyusun kalimat tidak pernah mendapat nilai
-sebagian. Soal menulis bebas (kalimat dari gambar dan esai) bernilai sepuluh
+sebagian. Soal dengan beberapa rumpang (ulasan pelajaran Standard Course)
+dicocokkan rumpang demi rumpang dengan cara yang sama, dan nilainya adalah
+bagian rumpang yang benar. Soal menulis bebas (kalimat dari gambar dan esai) bernilai sepuluh
 poin dan hanya dinilai guru melalui antrean penilaian (koleksi marking_items,
 fungsi markAnswer); hasil yang masih menunggu penilaian berstatus
 pending_marking tanpa keputusan lulus. Contoh pencocokan ditunjukkan pada

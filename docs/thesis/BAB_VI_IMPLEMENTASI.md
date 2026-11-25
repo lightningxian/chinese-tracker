@@ -831,8 +831,10 @@ kemiripan S = 1 − d/n paling sedikit 0,75 (Rumus 2.1) berarti setengah
 nilai dan ditandai untuk dilihat guru; selain itu nol. Fungsi matchPinyin
 bekerja serupa pada suku kata: huruf yang sama dengan nada yang salah
 menghasilkan setengah nilai, dan kunci yang ditulis tanpa nada dibandingkan
-pada hurufnya saja. Keduanya diuji dengan node functions/test_typing_matcher.js
-dan diukur dengan 200 jawaban uji pada Bab VII.
+pada hurufnya saja. Soal dengan beberapa rumpang memanggil matchHanzi untuk
+setiap rumpang dan mendapat bagian rumpang yang benar. Keduanya diuji dengan
+node functions/test_typing_matcher.js dan diukur dengan 200 jawaban uji pada
+Bab VII.
 
 Penilaian satu paket latihan dilakukan fungsi finishExercise (Segmen
 Program 6.9), yang dipanggil aplikasi satu kali setelah murid menjawab
