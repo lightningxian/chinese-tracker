@@ -2238,10 +2238,39 @@ Any time:
 - Fixed (from an independent review): review numbering with two blocks,
   one blank count everywhere, digits in a blanks key line, essay line
   breaks in the result review.
-- Still open (recommendations sent to the PLAN chat): the public repository
-  with the live test password in two docs; teacher-marked 组词 items count
-  10 points each; lesson text not in the test-code player; package editor
-  does not check the recording.
+- **For the PLAN chat (the PC session could not reach it on 2026-11-25):**
+  please review v0.1.39, v0.1.40 and v0.1.41 on the Mac, update the §1
+  Live line (still says v0.1.38), and take these recommendations, most
+  urgent first:
+  1. **Security, owner action, open since 2026-11-17.** The repository is
+     still public and `docs/CLAUDE_FULL_HANDOFF.md` and
+     `docs/FIREBASE_BACKEND.md` still show the live test accounts'
+     password. Ask the owner to reset the passwords of `admin@`,
+     `teacher@`, `student1-3@test.chinesetracker` in Firebase
+     Authentication first (git history keeps the old one, so removing it
+     from the docs alone is not enough), then decide private or public;
+     then remove the password from the docs.
+  2. **Owner live walk of the Standard Course scanner:** Scan paper with
+     Bab 1 on live, correct the lesson text, mark the answers (choices,
+     word order, characters, review blanks), save, upload `01.mp3.mpeg`,
+     make a package, play it as `student1@`. Note the minutes; that is the
+     first real use.
+  3. **Decision for the owner: points of 组词 (make words).** They are
+     saved as free writing: 10 points each against 1 for every other
+     question, and every Standard Course result stays `pending_marking`
+     until a teacher marks them. Options: (a) keep; (b) 2 points each,
+     still teacher-marked; (c) leave them out of the worksheet.
+     Recommendation: (b), a small BUILD item (a `points` field on the
+     bank item, read by `pointsOf`).
+  4. **Small BUILD items, one session together:** the lesson text in the
+     test-code player (only practice packages show it); the package editor
+     checks the recording of HSK / Standard Course sheets as the worksheet
+     screen does; Scan paper hands the already-read pages to the worksheet
+     reader instead of reading a scanned worksheet twice.
+  5. **Still open from §4 "After Build 8" A:** MT-05 sandbox payment,
+     Rebuild progress summaries and Voucher check once, the real
+     timetable, H326202Z truth file. None of these changed; the trial in
+     January needs 1, 2 and 4 of that list.
 
 ### 2026-11-25 — Fill in the blanks for the Standard Course review — COMMIT, release v0.1.40 (functions and hosting)
 - Review questions take one answer per blank (proofreading, answer key,
