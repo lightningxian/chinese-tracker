@@ -97,6 +97,56 @@ live in the Storage bucket, which Google keeps. The NAS copy in
 `docs/NAS_BACKUP_SETUP.md` is optional and, for Firestore, would now need a
 manual `gcloud firestore export`.
 
+## C. Reset the live test passwords (security, open since 2026-11-17)
+
+**Why.** The GitHub repository is public, and the password of the five live
+test accounts (`admin@`, `teacher@`, `student1@`, `student2@`,
+`student3@test.chinesetracker`) is written in 8 files of it (docs, app code,
+seed scripts). Git keeps every old version, so deleting it from the files
+is not enough: anyone can still read it and sign in to the live site as
+**admin**. Only a new password closes this. (Checked 2026-11-25: the live
+web app itself does not contain the password; the repository does.)
+
+**1. Give each account a new password (about 10 minutes, in the app).**
+For each of the five accounts:
+1. Open https://chinese-tracker.web.app and sign in with the account and
+   its current password.
+2. Open the **Profile** tab and press **Change password**.
+3. Type the current password, then the new one twice (at least 8
+   characters), and press **Change password**. You should see
+   "Password changed."
+4. Sign out, and do the next account.
+
+Keep the new password in your own password manager. Do not type it in a
+Claude chat and do not write it into any file in the repository.
+
+If an account is not needed any more: Firebase Console → **Authentication**
+→ **Users** → the account's row → ⋮ → **Disable account**. (The console
+cannot set a password itself, and its "Reset password" sends an e-mail to
+the `test.chinesetracker` address, which does not exist.)
+
+**Check:** sign in once with the **old** password on any of the five
+accounts. The app must say the password is wrong.
+
+**2. Decide: private or public repository.** Once step 1 is done, the old
+password in the history is worthless, so keeping the repository public is
+safe again. Reasons to make it private anyway: the code of a thesis that
+is not yet defended. What changes if private: the GitHub checks run on
+your free monthly minutes (GitHub → Settings → Billing shows the use);
+anyone who should read it (supervisor, examiners) must be added as a
+collaborator. Hosting, the APK and releases do not change. To switch:
+GitHub → the repository → **Settings** → **General** → bottom of the page,
+**Danger Zone** → **Change visibility** → **Private**.
+
+**3. Tell the BUILD chat "test passwords reset".** It then removes the old
+password from the 8 files: the docs (`CLAUDE_FULL_HANDOFF.md`,
+`FIREBASE_BACKEND.md`, `SESSION_LOG.md`, `PLAN.md`), the app code
+(`lib/core/constants/test_accounts.dart` gets no live default,
+`test_login_screen.dart`) and the seed scripts (`seed_test_accounts.sh`,
+`seed_report_demo_data.py` read the password from an environment
+variable). Nothing on the live site changes. The new password never goes
+into the repository.
+
 ## Storage rules that read Firestore (one-time grant, 2026-11-24)
 
 The Storage rules check "is this person an admin / staff?" by reading
