@@ -6,7 +6,7 @@
 // system, so the ribbon is painted over with the colour next to it and the
 // bottom bar is cropped away (1280 × 800 → 1280 × 776). Pixels are handled
 // in headless Chrome (canvas 2D), so no image library is needed.
-// Afterwards the sixteen shots the book shows are copied from
+// Afterwards the twelve shots the book shows are copied from
 // word/bab6_lengkap/ to word/fig_6_<figure>.png (mapping in bab6_book.mjs).
 //
 //   node docs/thesis/tools/clean_shots.mjs [files…]   (default: word/bab6_lengkap/fig_6_*.png)

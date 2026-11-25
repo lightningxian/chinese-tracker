@@ -66,6 +66,14 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   languages. Approved. Open for the owner: Rebuild leaderboards once, and the
   rule for sitting an HSK simulation again (simulations run only as test
   codes since 2026-11-16, so package retakes reach exam packages only).
+- **The 120-page limit counts the front pages (owner, 2026-11-26).** Budget
+  in `docs/PLAN.md` §7: 119 pages. **Bab VI cut a second time:** 12
+  screenshots at 12 × 7.28 cm and 6 program segments, about 1,720 words,
+  target 13 pages. After Build 9, retake figures 6.5 and 6.10.
+- **Demo video:** the owner wants it from the emulator and asked whether the
+  PLAN chat can make it. Tested: headless Chrome on the Mac records an MP4
+  (H.264) from a canvas with no extra software, so a scripted, captioned
+  walk-through is possible. To be made after Build 9 is complete.
 - **Owner's rule for sitting a test code again (2026-11-26, in the BUILD
   chat): the first valid sitting counts** for the leaderboard, the promotion
   count and placement; later sittings are kept and marked as repeats. He also

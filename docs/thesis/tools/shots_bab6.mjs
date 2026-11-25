@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Thesis Bab VI (Implementasi Desain): one screenshot per page, written as
 // docs/thesis/word/bab6_lengkap/fig_6_<n>.png (n = shot number). The book
-// shows sixteen of them: clean_shots.mjs cleans the shots and copies those
-// sixteen to docs/thesis/word/fig_6_<figure>.png (mapping in bab6_book.mjs).
+// shows twelve of them: clean_shots.mjs cleans the shots and copies those
+// twelve to docs/thesis/word/fig_6_<figure>.png (mapping in bab6_book.mjs).
 // Same mechanics as tool/screenshots/run.mjs: headless Chrome through the
 // DevTools protocol against the EMULATOR bundle with the trial seed.
 //
@@ -180,7 +180,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const sheet = ["# Bab VI screenshots", "",
   "Made by `docs/thesis/tools/shots_bab6.mjs` on the emulator bundle with the trial seed",
   `(${new Date().toISOString().slice(0, 10)}), Indonesian, light, 1280 x 800.`, "",
-  "All shots are in `docs/thesis/word/bab6_lengkap/`. The book shows the sixteen with a figure",
+  "All shots are in `docs/thesis/word/bab6_lengkap/`. The book shows the twelve with a figure",
   "number (`bab6_book.mjs`); `clean_shots.mjs` copies them to `docs/thesis/word/fig_6_<n>.png`.", "",
   "| Tangkapan | Gambar di buku | Halaman |", "|---|---|---|"];
 const failures = [];

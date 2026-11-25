@@ -345,9 +345,10 @@ FIG_SIZE_CM = {'2.1': (13, 5.72), '2.2': (13, 5.2), '2.3': (13, 6.24), '2.4': (1
                '3.1': (6.5, 13.5), '3.2': (10, 13.5), '3.3': (12, 8.1), '3.4': (12, 6.2), '3.5': (14, 10), '3.6': (14, 11.8), '3.7': (14, 12.3), '3.8': (14, 10.9),
                '4.1': (8, 11), '4.2': (12, 8.4), '4.3': (14, 3), '4.4': (14, 3),
                '5.1': (14, 9), '5.2': (14, 9.5), '5.3': (14, 9.5), '5.4': (14, 9.5), '5.5': (14, 10), '5.6': (14, 11), '5.7': (14, 11), '5.8': (14, 9.5), '5.9': (14, 10)}            # width, height in cm; other figures 14 x 8
-# Bab VI screenshots (docs/thesis/tools/shots_bab6.mjs, 1280 x 776 after clean_shots.mjs): 13 cm wide keeps two per page.
+# Bab VI screenshots (docs/thesis/tools/shots_bab6.mjs, 1280 x 776 after clean_shots.mjs): 12 cm wide lets two
+# figures with their captions and a short paragraph each share one page (text height 22.7 cm).
 for _n in range(1, 60):
-    FIG_SIZE_CM.setdefault('6.%d' % _n, (13, 7.9))
+    FIG_SIZE_CM.setdefault('6.%d' % _n, (12, 7.28))
 
 def render_chapter(c, title, blocks, figure_png=None):
     out = []
