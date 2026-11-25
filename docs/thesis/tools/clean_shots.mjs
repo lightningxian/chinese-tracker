@@ -6,18 +6,22 @@
 // system, so the ribbon is painted over with the colour next to it and the
 // bottom bar is cropped away (1280 × 800 → 1280 × 776). Pixels are handled
 // in headless Chrome (canvas 2D), so no image library is needed.
+// Afterwards the sixteen shots the book shows are copied from
+// word/bab6_lengkap/ to word/fig_6_<figure>.png (mapping in bab6_book.mjs).
 //
-//   node docs/thesis/tools/clean_shots.mjs [files…]   (default: word/fig_6_*.png)
+//   node docs/thesis/tools/clean_shots.mjs [files…]   (default: word/bab6_lengkap/fig_6_*.png)
 import {spawn} from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
+import {BOOK} from "./bab6_book.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const WORD = path.join(HERE, "..", "word");
+const FULL = path.join(WORD, "bab6_lengkap");
 const files = process.argv.slice(2).length ? process.argv.slice(2) :
-  fs.readdirSync(WORD).filter((f) => /^fig_6_\d+\.png$/.test(f)).map((f) => path.join(WORD, f));
+  fs.readdirSync(FULL).filter((f) => /^fig_6_\d+\.png$/.test(f)).map((f) => path.join(FULL, f));
 const HEIGHT = 776;
 
 const chrome = [process.env.CHROME,
@@ -97,6 +101,13 @@ for (const file of files) {
   fs.writeFileSync(file, Buffer.from(out.slice("data:image/png;base64,".length), "base64"));
   console.log(`${path.basename(file)}: cleaned`);
 }
+
+// The book's figures: shot number → Gambar 6.<figure>.
+for (const [shot, fig] of Object.entries(BOOK)) {
+  const from = path.join(FULL, `fig_6_${shot}.png`);
+  if (fs.existsSync(from)) fs.copyFileSync(from, path.join(WORD, `fig_6_${fig}.png`));
+}
+console.log(`${Object.keys(BOOK).length} book figures copied to ${path.relative(process.cwd(), WORD)}`);
 
 ws.close();
 proc.kill();

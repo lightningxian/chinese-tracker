@@ -341,7 +341,8 @@ def p_code(kind, number, title, lines):
     return out
 
 # ---------------------------------------------------------------- chapter rendering
-FIG_SIZE_CM = {'3.1': (6.5, 13.5), '3.2': (10, 13.5), '3.3': (12, 8.1), '3.4': (12, 6.2), '3.5': (14, 10), '3.6': (14, 11.8), '3.7': (14, 12.3), '3.8': (14, 10.9),
+FIG_SIZE_CM = {'2.1': (13, 5.72), '2.2': (13, 5.2), '2.3': (13, 6.24), '2.4': (13, 5.46), '2.5': (13, 5.46), '2.6': (13, 6.5), '2.7': (13, 6.37), '2.8': (13, 6.5),   # docs/thesis/tools/make_bab2_figs.py, canvas 1000 px wide
+               '3.1': (6.5, 13.5), '3.2': (10, 13.5), '3.3': (12, 8.1), '3.4': (12, 6.2), '3.5': (14, 10), '3.6': (14, 11.8), '3.7': (14, 12.3), '3.8': (14, 10.9),
                '4.1': (8, 11), '4.2': (12, 8.4), '4.3': (14, 3), '4.4': (14, 3),
                '5.1': (14, 9), '5.2': (14, 9.5), '5.3': (14, 9.5), '5.4': (14, 9.5), '5.5': (14, 10), '5.6': (14, 11), '5.7': (14, 11), '5.8': (14, 9.5), '5.9': (14, 10)}            # width, height in cm; other figures 14 x 8
 # Bab VI screenshots (docs/thesis/tools/shots_bab6.mjs, 1280 x 776 after clean_shots.mjs): 13 cm wide keeps two per page.
@@ -473,7 +474,7 @@ SKELETON = {
         ('Hasil Kuesioner System Usability Scale', '[ISI: skor per responden (Lampiran D), rata-rata, interpretasi; target > 70.]', []),
     ]),
     8: ('PENUTUP', '[ISI: paragraf pembuka Bab VIII.]', [
-        ('Kesimpulan', '[ISI: satu butir per tujuan pada Bab I dengan angka pembuktinya (skenario lulus, akurasi pencocokan, rata-rata SUS).]', []),
+        ('Kesimpulan', '[ISI: tepat lima butir, satu untuk setiap tujuan pada Bab I subbab 1.2 dengan urutan yang sama (permintaan pembimbing 2026-11-25), masing-masing dengan angka pembuktinya dari Bab VII (skenario lulus, akurasi pencocokan, rata-rata SUS).]', []),
         ('Saran', '[ISI: dari komentar responden dan fitur di luar lingkup (antarmuka Inggris, peran orang tua, materi, HSK 3.0, pembaca naskah).]', []),
     ]),
 }

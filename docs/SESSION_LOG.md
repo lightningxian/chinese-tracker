@@ -37,7 +37,23 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 - **Real page count from Word on the PC:** 148 physical pages; 128 printed
   pages from Bab I to the Riwayat Hidup; Bab VI alone is 49. The budget in
   `docs/PLAN.md` §7 brings the printed pages to about 113 (Bab VI to 16,
-  Bab II to 15). Bab II and Bab VI are being reworked to that budget.
+  Bab II to 15).
+- **Bab II extended:** eight own-drawn figures (Flutter layers, one code base
+  to three platforms, the Firebase services, Firestore structure, the two
+  access paths, transaction with retry and idempotent key, MVVM, the Snap
+  payment sequence) from `docs/thesis/tools/make_bab2_figs.py`; about 2,940
+  words; no new reference.
+- **Bab VI trimmed to the important parts:** 16 screenshots and 8 program
+  segments (rules, clash check, closeSession, typing matcher, finishExercise,
+  promotion, voucher crediting, progress warnings), about 2,700 words
+  instead of 7,330. The full chapter is kept in
+  `docs/thesis/archive/BAB_VI_LENGKAP_2026-11-25.md` and all 37 screenshots
+  in `docs/thesis/word/bab6_lengkap/` for an appendix and the video script;
+  `tools/bab6_book.mjs` maps shot numbers to figure numbers. The book now
+  has 46 figures, 28 tables, 8 segments. Bab VIII's skeleton says exactly
+  five conclusions.
+- After Build 9, retake figures 6.5, 6.7 and 6.14 and reread the
+  finishExercise paragraph (retakes).
 
 ### 2026-11-25 — Claude (PLAN chat, Mac): Bab VI Implementasi drafted
 

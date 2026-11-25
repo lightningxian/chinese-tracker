@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 // Thesis Bab VI (Implementasi Desain): one screenshot per page, written as
-// docs/thesis/word/fig_6_<n>.png for docs/thesis/tools/build_book.py.
+// docs/thesis/word/bab6_lengkap/fig_6_<n>.png (n = shot number). The book
+// shows sixteen of them: clean_shots.mjs cleans the shots and copies those
+// sixteen to docs/thesis/word/fig_6_<figure>.png (mapping in bab6_book.mjs).
 // Same mechanics as tool/screenshots/run.mjs: headless Chrome through the
 // DevTools protocol against the EMULATOR bundle with the trial seed.
 //
@@ -8,6 +10,7 @@
 //   python3 -I scripts/seed_trial.py emulator
 //   scripts/run_emulator_web.sh                  (serves build/web-emulator on :5181)
 //   node docs/thesis/tools/shots_bab6.mjs [--base http://127.0.0.1:5181] [--only 6,12]
+//   node docs/thesis/tools/clean_shots.mjs
 //
 // Every shot: a fresh browser context, Indonesian, light, 1280 x 800. The
 // emulator bundle signs in with ?as=<email> (emulator-only password) and
@@ -19,10 +22,11 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
+import {BOOK} from "./bab6_book.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(HERE, "..", "..", "..");
-const OUT = path.join(ROOT, "docs", "thesis", "word");
+const OUT = path.join(ROOT, "docs", "thesis", "word", "bab6_lengkap");
 const args = process.argv.slice(2);
 const opt = (n, d) => (args.includes(n) ? args[args.indexOf(n) + 1] : d);
 const BASE = opt("--base", "http://127.0.0.1:5181").replace(/\/$/, "");
@@ -176,7 +180,9 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const sheet = ["# Bab VI screenshots", "",
   "Made by `docs/thesis/tools/shots_bab6.mjs` on the emulator bundle with the trial seed",
   `(${new Date().toISOString().slice(0, 10)}), Indonesian, light, 1280 x 800.`, "",
-  "| Gambar | Halaman |", "|---|---|"];
+  "All shots are in `docs/thesis/word/bab6_lengkap/`. The book shows the sixteen with a figure",
+  "number (`bab6_book.mjs`); `clean_shots.mjs` copies them to `docs/thesis/word/fig_6_<n>.png`.", "",
+  "| Tangkapan | Gambar di buku | Halaman |", "|---|---|---|"];
 const failures = [];
 
 for (const [n, who, start, tab, deep, caption, click] of SHOTS) {
@@ -228,7 +234,7 @@ for (const [n, who, start, tab, deep, caption, click] of SHOTS) {
     await sleep(deep || click ? 7000 : 5000);
     const {data} = await send("Page.captureScreenshot", {format: "png"}, sessionId);
     fs.writeFileSync(path.join(OUT, file), Buffer.from(data, "base64"));
-    sheet.push(`| 6.${n} | ${caption} |`);
+    sheet.push(`| ${n} | ${BOOK[n] ? `6.${BOOK[n]}` : "–"} | ${caption} |`);
     console.log(`${file}: saved (${caption})`);
   } catch (err) {
     failures.push(`${file}: ${err.message}`);

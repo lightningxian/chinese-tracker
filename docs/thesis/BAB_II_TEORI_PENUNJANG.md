@@ -38,7 +38,18 @@ pendekatan berbasis widget: seluruh elemen antarmuka pengguna, dari tombol
 sampai tata letak halaman, dibangun dari susunan widget yang dapat
 dikustomisasi dan dipakai ulang. Flutter memiliki mesin rendering sendiri,
 sehingga tampilan aplikasi konsisten di berbagai perangkat dan tidak
-bergantung pada komponen bawaan sistem operasi.
+bergantung pada komponen bawaan sistem operasi. Susunan Flutter terdiri atas
+tiga lapisan seperti pada Gambar 2.1.
+
+[GAMBAR 2.1: lapisan arsitektur Flutter]
+
+Gambar 2.1
+Lapisan Arsitektur Flutter
+
+Kode aplikasi hanya berhubungan dengan lapisan framework yang ditulis
+dalam Dart. Engine menggambar setiap piksel dan menjalankan kode Dart,
+sedangkan embedder menghubungkan engine dengan sistem operasi atau
+peramban, sehingga kode aplikasi yang sama dapat dipakai di setiap platform.
 
 Fitur hot reload mempercepat proses pengembangan karena perubahan
 kode dapat langsung terlihat tanpa menjalankan ulang aplikasi. Flutter juga
@@ -59,6 +70,18 @@ sehingga biaya pengembangan dan pemeliharaan lebih rendah dan pengalaman
 pengguna lebih konsisten antarperangkat. Bagi lembaga kursus kecil seperti
 Easy Study, pendekatan ini penting karena murid memakai perangkat yang
 beragam: telepon Android, iPhone, dan komputer dengan peramban web.
+Pada Flutter, satu basis kode tersebut dikompilasi menjadi keluaran yang
+berbeda untuk setiap platform, seperti pada Gambar 2.2 [6].
+
+[GAMBAR 2.2: satu basis kode Flutter untuk web, Android, dan iOS]
+
+Gambar 2.2
+Satu Basis Kode untuk Web, Android, dan iOS
+
+Untuk web, kode Dart dikompilasi menjadi JavaScript atau WebAssembly
+yang dijalankan peramban, sedangkan untuk Android dan iOS kode dikompilasi
+menjadi kode mesin native. Pada aplikasi ini keluaran web diterapkan pada
+Firebase Hosting dan keluaran Android dibagikan sebagai berkas APK.
 
 ## 2.4 Firebase
 
@@ -66,7 +89,17 @@ Firebase adalah platform Backend-as-a-Service (BaaS) yang dikembangkan
 oleh Google untuk mendukung pengembangan aplikasi mobile dan web tanpa
 perlu membangun dan mengelola server sendiri [7]. Firebase dapat
 diintegrasikan dengan Flutter melalui paket resmi FlutterFire. Layanan
-Firebase yang digunakan pada aplikasi ini adalah sebagai berikut.
+Firebase yang digunakan pada aplikasi ini ditunjukkan pada Gambar 2.3.
+
+[GAMBAR 2.3: layanan Firebase yang digunakan aplikasi]
+
+Gambar 2.3
+Layanan Firebase yang Digunakan Aplikasi
+
+Aplikasi berhubungan dengan Firebase melalui HTTPS dengan membawa ID
+token pengguna. Cloud Functions berada di sisi server: fungsi membaca dan
+menulis Cloud Firestore serta mengirim notifikasi melalui Cloud Messaging.
+Setiap layanan dijelaskan pada subbab berikut.
 
 ### 2.4.1 Cloud Firestore
 
@@ -78,6 +111,17 @@ yang mendengarkan dokumen atau kueri yang sama, mendukung mode luring,
 dan diskalakan secara otomatis. Firestore juga menyediakan transaksi dan
 batched writes untuk mengubah beberapa dokumen secara atomik (lihat 2.7),
 serta Security Rules untuk mengatur hak akses setiap permintaan (lihat 2.6).
+Contoh susunan koleksi, dokumen, dan subkoleksi ditunjukkan pada Gambar 2.4.
+
+[GAMBAR 2.4: struktur koleksi, dokumen, dan subkoleksi Cloud Firestore]
+
+Gambar 2.4
+Struktur Koleksi, Dokumen, dan Subkoleksi pada Cloud Firestore
+
+Pada contoh ini dokumen seorang murid di koleksi users memiliki
+subkoleksi level_history yang mencatat setiap kenaikan tingkatnya. Setiap
+dokumen dialamati dengan jalur yang disusun dari nama koleksi dan ID
+dokumen secara bergantian.
 
 ### 2.4.2 Firebase Authentication
 
@@ -144,10 +188,16 @@ pengguna (misalnya UID dan peran yang tersimpan pada dokumen
 penggunanya), isi dokumen yang diminta, dan isi data yang akan ditulis.
 Permintaan yang tidak memenuhi aturan ditolak oleh server, sehingga aplikasi
 yang dimodifikasi atau skrip yang memakai SDK secara langsung tetap tidak
-dapat membaca atau menulis data yang bukan haknya.
+dapat membaca atau menulis data yang bukan haknya. Alur pemeriksaan ini
+ditunjukkan pada Gambar 2.5.
+
+[GAMBAR 2.5: dua jalur akses ke Cloud Firestore, melalui Security Rules dan melalui Cloud Functions]
+
+Gambar 2.5
+Jalur Akses ke Cloud Firestore melalui Security Rules dan Cloud Functions
 
 Cloud Functions menggunakan Admin SDK sehingga tidak dibatasi oleh
-aturan ini. Pola yang dipakai pada aplikasi ini adalah: data yang menentukan
+aturan ini (jalur bawah pada Gambar 2.5). Pola yang dipakai pada aplikasi ini adalah: data yang menentukan
 hasil belajar atau uang (nilai, riwayat voucher, pembayaran, sesi kelas) hanya
 dapat ditulis oleh Cloud Functions, sedangkan aplikasi klien hanya dapat
 membacanya sesuai perannya. Dengan demikian murid tidak dapat mengubah
@@ -175,7 +225,17 @@ yang sama tidak dapat dibuat dua kali, dan dengan memeriksa status dokumen
 di awal transaksi, misalnya sesi yang sudah berstatus selesai tidak ditutup
 lagi. Dengan cara ini pemanggilan ulang karena koneksi terputus atau
 notifikasi pembayaran yang dikirim dua kali tidak memotong voucher atau
-membuat voucher untuk kedua kalinya.
+membuat voucher untuk kedua kalinya. Gabungan kedua mekanisme ini
+ditunjukkan pada Gambar 2.6.
+
+[GAMBAR 2.6: transaksi Firestore dengan pengulangan dan kunci idempoten]
+
+Gambar 2.6
+Transaksi Firestore dengan Pengulangan dan Kunci Idempoten
+
+Pemeriksaan di awal transaksi membuat pemanggilan kedua berhenti tanpa
+perubahan, sedangkan pengulangan otomatis menjamin setiap perubahan
+dihitung dari data terbaru.
 
 ## 2.8 Basis Data NoSQL
 
@@ -205,8 +265,17 @@ Model-View-ViewModel (MVVM) adalah pola arsitektur perangkat lunak
 yang memisahkan logika presentasi dari antarmuka pengguna, sehingga
 aplikasi lebih modular, mudah dikelola, dan dapat diuji. Pada aplikasi ini
 MVVM diterapkan dengan paket Provider [19], yaitu solusi pengelolaan state
-yang dicontohkan dalam dokumentasi resmi Flutter. Konsep-konsep yang
-mendasarinya adalah sebagai berikut.
+yang dicontohkan dalam dokumentasi resmi Flutter. Aliran data antarlapisannya
+ditunjukkan pada Gambar 2.7.
+
+[GAMBAR 2.7: aliran data pola MVVM dengan Provider]
+
+Gambar 2.7
+Pola MVVM dengan Provider
+
+Aksi pengguna mengalir dari View ke ViewModel lalu ke Service, sedangkan
+data mengalir ke arah sebaliknya sampai View dibangun ulang. Konsep-konsep
+yang mendasari pola ini adalah sebagai berikut.
 
 - Separation of Concerns (SoC). Tanggung jawab dipisahkan ke dalam
   bagian yang berbeda: Model menangani data dan logika bisnis, View
@@ -238,12 +307,18 @@ aplikasi menerima pembayaran daring melalui berbagai metode, seperti
 transfer bank melalui Virtual Account, e-wallet (GoPay dan ShopeePay),
 QRIS, dan kartu kredit [15]. Midtrans menyediakan Snap, yaitu halaman
 pembayaran siap pakai yang dapat ditampilkan di dalam aplikasi, sehingga
-pengembang tidak perlu membangun antarmuka pembayaran sendiri.
+pengembang tidak perlu membangun antarmuka pembayaran sendiri. Urutan
+pembayaran dengan Snap ditunjukkan pada Gambar 2.8.
+
+[GAMBAR 2.8: urutan pembayaran dengan Midtrans Snap]
+
+Gambar 2.8
+Urutan Pembayaran dengan Midtrans Snap
 
 Untuk menjaga keamanan, pembuatan transaksi dilakukan di sisi server
-menggunakan server key, dan setelah transaksi selesai Midtrans mengirimkan
-HTTP notification (webhook) ke server untuk memperbarui status pembayaran
-secara otomatis. Setiap notifikasi membawa signature key, yaitu hasil hash
+menggunakan server key (langkah 2), dan setelah transaksi selesai Midtrans
+mengirimkan HTTP notification (webhook) ke server (langkah 6) untuk
+memperbarui status pembayaran secara otomatis. Setiap notifikasi membawa signature key, yaitu hasil hash
 SHA-512 dari order ID, kode status, jumlah, dan server key, sehingga server
 dapat memastikan notifikasi benar-benar berasal dari Midtrans. Midtrans juga
 menyediakan mode sandbox untuk menguji proses pembayaran tanpa uang
