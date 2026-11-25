@@ -3375,21 +3375,30 @@ points 10 to 13 are Build 9 in §4)
 | 8 | Artikel Ilmiah, a summary of the book | Later, on the campus article template in `CEK BUKU MANDIRI V4`, after Bab VII |
 | 9 | A poster | Later; the campus size and template are needed |
 
-**Page budget** (Bab I to VIII; an estimate from word and figure counts until
-Word gives the real numbers; open question whether the 120 includes the
-front pages)
+**Page budget** (real numbers: Word on the PC, 2026-11-25, book at
+`ad86562`: 148 physical pages, of which 20 front pages and 128 printed
+pages from Bab I to the Riwayat Hidup; the limit is read as the printed
+pages until the owner says otherwise)
 
-| Bab | Now (estimate) | Target |
+| Part | Now (Word) | Target |
 |---|---|---|
-| I Pendahuluan | 8 | 8 |
-| II Teori Penunjang | 9 | 14 |
-| III Proses Bisnis | 13 | 12 |
-| IV Analisa Sistem | 12 | 11 |
-| V Desain Sistem | 25 | 28 |
-| VI Implementasi | 40 | 16 |
-| VII Uji Coba | not written | 16 |
-| VIII Penutup | not written | 3 |
-| Total | about 107 before Bab VII and VIII | about 108 |
+| I Pendahuluan | 10 | 10 |
+| II Teori Penunjang | 10 | 15 |
+| III Proses Bisnis | 14 | 12 |
+| IV Analisa Sistem | 13 | 12 |
+| V Desain Sistem | 26 | 26 (diagrams replace tables and text, no growth) |
+| VI Implementasi | 49 | 16 |
+| VII Uji Coba | 2 (headings only) | 16 |
+| VIII Penutup | 1 (headings only) | 3 |
+| Daftar Pustaka, Riwayat Hidup | 3 | 3 |
+| Total | 128 | 113 |
+
+One page of this book holds about 250 words, less than the usual estimate,
+because of the wide margins and the 1.5 spacing. The BUILD chat also saw
+every BAB line of the Daftar Isi show page 8 after a field refresh through
+Word automation; to be checked by hand in Word (Ctrl+A, F9) before anything
+is changed in the builder, because automation often refreshes fields before
+the pages are laid out.
 
 **Riwayat Hidup:** the owner gave the birth place and date, the home
 address and the starting year (2021) on 2026-11-25. The repository is

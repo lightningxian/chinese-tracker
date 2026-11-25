@@ -31,11 +31,13 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   (Bab I §1.4 item 8, Tabel 6.1), as the supervisor asked; the Riwayat Hidup
   takes the owner's birth data and address from the git-ignored
   `docs/thesis/local/riwayat.json` and only for a book built into
-  `docs/thesis/local/` (the repository is public); the ITS years start in
+  `docs/thesis/local/` (the repository is public); the ISTTS years start in
   2021. Fixed on the way: the template's sample address ("Jl. SMTown …") was
   still in the Riwayat Hidup because the match failed across two runs.
-- Asked the BUILD chat for the real page count from Word on the PC (the Mac
-  has no Word; Pages could not be driven).
+- **Real page count from Word on the PC:** 148 physical pages; 128 printed
+  pages from Bab I to the Riwayat Hidup; Bab VI alone is 49. The budget in
+  `docs/PLAN.md` §7 brings the printed pages to about 113 (Bab VI to 16,
+  Bab II to 15). Bab II and Bab VI are being reworked to that budget.
 
 ### 2026-11-25 — Claude (PLAN chat, Mac): Bab VI Implementasi drafted
 
