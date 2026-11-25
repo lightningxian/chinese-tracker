@@ -29,7 +29,8 @@ bukan di sini; aturannya ada di `docs/THESIS_BOOK_GUIDE.md` §6.
 | III Proses Bisnis | `BAB_III_PROSES_BISNIS.md` | Draf lengkap, butuh foto dan angka dari pemilik; sistem lama **tanpa penjadwalan guru** (pemilik 2026-11-24: 3.2.2 dan Gambar 3.2/3.8 dihapus, gambar dinomori ulang); Gambar 3.1–3.3 adalah foto/tangkapan layar pemilik (`word/fig_3_1.png` daftar sesi WhatsApp dengan nama dan nomor diburamkan, `fig_3_2.png` daftar hadir kertas, `fig_3_3.png` halaman nilai HSK dengan data pribadi diburamkan); Gambar 3.4 aplikasi web Nilai Simulasi HSK (tangkapan layar), 3.5 (rich picture), 3.6 (use case), 3.7 dan 3.8 (activity) digambar dari jawaban pemilik 2026-11-24 (`word/fig_3_4.png` sampai `fig_3_8.png`, sumber SVG di scratchpad chat PLAN) |
 | IV Analisa Sistem | `BAB_IV_ANALISA_SISTEM.md` | Draf lengkap dari jawaban pemilik 2026-11-24 dan dokumen asli (Google Form, Excel daftar siswa dan rekap absensi, kwitansi); Gambar 4.1–4.4 di `word/` (data pribadi diburamkan) |
 | V Desain Sistem | `BAB_V_DESAIN_SISTEM.md` | Draf lengkap dari proposal §IV dan kode: 12 sub-bab, Algoritma 5.1–5.8 (format kampus, numbering template), Rumus 5.1–5.2, Tabel 5.1–5.13, Gambar 5.1–5.9 (arsitektur, use case per peran, 4 activity diagram, peta halaman) di `word/` |
-| VI–VIII | belum (kerangka sub-bab ada di buku Word) | VI berikutnya (tangkapan layar + segmen program); VII–VIII setelah uji coba |
+| VI Implementasi | `BAB_VI_IMPLEMENTASI.md` | Draf lengkap (2026-11-25): Tabel 6.1 lingkungan, 6.2 susunan kode; Gambar 6.1–6.37 tangkapan layar emulator dengan seed uji coba (`tools/shots_bab6.mjs`, dibersihkan `tools/clean_shots.mjs`); Segmen Program 6.1–6.17 dikutip dari kode (main.dart, app_router, firestore.rules, scheduling.js, saveSchedule, bookingRefusal, closeSession, typing_matcher, finishExercise, promotion.js, createInvoice, Snap, tanda tangan Midtrans, creditDecision, warningsOf, fl_chart, pemutar latihan) |
+| VII–VIII | belum (kerangka sub-bab ada di buku Word) | setelah uji coba (Januari 2027) |
 | Daftar Pustaka | `DAFTAR_PUSTAKA.md` | 20 sumber proposal, urut abjad |
 
 **File Word (`word/`)**
@@ -48,6 +49,12 @@ dipasang sebagai gambar untuk Gambar bab.n (ukuran di `FIG_SIZE_CM`, bawaan
 python3 -I docs/thesis/tools/build_book.py docs/thesis/local/TEMPLATE.dotx \
   "docs/thesis/word/BUKU TA Easy Study.docx"
 ```
+
+Tangkapan layar Bab VI: `node docs/thesis/tools/shots_bab6.mjs` (emulator + `seed_trial.py emulator` +
+`scripts/run_emulator_web.sh` dulu; 37 halaman, 1280 × 800, bahasa Indonesia) lalu
+`node docs/thesis/tools/clean_shots.mjs` (menghapus pita EMULATOR dan bilah peringatan Auth;
+hasil 1280 × 776, dipasang 13 × 7,9 cm). Halaman yang perlu data khusus (sesi hari ini, kelas yang
+dipesan, murid dengan hasil tes) dicari skrip itu sendiri di Firestore emulator.
 
 Untuk pengumpulan, kampus meminta satu file per bab; file per bab dibuat
 dengan `tools/build_bab.py` (contoh di bawah) atau dengan memecah buku lengkap
@@ -99,20 +106,22 @@ satu halaman, selalu diikuti paragraf; kode panjang ke Lampiran E):
 | 5.7 | Rekomendasi Tingkat Tes Penempatan | `functions/placement.js` |
 | 5.8 | Peringatan Progress Murid | `functions/progress.js` `warningsOf` |
 
-| No | Segmen Program (Bab VI, ≤ 25 baris + paragraf) | Sumber |
+| No | Segmen Program (Bab VI, ditulis 2026-11-25; ≤ ~30 baris + paragraf) | Sumber |
 |---|---|---|
-| 6.1 | Inisialisasi Firebase | `lib/main.dart` |
-| 6.2 | Pengalihan halaman menurut peran dan status akun | `lib/app.dart` |
-| 6.3 | Aturan akses `exercise_results` dan `schedules` | `firestore.rules` |
-| 6.4 | `conflicts` dan `overlaps` | `functions/scheduling.js` |
-| 6.5 | `saveSchedule`: transaksi dan `schedule_locks` | `functions/index.js` |
-| 6.6 | `bookSession` dan `bookingRefusal` | `functions/index.js`, `scheduling.js` |
-| 6.7 | `closeSession`: satu transaksi, kunci idempoten `voucher_history` | `functions/index.js` |
-| 6.8 | Normalisasi dan `matchHanzi` / `matchPinyin` | `functions/typing_matcher.js` |
-| 6.9 | `finishExercise`: nilai per bagian, antrean penilaian | `functions/index.js` |
-| 6.10 | `countsAt` dan `promotionState` dalam `onTestResultWritten` | `functions/promotion.js` |
-| 6.11 | `createInvoice` dan token Snap | `functions/payments.js` |
-| 6.12 | Notifikasi pembayaran dan pembuatan term voucher | `functions/payments.js` |
-| 6.13 | `warningsOf` | `functions/progress.js` |
-| 6.14 | Grafik `StudentProgressReport` (`fl_chart`) | `lib/features/...` |
-| 6.15 | Pemutar latihan: kirim jawaban sekali ke `finishExercise` | `lib/features/exercises/` |
+| 6.1 | Inisialisasi Aplikasi dan Firebase | `lib/main.dart` |
+| 6.2 | Pengalihan Halaman Menurut Peran dan Status Akun | `lib/core/router/app_router.dart` |
+| 6.3 | Aturan Akses exercise_results, schedules, dan voucher_history | `firestore.rules` |
+| 6.4 | Fungsi overlaps dan conflicts | `functions/scheduling.js` |
+| 6.5 | Fungsi saveSchedule dengan Transaksi dan schedule_locks | `functions/index.js` |
+| 6.6 | Fungsi bookingRefusal | `functions/scheduling.js` |
+| 6.7 | Transaksi closeSession dan Kunci Idempoten voucher_history | `functions/index.js` |
+| 6.8 | Normalisasi dan Pencocokan Hanzi | `functions/typing_matcher.js` |
+| 6.9 | Fungsi finishExercise | `functions/index.js` |
+| 6.10 | Fungsi countsAt dan promotionState | `functions/promotion.js` |
+| 6.11 | Fungsi createInvoice: Pemeriksaan Pembeli dan Harga dari Server | `functions/index.js` |
+| 6.12 | Permintaan Token Midtrans Snap | `functions/index.js` |
+| 6.13 | Pemeriksaan Tanda Tangan dan Status Notifikasi Midtrans | `functions/payments.js`, `index.js` |
+| 6.14 | Transaksi Pengkreditan Voucher dan creditDecision | `functions/payments.js`, `index.js` |
+| 6.15 | Fungsi warningsOf | `functions/progress.js` |
+| 6.16 | Grafik Nilai Latihan per Minggu dengan fl_chart | `lib/features/progress/student_progress_report_screen.dart` |
+| 6.17 | Pengiriman Jawaban Sekali ke finishExercise | `lib/services/exercise_play_service.dart`, `exercise_screen.dart` |

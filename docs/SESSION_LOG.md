@@ -13,6 +13,20 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-25 — Claude (PLAN chat, Mac): Bab VI Implementasi drafted
+
+- `docs/thesis/BAB_VI_IMPLEMENTASI.md`: 6.1 Implementasi Desain (Tabel 6.1 lingkungan; Gambar 6.1–6.37, one
+  page per figure for public, admin, teacher and student pages) and 6.2 Implementasi Program (Tabel 6.2 code
+  layout; Segmen Program 6.1–6.17 quoted from the running code with `// ...` for elided lines: main.dart,
+  router redirect, rules, overlaps/conflicts, saveSchedule, bookingRefusal, closeSession, typing matcher,
+  finishExercise, countsAt/promotionState, createInvoice, Snap token, Midtrans signature, creditDecision,
+  warningsOf, fl_chart, player finish).
+- Screenshots: `docs/thesis/tools/shots_bab6.mjs` (DevTools against the emulator bundle with the trial seed,
+  looks up today's session, a booked class and a student with a test result itself; clicks for the teacher
+  tabs, the report rebuild and the news dialog) and `clean_shots.mjs` (paints over the EMULATOR ribbon, crops
+  the Auth warning bar). Builder: `md[6]`, Bab VI figures 13 × 7.9 cm.
+- Book: 59 figures, 28 tables, 17 segments, 8 algorithms, 4 formulas. Seen while shooting: the student's
+  class page lists classmates by first name, not by Chinese name (owner decision 2026-11-16); told the BUILD chat.
 ### 2026-11-25 — Claude (BUILD chat, PC): recheck and four fixes
 
 - Owner asked to recheck everything and send recommendations to the PLAN
