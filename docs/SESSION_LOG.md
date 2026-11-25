@@ -25,6 +25,12 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   looks up today's session, a booked class and a student with a test result itself; clicks for the teacher
   tabs, the report rebuild and the news dialog) and `clean_shots.mjs` (paints over the EMULATOR ribbon, crops
   the Auth warning bar). Builder: `md[6]`, Bab VI figures 13 × 7.9 cm.
+- **v0.1.39, v0.1.40, v0.1.41 (c7ecef4, 8e7a0f5, 85164a4) reviewed on the Mac:** analyzer 17 infos; `flutter test`
+  186 pass + 2 skipped; all twelve node suites pass; functions diff is `shareContext` (lesson text sent once) and
+  `fill_blanks` scoring per blank through `matchHanzi`, no new access path; rules unchanged; no tracked secrets;
+  live `main.dart.js` from 10:12 UTC carries the fill-in-the-blanks strings; APK served; 74 functions on live.
+  PLAN.md §1 Live line moved to v0.1.41. The BUILD chat's five recommendations (PLAN.md §6, a592cb4) go to the
+  owner: password reset first (docs/OWNER_PROCEDURES.md §C), the Standard Course live walk, the 组词 points decision.
 - Book: 59 figures, 28 tables, 17 segments, 8 algorithms, 4 formulas. Seen while shooting: the student's
   class page lists classmates by first name, not by Chinese name (owner decision 2026-11-16); told the BUILD chat.
 ### 2026-11-25 — Claude (BUILD chat, PC): recheck and four fixes
