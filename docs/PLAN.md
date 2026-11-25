@@ -73,8 +73,15 @@ Read docs/PLAN.md. You are the BUILD chat. Follow section 0, run Build 0 if this
 
 ## 1. Where the project stands (2026-11-20)
 
-**Live:** https://chinese-tracker.web.app, hosting at release v0.1.41
-(recheck with four small fixes, hosting only, from the PC 2026-11-25, checked from the Mac;
+**Live:** https://chinese-tracker.web.app, hosting at release v0.1.42
+(Build 9 session 1 from the PC 2026-11-26: the shared paging pieces, the paged audit log with
+a date range, reports over a period of months, leaderboard time stamps with staff export and
+"Share my result", timed exam packages that can be sat again; functions, one index and
+hosting; **75 functions** with the new `rebuildLeaderboards`; checked from the Mac the same
+night: analyzer 16 infos, 202 Flutter tests, every node suite, 75 functions and 24 indexes on
+live equal to the repo, the bundle carries the new strings, no secret tracked. Open: the owner
+presses Org settings → **Rebuild leaderboards** once. v0.1.41
+recheck with four small fixes, hosting only, from the PC 2026-11-25, checked from the Mac;
 v0.1.40 Fill in the blanks for the Standard Course review and v0.1.39 the Standard Course
 scanner, both functions and hosting, 74 functions unchanged; v0.1.38 Scan paper hands a
 non-HSK file to the worksheet reader; v0.1.37 more audio file types for recordings; v0.1.36 Exam hidden, "Standard Course",
@@ -3469,11 +3476,22 @@ pages until the owner says otherwise)
 | Total | 128 | 113 |
 
 One page of this book holds about 250 words, less than the usual estimate,
-because of the wide margins and the 1.5 spacing. The BUILD chat also saw
-every BAB line of the Daftar Isi show page 8 after a field refresh through
-Word automation; to be checked by hand in Word (Ctrl+A, F9) before anything
-is changed in the builder, because automation often refreshes fields before
-the pages are laid out.
+because of the wide margins and the 1.5 spacing.
+
+**After the rework of Bab II and Bab VI** (`f1b5d61`, Word on the PC,
+2026-11-26): 123 physical pages; BAB I on page 1, BAB VIII on 101, the
+Daftar Pustaka on 102, so about 104 printed pages to the Riwayat Hidup with
+Bab VII and VIII still as headings (3 pages). Bab I to VI take about 98
+pages, 4 more than the budget. With Bab VII at 16 and Bab VIII at 3 the book
+would reach about 120, the top of the limit. So: Bab III and IV give back
+3 pages, Bab V must not grow when its diagrams come, and Bab VII aims at
+14. The page on which each BAB starts is still wanted for the exact
+picture.
+
+**Daftar Isi page numbers: no fault in the builder.** The first automation
+run showed page 8 on every BAB line because the fields were refreshed before
+Word had laid out the pages. With Repaginate first and the field update
+twice, every line is right. By hand: Ctrl+A, then F9 twice.
 
 **Riwayat Hidup:** the owner gave the birth place and date, the home
 address and the starting year (2021) on 2026-11-25. The repository is

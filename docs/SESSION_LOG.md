@@ -54,6 +54,21 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   five conclusions.
 - After Build 9, retake figures 6.5, 6.7 and 6.14 and reread the
   finishExercise paragraph (retakes).
+- **v0.1.42 (Build 9 session 1, `e9b2b5e`, `cbe4e39`, `56a4189`) reviewed on
+  the Mac:** analyzer 0 errors, 0 warnings, 16 infos; `flutter test` 202 pass,
+  2 skipped; every node suite passes; 75 functions on live (63 + 12) equal to
+  the exports, with `rebuildLeaderboards` (admin only, audited); 24 indexes on
+  live equal to the repo, with the new audit index; the live bundle carries the
+  new strings; the APK is served; no secret tracked; rules unchanged. Read for
+  safety: each attempt writes its own `exercise_results` document, one attempt
+  open at a time inside a transaction; staff export only in the staff view, a
+  student shares only their own card; the privacy page says so in both
+  languages. Approved. Open for the owner: Rebuild leaderboards once, and the
+  rule for sitting an HSK simulation again (simulations run only as test
+  codes since 2026-11-16, so package retakes reach exam packages only).
+- **Book in Word after the rework:** 123 physical pages, about 104 printed;
+  the Daftar Isi numbers are right once the pages are laid out before the
+  fields are refreshed (no builder fault).
 
 ### 2026-11-25 — Claude (PLAN chat, Mac): Bab VI Implementasi drafted
 
