@@ -124,6 +124,9 @@ class SheetAnswerKeyPlan {
         case ExerciseType.typeHanzi:
           final first = q.options.where((o) => o.trim().isNotEmpty).firstOrNull;
           if (first != null) written.add('$n ${first.trim()}');
+        case ExerciseType.fillBlanks:
+          // One answer per blank, `|` between blanks.
+          if (q.options.isNotEmpty) written.add('$n ${q.options.join(' | ')}');
         default:
           break;
       }
@@ -176,6 +179,13 @@ class SheetAnswerKeyPlan {
           }
         case ExerciseType.typeHanzi:
           fields[item.id] = {'question.options': [entry.value.trim()]};
+        case ExerciseType.fillBlanks:
+          fields[item.id] = {
+            'question.options': [
+              for (final a in entry.value.split(RegExp(r'\s*[|｜]\s*')))
+                if (a.trim().isNotEmpty) a.trim(),
+            ],
+          };
         default:
           break;
       }

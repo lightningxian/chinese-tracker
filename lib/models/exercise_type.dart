@@ -9,7 +9,11 @@ enum ExerciseType {
   // Build 2A: T1 type the pinyin (keys checked on the server, half credit
   // for tones) and T5 free writing (always marked by a teacher).
   typePinyin('type_pinyin', 'Type the pinyin (写拼音)'),
-  essay('essay', 'Free writing (写作)');
+  essay('essay', 'Free writing (写作)'),
+  // Owner 2026-11-25: a sentence with several blanks and one typed answer
+  // per blank (Standard Course review, 根据课文内容填空); checked blank by
+  // blank on the server.
+  fillBlanks('fill_blanks', 'Fill in the blanks (填空)');
 
   const ExerciseType(this.value, this.label);
 
@@ -37,6 +41,7 @@ enum ExerciseType {
       case ExerciseType.pictureSentence:
       case ExerciseType.typePinyin:
       case ExerciseType.essay:
+      case ExerciseType.fillBlanks:
         return true;
     }
   }
@@ -46,9 +51,13 @@ enum ExerciseType {
       this == ExerciseType.typeHanzi ||
       this == ExerciseType.typePinyin ||
       this == ExerciseType.pictureSentence ||
-      this == ExerciseType.essay;
+      this == ExerciseType.essay ||
+      this == ExerciseType.fillBlanks;
 
   /// Marked by a teacher, never by the machine (T5).
+  /// The blanks of a [fillBlanks] prompt (`____`, or an empty bracket).
+  static final blankMark = RegExp(r'_{2,}|＿+|[（(]\s*[)）]');
+
   bool get isTeacherMarked =>
       this == ExerciseType.pictureSentence || this == ExerciseType.essay;
 }

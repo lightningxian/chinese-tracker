@@ -34,6 +34,10 @@ abstract final class QuestionBankText {
         );
       case ExerciseType.essay:
         return l.bankTextKeywords(q.keywords.join(', '));
+      case ExerciseType.fillBlanks:
+        return q.options.isEmpty
+            ? l.bankTextTypeHanziInEditor
+            : l.bankTextAnswer(q.options.join(' · '));
       case ExerciseType.multipleChoice:
       case ExerciseType.listening:
         if (q.options.isEmpty) return l.bankTextNoOptionsYet;

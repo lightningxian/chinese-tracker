@@ -932,7 +932,8 @@ class _ReviewTile extends StatelessWidget {
     if (index != null) return _option(index);
     final order = a.order;
     if (order != null) return order.join(' ');
-    return a.text;
+    // Fill in the blanks: one line per blank.
+    return a.text?.split('\n').join(' / ');
   }
 
   String? _correctAnswer(AppLocalizations l) {
@@ -1025,11 +1026,15 @@ class _ReviewTile extends StatelessWidget {
                       : l.exercisePlayYourAnswer(yours),
                   style: TextStyle(color: color, fontSize: 14),
                 ),
-                if (waiting || half)
+                if (waiting)
                   Text(
-                    waiting && !half
-                        ? l.playWaitingForTeacher
-                        : l.playHalfWaiting,
+                    half ? l.playHalfWaiting : l.playWaitingForTeacher,
+                    style: TextStyle(color: AppColors.chipAmberFg, fontSize: 13),
+                  )
+                else if (half)
+                  // Fill in the blanks: the share of blanks right, final.
+                  Text(
+                    l.playPartRight(((c!.credit ?? 0) * 100).round()),
                     style: TextStyle(color: AppColors.chipAmberFg, fontSize: 13),
                   ),
                 if ((c?.keywords ?? const []).isNotEmpty)

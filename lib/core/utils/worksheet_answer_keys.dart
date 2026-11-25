@@ -76,6 +76,7 @@ class WorksheetAnswerKeys {
       case ExerciseType.typePinyin:
       case ExerciseType.essay:
       case ExerciseType.pictureSentence:
+      case ExerciseType.fillBlanks:
         final (items, applied) = _applyChoices(parsed.mcQuestions, key);
         return (
           result: parsed.copyWith(mcQuestions: items),

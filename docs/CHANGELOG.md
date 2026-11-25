@@ -6,6 +6,39 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-25 — Claude (BUILD chat): Standard Course review gets its answers (fill in the blanks)
+
+**What changed**
+- New question type **Fill in the blanks** (`fill_blanks`,
+  `ExerciseType.fillBlanks`): a sentence with several `____` blanks and
+  one answer per blank (`question.options`, in order; `a/b` = either is
+  right).
+- Scan paper: the Standard Course review part (根据课文内容填空 / 四、复习)
+  is now this type instead of an open answer (`HskForm.fillBlanks`). The
+  proofreading screen has an **Answers, one line per blank** field; the
+  question counts as answered when every blank has its answer. Make-words
+  (组词) stays an open answer a teacher marks.
+- The worksheet's **Answer key** box shows and takes them as
+  `56 早就 | 找好 | …`; the bank editor edits them (answers one per line,
+  the sentence must have its blanks).
+- Student: one numbered box per blank (①②③ in the sentence and on the
+  boxes). The server (`checkAnswer`) matches each blank like a typed
+  hanzi answer and gives the share right (2 of 3 = 67%); the answers are
+  never sent before submitting. The review says "67% of the blanks right"
+  instead of "Half marks … teacher" (that line stays for real half marks).
+
+**Why**
+- Owner 2026-11-25: "for review part i have the correct answer, just make
+  it so i can put the answer to it".
+
+**For review**
+- Functions (all redeployed: `stripQuestion` / `checkAnswer` are shared by
+  the package and test callables) and hosting.
+- Emulator: a three-blank question as student1 (2 right → 67%, review line
+  correct) and student2 (3 right → 100%, Submit button).
+
+---
+
 ## 2026-11-25 — Claude (BUILD chat): Scan paper reads HSK Standard Course lessons
 
 **What changed**

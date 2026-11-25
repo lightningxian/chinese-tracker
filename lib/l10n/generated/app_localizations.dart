@@ -9573,6 +9573,60 @@ abstract class AppLocalizations {
   /// **'Open answer (a teacher marks it)'**
   String get paperFormOpen;
 
+  /// No description provided for @paperFormFillBlanks.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill in the blanks'**
+  String get paperFormFillBlanks;
+
+  /// No description provided for @paperBlankAnswers.
+  ///
+  /// In en, this message translates to:
+  /// **'Answers, one line per blank ({count} blanks)'**
+  String paperBlankAnswers(int count);
+
+  /// No description provided for @paperBlankAnswersHint.
+  ///
+  /// In en, this message translates to:
+  /// **'In the order of the blanks. Two right answers for one blank: write them on one line as a/b.'**
+  String get paperBlankAnswersHint;
+
+  /// No description provided for @exerciseTypeFillBlanks.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill in the blanks (填空)'**
+  String get exerciseTypeFillBlanks;
+
+  /// No description provided for @playBlankHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Blank {n}'**
+  String playBlankHint(int n);
+
+  /// No description provided for @bankEditorBlankAnswers.
+  ///
+  /// In en, this message translates to:
+  /// **'Answers, one line per blank'**
+  String get bankEditorBlankAnswers;
+
+  /// No description provided for @bankEditorBlankAnswersHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Write ____ in the sentence for each blank; here the answers in the same order (a/b = either is right).'**
+  String get bankEditorBlankAnswersHelper;
+
+  /// No description provided for @bankEditorNeedBlanks.
+  ///
+  /// In en, this message translates to:
+  /// **'Write ____ in the sentence for each blank.'**
+  String get bankEditorNeedBlanks;
+
+  /// No description provided for @bankEditorBlankCountMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'The sentence has {count} blanks: give one answer per blank.'**
+  String bankEditorBlankCountMismatch(int count);
+
   /// No description provided for @paperContextTitle.
   ///
   /// In en, this message translates to:
@@ -10131,6 +10185,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Half marks for now; your teacher will check it'**
   String get playHalfWaiting;
+
+  /// No description provided for @playPartRight.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% of the blanks right'**
+  String playPartRight(int percent);
 
   /// No description provided for @playPendingSubtitle.
   ///

@@ -5912,6 +5912,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paperFormOpen => 'Open answer (a teacher marks it)';
 
   @override
+  String get paperFormFillBlanks => 'Fill in the blanks';
+
+  @override
+  String paperBlankAnswers(int count) {
+    return 'Answers, one line per blank ($count blanks)';
+  }
+
+  @override
+  String get paperBlankAnswersHint =>
+      'In the order of the blanks. Two right answers for one blank: write them on one line as a/b.';
+
+  @override
+  String get exerciseTypeFillBlanks => 'Fill in the blanks (填空)';
+
+  @override
+  String playBlankHint(int n) {
+    return 'Blank $n';
+  }
+
+  @override
+  String get bankEditorBlankAnswers => 'Answers, one line per blank';
+
+  @override
+  String get bankEditorBlankAnswersHelper =>
+      'Write ____ in the sentence for each blank; here the answers in the same order (a/b = either is right).';
+
+  @override
+  String get bankEditorNeedBlanks =>
+      'Write ____ in the sentence for each blank.';
+
+  @override
+  String bankEditorBlankCountMismatch(int count) {
+    return 'The sentence has $count blanks: give one answer per blank.';
+  }
+
+  @override
   String get paperContextTitle => 'Lesson text for the students';
 
   @override
@@ -6243,6 +6279,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get playHalfWaiting =>
       'Half marks for now; your teacher will check it';
+
+  @override
+  String playPartRight(int percent) {
+    return '$percent% of the blanks right';
+  }
 
   @override
   String get playPendingSubtitle =>

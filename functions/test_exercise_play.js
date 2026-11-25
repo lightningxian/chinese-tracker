@@ -139,4 +139,15 @@ assert.strictEqual(shared[2].context, "");
 assert.ok(!shared[2].contextSame, "no text is not 'the same text'");
 assert.strictEqual(shared[3].context, ctx, "sent again after a question without it");
 
+// Fill in the blanks (owner 2026-11-25): one answer per blank, the share
+// right counts; the answers never go to the student.
+const blanks = {id: "fb", type: "fill_blanks",
+  question: {prompt: "小刚____请小丽吃饭，他已经____饭馆了。", options: ["早就", "找好/订好"]}};
+assert.ok(!("options" in play.stripQuestion(blanks)));
+assert.strictEqual(play.checkAnswer(blanks, {text: "早就\n订好"}).credit, 1);
+assert.strictEqual(play.checkAnswer(blanks, {text: "早就\n买好"}).credit, 0.5);
+assert.strictEqual(play.checkAnswer(blanks, {text: ""}).credit, 0);
+assert.deepStrictEqual(play.checkAnswer(blanks, {text: "x"}).correctAnswer.accepted,
+    ["1. 早就", "2. 找好/订好"]);
+
 console.log("exercise_play: all checks passed");

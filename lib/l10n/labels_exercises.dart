@@ -18,6 +18,7 @@ extension ExerciseTypeL10n on ExerciseType {
         ExerciseType.typeHanzi => l.exerciseTypeTypeHanzi,
         ExerciseType.typePinyin => l.exerciseTypeTypePinyin,
         ExerciseType.essay => l.exerciseTypeEssay,
+        ExerciseType.fillBlanks => l.exerciseTypeFillBlanks,
       };
 }
 

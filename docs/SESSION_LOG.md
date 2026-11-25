@@ -13,6 +13,11 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-25 — Claude (BUILD chat, PC): review answers (fill in the blanks)
+
+- Owner has the review answers: new type Fill in the blanks, one answer
+  per blank, checked automatically. Release v0.1.40.
+
 ### 2026-11-25 — Claude (BUILD chat, PC): Standard Course scanner
 
 - Owner sent Bab 1 of HSK Standard Course 3 (textbook + workbook) and its

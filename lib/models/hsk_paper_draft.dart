@@ -18,6 +18,10 @@ abstract final class HskForm {
   /// fill in from the textbook text); a teacher marks it.
   static const open = 'open_answer';
 
+  /// Standard Course review (owner 2026-11-25): blanks with one typed
+  /// answer each ([HskSlot.accepted], in order).
+  static const fillBlanks = 'fill_blanks';
+
   /// Standard Course block kind only (never a slot's form): two blanks and
   /// two characters to place; saved as a [choice] of the two orders.
   static const charPair = 'char_pair';
@@ -32,6 +36,7 @@ abstract final class HskForm {
     pinyinChar,
     sentenceWithWord,
     open,
+    fillBlanks,
   ];
 }
 
@@ -109,6 +114,8 @@ class HskSlot {
   bool get answered => switch (form) {
         HskForm.reorder => orderSet,
         HskForm.pinyinChar => accepted.any((a) => a.trim().isNotEmpty),
+        HskForm.fillBlanks => blankCount > 0 &&
+            accepted.where((a) => a.trim().isNotEmpty).length == blankCount,
         HskForm.sentenceWithWord || HskForm.open => true,
         _ => correctIndex != null,
       };
@@ -120,6 +127,9 @@ class HskSlot {
       form == HskForm.wordBank ||
       form == HskForm.picture ||
       form == HskForm.trueFalse;
+
+  /// Blanks in [prompt] (`____`), for [HskForm.fillBlanks].
+  int get blankCount => RegExp(r'_{2,}|＿+').allMatches(prompt).length;
 
   static final _cjk = RegExp(r'[㐀-鿿]');
   static final _toneMark = RegExp(r'[āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]');
@@ -199,6 +209,7 @@ class HskSlot {
       (form == HskForm.reorder && segments.length < 2) ||
       (form == HskForm.pinyinChar && keyword.trim().isEmpty) ||
       (form == HskForm.open && prompt.trim().isEmpty) ||
+      (form == HskForm.fillBlanks && blankCount == 0) ||
       ((form == HskForm.choice ||
               form == HskForm.matching ||
               form == HskForm.wordBank) &&

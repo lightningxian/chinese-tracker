@@ -145,6 +145,7 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
       case ExerciseType.readingCloze:
       case ExerciseType.typeHanzi:
       case ExerciseType.typePinyin:
+      case ExerciseType.fillBlanks:
         _linesController.text = e.question.options.join('\n');
       case ExerciseType.essay:
         _keywordController.text = e.question.keywords.join(', ');
@@ -251,6 +252,7 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
           audioUrl: _audioUrl,
         );
       case ExerciseType.typePinyin:
+      case ExerciseType.fillBlanks:
         return ExerciseQuestion(
           prompt: prompt,
           explanation: explanation,
@@ -316,6 +318,12 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
         if (q.acceptedAnswers.isEmpty) return l.bankEditorNeedAccepted;
       case ExerciseType.essay:
         if (q.prompt.isEmpty) return l.bankEditorEnterQuestion;
+      case ExerciseType.fillBlanks:
+        final blanks = ExerciseType.blankMark.allMatches(q.prompt).length;
+        if (blanks == 0) return l.bankEditorNeedBlanks;
+        if (q.options.isNotEmpty && q.options.length != blanks) {
+          return l.bankEditorBlankCountMismatch(blanks);
+        }
       case ExerciseType.multipleChoice:
       case ExerciseType.listening:
         if (q.prompt.isEmpty) return l.bankEditorEnterQuestion;
@@ -737,6 +745,15 @@ class _QuestionBankEditorSheetState extends State<QuestionBankEditorSheet> {
           ),
           const SizedBox(height: 12),
           _prompt(label: l.bankEditorInstruction, optional: true),
+        ];
+      case ExerciseType.fillBlanks:
+        return [
+          _prompt(label: l.bankEditorEnterQuestion, helper: l.bankEditorNeedBlanks),
+          const SizedBox(height: 12),
+          _linesField(
+            label: l.bankEditorBlankAnswers,
+            helper: l.bankEditorBlankAnswersHelper,
+          ),
         ];
       case ExerciseType.pictureSentence:
         return [

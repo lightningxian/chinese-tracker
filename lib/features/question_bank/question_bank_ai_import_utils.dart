@@ -207,6 +207,13 @@ abstract final class QuestionBankAiImportUtils {
           ExerciseType.essay,
           ExerciseQuestion(prompt: q.prompt, imageUrl: imageUrl),
         );
+      case 'fill_blanks':
+        // Standard Course review (owner 2026-11-25): one answer per blank.
+        if (q.prompt.isEmpty) return null;
+        return (
+          ExerciseType.fillBlanks,
+          ExerciseQuestion(prompt: q.prompt, options: q.accepted),
+        );
       case 'sentence_with_word':
         if (q.keyword.isEmpty) return null;
         return (

@@ -951,6 +951,8 @@ class _SlotEditorState extends State<_SlotEditor> {
       TextEditingController(text: widget.slot.segments.join(' / '));
   late final _keyword = TextEditingController(text: widget.slot.keyword);
   late final _accepted = TextEditingController(text: widget.slot.accepted.join(' / '));
+  late final _blankAnswers =
+      TextEditingController(text: widget.slot.accepted.join('\n'));
 
   @override
   void dispose() {
@@ -959,6 +961,7 @@ class _SlotEditorState extends State<_SlotEditor> {
     _segments.dispose();
     _keyword.dispose();
     _accepted.dispose();
+    _blankAnswers.dispose();
     super.dispose();
   }
 
@@ -985,6 +988,7 @@ class _SlotEditorState extends State<_SlotEditor> {
         HskForm.pinyinChar => l.paperFormPinyinChar,
         HskForm.sentenceWithWord => l.paperFormSentenceWithWord,
         HskForm.open => l.paperFormOpen,
+        HskForm.fillBlanks => l.paperFormFillBlanks,
         _ => l.paperFormChoice,
       };
 
@@ -1109,6 +1113,26 @@ class _SlotEditorState extends State<_SlotEditor> {
             if (s.form == HskForm.choice) ...[
               const SizedBox(height: 8),
               _ChoiceRows(key: ValueKey('choices-${s.number}'), slot: s),
+            ],
+            if (s.form == HskForm.fillBlanks) ...[
+              const SizedBox(height: 8),
+              TextField(
+                controller: _blankAnswers,
+                minLines: 2,
+                maxLines: 8,
+                decoration: deco(
+                  l.paperBlankAnswers(s.blankCount),
+                  helper: l.paperBlankAnswersHint,
+                ),
+                onChanged: (v) {
+                  setState(() => s.accepted = v
+                      .split('\n')
+                      .map((a) => a.trim())
+                      .where((a) => a.isNotEmpty)
+                      .toList());
+                  _changed();
+                },
+              ),
             ],
             if (s.form == HskForm.matching || s.form == HskForm.wordBank) ...[
               const SizedBox(height: 8),
@@ -1422,6 +1446,7 @@ class _AnswerChip extends StatelessWidget {
     final String? answer = switch (slot.form) {
       HskForm.reorder => slot.orderSet ? slot.segments.join() : null,
       HskForm.pinyinChar => slot.accepted.where((a) => a.trim().isNotEmpty).firstOrNull,
+      HskForm.fillBlanks => slot.answered ? slot.accepted.join(' · ') : null,
       HskForm.trueFalse => i == null ? null : (i == 0 ? '✓' : '✗'),
       _ => i == null ? null : _letter(i),
     };

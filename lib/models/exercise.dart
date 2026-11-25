@@ -93,6 +93,7 @@ class ExerciseQuestion {
         );
       case ExerciseType.typeHanzi:
       case ExerciseType.typePinyin:
+      case ExerciseType.fillBlanks:
         return ExerciseQuestion(
           prompt: map['prompt'] as String? ?? '',
           keyword: map['keyword'] as String? ?? '',
@@ -167,6 +168,13 @@ class ExerciseQuestion {
         return {
           'prompt': prompt,
           'keyword': keyword,
+          'options': options,
+          ...sharedFields(),
+        };
+      case ExerciseType.fillBlanks:
+        // One answer per blank, in order; `a/b` = either is right.
+        return {
+          'prompt': prompt,
           'options': options,
           ...sharedFields(),
         };

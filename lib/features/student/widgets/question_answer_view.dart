@@ -74,7 +74,100 @@ class _QuestionAnswerViewState extends State<QuestionAnswerView> {
   void dispose() {
     _sourceTimer?.cancel();
     _typedController.dispose();
+    for (final c in _blankControllers) {
+      c.dispose();
+    }
     super.dispose();
+  }
+
+  /// Fill in the blanks (owner 2026-11-25): one field per blank; the answer
+  /// sent is the blanks' text, one line each.
+  late final List<TextEditingController> _blankControllers = () {
+    final count = ExerciseType.blankMark
+        .allMatches(widget.question.prompt)
+        .length
+        .clamp(1, 20);
+    final given = (widget.answer?.text ?? '').split('\n');
+    return [
+      for (var i = 0; i < count; i++)
+        TextEditingController(text: i < given.length ? given[i] : ''),
+    ];
+  }();
+
+  void _blankTyped() {
+    final parts = [for (final c in _blankControllers) c.text.trim()];
+    widget.onChanged(parts.every((p) => p.isEmpty)
+        ? null
+        : PlayAnswer.text(parts.join('\n')));
+  }
+
+  static const _circled = '①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳';
+
+  Widget _buildFillBlanksQuestion(PlayQuestion question) {
+    final l = context.l10n;
+    var n = 0;
+    // Each blank numbered in the sentence: `____` → `__①__`.
+    final shown = question.prompt.replaceAllMapped(
+      ExerciseType.blankMark,
+      (_) => '__${_circled[(n++).clamp(0, 19)]}__',
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          shown,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: AppColors.navy,
+                height: 1.7,
+              ),
+        ),
+        const SizedBox(height: 16),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            for (final (i, c) in _blankControllers.indexed)
+              SizedBox(
+                width: 180,
+                child: TextField(
+                  controller: c,
+                  enabled: widget.enabled,
+                  autofocus: i == 0,
+                  style: AppTextStyles.question.copyWith(fontSize: 20),
+                  textInputAction: i + 1 < _blankControllers.length
+                      ? TextInputAction.next
+                      : TextInputAction.done,
+                  onChanged: (_) => _blankTyped(),
+                  onSubmitted: (_) {
+                    if (i + 1 == _blankControllers.length) {
+                      widget.onSubmitted?.call();
+                    }
+                  },
+                  decoration: InputDecoration(
+                    prefixIcon: Padding(
+                      padding: const EdgeInsets.only(left: 12, right: 6),
+                      child: Text(
+                        _circled[i.clamp(0, 19)],
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: AppColors.teal,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    prefixIconConstraints:
+                        const BoxConstraints(minWidth: 0, minHeight: 0),
+                    hintText: l.playBlankHint(i + 1),
+                    border: const OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ],
+    );
   }
 
   void _selectAnswer(int index) {
@@ -315,6 +408,9 @@ class _QuestionAnswerViewState extends State<QuestionAnswerView> {
   Widget _buildTypedQuestion(PlayQuestion question) {
     final l = context.l10n;
     if (question.type == ExerciseType.essay) return _buildEssayQuestion(question);
+    if (question.type == ExerciseType.fillBlanks) {
+      return _buildFillBlanksQuestion(question);
+    }
     final isPinyin = question.type == ExerciseType.typePinyin;
     final isPicture = question.type == ExerciseType.pictureSentence;
     final hint = question.keyword;

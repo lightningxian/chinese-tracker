@@ -4,6 +4,7 @@
 // between two columns, `＿＿` a blank line); no book text is copied here.
 import 'package:chinese_tracker/core/utils/question_import_utils.dart';
 import 'package:chinese_tracker/features/question_bank/question_bank_ai_import_utils.dart';
+import 'package:chinese_tracker/models/exercise.dart';
 import 'package:chinese_tracker/models/exercise_category.dart';
 import 'package:chinese_tracker/models/exercise_type.dart';
 import 'package:chinese_tracker/models/hsk_paper_draft.dart';
@@ -111,9 +112,22 @@ void main() {
     expect(d.slots[6].segments, ['去', '我', '商店', '想']);
     expect([form(9), form(10)], everyElement(HskForm.pinyinChar));
     expect(d.slots[8].keyword, 'yì');
-    for (var n = 13; n <= 17; n++) {
+    for (var n = 13; n <= 16; n++) {
       expect(form(n), HskForm.open, reason: '$n');
     }
+    // The review has its answers (owner 2026-11-25): one per blank.
+    expect(form(17), HskForm.fillBlanks);
+  });
+
+  test('a review question is answered once every blank has its answer', () {
+    final review = read().slots[16];
+    expect(review.blankCount, 2);
+    expect(review.answered, isFalse);
+    review.accepted = ['想'];
+    expect(review.answered, isFalse);
+    review.accepted = ['想', '要/想'];
+    expect(review.answered, isTrue);
+    expect(review.flagged, isFalse);
   });
 
   test('two blanks and two characters become a choice of the two orders', () {
@@ -171,6 +185,7 @@ void main() {
     for (final s in d.slots) {
       s.correctIndex ??= 0;
     }
+    d.slots[16].accepted = ['想', '要/想'];
     final ws = d.toAiWorksheet({for (var p = 1; p <= 4; p++) p: (1000, 1400)});
     expect(ws.category, 'hsk_standard_course');
     final items = QuestionBankAiImportUtils.toBankItems(
@@ -183,8 +198,18 @@ void main() {
     expect(items.every((i) => i.category == ExerciseCategory.standardCourse), isTrue);
     expect(items.every((i) => i.context == d.context), isTrue);
     final open = items.where((i) => i.type == ExerciseType.essay).toList();
-    expect(open.length, 5);
-    expect(open.last.question.prompt, '大明____去商店，小红____买苹果。');
+    expect(open.length, 4);
+    final review = items.last;
+    expect(review.type, ExerciseType.fillBlanks);
+    expect(review.question.prompt, '大明____去商店，小红____买苹果。');
+    expect(review.question.options, ['想', '要/想']);
+    // Stored and read back the same way.
+    expect(
+      ExerciseQuestion.fromMap(review.question.toMap(ExerciseType.fillBlanks),
+              exerciseType: ExerciseType.fillBlanks)
+          .options,
+      ['想', '要/想'],
+    );
     expect(items[10].question.options, ['去 … 跟', '跟 … 去']);
   });
 

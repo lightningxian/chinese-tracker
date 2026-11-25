@@ -127,6 +127,7 @@ class WorksheetParseResult {
       case ExerciseType.typeHanzi:
       case ExerciseType.typePinyin:
       case ExerciseType.essay:
+      case ExerciseType.fillBlanks:
       case ExerciseType.multipleChoice:
       case ExerciseType.listening:
         return mc;
@@ -421,6 +422,7 @@ abstract final class QuestionImportUtils {
         ExerciseType.typeHanzi => 'T2 type the hanzi (写汉字)',
         ExerciseType.typePinyin => 'T1 type the pinyin (写拼音)',
         ExerciseType.essay => 'T5 free writing (写作)',
+        ExerciseType.fillBlanks => 'fill in the blanks (填空)',
         ExerciseType.listening => 'L3 listening',
         ExerciseType.multipleChoice => 'multiple choice',
       };
@@ -1124,6 +1126,9 @@ abstract final class QuestionImportUtils {
       case ExerciseType.essay:
         notes.insert(0,
             '${n(r.mcQuestions.length, 'writing task')}, marked by a teacher.');
+      case ExerciseType.fillBlanks:
+        notes.insert(0,
+            '${n(r.mcQuestions.length, 'sentence')} with blanks: type the answers in the editor.');
     }
     return 'Detected $form$level — ${notes.join(' ')}';
   }

@@ -126,6 +126,9 @@ function stripQuestion(item) {
     case "type_pinyin":
       // The hanzi to write in pinyin is the prompt; the keys stay here.
       return base;
+    case "fill_blanks":
+      // The sentence with its blanks; the answers stay here.
+      return base;
     case "picture_sentence":
       return {...base, keyword: String(q.keyword || "")};
     case "essay":
@@ -206,6 +209,26 @@ function checkAnswer(item, answer) {
       const accepted = (q.options || []).map(String);
       const m = matcher.matchPinyin(a.text, accepted);
       return out(m.credit, m.review, m.reason, {accepted});
+    }
+    case "fill_blanks": {
+      // Owner 2026-11-25: one answer per blank (the typed text has one line
+      // per blank); each blank is matched like a typed hanzi answer and the
+      // question gets the share of blanks right.
+      const keys = (q.options || []).map(String);
+      const got = String(a.text || "").split("\n");
+      const shown = keys.map((k, i) => `${i + 1}. ${k}`);
+      if (!keys.length) return out(0, false, "wrong", {accepted: shown});
+      let sum = 0;
+      let review = false;
+      keys.forEach((k, i) => {
+        const alts = k.split("/").map((x) => x.trim()).filter((x) => x);
+        const m = matcher.matchHanzi(got[i] || "", alts);
+        sum += m.credit;
+        if (m.review) review = true;
+      });
+      const credit = Math.round((sum / keys.length) * 100) / 100;
+      const reason = credit === 1 ? "exact" : credit > 0 ? "partial" : "wrong";
+      return out(credit, review, reason, {accepted: shown});
     }
     case "picture_sentence":
     case "essay": {

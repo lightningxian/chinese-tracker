@@ -36,6 +36,7 @@ enum ExerciseSkillCategory {
       ExerciseType.typeHanzi => ExerciseSkillCategory.typing,
       ExerciseType.typePinyin => ExerciseSkillCategory.typing,
       ExerciseType.essay => ExerciseSkillCategory.typing,
+      ExerciseType.fillBlanks => ExerciseSkillCategory.typing,
       ExerciseType.matching => ExerciseSkillCategory.reading,
       ExerciseType.multipleChoice => ExerciseSkillCategory.reading,
     };

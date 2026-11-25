@@ -341,5 +341,22 @@ void main() {
       expect(plan.fields['q3'], {'question.segments': ['我们', '一起', '去吧']});
       expect(plan.fields['q4'], {'question.options': ['长']});
     });
+
+    test('fill in the blanks: one answer per blank, `|` between (owner 2026-11-25)', () {
+      QuestionBankItem item(String id, ExerciseType type, ExerciseQuestion q, int i) =>
+          QuestionBankItem(id: id, ownerId: 'a', type: type, question: q, sheetCode: 'K', sheetIndex: i);
+      final sheet = QuestionBankSheet(key: 'K', items: [
+        item('q1', ExerciseType.fillBlanks,
+            const ExerciseQuestion(prompt: '他____去，她____买。', options: ['想', '要/想']), 0),
+        item('q2', ExerciseType.fillBlanks,
+            const ExerciseQuestion(prompt: '我____了。'), 1),
+      ]);
+      final text = SheetAnswerKeyPlan.keyText(sheet);
+      expect(text, '1 想 | 要/想');
+      final plan = SheetAnswerKeyPlan.of(sheet,
+          choices: const {}, written: AnswerKeyParser.parseWritten('$text\n2 走'));
+      expect(plan.fields['q1'], {'question.options': ['想', '要/想']});
+      expect(plan.fields['q2'], {'question.options': ['走']});
+    });
   });
 }

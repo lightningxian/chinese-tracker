@@ -5885,6 +5885,42 @@ class AppLocalizationsId extends AppLocalizations {
   String get paperFormOpen => 'Jawaban bebas (dinilai guru)';
 
   @override
+  String get paperFormFillBlanks => 'Isi titik-titik';
+
+  @override
+  String paperBlankAnswers(int count) {
+    return 'Jawaban, satu baris per titik-titik ($count titik-titik)';
+  }
+
+  @override
+  String get paperBlankAnswersHint =>
+      'Sesuai urutan titik-titik. Dua jawaban benar untuk satu titik-titik: tulis di satu baris sebagai a/b.';
+
+  @override
+  String get exerciseTypeFillBlanks => 'Isi titik-titik (填空)';
+
+  @override
+  String playBlankHint(int n) {
+    return 'Titik-titik $n';
+  }
+
+  @override
+  String get bankEditorBlankAnswers => 'Jawaban, satu baris per titik-titik';
+
+  @override
+  String get bankEditorBlankAnswersHelper =>
+      'Tulis ____ di kalimat untuk setiap titik-titik; di sini jawabannya dengan urutan yang sama (a/b = keduanya benar).';
+
+  @override
+  String get bankEditorNeedBlanks =>
+      'Tulis ____ di kalimat untuk setiap titik-titik.';
+
+  @override
+  String bankEditorBlankCountMismatch(int count) {
+    return 'Kalimat ini punya $count titik-titik: beri satu jawaban per titik-titik.';
+  }
+
+  @override
   String get paperContextTitle => 'Teks pelajaran untuk siswa';
 
   @override
@@ -6217,6 +6253,11 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get playHalfWaiting =>
       'Setengah nilai untuk sementara; guru akan memeriksanya';
+
+  @override
+  String playPartRight(int percent) {
+    return '$percent% titik-titik benar';
+  }
 
   @override
   String get playPendingSubtitle =>

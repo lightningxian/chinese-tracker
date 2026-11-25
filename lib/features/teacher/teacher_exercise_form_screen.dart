@@ -826,6 +826,8 @@ class _TeacherExerciseFormScreenState extends State<TeacherExerciseFormScreen> {
         ExerciseType.typePinyin => 'Students type the pinyin of the hanzi shown',
         ExerciseType.essay =>
           'Students write freely; a teacher marks it with the rubric',
+        ExerciseType.fillBlanks =>
+          'Students type one answer for each blank in the sentence',
       };
 
   @override

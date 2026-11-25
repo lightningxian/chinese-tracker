@@ -221,6 +221,11 @@ class _TestReviewScreenState extends State<TestReviewScreen> {
                       Text(
                         c.isHalf ? l.playHalfWaiting : l.playWaitingForTeacher,
                         style: TextStyle(color: AppColors.chipAmberFg),
+                      )
+                    else if (c.isHalf)
+                      Text(
+                        l.playPartRight(((c.credit ?? 0) * 100).round()),
+                        style: TextStyle(color: AppColors.chipAmberFg),
                       ),
                     if (c.keywords.isNotEmpty)
                       Text(l.bankTextKeywords(c.keywords.join(', ')),

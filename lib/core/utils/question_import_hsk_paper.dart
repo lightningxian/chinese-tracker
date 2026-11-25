@@ -283,9 +283,10 @@ class _HskPaperParser {
     if (t.contains('连词成句')) return HskForm.reorder;
     if (t.contains('看拼音')) return HskForm.pinyinChar;
     if (t.contains('辨认汉字')) return HskForm.charPair;
-    if (t.contains('组词') || t.contains('课文') || skillHeading.contains('复习')) {
-      return HskForm.open;
+    if (t.contains('课文') || skillHeading.contains('复习')) {
+      return HskForm.fillBlanks;
     }
+    if (t.contains('组词')) return HskForm.open;
     if (t.contains('词语填空') || t.contains('选词填空')) return HskForm.wordBank;
     if (t.contains('选择正确答案')) return HskForm.choice;
     return null;
@@ -706,9 +707,14 @@ class _HskPaperParser {
         if ('____'.allMatches(prompt).length != 2) slot.unsure = true;
         return true;
       case HskForm.open:
-        // Many right answers (make words, fill in from the text): a
-        // teacher marks them.
+        // Many right answers (make words): a teacher marks them.
         slot.form = HskForm.open;
+        slot.prompt = blanks(joined);
+        return true;
+      case HskForm.fillBlanks:
+        // Fill in from the textbook text: one typed answer per blank,
+        // entered while proofreading (owner 2026-11-25).
+        slot.form = HskForm.fillBlanks;
         slot.prompt = blanks(joined);
         return true;
       case HskForm.reorder:

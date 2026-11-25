@@ -2230,6 +2230,10 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
+### 2026-11-25 — Fill in the blanks for the Standard Course review — COMMIT, release v0.1.40 (functions and hosting)
+- Review questions take one answer per blank (proofreading, answer key,
+  editor) and are checked blank by blank; checked on the emulator.
+
 ### 2026-11-25 — Standard Course scanner — COMMIT, release v0.1.39 (functions and hosting)
 - Built: Scan paper reads a Standard Course lesson (textbook + workbook)
   into one Standard Course worksheet; block forms from the instruction
