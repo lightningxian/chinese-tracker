@@ -66,6 +66,14 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   languages. Approved. Open for the owner: Rebuild leaderboards once, and the
   rule for sitting an HSK simulation again (simulations run only as test
   codes since 2026-11-16, so package retakes reach exam packages only).
+- **Owner, second round 2026-11-26:** the supervisor says not to worry about
+  the page count (looked at again at the end); Bab V takes option A (the UML
+  set); **every diagram is at most half a page, two on a page with their
+  explanations**; the video is made by the PLAN chat. New shared kit
+  `docs/thesis/tools/figkit.py` (canvas 1000 px = 14 cm, at most 550 px
+  high). Riwayat Hidup filled from the owner's CV and photo, private data in
+  `docs/thesis/local/` only (`riwayat.json`, `foto.png`); the builder takes
+  several work lines and the photo's own proportion.
 - **The 120-page limit counts the front pages (owner, 2026-11-26).** Budget
   in `docs/PLAN.md` §7: 119 pages. **Bab VI cut a second time:** 12
   screenshots at 12 × 7.28 cm and 6 program segments, about 1,720 words,

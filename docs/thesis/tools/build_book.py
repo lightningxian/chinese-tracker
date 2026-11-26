@@ -27,6 +27,14 @@ import json
 _PRIV_PATH = os.path.join(DOCS, 'local', 'riwayat.json')
 _LOCAL_OUT = os.path.abspath(OUT).startswith(os.path.join(DOCS, 'local') + os.sep)
 PRIV = json.load(open(_PRIV_PATH, encoding='utf8')) if (_LOCAL_OUT and os.path.exists(_PRIV_PATH)) else {}
+# The owner's photo is private too: docs/thesis/local/foto.png, used only together with PRIV.
+_FOTO = os.path.join(DOCS, 'local', 'foto.png')
+FOTO = _FOTO if (PRIV and os.path.exists(_FOTO)) else os.path.join(DOCS, 'word', 'foto_placeholder.png')
+def _png_size(path):
+    import struct
+    with open(path, 'rb') as f:
+        head = f.read(24)
+    return struct.unpack('>II', head[16:24])
 W = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}'
 
 # ---------------------------------------------------------------- facts
@@ -639,6 +647,11 @@ def riwayat_hidup():
     photo = raw(400)
     photo = re.sub(r'r:embed="rId\d+"', 'r:embed="rIdFoto"', photo)
     photo = re.sub(r'<wp:docPr id="\d+"', '<wp:docPr id="199"', photo)
+    if FOTO == _FOTO:                                   # keep the frame's height, take the photo's own proportion
+        pw, ph = _png_size(FOTO)
+        def fit(m):
+            cy = int(m.group(3)); return '%s cx="%d" cy="%d"' % (m.group(1), round(cy * pw / ph), cy)
+        photo = re.sub(r'(<wp:extent|<a:ext) cx="(\d+)" cy="(\d+)"', fit, photo)
     out.append(photo)
     t = raw(401)
     t = re.sub(r'<w:p(?: [^>]*)?>(?:(?!</w:p>).)*Ten Chittapon Leechaiyapornkul.*?</w:p>', lambda m: rebuild_par(m.group(0), [F['nama']]), t, flags=re.S)
@@ -652,7 +665,8 @@ def riwayat_hidup():
     out.append(p_body('(Program Studi S1 Informatika)', '<w:ind w:left="2835" w:firstLine="0"/>'))
     out.append(p_empty())
     out.append(rebuild_par(raw(403), ['Pengalaman Kerja:']))
-    out.append(P('<w:pStyle w:val="ListParagraph"/><w:numPr><w:ilvl w:val="0"/><w:numId w:val="12"/></w:numPr><w:tabs><w:tab w:val="left" w:pos="2835"/></w:tabs><w:ind w:left="426" w:hanging="426"/>', runs(PRIV.get('kerja_tahun', '[ISI: tahun]')) + TAB + runs(PRIV.get('kerja', '[ISI: pekerjaan atau tulis "–" bila belum ada]'))))
+    for years, job in [tuple(x) for x in PRIV.get('kerja', [['[ISI: tahun]', '[ISI: pekerjaan atau tulis "–" bila belum ada]']])]:
+        out.append(P('<w:pStyle w:val="ListParagraph"/><w:numPr><w:ilvl w:val="0"/><w:numId w:val="12"/></w:numPr><w:tabs><w:tab w:val="left" w:pos="426"/><w:tab w:val="left" w:pos="3686"/></w:tabs><w:ind w:left="3686" w:hanging="3686"/>', runs(years) + TAB + runs(job)))
     return out
 
 # ---------------------------------------------------------------- assemble
@@ -724,7 +738,7 @@ for rid, png in C.fig_files.items():
     name = os.path.basename(png)
     files['word/media/' + name] = open(png, 'rb').read()
     add += '<Relationship Id="%s" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/%s"/>' % (rid, name)
-files['word/media/foto_placeholder.png'] = open(os.path.join(DOCS, 'word', 'foto_placeholder.png'), 'rb').read()
+files['word/media/foto_placeholder.png'] = open(FOTO, 'rb').read()   # the media name stays; the bytes are the private photo for a local build
 add += '<Relationship Id="rIdFoto" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/foto_placeholder.png"/>'
 files['word/_rels/document.xml.rels'] = rels.replace('</Relationships>', add + '</Relationships>').encode('utf8')
 

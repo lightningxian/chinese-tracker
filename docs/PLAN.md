@@ -3528,6 +3528,26 @@ because of the wide margins and the 1.5 spacing.
 - Presentation, article and poster: later. Rebuild leaderboards on live:
   later.
 
+**Owner's answers 2026-11-26, second round**
+
+- **Page count: not a worry for now.** The supervisor told the owner not to
+  worry about the page count; appendices outside the 120 pages are fine; the
+  count is looked at again at the end. So no chapter is cut further for
+  pages. The budget below stays as a reference only.
+- **Bab V: option A** (the UML set): architecture, use case per role,
+  activity diagrams, page map, plus data model diagrams of the collections,
+  sequence diagrams and a status diagram.
+- **Rule for every diagram: at most half a page, two diagrams on a page,
+  each with its explanation.** Diagrams are drawn 14 cm wide and at most
+  7.7 cm high; one that does not fit is split in two. The shared drawing
+  kit `docs/thesis/tools/figkit.py` refuses a taller canvas. The existing
+  diagrams of Bab III and Bab V are redrawn to this rule.
+- **Video:** the PLAN chat makes it from the emulator after Build 9 is
+  complete (scripted walk with captions, no voice).
+- **Riwayat Hidup:** schools, work history (from the owner's CV) and the
+  photo received; kept in the git-ignored `docs/thesis/local/` and only in
+  the book built there.
+
 **Budget for 120 physical pages** (replaces the targets above)
 
 | Part | Pages now | Target |
