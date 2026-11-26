@@ -12,7 +12,6 @@ import '../../core/widgets/exercise_results_list.dart';
 import '../../core/widgets/stat_card.dart';
 import '../../l10n/l10n.dart';
 import '../../models/app_user.dart';
-import '../../models/attendance_record.dart';
 import '../../models/exercise_result.dart';
 import '../../models/lesson.dart';
 import '../../models/student_class_term.dart';
@@ -191,20 +190,13 @@ class ParentOverviewTab extends StatelessWidget {
           },
         ),
         const SizedBox(height: 20),
-        StreamBuilder<List<StudentClassTerm>>(
-          stream: firestore.watchStudentClassTerms(child.uid),
-          builder: (context, termsSnap) {
-            return StreamBuilder<List<AttendanceRecord>>(
-              stream: firestore.watchStudentJoinedSessions(child.uid),
-              builder: (context, visitsSnap) {
-                return ClassHistorySection(
-                  terms: termsSnap.data ?? const [],
-                  visits: visitsSnap.data ?? const [],
-                  vouchersTitle: l.parentOverviewClassHistory,
-                );
-              },
-            );
-          },
+        // Build 9A session 2: the history is read 25 classes a page.
+        PagedClassHistory(
+          key: ValueKey('history-${child.uid}'),
+          studentId: child.uid,
+          vouchersTitle: l.parentOverviewClassHistory,
+          padding: EdgeInsets.zero,
+          inline: true,
         ),
       ],
     );

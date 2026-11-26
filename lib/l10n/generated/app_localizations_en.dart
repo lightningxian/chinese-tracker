@@ -9005,4 +9005,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String testsRepeatIntro(int n) {
     return 'This is your sitting $n of this test. Your first sitting is the one that counts for the leaderboard and promotion; this one is practice.';
   }
+
+  @override
+  String usersNotIndexed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count accounts are not in this list yet.',
+      one: '1 account is not in this list yet.',
+    );
+    return '$_temp0 An admin presses Org settings → Rebuild user search once.';
+  }
+
+  @override
+  String get orgRebuildUserSearch => 'Rebuild user search';
+
+  @override
+  String get orgRebuildUserSearchHint =>
+      'Writes the search index on every account (needed once after the Build 9 update, so the Users list can be paged and searched).';
+
+  @override
+  String orgRebuildUserSearchDone(int count) {
+    return '$count accounts written to the search index.';
+  }
 }

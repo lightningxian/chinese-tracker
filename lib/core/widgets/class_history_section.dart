@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 import '../../l10n/l10n.dart';
 import '../../models/attendance_record.dart';
 import '../../models/student_class_term.dart';
+import '../../services/firestore_service.dart';
+import '../paging/paged_controller.dart';
 import '../theme/app_theme.dart';
 import 'app_card.dart';
+import 'paging_bars.dart';
 
 /// A student's class history for the student and parent screens: one card
 /// per voucher (package size, validity, used / remaining bar, and the
@@ -142,13 +146,18 @@ class VoucherHistoryCard extends StatefulWidget {
   const VoucherHistoryCard({
     super.key,
     required this.term,
-    required this.visits,
+    this.visits = const [],
+    this.loadVisits,
     this.initiallyExpanded = false,
     this.onOpenSession,
   });
 
   final StudentClassTerm term;
   final List<AttendanceRecord> visits;
+
+  /// Build 9A session 2: reads the voucher's classes when the card is
+  /// opened (instead of every class of the student up front).
+  final Future<List<AttendanceRecord>> Function()? loadVisits;
   final bool initiallyExpanded;
   final void Function(AttendanceRecord record)? onOpenSession;
 
@@ -158,6 +167,28 @@ class VoucherHistoryCard extends StatefulWidget {
 
 class _VoucherHistoryCardState extends State<VoucherHistoryCard> {
   late bool _expanded = widget.initiallyExpanded;
+  List<AttendanceRecord>? _loaded;
+  bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_expanded) _load();
+  }
+
+  Future<void> _load() async {
+    final load = widget.loadVisits;
+    if (load == null || _loaded != null || _loading) return;
+    setState(() => _loading = true);
+    try {
+      final list = await load();
+      if (mounted) setState(() => _loaded = list);
+    } catch (e) {
+      debugPrint('voucher visits: $e');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
 
   static String _date(String iso, String locale) {
     final parsed = DateTime.tryParse(iso);
@@ -183,7 +214,7 @@ class _VoucherHistoryCardState extends State<VoucherHistoryCard> {
     );
     final fraction = term.packageSize == 0 ? 0.0 : used / term.packageSize;
     final code = term.voucherCode ?? '';
-    final sortedVisits = List<AttendanceRecord>.from(widget.visits)
+    final sortedVisits = List<AttendanceRecord>.from(_loaded ?? widget.visits)
       ..sort((a, b) => b.sessionDate.compareTo(a.sessionDate));
 
     return AppCard(
@@ -287,7 +318,10 @@ class _VoucherHistoryCardState extends State<VoucherHistoryCard> {
           Align(
             alignment: Alignment.centerLeft,
             child: TextButton.icon(
-              onPressed: () => setState(() => _expanded = !_expanded),
+              onPressed: () {
+                setState(() => _expanded = !_expanded);
+                if (_expanded) _load();
+              },
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 visualDensity: VisualDensity.compact,
@@ -299,13 +333,18 @@ class _VoucherHistoryCardState extends State<VoucherHistoryCard> {
               label: Text(
                 _expanded
                     ? l.historyHideSessions
-                    : l.historyShowSessions(sortedVisits.length),
+                    : l.historyShowSessions(
+                        widget.loadVisits != null && _loaded == null
+                            ? used
+                            : sortedVisits.length),
               ),
             ),
           ),
           if (_expanded) ...[
             const SizedBox(height: 4),
-            if (sortedVisits.isEmpty)
+            if (_loading)
+              const LinearProgressIndicator(minHeight: 2)
+            else if (sortedVisits.isEmpty)
               Text(
                 l.historyNoSessionsYet,
                 style: TextStyle(
@@ -409,6 +448,146 @@ class ClassVisitRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Build 9A session 2 (supervisor 2026-11-25): a student's history read in
+/// pages. The vouchers (few) come first, each reading its own classes when
+/// opened; then every class visit, 25 a page, in a date range (default
+/// this month), grouped by month on the page.
+class PagedClassHistory extends StatefulWidget {
+  const PagedClassHistory({
+    super.key,
+    required this.studentId,
+    this.onOpenSession,
+    this.vouchersTitle,
+    this.padding = const EdgeInsets.all(20),
+    this.inline = false,
+  });
+
+  /// Inside the caller's own list (the parent's overview).
+  final bool inline;
+
+  final String studentId;
+  final void Function(AttendanceRecord record)? onOpenSession;
+  final String? vouchersTitle;
+  final EdgeInsets padding;
+
+  @override
+  State<PagedClassHistory> createState() => _PagedClassHistoryState();
+}
+
+class _PagedClassHistoryState extends State<PagedClassHistory> {
+  late final FirestoreService _firestore = context.read<FirestoreService>();
+  late final Stream<List<StudentClassTerm>> _terms =
+      _firestore.watchStudentClassTerms(widget.studentId);
+  late final PagedController<AttendanceRecord> _pages =
+      PagedController<AttendanceRecord>(
+    build: (range) => _firestore.studentVisitSource(widget.studentId, range),
+  );
+
+  @override
+  void dispose() {
+    _pages.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    return StreamBuilder<List<StudentClassTerm>>(
+      stream: _terms,
+      builder: (context, termsSnap) {
+        final terms = [...(termsSnap.data ?? const <StudentClassTerm>[])]
+          ..sort((a, b) {
+            final aActive = a.isActive && a.isWithinTermDates;
+            final bActive = b.isActive && b.isWithinTermDates;
+            if (aActive != bActive) return aActive ? -1 : 1;
+            return b.startDate.compareTo(a.startDate);
+          });
+        return ListenableBuilder(
+          listenable: _pages,
+          builder: (context, _) {
+            final visits = _pages.items
+                .where((r) => r.attended || r.joinedByStudent)
+                .toList();
+            final byMonth = ClassHistorySection._groupByMonth(visits);
+            return PagedListBody<AttendanceRecord>(
+              controller: _pages,
+              padding: widget.padding,
+              inline: widget.inline,
+              emptyIcon: Icons.history_outlined,
+              emptyTitle: l.studentMyClassesEmptyTitle,
+              emptySubtitle: l.studentMyClassesEmptySubtitle,
+              header: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SectionHeader(title: widget.vouchersTitle ?? l.historyVouchersTitle),
+                  if (terms.isEmpty)
+                    AppCard(
+                      child: Text(
+                        l.historyNoVouchers,
+                        style: TextStyle(color: AppColors.textSecondary, height: 1.4),
+                      ),
+                    )
+                  else
+                    for (final term in terms)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: VoucherHistoryCard(
+                          key: ValueKey(term.id),
+                          term: term,
+                          loadVisits: () =>
+                              _firestore.termVisits(widget.studentId, term.id),
+                          initiallyExpanded: false,
+                          onOpenSession: widget.onOpenSession,
+                        ),
+                      ),
+                  const SizedBox(height: 16),
+                  SectionHeader(
+                    title: _pages.total == null
+                        ? l.historyAllClasses
+                        : '${l.historyAllClasses} · ${l.historyClassesCount(_pages.total!)}',
+                  ),
+                  DateRangeBar(value: _pages.range, onChanged: _pages.setRange),
+                ],
+              ),
+              itemBuilder: (context, _) => const SizedBox.shrink(),
+              body: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final entry in byMonth) ...[
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4, bottom: 6),
+                      child: Text(
+                        DateFormat('MMMM yyyy', l.localeName).format(entry.key),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.navy,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                    for (final record in entry.value)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: AppCard(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 10),
+                          onTap: widget.onOpenSession == null
+                              ? null
+                              : () => widget.onOpenSession!(record),
+                          child: ClassVisitRow(record: record),
+                        ),
+                      ),
+                  ],
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 
+import '../core/paging/date_range.dart';
+import '../core/paging/paged_controller.dart';
 import '../models/app_user.dart';
 import '../models/marking_item.dart';
 
@@ -15,6 +17,27 @@ class MarkingService {
 
   final FirebaseFirestore _db;
   final FirebaseFunctions _functions;
+
+  /// Build 9A session 2: the open queue of [user] (a teacher: their own;
+  /// an admin: all), newest first, within [range].
+  Query<Map<String, dynamic>> openQuery(AppUser user,
+      [DateRangeSel range = const DateRangeSel.all()]) {
+    Query<Map<String, dynamic>> q = _db.collection('marking_items');
+    if (!user.isAdmin) q = q.where('teacherIds', arrayContains: user.uid);
+    return applyDateRange(
+        q
+            .where('status', isEqualTo: 'open')
+            .orderBy('createdAt', descending: true),
+        'createdAt',
+        range);
+  }
+
+  PageSource<MarkingItem> openSource(AppUser user, DateRangeSel range) =>
+      FirestorePageSource(openQuery(user, range), MarkingItem.fromDoc);
+
+  /// How many answers wait for [user] (a count, no documents read).
+  Future<int> openCount(AppUser user) async =>
+      (await openQuery(user).count().get()).count ?? 0;
 
   /// Open answers waiting for [user], newest first.
   Stream<List<MarkingItem>> watchOpen(AppUser user) {

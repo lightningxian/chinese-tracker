@@ -8960,4 +8960,21 @@ class AppLocalizationsId extends AppLocalizations {
   String testsRepeatIntro(int n) {
     return 'Ini ujian ke-$n Anda untuk tes ini. Ujian pertama yang dihitung untuk papan peringkat dan kenaikan level; yang ini latihan.';
   }
+
+  @override
+  String usersNotIndexed(int count) {
+    return '$count akun belum masuk daftar ini. Admin menekan Pengaturan organisasi → Susun ulang pencarian pengguna satu kali.';
+  }
+
+  @override
+  String get orgRebuildUserSearch => 'Susun ulang pencarian pengguna';
+
+  @override
+  String get orgRebuildUserSearchHint =>
+      'Menulis indeks pencarian di setiap akun (perlu sekali setelah pembaruan Build 9, agar daftar Pengguna dapat dibagi per halaman dan dicari).';
+
+  @override
+  String orgRebuildUserSearchDone(int count) {
+    return '$count akun ditulis ke indeks pencarian.';
+  }
 }

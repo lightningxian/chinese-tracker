@@ -3289,5 +3289,11 @@
   "testsSittingRepeat": "Sitting {n} · practice",
   "@testsSittingRepeat": {"placeholders": {"n": {"type": "int"}}},
   "testsRepeatIntro": "This is your sitting {n} of this test. Your first sitting is the one that counts for the leaderboard and promotion; this one is practice.",
-  "@testsRepeatIntro": {"placeholders": {"n": {"type": "int"}}}
+  "@testsRepeatIntro": {"placeholders": {"n": {"type": "int"}}},
+  "usersNotIndexed": "{count, plural, =1{1 account is not in this list yet.} other{{count} accounts are not in this list yet.}} An admin presses Org settings → Rebuild user search once.",
+  "@usersNotIndexed": {"placeholders": {"count": {"type": "int"}}},
+  "orgRebuildUserSearch": "Rebuild user search",
+  "orgRebuildUserSearchHint": "Writes the search index on every account (needed once after the Build 9 update, so the Users list can be paged and searched).",
+  "orgRebuildUserSearchDone": "{count} accounts written to the search index.",
+  "@orgRebuildUserSearchDone": {"placeholders": {"count": {"type": "int"}}}
 }

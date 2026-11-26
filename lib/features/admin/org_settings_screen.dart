@@ -127,6 +127,8 @@ class OrgSettingsScreen extends StatelessWidget {
               const _RebuildSummariesCard(),
               const SizedBox(height: 12),
               const _RebuildSummariesCard(leaderboards: true),
+              const SizedBox(height: 12),
+              const _RebuildSummariesCard(userSearch: true),
               const SizedBox(height: 10),
               // Build 7: vouchers against the ledger (VC-05).
               const ReconcileVouchersCard(),
@@ -368,10 +370,13 @@ class _RoomsCardState extends State<_RoomsCard> {
 }
 
 class _RebuildSummariesCard extends StatefulWidget {
-  const _RebuildSummariesCard({this.leaderboards = false});
+  const _RebuildSummariesCard({this.leaderboards = false, this.userSearch = false});
 
   /// Build 9C: the same card for **Rebuild leaderboards**.
   final bool leaderboards;
+
+  /// Build 9A session 2: the same card for **Rebuild user search**.
+  final bool userSearch;
 
   @override
   State<_RebuildSummariesCard> createState() => _RebuildSummariesCardState();
@@ -385,7 +390,10 @@ class _RebuildSummariesCardState extends State<_RebuildSummariesCard> {
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _busy = true);
     try {
-      if (widget.leaderboards) {
+      if (widget.userSearch) {
+        final n = await FirestoreService().rebuildUserSearch();
+        messenger.showSnackBar(SnackBar(content: Text(l.orgRebuildUserSearchDone(n))));
+      } else if (widget.leaderboards) {
         final n = await PromotionService().rebuildLeaderboards();
         messenger.showSnackBar(
             SnackBar(content: Text(l.orgRebuildLeaderboardsDone(n))));
@@ -420,14 +428,18 @@ class _RebuildSummariesCardState extends State<_RebuildSummariesCard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                    widget.leaderboards
-                        ? l.orgRebuildLeaderboards
-                        : l.progressRebuildTitle,
+                    widget.userSearch
+                        ? l.orgRebuildUserSearch
+                        : widget.leaderboards
+                            ? l.orgRebuildLeaderboards
+                            : l.progressRebuildTitle,
                     style: const TextStyle(fontWeight: FontWeight.w700)),
                 Text(
-                    widget.leaderboards
-                        ? l.orgRebuildLeaderboardsHint
-                        : l.progressRebuildHint,
+                    widget.userSearch
+                        ? l.orgRebuildUserSearchHint
+                        : widget.leaderboards
+                            ? l.orgRebuildLeaderboardsHint
+                            : l.progressRebuildHint,
                     style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
               ],
             ),

@@ -59,7 +59,7 @@ enum AuditActionGroup {
   registration(['registration.approve', 'registration.reject']),
   schedule(['schedule.create', 'schedule.update', 'schedule.delete']),
   day(['day.close', 'day.open']),
-  progress(['progress.rebuild', 'leaderboard.rebuild']);
+  progress(['progress.rebuild', 'leaderboard.rebuild', 'users.search.rebuild']);
 
   const AuditActionGroup(this.actions);
 

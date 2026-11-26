@@ -14777,6 +14777,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This is your sitting {n} of this test. Your first sitting is the one that counts for the leaderboard and promotion; this one is practice.'**
   String testsRepeatIntro(int n);
+
+  /// No description provided for @usersNotIndexed.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 account is not in this list yet.} other{{count} accounts are not in this list yet.}} An admin presses Org settings → Rebuild user search once.'**
+  String usersNotIndexed(int count);
+
+  /// No description provided for @orgRebuildUserSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Rebuild user search'**
+  String get orgRebuildUserSearch;
+
+  /// No description provided for @orgRebuildUserSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Writes the search index on every account (needed once after the Build 9 update, so the Users list can be paged and searched).'**
+  String get orgRebuildUserSearchHint;
+
+  /// No description provided for @orgRebuildUserSearchDone.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} accounts written to the search index.'**
+  String orgRebuildUserSearchDone(int count);
 }
 
 class _AppLocalizationsDelegate

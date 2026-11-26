@@ -117,6 +117,54 @@ class FirestoreService {
   /// All platform users — merges per-role queries so admin sees the same
   /// student base as the teacher view (unfiltered collection reads are
   /// blocked by Firestore rules for non-matching documents).
+  /// Build 9A session 2: the admin's Users list, a page at a time, by name.
+  /// `listed`, `nameLower` and `searchPrefixes` are written by the
+  /// `onUserSearchIndex` function (functions/user_search.js).
+  Query<Map<String, dynamic>> userListQuery({
+    String? role,
+    bool? active,
+    String search = '',
+  }) {
+    Query<Map<String, dynamic>> q = _db
+        .collection(AppConstants.usersCollection)
+        .where('listed', isEqualTo: true);
+    if (role != null) q = q.where('role', isEqualTo: role);
+    if (active != null) q = q.where('active', isEqualTo: active);
+    final term = UserSearch.normalize(search);
+    if (term.isNotEmpty) q = q.where('searchPrefixes', arrayContains: term);
+    return q.orderBy('nameLower');
+  }
+
+  PageSource<AppUser> userSource(Query<Map<String, dynamic>> query) =>
+      FirestorePageSource(query, AppUser.fromFirestore);
+
+  Future<int> countOf(Query<Map<String, dynamic>> query) async =>
+      (await query.count().get()).count ?? 0;
+
+  /// Accounts the search index does not cover yet (before an admin presses
+  /// Rebuild user search once): all accounts minus the indexed ones.
+  Future<int> usersNotIndexed() async {
+    final col = _db.collection(AppConstants.usersCollection);
+    final all = await countOf(col);
+    final indexed = await countOf(col.where('listed', whereIn: [true, false]));
+    return all - indexed;
+  }
+
+  /// Admin: writes the search index on every account (once after Build 9).
+  Future<int> rebuildUserSearch() async {
+    final r = await FirebaseFunctions.instance
+        .httpsCallable('rebuildUserSearch',
+            options: HttpsCallableOptions(timeout: const Duration(minutes: 9)))
+        .call({});
+    return ((r.data as Map)['written'] as num?)?.toInt() ?? 0;
+  }
+
+  /// Students waiting for approval (the Approval chip's badge).
+  Future<int> pendingRegistrations() => countOf(_db
+      .collection(AppConstants.usersCollection)
+      .where('role', isEqualTo: AppConstants.roleStudent)
+      .where('status', isEqualTo: AppUser.statusPending));
+
   Stream<List<AppUser>> watchAllUsers() {
     return _mergeUserRoleStreams([
       AppConstants.roleStudent,
@@ -1385,6 +1433,37 @@ class FirestoreService {
     return watchStudentJoinedSessions(studentId);
   }
 
+  /// Build 9A session 2: a student's classes, newest first, within [range]
+  /// (index studentId + sessionDate desc).
+  PageSource<AttendanceRecord> studentVisitSource(
+          String studentId, DateRangeSel range) =>
+      FirestorePageSource(
+        applyDateRange(
+          _db
+              .collection(AppConstants.attendanceCollection)
+              .where('studentId', isEqualTo: studentId)
+              .orderBy('sessionDate', descending: true),
+          'sessionDate',
+          range,
+          kind: DateFieldKind.isoDay,
+        ),
+        AttendanceRecord.fromFirestore,
+      );
+
+  /// The classes charged to one voucher (read when its card is opened).
+  Future<List<AttendanceRecord>> termVisits(String studentId, String termId) async {
+    final snap = await _db
+        .collection(AppConstants.attendanceCollection)
+        .where('studentId', isEqualTo: studentId)
+        .where('classTermId', isEqualTo: termId)
+        .get();
+    return snap.docs
+        .map(AttendanceRecord.fromFirestore)
+        .where((r) => r.attended || r.joinedByStudent)
+        .toList()
+      ..sort((a, b) => b.sessionDate.compareTo(a.sessionDate));
+  }
+
   /// Joined / attended records for a student (direct query — no full session scan).
   Stream<List<AttendanceRecord>> watchStudentJoinedSessions(String studentId) {
     if (studentId.isEmpty) {
@@ -1901,6 +1980,43 @@ class FirestoreService {
   }
 
   /// All invoices — admin view. Filtered client-side sort (rules gate access).
+  /// Build 9A session 2: the admin's invoices, newest first, within
+  /// [range]; discarded ones apart; status and price item as query filters
+  /// (indexes: status + createdAt, status + priceItemId + createdAt).
+  Query<Map<String, dynamic>> invoiceQuery(
+    DateRangeSel range, {
+    bool discarded = false,
+    InvoiceStatus? status,
+    String? priceItemId,
+  }) {
+    Query<Map<String, dynamic>> q =
+        _db.collection(AppConstants.invoicesCollection);
+    if (discarded) {
+      q = q.where('status', isEqualTo: InvoiceStatus.discarded.value);
+    } else if (status != null) {
+      q = q.where('status', isEqualTo: status.value);
+    } else {
+      q = q.where('status', whereIn: [
+        for (final s in InvoiceStatus.values)
+          if (s != InvoiceStatus.discarded) s.value,
+      ]);
+    }
+    if (priceItemId != null) q = q.where('priceItemId', isEqualTo: priceItemId);
+    return applyDateRange(
+        q.orderBy('createdAt', descending: true), 'createdAt', range);
+  }
+
+  PageSource<Invoice> invoiceSource(Query<Map<String, dynamic>> query) =>
+      FirestorePageSource(query, Invoice.fromFirestore);
+
+  /// How many invoices a query matches and their amount, read as two
+  /// aggregations (no documents are downloaded).
+  Future<({int count, int amount})> invoiceTotals(
+      Query<Map<String, dynamic>> query) async {
+    final a = await query.aggregate(count(), sum('amount')).get();
+    return (count: a.count ?? 0, amount: (a.getSum('amount') ?? 0).round());
+  }
+
   Stream<List<Invoice>> watchAllInvoices() {
     return _mapInvoices(_db.collection(AppConstants.invoicesCollection));
   }
@@ -2469,5 +2585,19 @@ class FirestoreService {
 
   Future<void> deleteEvaluation(String id) async {
     await _db.collection(AppConstants.evaluationsCollection).doc(id).delete();
+  }
+}
+
+/// Build 9A session 2: what the Users search box sends to the query. Twin
+/// of `normalizeQuery` in functions/user_search.js.
+abstract final class UserSearch {
+  static const maxPrefix = 20;
+
+  static String normalize(String text) {
+    final t = text.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+    final chars = t.runes.toList();
+    return chars.length <= maxPrefix
+        ? t
+        : String.fromCharCodes(chars.take(maxPrefix));
   }
 }

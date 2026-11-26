@@ -9,6 +9,12 @@ enum RangePreset { today, last7, thisMonth, lastMonth, thisYear, all, custom }
 class DateRangeSel {
   const DateRangeSel._(this.preset, this.from, this.to);
 
+  /// No date limit ("All dates").
+  const DateRangeSel.all()
+      : preset = RangePreset.all,
+        from = null,
+        to = null;
+
   /// A preset counted from [now] (Jakarta calendar day; defaults to the
   /// current Jakarta day).
   factory DateRangeSel.preset(RangePreset preset, {DateTime? now}) {

@@ -809,7 +809,28 @@ def seed_build9(admin_uid, student_uids, student_names):
             "parts": [{"skill": "listening", "mark": total // 3, "maxScore": 100},
                       {"skill": "reading", "mark": total // 3, "maxScore": 100},
                       {"skill": "writing", "mark": total - 2 * (total // 3), "maxScore": 100}]})
-    print(f"Build 9: 70 audit entries, board {BOARD_CODE} with {n} results")
+    # Session 2: 40 invoices this month, so Payments has a page 2.
+    for i in range(40):
+        uid = student_uids[i % len(student_uids)]
+        status = ["paid", "pending", "paid", "expired"][i % 4]
+        put("invoices", f"b9_inv_{i:02d}", {
+            "studentId": uid, "studentName": student_names[i % len(student_names)],
+            "invoiceNumber": f"INV-B9-{i + 1:03d}", "amount": 2450000 if i % 2 else 3950000,
+            "packageSize": 8 if i % 2 else 16, "priceItemId": "package8" if i % 2 else "package16",
+            "itemLabel": "8次课程" if i % 2 else "16次课程", "status": status,
+            "dueDate": ymd(7), "createdAt": ts(-(i % 20), 9 + i % 8),
+            **({"paidAt": ts(-(i % 20), 12), "paymentMethod": "transfer"} if status == "paid" else {})})
+    # And 30 open answers in the marking queue (page 2 for the admin).
+    for i in range(30):
+        uid = student_uids[i % len(student_uids)]
+        put("marking_items", f"b9_mark_{i:02d}", {
+            "source": "package", "resultId": f"b9_res_{i:02d}", "title": "Seed package",
+            "studentId": uid, "studentName": student_names[i % len(student_names)],
+            "questionId": f"q{i}", "type": "essay", "prompt": "写一句话。",
+            "answerText": "我喜欢学习中文。", "characterCount": 8, "reason": "free_writing",
+            "machinePoints": 0, "maxPoints": 10, "status": "open",
+            "teacherIds": [admin_uid], "createdAt": ts(-(i % 25), 10)})
+    print(f"Build 9: 70 audit entries, board {BOARD_CODE} with {n} results, 40 invoices, 30 marking items")
 
 
 if __name__ == "__main__":

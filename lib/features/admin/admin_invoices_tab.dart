@@ -3,13 +3,17 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show Query;
 import 'package:provider/provider.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../core/paging/date_range.dart';
+import '../../core/paging/paged_controller.dart';
+import '../../core/utils/csv_export.dart';
+import '../../core/widgets/paging_bars.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/app_data_table.dart';
-import '../../core/widgets/table_tools.dart';
 import '../../core/utils/money_format.dart';
 import '../../core/widgets/status_pill.dart';
 import '../../l10n/l10n.dart';
@@ -21,6 +25,7 @@ import '../../models/org_settings.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/payment_service.dart';
+import '../../services/promotion_service.dart';
 
 /// Admin view of all invoices, with a "Create invoice" action.
 class AdminInvoicesTab extends StatefulWidget {
@@ -33,17 +38,86 @@ class AdminInvoicesTab extends StatefulWidget {
 class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
   String? _sortColumnId;
 
-  /// Live student profiles, so rows show the staff label (PLAN.md §3).
-  late final Stream<List<AppUser>> _students =
-      context.read<FirestoreService>().watchAllStudents();
-  Map<String, AppUser> _studentsById = const {};
+  /// Build 9A session 2: staff labels of the students on the page only
+  /// (PLAN.md §3), not the whole student list.
+  Map<String, String> _labels = const {};
 
   /// `中文名 (Latin name)` from the profile, else the name on the invoice.
   String? _studentLabel(Invoice inv) {
-    final student = _studentsById[inv.studentId];
-    if (student != null) return student.staffLabel;
+    final label = _labels[inv.studentId];
+    if (label != null && label.isNotEmpty) return label;
     final stored = inv.studentName ?? '';
     return stored.isEmpty ? null : stored;
+  }
+
+  late final FirestoreService _firestore = context.read<FirestoreService>();
+
+  /// Build 9A session 2: one page of invoices at a time, in a date range.
+  late final PagedController<Invoice> _pages = PagedController<Invoice>(
+    build: (range) => _firestore.invoiceSource(_query(range)),
+  )..addListener(_onPage);
+
+  Query<Map<String, dynamic>> _query(DateRangeSel range,
+          {bool? discarded}) =>
+      _firestore.invoiceQuery(range,
+          discarded: discarded ?? _showDiscarded,
+          status: (discarded ?? _showDiscarded) ? null : _statusFilter,
+          priceItemId: (discarded ?? _showDiscarded) ? null : _itemFilter);
+
+  ({int count, int amount})? _totals;
+  int? _discardedCount;
+  int _totalsGen = 0;
+
+  Future<void> _loadTotals() async {
+    final gen = ++_totalsGen;
+    final range = _pages.range;
+    try {
+      final totals = await _firestore.invoiceTotals(_query(range, discarded: false));
+      final gone = await _firestore.invoiceTotals(_query(range, discarded: true));
+      if (!mounted || gen != _totalsGen) return;
+      setState(() {
+        _totals = totals;
+        _discardedCount = gone.count;
+      });
+    } catch (e) {
+      debugPrint('invoice totals: $e');
+    }
+  }
+
+  Future<void> _onPage() async {
+    final missing = _pages.items
+        .map((i) => i.studentId)
+        .where((id) => id.isNotEmpty && !_labels.containsKey(id))
+        .toSet();
+    if (missing.isEmpty) return;
+    try {
+      final found = await PromotionService().staffLabels(missing);
+      if (!mounted) return;
+      setState(() => _labels = {
+            ..._labels,
+            for (final id in missing) id: found[id] ?? '',
+          });
+    } catch (e) {
+      debugPrint('invoice labels: $e');
+    }
+  }
+
+  /// After a filter, the range or one of the page's own writes.
+  void _reload() {
+    _pages.reload();
+    _loadTotals();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTotals();
+  }
+
+  @override
+  void dispose() {
+    _pages.dispose();
+    super.dispose();
   }
   bool _sortAscending = true;
 
@@ -53,7 +127,6 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
   /// Owner 2026-11-24: show the Discarded invoices instead of the table.
   bool _showDiscarded = false;
   String? _itemFilter;
-  String? _monthFilter;
 
   void _onSort(String columnId) {
     setState(() {
@@ -88,8 +161,20 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
     return sorted;
   }
 
-  /// Rows the table shows now, for the CSV export in the header.
+  /// Rows the table shows now (this page, sorted by the chosen column).
   List<Invoice> _visible = const [];
+
+  /// The CSV follows the date range and filters, not the visible page.
+  Future<void> _exportCsv() async {
+    final l = context.l10n;
+    final rows = await fetchRowsForExport(context, _pages);
+    if (rows == null || !mounted) return;
+    await CsvExport.download(
+      fileStem: 'invoices_${DateRangeSel.isoDay(DateRangeSel.jakartaToday())}',
+      header: _csvHeader(l),
+      rows: [for (final inv in rows) _csvRow(l, inv)],
+    );
+  }
 
   static List<String> _csvHeader(AppLocalizations l) => [
         l.adminInvoicesColInvoice,
@@ -157,10 +242,10 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
                   ),
                 ),
               ),
-              ExportCsvButton(
-                fileStem: 'invoices',
-                header: _csvHeader(l),
-                rows: () => _visible.map((inv) => _csvRow(l, inv)).toList(),
+              OutlinedButton.icon(
+                onPressed: _exportCsv,
+                icon: const Icon(Icons.download_outlined, size: 18),
+                label: Text(l.pagingExportCsv),
               ),
               const SizedBox(width: 8),
               OutlinedButton.icon(
@@ -184,63 +269,58 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
             child: _InfoBanner(text: l.adminInvoicesCodeOnlyBanner),
           ),
         Expanded(
-          child: StreamBuilder<List<AppUser>>(
-            stream: _students,
-            builder: (context, studentsSnap) {
-              _studentsById = {
-                for (final s in studentsSnap.data ?? const <AppUser>[])
-                  s.uid: s,
-              };
-              return StreamBuilder<List<Invoice>>(
-                stream: firestore.watchAllInvoices(),
-                builder: (context, snap) {
-                  if (snap.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  final everything = snap.data ?? [];
-                  final discarded = everything.where((i) => i.isDiscarded).toList()
-                    ..sort((a, b) => (b.discardedAt ?? DateTime(0))
-                        .compareTo(a.discardedAt ?? DateTime(0)));
-                  final invoices = everything.where((i) => !i.isDiscarded).toList();
-                  if (everything.isEmpty) {
-                    return EmptyState(
-                      icon: Icons.receipt_long_outlined,
-                      title: l.adminInvoicesEmptyTitle,
-                      subtitle: l.adminInvoicesEmptySubtitle,
-                    );
-                  }
-                  _visible = _sorted(filterInvoices(
-                    invoices,
-                    status: _statusFilter,
-                    priceItemId: _itemFilter,
-                    month: _monthFilter,
-                  ));
-                  return ListView(
-                    padding: const EdgeInsets.all(20),
-                    children: [
-                      Row(
-                        children: [
-                          ChoiceChip(
-                            label: Text(l.invoiceActiveList(invoices.length)),
-                            selected: !_showDiscarded,
-                            onSelected: (_) => setState(() => _showDiscarded = false),
-                          ),
-                          const SizedBox(width: 8),
-                          ChoiceChip(
-                            avatar: const Icon(Icons.delete_sweep_outlined, size: 18),
-                            label: Text(l.invoiceDiscardedList(discarded.length)),
-                            selected: _showDiscarded,
-                            onSelected: (_) => setState(() => _showDiscarded = true),
-                          ),
-                        ],
-                      ),
+          child: ListenableBuilder(
+            listenable: _pages,
+            builder: (context, _) {
+              _visible = _sorted(_pages.items);
+              return PagedListBody<Invoice>(
+                controller: _pages,
+                emptyIcon: Icons.receipt_long_outlined,
+                emptyTitle: l.adminInvoicesEmptyTitle,
+                header: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        ChoiceChip(
+                          label: Text(l.invoiceActiveList(_totals?.count ?? 0)),
+                          selected: !_showDiscarded,
+                          onSelected: (_) {
+                            setState(() => _showDiscarded = false);
+                            _pages.reload();
+                          },
+                        ),
+                        const SizedBox(width: 8),
+                        ChoiceChip(
+                          avatar: const Icon(Icons.delete_sweep_outlined, size: 18),
+                          label: Text(l.invoiceDiscardedList(_discardedCount ?? 0)),
+                          selected: _showDiscarded,
+                          onSelected: (_) {
+                            setState(() => _showDiscarded = true);
+                            _pages.reload();
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    DateRangeBar(
+                      value: _pages.range,
+                      onChanged: (r) {
+                        _pages.setRange(r);
+                        _loadTotals();
+                      },
+                    ),
+                    if (!_showDiscarded) ...[
                       const SizedBox(height: 12),
-                      if (_showDiscarded)
-                        _discardedList(context, l, discarded)
-                      else ...[
-                      _filters(l, invoices),
-                      const SizedBox(height: 12),
-                      AppDataTable<Invoice>(
+                      _filters(l),
+                    ],
+                  ],
+                ),
+                // The table is one item: the rows of this page.
+                itemBuilder: (context, _) => const SizedBox.shrink(),
+                body: _showDiscarded
+                    ? _discardedList(context, l, _pages.items)
+                    : AppDataTable<Invoice>(
                         rows: _visible,
                         columns: _buildColumns(l),
                         sortColumnId: _sortColumnId,
@@ -254,10 +334,6 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
                               : null,
                         ),
                       ),
-                      ],
-                    ],
-                  );
-                },
               );
             },
           ),
@@ -266,19 +342,7 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
     );
   }
 
-  Widget _filters(AppLocalizations l, List<Invoice> all) {
-    final items = <String, String>{};
-    for (final i in all) {
-      final id = i.priceItemId;
-      if (id == null || id.isEmpty) continue;
-      items[id] = i.nameChinese.isNotEmpty ? i.nameChinese : i.itemLocalized(l);
-    }
-    final months = {
-      for (final i in all)
-        if (i.createdAt != null)
-          '${i.createdAt!.year}-${i.createdAt!.month.toString().padLeft(2, '0')}',
-    }.toList()
-      ..sort((a, b) => b.compareTo(a));
+  Widget _filters(AppLocalizations l) {
     Widget drop<T>(String label, T? value, Map<T, String> options,
             ValueChanged<T?> onChanged) =>
         SizedBox(
@@ -295,30 +359,42 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
             onChanged: onChanged,
           ),
         );
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        drop<InvoiceStatus>(
-          l.profileWidgetStatus,
-          _statusFilter,
-          {
-            for (final s in InvoiceStatus.values)
-              if (s != InvoiceStatus.discarded) s: s.localized(l)
-          },
-          (v) => setState(() => _statusFilter = v),
-        ),
-        drop<String>(l.adminInvoicesColItem, _itemFilter, items,
-            (v) => setState(() => _itemFilter = v)),
-        drop<String>(l.invoicesFilterMonth, _monthFilter,
-            {for (final m in months) m: m},
-            (v) => setState(() => _monthFilter = v)),
-        Text(
-          l.invoicesFilteredTotal(_visible.length, formatRupiah(invoiceTotal(_visible))),
-          style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.navy),
-        ),
-      ],
+    return StreamBuilder<PricingSettings>(
+      stream: _firestore.watchPricing(),
+      builder: (context, snap) {
+        final items = <String, String>{
+          for (final i in snap.data?.items ?? const <PriceItem>[])
+            i.id: i.nameChinese.isNotEmpty ? i.nameChinese : i.name,
+        };
+        return Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            drop<InvoiceStatus>(
+              l.profileWidgetStatus,
+              _statusFilter,
+              {
+                for (final s in InvoiceStatus.values)
+                  if (s != InvoiceStatus.discarded) s: s.localized(l)
+              },
+              (v) {
+                setState(() => _statusFilter = v);
+                _reload();
+              },
+            ),
+            drop<String>(l.adminInvoicesColItem, _itemFilter, items, (v) {
+              setState(() => _itemFilter = v);
+              _reload();
+            }),
+            if (_totals != null)
+              Text(
+                l.invoicesFilteredTotal(_totals!.count, formatRupiah(_totals!.amount)),
+                style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.navy),
+              ),
+          ],
+        );
+      },
     );
   }
 
@@ -496,6 +572,7 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
             method: result.method,
             note: result.note,
           );
+      _reload();
       messenger.showSnackBar(
         SnackBar(
           content: Text(
@@ -564,6 +641,7 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
     final messenger = ScaffoldMessenger.of(context);
     try {
       await context.read<FirestoreService>().discardInvoice(invoice.id, reason: reason.text);
+      _reload();
       messenger.showSnackBar(SnackBar(content: Text(l.invoiceDiscarded)));
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(l.adminInvoicesDeleteFailed('$e'))));
@@ -575,6 +653,7 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
     final messenger = ScaffoldMessenger.of(context);
     try {
       await context.read<FirestoreService>().discardInvoice(invoice.id, restore: true);
+      _reload();
       messenger.showSnackBar(SnackBar(content: Text(l.invoiceRestored)));
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(l.adminInvoicesDeleteFailed('$e'))));
@@ -645,6 +724,7 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
       showDragHandle: true,
       builder: (_) => const _CreateInvoiceSheet(),
     );
+    if (mounted) _reload();
   }
 }
 

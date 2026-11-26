@@ -3927,6 +3927,46 @@ exports.rebuildLeaderboards = onCall({timeoutSeconds: 540}, async (request) => {
   return {results: snap.size, rebuilt: done};
 });
 
+// Build 9A session 2: the Users list's search index on every account
+// (`nameLower`, `searchPrefixes`, `listed`; pure logic in user_search.js).
+const userSearch = require("./user_search");
+
+exports.onUserSearchIndex = onDocumentWritten(`${USERS}/{uid}`, async (event) => {
+  const after = event.data && event.data.after.exists ? event.data.after.data() : null;
+  if (!after) return;
+  const fields = userSearch.searchFieldsOf(after);
+  if (userSearch.sameFields(after, fields)) return;
+  await event.data.after.ref.update(fields);
+});
+
+/** Admin: writes the search index on every account (once after Build 9). */
+exports.rebuildUserSearch = onCall({timeoutSeconds: 540}, async (request) => {
+  const {uid, profile} = await requireCaller(request);
+  if (profile.role !== "admin") {
+    throw new HttpsError("permission-denied", "Only admins rebuild the user search.");
+  }
+  const snap = await db.collection(USERS).get();
+  let written = 0;
+  let batch = db.batch();
+  let inBatch = 0;
+  for (const d of snap.docs) {
+    const fields = userSearch.searchFieldsOf(d.data() || {});
+    if (userSearch.sameFields(d.data() || {}, fields)) continue;
+    batch.update(d.ref, fields);
+    written += 1;
+    inBatch += 1;
+    if (inBatch === 400) {
+      await batch.commit();
+      batch = db.batch();
+      inBatch = 0;
+    }
+  }
+  if (inBatch) await batch.commit();
+  await writeAudit({action: "users.search.rebuild", actorId: uid, actorName: latinName(profile),
+    targetType: "users", targetId: "all", detail: `${written} of ${snap.size}`});
+  return {users: snap.size, written};
+});
+
 // ---------------------------------------------------------------------------
 // Build 5 (docs/PLAN.md §4, Must 6): vouchers expire after their validity.
 // Active terms whose deadline has passed become `expired`; the remaining

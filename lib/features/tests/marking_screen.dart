@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/paging/date_range.dart';
+import '../../core/paging/paged_controller.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
+import '../../core/widgets/paging_bars.dart';
 import '../../core/widgets/shell_nested_page.dart';
 import '../../l10n/l10n.dart';
 import '../../models/app_user.dart';
@@ -54,11 +57,34 @@ class MarkingScreen extends StatefulWidget {
 
 class _MarkingScreenState extends State<MarkingScreen> {
   final _vm = MarkingViewModel();
-  late final Stream<List<MarkingItem>> _queue = _vm.service.watchOpen(widget.user);
+
+  /// Build 9A session 2: 25 answers a page. The queue opens on all dates
+  /// (an old answer must not hide behind "this month"); the range bar
+  /// narrows it.
+  late final PagedController<MarkingItem> _pages = PagedController<MarkingItem>(
+    build: (range) => _vm.service.openSource(widget.user, range),
+    range: const DateRangeSel.all(),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    // A marked answer leaves the queue: read the page again.
+    _vm.addListener(_afterMark);
+  }
+
+  String? _wasSaving;
+
+  void _afterMark() {
+    if (_wasSaving != null && _vm.savingId == null) _pages.refresh();
+    _wasSaving = _vm.savingId;
+  }
 
   @override
   void dispose() {
+    _vm.removeListener(_afterMark);
     _vm.dispose();
+    _pages.dispose();
     super.dispose();
   }
 
@@ -68,44 +94,29 @@ class _MarkingScreenState extends State<MarkingScreen> {
     return ShellNestedPage(
       embedded: widget.embedded,
       title: l.markingTitle,
-      child: StreamBuilder<List<MarkingItem>>(
-        stream: _queue,
-        builder: (context, snap) {
-          if (snap.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(testErrorMessage(l, snap.error!)),
+      child: ListenableBuilder(
+        listenable: _vm,
+        builder: (context, _) => PagedListBody<MarkingItem>(
+          controller: _pages,
+          padding: const EdgeInsets.all(16),
+          maxWidth: 960,
+          emptyIcon: Icons.task_alt,
+          emptyTitle: l.markingEmptyTitle,
+          emptySubtitle: l.markingEmptySubtitle,
+          header: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(l.markingIntro, style: TextStyle(color: AppColors.textSecondary)),
+              const SizedBox(height: 10),
+              ListenableBuilder(
+                listenable: _pages,
+                builder: (context, _) =>
+                    DateRangeBar(value: _pages.range, onChanged: _pages.setRange),
               ),
-            );
-          }
-          if (!snap.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final items = snap.data!;
-          if (items.isEmpty) {
-            return EmptyState(
-              icon: Icons.task_alt,
-              title: l.markingEmptyTitle,
-              subtitle: l.markingEmptySubtitle,
-            );
-          }
-          return ListenableBuilder(
-            listenable: _vm,
-            builder: (context, _) => ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                Text(l.markingIntro,
-                    style: TextStyle(color: AppColors.textSecondary)),
-                const SizedBox(height: 12),
-                for (final item in items) ...[
-                  _MarkingTile(item: item, vm: _vm),
-                  const SizedBox(height: 10),
-                ],
-              ],
-            ),
-          );
-        },
+            ],
+          ),
+          itemBuilder: (context, item) => _MarkingTile(item: item, vm: _vm),
+        ),
       ),
     );
   }

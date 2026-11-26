@@ -8,7 +8,6 @@ import '../../core/widgets/app_card.dart';
 import '../../l10n/l10n.dart';
 import '../../models/app_user.dart';
 import '../../models/leaderboard.dart';
-import '../../models/marking_item.dart';
 import '../../models/test_track.dart';
 import '../../services/auth_service.dart';
 import '../../services/marking_service.dart';
@@ -81,10 +80,11 @@ class StaffTestsTab extends StatelessWidget {
               label: Text(l.testsResultsTitle),
             ),
             // Build 2A: answers waiting for this teacher's mark.
-            StreamBuilder<List<MarkingItem>>(
-              stream: MarkingService().watchOpen(user),
+            // Build 9A session 2: a count, not the whole queue.
+            FutureBuilder<int>(
+              future: MarkingService().openCount(user),
               builder: (context, snap) {
-                final open = snap.data?.length ?? 0;
+                final open = snap.data ?? 0;
                 return OutlinedButton.icon(
                   onPressed: () => context.push('$_base/marking'),
                   icon: Badge(

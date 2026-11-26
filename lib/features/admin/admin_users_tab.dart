@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart' show Query;
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -5,6 +8,10 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../core/paging/date_range.dart';
+import '../../core/paging/paged_controller.dart';
+import '../../core/utils/csv_export.dart';
+import '../../core/widgets/paging_bars.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/app_data_table.dart';
@@ -15,6 +22,8 @@ import '../../l10n/labels_admin.dart';
 import '../../models/app_user.dart';
 import 'registration_approval_view.dart';
 import '../../services/firestore_service.dart';
+import '../../services/placement_service.dart';
+import '../../services/promotion_service.dart';
 import 'admin_dashboard_widgets.dart';
 
 /// Students show the staff label (PLAN.md §3); other roles keep their name.
@@ -44,6 +53,85 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
   /// Uids ticked in the table.
   Set<String> _selected = {};
   bool _busy = false;
+
+  // Build 9A session 2: the list is read a page at a time (25, by name);
+  // search, role and status are part of the query, not a filter over the
+  // page, so a student who is not on page 1 is still found.
+  late final FirestoreService _firestore = context.read<FirestoreService>();
+  late final PagedController<AppUser> _pages = PagedController<AppUser>(
+    build: (_) => _firestore.userSource(_listQuery()),
+    range: DateRangeSel.preset(RangePreset.all),
+  )..addListener(_onPage);
+  Timer? _searchDebounce;
+  Map<String?, int> _roleCounts = const {};
+  int _pending = 0;
+  int _notIndexed = 0;
+
+  /// Children's labels of the parents on the page.
+  Map<String, String> _childLabels = const {};
+
+  Query<Map<String, dynamic>> _listQuery({String? role, bool useRole = true}) =>
+      _firestore.userListQuery(
+        role: useRole ? _roleFilter : role,
+        active: _statusFilter == 'active'
+            ? true
+            : _statusFilter == 'inactive'
+                ? false
+                : null,
+        search: _query,
+      );
+
+  Future<void> _loadCounts() async {
+    try {
+      final roles = [
+        null,
+        AppConstants.roleAdmin,
+        AppConstants.roleTeacher,
+        AppConstants.roleStudent,
+        AppConstants.roleParent,
+      ];
+      final counts = await Future.wait([
+        for (final r in roles)
+          _firestore.countOf(_firestore.userListQuery(role: r)),
+      ]);
+      final pending = await _firestore.pendingRegistrations();
+      final notIndexed = await _firestore.usersNotIndexed();
+      if (!mounted) return;
+      setState(() {
+        _roleCounts = {for (var i = 0; i < roles.length; i++) roles[i]: counts[i]};
+        _pending = pending;
+        _notIndexed = notIndexed;
+      });
+    } catch (e) {
+      debugPrint('user counts: $e');
+    }
+  }
+
+  Future<void> _onPage() async {
+    final ids = {
+      for (final u in _pages.items)
+        if (u.isParent) ...u.studentIds,
+    }.where((id) => !_childLabels.containsKey(id)).toSet();
+    if (ids.isEmpty) return;
+    try {
+      final found = await PromotionService().staffLabels(ids);
+      if (!mounted) return;
+      setState(() => _childLabels = {..._childLabels, for (final id in ids) id: found[id] ?? ''});
+    } catch (e) {
+      debugPrint('child labels: $e');
+    }
+  }
+
+  void _reload() {
+    _pages.reload();
+    _loadCounts();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCounts();
+  }
 
   List<String> _csvHeader(AppLocalizations l) => [
         l.adminUsersColName,
@@ -97,6 +185,8 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
   @override
   void dispose() {
     _searchController.dispose();
+    _searchDebounce?.cancel();
+    _pages.dispose();
     super.dispose();
   }
 
@@ -119,30 +209,10 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
     return user.level ?? '—';
   }
 
-  List<AppUser> _filter(AppLocalizations l, List<AppUser> users) {
-    // Build 3: pending and rejected registrations live under Approval.
-    var result = users.where((u) => !u.awaitsApproval).toList();
-
-    if (_roleFilter != null) {
-      result = result.where((user) => user.role == _roleFilter).toList();
-    }
-
-    if (_statusFilter == 'active') {
-      result = result.where((user) => user.active).toList();
-    } else if (_statusFilter == 'inactive') {
-      result = result.where((user) => !user.active).toList();
-    }
-
-    final q = _query.trim().toLowerCase();
-    if (q.isNotEmpty) {
-      result = result.where((user) {
-        return user.matchesSearch(q) ||
-            _roleLabel(l, user).toLowerCase().contains(q);
-      }).toList();
-    }
-
-    return _sortUsers(l, result);
-  }
+  /// The page on screen, sorted by the chosen column (the server reads the
+  /// list by name; search, role and status are in the query).
+  List<AppUser> _filter(AppLocalizations l, List<AppUser> page) =>
+      _sortUsers(l, page.where((u) => !u.awaitsApproval).toList());
 
   int _roleSortOrder(AppUser user) {
     return switch (user.role) {
@@ -224,6 +294,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
       await action();
       messenger.showSnackBar(SnackBar(content: Text(done)));
       if (mounted) setState(() => _selected = {});
+      _reload();
     } catch (e) {
       messenger.showSnackBar(
         SnackBar(content: Text(e.toString()), backgroundColor: AppColors.error),
@@ -316,13 +387,9 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
   }
 
   /// One chip per role with its count; the selected chip filters the table.
-  Widget _roleTabs(AppLocalizations l, List<AppUser> allUsers) {
-    final listed = allUsers.where((u) => !u.awaitsApproval).toList();
-    final counts = <String?, int>{null: listed.length};
-    for (final user in listed) {
-      counts[user.role] = (counts[user.role] ?? 0) + 1;
-    }
-    final pending = RegistrationApprovalView.pendingCount(allUsers);
+  Widget _roleTabs(AppLocalizations l) {
+    final counts = _roleCounts;
+    final pending = _pending;
     return Wrap(
       spacing: 8,
       runSpacing: 8,
@@ -345,26 +412,24 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
           ChoiceChip(
             label: Text('${entry.value} (${counts[entry.key] ?? 0})'),
             selected: _roleFilter == entry.key,
-            onSelected: (_) => setState(() {
-              _roleFilter = entry.key;
-              _selected = {};
-            }),
+            onSelected: (_) {
+              setState(() {
+                _roleFilter = entry.key;
+                _selected = {};
+              });
+              _pages.reload();
+            },
           ),
       ],
     );
   }
 
   /// "Parent: Ibu Santoso" under a student, the children under a parent.
-  String? _relationLabel(
-    AppLocalizations l,
-    AppUser user,
-    List<AppUser> allUsers,
-  ) {
+  String? _relationLabel(AppLocalizations l, AppUser user) {
     if (user.isParent) {
       final children = [
         for (final id in user.studentIds)
-          for (final u in allUsers)
-            if (u.uid == id) u.staffLabel,
+          if ((_childLabels[id] ?? '').isNotEmpty) _childLabels[id]!,
       ];
       if (children.isEmpty) return l.adminUsersNoChildLinked;
       final shown = children.take(3).join(', ');
@@ -373,20 +438,13 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
           ? l.adminUsersChildrenMore(shown, more)
           : l.adminUsersChildren(children.length, shown);
     }
-    if (user.isStudent) {
-      for (final u in allUsers) {
-        if (u.isParent && u.studentIds.contains(user.uid)) {
-          return l.adminUsersParentOf(u.name);
-        }
-      }
+    if (user.isStudent && (user.linkedParentName ?? '').isNotEmpty) {
+      return l.adminUsersParentOf(user.linkedParentName!);
     }
     return null;
   }
 
-  List<AppTableColumn<AppUser>> _buildColumns(
-    BuildContext context,
-    List<AppUser> allUsers,
-  ) {
+  List<AppTableColumn<AppUser>> _buildColumns(BuildContext context) {
     final l = context.l10n;
     final metaStyle = TextStyle(
       fontSize: 12,
@@ -401,7 +459,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
         cell: (user) => _UserNameCell(
           user: user,
           roleColor: _roleColor(user),
-          detail: _relationLabel(l, user, allUsers),
+          detail: _relationLabel(l, user),
         ),
       ),
       AppTableColumn<AppUser>(
@@ -504,6 +562,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
       messenger.showSnackBar(
         SnackBar(content: Text(l.adminUsersDeleted(user.email))),
       );
+      _reload();
     } on FirebaseFunctionsException catch (e) {
       messenger.showSnackBar(
         SnackBar(
@@ -520,6 +579,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
             userId: user.uid,
             active: !user.active,
           );
+      _reload();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -535,77 +595,96 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
   Widget build(BuildContext context) {
     final isWide = MediaQuery.sizeOf(context).width >= 720;
     final l = context.l10n;
-
-    return StreamBuilder<List<AppUser>>(
-      stream: context.read<FirestoreService>().watchAllUsers(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (snapshot.hasError) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Text(
-                l.adminUsersLoadFailed('${snapshot.error}'),
-                style: TextStyle(color: AppColors.error),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          );
-        }
-
-        final allUsers = snapshot.data ?? [];
-        final users = _filter(l, allUsers);
-
-        return ListView(
-          padding: EdgeInsets.all(isWide ? 32 : 20),
+    return ListenableBuilder(
+      listenable: _pages,
+      builder: (context, _) {
+        final users = _filter(l, _pages.items);
+        final header = Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _toolbar(context, isWide, users),
             const SizedBox(height: 12),
-            _roleTabs(l, allUsers),
-            const SizedBox(height: 12),
-            if (_roleFilter == _approvalFilter)
-              RegistrationApprovalView(users: allUsers)
-            else ...[
-            _selectionBar(l, users),
-            if (users.isEmpty)
+            _roleTabs(l),
+            if (_notIndexed > 0) ...[
+              const SizedBox(height: 10),
               AppCard(
-                child: Text(
-                  snapshot.data?.isEmpty ?? true
-                      ? l.adminUsersEmpty
-                      : l.adminUsersNoMatch,
-                  style: TextStyle(color: AppColors.textSecondary),
-                ),
-              )
-            else
-              AppDataTable<AppUser>(
-                rows: users,
-                columns: _buildColumns(context, allUsers),
-                sortColumnId: _sortColumn.name,
-                sortAscending: _sortAscending,
-                onSort: _onSortById,
-                onRowTap: _openUser,
-                rowKey: (user) => user.uid,
-                selectedKeys: _selected,
-                onSelectionChanged: (keys) => setState(() => _selected = keys),
-                mobileCardBuilder: (user) => _UserMobileCard(
-                  user: user,
-                  onOpen: user.isStudent ? () => _openUser(user) : null,
-                  roleLabel: _roleLabel(l, user),
-                  roleColor: _roleColor(user),
-                  joinedLabel: _joinedLabel(user),
-                  hskLabel: _hskLabel(user),
-                  onToggleActive: () => _toggleActive(user),
-                  onDelete: () => _deleteAccount(user),
-                  onEdit: () => context.push('/admin/users/${user.uid}/edit'),
+                padding: const EdgeInsets.all(12),
+                child: Wrap(
+                  spacing: 12,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(l.usersNotIndexed(_notIndexed),
+                        style: TextStyle(color: AppColors.error)),
+                    FilledButton.icon(
+                      onPressed: _busy ? null : _rebuildSearch,
+                      icon: const Icon(Icons.refresh, size: 18),
+                      label: Text(l.orgRebuildUserSearch),
+                    ),
+                  ],
                 ),
               ),
             ],
+            const SizedBox(height: 12),
+            if (_roleFilter != _approvalFilter) _selectionBar(l, users),
           ],
         );
+        if (_roleFilter == _approvalFilter) {
+          return ListView(
+            padding: EdgeInsets.all(isWide ? 32 : 20),
+            children: [header, const _ApprovalUsers()],
+          );
+        }
+        return PagedListBody<AppUser>(
+          controller: _pages,
+          padding: EdgeInsets.all(isWide ? 32 : 20),
+          header: header,
+          emptyIcon: Icons.people_outline,
+          emptyTitle: _query.trim().isEmpty ? l.adminUsersEmpty : l.adminUsersNoMatch,
+          emptySubtitle: '',
+          itemBuilder: (context, _) => const SizedBox.shrink(),
+          body: AppDataTable<AppUser>(
+            rows: users,
+            columns: _buildColumns(context),
+            sortColumnId: _sortColumn.name,
+            sortAscending: _sortAscending,
+            onSort: _onSortById,
+            onRowTap: _openUser,
+            rowKey: (user) => user.uid,
+            selectedKeys: _selected,
+            onSelectionChanged: (keys) => setState(() => _selected = keys),
+            mobileCardBuilder: (user) => _UserMobileCard(
+              user: user,
+              onOpen: user.isStudent ? () => _openUser(user) : null,
+              roleLabel: _roleLabel(l, user),
+              roleColor: _roleColor(user),
+              joinedLabel: _joinedLabel(user),
+              hskLabel: _hskLabel(user),
+              onToggleActive: () => _toggleActive(user),
+              onDelete: () => _deleteAccount(user),
+              onEdit: () => context.push('/admin/users/${user.uid}/edit'),
+            ),
+          ),
+        );
       },
+    );
+  }
+
+  /// Build 9A session 2: the one-time index of the accounts made before.
+  Future<void> _rebuildSearch() => _runBulk(() async {
+        final n = await _firestore.rebuildUserSearch();
+        debugPrint('user search rebuilt: $n');
+      }, context.l10n.orgRebuildUserSearch);
+
+  /// The CSV follows the role, status and search, not the visible page.
+  Future<void> _exportCsv() async {
+    final l = context.l10n;
+    final rows = await fetchRowsForExport(context, _pages);
+    if (rows == null || !mounted) return;
+    await CsvExport.download(
+      fileStem: 'users',
+      header: _csvHeader(l),
+      rows: [for (final u in rows) _csvRow(l, u)],
     );
   }
 
@@ -613,10 +692,10 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
     final l = context.l10n;
     final exportButton = SizedBox(
       height: _toolbarFieldHeight,
-      child: ExportCsvButton(
-        fileStem: 'users',
-        header: _csvHeader(l),
-        rows: () => users.map((user) => _csvRow(l, user)).toList(),
+      child: OutlinedButton.icon(
+        onPressed: _exportCsv,
+        icon: const Icon(Icons.download_outlined, size: 18),
+        label: Text(l.tableToolsExportCsv),
       ),
     );
 
@@ -627,7 +706,10 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
         label: l.profileWidgetStatus,
         value: _statusFilter,
         items: _statusFilterOptions(l),
-        onChanged: (value) => setState(() => _statusFilter = value),
+        onChanged: (value) {
+          setState(() => _statusFilter = value);
+          _pages.reload();
+        },
       ),
     );
 
@@ -710,7 +792,13 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
   Widget _searchField() {
     return TextField(
       controller: _searchController,
-      onChanged: (value) => setState(() => _query = value),
+      onChanged: (value) {
+        setState(() => _query = value);
+        // Search is a query: wait for the typing to stop.
+        _searchDebounce?.cancel();
+        _searchDebounce =
+            Timer(const Duration(milliseconds: 350), () => _pages.reload());
+      },
       decoration: InputDecoration(
         hintText: context.l10n.adminUsersSearchHint,
         prefixIcon: const Icon(Icons.search, size: 20),
@@ -1182,6 +1270,33 @@ class _ActionButton extends StatelessWidget {
         active
             ? context.l10n.adminUsersDeactivate
             : context.l10n.adminUsersActivate,
+      ),
+    );
+  }
+}
+
+/// Build 9A session 2: the Approval chip reads only the waiting and
+/// rejected students and the teachers, not every account.
+class _ApprovalUsers extends StatelessWidget {
+  const _ApprovalUsers();
+
+  @override
+  Widget build(BuildContext context) {
+    final firestore = context.read<FirestoreService>();
+    return StreamBuilder<List<AppUser>>(
+      stream: PlacementService().watchRegistrations(),
+      builder: (context, regs) => StreamBuilder<List<AppUser>>(
+        stream: firestore.watchAllTeachers(),
+        builder: (context, teachers) {
+          if (!regs.hasData || !teachers.hasData) {
+            return const Padding(
+              padding: EdgeInsets.all(24),
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
+          return RegistrationApprovalView(
+              users: [...regs.data!, ...teachers.data!]);
+        },
       ),
     );
   }

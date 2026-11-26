@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:chinese_tracker/core/paging/date_range.dart';
 import 'package:chinese_tracker/core/paging/paged_controller.dart';
 import 'package:chinese_tracker/models/audit_log.dart';
+import 'package:chinese_tracker/services/firestore_service.dart' show UserSearch;
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -132,7 +133,7 @@ void main() {
   test('every audit action the functions write has a filter group', () {
     final src = File('functions/index.js').readAsStringSync();
     final written = <String>{
-      for (final m in RegExp(r'"((?:invoice|test|promotion|registration|schedule|day|progress|leaderboard)\.[a-z.]+)"')
+      for (final m in RegExp(r'"((?:invoice|test|promotion|registration|schedule|day|progress|leaderboard|users)\.[a-z.]+)"')
           .allMatches(src))
         m.group(1)!,
     }..removeWhere((a) => a.endsWith('.'));
@@ -144,5 +145,17 @@ void main() {
     for (final g in AuditActionGroup.values) {
       expect(g.actions.length, lessThanOrEqualTo(30), reason: 'whereIn limit');
     }
+  });
+
+  test('the Users search box sends what functions/user_search.js indexes', () {
+    expect(UserSearch.normalize('  Angeline   SAN '), 'angeline san');
+    expect(UserSearch.normalize('陈美'), '陈美');
+    expect(UserSearch.normalize('x' * 40).length, UserSearch.maxPrefix);
+    expect(UserSearch.normalize('   '), '');
+  });
+
+  test('an inline paged list and the "all dates" range', () {
+    expect(const DateRangeSel.all().isAll, isTrue);
+    expect(const DateRangeSel.all().startUtc, isNull);
   });
 }

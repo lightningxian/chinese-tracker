@@ -2476,5 +2476,9 @@
   "resultAttemptNo": "Percobaan ke-{n}",
   "testsSitting": "Ujian ke-{n}",
   "testsSittingRepeat": "Ujian ke-{n} · latihan",
-  "testsRepeatIntro": "Ini ujian ke-{n} Anda untuk tes ini. Ujian pertama yang dihitung untuk papan peringkat dan kenaikan level; yang ini latihan."
+  "testsRepeatIntro": "Ini ujian ke-{n} Anda untuk tes ini. Ujian pertama yang dihitung untuk papan peringkat dan kenaikan level; yang ini latihan.",
+  "usersNotIndexed": "{count} akun belum masuk daftar ini. Admin menekan Pengaturan organisasi → Susun ulang pencarian pengguna satu kali.",
+  "orgRebuildUserSearch": "Susun ulang pencarian pengguna",
+  "orgRebuildUserSearchHint": "Menulis indeks pencarian di setiap akun (perlu sekali setelah pembaruan Build 9, agar daftar Pengguna dapat dibagi per halaman dan dicari).",
+  "orgRebuildUserSearchDone": "{count} akun ditulis ke indeks pencarian."
 }

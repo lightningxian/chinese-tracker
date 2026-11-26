@@ -163,7 +163,15 @@ class PagedListBody<T> extends StatelessWidget {
     this.padding = const EdgeInsets.all(20),
     this.separator = 10,
     this.maxWidth,
+    this.body,
+    this.inline = false,
   });
+
+  /// Draws a plain column (inside a caller's own scrolling list).
+  final bool inline;
+
+  /// Draws the whole page at once (a table) instead of [itemBuilder] rows.
+  final Widget? body;
 
   final PagedController<T> controller;
   final Widget Function(BuildContext context, T item) itemBuilder;
@@ -198,6 +206,8 @@ class PagedListBody<T> extends StatelessWidget {
               title: emptyTitle ?? l.pagingEmptyTitle,
               subtitle: emptySubtitle ?? l.pagingEmptySubtitle,
             )
+          else if (body != null)
+            body!
           else
             for (var i = 0; i < rows.length; i++) ...[
               if (i > 0) SizedBox(height: separator),
@@ -206,6 +216,13 @@ class PagedListBody<T> extends StatelessWidget {
           const SizedBox(height: 8),
           PagerBar(controller: c),
         ];
+        if (inline) {
+          return Padding(
+            padding: padding,
+            child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
+          );
+        }
         final list = ListView(padding: padding, children: children);
         if (maxWidth == null) return list;
         return Center(
