@@ -13,6 +13,13 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-26 — Claude (BUILD chat, PC): NAS backup setup rewritten (v0.1.52)
+
+- Cloud Shell script + Cloud Scheduler export (no function) + read-only NAS
+  account; NAS runs one Docker project that pulls nightly and keeps 7 days.
+- Privacy policy mentions the backup copy on the centre's own device.
+- Waiting on the owner: Step 1 (Cloud Shell) and Step 2 (NAS Docker).
+
 ### 2026-11-26 — Claude (BUILD chat, PC): payment photo download, upload live (v0.1.51)
 
 - Owner deployed Storage rules + the two payment functions by the CLI's

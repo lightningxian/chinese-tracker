@@ -1,0 +1,18 @@
+# Easy Study NAS backup (docs/NAS_BACKUP_SETUP.md).
+# UGOS -> Docker -> Project -> Create, paste this file.
+# The folder /volume1/docker/easystudy-backup must hold:
+#   backup_loop.sh, rclone.conf, nas-backup-key.json
+# If your storage pool is not volume1, change the two left-hand paths.
+services:
+  easystudy-backup:
+    image: rclone/rclone:1.68.2
+    container_name: easystudy-backup
+    restart: unless-stopped
+    # tr strips Windows line endings in case the script was copied from a PC.
+    entrypoint: ["/bin/sh", "-c", "tr -d '\\r' < /config/backup_loop.sh > /tmp/backup_loop.sh && exec sh /tmp/backup_loop.sh"]
+    environment:
+      KEEP_DAYS: "7"      # matches the privacy policy
+      RUN_HOUR_UTC: "20"  # 20:00 UTC = 03:00 Jakarta
+    volumes:
+      - /volume1/docker/easystudy-backup:/config:ro
+      - /volume1/backups/easystudy:/data

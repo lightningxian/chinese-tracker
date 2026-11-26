@@ -6,6 +6,41 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-26 — Claude (BUILD chat): nightly backup copy on the NAS (setup rewritten)
+
+**What changed**
+- `scripts/setup_nas_backup_gcp.sh` rewritten for Google Cloud Shell (no
+  install): bucket `gs://chinese-tracker-backups` (asia-southeast2, uniform
+  access, public access blocked, objects deleted after 2 days); service
+  account `firestore-export` (`datastore.importExportAdmin`, `storage.admin`
+  on that bucket only) used by a Cloud Scheduler HTTP job
+  `firestore-nightly-export` that calls the Firestore export API at 02:00
+  Jakarta: no Cloud Function; service account `nas-backup` with
+  `storage.objectViewer` on the backup bucket and the file bucket, and its key.
+- NAS side is now one Docker project (`scripts/nas/docker-compose.yml`,
+  rclone 1.68.2) running `scripts/nas/backup_loop.sh`: runs at start, then
+  03:00 Jakarta; copies exports, syncs files with a dated `deleted/` folder,
+  keeps 7 days, writes `LAST_RUN.txt`. Replaces `nas_backup_sync.sh` and the
+  UGOS Task Scheduler step.
+- `.gitattributes`: `scripts/nas/*` and `scripts/*.sh` keep Unix line endings;
+  the container also strips `` in case.
+- Privacy policy (EN + ID): data is stored with Google Firebase "with a backup
+  copy on the centre's own storage device". Retention stays 7 days.
+
+**Why**
+- Owner 2026-11-26: asked to set up the NAS backup. Firestore's own backups
+  cannot be downloaded, so the database needs an export to a bucket.
+
+**For review**
+- Not yet run: the owner runs the Cloud Shell script and creates the Docker
+  project (`docs/NAS_BACKUP_SETUP.md`). IAM changes and the key are the
+  owner's; Claude never sees the key.
+- `backup_loop.sh` tested on the PC with a fake rclone: copy, sync,
+  pruning of folders older than 7 days, `LAST_RUN.txt`, next-run timing.
+- Hosting (privacy text).
+
+---
+
 ## 2026-11-26 — Claude (BUILD chat): download the payment photo; photo upload live
 
 **What changed**

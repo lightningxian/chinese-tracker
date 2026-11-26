@@ -93,9 +93,10 @@ firebase firestore:databases:restore --backup <backup name from the list> --data
 ```
 
 Storage files (photos, worksheets, recordings) are not in this backup; they
-live in the Storage bucket, which Google keeps. The NAS copy in
-`docs/NAS_BACKUP_SETUP.md` is optional and, for Firestore, would now need a
-manual `gcloud firestore export`.
+live in the Storage bucket, which Google keeps. A copy of both the database
+and the files on the UGREEN NAS, every night, is set up with
+`docs/NAS_BACKUP_SETUP.md` (rewritten 2026-11-26: one Cloud Shell script plus
+one Docker project on the NAS).
 
 ## C. Reset the live test passwords (security, open since 2026-11-17)
 

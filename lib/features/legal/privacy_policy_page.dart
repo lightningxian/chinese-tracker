@@ -128,7 +128,8 @@ const _en = <(String, String)>[
         'their linked child. Other students see only your Chinese name on a test '
         'leaderboard. Staff may export a leaderboard (rank, name, marks, finish time) as a '
         'CSV or PDF file for the centre’s own records; a student may share their own result '
-        'card, which shows no other student. The data is stored with Google Firebase (Google Cloud), and payments '
+        'card, which shows no other student. The data is stored with Google Firebase (Google Cloud), with a backup copy on the '
+        'centre’s own storage device, and payments '
         'are processed by Midtrans (PT Midtrans). Tools that read papers or recordings '
         'run on the computer of the person using them and send nothing elsewhere.'
   ),
@@ -192,7 +193,8 @@ const _id = <(String, String)>[
         'melihat anak yang terhubung. Murid lain hanya melihat nama Mandarin Anda di papan '
         'peringkat tes. Staf dapat mengekspor papan peringkat (peringkat, nama, nilai, waktu '
         'selesai) sebagai berkas CSV atau PDF untuk catatan centre sendiri; murid dapat '
-        'membagikan kartu hasilnya sendiri, yang tidak menampilkan murid lain. Data disimpan di Google Firebase (Google Cloud), dan pembayaran '
+        'membagikan kartu hasilnya sendiri, yang tidak menampilkan murid lain. Data disimpan di Google Firebase (Google Cloud), dengan salinan cadangan di '
+        'perangkat penyimpanan milik centre sendiri, dan pembayaran '
         'diproses oleh Midtrans (PT Midtrans). Alat pembaca kertas soal dan rekaman berjalan '
         'di komputer pemakainya dan tidak mengirim apa pun ke tempat lain.'
   ),

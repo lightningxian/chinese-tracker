@@ -1,0 +1,3 @@
+# NAS backup files run on Linux (UGREEN NAS): keep Unix line endings.
+scripts/nas/* text eol=lf
+scripts/*.sh text eol=lf
