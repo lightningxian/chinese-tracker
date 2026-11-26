@@ -2517,7 +2517,7 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
-### 2026-11-26 — Answer sheet on every worksheet (owner request) — release v0.1.47 (Storage rules and hosting)
+### 2026-11-26 — Answer sheet on every worksheet (owner request) — eb58fc2, release v0.1.47 (hosting live; **Storage rules wait for the owner**)
 
 - **Owner asked:** "all the question bank should have something called answer
   sheet, i have the pdf, just need to upload it … the work of admin is just
@@ -2544,6 +2544,10 @@ Any time:
   again; the shared dev emulator's Storage answers 500 for every rule that
   reads Firestore (old paths too). The owner's first live upload is the
   check; Save uploads first, so a failed upload changes nothing.
+- **Owner, once:** `firebase deploy --only storage --project chinese-tracker`
+  (adds the `answer_sheets` rule; the PC session was not allowed to run it).
+  Until then **Save keys** with a new PDF stops at the upload and writes
+  nothing; Read again / Open need it too.
 - **Not done / for later:** a key PDF that holds several worksheets (owner: not
   needed now); answers that wrap onto a second line are read as the first line
   only; out-of-order written answers in two-column keys are kept inside the
