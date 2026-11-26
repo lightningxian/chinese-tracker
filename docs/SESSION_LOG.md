@@ -13,6 +13,34 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-26 — Claude (PLAN chat, Mac): v0.1.46 reviewed, demo video, Bab VI figures retaken
+
+- **v0.1.46 (Build 9 part 2) reviewed and approved:** analyzer 16 infos,
+  209 Flutter tests, all node suites, 87 rules tests (1 skipped); 82
+  functions and 97 indexes on live equal the repo; the live bundle carries
+  the build; no secret tracked. The new rule (`bank_sheets`: staff read, no
+  client write) and the five new functions were read: the admin check, the
+  loop guards (`onlyStampChanged`, `sameListFields`) and what the roster
+  shows a student (their own numbers only) are right. Two notes that do not
+  block, written in `docs/PLAN.md` §1: a merge write can bring back a
+  deleted assignment as a ghost, and the worksheet index is not written in
+  a transaction.
+- **Demo video made (supervisor's point 3):** 6 min 22 s, 1920 × 1080,
+  Indonesian captions, four parts (Admin, Guru, Murid, Guru menilai),
+  filmed on the emulator with seed data by
+  `docs/thesis/tools/video/make_demo_video.mjs`. The file stays in
+  git-ignored `docs/thesis/local/video/`. Filmed on v0.1.45; the pages it
+  shows did not change in v0.1.46 except the admin dashboard drill-downs,
+  which the video does not open.
+- **Bab VI figures retaken on v0.1.45** (all 37; the twelve in the book
+  copied to `word/fig_6_N.png`) and the sentences before six of them changed
+  to say what the new pictures show (promotion page, report period, closing
+  dialog with the paper board, token and QR, 14 days of classes, finish
+  time and share on the board). Both books rebuilt: 64 figures, 28 tables.
+- **Owner:** press Rebuild list indexes, then Rebuild progress summaries
+  (Org settings), and Rebuild user search if not done; upload the video and
+  send the link for the yellow mark in Bab VI.
+
 ### 2026-11-26 — Claude (BUILD chat, PC): Build 9 part 2, the heavy lists (v0.1.46)
 
 - Teacher Students tab, dashboard drill-downs, packages, question bank,

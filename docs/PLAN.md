@@ -73,8 +73,19 @@ Read docs/PLAN.md. You are the BUILD chat. Follow section 0, run Build 0 if this
 
 ## 1. Where the project stands (2026-11-20)
 
-**Live:** https://chinese-tracker.web.app, hosting at release v0.1.45
-(Build 9 Then list part 1 from the PC 2026-11-26: News, test sessions and results, declined
+**Live:** https://chinese-tracker.web.app, hosting at release v0.1.46
+(Build 9 part 2, the heavy lists, from the PC 2026-11-26: the teacher Students tab, the
+dashboard drill-downs, exercise packages, the question bank, the History timeline, Grades, the
+transcript and Timetable follow-up read a page at a time; 5 new functions, 82 on live; 55 new
+indexes, 97 on live; rules: `bank_sheets` staff read, no client write; checked from the Mac the
+same day: analyzer 16 infos, 209 Flutter tests, node suites, 87 rules tests, functions and
+indexes on live equal to the repo, the live bundle carries the build, no secret tracked. Two
+notes for a later session, neither blocks: `stampAssignments` writes with merge, so an
+assignment deleted during a refresh can come back as a two-field ghost; `onQuestionBankIndexed`
+reads then sets without a transaction, so questions of one worksheet written one by one can
+leave an old count until the next write or **Rebuild list indexes**. Owner once: Org settings →
+Rebuild list indexes, then Rebuild progress summaries. v0.1.45
+Build 9 Then list part 1 from the PC 2026-11-26: News, test sessions and results, declined
 promotions, the student's exercise results and admin Vouchers are paged, the bell reads the
 newest 30 notices of each kind; hosting and 8 indexes, 42 on live, no function or rules change;
 checked from the Mac the same day: analyzer 16 infos, 204 Flutter tests, 42 indexes and 77

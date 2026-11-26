@@ -1,7 +1,7 @@
 # Bab VI screenshots
 
 Made by `docs/thesis/tools/shots_bab6.mjs` on the emulator bundle with the trial seed
-(2026-11-25), Indonesian, light, 1280 x 800.
+(2026-11-26), Indonesian, light, 1280 x 800.
 
 All shots are in `docs/thesis/word/bab6_lengkap/`. The book shows the twelve with a figure
 number (`bab6_book.mjs`); `clean_shots.mjs` copies them to `docs/thesis/word/fig_6_<n>.png`.

@@ -59,16 +59,19 @@ penyimpanannya menolak bentrok guru dan ruang (Segmen Program 6.2).
 Gambar 6.3
 Jadwal Mingguan
 
-Verifikasi kenaikan tingkat pada Gambar 6.4 memuat rekomendasi yang dibuat
-sistem ketika murid memenuhi syarat jumlah kode tes, untuk disetujui admin.
+Halaman kenaikan tingkat pada Gambar 6.4 memuat aturan rekomendasi, daftar
+syarat tiap tingkat, dan tombol untuk menaikkan murid secara langsung.
+Rekomendasi yang dibuat sistem ketika murid memenuhi syarat muncul di bagian
+bawah halaman untuk disetujui admin.
 
 [GAMBAR 6.4: verifikasi kenaikan tingkat]
 
 Gambar 6.4
 Verifikasi Kenaikan Tingkat
 
-Laporan bulanan pada Gambar 6.5 merangkum murid baru, pendapatan,
-kehadiran, dan jam mengajar, dengan ekspor CSV dan PDF.
+Laporan pada Gambar 6.5 merangkum murid baru, pendapatan, kehadiran, dan
+jam mengajar untuk periode bulan yang dipilih admin, dengan ekspor CSV dan
+PDF.
 
 [GAMBAR 6.5: laporan bulanan]
 
@@ -76,19 +79,22 @@ Gambar 6.5
 Laporan Bulanan
 
 Halaman admin lainnya (pengguna, bank soal, kode tes, voucher, daftar harga,
-tagihan, dan berita) mengikuti pola yang sama.
+tagihan, dan berita) mengikuti pola yang sama; daftar yang panjang dibaca
+per halaman dengan pilihan rentang tanggal.
 
 ### 6.1.3 Halaman Guru
 
-Pada halaman sesi (Gambar 6.6) guru menandai murid hadir, izin, atau alpa,
-lalu menutup sesi (Segmen Program 6.3).
+Pada dialog penutupan kelas (Gambar 6.6) guru menandai murid hadir, izin,
+atau alpa, membandingkannya dengan papan absensi kertas, lalu menutup sesi
+(Segmen Program 6.3).
 
 [GAMBAR 6.6: halaman sesi dan absensi]
 
 Gambar 6.6
-Halaman Sesi dan Absensi
+Penutupan Sesi dan Absensi
 
-Pengawasan sesi tes pada Gambar 6.7 menampilkan token untuk murid dan
+Pengawasan sesi tes pada Gambar 6.7 menampilkan token enam karakter dan
+kode QR untuk murid beserta sisa waktu bergabung; daftar di bawahnya memuat
 bagian yang sedang dikerjakan setiap murid.
 
 [GAMBAR 6.7: pengawasan sesi tes]
@@ -101,8 +107,9 @@ dan antrean penilaian jawaban ketik dan tulisan bebas.
 
 ### 6.1.4 Halaman Murid
 
-Beranda murid pada Gambar 6.8 menampilkan sisa sesi, pengumuman, dan sesi
-kelas yang dapat dipesan (Algoritma 5.2).
+Beranda murid pada Gambar 6.8 menampilkan sisa sesi dan sesi kelas empat
+belas hari ke depan yang dapat dipesan (Algoritma 5.2); pengumuman yang
+sedang berlaku tampil di halaman yang sama.
 
 [GAMBAR 6.8: beranda murid dan pemesanan sesi]
 
@@ -119,7 +126,8 @@ Gambar 6.9
 Pemutar Latihan dengan Soal Ketik
 
 Leaderboard pada Gambar 6.10 mengurutkan hasil satu kode tes, yang
-dikerjakan murid dengan token dari guru, menurut nilai lalu waktu.
+dikerjakan murid dengan token dari guru, menurut nilai lalu waktu. Setiap
+baris memuat waktu selesai, dan murid dapat membagikan hasilnya sendiri.
 
 [GAMBAR 6.10: leaderboard kode tes]
 

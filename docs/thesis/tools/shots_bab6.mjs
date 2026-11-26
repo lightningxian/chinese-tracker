@@ -23,6 +23,7 @@ import os from "node:os";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
 import {BOOK} from "./bab6_book.mjs";
+import {ensureRunningClass} from "./emu_prep.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(HERE, "..", "..", "..");
@@ -66,10 +67,17 @@ const today = jakartaToday();
 const teacherSessions = (await runQuery("class_sessions", eq("teacherId", teacherUid)))
     .filter((s) => s.sessionDate >= today && s.status !== "cancelled")
     .sort((a, b) => `${a.sessionDate}${a.startMinutes}`.localeCompare(`${b.sessionDate}${b.startMinutes}`));
-// The trial seed also plants a "late check-in" session at 00:00 today; a
-// real class of the day is the better picture.
-const todaySession = (teacherSessions.find((s) => s.sessionDate === today && Number(s.startMinutes) > 0) ||
-  teacherSessions.find((s) => s.sessionDate === today) || teacherSessions[0] || {}).id;
+// The session page is shown for a class that is running now, with booked
+// students: the seed's timetable has no class on some days, so one is made
+// through the app's own functions (emu_prep.mjs) when it is missing.
+let todaySession = null;
+try {
+  todaySession = (await ensureRunningClass()).sessionId;
+} catch (err) {
+  console.log(`no running class (${err.message}); the next class of the teacher is shown instead`);
+  todaySession = (teacherSessions.find((s) => s.sessionDate === today && Number(s.startMinutes) > 0) ||
+    teacherSessions[0] || {}).id;
+}
 const attendance = (await runQuery("attendance", eq("studentId", student1Uid)))
     .filter((a) => a.sessionDate >= today)
     .sort((a, b) => a.sessionDate.localeCompare(b.sessionDate));
@@ -79,8 +87,8 @@ console.log(`teacher ${teacherUid} · student1 ${student1Uid} · today ${today} 
   `session ${todaySession || "-"} · booked ${bookedSession || "-"}`);
 
 // [number, account (null = signed out), start path, tab, deep route, caption, click]
-// click = [x, y] pressed after the page is up (the teacher shell has no ?tab=, and
-// a dialog shows more than an empty list).
+// click = [x, y], or a list of points pressed one after the other, after the page
+// is up (the teacher shell has no ?tab=, and a dialog shows more than an empty list).
 // The caption is the Indonesian figure title used in BAB_VI_IMPLEMENTASI.md.
 const SHOTS = [
   [1, null, "/", null, null, "Halaman depan"],
@@ -101,25 +109,28 @@ const SHOTS = [
   [16, `admin${D}`, "/", null, "/admin/price-list", "Daftar harga"],
   [17, `admin${D}`, "/", 6, null, "Daftar tagihan dan pembayaran"],
   [18, `admin${D}`, "/", null, "/admin/tests/promotion", "Verifikasi kenaikan tingkat"],
-  [19, `admin${D}`, "/", 7, null, "Laporan bulanan", [731, 212]],
+  // Period "3 bulan terakhir", then Hitung ulang on each month, last month first (a fresh seed
+  // has no report yet; the red notice above the table moves the rows down by 26 px while one is missing).
+  [19, `admin${D}`, "/", 7, null, "Laporan bulanan", [[471, 190], [332, 450], [332, 410], [332, 370]]],
   [20, `admin${D}`, "/", 9, null, "Pengumuman", [1150, 104]],
   [21, `teacher${D}`, "/", 0, null, "Dashboard guru"],
   [22, `teacher${D}`, "/", null, "/teacher/schedule", "Jadwal mengajar guru"],
+  // Tutup sesi opens the attendance list (hadir, izin, alpa) of the running class; nothing is saved.
   [23, `teacher${D}`, "/", null, todaySession ? `/teacher/session/${todaySession}` : null,
-    "Halaman sesi dan absensi"],
+    "Halaman sesi dan absensi", [531, 353]],
   [24, `teacher${D}`, "/", null, null, "Paket latihan guru", [84, 285]],
   [25, `teacher${D}`, "/", null, null, "Tes di sisi guru", [66, 435]],
   [26, `teacher${D}`, "/", null, "SUPERVISE", "Pengawasan sesi tes"],
   [27, `teacher${D}`, "/", null, "/teacher/tests/marking", "Antrean penilaian"],
   [28, `teacher${D}`, "/", null, `/teacher/student/${student1Uid}/progress`, "Laporan progress murid di sisi guru"],
-  [29, `student1${D}`, "/", 0, null, "Beranda murid"],
-  [30, `student1${D}`, "/", 1, null, "Pemesanan sesi kelas"],
+  [29, `student1${D}`, "/", 0, null, "Beranda murid dan pemesanan sesi"],
+  [30, `student1${D}`, "/", 1, null, "Riwayat kelas dan voucher murid"],
   [31, `student1${D}`, "/", null, bookedSession ? `/student/class/${bookedSession}` : null,
     "Halaman kelas yang dipesan"],
   [32, `student1${D}`, "/", 2, null, "Daftar latihan murid"],
   [33, `student1${D}`, "/", null, "/student/exercise/pkg_typing", "Pemutar latihan (soal ketik)"],
   [34, `student1${D}`, "/", 4, null, "Tes: memasukkan token"],
-  [35, "student26@test.chinesetracker", "/", null, "/student/test-leaderboard/PRG2", "Leaderboard kode tes"],   // a student with a result on that code (trial seed)
+  [35, `student1${D}`, "/", null, "/student/test-leaderboard/H3BOARD", "Leaderboard kode tes"],   // the seed's board of 28 students
   [36, `student1${D}`, "/", 5, null, "Voucher dan pembayaran murid"],
   [37, `student1${D}`, "/", 3, null, "Laporan progress murid"],
 ];
@@ -224,9 +235,8 @@ for (const [n, who, start, tab, deep, caption, click] of SHOTS) {
       await evaluate(`history.pushState({}, '', ${JSON.stringify(route)}); ` +
         "dispatchEvent(new PopStateEvent('popstate')); true");
     }
-    if (click) {
+    for (const [x, y] of click ? (Array.isArray(click[0]) ? click : [click]) : []) {
       await sleep(4000);
-      const [x, y] = click;
       await send("Input.dispatchMouseEvent", {type: "mouseMoved", x, y}, sessionId);
       await send("Input.dispatchMouseEvent", {type: "mousePressed", x, y, button: "left", clickCount: 1}, sessionId);
       await send("Input.dispatchMouseEvent", {type: "mouseReleased", x, y, button: "left", clickCount: 1}, sessionId);

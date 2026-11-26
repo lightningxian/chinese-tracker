@@ -3,7 +3,7 @@
 // red "EMULATOR" ribbon in the top-left corner (Flutter Banner, topStart:
 // the band between x + y = 28·√2 and 40·√2 plus its shadow) and the Auth
 // emulator adds a warning bar at the bottom. Both say nothing about the
-// system, so the ribbon is painted over with the colour next to it and the
+// system, so the ribbon is painted over with the colours next to it and the
 // bottom bar is cropped away (1280 × 800 → 1280 × 776). Pixels are handled
 // in headless Chrome (canvas 2D), so no image library is needed.
 // Afterwards the twelve shots the book shows are copied from
@@ -76,15 +76,14 @@ const CLEAN = `(async (dataUrl, height) => {
   g.drawImage(img, 0, 0);
   const px = (x, y) => { const d = g.getImageData(x, y, 1, 1).data; return [d[0], d[1], d[2]]; };
   const rgb = (p) => 'rgb(' + p.join(',') + ')';
-  // Colour just outside the band on each side of the diagonal.
-  const left = px(2, 72), top = px(72, 2);
-  // The whole corner up to the band's outer edge plus shadow: x + y <= 62
-  // (the inner shadow reaches the corner, so the inside is painted too).
-  const fill = (points, colour) => { g.fillStyle = colour; g.beginPath();
-    points.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); g.closePath(); g.fill(); };
-  // Lower-left half (below the diagonal x = y) and the upper-right half.
-  fill([[0, 0], [31, 31], [0, 62]], rgb(left));
-  fill([[0, 0], [62, 0], [31, 31]], rgb(top));
+  // The whole corner up to the band's outer edge plus its shadow (x + y <= 66) is
+  // painted row by row: the colour of the bar across the top for the first 56
+  // rows (sampled at the right edge, where no icon sits), then the colour of
+  // the column under the ribbon. A page without a side menu (the exercise
+  // player, the leaderboard) has a white bar over a beige page, so one colour
+  // for the whole corner would leave a wedge.
+  const head = px(c.width - 6, 20), side = px(2, 72);
+  for (let y = 0; y < 66; y++) { g.fillStyle = rgb(y < 56 ? head : side); g.fillRect(0, y, 66 - y, 1); }
   return c.toDataURL('image/png');
 })`;
 
