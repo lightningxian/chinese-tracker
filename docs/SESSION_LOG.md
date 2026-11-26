@@ -13,6 +13,17 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-26 — Claude (BUILD chat, PC): Build 9 part 2, the heavy lists (v0.1.46)
+
+- Teacher Students tab, dashboard drill-downs, packages, question bank,
+  History timeline, Grades, transcript and Timetable follow-up are paged;
+  their numbers come from `progress_summary.roster`, assignment stamps,
+  `bank_sheets` and package list fields kept by 5 new functions (82 live).
+- Emulator: 29 of 29 student rows equal the old computation; Students
+  reads ~54 documents instead of 224 on the seed.
+- Owner once: Org settings → Rebuild list indexes, then Rebuild progress
+  summaries. Report: `docs/PLAN.md` §6.
+
 ### 2026-11-25 — Claude (PLAN chat, Mac): supervisor's review, Build 9 planned
 
 - **The supervisor reviewed the app and the book** (owner's message, 13

@@ -348,8 +348,9 @@ functions, 23 indexes equal to the repo, the bundle carries the monthly
 report. **Nothing is marked NEXT: the thesis builds are finished, the
 owner decides what follows ("After Build 8" in §4).**
 
-**2026-11-26: Build 9, part 2 (the heavy lists) is marked NEXT in §4;
-the rest of Build 9 is live.** Earlier: 2026-11-25 Build 9 was marked NEXT (paged lists with a date range,
+**2026-11-26: Build 9 is finished and live, part 2 (the heavy lists) as
+v0.1.46; nothing is marked NEXT.** Owner: Org settings → Rebuild list
+indexes, then Rebuild progress summaries, once. Earlier: 2026-11-25 Build 9 was marked NEXT (paged lists with a date range,
 reports over a period, leaderboard export and time stamps, HSK simulation
 retakes): the supervisor's four remarks about the app, §4.
 
@@ -2360,7 +2361,7 @@ fine), refresh the fields, and report the total page count and the page on
 which each BAB, the Daftar Pustaka and the Riwayat Hidup start. The
 supervisor set a limit of 100 to 120 pages and the Mac has no Word.
 
-### Build 9, part 2 — the heavy lists — **NEXT** (a new BUILD session; PLAN chat 2026-11-26)
+### Build 9, part 2 — the heavy lists — done 2026-11-26 (v0.1.46, report in §6)
 
 Build 9's Must list and part 1 of its Then list are live (v0.1.42 to
 v0.1.45): every page the supervisor named is paged. What is left are the
@@ -2504,6 +2505,60 @@ Any time:
    `scripts/build_ios.sh`); the owner's steps are in `docs/IOS_SPEC.md`.
 
 ## 6. Build reports (newest first, written by the BUILD chat)
+
+### 2026-11-26 — Build 9, part 2 (the heavy lists) — 95fa704, release v0.1.46 (rules, 55 indexes, functions and hosting)
+
+- **Done (Must 1–4):** the teacher Students tab, both dashboards' drill-downs,
+  exercise packages, the question bank (and the worksheet screen), the staff
+  History timeline, teacher Grades, the transcript and Timetable follow-up
+  read a page at a time; none starts a stream over a whole collection.
+  Upcoming classes read from today on only.
+- **How the numbers are kept:** `progress_summary.roster` (functions,
+  `progress.rosterOf`, same rules as TeacherStatsUtils /
+  TeacherAttentionUtils) gives each student's homework, practice average,
+  sessions left, lessons, last activity and attention reasons; the refresh
+  stamps every assignment `done` / `bestScore`, so package counts and the
+  homework lists are queries. The bank reads a new `bank_sheets` index (one
+  doc per worksheet or stand-alone question); packages carry `listAt`,
+  `listCategory`, `listSkill`, `searchPrefixes`. Shared pieces only:
+  `MergedPageSource`, `FilteredPageSource`, `MappedPageSource` were added to
+  `lib/core/paging/` and every screen uses them with `PagedController`,
+  `DateRangeBar`, `PagerBar`, `PagedListBody`.
+- **Must 1, reads on opening (emulator seed, same queries as the app):**
+  Students 224 documents streamed before → 26 users + 25 summaries (+3
+  lessons) now; packages 121 → 5 packages + their 15 assignments; bank 28
+  questions → 6 worksheet rows. The gap grows with real data (the old
+  screens grew with every result ever written).
+- **Must 2, same numbers:** a script recomputed every student's row from the
+  raw collections with the old rules and compared it with the roster: 29 of
+  29 equal. Homework overview 3 done / 10 to do / 2 overdue = the old 20 % and
+  2; the package "HSK 1 Reading" 3/6 with 2 late; bank sheet counts sum to the
+  28 questions; Timetable follow-up gives the same single session.
+  Differences on purpose: the Students list leaves out the 2 registrations
+  still waiting (they are under Approval: 29 instead of 31); column sorting
+  orders the page on screen; package counts include assignments of switched-off
+  students; bank and package search finds the beginning of a word of the title
+  or code (or of a question's text), not any substring.
+- **Must 4:** analyzer 16 infos; `flutter test` 209 pass (2 skipped); node
+  suites pass, new `functions/test_list_index.js`, `test_progress.js` covers
+  the roster and the stamp; Firestore rules tests pass with a new
+  `bank_sheets` test (the 2 Storage tests fail only when run against the
+  shared dev emulator; CI runs them on their own). **Functions changed:** 5
+  new (`onAssignmentWritten`, `onLessonProgressWritten`,
+  `onQuestionBankIndexed`, `onExerciseListIndex`, `rebuildListIndexes`; 82 on
+  live), `refreshProgressSummary` and `onUserSearchIndex` extended. **Rules
+  changed:** `bank_sheets` staff read, no client write. 55 composite indexes.
+- **Owner after the deploy (once):** Org settings → **Rebuild list indexes**,
+  then **Rebuild progress summaries**. Until then older packages and
+  worksheets are missing from those two lists (an admin banner on both says
+  so, with the button) and Students rows show dashes.
+- **Still streaming, left on purpose or for later (Then list):** the teacher
+  dashboard tab itself (its cohort cards still stream the six collections;
+  next step: compute them from the summaries), the student picker in the
+  grade form, the package form's "From bank" picker, the test-code form and
+  the bank imports' duplicate check (they read the whole bank once, as an
+  action, not a list). Small by nature and left as they are: rooms, price
+  list, holidays, schedules, level paths, unconfirmed schedules.
 
 ### 2026-11-26 — Build 9 Then list, part 1 — release v0.1.45 (hosting + 8 indexes)
 
