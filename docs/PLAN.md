@@ -73,8 +73,13 @@ Read docs/PLAN.md. You are the BUILD chat. Follow section 0, run Build 0 if this
 
 ## 1. Where the project stands (2026-11-20)
 
-**Live:** https://chinese-tracker.web.app, hosting at release v0.1.44
-(Build 9 session 2 from the PC 2026-11-26: Payments, Users, the marking queue and the student
+**Live:** https://chinese-tracker.web.app, hosting at release v0.1.45
+(Build 9 Then list part 1 from the PC 2026-11-26: News, test sessions and results, declined
+promotions, the student's exercise results and admin Vouchers are paged, the bell reads the
+newest 30 notices of each kind; hosting and 8 indexes, 42 on live, no function or rules change;
+checked from the Mac the same day: analyzer 16 infos, 204 Flutter tests, 42 indexes and 77
+functions on live equal to the repo, no secret tracked. v0.1.44
+Build 9 session 2 from the PC 2026-11-26: Payments, Users, the marking queue and the student
 and parent History are paged; search on Users is a query on an index the new trigger
 `onUserSearchIndex` writes; `rebuildUserSearch` for old accounts; functions, 10 new indexes and
 hosting; **77 functions**, 34 indexes, rules unchanged; checked from the Mac the same day:
@@ -343,7 +348,8 @@ functions, 23 indexes equal to the repo, the bundle carries the monthly
 report. **Nothing is marked NEXT: the thesis builds are finished, the
 owner decides what follows ("After Build 8" in §4).**
 
-**2026-11-25: Build 9 is marked NEXT** (paged lists with a date range,
+**2026-11-26: Build 9, part 2 (the heavy lists) is marked NEXT in §4;
+the rest of Build 9 is live.** Earlier: 2026-11-25 Build 9 was marked NEXT (paged lists with a date range,
 reports over a period, leaderboard export and time stamps, HSK simulation
 retakes): the supervisor's four remarks about the app, §4.
 
@@ -2150,7 +2156,7 @@ each build's acceptance walk becomes a black-box table; the scenario IDs
 (§3) become the functional validation chapter; `docs/screenshots/proposal/`
 supplies the figures.
 
-### Build 9 — Paged lists, period reports, leaderboard export, simulation retakes — **NEXT** (owner 2026-11-25, from the supervisor's review)
+### Build 9 — Paged lists, period reports, leaderboard export, simulation retakes — done 2026-11-26 except part 2 below (v0.1.42 to v0.1.45, reports in §6)
 
 The supervisor looked at the app and the book on 2026-11-25. Four of the
 thirteen remarks are about the app (the owner's points 10 to 13); the other
@@ -2353,6 +2359,45 @@ report whether rules changed.
 fine), refresh the fields, and report the total page count and the page on
 which each BAB, the Daftar Pustaka and the Riwayat Hidup start. The
 supervisor set a limit of 100 to 120 pages and the Mac has no Word.
+
+### Build 9, part 2 — the heavy lists — **NEXT** (a new BUILD session; PLAN chat 2026-11-26)
+
+Build 9's Must list and part 1 of its Then list are live (v0.1.42 to
+v0.1.45): every page the supervisor named is paged. What is left are the
+screens that stream whole collections to work out counts and statistics.
+A pager alone does not help them; each needs its numbers from a count, a
+sum or a stored summary. The BUILD chat that built Build 9 asked for a
+fresh session for this part, because its context was long.
+
+**Screens** (from the inventory in the §6 report of v0.1.42 and the note of
+v0.1.45)
+
+- Teacher **Students** tab: reads six full collections today. Read the
+  teacher's own students a page at a time; take each row's numbers from
+  `progress_summary` instead of raw results.
+- **Exercise packages** (admin and teacher): streams every result and
+  assignment to show counts per package. Use count aggregations per package
+  on the page, or a counter kept by a trigger if the reads are too many.
+- **Question bank**: streams the whole bank. Page by worksheet; open a
+  worksheet's questions only when it is opened.
+- Staff **History timeline** (`student_activity.dart`), teacher **Grades**,
+  **Transcript**, Timetable **Follow-up**, the dashboard drill-downs: pager
+  and date range with the shared pieces, reading only the page.
+
+**Must list**
+
+1. No screen in the list starts a stream over a whole collection. Show it
+   with the emulator's request log or the network panel for the three
+   biggest: Students, Exercise packages, Question bank.
+2. Counts and averages on those screens equal what they showed before, on
+   the emulator seed.
+3. Only the shared paging pieces are used; no screen has its own copy.
+4. Tests and the analyzer baseline as before; new indexes in
+   `firestore.indexes.json`; say in the report whether a function or a rule
+   changed.
+
+**Then list:** anything of the inventory still streaming after this; a
+note in the report of what stays unpaged on purpose and why.
 
 ### After the thesis builds — extras for the centre
 

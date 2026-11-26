@@ -66,6 +66,12 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   languages. Approved. Open for the owner: Rebuild leaderboards once, and the
   rule for sitting an HSK simulation again (simulations run only as test
   codes since 2026-11-16, so package retakes reach exam packages only).
+- **v0.1.45 (Build 9 Then list part 1, `74067ad`, `7448c8e`, `944283a`)
+  reviewed on the Mac:** analyzer 0 errors, 0 warnings, 16 infos; `flutter
+  test` 204 pass, 2 skipped; 42 indexes and 77 functions on live equal to the
+  repo; no function or rules change; APK served; no secret tracked. Approved.
+  **Build 9 part 2 (the heavy lists) is written in `docs/PLAN.md` §4 and
+  marked NEXT for a new BUILD session**, as the BUILD chat asked.
 - **Bab V rebuilt with the UML set under the half-page rule:** 26 figures
   (2 architecture, 2 status, 3 sequence, 5 use case, 6 activity, 6
   collection structure, 2 page map), each with an introducing sentence and
