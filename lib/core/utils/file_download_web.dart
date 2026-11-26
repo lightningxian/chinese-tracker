@@ -11,3 +11,13 @@ void downloadTextFile(String filename, String content) {
   html.Url.revokeObjectUrl(url);
   anchor.remove();
 }
+
+/// Opens [bytes] in a new browser tab (a PDF shows in the browser's
+/// viewer); the address is a local blob, never a shareable link.
+void openBytesInNewTab(List<int> bytes, String mimeType) {
+  final blob = html.Blob([bytes], mimeType);
+  final url = html.Url.createObjectUrlFromBlob(blob);
+  html.window.open(url, '_blank');
+  // Revoked later: the new tab needs a moment to load it.
+  Future<void>.delayed(const Duration(minutes: 1), () => html.Url.revokeObjectUrl(url));
+}

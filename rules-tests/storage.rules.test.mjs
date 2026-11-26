@@ -9,7 +9,7 @@ import {
   initializeTestEnvironment,
 } from "@firebase/rules-unit-testing";
 import { doc, setDoc } from "firebase/firestore";
-import { ref, uploadBytes } from "firebase/storage";
+import { getBytes, ref, uploadBytes } from "firebase/storage";
 
 const PROJECT_ID = "demo-chinese-tracker";
 let env;
@@ -17,6 +17,7 @@ let env;
 const USERS = {
   admin1: { role: "admin", email: "admin@test", name: "Admin", active: true },
   student1: { role: "student", email: "s1@test", name: "Murid", active: true },
+  teacher1: { role: "teacher", email: "t1@test", name: "Guru", active: true },
 };
 
 before(async () => {
@@ -66,5 +67,37 @@ describe("question bank media limits (Build 1B)", () => {
 
   it("students cannot upload bank media", async () => {
     await assertFails(upload("student1", "x.mp3", 1 * MB, "audio/mpeg"));
+  });
+});
+
+// Owner 2026-11-26: the answer-sheet PDF is the key: admins only.
+describe("answer sheets (2026-11-26)", () => {
+  const put = (who, folder, size, contentType) =>
+    uploadBytes(
+      ref(env.authenticatedContext(who).storage(), `answer_sheets/${folder}/key.pdf`),
+      new Uint8Array(size),
+      { contentType },
+    );
+
+  it("an admin stores a PDF in their own folder and reads it back", async () => {
+    await assertSucceeds(put("admin1", "admin1", 1 * MB, "application/pdf"));
+    await assertSucceeds(
+      getBytes(ref(env.authenticatedContext("admin1").storage(), "answer_sheets/admin1/key.pdf")));
+  });
+
+  it("not a PDF, too large, or another admin's folder is refused", async () => {
+    await assertFails(put("admin1", "admin1", 1 * MB, "image/png"));
+    await assertFails(put("admin1", "admin1", 25 * MB, "application/pdf"));
+    await assertFails(put("admin1", "someone", 1 * MB, "application/pdf"));
+  });
+
+  it("teachers and students neither upload nor read it", async () => {
+    await assertSucceeds(put("admin1", "admin1", 1 * MB, "application/pdf"));
+    await assertFails(put("teacher1", "teacher1", 1 * MB, "application/pdf"));
+    await assertFails(put("student1", "student1", 1 * MB, "application/pdf"));
+    for (const who of ["teacher1", "student1"]) {
+      await assertFails(
+        getBytes(ref(env.authenticatedContext(who).storage(), "answer_sheets/admin1/key.pdf")));
+    }
   });
 });

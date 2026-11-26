@@ -649,6 +649,26 @@ class FirestoreService {
     }
   }
 
+  /// The answer-sheet PDF of a worksheet (owner 2026-11-26), on every
+  /// question of it; null removes it. Admin only (rules: bank writes).
+  Future<void> setQuestionBankAnswerSheet(
+      Iterable<String> ids, AnswerSheetFile? file) async {
+    final list = ids.toList();
+    for (var i = 0; i < list.length; i += 400) {
+      final batch = _db.batch();
+      for (final id in list.skip(i).take(400)) {
+        batch.update(
+          _db.collection(AppConstants.questionBankCollection).doc(id),
+          {
+            'answerSheet': file == null ? FieldValue.delete() : file.toMap(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          },
+        );
+      }
+      await batch.commit();
+    }
+  }
+
   /// Standard Course (owner 2026-11-25): the lesson text of a worksheet,
   /// kept on every question of it; empty removes it.
   Future<void> setQuestionBankContext(Iterable<String> ids, String text) async {

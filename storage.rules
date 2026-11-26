@@ -81,6 +81,16 @@ service firebase.storage {
         request.resource.size < 60 * 1024 * 1024;
     }
 
+    // Owner 2026-11-26: a worksheet's answer-sheet PDF. It is the key, so
+    // only admins read it (students and teachers never), PDF only.
+    match /answer_sheets/{uid}/{fileName} {
+      allow read, delete: if isAdmin();
+      allow write: if isAdmin() &&
+        request.auth.uid == uid &&
+        request.resource.contentType == 'application/pdf' &&
+        request.resource.size < 25 * 1024 * 1024;
+    }
+
     // Question-bank media (images/audio per question). Staff write; signed-in read.
     // A paper's official recording may be up to 60 MB (Build 1B); every
     // other file (pictures) stays under 10 MB.

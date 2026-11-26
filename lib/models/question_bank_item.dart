@@ -32,6 +32,7 @@ class QuestionBankItem {
     this.transcript,
     this.context,
     this.paperRecord,
+    this.answerSheet,
     this.usageCount = 0,
     this.lastUsedAt,
     this.updatedAt,
@@ -85,6 +86,11 @@ class QuestionBankItem {
   /// How the scanned paper was read and proofread (Build 1C), on every
   /// question of a worksheet made with **Scan paper**.
   final PaperProofRecord? paperRecord;
+
+  /// The answer-sheet PDF the key was read from (owner 2026-11-26), on
+  /// every question of the sheet; set with
+  /// `FirestoreService.setQuestionBankAnswerSheet`, never by [toMap].
+  final AnswerSheetFile? answerSheet;
 
   final int usageCount;
   final DateTime? lastUsedAt;
@@ -153,6 +159,7 @@ class QuestionBankItem {
           ? PaperProofRecord.fromMap(
               Map<String, dynamic>.from(data['paperRecord'] as Map))
           : null,
+      answerSheet: AnswerSheetFile.fromMap(data['answerSheet']),
       usageCount: data['usageCount'] as int? ?? 0,
       lastUsedAt: (data['lastUsedAt'] as Timestamp?)?.toDate(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
@@ -224,6 +231,7 @@ class QuestionBankItem {
       transcript: transcript,
       context: context,
       paperRecord: paperRecord ?? this.paperRecord,
+      answerSheet: answerSheet,
       usageCount: usageCount ?? this.usageCount,
       lastUsedAt: lastUsedAt ?? this.lastUsedAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -325,6 +333,15 @@ class QuestionBankSheet {
   }
 
   /// The listening recording attached to the sheet, if any.
+  /// The answer-sheet PDF of the worksheet, if one was uploaded.
+  AnswerSheetFile? get answerSheet {
+    for (final item in items) {
+      final a = item.answerSheet;
+      if (a != null) return a;
+    }
+    return null;
+  }
+
   String? get sectionAudioUrl {
     for (final item in items) {
       final url = item.sectionAudioUrl;
@@ -445,4 +462,44 @@ class BankSheetRow {
       creators: [for (final x in (d['creators'] as List? ?? const [])) '$x'],
     );
   }
+}
+
+/// An answer-sheet PDF kept with a worksheet (owner 2026-11-26), in Storage
+/// at [path] (`answer_sheets/{uid}/…`, admin only: it is the key).
+class AnswerSheetFile {
+  const AnswerSheetFile({
+    required this.path,
+    required this.name,
+    this.size = 0,
+    this.uploadedAt,
+    this.uploadedBy,
+  });
+
+  final String path;
+  final String name;
+  final int size;
+  final DateTime? uploadedAt;
+  final String? uploadedBy;
+
+  static AnswerSheetFile? fromMap(Object? raw) {
+    if (raw is! Map) return null;
+    final path = raw['path'];
+    if (path is! String || path.isEmpty) return null;
+    return AnswerSheetFile(
+      path: path,
+      name: raw['name'] as String? ?? 'answer-sheet.pdf',
+      size: (raw['size'] as num?)?.toInt() ?? 0,
+      uploadedAt: (raw['uploadedAt'] as Timestamp?)?.toDate(),
+      uploadedBy: raw['uploadedBy'] as String?,
+    );
+  }
+
+  /// [uploadedAt] is set by the server when written.
+  Map<String, Object?> toMap() => {
+        'path': path,
+        'name': name,
+        'size': size,
+        'uploadedAt': FieldValue.serverTimestamp(),
+        if (uploadedBy != null) 'uploadedBy': uploadedBy,
+      };
 }

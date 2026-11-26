@@ -105,31 +105,9 @@ class SheetAnswerKeyPlan {
     final written = <String>[];
     for (var i = 0; i < sheet.items.length; i++) {
       final item = sheet.items[i];
-      final q = item.question;
-      final n = i + 1;
-      switch (item.type) {
-        case ExerciseType.multipleChoice ||
-              ExerciseType.listening ||
-              ExerciseType.matching ||
-              ExerciseType.readingCloze:
-          if (q.correctIndex < 0 || q.correctIndex >= q.options.length) continue;
-          final trueFalse = q.options.length == 2 &&
-              q.options.join() == QuestionImportUtils.trueFalseOptions.join();
-          final mark = trueFalse
-              ? (q.correctIndex == 0 ? '√' : '×')
-              : String.fromCharCode(65 + q.correctIndex);
-          choices.add('$n $mark');
-        case ExerciseType.composeSentences:
-          if (q.segments.length > 1) written.add('$n ${q.segments.join()}');
-        case ExerciseType.typeHanzi:
-          final first = q.options.where((o) => o.trim().isNotEmpty).firstOrNull;
-          if (first != null) written.add('$n ${first.trim()}');
-        case ExerciseType.fillBlanks:
-          // One answer per blank, `|` between blanks.
-          if (q.options.isNotEmpty) written.add('$n ${q.options.join(' | ')}');
-        default:
-          break;
-      }
+      final key = keyFor(item);
+      if (key == null) continue;
+      (_usesIndex(item.type) ? choices : written).add('${i + 1} $key');
     }
     final lines = <String>[
       for (var i = 0; i < choices.length; i += 5)
@@ -138,6 +116,54 @@ class SheetAnswerKeyPlan {
     ];
     return lines.join('\n');
   }
+
+  /// One question's key in the dialog's form (`D`, `√`, `我们一起去吧`,
+  /// `长`, `想 | 要/想`), or null when it has none (free writing, no
+  /// choice set). Shared with the answer-sheet check screen.
+  static String? keyFor(QuestionBankItem item) {
+    final q = item.question;
+    switch (item.type) {
+      case ExerciseType.multipleChoice ||
+            ExerciseType.listening ||
+            ExerciseType.matching ||
+            ExerciseType.readingCloze:
+        if (q.correctIndex < 0 || q.correctIndex >= q.options.length) return null;
+        final trueFalse = q.options.length == 2 &&
+            q.options.join() == QuestionImportUtils.trueFalseOptions.join();
+        return trueFalse
+            ? (q.correctIndex == 0 ? '√' : '×')
+            : String.fromCharCode(65 + q.correctIndex);
+      case ExerciseType.composeSentences:
+        return q.segments.length > 1 ? q.segments.join() : null;
+      case ExerciseType.typeHanzi || ExerciseType.typePinyin:
+        // Every accepted answer, ` / ` between (2026-11-26).
+        final accepted = [
+          for (final o in q.options)
+            if (o.trim().isNotEmpty) o.trim(),
+        ];
+        return accepted.isEmpty ? null : accepted.join(' / ');
+      case ExerciseType.fillBlanks:
+        // One answer per blank, `|` between blanks.
+        return q.options.isEmpty ? null : q.options.join(' | ');
+      default:
+        return null;
+    }
+  }
+
+  static bool _usesIndex(ExerciseType t) => switch (t) {
+        ExerciseType.multipleChoice ||
+        ExerciseType.listening ||
+        ExerciseType.matching ||
+        ExerciseType.readingCloze =>
+          true,
+        _ => false,
+      };
+
+  /// Accepted answers of a typed question: `长 / 常` gives both.
+  static List<String> alternatives(String value) => [
+        for (final a in value.split(RegExp(r'\s*[/／]\s*')))
+          if (a.trim().isNotEmpty) a.trim(),
+      ];
 
   static SheetAnswerKeyPlan of(
     QuestionBankSheet sheet, {
@@ -149,15 +175,7 @@ class SheetAnswerKeyPlan {
       final index = entry.key - 1;
       if (index < 0 || index >= sheet.items.length) continue;
       final item = sheet.items[index];
-      final usesIndex = switch (item.type) {
-        ExerciseType.multipleChoice ||
-        ExerciseType.listening ||
-        ExerciseType.matching ||
-        ExerciseType.readingCloze =>
-          true,
-        _ => false,
-      };
-      if (!usesIndex || entry.value >= item.question.options.length) continue;
+      if (!_usesIndex(item.type) || entry.value >= item.question.options.length) continue;
       if (item.question.correctIndex != entry.value) {
         indexes[item.id] = entry.value;
       }
@@ -177,8 +195,9 @@ class SheetAnswerKeyPlan {
           } else {
             fields[item.id] = {'question.segments': ordered};
           }
-        case ExerciseType.typeHanzi:
-          fields[item.id] = {'question.options': [entry.value.trim()]};
+        case ExerciseType.typeHanzi || ExerciseType.typePinyin:
+          final accepted = alternatives(entry.value);
+          if (accepted.isNotEmpty) fields[item.id] = {'question.options': accepted};
         case ExerciseType.fillBlanks:
           final answers = [
             for (final a in entry.value.split(RegExp(r'\s*[|｜]\s*')))

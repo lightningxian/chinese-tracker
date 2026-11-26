@@ -14837,6 +14837,306 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{sheets} worksheets and {exercises} packages indexed.'**
   String listIndexRebuildDone(int sheets, int exercises);
+
+  /// No description provided for @answerSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Answer sheet'**
+  String get answerSheetTitle;
+
+  /// No description provided for @answerSheetNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload the answer PDF of this worksheet. The app reads the key of every question; you only check it and save.'**
+  String get answerSheetNone;
+
+  /// No description provided for @answerSheetUpload.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload answer sheet'**
+  String get answerSheetUpload;
+
+  /// No description provided for @answerSheetUploaded.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} · uploaded {date}'**
+  String answerSheetUploaded(String name, String date);
+
+  /// No description provided for @answerSheetOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open PDF'**
+  String get answerSheetOpen;
+
+  /// No description provided for @answerSheetReadAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Read again'**
+  String get answerSheetReadAgain;
+
+  /// No description provided for @answerSheetReplace.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace'**
+  String get answerSheetReplace;
+
+  /// No description provided for @answerSheetRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove the answer sheet'**
+  String get answerSheetRemove;
+
+  /// No description provided for @answerSheetRemoveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove the answer sheet?'**
+  String get answerSheetRemoveTitle;
+
+  /// No description provided for @answerSheetRemoveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The PDF is deleted. The keys of the questions stay as they are.'**
+  String get answerSheetRemoveBody;
+
+  /// No description provided for @answerSheetRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Answer sheet removed.'**
+  String get answerSheetRemoved;
+
+  /// No description provided for @answerSheetReading.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading the answer sheet…'**
+  String get answerSheetReading;
+
+  /// No description provided for @answerSheetReadingPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {page} of {pages}'**
+  String answerSheetReadingPage(int page, int pages);
+
+  /// No description provided for @answerSheetReadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read the PDF: {error}'**
+  String answerSheetReadFailed(String error);
+
+  /// No description provided for @answerSheetCheckTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the answer sheet'**
+  String get answerSheetCheckTitle;
+
+  /// No description provided for @answerSheetSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save keys'**
+  String get answerSheetSave;
+
+  /// No description provided for @answerSheetSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving the keys…'**
+  String get answerSheetSaving;
+
+  /// No description provided for @answerSheetSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Answer sheet kept, {count} keys saved.'**
+  String answerSheetSaved(int count);
+
+  /// No description provided for @answerSheetSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save: {error}'**
+  String answerSheetSaveFailed(String error);
+
+  /// No description provided for @answerSheetCountChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} to save'**
+  String answerSheetCountChanged(int count);
+
+  /// No description provided for @answerSheetCountSame.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} already right'**
+  String answerSheetCountSame(int count);
+
+  /// No description provided for @answerSheetCountCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} to check'**
+  String answerSheetCountCheck(int count);
+
+  /// No description provided for @answerSheetCountMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} not found'**
+  String answerSheetCountMissing(int count);
+
+  /// No description provided for @answerSheetCountFree.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} free writing'**
+  String answerSheetCountFree(int count);
+
+  /// No description provided for @answerSheetFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get answerSheetFilterAll;
+
+  /// No description provided for @answerSheetFilterCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'To check'**
+  String get answerSheetFilterCheck;
+
+  /// No description provided for @answerSheetFilterChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes'**
+  String get answerSheetFilterChanged;
+
+  /// No description provided for @answerSheetNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Now: {key}'**
+  String answerSheetNow(String key);
+
+  /// No description provided for @answerSheetNoKeyYet.
+  ///
+  /// In en, this message translates to:
+  /// **'no key yet'**
+  String get answerSheetNoKeyYet;
+
+  /// No description provided for @answerSheetKeyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Key from the sheet'**
+  String get answerSheetKeyLabel;
+
+  /// No description provided for @answerSheetStatusSame.
+  ///
+  /// In en, this message translates to:
+  /// **'Already right'**
+  String get answerSheetStatusSame;
+
+  /// No description provided for @answerSheetStatusChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Will be saved'**
+  String get answerSheetStatusChanged;
+
+  /// No description provided for @answerSheetStatusCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'Check this one'**
+  String get answerSheetStatusCheck;
+
+  /// No description provided for @answerSheetStatusMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Not in the PDF: the key stays'**
+  String get answerSheetStatusMissing;
+
+  /// No description provided for @answerSheetStatusFree.
+  ///
+  /// In en, this message translates to:
+  /// **'Free writing: a teacher marks it'**
+  String get answerSheetStatusFree;
+
+  /// No description provided for @answerSheetIssueNotAChoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Not a choice of this question'**
+  String get answerSheetIssueNotAChoice;
+
+  /// No description provided for @answerSheetIssuePastLast.
+  ///
+  /// In en, this message translates to:
+  /// **'This question has fewer choices'**
+  String get answerSheetIssuePastLast;
+
+  /// No description provided for @answerSheetIssueWords.
+  ///
+  /// In en, this message translates to:
+  /// **'The words of the question do not make this sentence'**
+  String get answerSheetIssueWords;
+
+  /// No description provided for @answerSheetIssueBlanks.
+  ///
+  /// In en, this message translates to:
+  /// **'One answer per blank, | between them'**
+  String get answerSheetIssueBlanks;
+
+  /// No description provided for @answerSheetIssueTwice.
+  ///
+  /// In en, this message translates to:
+  /// **'The PDF gives two answers for this number'**
+  String get answerSheetIssueTwice;
+
+  /// No description provided for @answerSheetIssueInOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Matched by order'**
+  String get answerSheetIssueInOrder;
+
+  /// No description provided for @answerSheetIssueHanzi.
+  ///
+  /// In en, this message translates to:
+  /// **'Characters expected'**
+  String get answerSheetIssueHanzi;
+
+  /// No description provided for @answerSheetIssuePinyin.
+  ///
+  /// In en, this message translates to:
+  /// **'Pinyin expected'**
+  String get answerSheetIssuePinyin;
+
+  /// No description provided for @answerSheetInOrderBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'The numbering of this answer sheet does not line up with the parts of the worksheet, so the answers were given out in order. Compare them with the PDF text.'**
+  String get answerSheetInOrderBanner;
+
+  /// No description provided for @answerSheetReaderBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'The pages of this PDF are pictures, so the built-in reader read them. Check every key.'**
+  String get answerSheetReaderBanner;
+
+  /// No description provided for @answerSheetNothingBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'No numbered answers were found in this PDF. Is it the right file?'**
+  String get answerSheetNothingBanner;
+
+  /// No description provided for @answerSheetTextPanel.
+  ///
+  /// In en, this message translates to:
+  /// **'Text read from the PDF'**
+  String get answerSheetTextPanel;
+
+  /// No description provided for @answerSheetSaveScript.
+  ///
+  /// In en, this message translates to:
+  /// **'Also save the listening script found in the PDF as the transcript'**
+  String get answerSheetSaveScript;
+
+  /// No description provided for @answerSheetHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A, √ or ×, a sentence, or blanks with | between'**
+  String get answerSheetHint;
+
+  /// No description provided for @answerSheetNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Question {number}'**
+  String answerSheetNumber(int number);
 }
 
 class _AppLocalizationsDelegate

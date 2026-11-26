@@ -13,6 +13,15 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-26 — Claude (BUILD side session, PC): Answer sheet on every worksheet, v0.1.47
+
+- Owner request: upload the answer PDF on a worksheet, the app fills in the
+  keys, the admin only checks. Owner answers (asked first): official HSK,
+  Standard Course and centre-made keys; one PDF per worksheet; text PDFs.
+- Built: Answer sheet card + check screen, on-device reader (PDF text, picture
+  pages through the paper reader), matching to questions and parts, Storage
+  `answer_sheets/` (admin only). Details in `docs/CHANGELOG.md` and PLAN §6.
+
 ### 2026-11-26 — Claude (PLAN chat, Mac): v0.1.46 reviewed, demo video, Bab VI figures retaken
 
 - **v0.1.46 (Build 9 part 2) reviewed and approved:** analyzer 16 infos,

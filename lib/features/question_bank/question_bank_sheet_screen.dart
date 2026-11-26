@@ -21,6 +21,7 @@ import '../../services/list_pages_service.dart';
 import '../../services/hsk_paper/paper_truth.dart';
 import '../../services/question_bank_media_service.dart';
 import '../teacher/exercise_assign_dialog.dart';
+import 'answer_sheet_screen.dart';
 import 'question_bank_editor.dart';
 import 'question_bank_pictures.dart';
 import 'question_bank_text.dart';
@@ -148,6 +149,11 @@ class QuestionBankSheetScreen extends StatelessWidget {
                       onUpload: () => _uploadAudio(context, sheet),
                       onRemove: () => _setAudio(context, sheet, null),
                     ),
+                    // Owner 2026-11-26: the answer PDF, read into the keys.
+                    if (canManageBank) ...[
+                      const SizedBox(height: 12),
+                      AnswerSheetCard(sheet: sheet),
+                    ],
                     const SizedBox(height: 12),
                     SheetTranscriptCard(
                       sheet: sheet,

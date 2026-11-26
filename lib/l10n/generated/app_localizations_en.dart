@@ -9053,4 +9053,187 @@ class AppLocalizationsEn extends AppLocalizations {
   String listIndexRebuildDone(int sheets, int exercises) {
     return '$sheets worksheets and $exercises packages indexed.';
   }
+
+  @override
+  String get answerSheetTitle => 'Answer sheet';
+
+  @override
+  String get answerSheetNone =>
+      'Upload the answer PDF of this worksheet. The app reads the key of every question; you only check it and save.';
+
+  @override
+  String get answerSheetUpload => 'Upload answer sheet';
+
+  @override
+  String answerSheetUploaded(String name, String date) {
+    return '$name · uploaded $date';
+  }
+
+  @override
+  String get answerSheetOpen => 'Open PDF';
+
+  @override
+  String get answerSheetReadAgain => 'Read again';
+
+  @override
+  String get answerSheetReplace => 'Replace';
+
+  @override
+  String get answerSheetRemove => 'Remove the answer sheet';
+
+  @override
+  String get answerSheetRemoveTitle => 'Remove the answer sheet?';
+
+  @override
+  String get answerSheetRemoveBody =>
+      'The PDF is deleted. The keys of the questions stay as they are.';
+
+  @override
+  String get answerSheetRemoved => 'Answer sheet removed.';
+
+  @override
+  String get answerSheetReading => 'Reading the answer sheet…';
+
+  @override
+  String answerSheetReadingPage(int page, int pages) {
+    return 'Page $page of $pages';
+  }
+
+  @override
+  String answerSheetReadFailed(String error) {
+    return 'Could not read the PDF: $error';
+  }
+
+  @override
+  String get answerSheetCheckTitle => 'Check the answer sheet';
+
+  @override
+  String get answerSheetSave => 'Save keys';
+
+  @override
+  String get answerSheetSaving => 'Saving the keys…';
+
+  @override
+  String answerSheetSaved(int count) {
+    return 'Answer sheet kept, $count keys saved.';
+  }
+
+  @override
+  String answerSheetSaveFailed(String error) {
+    return 'Could not save: $error';
+  }
+
+  @override
+  String answerSheetCountChanged(int count) {
+    return '$count to save';
+  }
+
+  @override
+  String answerSheetCountSame(int count) {
+    return '$count already right';
+  }
+
+  @override
+  String answerSheetCountCheck(int count) {
+    return '$count to check';
+  }
+
+  @override
+  String answerSheetCountMissing(int count) {
+    return '$count not found';
+  }
+
+  @override
+  String answerSheetCountFree(int count) {
+    return '$count free writing';
+  }
+
+  @override
+  String get answerSheetFilterAll => 'All';
+
+  @override
+  String get answerSheetFilterCheck => 'To check';
+
+  @override
+  String get answerSheetFilterChanged => 'Changes';
+
+  @override
+  String answerSheetNow(String key) {
+    return 'Now: $key';
+  }
+
+  @override
+  String get answerSheetNoKeyYet => 'no key yet';
+
+  @override
+  String get answerSheetKeyLabel => 'Key from the sheet';
+
+  @override
+  String get answerSheetStatusSame => 'Already right';
+
+  @override
+  String get answerSheetStatusChanged => 'Will be saved';
+
+  @override
+  String get answerSheetStatusCheck => 'Check this one';
+
+  @override
+  String get answerSheetStatusMissing => 'Not in the PDF: the key stays';
+
+  @override
+  String get answerSheetStatusFree => 'Free writing: a teacher marks it';
+
+  @override
+  String get answerSheetIssueNotAChoice => 'Not a choice of this question';
+
+  @override
+  String get answerSheetIssuePastLast => 'This question has fewer choices';
+
+  @override
+  String get answerSheetIssueWords =>
+      'The words of the question do not make this sentence';
+
+  @override
+  String get answerSheetIssueBlanks => 'One answer per blank, | between them';
+
+  @override
+  String get answerSheetIssueTwice =>
+      'The PDF gives two answers for this number';
+
+  @override
+  String get answerSheetIssueInOrder => 'Matched by order';
+
+  @override
+  String get answerSheetIssueHanzi => 'Characters expected';
+
+  @override
+  String get answerSheetIssuePinyin => 'Pinyin expected';
+
+  @override
+  String get answerSheetInOrderBanner =>
+      'The numbering of this answer sheet does not line up with the parts of the worksheet, so the answers were given out in order. Compare them with the PDF text.';
+
+  @override
+  String get answerSheetReaderBanner =>
+      'The pages of this PDF are pictures, so the built-in reader read them. Check every key.';
+
+  @override
+  String get answerSheetNothingBanner =>
+      'No numbered answers were found in this PDF. Is it the right file?';
+
+  @override
+  String get answerSheetTextPanel => 'Text read from the PDF';
+
+  @override
+  String get answerSheetSaveScript =>
+      'Also save the listening script found in the PDF as the transcript';
+
+  @override
+  String get answerSheetHint =>
+      'A, √ or ×, a sentence, or blanks with | between';
+
+  @override
+  String answerSheetNumber(int number) {
+    return 'Question $number';
+  }
 }

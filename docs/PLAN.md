@@ -2517,6 +2517,38 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
+### 2026-11-26 — Answer sheet on every worksheet (owner request) — release v0.1.47 (Storage rules and hosting)
+
+- **Owner asked:** "all the question bank should have something called answer
+  sheet, i have the pdf, just need to upload it … the work of admin is just
+  checking." Asked first; owner: official HSK keys, Standard Course keys and
+  centre-made keys, **one PDF per worksheet**, **text that can be selected**,
+  no sample (build from the usual layouts).
+- **Done:** worksheet screen → **Answer sheet** card (admin, web): Upload →
+  read on the device → check screen (question, key read, key now, status,
+  filters, PDF text beside) → **Save keys** writes the changed keys through the
+  Answer key dialog's plan and keeps the PDF (`answer_sheets/{uid}/…`, admin
+  only; `answerSheet` on the questions). Open PDF, Read again, Replace,
+  remove. Every bank type is covered: choice, true/false, word bank, typed
+  hanzi and pinyin (`/` alternatives), word order, fill in the blanks; free
+  writing shows "a teacher marks it". A listening script in the PDF may be
+  saved as the transcript.
+- **How numbers are matched:** one numbering → the n-th question (shifted when
+  the key starts later); numbering starting again at 1 → one block per part of
+  the worksheet (or per part with a key); otherwise in order, with a banner.
+  A number printed twice with two answers waits for the admin.
+- **Checks:** `flutter test` 225 pass (16 new), analyzer 16 infos, rules tests
+  90 pass / 1 skipped (3 new for `answer_sheets`). Emulator: a made-up key PDF
+  on 310901-KK read as 2 to save / 8 right / 1 flagged; fixed, saved, keys in
+  Firestore. **Not proven on the emulator:** the PDF upload, Open and Read
+  again; the shared dev emulator's Storage answers 500 for every rule that
+  reads Firestore (old paths too). The owner's first live upload is the
+  check; Save uploads first, so a failed upload changes nothing.
+- **Not done / for later:** a key PDF that holds several worksheets (owner: not
+  needed now); answers that wrap onto a second line are read as the first line
+  only; out-of-order written answers in two-column keys are kept inside the
+  previous answer (choice letters are fine).
+
 ### 2026-11-26 — Build 9, part 2 (the heavy lists) — 95fa704, release v0.1.46 (rules, 55 indexes, functions and hosting)
 
 - **Done (Must 1–4):** the teacher Students tab, both dashboards' drill-downs,

@@ -19,6 +19,7 @@ import 'services/payment_service.dart';
 import 'services/push_service.dart';
 import 'services/materials_storage_service.dart';
 import 'services/question_bank_media_service.dart';
+import 'services/answer_sheet_service.dart';
 import 'services/locale_controller.dart';
 import 'services/theme_controller.dart';
 
@@ -127,6 +128,8 @@ class _ChineseTrackerAppState extends State<ChineseTrackerApp> {
         Provider<QuestionBankMediaService>.value(
           value: _questionBankMediaService,
         ),
+        // Owner 2026-11-26: the worksheet's answer-sheet PDF.
+        Provider<AnswerSheetService>(create: (_) => AnswerSheetService()),
       ],
       child: Builder(
         builder: (context) {

@@ -6,6 +6,57 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-26 — Claude (BUILD chat): Answer sheet on every worksheet
+
+**What changed**
+- **Answer sheet card** on the worksheet screen (admin on web): upload the
+  answer PDF; the app reads it on this computer, matches each answer to its
+  question and opens a **check screen**: every question next to the key
+  read, the key it has now and a status (already right / will be saved /
+  check this one / not in the PDF / free writing), filters, and the PDF's
+  text beside the list. The admin fixes the odd one and presses **Save
+  keys**. Later: **Open PDF**, **Read again**, **Replace**, remove.
+- **Reader** (`lib/core/utils/answer_sheet_parser.dart`, pure): `1. A`,
+  `1．A`, `1、A`, `(1) A`, `1.A2.C`, ranges `41-45 ECBAD`, number/answer
+  tables, √ × 对 错, written answers, blanks; cuts out the listening script
+  (`听力材料`, `听力文本`, `录音文本` …) and, when the PDF has an answer
+  heading (`答案`, `参考答案`, `Kunci jawaban`), reads only under it. A new
+  block starts where the numbering starts again at 1 (Standard Course keys).
+- **Matching and checks** (`lib/features/question_bank/answer_sheet_check.dart`,
+  pure): one numbering → n-th question (shifted when the key starts later,
+  e.g. 41–60); blocks → the worksheet's parts (or the parts that have a key);
+  else in order with a warning. Choices by letter, mark or the choice's own
+  text; word order through `orderSegments`; typed hanzi / pinyin with `/`
+  alternatives; blanks split by `|`, `；`, `，` or spaces; free writing has no
+  key. Save goes through the same `SheetAnswerKeyPlan` as the Answer key
+  dialog, which now also takes pinyin keys and `/` alternatives.
+- **PDF text** (`lib/services/answer_sheet_service.dart`): the PDF's own text
+  through pdfrx; a PDF of pictures is read by the built-in paper reader
+  (PaddleOCR in the browser). No outside service.
+- **Storage:** `answer_sheets/{uid}/…`, admin read/write/delete only, PDF
+  only, under 25 MB (it is the key; teachers and students never read it).
+  The worksheet's questions carry `answerSheet {path, name, size,
+  uploadedAt, uploadedBy}`. A listening script found in the PDF may be saved
+  as the transcript (ticked when the sheet has none).
+
+**Why**
+- Owner 2026-11-26: "all the question bank should have something called
+  answer sheet, i have the pdf, just need to upload it … the work of admin is
+  just checking." Owner answers: official HSK keys, Standard Course keys and
+  centre-made keys; one PDF per worksheet; text that can be selected.
+
+**For review**
+- Storage rules changed (new `answer_sheets` match); 3 new rules tests.
+- `flutter test` 225 pass (16 new in `test/answer_sheet_parser_test.dart`);
+  analyzer 16 infos; rules tests 90 pass, 1 skipped.
+- Emulator: the check screen read a made-up key PDF on worksheet 310901-KK
+  (2 to save, 8 right, 1 flagged "fewer choices", fixed, saved: keys written).
+  The PDF upload could not finish on the shared dev emulator, whose Storage
+  answers 500 for every rule that reads Firestore (also `question_bank_media`
+  and `paper_drafts`); the new rule passed on its own emulator. Save now
+  uploads the PDF first, so a failed upload writes nothing.
+- No official key was committed or typed out; tests use made-up keys.
+
 ## 2026-11-26 — Claude (BUILD chat): Build 9, part 2 — the heavy lists
 
 **What changed**

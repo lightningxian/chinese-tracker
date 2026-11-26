@@ -25,6 +25,13 @@ Worksheet **upload and OCR import** is available only to **admins** on **web**
    - Web: upload card + **Choose file** button.
    - Non-web: info card with `unsupportedMessage`, no file picker.
 
+## Answer sheet (owner 2026-11-26)
+
+The worksheet's **Answer sheet** (upload the key PDF, read on the device,
+check, save) follows the same gate: `AnswerSheetService` calls
+`WorksheetImportPlatform.ensureSupportedFor(user)`; the card shows only when
+`canManageBank`; Storage `answer_sheets/{uid}/…` is admin only.
+
 ## Do not
 
 - Add worksheet upload buttons on Android or iOS without a web-only guard.

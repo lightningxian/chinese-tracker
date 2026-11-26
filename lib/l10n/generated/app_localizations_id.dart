@@ -9002,4 +9002,187 @@ class AppLocalizationsId extends AppLocalizations {
   String listIndexRebuildDone(int sheets, int exercises) {
     return '$sheets lembar kerja dan $exercises paket diindeks.';
   }
+
+  @override
+  String get answerSheetTitle => 'Lembar jawaban';
+
+  @override
+  String get answerSheetNone =>
+      'Unggah PDF kunci jawaban lembar ini. Aplikasi membaca kunci setiap soal; Anda cukup memeriksa lalu menyimpan.';
+
+  @override
+  String get answerSheetUpload => 'Unggah lembar jawaban';
+
+  @override
+  String answerSheetUploaded(String name, String date) {
+    return '$name · diunggah $date';
+  }
+
+  @override
+  String get answerSheetOpen => 'Buka PDF';
+
+  @override
+  String get answerSheetReadAgain => 'Baca ulang';
+
+  @override
+  String get answerSheetReplace => 'Ganti';
+
+  @override
+  String get answerSheetRemove => 'Hapus lembar jawaban';
+
+  @override
+  String get answerSheetRemoveTitle => 'Hapus lembar jawaban?';
+
+  @override
+  String get answerSheetRemoveBody =>
+      'PDF dihapus. Kunci soal tetap seperti sekarang.';
+
+  @override
+  String get answerSheetRemoved => 'Lembar jawaban dihapus.';
+
+  @override
+  String get answerSheetReading => 'Membaca lembar jawaban…';
+
+  @override
+  String answerSheetReadingPage(int page, int pages) {
+    return 'Halaman $page dari $pages';
+  }
+
+  @override
+  String answerSheetReadFailed(String error) {
+    return 'PDF tidak dapat dibaca: $error';
+  }
+
+  @override
+  String get answerSheetCheckTitle => 'Periksa lembar jawaban';
+
+  @override
+  String get answerSheetSave => 'Simpan kunci';
+
+  @override
+  String get answerSheetSaving => 'Menyimpan kunci…';
+
+  @override
+  String answerSheetSaved(int count) {
+    return 'Lembar jawaban disimpan, $count kunci disimpan.';
+  }
+
+  @override
+  String answerSheetSaveFailed(String error) {
+    return 'Gagal menyimpan: $error';
+  }
+
+  @override
+  String answerSheetCountChanged(int count) {
+    return '$count akan disimpan';
+  }
+
+  @override
+  String answerSheetCountSame(int count) {
+    return '$count sudah benar';
+  }
+
+  @override
+  String answerSheetCountCheck(int count) {
+    return '$count perlu dicek';
+  }
+
+  @override
+  String answerSheetCountMissing(int count) {
+    return '$count tidak ditemukan';
+  }
+
+  @override
+  String answerSheetCountFree(int count) {
+    return '$count menulis bebas';
+  }
+
+  @override
+  String get answerSheetFilterAll => 'Semua';
+
+  @override
+  String get answerSheetFilterCheck => 'Perlu dicek';
+
+  @override
+  String get answerSheetFilterChanged => 'Perubahan';
+
+  @override
+  String answerSheetNow(String key) {
+    return 'Sekarang: $key';
+  }
+
+  @override
+  String get answerSheetNoKeyYet => 'belum ada kunci';
+
+  @override
+  String get answerSheetKeyLabel => 'Kunci dari lembar';
+
+  @override
+  String get answerSheetStatusSame => 'Sudah benar';
+
+  @override
+  String get answerSheetStatusChanged => 'Akan disimpan';
+
+  @override
+  String get answerSheetStatusCheck => 'Cek soal ini';
+
+  @override
+  String get answerSheetStatusMissing => 'Tidak ada di PDF: kunci tetap';
+
+  @override
+  String get answerSheetStatusFree => 'Menulis bebas: dinilai guru';
+
+  @override
+  String get answerSheetIssueNotAChoice => 'Bukan pilihan soal ini';
+
+  @override
+  String get answerSheetIssuePastLast => 'Pilihan soal ini lebih sedikit';
+
+  @override
+  String get answerSheetIssueWords =>
+      'Kata-kata soal tidak membentuk kalimat ini';
+
+  @override
+  String get answerSheetIssueBlanks =>
+      'Satu jawaban per titik-titik, | di antaranya';
+
+  @override
+  String get answerSheetIssueTwice => 'PDF memberi dua jawaban untuk nomor ini';
+
+  @override
+  String get answerSheetIssueInOrder => 'Dicocokkan menurut urutan';
+
+  @override
+  String get answerSheetIssueHanzi => 'Seharusnya karakter Mandarin';
+
+  @override
+  String get answerSheetIssuePinyin => 'Seharusnya pinyin';
+
+  @override
+  String get answerSheetInOrderBanner =>
+      'Penomoran lembar jawaban ini tidak cocok dengan bagian lembar kerja, jadi jawaban dibagikan menurut urutan. Bandingkan dengan teks PDF.';
+
+  @override
+  String get answerSheetReaderBanner =>
+      'Halaman PDF ini berupa gambar, jadi pembaca bawaan yang membacanya. Cek setiap kunci.';
+
+  @override
+  String get answerSheetNothingBanner =>
+      'Tidak ada jawaban bernomor di PDF ini. Apakah filenya benar?';
+
+  @override
+  String get answerSheetTextPanel => 'Teks yang dibaca dari PDF';
+
+  @override
+  String get answerSheetSaveScript =>
+      'Simpan juga naskah listening dari PDF sebagai transkrip';
+
+  @override
+  String get answerSheetHint =>
+      'A, √ atau ×, kalimat, atau isian dengan | di antaranya';
+
+  @override
+  String answerSheetNumber(int number) {
+    return 'Soal $number';
+  }
 }
