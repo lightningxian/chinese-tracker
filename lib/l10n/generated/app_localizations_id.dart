@@ -9185,4 +9185,34 @@ class AppLocalizationsId extends AppLocalizations {
   String answerSheetNumber(int number) {
     return 'Soal $number';
   }
+
+  @override
+  String get invoiceProofAdd => 'Tambah foto pembayaran';
+
+  @override
+  String invoiceProofChange(String name) {
+    return 'Ganti foto ($name)';
+  }
+
+  @override
+  String get invoiceProofRequired => 'Tambahkan foto pembayaran dulu.';
+
+  @override
+  String get invoiceProofHintCash =>
+      'Foto kuitansi atau uang yang diterima (wajib, disimpan sebagai bukti).';
+
+  @override
+  String get invoiceProofHintTransfer =>
+      'Tangkapan layar atau foto transfer (wajib, disimpan sebagai bukti).';
+
+  @override
+  String get invoiceProofView => 'Foto pembayaran';
+
+  @override
+  String invoiceProofTitle(String number) {
+    return 'Foto pembayaran · $number';
+  }
+
+  @override
+  String get invoiceProofLoadFailed => 'Foto tidak dapat dibuka.';
 }

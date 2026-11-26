@@ -90,6 +90,7 @@ class Invoice {
     this.classTermId,
     this.paidBy,
     this.note,
+    this.proofPath,
     this.selfPurchase = false,
     this.nameChinese = '',
     this.createdByRole = '',
@@ -146,6 +147,10 @@ class Invoice {
   final String? classTermId;
   final String? paidBy;
   final String? note;
+
+  /// Owner 2026-11-26: Storage path of the payment photo (receipt or
+  /// transfer screenshot) the admin added when marking the invoice paid.
+  final String? proofPath;
 
   /// Build 5: bought in the app by the student or the linked parent.
   final bool selfPurchase;
@@ -220,6 +225,7 @@ class Invoice {
       classTermId: data['classTermId'] as String?,
       paidBy: data['paidBy'] as String?,
       note: data['note'] as String?,
+      proofPath: data['proofPath'] as String?,
       selfPurchase: data['selfPurchase'] == true,
       nameChinese: data['nameChinese'] as String? ?? '',
       createdByRole: data['createdByRole'] as String? ?? '',

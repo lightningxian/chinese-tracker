@@ -6,6 +6,45 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-26 — Claude (BUILD chat): one voucher per paid invoice, payment photo required
+
+**What changed**
+- **Double voucher fixed.** When the admin made a voucher with **New
+  voucher** from a pending invoice, then marked the invoice paid,
+  `markInvoicePaid` did not see the voucher (it only looked at the
+  invoice's `classTermId`) and opened a second one. `linkedTermSnap` now
+  also finds a voucher whose `sourceInvoiceId` is the invoice, inside the
+  transaction; the Midtrans webhook uses the same lookup.
+- **Vouchers opened on payment get a code** (`yyyy_MM_NNN`, the next one of
+  the month in Jakarta, read in the transaction) instead of "—".
+- **Payment photo required** (owner): **Mark as paid** asks for a photo of
+  the receipt / cash (Cash) or of the transfer (Bank transfer). The app
+  uploads it to Storage `payment_proofs/{invoiceId}/` and the function
+  refuses without it (path must belong to that invoice and exist); the
+  invoice keeps `proofPath`. A paid invoice with a photo shows a receipt
+  button in Payments that opens it. If recording fails, the photo is
+  deleted again.
+- Storage rule `payment_proofs/{invoiceId}/{file}`: admins only, images
+  only (no SVG), under 10 MB.
+
+**Why**
+- Owner 2026-11-26: Vouchers showed 2 for 1 invoice; every cash or transfer
+  payment should keep a picture as documentation.
+
+**For review**
+- Functions `markInvoicePaid`, `midtransNotification`; Storage rules;
+  hosting. Online (Midtrans) payments need no photo.
+- Emulator script (10 checks): no photo / missing photo / another
+  invoice's photo refused; paid with a photo; one voucher with a code; a
+  voucher made first from the pending invoice is kept and marked paid, no
+  second one. Rules tests: the refusals pass; the allowed uploads fail on
+  this PC for every folder (known emulator upload problem), so the
+  admin upload is first proven on live.
+- The existing live duplicate (Test Student 1) is left for the owner to
+  delete in Vouchers.
+
+---
+
 ## 2026-11-26 — Claude (BUILD chat): calmer colours, Sepia for admins, Kertas for the rest
 
 **What changed**

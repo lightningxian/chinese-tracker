@@ -15137,6 +15137,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Question {number}'**
   String answerSheetNumber(int number);
+
+  /// No description provided for @invoiceProofAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add payment photo'**
+  String get invoiceProofAdd;
+
+  /// No description provided for @invoiceProofChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Change photo ({name})'**
+  String invoiceProofChange(String name);
+
+  /// No description provided for @invoiceProofRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a photo of the payment first.'**
+  String get invoiceProofRequired;
+
+  /// No description provided for @invoiceProofHintCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo of the receipt or the cash received (required, kept as a record).'**
+  String get invoiceProofHintCash;
+
+  /// No description provided for @invoiceProofHintTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Screenshot or photo of the transfer (required, kept as a record).'**
+  String get invoiceProofHintTransfer;
+
+  /// No description provided for @invoiceProofView.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment photo'**
+  String get invoiceProofView;
+
+  /// No description provided for @invoiceProofTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment photo · {number}'**
+  String invoiceProofTitle(String number);
+
+  /// No description provided for @invoiceProofLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open the photo.'**
+  String get invoiceProofLoadFailed;
 }
 
 class _AppLocalizationsDelegate

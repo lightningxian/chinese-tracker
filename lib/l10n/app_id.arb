@@ -2536,5 +2536,13 @@
   "answerSheetTextPanel": "Teks yang dibaca dari PDF",
   "answerSheetSaveScript": "Simpan juga naskah listening dari PDF sebagai transkrip",
   "answerSheetHint": "A, √ atau ×, kalimat, atau isian dengan | di antaranya",
-  "answerSheetNumber": "Soal {number}"
+  "answerSheetNumber": "Soal {number}",
+  "invoiceProofAdd": "Tambah foto pembayaran",
+  "invoiceProofChange": "Ganti foto ({name})",
+  "invoiceProofRequired": "Tambahkan foto pembayaran dulu.",
+  "invoiceProofHintCash": "Foto kuitansi atau uang yang diterima (wajib, disimpan sebagai bukti).",
+  "invoiceProofHintTransfer": "Tangkapan layar atau foto transfer (wajib, disimpan sebagai bukti).",
+  "invoiceProofView": "Foto pembayaran",
+  "invoiceProofTitle": "Foto pembayaran · {number}",
+  "invoiceProofLoadFailed": "Foto tidak dapat dibuka."
 }

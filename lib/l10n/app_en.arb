@@ -3366,5 +3366,15 @@
   "answerSheetSaveScript": "Also save the listening script found in the PDF as the transcript",
   "answerSheetHint": "A, √ or ×, a sentence, or blanks with | between",
   "answerSheetNumber": "Question {number}",
-  "@answerSheetNumber": {"placeholders":{"number":{"type":"int"}}}
+  "@answerSheetNumber": {"placeholders":{"number":{"type":"int"}}},
+  "invoiceProofAdd": "Add payment photo",
+  "invoiceProofChange": "Change photo ({name})",
+  "@invoiceProofChange": {"placeholders": {"name": {"type": "String"}}},
+  "invoiceProofRequired": "Add a photo of the payment first.",
+  "invoiceProofHintCash": "Photo of the receipt or the cash received (required, kept as a record).",
+  "invoiceProofHintTransfer": "Screenshot or photo of the transfer (required, kept as a record).",
+  "invoiceProofView": "Payment photo",
+  "invoiceProofTitle": "Payment photo · {number}",
+  "@invoiceProofTitle": {"placeholders": {"number": {"type": "String"}}},
+  "invoiceProofLoadFailed": "Could not open the photo."
 }

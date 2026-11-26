@@ -3,6 +3,7 @@ const {initializeApp} = require("firebase-admin/app");
 const {getAuth} = require("firebase-admin/auth");
 const {getFirestore, FieldValue, Timestamp} = require("firebase-admin/firestore");
 const {getMessaging} = require("firebase-admin/messaging");
+const {getStorage} = require("firebase-admin/storage");
 const {onCall, onRequest, HttpsError} = require("firebase-functions/v2/https");
 const {onDocumentCreated, onDocumentUpdated, onDocumentWritten} =
   require("firebase-functions/v2/firestore");
@@ -883,7 +884,7 @@ exports.createInvoice = onCall(
  * otherwise a new term is created. Book / registration / other credit nothing.
  * Returns what was credited, for the notification and the audit line.
  */
-function creditPaidInvoice(tx, invoiceRef, invoice, termValidDays, termSnap) {
+function creditPaidInvoice(tx, invoiceRef, invoice, termValidDays, termSnap, voucherCode) {
   const sessions = Number(invoice.sessions);
   const credits = invoice.kind === "sessions" ?
     sessions > 0 :
@@ -927,6 +928,9 @@ function creditPaidInvoice(tx, invoiceRef, invoice, termValidDays, termSnap) {
     source: invoice.selfPurchase === true ? "app" :
       (invoice.paymentMethod === "midtrans" ? "midtrans" : invoice.paymentMethod || "admin"),
     sourceInvoiceId: invoiceRef.id,
+    // Owner 2026-11-26: a voucher made on payment has a code like the ones
+    // the admin makes by hand (yyyy_MM_NNN), instead of none.
+    ...(voucherCode ? {voucherCode} : {}),
     createdBy: invoice.paymentMethod === "midtrans" ? "midtrans" : "admin",
     purchasedAt: FieldValue.serverTimestamp(),
     createdAt: FieldValue.serverTimestamp(),
@@ -960,11 +964,49 @@ function withPriceItem(invoice, pricing) {
   };
 }
 
-/** The voucher an invoice is linked to, read inside the transaction. */
-async function linkedTermSnap(tx, invoice) {
+/**
+ * The voucher an invoice is linked to, read inside the transaction: the
+ * invoice's `classTermId` (a teacher added the term first), or a voucher
+ * that names this invoice as its `sourceInvoiceId` (the admin's New voucher
+ * form picked the invoice while it was still pending). Owner 2026-11-26: the
+ * second case used to be missed, so paying the invoice made a second voucher.
+ */
+async function linkedTermSnap(tx, invoice, invoiceId) {
   const id = String(invoice.classTermId || "").trim();
-  return id ? tx.get(db.collection(CLASS_TERMS).doc(id)) : null;
+  if (id) return tx.get(db.collection(CLASS_TERMS).doc(id));
+  if (!invoiceId) return null;
+  const q = await tx.get(db.collection(CLASS_TERMS)
+      .where("sourceInvoiceId", "==", invoiceId).limit(1));
+  return q.empty ? null : q.docs[0];
 }
+
+/**
+ * The next voucher code for this month in Jakarta (`yyyy_MM_NNN`), read
+ * inside the transaction so two payments in a row do not share a code.
+ */
+async function nextVoucherCode(tx) {
+  const prefix = payments.jakartaDate(Date.now()).slice(0, 7).replace("-", "_") + "_";
+  const q = await tx.get(db.collection(CLASS_TERMS)
+      .where("voucherCode", ">=", prefix)
+      .where("voucherCode", "<", prefix + "\uf8ff")
+      .orderBy("voucherCode", "desc").limit(1));
+  const last = q.empty ? "" : String((q.docs[0].data() || {}).voucherCode || "");
+  const seq = (parseInt(last.slice(prefix.length), 10) || 0) + 1;
+  return prefix + String(seq).padStart(3, "0");
+}
+
+/** Whether an invoice would open a new voucher when paid (no linked one). */
+function opensVoucher(invoice, termSnap) {
+  const credits = invoice.kind === "sessions" ?
+    Number(invoice.sessions) > 0 :
+    (invoice.item !== BOOK_ITEM && Number(invoice.packageSize) > 0);
+  const linked = termSnap && termSnap.exists &&
+    (termSnap.data() || {}).studentId === invoice.studentId;
+  return credits && !!invoice.studentId && !linked;
+}
+
+/** Storage folder of the payment photos of one invoice (owner 2026-11-26). */
+const PAYMENT_PROOFS = "payment_proofs";
 
 function paidAuditDetail(credited, ref) {
   const inv = credited.invoice;
@@ -1049,6 +1091,18 @@ exports.markInvoicePaid = onCall(async (request) => {
   if (!invoiceId) {
     throw new HttpsError("invalid-argument", "invoiceId is required.");
   }
+  // Owner 2026-11-26: every cash or transfer payment keeps a photo (the
+  // receipt or the transfer screenshot), uploaded first by the admin to
+  // payment_proofs/{invoiceId}/.
+  const proofPath = String(data.proofPath || "").trim();
+  if (!proofPath.startsWith(`${PAYMENT_PROOFS}/${invoiceId}/`) ||
+      proofPath.includes("..")) {
+    throw new HttpsError("invalid-argument", "Add a photo of the payment first.");
+  }
+  const [proofExists] = await getStorage().bucket().file(proofPath).exists();
+  if (!proofExists) {
+    throw new HttpsError("failed-precondition", "The payment photo was not uploaded. Try again.");
+  }
 
   const invoiceRef = db.collection(INVOICES).doc(invoiceId);
   const pricing = await loadPricing();
@@ -1066,17 +1120,19 @@ exports.markInvoicePaid = onCall(async (request) => {
           `This invoice is already ${invoice.status}.`,
       );
     }
-    const termSnap = await linkedTermSnap(tx, invoice);
+    const termSnap = await linkedTermSnap(tx, invoice, invoiceId);
+    const code = opensVoucher(invoice, termSnap) ? await nextVoucherCode(tx) : null;
     tx.update(invoiceRef, {
       status: "paid",
       paidAt: FieldValue.serverTimestamp(),
       paymentMethod: method,
       paidBy: auth.uid,
+      proofPath,
       ...(note ? {note} : {}),
     });
     credited = creditPaidInvoice(
         tx, invoiceRef, withPriceItem({...invoice, paymentMethod: method}, pricing),
-        termValidDays, termSnap,
+        termValidDays, termSnap, code,
     );
   });
 
@@ -1173,14 +1229,16 @@ exports.midtransNotification = onRequest(
         return;
       }
       const termSnap = newStatus === "paid" ?
-        await linkedTermSnap(tx, invoice) : null;
+        await linkedTermSnap(tx, invoice, invoiceRef.id) : null;
+      const code = newStatus === "paid" && opensVoucher(invoice, termSnap) ?
+        await nextVoucherCode(tx) : null;
       tx.update(invoiceRef, {
         status: newStatus,
         ...(newStatus === "paid" ? {paidAt: FieldValue.serverTimestamp()} : {}),
       });
       if (newStatus !== "paid") return;
       credited = creditPaidInvoice(
-          tx, invoiceRef, withPriceItem(invoice, pricing), termValidDays, termSnap,
+          tx, invoiceRef, withPriceItem(invoice, pricing), termValidDays, termSnap, code,
       );
     });
     if (amountMismatch) {

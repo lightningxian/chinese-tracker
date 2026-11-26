@@ -13,6 +13,13 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-26 — Claude (BUILD chat, PC): one voucher per paid invoice, payment photo (v0.1.50)
+
+- Fixed the second voucher made when a pending invoice already had a
+  voucher from New voucher; vouchers opened on payment get a code.
+- Mark as paid needs a photo (cash or transfer), kept in Storage
+  `payment_proofs/`, viewable from Payments.
+
 ### 2026-11-26 — Claude (BUILD chat, PC): calmer colours (v0.1.49) and fonts (v0.1.48)
 
 - Fonts: Noto Sans for text, Noto Sans SC Regular for Chinese, never bold

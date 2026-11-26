@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Result of a createInvoice call.
@@ -92,22 +95,60 @@ class PaymentService {
 
   /// Admin records a cash or bank-transfer payment. The server flips the
   /// invoice to paid and credits the sessions (or marks the linked term paid).
+  ///
+  /// Owner 2026-11-26: [proofBytes] is the photo of the payment (receipt or
+  /// transfer screenshot). It is uploaded first to
+  /// `payment_proofs/{invoiceId}/` and the function checks it is there.
   Future<void> markInvoicePaid({
     required String invoiceId,
     required String method, // 'cash' | 'transfer'
     String? note,
+    required Uint8List proofBytes,
+    required String proofName,
   }) async {
+    final ext = _imageExt(proofName);
+    final path = 'payment_proofs/$invoiceId/'
+        '${DateTime.now().millisecondsSinceEpoch}.$ext';
+    final ref = FirebaseStorage.instance.ref(path);
+    try {
+      await ref.putData(
+        proofBytes,
+        SettableMetadata(contentType: ext == 'png' ? 'image/png'
+            : ext == 'webp' ? 'image/webp' : 'image/jpeg'),
+      );
+    } catch (e) {
+      throw PaymentException('Could not upload the payment photo. Try again. ($e)');
+    }
     try {
       await _functions.httpsCallable('markInvoicePaid').call({
         'invoiceId': invoiceId,
         'method': method,
+        'proofPath': path,
         if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
       });
     } on FirebaseFunctionsException catch (e) {
+      // The invoice was not marked paid: the photo is not kept.
+      try {
+        await ref.delete();
+      } catch (_) {}
       throw PaymentException(
         e.message ?? 'Could not record the payment. Try again.',
       );
     }
+  }
+
+  /// A link to the payment photo of a paid invoice (admins only).
+  Future<String> paymentProofUrl(String proofPath) =>
+      FirebaseStorage.instance.ref(proofPath).getDownloadURL();
+
+  static String _imageExt(String name) {
+    final dot = name.lastIndexOf('.');
+    final ext = dot < 0 ? '' : name.substring(dot + 1).toLowerCase();
+    return switch (ext) {
+      'png' => 'png',
+      'webp' => 'webp',
+      _ => 'jpg',
+    };
   }
 
   /// Opens the Midtrans Snap payment page in a browser tab.

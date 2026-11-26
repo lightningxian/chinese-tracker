@@ -2517,6 +2517,14 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
+### 2026-11-26 — Payment photo and double voucher fix, release v0.1.50
+
+- `markInvoicePaid` / webhook now find a voucher linked by
+  `sourceInvoiceId` (made by New voucher before payment), so no second
+  voucher; new vouchers made on payment get a `yyyy_MM_NNN` code.
+- Mark as paid requires a photo (`payment_proofs/{invoiceId}/`, admin-only
+  Storage rule), shown from Payments. Functions + Storage rules + hosting.
+
 ### 2026-11-26 — Calmer colours, release v0.1.49 (hosting only)
 
 - Owner found the Pensil colours tiring. Now **Sepia** for admins and

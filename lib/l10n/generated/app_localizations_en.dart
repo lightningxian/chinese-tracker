@@ -9236,4 +9236,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String answerSheetNumber(int number) {
     return 'Question $number';
   }
+
+  @override
+  String get invoiceProofAdd => 'Add payment photo';
+
+  @override
+  String invoiceProofChange(String name) {
+    return 'Change photo ($name)';
+  }
+
+  @override
+  String get invoiceProofRequired => 'Add a photo of the payment first.';
+
+  @override
+  String get invoiceProofHintCash =>
+      'Photo of the receipt or the cash received (required, kept as a record).';
+
+  @override
+  String get invoiceProofHintTransfer =>
+      'Screenshot or photo of the transfer (required, kept as a record).';
+
+  @override
+  String get invoiceProofView => 'Payment photo';
+
+  @override
+  String invoiceProofTitle(String number) {
+    return 'Payment photo · $number';
+  }
+
+  @override
+  String get invoiceProofLoadFailed => 'Could not open the photo.';
 }

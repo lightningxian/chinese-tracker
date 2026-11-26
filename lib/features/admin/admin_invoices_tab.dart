@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'dart:typed_data';
+
+import 'package:file_picker/file_picker.dart';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -522,7 +525,15 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
         label: '',
         width: 56,
         alignment: Alignment.centerRight,
-        cell: (invoice) => !invoice.isPaid && !invoice.isDiscarded
+        cell: (invoice) => invoice.isPaid
+            ? (invoice.proofPath == null
+                ? const SizedBox.shrink()
+                : IconButton(
+                    tooltip: l.invoiceProofView,
+                    icon: const Icon(Icons.receipt_outlined, size: 20),
+                    onPressed: () => _showProof(context, invoice),
+                  ))
+            : !invoice.isDiscarded
             ? PopupMenuButton<String>(
                 tooltip: l.adminUsersColActions,
                 icon: const Icon(Icons.more_vert, size: 20),
@@ -557,7 +568,8 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
   /// paid and credits the sessions or marks the linked voucher paid.
   Future<void> _recordPayment(BuildContext context, Invoice invoice) async {
     final l = context.l10n;
-    final result = await showDialog<({String method, String note})>(
+    final result = await showDialog<
+        ({String method, String note, Uint8List photo, String photoName})>(
       context: context,
       builder: (_) => _RecordPaymentDialog(
         invoice: invoice,
@@ -571,6 +583,8 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
             invoiceId: invoice.id,
             method: result.method,
             note: result.note,
+            proofBytes: result.photo,
+            proofName: result.photoName,
           );
       _reload();
       messenger.showSnackBar(
@@ -589,6 +603,57 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
         SnackBar(content: Text(e.message), backgroundColor: AppColors.error),
       );
     }
+  }
+
+  /// Owner 2026-11-26: the photo kept when the invoice was marked paid.
+  Future<void> _showProof(BuildContext context, Invoice invoice) async {
+    final l = context.l10n;
+    final future = context.read<PaymentService>().paymentProofUrl(invoice.proofPath!);
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l.invoiceProofTitle(invoice.invoiceNumber)),
+        content: SizedBox(
+          width: 520,
+          child: FutureBuilder<String>(
+            future: future,
+            builder: (ctx, snap) {
+              if (snap.hasError) {
+                return Text(l.invoiceProofLoadFailed,
+                    style: TextStyle(color: AppColors.error));
+              }
+              if (!snap.hasData) {
+                return const SizedBox(
+                    height: 160, child: Center(child: CircularProgressIndicator()));
+              }
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 520),
+                    child: InteractiveViewer(
+                      child: Image.network(snap.data!, fit: BoxFit.contain),
+                    ),
+                  ),
+                  if ((invoice.note ?? '').isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Text(invoice.note!,
+                        style: TextStyle(color: AppColors.textSecondary)),
+                  ],
+                ],
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l.commonOk),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Owner 2026-11-24: discard with a reason (`discardInvoice`).
@@ -1154,7 +1219,8 @@ class _CreateInvoiceSheetState extends State<_CreateInvoiceSheet> {
   }
 }
 
-/// "Mark as paid": how the money came in, plus an optional note.
+/// "Mark as paid": how the money came in, a photo of the payment (owner
+/// 2026-11-26, required for cash and transfer alike) and an optional note.
 class _RecordPaymentDialog extends StatefulWidget {
   const _RecordPaymentDialog({required this.invoice, this.studentLabel});
 
@@ -1168,6 +1234,24 @@ class _RecordPaymentDialog extends StatefulWidget {
 class _RecordPaymentDialogState extends State<_RecordPaymentDialog> {
   String _method = 'cash';
   final _note = TextEditingController();
+  Uint8List? _photo;
+  String _photoName = '';
+  bool _missingPhoto = false;
+
+  Future<void> _pickPhoto() async {
+    final picked = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['jpg', 'jpeg', 'png', 'webp'],
+      withData: true,
+    );
+    final file = picked?.files.firstOrNull;
+    if (file?.bytes == null) return;
+    setState(() {
+      _photo = file!.bytes;
+      _photoName = file.name;
+      _missingPhoto = false;
+    });
+  }
 
   @override
   void dispose() {
@@ -1214,6 +1298,42 @@ class _RecordPaymentDialogState extends State<_RecordPaymentDialog> {
               onSelectionChanged: (v) => setState(() => _method = v.first),
             ),
             const SizedBox(height: 14),
+            Text(
+              _method == 'transfer'
+                  ? l.invoiceProofHintTransfer
+                  : l.invoiceProofHintCash,
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
+            ),
+            const SizedBox(height: 8),
+            if (_photo != null) ...[
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 180),
+                  child: Image.memory(_photo!, fit: BoxFit.contain),
+                ),
+              ),
+              const SizedBox(height: 6),
+            ],
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                onPressed: _pickPhoto,
+                icon: Icon(
+                    _photo == null ? Icons.add_a_photo_outlined : Icons.swap_horiz,
+                    size: 18),
+                label: Text(_photo == null
+                    ? l.invoiceProofAdd
+                    : l.invoiceProofChange(_photoName)),
+              ),
+            ),
+            if (_missingPhoto)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(l.invoiceProofRequired,
+                    style: TextStyle(color: AppColors.error, fontSize: 12.5)),
+              ),
+            const SizedBox(height: 14),
             TextField(
               controller: _note,
               decoration: InputDecoration(
@@ -1242,10 +1362,22 @@ class _RecordPaymentDialogState extends State<_RecordPaymentDialog> {
           child: Text(l.commonCancel),
         ),
         FilledButton(
-          onPressed: () => Navigator.pop(
-            context,
-            (method: _method, note: _note.text.trim()),
-          ),
+          onPressed: () {
+            final photo = _photo;
+            if (photo == null) {
+              setState(() => _missingPhoto = true);
+              return;
+            }
+            Navigator.pop(
+              context,
+              (
+                method: _method,
+                note: _note.text.trim(),
+                photo: photo,
+                photoName: _photoName,
+              ),
+            );
+          },
           child: Text(l.adminInvoicesConfirmPayment),
         ),
       ],

@@ -91,6 +91,14 @@ service firebase.storage {
         request.resource.size < 25 * 1024 * 1024;
     }
 
+    // Owner 2026-11-26: the photo of a cash or transfer payment (receipt or
+    // transfer screenshot), kept as documentation. Admins only; images only.
+    match /payment_proofs/{invoiceId}/{fileName} {
+      allow read, delete: if isAdmin();
+      allow write: if isAdmin() && isImage() &&
+        request.resource.size < 10 * 1024 * 1024;
+    }
+
     // Question-bank media (images/audio per question). Staff write; signed-in read.
     // A paper's official recording may be up to 60 MB (Build 1B); every
     // other file (pictures) stays under 10 MB.

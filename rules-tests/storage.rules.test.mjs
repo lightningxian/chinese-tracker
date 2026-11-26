@@ -101,3 +101,34 @@ describe("answer sheets (2026-11-26)", () => {
     }
   });
 });
+
+// Owner 2026-11-26: the photo kept when an invoice is marked paid: admins only.
+describe("payment photos (2026-11-26)", () => {
+  const put = (who, size, contentType) =>
+    uploadBytes(
+      ref(env.authenticatedContext(who).storage(), "payment_proofs/inv1/1.jpg"),
+      new Uint8Array(size),
+      { contentType },
+    );
+
+  it("an admin stores a photo and reads it back", async () => {
+    await assertSucceeds(put("admin1", 1 * MB, "image/jpeg"));
+    await assertSucceeds(
+      getBytes(ref(env.authenticatedContext("admin1").storage(), "payment_proofs/inv1/1.jpg")));
+  });
+
+  it("not an image, an SVG, or too large is refused", async () => {
+    await assertFails(put("admin1", 1 * MB, "application/pdf"));
+    await assertFails(put("admin1", 1 * MB, "image/svg+xml"));
+    await assertFails(put("admin1", 11 * MB, "image/jpeg"));
+  });
+
+  it("teachers and students neither upload nor read it", async () => {
+    await assertSucceeds(put("admin1", 1 * MB, "image/jpeg"));
+    for (const who of ["teacher1", "student1"]) {
+      await assertFails(put(who, 1 * MB, "image/jpeg"));
+      await assertFails(
+        getBytes(ref(env.authenticatedContext(who).storage(), "payment_proofs/inv1/1.jpg")));
+    }
+  });
+});
