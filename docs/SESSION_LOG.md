@@ -66,6 +66,17 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   languages. Approved. Open for the owner: Rebuild leaderboards once, and the
   rule for sitting an HSK simulation again (simulations run only as test
   codes since 2026-11-16, so package retakes reach exam packages only).
+- **Bab V rebuilt with the UML set under the half-page rule:** 26 figures
+  (2 architecture, 2 status, 3 sequence, 5 use case, 6 activity, 6
+  collection structure, 2 page map), each with an introducing sentence and
+  an explanation; the nine old figures were redrawn (six of them split), 11
+  are new. Text brought up to Build 9: repeat sittings, paged lists with a
+  date range, reports over a period; Tabel 5.11 names the new fields.
+  **Bab III diagrams redrawn** the same way: 3.5 to 3.13 (rich picture in
+  2, use case in 3, activity in 4). Generators: `make_bab5_figs.py` (parts
+  a and b) and `make_bab3_figs.py` on `figkit.py`. The three long tables of
+  Bab V stay in the chapter for now; they can move to an appendix when the
+  page count is looked at. Book: 64 figures, 28 tables.
 - **v0.1.44 (Build 9 session 2, `818c46e`, `e7bf12a`) reviewed on the Mac:**
   analyzer 0 errors, 0 warnings, 16 infos; `flutter test` 204 pass, 2 skipped;
   every node suite with the new `test_user_search.js`; 77 functions (64 + 13)

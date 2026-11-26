@@ -20,26 +20,41 @@ Seluruh data tersimpan dalam satu basis data Cloud Firestore, dan logika yang
 menentukan uang atau nilai (pemotongan sesi, penilaian, pengecekan bentrok,
 kenaikan tingkat) dijalankan di Cloud Functions, bukan di perangkat pengguna.
 
-Arsitektur sistem ditunjukkan pada Gambar 5.1. Di dalam aplikasi, kode
-disusun dengan pola MVVM: View menampilkan halaman, ViewModel mengelola
-keadaan halaman dengan ChangeNotifier dan Provider, dan Service menjadi
-satu-satunya lapisan yang berbicara dengan Firebase melalui FlutterFire [11]
-[19]. Firebase Authentication menangani login, Cloud Firestore menyimpan
-data, Cloud Storage menyimpan rekaman dan gambar, Firebase Cloud Messaging
-mengirim notifikasi, dan Firebase Hosting menyajikan versi web beserta berkas
-model pembaca naskah. Cloud Functions dipanggil langsung dari aplikasi
-(callable), berjalan ketika data berubah (trigger Firestore), berjalan
-terjadwal, atau menerima HTTP dari Midtrans (webhook). Midtrans hanya
-berkomunikasi dengan Cloud Functions, sehingga server key Midtrans tidak
-pernah ada di aplikasi [15]. Dua pekerjaan berat berjalan di peramban admin
-tanpa layanan luar: pembacaan naskah soal HSK dari PDF (PaddleOCR melalui
-onnxruntime-web) dan penulisan transkrip rekaman (Whisper melalui
-transformers.js).
+Arsitektur sistem dari sisi aplikasi ditunjukkan pada Gambar 5.1.
 
-[GAMBAR 5.1: diagram arsitektur sistem]
+[GAMBAR 5.1: arsitektur Sistem dari Sisi Aplikasi]
 
 Gambar 5.1
-Arsitektur Sistem
+Arsitektur Sistem dari Sisi Aplikasi
+
+Ketiga kelompok pengguna memakai aplikasi Flutter yang sama: admin terutama di
+PC, guru di telepon, serta murid dan orang tua di Android, iPhone, atau web.
+Di dalam aplikasi, kode disusun dengan pola MVVM: View menampilkan halaman per
+peran, ViewModel mengelola keadaan halaman dengan ChangeNotifier dan Provider,
+dan Service menjadi satu-satunya lapisan yang berbicara dengan Firebase
+melalui FlutterFire [11] [19]. Dua pekerjaan berat berjalan di peramban admin
+tanpa layanan luar, yaitu pembacaan naskah soal HSK dari PDF (PaddleOCR
+melalui onnxruntime-web) dan penulisan transkrip rekaman (Whisper melalui
+transformers.js). Aplikasi tidak pernah menghubungi Midtrans secara langsung;
+hanya Cloud Functions yang memegang server key dan menerima webhook [15].
+
+Layanan di sisi server dirinci pada Gambar 5.2.
+
+[GAMBAR 5.2: arsitektur Sistem dari Sisi Firebase]
+
+Gambar 5.2
+Arsitektur Sistem dari Sisi Firebase
+
+Firebase Authentication menangani login, Cloud Firestore menyimpan data dan
+menjaganya dengan Security Rules, Cloud Storage menyimpan rekaman, gambar, dan
+naskah PDF, Firebase Cloud Messaging mengirim notifikasi, dan Firebase Hosting
+menyajikan versi web, berkas APK, serta berkas model pembaca naskah. Cloud
+Functions dipanggil langsung dari aplikasi (callable), berjalan ketika data
+berubah (trigger Firestore), berjalan terjadwal, atau menerima HTTP dari
+Midtrans (webhook); di sinilah penilaian, pemotongan voucher, pengecekan
+bentrok, kenaikan tingkat, dan laporan dijalankan. Firebase Emulator Suite
+dipakai selama pengembangan dan pengujian otomatis, dan Cloud Firestore
+dicadangkan setiap hari dengan masa simpan tujuh hari.
 
 ## 5.2 Jadwal dan Sesi
 
@@ -73,6 +88,36 @@ pemesan kurang dari batas minimum (settings/scheduling.minStudents) dapat
 ditutup otomatis beberapa jam sebelum mulai, dan hari libur nasional (koleksi
 holidays, diambil dari daftar SKB tiga menteri) atau hari yang ditutup admin
 membatalkan sesi pada hari itu dengan mengembalikan pesanan murid.
+
+Perubahan status sebuah sesi kelas ditunjukkan pada Gambar 5.3.
+
+[GAMBAR 5.3: diagram Status Sesi Kelas]
+
+Gambar 5.3
+Diagram Status Sesi Kelas
+
+Sesi dibuat oleh generateSessions dengan status scheduled, atau needs_teacher
+bila guru libur pada tanggal itu sampai admin menunjuk guru pengganti. Sesi
+menjadi ongoing dengan sendirinya ketika jam mulai tiba dan menjadi done
+setelah guru menutupnya dengan closeSession. Sesi menjadi cancelled bila
+dibatalkan admin, harinya ditutup, muridnya terlalu sedikit, atau jadwalnya
+dihapus; hari yang dibuka kembali mengembalikan sesinya menjadi scheduled.
+Semua perubahan status ditulis oleh Cloud Functions.
+
+Urutan pemesanan sesi kelas oleh murid ditunjukkan pada Gambar 5.4.
+
+[GAMBAR 5.4: sequence Diagram Pemesanan Sesi Kelas]
+
+Gambar 5.4
+Sequence Diagram Pemesanan Sesi Kelas
+
+Pemesanan dilakukan fungsi bookSession, yang dapat dipanggil murid atau orang
+tua yang tertaut dengannya. Di dalam satu transaksi, fungsi membaca sesi,
+voucher, dan pesanan lain murid, lalu memeriksa alasan penolakan dengan
+bookingRefusal. Bila tidak ada alasan penolakan, fungsi membuat dokumen
+attendance, menambah bookedCount pada sesi, dan menambah sessionsBooked pada
+voucher. Bila ditolak, tidak ada data yang berubah dan aplikasi menampilkan
+alasannya.
 
 ## 5.3 Penjadwalan Guru dan Pengecekan Bentrok
 
@@ -191,6 +236,35 @@ Contoh Perubahan Data Voucher Delapan Sesi
 | 5 | Sesi ketiga ditutup, murid alpa | 2 | 0 | 6 | 6 |
 | 6 | closeSession sesi ketiga terpanggil ulang | 2 | 0 | 6 | 6 (tidak berubah) |
 
+Urutan penutupan sesi kelas oleh guru ditunjukkan pada Gambar 5.5.
+
+[GAMBAR 5.5: sequence Diagram Penutupan Sesi Kelas]
+
+Gambar 5.5
+Sequence Diagram Penutupan Sesi Kelas
+
+Aplikasi hanya mengirim ID sesi dan status kehadiran; seluruh perubahan data
+dilakukan fungsi closeSession di dalam satu transaksi Firestore. Fungsi
+memeriksa status sesi terlebih dahulu, lalu menulis buku besar
+voucher_history, mengubah dokumen attendance dan sisa sesi voucher, serta
+menandai sesi sebagai done. Bila fungsi dipanggil lagi untuk sesi yang sama,
+pemeriksaan pada langkah 4 menghentikannya, sehingga voucher murid tidak
+terpotong dua kali.
+
+Perubahan status tagihan dan voucher ditunjukkan pada Gambar 5.6.
+
+[GAMBAR 5.6: diagram Status Tagihan dan Voucher]
+
+Gambar 5.6
+Diagram Status Tagihan dan Voucher
+
+Tagihan dibuat dengan status pending dan menjadi paid setelah pembayaran
+Midtrans berhasil atau setelah admin mencatat pembayaran tunai atau transfer.
+Tagihan yang tidak dibayar menjadi expired atau failed, dan admin dapat
+menyisihkannya sebagai discarded lalu memulihkannya kembali. Tagihan yang
+lunas menghasilkan voucher berstatus active. Voucher menjadi depleted ketika
+sisa sesinya habis dan expired ketika tenggatnya terlewati.
+
 ## 5.5 Tipe Soal dan Algoritma Penilaian
 
 Seluruh soal tersimpan di bank soal (koleksi question_bank). Setiap butir
@@ -200,9 +274,9 @@ dapat memiliki bagian (section), gambar per pilihan, satu rekaman untuk
 seluruh lembar, dan transkripnya. Setiap lembar kerja mempunyai jenis
 latihan: Exercise, Quiz, HSK Simulation, atau Standard Course. Dari bank soal
 disusun paket (koleksi exercises) yang berisi lembar kerja dan butir soal;
-paket yang lembar pertamanya HSK Simulation dimainkan sebagai tes satu
-percobaan dengan jam server, sedangkan paket lainnya adalah latihan yang
-dapat diulang. Perbedaan latihan dan tes dirangkum pada Tabel 5.4, dan bentuk
+lembar HSK Simulation hanya dikerjakan melalui kode tes yang diawasi (subbab
+5.6), sedangkan paket lainnya adalah latihan yang dapat diulang; paket yang
+diberi batas waktu memakai percobaan bernomor dengan jam server. Perbedaan latihan dan tes dirangkum pada Tabel 5.4, dan bentuk
 soal yang tersedia pada Tabel 5.5.
 
 Tabel 5.4
@@ -213,7 +287,7 @@ Perbedaan Latihan dan Tes Simulasi HSK
 | Tujuan | Melatih pemahaman materi | Mengukur kemampuan untuk kenaikan tingkat |
 | Tempat dan pembukaan | Di mana saja, ditugaskan guru atau admin | Di Easy Study, dibuka guru dengan token enam karakter yang berlaku lima belas menit |
 | Waktu | Tanpa batas, kecuali paket diberi batas menit | Per bagian sesuai format HSK, dihitung jam server |
-| Percobaan | Berulang kali | Satu kali per kode tes |
+| Percobaan | Berulang kali | Duduk pertama yang sah dihitung; duduk ulang hanya pada sesi baru dan menjadi latihan |
 | Rekaman | Diputar bebas | Diputar menurut aturan bagian |
 | Ulasan | Setelah jawaban dikumpulkan | Setelah tes ditutup, tanpa kunci untuk tes penempatan pengunjung |
 | Kegunaan nilai | Laporan progress | Kenaikan tingkat dan leaderboard |
@@ -317,6 +391,29 @@ terpenuhi; rekomendasi (koleksi level_promotions) disetujui atau ditolak admin,
 dan admin juga dapat menaikkan tingkat langsung dengan alasan. Contoh riwayat
 tes seorang murid HSK 3 ditunjukkan pada Tabel 5.9.
 
+Urutan pelaksanaan tes simulasi yang diawasi guru ditunjukkan pada Gambar 5.7.
+
+[GAMBAR 5.7: sequence Diagram Tes Simulasi dengan Token]
+
+Gambar 5.7
+Sequence Diagram Tes Simulasi dengan Token
+
+Guru membuka sesi tes dan menyebutkan token yang dihasilkan kepada murid di
+kelas. Murid memulai tes dengan token itu, menerima soal tanpa kunci jawaban,
+dan mengirim jawaban setiap bagian melalui submitTestPart. Setelah bagian
+terakhir, fungsi menghitung nilai dan menulis test_results, lalu murid melihat
+kartu hasilnya. Penulisan hasil itu memicu onTestResultWritten yang
+memperbarui leaderboard, hitungan kenaikan tingkat, dan ringkasan progress
+berdasarkan duduk pertama yang sah.
+
+Murid dapat mengerjakan kode tes yang sama lagi hanya pada sesi tes baru yang
+dibuka guru. Setiap pengerjaan diberi nomor duduk; duduk pertama yang sah
+dihitung untuk leaderboard, hitungan kenaikan tingkat, dan rekomendasi
+penempatan, sedangkan duduk berikutnya disimpan sebagai latihan karena murid
+sudah melihat ulasan jawabannya. Setiap baris leaderboard memuat waktu
+selesai; staf dapat mengekspornya sebagai CSV atau PDF, sedangkan murid hanya
+dapat membagikan kartu hasilnya sendiri.
+
 Algoritma 5.5
 Penilaian Tes Simulasi per Bagian
 01: masukan: bagian B (mendengarkan, membaca, menulis) dengan soal dan jawaban murid; nilai maksimal setiap bagian 100
@@ -404,66 +501,281 @@ Peringatan Progress Murid
 
 ## 5.8 Pemodelan Sistem Baru
 
-Sistem baru dimodelkan dengan use case diagram per peran dan activity
-diagram untuk empat alur utama. Gambar 5.2 menunjukkan use case admin,
-Gambar 5.3 use case guru, dan Gambar 5.4 use case murid beserta orang tua.
-Use case umum untuk semua peran adalah login, pemilihan bahasa antarmuka,
-penggantian kata sandi, dan penerimaan notifikasi.
+Sistem baru dimodelkan dengan use case diagram per peran dan activity diagram
+untuk empat alur utama. Use case umum untuk semua peran adalah login,
+pemilihan bahasa antarmuka, penggantian kata sandi, dan penerimaan notifikasi.
+Urutan pesan antara aplikasi, Cloud Functions, dan Cloud Firestore untuk tiga
+alur terpenting sudah digambarkan dengan sequence diagram pada Gambar 5.4,
+Gambar 5.5, dan Gambar 5.7, dan struktur datanya dibahas pada subbab 5.9.
 
-[GAMBAR 5.2: use case diagram admin]
+Use case admin dibagi menjadi dua diagram menurut bidang pekerjaannya; Gambar
+5.8 memuat pengelolaan akun, bank soal, dan jadwal.
 
-Gambar 5.2
-Use Case Diagram Admin
-
-[GAMBAR 5.3: use case diagram guru]
-
-Gambar 5.3
-Use Case Diagram Guru
-
-[GAMBAR 5.4: use case diagram murid dan orang tua]
-
-Gambar 5.4
-Use Case Diagram Murid dan Orang Tua
-
-Gambar 5.5 menggambarkan pendaftaran dan persetujuan: calon murid
-mendaftar sendiri, memilih mulai dari Beginner atau tes penempatan, akunnya
-berstatus menunggu, lalu admin menyetujui dengan menetapkan tingkat dan guru
-atau menolak dengan alasan. Gambar 5.6 menggambarkan pemesanan sesi sampai
-penutupan: sistem membuat sesi dari jadwal, murid memesan tempat, sesi
-dimulai sendiri, guru mengisi absensi dan menutup sesi, lalu voucher dipotong
-dalam satu transaksi dan ringkasan progress diperbarui. Gambar 5.7
-menggambarkan tes simulasi dan kenaikan tingkat, dan Gambar 5.8 pembelian
-voucher melalui invoice yang dibayar daring atau dicatat admin.
-
-[GAMBAR 5.5: activity diagram pendaftaran dan persetujuan]
-
-Gambar 5.5
-Activity Diagram Pendaftaran dan Persetujuan Murid
-
-[GAMBAR 5.6: activity diagram pemesanan sesi sampai penutupan]
-
-Gambar 5.6
-Activity Diagram Pemesanan Sesi sampai Penutupan Sesi
-
-[GAMBAR 5.7: activity diagram tes simulasi dan kenaikan tingkat]
-
-Gambar 5.7
-Activity Diagram Tes Simulasi dan Kenaikan Tingkat
-
-[GAMBAR 5.8: activity diagram pembelian voucher]
+[GAMBAR 5.8: use Case Diagram Admin: Akun, Bank Soal, dan Jadwal]
 
 Gambar 5.8
+Use Case Diagram Admin: Akun, Bank Soal, dan Jadwal
+
+Admin menyetujui atau menolak pendaftaran murid, mengelola akun guru, murid,
+dan orang tua, serta mengelola bank soal dan kode tes, termasuk membaca naskah
+soal HSK dari PDF. Pada bidang jadwal, admin menyusun jadwal dengan pengecekan
+bentrok, menunjuk guru pengganti, mengelola sesi, hari libur, dan aturan
+jadwal, serta mengirim pengumuman.
+
+Gambar 5.9 memuat use case admin untuk voucher, pembayaran, kenaikan tingkat,
+dan laporan.
+
+[GAMBAR 5.9: use Case Diagram Admin: Voucher, Kenaikan Tingkat, dan Laporan]
+
+Gambar 5.9
+Use Case Diagram Admin: Voucher, Kenaikan Tingkat, dan Laporan
+
+Admin mengelola paket voucher dan daftar harga, mencatat pembayaran tunai atau
+transfer, memantau pembayaran Midtrans dan invoice, serta memeriksa voucher
+dan jejak audit. Admin juga mengatur aturan kenaikan tingkat, memutuskan
+rekomendasi kenaikan tingkat yang ditulis sistem, dan melihat laporan progress
+semua murid, laporan bulanan, serta rekap guru.
+
+Use case guru ditunjukkan pada Gambar 5.10.
+
+[GAMBAR 5.10: use Case Diagram Guru]
+
+Gambar 5.10
+Use Case Diagram Guru
+
+Di bidang kelas, guru melihat jadwal mengajar dan sesi hari ini, mengisi
+ketersediaan bila fitur itu dinyalakan, melakukan check-in, mengisi absensi
+hadir, izin, atau alpa, lalu menutup sesi. Guru juga melihat data dan progress
+muridnya serta menulis catatan tindak lanjut. Di bidang soal dan tes, guru
+menulis soal dan lembar kerja, menyusun dan menugaskan paket latihan, membuka
+dan mengawasi tes, menilai jawaban menulis bebas, meninjau jawaban Typing yang
+ditandai, dan melihat leaderboard dengan nama lengkap murid.
+
+Use case murid ditunjukkan pada Gambar 5.11.
+
+[GAMBAR 5.11: use Case Diagram Murid]
+
+Gambar 5.11
+Use Case Diagram Murid
+
+Murid mendaftar sendiri dan dapat memilih tes penempatan, melihat sisa sesi
+dan tenggat voucher, membeli paket melalui Midtrans, memesan atau membatalkan
+sesi termasuk masuk daftar tunggu, dan melihat riwayat kehadirannya. Untuk
+belajar, murid mengerjakan latihan yang ditugaskan, mengikuti tes simulasi
+dengan token, lalu melihat nilai, ulasan, leaderboard, dan laporan progress.
+Murid juga dapat menautkan akun orang tua dengan kode anak serta mengubah
+bahasa, mengganti kata sandi, atau menghapus akunnya.
+
+Use case orang tua ditunjukkan pada Gambar 5.12.
+
+[GAMBAR 5.12: use Case Diagram Orang Tua]
+
+Gambar 5.12
+Use Case Diagram Orang Tua
+
+Orang tua adalah akun tambahan yang ditautkan ke akun anaknya dengan kode
+anak. Setelah tertaut, orang tua melihat sisa sesi, tenggat voucher, riwayat
+kehadiran, dan laporan progress anaknya, serta dapat membeli paket dan memesan
+atau membatalkan sesi atas nama anak. Use case yang hanya dimiliki orang tua
+adalah membayar tagihan anak; tujuh use case lainnya sama dengan milik murid
+pada Gambar 5.11.
+
+Gambar 5.13 menggambarkan pendaftaran dan persetujuan murid.
+
+[GAMBAR 5.13: activity Diagram Pendaftaran dan Persetujuan Murid]
+
+Gambar 5.13
+Activity Diagram Pendaftaran dan Persetujuan Murid
+
+Calon murid mengisi formulir pendaftaran dan memilih mulai dari Beginner atau
+mengikuti tes penempatan, lalu sistem membuat akun berstatus pending dan
+menampilkannya pada daftar Persetujuan. Bila calon murid mempunyai kode hasil
+penempatan, admin melihat rekomendasi tingkatnya sebelum meninjau pendaftaran.
+Admin menolak dengan alasan, atau menyetujui dengan menetapkan tingkat awal
+dan guru; setelah disetujui, fungsi decideRegistration mengaktifkan akun dan
+memberi tahu murid, yang kemudian dapat masuk ke beranda murid.
+
+Alur dari pemesanan sampai penutupan sesi dibagi menjadi dua diagram; Gambar
+5.14 menggambarkan pemesanan sesi.
+
+[GAMBAR 5.14: activity Diagram Pemesanan Sesi]
+
+Gambar 5.14
+Activity Diagram Pemesanan Sesi
+
+Fungsi generateSessions membuat sesi dari jadwal untuk empat belas hari ke
+depan, lalu murid memilih sesi pada kalender. Fungsi bookSession memeriksa
+status, waktu, tingkat, kuota, voucher, dan bentrok sesuai Algoritma 5.2. Bila
+pemeriksaan tidak lolos, murid melihat alasannya dan dapat masuk daftar tunggu
+bila kelas penuh; bila lolos, tempat dipesan dengan menambah bookedCount pada
+sesi dan sessionsBooked pada voucher serta membuat dokumen attendance.
+Penghubung A menandai kelanjutan alur pada Gambar 5.15.
+
+Gambar 5.15 melanjutkan alur tersebut sampai sesi ditutup.
+
+[GAMBAR 5.15: activity Diagram Pelaksanaan dan Penutupan Sesi]
+
+Gambar 5.15
+Activity Diagram Pelaksanaan dan Penutupan Sesi
+
+Sistem mengirim pengingat satu jam sebelum sesi, dan sesi dimulai sendiri pada
+jam mulainya. Guru melakukan check-in yang mencatat kedatangannya, mengisi
+absensi hadir, izin, atau alpa sambil membandingkannya dengan papan kehadiran,
+lalu menutup sesi. Fungsi closeSession memotong voucher, menulis buku besar
+voucher, dan memperbarui rekap guru dalam satu transaksi (Algoritma 5.3),
+kemudian ringkasan progress diperbarui dan pemberitahuan dikirim bila ada
+peringatan.
+
+Alur tes simulasi sampai kenaikan tingkat juga dibagi menjadi dua diagram;
+Gambar 5.16 menggambarkan pelaksanaan tes dengan token.
+
+[GAMBAR 5.16: activity Diagram Tes Simulasi dengan Token]
+
+Gambar 5.16
+Activity Diagram Tes Simulasi dengan Token
+
+Guru membuka sesi tes untuk satu kode tes, dan sistem menerbitkan token enam
+karakter yang berlaku lima belas menit. Murid memasukkan token dan memulai
+tes; fungsi startTest mencatat jam server untuk setiap bagian, sehingga batas
+waktu tidak bergantung pada jam perangkat murid. Murid mengerjakan dan
+mengirim jawaban per bagian, dan sistem menilai setiap bagian sesuai Algoritma
+5.5. Penghubung A menandai kelanjutan alur pada Gambar 5.17.
+
+Gambar 5.17 menggambarkan penilaian akhir sampai kenaikan tingkat.
+
+[GAMBAR 5.17: activity Diagram Penilaian Akhir dan Kenaikan Tingkat]
+
+Gambar 5.17
+Activity Diagram Penilaian Akhir dan Kenaikan Tingkat
+
+Bila tes memuat soal menulis bebas, jawabannya masuk antrean penilaian dan
+dinilai guru melalui fungsi markAnswer; bila tidak, hasil langsung menjadi
+final. Hasil final masuk ke leaderboard dan dipakai untuk menghitung syarat
+kenaikan tingkat sesuai Algoritma 5.6. Bila syarat terpenuhi, sistem menulis
+rekomendasi yang disetujui atau ditolak admin; setelah disetujui, tingkat
+murid dinaikkan, riwayatnya dicatat, dan murid beserta orang tuanya diberi
+tahu.
+
+Gambar 5.18 menggambarkan pembelian voucher.
+
+[GAMBAR 5.18: activity Diagram Pembelian Voucher]
+
+Gambar 5.18
 Activity Diagram Pembelian Voucher
+
+Murid atau orang tua memilih paket 8 atau 16 sesi pada daftar harga, lalu
+fungsi createInvoice membuat tagihan terbuka atau memakai ulang tagihan lama
+yang belum dibayar. Untuk pembayaran daring, fungsi meminta Snap token dengan
+server key yang hanya ada di Cloud Functions, pembeli membayar pada halaman
+Midtrans, dan notifikasi pembayaran diperiksa tanda tangannya sebelum invoice
+ditandai lunas. Untuk pembayaran tunai atau transfer, admin mencatatnya dengan
+markInvoicePaid. Kedua jalur berakhir pada langkah yang sama: term voucher
+dibuat dengan masa berlakunya dan dicatat pada voucher_history, lalu murid
+diberi tahu; fungsi expireVouchers menghanguskan sisa sesi setelah tenggat.
 
 ## 5.9 Desain Basis Data
 
 Cloud Firestore menyimpan data sebagai dokumen di dalam koleksi [8].
-Koleksi utama dan field pentingnya dirangkum pada Tabel 5.11. Beberapa ID
+Hubungan antarkoleksi digambarkan pada Gambar 5.19 sampai Gambar 5.24, dan
+koleksi utama beserta field pentingnya dirangkum pada Tabel 5.11. Beberapa ID
 dokumen disusun dari data lain agar satu kejadian tidak tersimpan dua kali:
 {jadwalId}_{tanggal} untuk sesi, {sesiId}_{muridId} untuk absensi dan buku
 besar voucher, {muridId}_{tingkat} untuk rekomendasi kenaikan, dan
 {guruId}_{bulan} untuk rekap guru. Pengaturan yang dapat diubah admin
 disimpan pada koleksi settings (pricing, scheduling, promotion, rooms).
+
+Hubungan antara pengguna, jadwal mingguan, dan sesi kelas ditunjukkan pada
+Gambar 5.19.
+
+[GAMBAR 5.19: struktur Koleksi Pengguna, Jadwal, dan Sesi Kelas]
+
+Gambar 5.19
+Struktur Koleksi Pengguna, Jadwal, dan Sesi Kelas
+
+Koleksi users menyimpan satu dokumen untuk setiap akun dengan ID yang sama
+dengan uid Firebase Authentication, beserta peran, status, dan tingkatnya.
+Koleksi schedules menyimpan pola kelas mingguan, sedangkan class_sessions
+menyimpan kejadian kelas pada satu tanggal. ID sesi disusun dari ID jadwal dan
+tanggalnya, sehingga fungsi generateSessions yang dijalankan berulang tidak
+membuat sesi ganda. Field teacherId pada sesi disalin dari jadwal dan berubah
+bila admin menunjuk guru pengganti.
+
+Pemesanan sesi dan kehadiran murid disimpan pada koleksi attendance seperti
+pada Gambar 5.20.
+
+[GAMBAR 5.20: struktur Koleksi Pemesanan, Kehadiran, dan Daftar Tunggu]
+
+Gambar 5.20
+Struktur Koleksi Pemesanan, Kehadiran, dan Daftar Tunggu
+
+Satu dokumen attendance mewakili satu murid pada satu sesi; field booked
+mencatat pesanan, sedangkan attendanceStatus dan sessionCredited diisi saat
+sesi ditutup. ID dokumen disusun dari ID sesi dan ID murid, sehingga seorang
+murid tidak dapat memesan sesi yang sama dua kali. Field classTermId menunjuk
+voucher yang sesinya dipakai untuk pesanan itu. Koleksi waitlist menyimpan
+antrean kelas yang penuh dengan pola ID yang sama; ketika ada kursi kosong,
+antrean pertama dipesankan secara otomatis.
+
+Koleksi yang menyimpan pembayaran dan voucher ditunjukkan pada Gambar 5.21.
+
+[GAMBAR 5.21: struktur Koleksi Tagihan, Voucher, dan Buku Besar Voucher]
+
+Gambar 5.21
+Struktur Koleksi Tagihan, Voucher, dan Buku Besar Voucher
+
+Setiap voucher pada student_class_terms menunjuk tagihan asalnya melalui
+sourceInvoiceId, dan satu tagihan menghasilkan paling banyak satu voucher.
+Setiap perubahan jumlah sesi dicatat sebagai satu dokumen voucher_history yang
+menunjuk voucher melalui termId. ID buku besar disusun dari kejadiannya: ID
+tagihan untuk pembelian, gabungan ID sesi dan ID murid untuk pemakaian, dan ID
+voucher untuk sisa sesi yang hangus. Karena satu ID hanya dapat dibuat sekali,
+satu kejadian tidak dapat tercatat dua kali.
+
+Koleksi yang dipakai untuk latihan ditunjukkan pada Gambar 5.22.
+
+[GAMBAR 5.22: struktur Koleksi Bank Soal, Paket Latihan, dan Hasil Latihan]
+
+Gambar 5.22
+Struktur Koleksi Bank Soal, Paket Latihan, dan Hasil Latihan
+
+Setiap butir soal disimpan sebagai satu dokumen question_bank beserta kode dan
+judul lembar soalnya. Paket latihan pada exercises tidak menyalin soal, tetapi
+hanya menyimpan daftar lembar dan butir soal yang dipakainya. Hasil pengerjaan
+ditulis ke exercise_results oleh fungsi finishExercise; paket berwaktu yang
+dapat diulang juga menyimpan nomor percobaannya. Jawaban yang harus diperiksa
+guru masuk ke marking_items dengan ID gabungan ID hasil dan ID soal, sehingga
+satu jawaban hanya memiliki satu butir penilaian.
+
+Tes simulasi yang diawasi memakai empat koleksi seperti pada Gambar 5.23.
+
+[GAMBAR 5.23: struktur Koleksi Kode Tes, Sesi Tes, Percobaan, dan Hasil Tes]
+
+Gambar 5.23
+Struktur Koleksi Kode Tes, Sesi Tes, Percobaan, dan Hasil Tes
+
+Kode tes menjadi ID dokumen test_codes dan menunjuk lembar soalnya melalui
+sheetKey. Setiap kali guru membuka tes, satu dokumen test_sessions dibuat
+dengan token yang berlaku selama 15 menit. Pengerjaan murid disimpan pada
+test_attempts dan hasilnya pada test_results dengan ID yang sama, yaitu
+gabungan kode tes dan ID murid. Murid yang mengerjakan kode yang sama pada
+sesi baru mendapat dokumen dengan akhiran nomor duduk, dan hanya duduk pertama
+yang sah yang ditandai counts untuk leaderboard dan kenaikan tingkat.
+
+Tiga koleksi yang isinya dihitung dari data lain ditunjukkan pada Gambar 5.24.
+
+[GAMBAR 5.24: koleksi Turunan untuk Leaderboard, Kenaikan Tingkat, dan Laporan Progress]
+
+Gambar 5.24
+Koleksi Turunan untuk Leaderboard, Kenaikan Tingkat, dan Laporan Progress
+
+Setiap kali sebuah dokumen test_results ditulis, trigger onTestResultWritten
+memperbarui entri leaderboard murid pada kode tes itu, menghitung ulang jumlah
+kode yang lulus, dan memperbarui ringkasan progress. Entri leaderboard
+menyimpan rankKey, yaitu urutan peringkat dalam satu nilai, sehingga papan
+peringkat dapat dibaca per halaman. Dokumen level_promotions berisi
+rekomendasi kenaikan tingkat yang menunggu keputusan admin. Karena ketiganya
+hanya ditulis oleh Cloud Functions, murid tidak dapat mengubah peringkat,
+rekomendasi, maupun ringkasannya sendiri.
 
 Tabel 5.11
 Koleksi Utama Cloud Firestore
@@ -480,12 +792,12 @@ Koleksi Utama Cloud Firestore
 | invoices | Tagihan dan pembayaran | studentId, kind, item, packageSize, amount, status, paymentMethod, midtransOrderId, paidAt, paidBy, classTermId, discardReason |
 | question_bank | Butir soal dan lembar kerja | type, skillCategory, category, level, question, section, sheetCode, sheetTitle, sectionAudioUrl, transcript, createdBy |
 | exercises | Paket latihan dan tes | title, level, bankSheets, bankQuestionIds, timeLimitMinutes, isPublished, teacherId |
-| exercise_assignments, exercise_attempts, exercise_results | Penugasan, percobaan berjalan, hasil akhir | exerciseId, studentId, dueDate; startedAt; score, correct, total, category, late, submittedAt |
+| exercise_assignments, exercise_attempts, exercise_results | Penugasan, percobaan berjalan, hasil akhir | exerciseId, studentId, dueDate; startedAt; score, correct, total, category, late, attemptNo, submittedAt |
 | marking_items | Antrean penilaian guru | resultId, studentId, questionId, answerText, maxPoints, mark, status |
 | test_formats, test_codes | Format HSK per tingkat; kode tes | parts, durasi, passMark; code, level, year, sheetKey, active, placement |
-| test_sessions, test_attempts, test_results | Sesi tes yang dibuka guru, percobaan murid, hasil | token, openedBy, codeId; part, partClocks, events; parts, total, mark, passed, valid, status |
+| test_sessions, test_attempts, test_results | Sesi tes yang dibuka guru, percobaan murid, hasil | token, openedBy, codeId; part, partClocks, events; parts, total, mark, passed, valid, status, sittingNo, counts |
 | placement_results | Hasil tes penempatan pengunjung | codeId, level, total, passed, recommendedLevel, resultCode, claimed |
-| leaderboards/{codeId}/entries | Peringkat per kode tes | studentId, studentNameChinese, total, parts, seconds |
+| leaderboards/{codeId}/entries | Peringkat per kode tes | studentId, studentNameChinese, total, parts, seconds, finishedAt, rankKey |
 | promotion_progress, level_promotions, level_paths | Kemajuan, rekomendasi, dan daftar centang kenaikan tingkat | count, codes, minCodes, mode; fromLevel, toLevel, status, decision, declineReason; items |
 | progress_summary, progress_notes | Ringkasan progress dan catatan guru | attendance, practice, tests, voucher, warnings, status; studentId, teacherId, note |
 | notifications, announcements | Pemberitahuan per pengguna dan pengumuman | kind, title, body, forRole, userId, read; title, body, audience, toDate, notify |
@@ -553,12 +865,39 @@ depan (maskot pensil, warna hijau dan kuning merek Easy Study), dengan
 tampilan yang lebih tenang di dalam aplikasi (permukaan putih, sedikit
 hiasan) serta mode gelap. Setiap peran mempunyai halaman beranda dengan tab
 di bawah pada telepon dan menu samping di layar lebar; bahasa antarmuka
-(Indonesia atau Inggris) dipilih pada halaman login dan tab profil. Peta
-halaman per peran ditunjukkan pada Gambar 5.9; halaman admin disusun untuk
-PC, halaman guru dan murid untuk telepon. Tampilan setiap halaman dibahas
-pada Bab VI.
+(Indonesia atau Inggris) dipilih pada halaman login dan tab profil.
 
-[GAMBAR 5.9: peta halaman aplikasi per peran]
+Daftar yang dapat menjadi panjang, seperti pengguna, tagihan, antrean
+penilaian, jejak audit, dan riwayat kelas, dibaca per halaman berisi 25 baris
+dengan kursor Cloud Firestore, dan daftar yang berurutan menurut tanggal
+mempunyai pilihan rentang tanggal, sehingga aplikasi hanya membaca data yang
+sedang ditampilkan. Laporan admin memakai satu pilihan periode dari bulan ke
+bulan, dan ekspor CSV atau PDF mengikuti rentang yang dipilih.
 
-Gambar 5.9
-Peta Halaman Aplikasi per Peran
+Peta halaman dibagi menjadi dua diagram; Gambar 5.25 memuat halaman umum dan
+halaman admin.
+
+[GAMBAR 5.25: peta Halaman Umum dan Admin]
+
+Gambar 5.25
+Peta Halaman Umum dan Admin
+
+Halaman umum dapat dibuka tanpa masuk: halaman depan, login dengan pilihan
+bahasa, pendaftaran murid baru, tes penempatan untuk pengunjung, halaman
+menunggu persetujuan, dan kebijakan privasi. Halaman admin disusun untuk PC
+dan mencakup dashboard, pengguna dan persetujuan, bank soal dan kode tes,
+paket latihan, timetable, halaman kelas, voucher dan invoice, promosi tingkat,
+laporan, pengumuman, pengaturan organisasi, dan profil.
+
+Gambar 5.26 memuat halaman guru, murid, dan orang tua.
+
+[GAMBAR 5.26: peta Halaman Guru, Murid, dan Orang Tua]
+
+Gambar 5.26
+Peta Halaman Guru, Murid, dan Orang Tua
+
+Halaman guru dan murid disusun untuk telepon dan mengikuti urutan pekerjaan
+sehari-hari: guru dari jadwal mengajar sampai antrean penilaian, murid dari
+beranda sampai profil. Orang tua mempunyai empat halaman, yaitu progress anak,
+kehadiran anak, tagihan dan pembayaran, serta profil. Tampilan setiap halaman
+dibahas pada Bab VI.

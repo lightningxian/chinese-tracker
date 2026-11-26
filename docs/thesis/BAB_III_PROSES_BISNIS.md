@@ -194,82 +194,146 @@ untuk menggambarkan urutan langkah pada proses-proses utama.
 
 ### 3.3.1 Rich Picture
 
-Rich picture sistem lama ditunjukkan pada Gambar 3.5. Terdapat lima
-pihak yang terlibat, yaitu calon murid, murid, admin, guru, dan pemilik usaha,
-serta empat alat bantu, yaitu WhatsApp, spreadsheet, daftar hadir kertas, dan
-aplikasi web Nilai Simulasi HSK. Hampir semua aliran informasi melewati
-admin: pendaftaran, pertanyaan jam belajar, bukti transfer, konfirmasi kehadiran,
-dan permintaan guru pengganti datang kepada admin melalui WhatsApp, lalu
-admin mencatatnya di spreadsheet. Guru menerima kabar murid baru beserta
-jam belajarnya dari admin, mencatat kehadiran di kertas, mengoreksi latihan dan tes di kertas, lalu
-menyetorkan daftar hadir dan nilai kepada admin. Pemilik usaha memperoleh
-gambaran keadaan kursus dengan bertanya kepada admin dan guru.
+Rich picture sistem lama digambarkan dalam dua bagian agar setiap aliran
+informasi terbaca dengan jelas. Terdapat lima pihak yang terlibat, yaitu
+calon murid, murid, admin, guru, dan pemilik usaha, serta empat alat bantu,
+yaitu WhatsApp, spreadsheet, daftar hadir kertas, dan aplikasi web Nilai
+Simulasi HSK. Bagian pertama, yaitu pendaftaran, daftar sesi harian, dan
+pembayaran, ditunjukkan pada Gambar 3.5.
 
-[GAMBAR 3.5: rich picture sistem lama]
+[GAMBAR 3.5: rich picture sistem lama, bagian pendaftaran, daftar sesi harian, dan pembayaran]
 
 Gambar 3.5
-Rich Picture Sistem Saat Ini
+Rich Picture Sistem Saat Ini: Pendaftaran, Daftar Sesi, dan Pembayaran
+
+Hampir semua aliran informasi melewati admin: pendaftaran, pertanyaan jam
+belajar, nama pada daftar sesi harian, bukti transfer, dan izin datang kepada
+admin melalui WhatsApp satu per satu, lalu admin mencatat murid, pembayaran,
+dan sisa sesi di spreadsheet. Murid tidak dapat melihat sendiri sisa sesinya,
+sedangkan pemilik usaha memperoleh gambaran keadaan kursus dengan bertanya
+kepada admin.
+
+Bagian kedua, yaitu kegiatan mengajar, kehadiran, dan nilai, ditunjukkan
+pada Gambar 3.6.
+
+[GAMBAR 3.6: rich picture sistem lama, bagian mengajar, kehadiran, dan nilai]
+
+Gambar 3.6
+Rich Picture Sistem Saat Ini: Mengajar, Kehadiran, dan Nilai
+
+Guru menerima kabar dari admin tentang murid yang datang hari itu beserta
+jam belajarnya, dan permintaan guru pengganti juga disampaikan admin melalui
+WhatsApp; karena tidak ada jadwal tertulis, pemakaian guru dan ruang tidak
+terpantau. Guru mencatat kehadiran di kertas, mengoreksi latihan dan tes di
+kertas lalu memberitahukan nilainya secara lisan, dan memasukkan nilai tes
+simulasi per bagian ke aplikasi web Nilai Simulasi HSK. Daftar hadir kertas
+disetorkan kepada admin secara berkala dan menjadi dasar penghitungan sisa
+sesi di spreadsheet. Pemilik usaha mengetahui perkembangan murid dengan
+bertanya kepada guru.
 
 ### 3.3.2 Use Case Diagram Sistem Saat Ini
 
-Use case diagram sistem lama ditunjukkan pada Gambar 3.6. Aktor calon
-murid menghubungi admin melalui WhatsApp atau datang langsung, mengisi
-Google Form data diri, dan memilih mulai dari Beginner atau mengikuti tes
-singkat. Aktor murid (beserta orang tuanya) membayar paket, mengirim bukti
-transfer, menuliskan nama pada daftar sesi harian, mengikuti sesi, mengerjakan
-latihan dan tes simulasi di kertas, dan menanyakan sisa sesi. Aktor admin
-mengirim tautan Google Form, meneruskan bukti transfer kepada pemilik usaha,
-menulis kwitansi dan mencatat paket di Excel voucher, mengirim daftar sesi
-harian, mengurangi sesi dari daftar hadir kertas, mengingatkan paket yang
-hampir habis, mencetak dan menstok soal HSK lama, mencari guru pengganti,
-dan membuat rekap bulanan. Aktor guru memberi tes singkat, mengajar sesi
-bertingkat campuran, mencatat kehadiran di kertas, mengawasi tes dan memutar
-rekaman, mengoreksi, serta memutuskan kapan murid dites dan naik tingkat.
-Aktor pemilik usaha menerima pemberitahuan pembayaran, menanyakan
-perkembangan murid, dan membaca rekap bulanan. Semua use case tersebut
-dilakukan tanpa sistem yang terhubung.
+Use case sistem lama digambarkan dalam tiga diagram menurut kelompok
+aktornya, dan semuanya dilakukan tanpa sistem yang terhubung. Use case
+calon murid dan murid ditunjukkan pada Gambar 3.7.
 
-[GAMBAR 3.6: use case diagram sistem lama]
+[GAMBAR 3.7: use case diagram sistem lama untuk calon murid dan murid]
 
-Gambar 3.6
-Use Case Diagram Sistem Saat Ini
+Gambar 3.7
+Use Case Diagram Sistem Saat Ini: Calon Murid dan Murid
+
+Aktor calon murid menghubungi admin melalui WhatsApp atau datang langsung,
+mengisi Google Form data diri, dan memilih mulai dari Beginner atau mengikuti
+tes singkat yang diberikan guru. Aktor murid (beserta orang tuanya) membayar
+paket, mengirim bukti transfer, menuliskan nama pada daftar sesi harian,
+mengikuti sesi bertingkat campuran yang diajar guru, mengerjakan latihan dan
+tes simulasi di kertas, dan menanyakan sisa sesi kepada admin.
+
+Use case admin ditunjukkan pada Gambar 3.8.
+
+[GAMBAR 3.8: use case diagram sistem lama untuk admin]
+
+Gambar 3.8
+Use Case Diagram Sistem Saat Ini: Admin
+
+Aktor admin mengirim tautan Google Form, meneruskan bukti transfer kepada
+pemilik usaha, menulis kwitansi dan mencatat paket di Excel voucher, mengirim
+daftar sesi harian, mengurangi sesi dari daftar hadir kertas, mengingatkan
+paket yang hampir habis, mencetak dan menstok soal HSK lama, dan membuat
+rekap bulanan. Bila seorang guru berhalangan, admin mencari guru pengganti
+dengan menghubungi guru lain.
+
+Use case guru dan pemilik usaha ditunjukkan pada Gambar 3.9.
+
+[GAMBAR 3.9: use case diagram sistem lama untuk guru dan pemilik usaha]
+
+Gambar 3.9
+Use Case Diagram Sistem Saat Ini: Guru dan Pemilik Usaha
+
+Selain memberi tes singkat dan mengajar sesi bertingkat campuran yang sudah
+tampak pada Gambar 3.7, aktor guru mencatat kehadiran di kertas, mengawasi
+tes dan memutar rekaman, mengoreksi, serta memutuskan kapan murid dites dan
+naik tingkat. Aktor pemilik usaha menerima pemberitahuan pembayaran,
+membaca rekap bulanan, dan menanyakan perkembangan murid kepada guru.
 
 ### 3.3.3 Activity Diagram Sistem Saat Ini
 
 Dua proses utama sistem lama digambarkan dalam activity diagram, yaitu
-pendaftaran dan pembayaran serta tes simulasi dan kenaikan tingkat.
+pendaftaran dan pembayaran serta tes simulasi dan kenaikan tingkat. Setiap
+proses dibagi menjadi dua diagram pada titik pergantian kegiatannya.
+Pendaftaran digambarkan pada Gambar 3.10.
 
-Gambar 3.7 menggambarkan pendaftaran dan pembayaran. Calon murid
-menghubungi admin melalui WhatsApp atau datang langsung; admin menjelaskan
-kelas, biaya, dan jam sesi, lalu mengirim tautan Google Form yang diisi calon
-murid. Admin menanyakan apakah calon murid ingin mulai dari Beginner atau
-mengikuti tes singkat; bila memilih tes, guru memberi tes singkat lisan dan
-menentukan tingkat awal. Admin menyebutkan paket delapan atau enam belas
-sesi beserta harganya, lalu calon murid membayar dengan transfer atau tunai.
-Bukti transfer dikirim kepada admin dan diteruskan kepada pemilik usaha.
+[GAMBAR 3.10: activity diagram pendaftaran pada sistem lama]
+
+Gambar 3.10
+Activity Diagram Pendaftaran pada Sistem Saat Ini
+
+Calon murid menghubungi admin melalui WhatsApp atau datang langsung; admin
+menjelaskan kelas, biaya, dan jam sesi, lalu mengirim tautan Google Form
+yang diisi calon murid. Admin menanyakan apakah calon murid ingin mulai dari
+Beginner atau mengikuti tes singkat; bila memilih tes, guru memberi tes
+singkat lisan dan menentukan tingkat awal. Admin kemudian menyebutkan paket
+delapan atau enam belas sesi beserta harganya.
+
+Pembayaran yang menyusul pendaftaran digambarkan pada Gambar 3.11.
+
+[GAMBAR 3.11: activity diagram pembayaran pada sistem lama]
+
+Gambar 3.11
+Activity Diagram Pembayaran pada Sistem Saat Ini
+
+Calon murid membayar paket dengan transfer atau tunai. Untuk transfer,
+bukti transfer dikirim kepada admin dan diteruskan kepada pemilik usaha.
 Admin menulis kwitansi fisik, mencatat paket di Excel voucher aktif, dan
 memasukkan murid ke grup WhatsApp siswa.
 
-[GAMBAR 3.7: activity diagram pendaftaran dan pembayaran pada sistem lama]
+Pelaksanaan tes simulasi digambarkan pada Gambar 3.12.
 
-Gambar 3.7
-Activity Diagram Pendaftaran dan Pembayaran pada Sistem Saat Ini
+[GAMBAR 3.12: activity diagram pelaksanaan tes simulasi pada sistem lama]
 
-Gambar 3.8 menggambarkan tes simulasi dan kenaikan tingkat. Guru
-menilai bahwa seorang murid perlu dites, karena sudah lama tidak dites atau
-sudah mencapai titik tertentu. Admin mengambil soal HSK lama yang sudah
+Gambar 3.12
+Activity Diagram Pelaksanaan Tes Simulasi pada Sistem Saat Ini
+
+Guru menilai bahwa seorang murid perlu dites, karena sudah lama tidak dites
+atau sudah mencapai titik tertentu. Admin mengambil soal HSK lama yang sudah
 dicetak dari stok arsip; guru mengawasi tes dan memutar rekaman bagian
-mendengarkan, sementara murid mengerjakannya di kertas. Guru mengoreksi dan
-menghitung nilai per bagian. Bila nilai belum mencapai sekitar 60 % pada
-setiap bagian, murid melanjutkan latihan dan dites ulang kemudian. Bila lulus,
-guru mencatat nilai dan menghitung tes yang sudah lulus; setelah dua sampai
-tiga tes lulus dan latihan dianggap cukup, guru menyatakan murid naik tingkat
-dan memberitahukannya secara lisan.
+mendengarkan, sementara murid mengerjakannya di kertas. Guru kemudian
+mengoreksi dan menghitung nilai per bagian.
 
-[GAMBAR 3.8: activity diagram tes simulasi dan kenaikan tingkat pada sistem lama]
+Penilaian dan kenaikan tingkat setelah tes dikoreksi digambarkan
+pada Gambar 3.13.
 
-Gambar 3.8
-Activity Diagram Tes Simulasi dan Kenaikan Tingkat pada Sistem Saat Ini
+[GAMBAR 3.13: activity diagram penilaian dan kenaikan tingkat pada sistem lama]
+
+Gambar 3.13
+Activity Diagram Penilaian dan Kenaikan Tingkat pada Sistem Saat Ini
+
+Bila nilai belum mencapai sekitar 60 % pada setiap bagian, murid melanjutkan
+latihan dan dites ulang kemudian. Bila lulus, guru mencatat nilai dan
+menghitung tes yang sudah lulus; setelah dua sampai tiga tes lulus dan
+latihan dianggap cukup, guru menyatakan murid naik tingkat dan
+memberitahukannya secara lisan. Bila belum, murid melanjutkan belajar di
+tingkat yang sama.
 
 ## 3.4 Permasalahan pada Sistem Saat Ini
 

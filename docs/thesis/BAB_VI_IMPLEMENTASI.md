@@ -7,7 +7,7 @@ kebenaran sistem.
 
 ## 6.1 Implementasi Desain
 
-Aplikasi dibangun sesuai arsitektur pada Gambar 5.1, dipasang di Firebase
+Aplikasi dibangun sesuai arsitektur pada Gambar 5.1 dan Gambar 5.2, dipasang di Firebase
 Hosting pada alamat https://chinese-tracker.web.app, dan dibagikan pula
 sebagai berkas APK Android. Lingkungan implementasi dirangkum pada Tabel
 6.1. Tangkapan layar diambil dari Firebase Emulator Suite dengan data uji

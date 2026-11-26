@@ -26,9 +26,9 @@ bukan di sini; aturannya ada di `docs/THESIS_BOOK_GUIDE.md` §6.
 |---|---|---|
 | I Pendahuluan | `BAB_I_PENDAHULUAN.md` | Draf lengkap, 8 `[ISI]`; 1.4 tanpa alat bantu AI (permintaan pembimbing 2026-11-25); di Word: `word/BUKU TA Easy Study.docx` dan `word/BAB I PENDAHULUAN.docx` |
 | II Teori Penunjang | `BAB_II_TEORI_PENUNJANG.md` | Draf lengkap; diperpanjang 2026-11-25 atas masukan pembimbing: Gambar 2.1–2.8 digambar sendiri (`tools/make_bab2_figs.py`), sekitar 2.940 kata, sekitar 15 halaman |
-| III Proses Bisnis | `BAB_III_PROSES_BISNIS.md` | Draf lengkap, butuh foto dan angka dari pemilik; sistem lama **tanpa penjadwalan guru** (pemilik 2026-11-24: 3.2.2 dan Gambar 3.2/3.8 dihapus, gambar dinomori ulang); Gambar 3.1–3.3 adalah foto/tangkapan layar pemilik (`word/fig_3_1.png` daftar sesi WhatsApp dengan nama dan nomor diburamkan, `fig_3_2.png` daftar hadir kertas, `fig_3_3.png` halaman nilai HSK dengan data pribadi diburamkan); Gambar 3.4 aplikasi web Nilai Simulasi HSK (tangkapan layar), 3.5 (rich picture), 3.6 (use case), 3.7 dan 3.8 (activity) digambar dari jawaban pemilik 2026-11-24 (`word/fig_3_4.png` sampai `fig_3_8.png`, sumber SVG di scratchpad chat PLAN) |
+| III Proses Bisnis | `BAB_III_PROSES_BISNIS.md` | Draf lengkap, butuh foto dan angka dari pemilik; sistem lama **tanpa penjadwalan guru** (pemilik 2026-11-24: 3.2.2 dan Gambar 3.2/3.8 dihapus, gambar dinomori ulang); Gambar 3.1–3.3 adalah foto/tangkapan layar pemilik (`word/fig_3_1.png` daftar sesi WhatsApp dengan nama dan nomor diburamkan, `fig_3_2.png` daftar hadir kertas, `fig_3_3.png` halaman nilai HSK dengan data pribadi diburamkan); Gambar 3.4 aplikasi web Nilai Simulasi HSK (tangkapan layar); diagram digambar dari jawaban pemilik 2026-11-24 dan digambar ulang 2026-11-26 dengan aturan setengah halaman: 3.5–3.6 (rich picture), 3.7–3.9 (use case), 3.10–3.13 (activity), dari `tools/make_bab3_figs.py` |
 | IV Analisa Sistem | `BAB_IV_ANALISA_SISTEM.md` | Draf lengkap dari jawaban pemilik 2026-11-24 dan dokumen asli (Google Form, Excel daftar siswa dan rekap absensi, kwitansi); Gambar 4.1–4.4 di `word/` (data pribadi diburamkan) |
-| V Desain Sistem | `BAB_V_DESAIN_SISTEM.md` | Draf lengkap dari proposal §IV dan kode: 12 sub-bab, Algoritma 5.1–5.8 (format kampus, numbering template), Rumus 5.1–5.2, Tabel 5.1–5.13, Gambar 5.1–5.9 (arsitektur, use case per peran, 4 activity diagram, peta halaman) di `word/` |
+| V Desain Sistem | `BAB_V_DESAIN_SISTEM.md` | Draf lengkap dari proposal §IV dan kode: 12 sub-bab, Algoritma 5.1–5.8, Rumus 5.1–5.2, Tabel 5.1–5.13; **sejak 2026-11-26 memakai set diagram UML (pilihan pemilik) dengan aturan setengah halaman: Gambar 5.1–5.26** (arsitektur 2, status 2, sequence 3, use case 5, activity 6, struktur koleksi 6, peta halaman 2), masing-masing dengan kalimat pengantar dan penjelasan; teks disesuaikan dengan Build 9 (duduk ulang kode tes, daftar berhalaman, laporan per periode); sekitar 7.600 kata |
 | VI Implementasi | `BAB_VI_IMPLEMENTASI.md` | Diringkas dua kali atas masukan pembimbing (hanya bagian penting; batas 120 halaman termasuk halaman depan): Tabel 6.1–6.2, Gambar 6.1–6.12 (12 × 7,28 cm), Segmen Program 6.1–6.6, sekitar 1.720 kata, target 13 halaman (49 pada 2026-11-25, 20 setelah ringkasan pertama); versi lengkap (37 gambar, 17 segmen) di `archive/BAB_VI_LENGKAP_2026-11-25.md` dan `word/bab6_lengkap/` untuk lampiran dan naskah video; dua tanda kuning: tautan video demonstrasi dan huruf lampiran |
 | VII–VIII | belum (kerangka sub-bab ada di buku Word) | setelah uji coba (Januari 2027) |
 | Daftar Pustaka | `DAFTAR_PUSTAKA.md` | 20 sumber proposal, urut abjad |
@@ -59,6 +59,14 @@ dipesan, murid dengan hasil tes) dicari skrip itu sendiri di Firestore emulator.
 (daftar berhalaman, leaderboard dengan waktu, laporan per periode) gambar 6.5 (laporan bulanan) dan 6.10 (leaderboard) diambil ulang.
 
 Gambar Bab II: `python3 -I docs/thesis/tools/make_bab2_figs.py` (SVG digambar skrip, PNG lewat Chrome headless).
+
+**Aturan gambar (pemilik dan pembimbing, 2026-11-26):** sebuah diagram paling besar setengah halaman, sehingga satu
+halaman memuat dua diagram beserta penjelasannya. Diagram digambar 14 cm lebar dan paling tinggi 7,7 cm (kanvas
+1000 × 550 px); yang tidak muat dipecah menjadi dua. Alat bersama: `tools/figkit.py` (menolak kanvas yang lebih tinggi).
+Gambar Bab III: `python3 -I docs/thesis/tools/make_bab3_figs.py`. Gambar Bab V: `python3 -I docs/thesis/tools/make_bab5_figs.py`
+(menjalankan bagian a dan b, lalu menyalin ke `word/fig_5_N.png` menurut tabel `BOOK` di dalamnya; nomor mengikuti urutan
+di `BAB_V_DESAIN_SISTEM.md`). Tinggi setiap gambar di buku ada di `FIG_SIZE_CM` pada `build_book.py`. Foto 3.1, 3.2, dan 4.1
+ditahan pada tinggi 9,5 cm.
 
 Untuk pengumpulan, kampus meminta satu file per bab; file per bab dibuat
 dengan `tools/build_bab.py` (contoh di bawah) atau dengan memecah buku lengkap
