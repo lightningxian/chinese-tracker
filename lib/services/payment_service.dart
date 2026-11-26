@@ -106,6 +106,10 @@ class PaymentService {
     required Uint8List proofBytes,
     required String proofName,
   }) async {
+    if (proofBytes.length >= 20 * 1024 * 1024) {
+      throw const PaymentException(
+          'The photo is larger than 20 MB. Take a smaller photo or a screenshot.');
+    }
     final ext = _imageExt(proofName);
     final path = 'payment_proofs/$invoiceId/'
         '${DateTime.now().millisecondsSinceEpoch}.$ext';

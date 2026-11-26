@@ -120,7 +120,7 @@ describe("payment photos (2026-11-26)", () => {
   it("not an image, an SVG, or too large is refused", async () => {
     await assertFails(put("admin1", 1 * MB, "application/pdf"));
     await assertFails(put("admin1", 1 * MB, "image/svg+xml"));
-    await assertFails(put("admin1", 11 * MB, "image/jpeg"));
+    await assertFails(put("admin1", 21 * MB, "image/jpeg"));
   });
 
   it("teachers and students neither upload nor read it", async () => {

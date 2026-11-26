@@ -6,6 +6,23 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-26 — Claude (BUILD chat): payment photo up to 20 MB
+
+**What changed**
+- Storage rule `payment_proofs/` allows images under 20 MB (was 10); the
+  app says plainly when a photo is larger instead of "unauthorized".
+
+**Why**
+- Owner's first live upload was refused (`firebase_storage/unauthorized`).
+  Either the Storage rule / cross-service grant is not live yet, or the
+  phone photo was over 10 MB; one `firebase deploy --only storage` by the
+  owner (answer Y to the grant) covers both.
+
+**For review**
+- Storage rules + hosting. Rules test updated (21 MB refused).
+
+---
+
 ## 2026-11-26 — Claude (BUILD chat): one voucher per paid invoice, payment photo required
 
 **What changed**

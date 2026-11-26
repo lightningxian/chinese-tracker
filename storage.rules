@@ -92,11 +92,12 @@ service firebase.storage {
     }
 
     // Owner 2026-11-26: the photo of a cash or transfer payment (receipt or
-    // transfer screenshot), kept as documentation. Admins only; images only.
+    // transfer screenshot), kept as documentation. Admins only; images only,
+    // under 20 MB (phone cameras make large files).
     match /payment_proofs/{invoiceId}/{fileName} {
       allow read, delete: if isAdmin();
       allow write: if isAdmin() && isImage() &&
-        request.resource.size < 10 * 1024 * 1024;
+        request.resource.size < 20 * 1024 * 1024;
     }
 
     // Question-bank media (images/audio per question). Staff write; signed-in read.
