@@ -1,19 +1,24 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/paging/date_range.dart';
+import '../../core/paging/paged_controller.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
+import '../../core/utils/csv_export.dart';
+import '../../core/widgets/paging_bars.dart';
 import '../../core/widgets/app_data_table.dart';
-import '../../core/widgets/table_tools.dart';
 import '../../core/widgets/status_pill.dart';
 import '../../l10n/l10n.dart';
 import '../../l10n/labels_admin.dart';
-import '../../models/app_user.dart';
 import '../../models/invoice.dart';
 import '../../models/student_class_term.dart';
 import '../../services/firestore_service.dart';
+import '../../services/promotion_service.dart';
 
 class AdminVouchersTab extends StatefulWidget {
   const AdminVouchersTab({super.key});
@@ -31,9 +36,55 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
   String? _sortColumnId;
   bool _sortAscending = true;
 
-  /// null = all; otherwise only vouchers in that payment state.
+  /// null = all; otherwise only vouchers in that payment state (applied to
+  /// the page: the state comes from the voucher's invoice).
   _PaymentState? _paymentFilter;
   Map<String, Invoice> _invoicesById = const {};
+
+  // Build 9 Then list: 25 vouchers a page (all dates by default, so an
+  // active voucher bought months ago is not hidden); a search is a small
+  // bounded query; names and invoices are read for the page only.
+  late final FirestoreService _firestore = context.read<FirestoreService>();
+  late final PagedController<StudentClassTerm> _pages = PagedController<StudentClassTerm>(
+    build: (range) => _searchResults != null
+        ? ListPageSource(_searchResults!)
+        : _firestore.voucherSource(range),
+    range: const DateRangeSel.all(),
+  )..addListener(_onPage);
+  List<StudentClassTerm>? _searchResults;
+  Timer? _debounce;
+  Map<String, String> _labels = const {};
+
+  Future<void> _onPage() async {
+    final items = _pages.items;
+    final ids = items.map((t) => t.studentId).where((id) => !_labels.containsKey(id)).toSet();
+    final invoiceIds = items
+        .map((t) => t.sourceInvoiceId ?? '')
+        .where((id) => id.isNotEmpty && !_invoicesById.containsKey(id))
+        .toSet();
+    try {
+      final labels = ids.isEmpty ? const <String, String>{} : await PromotionService().staffLabels(ids);
+      final invoices = invoiceIds.isEmpty
+          ? const <String, Invoice>{}
+          : await _firestore.invoicesByIds(invoiceIds);
+      if (!mounted) return;
+      setState(() {
+        _labels = {..._labels, for (final id in ids) id: labels[id] ?? id};
+        _invoicesById = {..._invoicesById, ...invoices};
+      });
+    } catch (e) {
+      debugPrint('voucher page: $e');
+    }
+  }
+
+  void _search(String text) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 350), () async {
+      final q = text.trim();
+      _searchResults = q.isEmpty ? null : await _firestore.searchVouchers(q);
+      if (mounted) _pages.reload();
+    });
+  }
 
   _PaymentState _paymentState(StudentClassTerm term) {
     final inv = _invoicesById[term.sourceInvoiceId];
@@ -71,6 +122,8 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
   @override
   void dispose() {
     _searchController.dispose();
+    _debounce?.cancel();
+    _pages.dispose();
     super.dispose();
   }
 
@@ -129,15 +182,8 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
     List<StudentClassTerm> terms,
     Map<String, String> usersById,
   ) {
-    final q = _query.trim().toLowerCase();
     return terms.where((term) {
-      if (_paymentFilter != null && _paymentState(term) != _paymentFilter) {
-        return false;
-      }
-      if (q.isEmpty) return true;
-      final studentName = (usersById[term.studentId] ?? '').toLowerCase();
-      final code = (term.voucherCode ?? '').toLowerCase();
-      return studentName.contains(q) || code.contains(q);
+      return _paymentFilter == null || _paymentState(term) == _paymentFilter;
     }).toList();
   }
 
@@ -367,6 +413,7 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
 
     try {
       await context.read<FirestoreService>().deleteClassTerm(term.id);
+      _pages.refresh();
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l.adminVouchersDeleted(code))),
@@ -386,48 +433,46 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
 
   @override
   Widget build(BuildContext context) {
-    final firestore = context.read<FirestoreService>();
-
-    return StreamBuilder<List<StudentClassTerm>>(
-      stream: firestore.watchAllClassTerms(),
-      builder: (context, termsSnap) {
-        return StreamBuilder<List<AppUser>>(
-          stream: firestore.watchAllUsers(),
-          builder: (context, usersSnap) {
-            if (termsSnap.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            return StreamBuilder<List<Invoice>>(
-              stream: firestore.watchAllInvoices(),
-              builder: (context, invSnap) {
-                _invoicesById = {
-                  for (final i in invSnap.data ?? const <Invoice>[]) i.id: i,
-                };
-                return _buildPage(context, termsSnap, usersSnap);
-              },
-            );
-          },
-        );
-      },
+    return ListenableBuilder(
+      listenable: _pages,
+      builder: (context, _) => _buildPage(context),
     );
   }
 
-  Widget _buildPage(
-    BuildContext context,
-    AsyncSnapshot<List<StudentClassTerm>> termsSnap,
-    AsyncSnapshot<List<AppUser>> usersSnap,
-  ) {
+  /// The CSV follows the search or the date range, not the visible page.
+  Future<void> _exportCsv() async {
+    final l = context.l10n;
+    final rows = await fetchRowsForExport(context, _pages);
+    if (rows == null || !mounted) return;
+    final ids = rows.map((t) => t.studentId).toSet();
+    final labels = await PromotionService().staffLabels(ids);
+    final invoices = await _firestore.invoicesByIds(rows.map((t) => t.sourceInvoiceId ?? ''));
+    _invoicesById = {..._invoicesById, ...invoices};
+    await CsvExport.download(
+      fileStem: 'vouchers',
+      header: _csvHeader(l),
+      rows: [for (final t in rows) _csvRow(l, t, labels)],
+    );
+  }
+
+  Widget _buildPage(BuildContext context) {
     {
       {
         final l = context.l10n;
-        // Staff label `中文名 (Latin name)` (PLAN.md §3); search matches both.
-        final usersById = <String, String>{
-          for (final u in usersSnap.data ?? <AppUser>[]) u.uid: u.staffLabel,
-        };
-        final terms = _filter(termsSnap.data ?? [], usersById);
+        // Staff label `中文名 (Latin name)` (PLAN.md §3), for the page.
+        final usersById = _labels;
+        final terms = _filter(_pages.items, usersById);
 
-        return ListView(
+        return PagedListBody<StudentClassTerm>(
+          controller: _pages,
           padding: const EdgeInsets.all(_horizontalPadding),
+          itemBuilder: (context, _) => const SizedBox.shrink(),
+          emptyIcon: Icons.confirmation_number_outlined,
+          emptyTitle: _query.trim().isEmpty ? l.adminVouchersEmptyTitle : l.adminVouchersNoMatch,
+          emptySubtitle: l.adminVouchersEmptySubtitle,
+          body: _buildVoucherTable(context: context, terms: terms, usersById: usersById),
+          header: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
@@ -442,7 +487,10 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
             ),
             TextField(
               controller: _searchController,
-              onChanged: (value) => setState(() => _query = value),
+              onChanged: (value) {
+                setState(() => _query = value);
+                _search(value);
+              },
               decoration: InputDecoration(
                 hintText: l.adminVouchersSearchHint,
                 prefixIcon: const Icon(Icons.search, size: 20),
@@ -477,72 +525,24 @@ class _AdminVouchersTabState extends State<AdminVouchersTab> {
                     selectedColor: AppColors.teal.withValues(alpha: 0.15),
                     checkmarkColor: AppColors.teal,
                   ),
-                ExportCsvButton(
-                  fileStem: 'vouchers',
-                  header: _csvHeader(l),
-                  rows: () => [
-                    for (final t in _sorted(terms, usersById))
-                      _csvRow(l, t, usersById),
-                  ],
+                OutlinedButton.icon(
+                  onPressed: _exportCsv,
+                  icon: const Icon(Icons.download_outlined, size: 18),
+                  label: Text(l.pagingExportCsv),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            if (terms.isEmpty)
-              AppCard(
-                child: Column(
-                  children: [
-                    Icon(
-                      Icons.confirmation_number_outlined,
-                      size: 40,
-                      color: AppColors.textSecondary,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      (termsSnap.data ?? []).isEmpty
-                          ? l.adminVouchersEmptyTitle
-                          : l.adminVouchersNoMatch,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                        color: AppColors.navy,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      l.adminVouchersEmptySubtitle,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 13,
-                        height: 1.4,
-                      ),
-                    ),
-                    if ((termsSnap.data ?? []).isEmpty) ...[
-                      const SizedBox(height: 16),
-                      FilledButton.icon(
-                        onPressed: () => context.push('/admin/vouchers/new'),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.navy,
-                        ),
-                        icon: const Icon(Icons.add, size: 18),
-                        label: Text(l.adminVouchersNewVoucher),
-                      ),
-                    ],
-                  ],
-                ),
-              )
-            else
-              _buildVoucherTable(
-                context: context,
-                terms: terms,
-                usersById: usersById,
-              ),
+            if (_searchResults == null) ...[
+              const SizedBox(height: 10),
+              DateRangeBar(value: _pages.range, onChanged: _pages.setRange),
+            ],
           ],
+          ),
         );
       }
     }
   }
+
 }
 
 class _VoucherCard extends StatelessWidget {

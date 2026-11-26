@@ -1433,6 +1433,64 @@ class FirestoreService {
     return watchStudentJoinedSessions(studentId);
   }
 
+  /// Build 9 Then list: the admin's vouchers, newest first, in [range].
+  PageSource<StudentClassTerm> voucherSource(DateRangeSel range) => FirestorePageSource(
+      applyDateRange(
+          _db
+              .collection(AppConstants.studentClassTermsCollection)
+              .orderBy('createdAt', descending: true),
+          'createdAt',
+          range),
+      StudentClassTerm.fromFirestore);
+
+  /// Vouchers matching a search: a voucher code that starts with [text], or
+  /// a student whose name matches it (through the Users search index).
+  /// Bounded (50 + 10 students), so it is read at once.
+  Future<List<StudentClassTerm>> searchVouchers(String text) async {
+    final col = _db.collection(AppConstants.studentClassTermsCollection);
+    final raw = text.trim();
+    final out = <String, StudentClassTerm>{};
+    if (raw.isNotEmpty) {
+      final upper = raw.toUpperCase();
+      final byCode = await col
+          .where('voucherCode', isGreaterThanOrEqualTo: upper)
+          .where('voucherCode', isLessThan: '$upper\uf8ff')
+          .limit(50)
+          .get();
+      for (final d in byCode.docs) {
+        out[d.id] = StudentClassTerm.fromFirestore(d);
+      }
+      final students = await userListQuery(role: AppConstants.roleStudent, search: raw)
+          .limit(10)
+          .get();
+      final ids = students.docs.map((d) => d.id).toList();
+      if (ids.isNotEmpty) {
+        final byStudent = await col.where('studentId', whereIn: ids).limit(50).get();
+        for (final d in byStudent.docs) {
+          out[d.id] = StudentClassTerm.fromFirestore(d);
+        }
+      }
+    }
+    return out.values.toList()
+      ..sort((a, b) => (b.createdAt ?? DateTime(0)).compareTo(a.createdAt ?? DateTime(0)));
+  }
+
+  /// Invoices by id (the vouchers on one page), 30 ids per read.
+  Future<Map<String, Invoice>> invoicesByIds(Iterable<String> ids) async {
+    final list = ids.where((id) => id.isNotEmpty).toSet().toList();
+    final out = <String, Invoice>{};
+    for (var i = 0; i < list.length; i += 30) {
+      final snap = await _db
+          .collection(AppConstants.invoicesCollection)
+          .where(FieldPath.documentId, whereIn: list.skip(i).take(30).toList())
+          .get();
+      for (final d in snap.docs) {
+        out[d.id] = Invoice.fromFirestore(d);
+      }
+    }
+    return out;
+  }
+
   /// Build 9 Then list: a student's exercise results, newest first, in
   /// [range] (index studentId + submittedAt desc, exists).
   Query<Map<String, dynamic>> studentResultsQuery(String studentId, DateRangeSel range) =>
