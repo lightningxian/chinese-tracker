@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/constants/app_constants.dart';
-import '../../core/utils/exercise_utils.dart';
+import '../../core/paging/date_range.dart';
+import '../../core/paging/paged_controller.dart';
 import '../../core/utils/progress_utils.dart';
 import '../../core/widgets/app_card.dart';
+import '../../core/widgets/paging_bars.dart';
 import '../../core/widgets/exercise_results_list.dart';
 import '../../core/widgets/progress_widgets.dart';
 import '../../l10n/l10n.dart';
@@ -79,81 +81,101 @@ class _StudentProgressTabState extends State<StudentProgressTab> {
   }
 }
 
-class _ExerciseHistory extends StatelessWidget {
+/// Build 9 Then list: the exercise results 25 a page in a date range
+/// (default this year); attempts and average for the range, best ever.
+class _ExerciseHistory extends StatefulWidget {
   const _ExerciseHistory({required this.studentId});
 
   final String studentId;
 
   @override
+  State<_ExerciseHistory> createState() => _ExerciseHistoryState();
+}
+
+class _ExerciseHistoryState extends State<_ExerciseHistory> {
+  late final FirestoreService _firestore = context.read<FirestoreService>();
+  late final PagedController<ExerciseResult> _pages = PagedController<ExerciseResult>(
+    build: (range) => FirestorePageSource(
+        _firestore.studentResultsQuery(widget.studentId, range),
+        ExerciseResult.fromFirestore),
+    range: DateRangeSel.preset(RangePreset.thisYear),
+  );
+  late Future<({int attempts, int? average, int? best})> _stats =
+      _firestore.studentResultStats(widget.studentId, _pages.range);
+  late final Stream<List<Exercise>> _exercises = _firestore
+      .watchAvailableExercisesForStudent(context.read<AuthService>().appUser!);
+
+  @override
+  void dispose() {
+    _pages.dispose();
+    super.dispose();
+  }
+
+  void _setRange(DateRangeSel r) {
+    _pages.setRange(r);
+    setState(() => _stats = _firestore.studentResultStats(widget.studentId, r));
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final firestore = context.read<FirestoreService>();
-    final student = context.watch<AuthService>().appUser!;
     final l = context.l10n;
-
-    return StreamBuilder<List<ExerciseResult>>(
-      stream: firestore.watchStudentExerciseResults(studentId),
-      builder: (context, snap) {
-        if (snap.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        final results = ExerciseUtils.newestFirst(snap.data ?? const []);
-        if (results.isEmpty) {
-          return EmptyState(
-            icon: Icons.fitness_center_outlined,
-            title: l.studentProgressNoExercisesTitle,
-            subtitle: l.studentProgressNoExercisesSubtitle,
-          );
-        }
-        final stats = ExerciseUtils.resultStats(results);
-
-        // Titles for attempts recorded before the title was stored with them.
-        return StreamBuilder<List<Exercise>>(
-          stream: firestore.watchAvailableExercisesForStudent(student),
-          builder: (context, exercisesSnap) {
-            final titles = {
-              for (final e in exercisesSnap.data ?? const <Exercise>[])
-                e.id: e.title,
-            };
-            return ListView(
-              padding: const EdgeInsets.all(20),
+    // Titles for attempts recorded before the title was stored with them.
+    return StreamBuilder<List<Exercise>>(
+      stream: _exercises,
+      builder: (context, exercisesSnap) {
+        final titles = {
+          for (final e in exercisesSnap.data ?? const <Exercise>[]) e.id: e.title,
+        };
+        return ListenableBuilder(
+          listenable: _pages,
+          builder: (context, _) => PagedListBody<ExerciseResult>(
+            controller: _pages,
+            separator: 8,
+            emptyIcon: Icons.fitness_center_outlined,
+            emptyTitle: l.studentProgressNoExercisesTitle,
+            emptySubtitle: l.studentProgressNoExercisesSubtitle,
+            header: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: SummaryTile(
-                        label: l.studentProgressAttempts,
-                        value: '${stats.attempts}',
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: SummaryTile(
-                        label: l.studentProgressAvgScore,
-                        value:
-                            stats.average != null ? '${stats.average}%' : '—',
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: SummaryTile(
-                        label: l.studentProgressBestScore,
-                        value: stats.best != null ? '${stats.best}%' : '—',
-                      ),
-                    ),
-                  ],
+                FutureBuilder<({int attempts, int? average, int? best})>(
+                  future: _stats,
+                  builder: (context, snap) {
+                    final st = snap.data;
+                    return Row(
+                      children: [
+                        Expanded(
+                          child: SummaryTile(
+                            label: l.studentProgressAttempts,
+                            value: st == null ? '…' : '${st.attempts}',
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: SummaryTile(
+                            label: l.studentProgressAvgScore,
+                            value: st?.average != null ? '${st!.average}%' : '—',
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: SummaryTile(
+                            label: l.studentProgressBestScore,
+                            value: st?.best != null ? '${st!.best}%' : '—',
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
-                const SizedBox(height: 20),
-                for (final result in results)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: ExerciseResultTile(
-                      result: result,
-                      fallbackTitle: titles[result.exerciseId],
-                    ),
-                  ),
+                const SizedBox(height: 12),
+                DateRangeBar(value: _pages.range, onChanged: _setRange),
               ],
-            );
-          },
+            ),
+            itemBuilder: (context, result) => ExerciseResultTile(
+              result: result,
+              fallbackTitle: titles[result.exerciseId],
+            ),
+          ),
         );
       },
     );

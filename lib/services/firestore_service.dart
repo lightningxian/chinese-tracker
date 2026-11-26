@@ -1433,6 +1433,40 @@ class FirestoreService {
     return watchStudentJoinedSessions(studentId);
   }
 
+  /// Build 9 Then list: a student's exercise results, newest first, in
+  /// [range] (index studentId + submittedAt desc, exists).
+  Query<Map<String, dynamic>> studentResultsQuery(String studentId, DateRangeSel range) =>
+      applyDateRange(
+          _db
+              .collection(AppConstants.exerciseResultsCollection)
+              .where('studentId', isEqualTo: studentId)
+              .orderBy('submittedAt', descending: true),
+          'submittedAt',
+          range);
+
+  /// Attempts and average score in the range, and the best score ever
+  /// (server aggregations and one document; index studentId + score desc).
+  Future<({int attempts, int? average, int? best})> studentResultStats(
+      String studentId, DateRangeSel range) async {
+    final agg = await studentResultsQuery(studentId, range)
+        .aggregate(count(), average('score'))
+        .get();
+    final bestSnap = await _db
+        .collection(AppConstants.exerciseResultsCollection)
+        .where('studentId', isEqualTo: studentId)
+        .orderBy('score', descending: true)
+        .limit(1)
+        .get();
+    final avg = agg.getAverage('score');
+    return (
+      attempts: agg.count ?? 0,
+      average: avg?.round(),
+      best: bestSnap.docs.isEmpty
+          ? null
+          : ((bestSnap.docs.first.data()['score'] as num?)?.round()),
+    );
+  }
+
   /// Build 9A session 2: a student's classes, newest first, within [range]
   /// (index studentId + sessionDate desc).
   PageSource<AttendanceRecord> studentVisitSource(
@@ -1892,10 +1926,20 @@ class FirestoreService {
       if (user.isStudent) AppConstants.roleStudent,
       'all',
     ];
-    final mine = col.where('userId', isEqualTo: user.uid).snapshots();
+    // Build 9 Then list: the bell reads only the newest notices (the sheet
+    // shows 12; the unread badge counts within these), not every notice
+    // ever sent. Indexes userId + createdAt, userId + forRole + createdAt.
+    const newest = 30;
+    final mine = col
+        .where('userId', isEqualTo: user.uid)
+        .orderBy('createdAt', descending: true)
+        .limit(newest)
+        .snapshots();
     final broadcast = col
         .where('userId', isEqualTo: '')
         .where('forRole', whereIn: audiences)
+        .orderBy('createdAt', descending: true)
+        .limit(newest)
         .snapshots();
 
     final controller = StreamController<List<AppNotification>>();
