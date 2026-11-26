@@ -1,20 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Design system for the signed-in app: direction "A · Pensil, calmer".
+/// Design system for the signed-in app.
 ///
-/// Same brand as the landing page (`lib/features/landing/landing_brand.dart`,
-/// colours from the logo) on white surfaces with less decoration: teal is the
-/// working colour, yellow is a highlight, green means success.
+/// Owner 2026-11-26: the first "Pensil" colours (bright teal, yellow, cream)
+/// were tiring for daily use. Two calmer styles replace them ([AppStyle]):
+/// **Kertas** (paper grey, soft teal, no yellow) for teachers, students and
+/// parents, and **Sepia** (warm paper, olive) for admins. The landing page
+/// keeps its own `LandingBrand` tokens.
 ///
-/// Light and dark are two [AppPalette]s. [AppColors] keeps the names the
-/// screens already use (`AppColors.navy`, `AppColors.card`, ...) and reads
-/// them from the palette that is on: [ThemeController] swaps it before the
-/// app rebuilds, so a screen never has to know which mode it is in.
+/// Each style has a light and a dark [AppPalette]. [AppColors] keeps the
+/// names the screens already use (`AppColors.navy`, `AppColors.card`, ...)
+/// and reads them from the palette that is on: [ThemeController] swaps it
+/// before the app rebuilds, so a screen never has to know which one is on.
 ///
 /// `navy` and `teal` are legacy names kept so the existing call sites keep
-/// compiling; they resolve to the brand primary / secondary. New code should
-/// use `primary`, `secondary`, `accent`.
+/// compiling; they resolve to the primary / secondary. New code should use
+/// `primary`, `secondary`, `accent`.
+enum AppStyle {
+  /// Teachers, students, parents and the sign-in screens.
+  kertas,
+
+  /// Admins.
+  sepia,
+}
+
 class AppPalette {
   const AppPalette({
     required this.brightness,
@@ -66,57 +76,123 @@ class AppPalette {
 
   bool get isDark => brightness == Brightness.dark;
 
-  /// Brand colours from assets/brand/README.md on warm white surfaces.
-  static const light = AppPalette(
+  /// The palette for a style and brightness.
+  static AppPalette of(AppStyle style, Brightness brightness) {
+    final dark = brightness == Brightness.dark;
+    return switch (style) {
+      AppStyle.kertas => dark ? kertasDark : kertasLight,
+      AppStyle.sepia => dark ? sepiaDark : sepiaLight,
+    };
+  }
+
+  /// The default (Kertas) palettes.
+  static const light = kertasLight;
+  static const dark = kertasDark;
+
+  /// Kertas: neutral paper-grey page, white cards, a softened brand teal for
+  /// buttons and the active item, sand instead of yellow for highlights.
+  static const kertasLight = AppPalette(
     brightness: Brightness.light,
-    primary: Color(0xFF006B54), // teal: lettering, pencil tip
-    primaryDark: Color(0xFF004D3C),
-    secondary: Color(0xFF0A8A4E), // green, darkened for text on white
-    secondaryLight: Color(0xFF3DBB7A),
-    accent: Color(0xFFF5B800), // yellow: pencil body
-    accentSoft: Color(0xFFFFF4CC),
-    ink: Color(0xFF16211C),
-    navyLight: Color(0xFF0E8A6D),
-    brandGreen: Color(0xFF00A651),
-    surface: Color(0xFFF7F6F1), // warm off-white page
+    primary: Color(0xFF2F6F62),
+    primaryDark: Color(0xFF23564C),
+    secondary: Color(0xFF3C7A5A), // success, readable as text on white
+    secondaryLight: Color(0xFF7FB89A),
+    accent: Color(0xFFC9A35E), // sand
+    accentSoft: Color(0xFFF3EEE3),
+    ink: Color(0xFF22282A),
+    navyLight: Color(0xFF4E8A7C),
+    brandGreen: Color(0xFF3F8F63),
+    surface: Color(0xFFF4F5F3),
     card: Colors.white,
-    border: Color(0xFFE4E2DA),
-    tableLine: Color(0xFFCBC7BB),
-    textSecondary: Color(0xFF5B665F),
-    error: Color(0xFFB53A3A),
-    inputFill: Color(0xFFFBFAF6),
-    chipGreenBg: Color(0xFFE3F5EA),
-    chipBlueBg: Color(0xFFE6F1EE),
-    chipPurpleBg: Color(0xFFF0EAFB),
-    chipPurpleFg: Color(0xFF6B4FBF),
-    chipAmberFg: Color(0xFF8A5A12),
+    border: Color(0xFFE3E6E3),
+    tableLine: Color(0xFFC9CEC9),
+    textSecondary: Color(0xFF636C68),
+    error: Color(0xFFB04545),
+    inputFill: Color(0xFFFAFBFA),
+    chipGreenBg: Color(0xFFE6F0EB),
+    chipBlueBg: Color(0xFFE7EFEC),
+    chipPurpleBg: Color(0xFFEFEBF6),
+    chipPurpleFg: Color(0xFF67589A),
+    chipAmberFg: Color(0xFF7A6340),
   );
 
-  /// The same brand at night: deep warm-green surfaces, the teal and green
-  /// lifted so they still read as text, white kept for text on buttons.
-  static const dark = AppPalette(
+  /// Kertas at night: soft charcoal, the teal lifted to read as text.
+  static const kertasDark = AppPalette(
     brightness: Brightness.dark,
-    primary: Color(0xFF34A585),
-    primaryDark: Color(0xFF237F66),
-    secondary: Color(0xFF4FC48A),
-    secondaryLight: Color(0xFF7FDCA5),
-    accent: Color(0xFFF5C842),
-    accentSoft: Color(0xFF3A3418),
-    ink: Color(0xFFECEFEA), // text on dark surfaces
-    navyLight: Color(0xFF6CC9AE),
-    brandGreen: Color(0xFF4FC27A),
-    surface: Color(0xFF121614),
-    card: Color(0xFF1B211E),
-    border: Color(0xFF2E3833),
-    tableLine: Color(0xFF3D4943),
-    textSecondary: Color(0xFFA3ADA6),
-    error: Color(0xFFE06A6A),
-    inputFill: Color(0xFF161C19),
-    chipGreenBg: Color(0xFF1E3A2C),
-    chipBlueBg: Color(0xFF1C3330),
-    chipPurpleBg: Color(0xFF2B2540),
-    chipPurpleFg: Color(0xFFB9A5F0),
-    chipAmberFg: Color(0xFFF2CF6B),
+    primary: Color(0xFF4E9A86),
+    primaryDark: Color(0xFF3B7D6C),
+    secondary: Color(0xFF6DB58E),
+    secondaryLight: Color(0xFF97CDAE),
+    accent: Color(0xFFD4B276),
+    accentSoft: Color(0xFF33302A),
+    ink: Color(0xFFE4E7E5),
+    navyLight: Color(0xFF7DBBAB),
+    brandGreen: Color(0xFF6DB58E),
+    surface: Color(0xFF16191A),
+    card: Color(0xFF1E2224),
+    border: Color(0xFF30363A),
+    tableLine: Color(0xFF3E4549),
+    textSecondary: Color(0xFFA2AAA6),
+    error: Color(0xFFDD7373),
+    inputFill: Color(0xFF1A1E20),
+    chipGreenBg: Color(0xFF22362C),
+    chipBlueBg: Color(0xFF1F3330),
+    chipPurpleBg: Color(0xFF2C2838),
+    chipPurpleFg: Color(0xFFB7AADF),
+    chipAmberFg: Color(0xFFDEC28E),
+  );
+
+  /// Sepia: warm paper like an e-reader, olive for actions, soft contrast
+  /// for long days at the admin tables.
+  static const sepiaLight = AppPalette(
+    brightness: Brightness.light,
+    primary: Color(0xFF5E6B4F),
+    primaryDark: Color(0xFF47523B),
+    secondary: Color(0xFF5A7146),
+    secondaryLight: Color(0xFF9AAE84),
+    accent: Color(0xFFB98A4A),
+    accentSoft: Color(0xFFF0E6D4),
+    ink: Color(0xFF2E2A24),
+    navyLight: Color(0xFF7A8767),
+    brandGreen: Color(0xFF6B8A4E),
+    surface: Color(0xFFF2EDE3),
+    card: Color(0xFFFAF7F1),
+    border: Color(0xFFE5DDCE),
+    tableLine: Color(0xFFCFC5B2),
+    textSecondary: Color(0xFF756C5F),
+    error: Color(0xFFA84638),
+    inputFill: Color(0xFFFDFBF7),
+    chipGreenBg: Color(0xFFE7E9DA),
+    chipBlueBg: Color(0xFFE9E6DA),
+    chipPurpleBg: Color(0xFFEEE6EA),
+    chipPurpleFg: Color(0xFF7A5266),
+    chipAmberFg: Color(0xFF7A5A2E),
+  );
+
+  /// Sepia at night: warm brown-black, olive and sand lifted.
+  static const sepiaDark = AppPalette(
+    brightness: Brightness.dark,
+    primary: Color(0xFF7C8A66),
+    primaryDark: Color(0xFF66734F),
+    secondary: Color(0xFF9DB585),
+    secondaryLight: Color(0xFFBFD0A8),
+    accent: Color(0xFFD6AE72),
+    accentSoft: Color(0xFF3A3226),
+    ink: Color(0xFFEAE3D6),
+    navyLight: Color(0xFFB6C2A0),
+    brandGreen: Color(0xFF9DB585),
+    surface: Color(0xFF1B1915),
+    card: Color(0xFF24211C),
+    border: Color(0xFF39342C),
+    tableLine: Color(0xFF4A443A),
+    textSecondary: Color(0xFFB0A795),
+    error: Color(0xFFDB7B6B),
+    inputFill: Color(0xFF201D19),
+    chipGreenBg: Color(0xFF2E3324),
+    chipBlueBg: Color(0xFF2E2D25),
+    chipPurpleBg: Color(0xFF36292F),
+    chipPurpleFg: Color(0xFFD7B3C4),
+    chipAmberFg: Color(0xFFE2C08C),
   );
 }
 
@@ -202,8 +278,10 @@ abstract final class AppTextStyles {
 }
 
 abstract final class AppTheme {
-  static ThemeData light() => build(AppPalette.light);
-  static ThemeData dark() => build(AppPalette.dark);
+  static ThemeData light([AppStyle style = AppStyle.kertas]) =>
+      build(AppPalette.of(style, Brightness.light));
+  static ThemeData dark([AppStyle style = AppStyle.kertas]) =>
+      build(AppPalette.of(style, Brightness.dark));
 
   /// [ThemeData] for one palette. Both themes are built from their own
   /// palette (not from [AppColors]) so `theme` and `darkTheme` are right no
@@ -349,7 +427,7 @@ abstract final class AppTheme {
         linearTrackColor: p.accentSoft,
       ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: p.isDark ? const Color(0xFF2A3430) : p.ink,
+        backgroundColor: p.isDark ? p.border : p.ink,
         contentTextStyle: TextStyle(color: p.isDark ? p.ink : Colors.white),
         behavior: SnackBarBehavior.floating,
         shape:

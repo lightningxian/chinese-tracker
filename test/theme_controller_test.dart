@@ -44,6 +44,21 @@ void main() {
     controller.dispose();
   });
 
+  test('admins get Sepia, the others Kertas, in both modes', () async {
+    final controller = ThemeController();
+    await controller.setMode(ThemeMode.light);
+    expect(AppColors.palette, AppPalette.kertasLight);
+
+    controller.setStyle(AppStyle.sepia);
+    expect(AppColors.palette, AppPalette.sepiaLight);
+    await controller.setMode(ThemeMode.dark);
+    expect(AppColors.palette, AppPalette.sepiaDark);
+
+    controller.setStyle(AppStyle.kertas);
+    expect(AppColors.palette, AppPalette.kertasDark);
+    controller.dispose();
+  });
+
   test('both themes come from their own palette', () {
     AppColors.palette = AppPalette.dark;
     final light = AppTheme.light();

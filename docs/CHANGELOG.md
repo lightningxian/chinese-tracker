@@ -6,6 +6,34 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-26 — Claude (BUILD chat): calmer colours, Sepia for admins, Kertas for the rest
+
+**What changed**
+- The signed-in app has two calmer colour styles (`AppStyle` in
+  `lib/core/theme/app_theme.dart`), each with a light and a dark palette:
+  - **Kertas** (teachers, students, parents, sign-in screens): neutral
+    paper-grey page, white cards, a softened brand teal (`#2F6F62`), sand
+    instead of the bright yellow.
+  - **Sepia** (admins): warm paper page (`#F2EDE3`), cream cards, olive
+    actions (`#5E6B4F`), soft contrast.
+- `ThemeController.setStyle` swaps the palette; `app.dart` follows the
+  signed-in role (`AuthService` listener), so the colours change on sign-in
+  and sign-out. Light / Dark / Device still works on top of both.
+- The old "Pensil" palettes (bright teal, yellow, cream) are gone from the
+  app; the landing page keeps its own `LandingBrand` colours.
+
+**Why**
+- Owner 2026-11-26: the theme was "a bit hard to look at daily"; chose
+  Sepia for admin, Kertas for everyone else.
+
+**For review**
+- Hosting only. `flutter test` 226 pass (new test: style by role in both
+  modes); analyzer 16 infos. Checked on the emulator: admin dashboard in
+  Sepia light and dark, student home in Kertas.
+- Report PDFs and the landing page are unchanged.
+
+---
+
 ## 2026-11-26 — Claude (BUILD chat): calmer fonts, Chinese never bold
 
 **What changed**

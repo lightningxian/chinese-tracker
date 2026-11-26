@@ -51,6 +51,12 @@ class _ChineseTrackerAppState extends State<ChineseTrackerApp> {
   /// SnackBar from outside the widget tree.
   final _messengerKey = GlobalKey<ScaffoldMessengerState>();
 
+  void _syncThemeStyle() {
+    _themeController.setStyle(
+      _authService.appUser?.isAdmin == true ? AppStyle.sepia : AppStyle.kertas,
+    );
+  }
+
   void _showForegroundPush() {
     final notification = _pushService.foregroundMessage.value?.notification;
     if (notification == null) return;
@@ -66,6 +72,7 @@ class _ChineseTrackerAppState extends State<ChineseTrackerApp> {
   @override
   void dispose() {
     _pushService.foregroundMessage.removeListener(_showForegroundPush);
+    _authService.removeListener(_syncThemeStyle);
     super.dispose();
   }
 
@@ -90,6 +97,9 @@ class _ChineseTrackerAppState extends State<ChineseTrackerApp> {
     _worksheetAiImportService = WorksheetAiImportService();
     _localeController = LocaleController();
     _themeController = ThemeController();
+    // Owner 2026-11-26: admins work in the Sepia colours, everyone else in
+    // Kertas.
+    _authService.addListener(_syncThemeStyle);
     _authService.init();
     _savedAccountsService.load();
     _localeController.load();
@@ -143,8 +153,8 @@ class _ChineseTrackerAppState extends State<ChineseTrackerApp> {
               scaffoldMessengerKey: _messengerKey,
               // Light / Dark / Device (ThemeController). The palette behind
               // `AppColors` is swapped by the controller before this rebuild.
-              theme: AppTheme.light(),
-              darkTheme: AppTheme.dark(),
+              theme: AppTheme.light(themeController.style),
+              darkTheme: AppTheme.dark(themeController.style),
               themeMode: themeController.mode,
               // UI language: ID | EN toggle (LocaleController). Student, parent
               // and sign-in screens are translated; admin/teacher stay English.
@@ -164,7 +174,8 @@ class _ChineseTrackerAppState extends State<ChineseTrackerApp> {
                   // by itself. A new key remounts the page tree in the new
                   // colours; the router keeps the current route.
                   child: KeyedSubtree(
-                    key: ValueKey('theme-${themeController.brightness.name}'),
+                    key: ValueKey(
+                        'theme-${themeController.style.name}-${themeController.brightness.name}'),
                     child: child ?? const SizedBox.shrink(),
                   ),
                 );

@@ -43,6 +43,18 @@ class ThemeController extends ChangeNotifier with WidgetsBindingObserver {
   AppTextSize _textSize = AppTextSize.normal;
   AppTextSize get textSize => _textSize;
 
+  /// Owner 2026-11-26: Sepia for admins, Kertas for everyone else. Set from
+  /// the signed-in role (app.dart), not saved.
+  AppStyle _style = AppStyle.kertas;
+  AppStyle get style => _style;
+
+  void setStyle(AppStyle style) {
+    if (style == _style) return;
+    _style = style;
+    _apply();
+    notifyListeners();
+  }
+
   /// The brightness the app is showing right now.
   Brightness get brightness => switch (_mode) {
         ThemeMode.light => Brightness.light,
@@ -112,7 +124,7 @@ class ThemeController extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   void _apply() {
-    AppColors.palette = isDark ? AppPalette.dark : AppPalette.light;
+    AppColors.palette = AppPalette.of(_style, brightness);
   }
 
   static ThemeMode? _parse(String? value) => switch (value) {

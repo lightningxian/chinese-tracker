@@ -2517,6 +2517,13 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
+### 2026-11-26 — Calmer colours, release v0.1.49 (hosting only)
+
+- Owner found the Pensil colours tiring. Now **Sepia** for admins and
+  **Kertas** for teachers, students and parents (light and dark each);
+  the style follows the signed-in role. Landing page and PDFs unchanged.
+- v0.1.48 (same day): Noto Sans and Noto Sans SC Regular, Chinese never bold.
+
 ### 2026-11-26 — Answer sheet on every worksheet (owner request) — eb58fc2, release v0.1.47 (Storage rules and hosting live)
 
 - **Owner asked:** "all the question bank should have something called answer

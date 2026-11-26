@@ -13,6 +13,13 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-26 — Claude (BUILD chat, PC): calmer colours (v0.1.49) and fonts (v0.1.48)
+
+- Fonts: Noto Sans for text, Noto Sans SC Regular for Chinese, never bold
+  (v0.1.48).
+- Colours: Sepia for admins, Kertas for teachers, students and parents,
+  each with a dark version (v0.1.49). Owner's choice from three options.
+
 ### 2026-11-26 — Claude (BUILD side session, PC): Answer sheet on every worksheet, v0.1.47
 
 - Owner request: upload the answer PDF on a worksheet, the app fills in the
