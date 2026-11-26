@@ -135,6 +135,13 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   owner: password reset first (docs/OWNER_PROCEDURES.md §C), the Standard Course live walk, the 组词 points decision.
 - Book: 59 figures, 28 tables, 17 segments, 8 algorithms, 4 formulas. Seen while shooting: the student's
   class page lists classmates by first name, not by Chinese name (owner decision 2026-11-16); told the BUILD chat.
+### 2026-11-26 — Claude (BUILD chat, PC): Build 9 Then list, part 1
+
+- News, test sessions and results, declined promotions, student exercise
+  results and Vouchers paged; the bell reads only the newest notices.
+  Released v0.1.45 (hosting + indexes). Part 2 (the heavy screens) listed
+  in PLAN §6.
+
 ### 2026-11-26 — Claude (BUILD chat, PC): Build 9 session 2
 
 - Payments, Users (search as a query), marking queue and History are read

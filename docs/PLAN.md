@@ -2460,6 +2460,21 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
+### 2026-11-26 — Build 9 Then list, part 1 — release v0.1.45 (hosting + 8 indexes)
+
+- **Paged now:** News, test sessions, staff and student test results,
+  declined promotions, student exercise results, admin Vouchers (search as
+  a bounded query); the bell reads the newest 30 notices of each kind.
+- **Part 2 (next BUILD session):** teacher Grades, transcript, the staff
+  History timeline (`student_activity.dart`), the teacher's Students tab
+  (streams 6 full collections), exercise packages (streams all results and
+  assignments), the question bank (streams the whole bank), Timetable
+  follow-up, dashboard drill-downs. These are the heavy screens; each needs
+  its own data change (counts or summaries instead of full streams), not
+  only a pager.
+- Checked: flutter test 204, analyzer 16 infos, emulator walk of Vouchers,
+  test results, News. No function or rules change.
+
 ### 2026-11-26 — Build 9, session 2 (Must 3: Payments, Users, marking queue, History) — release v0.1.44
 
 - **Done:** Must 3. Payments (range, status and item as queries, count and

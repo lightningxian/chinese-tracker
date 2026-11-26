@@ -6,6 +6,45 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-26 — Claude (BUILD chat): Build 9 Then list, part 1 — more lists paged
+
+**What changed**
+- **News (admin):** "Showing now" stays live (few); every post is read 25
+  a page in a date range.
+- **Test sessions** (staff Tests tab), **staff test results** (code as a
+  query filter, all dates by default) and **the student's test results**
+  (this year by default): 25 a page in a date range.
+- **Declined promotions:** paged, all dates.
+- **Student exercise results** (Progress → Exercises): 25 a page in a
+  range (this year); attempts and average for the range from server
+  aggregations, best score ever from one document.
+- **The bell:** reads the newest 30 notices of each kind instead of every
+  notice ever sent (the sheet shows 12; the unread badge counts within
+  them).
+- **Vouchers (admin):** 25 a page (all dates by default, so an active
+  voucher bought long ago is not hidden); search is a small bounded query
+  (voucher code that starts with the text, or students found through the
+  Users search index); names and invoices are read for the page only; the
+  payment filter applies to the page (its state comes from the invoice);
+  CSV of the range.
+- 8 composite indexes (test results 4, test sessions, exercise results by
+  score, notifications 2).
+
+**Why**
+- Supervisor 2026-11-25 ("every page that has a long list"); the PLAN chat
+  asked for the Then list before the demonstration video.
+
+**For review**
+- Hosting and indexes only; no function or rules change.
+- Tests: `flutter test` 204 pass; analyzer 16 infos. Checked on the
+  emulator: Vouchers (names, search finds a student), staff test results,
+  News.
+- Still to do (part 2): teacher Grades, the transcript, the staff History
+  timeline, the teacher's Students tab, exercise packages, the question
+  bank, Timetable follow-up, dashboard drill-downs.
+
+---
+
 ## 2026-11-26 — Claude (BUILD chat): Build 9 session 2 — Payments, Users, marking queue, History paged
 
 **What changed**
