@@ -66,6 +66,19 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   languages. Approved. Open for the owner: Rebuild leaderboards once, and the
   rule for sitting an HSK simulation again (simulations run only as test
   codes since 2026-11-16, so package retakes reach exam packages only).
+- **v0.1.44 (Build 9 session 2, `818c46e`, `e7bf12a`) reviewed on the Mac:**
+  analyzer 0 errors, 0 warnings, 16 infos; `flutter test` 204 pass, 2 skipped;
+  every node suite with the new `test_user_search.js`; 77 functions (64 + 13)
+  and 34 indexes on live, equal to the repo; the bundle carries the new
+  strings; the APK is served; no secret tracked; rules unchanged. Read for
+  safety: the search index on a user document is recomputed by the trigger on
+  every write, so a user cannot keep a forged value; the user's own profile
+  rule compares fields and has no key list, so the new fields do not block
+  profile edits; `rebuildUserSearch` is admin only and audited. Approved.
+  **Owner must press Rebuild user search once on live** (until then the Users
+  list shows only accounts written since the deploy). The Must list of Build 9
+  is complete; the Then list (vouchers, news, test results, question bank and
+  the rest) goes ahead before the video.
 - **v0.1.43 (Build 9D test-code retakes, `df5e110`, `251e217`) reviewed on the
   Mac:** analyzer 0 errors, 0 warnings, 16 infos; `flutter test` 202 pass, 2
   skipped; every node suite; 75 functions on live, equal to the exports; the

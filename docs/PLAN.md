@@ -73,8 +73,16 @@ Read docs/PLAN.md. You are the BUILD chat. Follow section 0, run Build 0 if this
 
 ## 1. Where the project stands (2026-11-20)
 
-**Live:** https://chinese-tracker.web.app, hosting at release v0.1.43
-(Build 9D test-code retakes from the PC 2026-11-26: a student sits a code again only in a new
+**Live:** https://chinese-tracker.web.app, hosting at release v0.1.44
+(Build 9 session 2 from the PC 2026-11-26: Payments, Users, the marking queue and the student
+and parent History are paged; search on Users is a query on an index the new trigger
+`onUserSearchIndex` writes; `rebuildUserSearch` for old accounts; functions, 10 new indexes and
+hosting; **77 functions**, 34 indexes, rules unchanged; checked from the Mac the same day:
+analyzer 16 infos, 204 Flutter tests, every node suite, 77 functions and 34 indexes on live
+equal to the repo, no secret tracked. **Open for the owner: press Rebuild user search once (the
+live Users list shows only accounts written since the deploy until then), and Rebuild
+leaderboards once.** v0.1.43
+Build 9D test-code retakes from the PC 2026-11-26: a student sits a code again only in a new
 session, the first valid sitting counts for the board, promotion and placement, repeats are
 practice; functions and hosting, 75 functions unchanged, rules and indexes unchanged; checked
 from the Mac the same day: analyzer 16 infos, 202 Flutter tests, every node suite, the bundle
