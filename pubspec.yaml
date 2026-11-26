@@ -54,13 +54,14 @@ flutter:
     - assets/brand/
     - assets/fonts/
     - assets/question_sets/
-  # Chinese text renders in Kai style (the handwriting model the centre
-  # teaches). LXGW WenKai, OFL 1.1 (assets/fonts/LICENSE-LXGWWenKai-OFL.txt),
-  # cut down to GB2312 + Latin/pinyin/punctuation (~3.5 MB each). The font has
-  # no Bold: Medium stands in for weight 700.
+  # Owner 2026-11-26: Chinese text reads in a plain sans face, never bold:
+  # Noto Sans SC Regular (OFL 1.1), cut to GB2312 + Latin/pinyin/punctuation
+  # by tool/subset_reading_font.py (~2.5 MB). The same file stands in for
+  # weight 700 so headings never draw a bold (or fake-bold) character. The
+  # Kai files (LXGW WenKai) stay in assets/fonts/ but are no longer used.
   fonts:
-    - family: LXGW WenKai
+    - family: Noto Sans SC Reading
       fonts:
-        - asset: assets/fonts/LXGWWenKai-Regular.ttf
-        - asset: assets/fonts/LXGWWenKai-Medium.ttf
+        - asset: assets/fonts/NotoSansSC-Reading.ttf
+        - asset: assets/fonts/NotoSansSC-Reading.ttf
           weight: 700

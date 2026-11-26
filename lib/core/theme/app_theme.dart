@@ -177,12 +177,14 @@ abstract final class AppColors {
 
 /// Text styles shared by the screens that show question content.
 abstract final class AppTextStyles {
-  /// Chinese text falls back to this family (Lexend has no CJK glyphs).
-  /// Kai style, as on the centre's worksheets and in handwriting class.
-  static const chineseFamily = 'LXGW WenKai';
+  /// Chinese text falls back to this family (the Latin face has no CJK
+  /// glyphs). Owner 2026-11-26: a plain sans face that is easy to read for
+  /// a long time (Noto Sans SC Regular), never bold (pubspec maps weight 700
+  /// to the same Regular file).
+  static const chineseFamily = 'Noto Sans SC Reading';
 
   /// A question, sentence or option as the admin or student reads it: larger
-  /// than body text and with room between the lines for the Kai strokes.
+  /// than body text and with room between the lines.
   static TextStyle get question => TextStyle(
         fontSize: 18,
         height: 1.5,
@@ -362,14 +364,15 @@ abstract final class AppTheme {
 
     // Global ~12% text scale is applied in `app.dart` via [TextScaler] — not
     // `fontSizeFactor` here (that assert-fails on some TextTheme styles).
-    // Lexend is the brand body face (same as the landing page); headings get
-    // a heavier weight instead of a second family to keep the inside calm.
-    final textTheme = GoogleFonts.lexendTextTheme(base.textTheme).apply(
+    // Owner 2026-11-26: Noto Sans inside the app, calm for long reading and
+    // drawn to match Noto Sans SC (the landing page keeps Lexend). Headings
+    // get a heavier weight instead of a second family.
+    final textTheme = GoogleFonts.notoSansTextTheme(base.textTheme).apply(
       bodyColor: p.ink,
       displayColor: p.ink,
     );
-    // Chinese glyphs come from the bundled Kai face (pubspec `fonts:`); the
-    // report PDFs keep Noto Sans SC (`report_pdf_fonts.dart`).
+    // Chinese glyphs come from the bundled Noto Sans SC Reading cut (pubspec
+    // `fonts:`), never bold; the report PDFs keep the full Noto Sans SC.
     TextStyle? withChinese(TextStyle? style, {FontWeight? weight}) =>
         style?.copyWith(
           fontFamilyFallback: const [AppTextStyles.chineseFamily],

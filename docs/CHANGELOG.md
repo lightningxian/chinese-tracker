@@ -6,6 +6,30 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-26 — Claude (BUILD chat): calmer fonts, Chinese never bold
+
+**What changed**
+- Inside the app, Latin text uses **Noto Sans** (Google Fonts) instead of
+  Lexend; the landing page keeps Lexend.
+- Chinese text uses **Noto Sans SC Regular** instead of the Kai face (LXGW
+  WenKai), cut to GB2312 + Latin/pinyin/punctuation by
+  `tool/subset_reading_font.py` (`assets/fonts/NotoSansSC-Reading.ttf`,
+  2.5 MB; the Kai files were 3.5 MB each). Weight 700 maps to the same
+  Regular file, so Chinese is never bold (no fake bold either), even in
+  headings and names. Report PDFs keep the full Noto Sans SC.
+
+**Why**
+- Owner 2026-11-26: "a font where we can look it nicely for a long time",
+  and Chinese "easier to read, maybe do not bold it".
+
+**For review**
+- Hosting only. Checked on the emulator: names and 合格 on the leaderboard
+  stay regular next to bold numbers. `flutter test` 225 pass; analyzer
+  16 infos. To undo: point `AppTextStyles.chineseFamily` back to
+  `LXGW WenKai` and restore its `fonts:` block in `pubspec.yaml`.
+
+---
+
 ## 2026-11-26 — Claude (BUILD chat): Answer sheet on every worksheet
 
 **What changed**
