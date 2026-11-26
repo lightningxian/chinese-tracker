@@ -73,8 +73,13 @@ Read docs/PLAN.md. You are the BUILD chat. Follow section 0, run Build 0 if this
 
 ## 1. Where the project stands (2026-11-20)
 
-**Live:** https://chinese-tracker.web.app, hosting at release v0.1.42
-(Build 9 session 1 from the PC 2026-11-26: the shared paging pieces, the paged audit log with
+**Live:** https://chinese-tracker.web.app, hosting at release v0.1.43
+(Build 9D test-code retakes from the PC 2026-11-26: a student sits a code again only in a new
+session, the first valid sitting counts for the board, promotion and placement, repeats are
+practice; functions and hosting, 75 functions unchanged, rules and indexes unchanged; checked
+from the Mac the same day: analyzer 16 infos, 202 Flutter tests, every node suite, the bundle
+carries the new strings, no secret tracked. v0.1.42
+Build 9 session 1 from the PC 2026-11-26: the shared paging pieces, the paged audit log with
 a date range, reports over a period of months, leaderboard time stamps with staff export and
 "Share my result", timed exam packages that can be sat again; functions, one index and
 hosting; **75 functions** with the new `rebuildLeaderboards`; checked from the Mac the same

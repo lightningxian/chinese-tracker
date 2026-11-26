@@ -66,6 +66,15 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
   languages. Approved. Open for the owner: Rebuild leaderboards once, and the
   rule for sitting an HSK simulation again (simulations run only as test
   codes since 2026-11-16, so package retakes reach exam packages only).
+- **v0.1.43 (Build 9D test-code retakes, `df5e110`, `251e217`) reviewed on the
+  Mac:** analyzer 0 errors, 0 warnings, 16 infos; `flutter test` 202 pass, 2
+  skipped; every node suite; 75 functions on live, equal to the exports; the
+  bundle carries the sitting strings; the APK is served; no secret tracked;
+  rules and indexes unchanged. Read for safety: a new sitting needs the token
+  of a different session and is decided inside the transaction; the review of
+  a sitting is given only to its own student; only the latest sitting can be
+  reset; the board, the promotion count and placement read the counting
+  sitting only. Approved. Build 9 session 2 (the rest of the lists) is open.
 - **Owner, second round 2026-11-26:** the supervisor says not to worry about
   the page count (looked at again at the end); Bab V takes option A (the UML
   set); **every diagram is at most half a page, two on a page with their
