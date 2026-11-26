@@ -13,6 +13,7 @@ import '../../core/constants/app_constants.dart';
 import '../../core/paging/date_range.dart';
 import '../../core/paging/paged_controller.dart';
 import '../../core/utils/csv_export.dart';
+import '../../core/utils/file_download.dart' as file_download;
 import '../../core/widgets/paging_bars.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
@@ -647,6 +648,12 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
           ),
         ),
         actions: [
+          // Owner 2026-11-26: keep a copy of the photo on the computer.
+          TextButton.icon(
+            onPressed: () => _downloadProof(ctx, invoice),
+            icon: const Icon(Icons.download_outlined, size: 18),
+            label: Text(l.invoiceProofDownload),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(l.commonOk),
@@ -654,6 +661,29 @@ class _AdminInvoicesTabState extends State<AdminInvoicesTab> {
         ],
       ),
     );
+  }
+
+  Future<void> _downloadProof(BuildContext context, Invoice invoice) async {
+    final l = context.l10n;
+    final messenger = ScaffoldMessenger.of(context);
+    final path = invoice.proofPath!;
+    final dot = path.lastIndexOf('.');
+    final ext = dot < 0 ? 'jpg' : path.substring(dot + 1).toLowerCase();
+    final mime = ext == 'png'
+        ? 'image/png'
+        : ext == 'webp'
+            ? 'image/webp'
+            : 'image/jpeg';
+    final name = 'payment_${invoice.invoiceNumber}'
+        .replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_');
+    try {
+      final bytes =
+          await context.read<PaymentService>().paymentProofBytes(path);
+      file_download.downloadBytesFile('$name.$ext', bytes, mime);
+    } catch (_) {
+      messenger.showSnackBar(
+          SnackBar(content: Text(l.invoiceProofDownloadFailed)));
+    }
   }
 
   /// Owner 2026-11-24: discard with a reason (`discardInvoice`).

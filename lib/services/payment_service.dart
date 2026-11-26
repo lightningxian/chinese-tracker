@@ -145,6 +145,15 @@ class PaymentService {
   Future<String> paymentProofUrl(String proofPath) =>
       FirebaseStorage.instance.ref(proofPath).getDownloadURL();
 
+  /// The payment photo itself, for the Download button (admins only).
+  Future<Uint8List> paymentProofBytes(String proofPath) async {
+    final bytes = await FirebaseStorage.instance
+        .ref(proofPath)
+        .getData(20 * 1024 * 1024);
+    if (bytes == null) throw const PaymentException('Could not open the photo.');
+    return bytes;
+  }
+
   static String _imageExt(String name) {
     final dot = name.lastIndexOf('.');
     final ext = dot < 0 ? '' : name.substring(dot + 1).toLowerCase();

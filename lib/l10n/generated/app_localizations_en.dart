@@ -9266,4 +9266,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get invoiceProofLoadFailed => 'Could not open the photo.';
+
+  @override
+  String get invoiceProofDownload => 'Download';
+
+  @override
+  String get invoiceProofDownloadFailed =>
+      'Could not download the photo. Try again.';
 }

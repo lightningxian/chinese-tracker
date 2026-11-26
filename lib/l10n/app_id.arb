@@ -2544,5 +2544,7 @@
   "invoiceProofHintTransfer": "Tangkapan layar atau foto transfer (wajib, disimpan sebagai bukti).",
   "invoiceProofView": "Foto pembayaran",
   "invoiceProofTitle": "Foto pembayaran · {number}",
-  "invoiceProofLoadFailed": "Foto tidak dapat dibuka."
+  "invoiceProofLoadFailed": "Foto tidak dapat dibuka.",
+  "invoiceProofDownload": "Unduh",
+  "invoiceProofDownloadFailed": "Foto tidak dapat diunduh. Coba lagi."
 }

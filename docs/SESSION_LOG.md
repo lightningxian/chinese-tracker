@@ -13,6 +13,12 @@ Owner GitHub: `lightningxian` · Author for commits: `Wilsin Kuonadi <wilsinkari
 
 ---
 
+### 2026-11-26 — Claude (BUILD chat, PC): payment photo download, upload live (v0.1.51)
+
+- Owner deployed Storage rules + the two payment functions by the CLI's
+  full path; the photo upload works on live.
+- Payment photo window got a Download button.
+
 ### 2026-11-26 — Claude (BUILD chat, PC): one voucher per paid invoice, payment photo (v0.1.50)
 
 - Fixed the second voucher made when a pending invoice already had a

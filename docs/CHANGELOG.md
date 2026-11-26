@@ -6,6 +6,30 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-26 — Claude (BUILD chat): download the payment photo; photo upload live
+
+**What changed**
+- The payment photo window (Payments → receipt button on a paid invoice)
+  has a **Download** button: it saves the photo as
+  `payment_<invoice number>.<jpg|png|webp>` (`PaymentService.paymentProofBytes`,
+  `file_download.downloadBytesFile`).
+- The owner deployed the Storage rules and `markInvoicePaid` /
+  `midtransNotification` from the PC terminal; the photo upload now works
+  on live (owner, 2026-11-26).
+
+**Why**
+- Owner 2026-11-26: "need a download button for it".
+- The earlier "unauthorized" upload error was only the missing deploy:
+  the Terminal panel could not find `firebase` (the CLI is installed in the
+  Claude app's own folder). Command that works is in
+  `docs/OWNER_PROCEDURES.md` § "Storage rules that read Firestore".
+
+**For review**
+- Hosting only. Checked on the emulator: the photo shows and Download
+  saves the same file (39,287 bytes, image/png).
+
+---
+
 ## 2026-11-26 — Claude (BUILD chat): payment photo up to 20 MB
 
 **What changed**

@@ -15185,6 +15185,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not open the photo.'**
   String get invoiceProofLoadFailed;
+
+  /// No description provided for @invoiceProofDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Download'**
+  String get invoiceProofDownload;
+
+  /// No description provided for @invoiceProofDownloadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not download the photo. Try again.'**
+  String get invoiceProofDownloadFailed;
 }
 
 class _AppLocalizationsDelegate

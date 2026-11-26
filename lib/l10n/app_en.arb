@@ -3376,5 +3376,7 @@
   "invoiceProofView": "Payment photo",
   "invoiceProofTitle": "Payment photo · {number}",
   "@invoiceProofTitle": {"placeholders": {"number": {"type": "String"}}},
-  "invoiceProofLoadFailed": "Could not open the photo."
+  "invoiceProofLoadFailed": "Could not open the photo.",
+  "invoiceProofDownload": "Download",
+  "invoiceProofDownloadFailed": "Could not download the photo. Try again."
 }

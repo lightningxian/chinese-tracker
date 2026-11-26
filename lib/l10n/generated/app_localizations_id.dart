@@ -9215,4 +9215,11 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get invoiceProofLoadFailed => 'Foto tidak dapat dibuka.';
+
+  @override
+  String get invoiceProofDownload => 'Unduh';
+
+  @override
+  String get invoiceProofDownloadFailed =>
+      'Foto tidak dapat diunduh. Coba lagi.';
 }

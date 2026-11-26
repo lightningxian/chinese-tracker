@@ -167,6 +167,17 @@ Grant it once, either way:
 Automated deploys (`--non-interactive`) skip the question, so the grant has
 to be done by hand once.
 
+**On the PC, if the terminal says `firebase` is "not recognized"** (the
+Firebase CLI is installed inside the Claude app's own folder, which a normal
+terminal cannot see), run it by its full path. This worked on 2026-11-26:
+
+```powershell
+& "C:\Program Files\nodejs\node.exe" "$env:LOCALAPPDATA\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js" deploy --only storage --project chinese-tracker
+```
+
+Swap `storage` for whatever needs deploying (e.g.
+`"storage,functions:markInvoicePaid"`).
+
 ## Storage bucket CORS (one-time, 2026-11-24)
 
 The web app downloads some files from Storage itself (reopening a scan
