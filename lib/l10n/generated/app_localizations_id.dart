@@ -8980,4 +8980,26 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get newsAll => 'Semua pengumuman';
+
+  @override
+  String listIndexMissingAdmin(int count) {
+    return '$count paket atau lembar kerja belum masuk indeks daftar. Tekan Bangun ulang indeks daftar sekali setelah pembaruan.';
+  }
+
+  @override
+  String listIndexMissingTeacher(int count) {
+    return '$count paket atau lembar kerja belum tampil. Minta admin menekan Bangun ulang indeks daftar sekali.';
+  }
+
+  @override
+  String get listIndexRebuild => 'Bangun ulang indeks daftar';
+
+  @override
+  String get listIndexRebuildHint =>
+      'Menulis indeks lembar kerja bank soal dan kolom daftar setiap paket latihan (perlu sekali setelah pembaruan Build 9 bagian 2, agar daftar ini bisa dibagi per halaman dan dicari).';
+
+  @override
+  String listIndexRebuildDone(int sheets, int exercises) {
+    return '$sheets lembar kerja dan $exercises paket diindeks.';
+  }
 }

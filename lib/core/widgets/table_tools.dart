@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -18,7 +20,8 @@ class ExportCsvButton extends StatelessWidget {
 
   final String fileStem;
   final List<String> header;
-  final List<List<Object?>> Function() rows;
+  /// May be async (Build 9: a paged list exports its whole range).
+  final FutureOr<List<List<Object?>>> Function() rows;
 
   /// Button text; defaults to the localized "Export CSV".
   final String? label;
@@ -26,7 +29,8 @@ class ExportCsvButton extends StatelessWidget {
   Future<void> _export(BuildContext context) async {
     final l = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
-    final data = rows();
+    final data = await rows();
+    if (!context.mounted) return;
     // Say it first: the browser's download prompt can take the focus and
     // hold a snackbar shown afterwards until the page is active again.
     messenger.showSnackBar(

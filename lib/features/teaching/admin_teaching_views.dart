@@ -1,19 +1,21 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 
+import '../../core/constants/app_constants.dart';
+import '../../core/paging/date_range.dart';
+import '../../core/paging/paged_controller.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/csv_export.dart';
 import '../../core/widgets/app_card.dart';
+import '../../core/widgets/paging_bars.dart';
 import '../../l10n/l10n.dart';
 import '../../models/class_session.dart';
-import '../../services/firestore_service.dart';
 import '../../services/teaching_day_service.dart';
 import '../../services/timetable_service.dart';
 import '../timetable/admin_timetable_screen.dart' show weekdayLabel;
 import 'teacher_schedule_screen.dart';
 
-String _dateKey(DateTime d) => DateFormat('yyyy-MM-dd').format(d);
 
 Widget _heading(String text) => Padding(
       padding: const EdgeInsets.only(top: 8, bottom: 8),
@@ -34,9 +36,59 @@ class AdminFollowUpView extends StatefulWidget {
 
 class _AdminFollowUpViewState extends State<AdminFollowUpView> {
   final _service = TeachingDayService();
-  late final Stream<List<ChangeRequest>> _requests = _service.watchChangeRequests();
-  late final Stream<List<ClassSession>> _sessions =
-      context.read<FirestoreService>().watchAllClassSessions();
+
+  // Build 9 part 2: the open change requests and the sessions needing a
+  // hand are read a page at a time; the sessions in a date range (default
+  // two weeks back and ahead, as before), through one query over the three
+  // flags, not the whole class_sessions collection.
+  late final PagedController<ChangeRequest> _requests =
+      PagedController<ChangeRequest>(
+    range: const DateRangeSel.all(),
+    build: (_) => FirestorePageSource(
+      FirebaseFirestore.instance
+          .collection('schedule_change_requests')
+          .where('status', isEqualTo: 'open')
+          .orderBy('createdAt', descending: true),
+      ChangeRequest.fromDoc,
+    ),
+  );
+  late final PagedController<ClassSession> _sessions =
+      PagedController<ClassSession>(
+    range: DateRangeSel.custom(
+      DateTime.now().subtract(const Duration(days: 14)),
+      DateTime.now().add(const Duration(days: 14)),
+    ),
+    build: (range) => FilteredPageSource<ClassSession>(
+      FirestorePageSource(
+        applyDateRange(
+          FirebaseFirestore.instance
+              .collection(AppConstants.classSessionsCollection)
+              .where(Filter.or(
+                Filter('lateCheckIn', isEqualTo: true),
+                Filter('unclosed', isEqualTo: true),
+                Filter('status', isEqualTo: 'needs_teacher'),
+              ))
+              .orderBy('sessionDate')
+              .orderBy('startMinutes'),
+          'sessionDate',
+          range,
+          kind: DateFieldKind.isoDay,
+        ),
+        ClassSession.fromFirestore,
+      ),
+      // Closed or cancelled since it was flagged: nothing left to do.
+      (s) =>
+          !s.isClosedOrCancelled &&
+          (s.lateCheckIn || s.unclosed || s.lifeStatus == 'needs_teacher'),
+    ),
+  );
+
+  @override
+  void dispose() {
+    _requests.dispose();
+    _sessions.dispose();
+    super.dispose();
+  }
 
   Future<void> _resolve(ChangeRequest r, bool accept) async {
     final l = context.l10n;
@@ -78,6 +130,7 @@ class _AdminFollowUpViewState extends State<AdminFollowUpView> {
     final messenger = ScaffoldMessenger.of(context);
     try {
       await _service.resolveChange(r.id, accept: accept, note: note.text);
+      _requests.refresh();
     } on TeachingDayException catch (e) {
       messenger.showSnackBar(
           SnackBar(content: Text(e.message), backgroundColor: AppColors.error));
@@ -88,85 +141,61 @@ class _AdminFollowUpViewState extends State<AdminFollowUpView> {
   Widget build(BuildContext context) {
     final l = context.l10n;
     final unconfirmed = widget.schedules.where((s) => s.status != 'confirmed').toList();
-    final now = DateTime.now();
-    final from = _dateKey(now.subtract(const Duration(days: 14)));
-    final to = _dateKey(now.add(const Duration(days: 14)));
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        StreamBuilder<List<ChangeRequest>>(
-          stream: _requests,
-          builder: (context, snap) {
-            final open = (snap.data ?? const <ChangeRequest>[]).where((r) => r.isOpen).toList();
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _heading(l.followUpRequests(open.length)),
-                if (open.isEmpty)
-                  Text(l.followUpNothing, style: TextStyle(color: AppColors.textSecondary)),
-                for (final r in open)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: AppCard(
-                      padding: const EdgeInsets.all(12),
-                      child: Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          Text('${r.teacherName} · ${r.className}: ${r.reason}'
-                              '${r.wanted.isNotEmpty ? ' → ${r.wanted}' : ''}'),
-                          FilledButton(
-                              onPressed: () => _resolve(r, true), child: Text(l.changeAccept)),
-                          OutlinedButton(
-                              onPressed: () => _resolve(r, false),
-                              child: Text(l.changeDecline)),
-                        ],
-                      ),
-                    ),
-                  ),
-              ],
-            );
-          },
-        ),
-        _heading(l.followUpUnconfirmed(unconfirmed.length)),
-        if (unconfirmed.isEmpty)
-          Text(l.followUpNothing, style: TextStyle(color: AppColors.textSecondary)),
-        for (final s in unconfirmed)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: Text('${weekdayLabel(l, s.weekday)} ${s.timeLabel} · ${s.className} · '
-                '${s.teacherName}'),
+    return ListenableBuilder(
+      listenable: Listenable.merge([_requests, _sessions]),
+      builder: (context, _) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _heading(l.followUpRequests(_requests.total ?? _requests.items.length)),
+          PagedListBody<ChangeRequest>(
+            controller: _requests,
+            inline: true,
+            padding: EdgeInsets.zero,
+            separator: 8,
+            emptyIcon: Icons.check_circle_outline,
+            emptyTitle: l.followUpNothing,
+            emptySubtitle: '',
+            itemBuilder: (context, r) => AppCard(
+              padding: const EdgeInsets.all(12),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Text('${r.teacherName} · ${r.className}: ${r.reason}'
+                      '${r.wanted.isNotEmpty ? ' → ${r.wanted}' : ''}'),
+                  FilledButton(
+                      onPressed: () => _resolve(r, true), child: Text(l.changeAccept)),
+                  OutlinedButton(
+                      onPressed: () => _resolve(r, false),
+                      child: Text(l.changeDecline)),
+                ],
+              ),
+            ),
           ),
-        StreamBuilder<List<ClassSession>>(
-          stream: _sessions,
-          builder: (context, snap) {
-            final list = (snap.data ?? const <ClassSession>[])
-                .where((s) =>
-                    s.sessionDate.compareTo(from) >= 0 &&
-                    s.sessionDate.compareTo(to) <= 0 &&
-                    !s.isClosedOrCancelled &&
-                    (s.lateCheckIn || s.unclosed || s.lifeStatus == 'needs_teacher'))
-                .toList()
-              ..sort((a, b) => a.sessionDate != b.sessionDate
-                  ? a.sessionDate.compareTo(b.sessionDate)
-                  : a.startMinutes.compareTo(b.startMinutes));
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _heading(l.followUpSessions(list.length)),
-                if (list.isEmpty)
-                  Text(l.followUpNothing, style: TextStyle(color: AppColors.textSecondary)),
-                for (final s in list)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: SessionDayCard(session: s, showDate: true),
-                  ),
-              ],
-            );
-          },
-        ),
-      ],
+          _heading(l.followUpUnconfirmed(unconfirmed.length)),
+          if (unconfirmed.isEmpty)
+            Text(l.followUpNothing, style: TextStyle(color: AppColors.textSecondary)),
+          for (final s in unconfirmed)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text('${weekdayLabel(l, s.weekday)} ${s.timeLabel} · ${s.className} · '
+                  '${s.teacherName}'),
+            ),
+          _heading(l.followUpSessions(_sessions.items.length)),
+          PagedListBody<ClassSession>(
+            controller: _sessions,
+            inline: true,
+            padding: EdgeInsets.zero,
+            separator: 8,
+            header: DateRangeBar(value: _sessions.range, onChanged: _sessions.setRange),
+            emptyIcon: Icons.check_circle_outline,
+            emptyTitle: l.followUpNothing,
+            emptySubtitle: '',
+            itemBuilder: (context, s) => SessionDayCard(session: s, showDate: true),
+          ),
+        ],
+      ),
     );
   }
 }

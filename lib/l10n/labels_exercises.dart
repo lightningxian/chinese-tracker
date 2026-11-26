@@ -51,3 +51,12 @@ extension QuestionBankSheetTypeL10n on QuestionBankSheet {
         _ => type.localized(l),
       };
 }
+
+/// Build 9 part 2: the same column for a row of the paged bank.
+extension BankSheetRowTypeL10n on BankSheetRow {
+  String typeLocalized(AppLocalizations l) => switch (category) {
+        ExerciseCategory.hskSimulation => l.bankTypeHsk,
+        ExerciseCategory.standardCourse => l.exerciseCategoryStandardCourse,
+        _ => type.localized(l),
+      };
+}

@@ -3,36 +3,34 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/constants/app_constants.dart';
+import '../../core/paging/paged_controller.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/exercise_utils.dart';
-import '../../core/utils/teacher_activity_utils.dart';
 import '../../core/utils/teacher_attention_utils.dart';
-import '../../core/utils/teacher_stats_utils.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/cohort_stats_widgets.dart';
-import '../../core/widgets/responsive_card_grid.dart';
+import '../../core/widgets/paging_bars.dart';
 import '../../core/widgets/shell_nested_page.dart';
 import '../../core/widgets/status_pill.dart';
 import '../../core/widgets/teacher_activity_widgets.dart';
 import '../../l10n/l10n.dart';
 import '../../l10n/labels_classes.dart';
-import '../../models/app_user.dart';
-import '../../models/attendance_record.dart';
 import '../../models/class_session.dart';
 import '../../models/cohort_report_models.dart';
-import '../../models/exercise.dart';
-import '../../models/exercise_assignment.dart';
-import '../../models/exercise_result.dart';
-import '../../models/lesson.dart';
-import '../../models/student_class_term.dart';
-import '../../models/student_progress.dart';
-import '../../models/teacher_activity_event.dart';
 import '../../models/dashboard_stat_routes.dart';
+import '../../models/lesson.dart';
+import '../../models/roster_row.dart';
+import '../../models/teacher_activity_event.dart';
 import '../../models/teacher_dashboard_stat_kind.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
+import '../../services/list_pages_service.dart';
 
+/// A teacher-dashboard figure opened as a list. Build 9 part 2: every list
+/// is read a page at a time — the student lists from `progress_summary`
+/// (its roster block, written by the functions), the homework lists from
+/// the assignments with their `done` stamp, the week from bounded queries —
+/// instead of eight whole collections streamed into the browser.
 class TeacherDashboardStatDetailScreen extends StatelessWidget {
   const TeacherDashboardStatDetailScreen({
     super.key,
@@ -47,833 +45,559 @@ class TeacherDashboardStatDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final firestore = context.read<FirestoreService>();
-    final user = context.watch<AuthService>().appUser;
-    // Admin centre views keep the full centre; teacher views are scoped.
-    final sessionsStream = user != null && user.isTeacher
-        ? firestore.watchTeacherSessions(AppConstants.contentOwnerFor(user))
-        : firestore.watchAllClassSessions();
-    // Per-teacher model: teachers use contentOwnerFor; admins aggregate below.
-    final teacherOwnerId = user != null && user.isTeacher
-        ? AppConstants.contentOwnerFor(user)
-        : '';
-
     return ShellNestedPage(
       embedded: embedded,
       title: kind.localizedTitle(context.l10n),
-      child: StreamBuilder<List<AppUser>>(
-        stream: firestore.watchAllStudents(),
-        builder: (context, studentsSnap) {
-          if (studentsSnap.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (studentsSnap.hasError) {
-            return Center(
-              child: Text(
-                studentsSnap.error.toString(),
-                style: TextStyle(color: AppColors.error),
-              ),
-            );
-          }
-
-          final students = studentsSnap.data ?? [];
-          final ownerIds = teacherOwnerId.isNotEmpty
-              ? <String>{teacherOwnerId}
-              : {
-                  for (final s in students) AppConstants.contentOwnerFor(s),
-                }.where((id) => id.isNotEmpty).toSet();
-
-          return StreamBuilder<List<StudentProgress>>(
-            stream: firestore.watchAllStudentProgress(),
-            builder: (context, progressSnap) {
-              return StreamBuilder<List<ExerciseAssignment>>(
-                stream: firestore.watchAllExerciseAssignments(),
-                builder: (context, assignmentsSnap) {
-                  return StreamBuilder<List<ExerciseResult>>(
-                    stream: firestore.watchAllExerciseResults(),
-                    builder: (context, resultsSnap) {
-                      return StreamBuilder<List<StudentClassTerm>>(
-                        stream: firestore.watchAllClassTerms(),
-                        builder: (context, termsSnap) {
-                          return StreamBuilder<List<Exercise>>(
-                            stream: firestore.watchAllExercises(),
-                            builder: (context, exercisesSnap) {
-                              return StreamBuilder<Map<String, List<Lesson>>>(
-                                stream: firestore.watchLessonsByOwnerIds(
-                                  ownerIds,
-                                ),
-                                builder: (context, lessonsSnap) {
-                                  return StreamBuilder<List<ClassSession>>(
-                                    stream: sessionsStream,
-                                    builder: (context, sessionsSnap) {
-                                      return StreamBuilder<
-                                          List<AttendanceRecord>>(
-                                        stream: firestore.watchAllAttendance(),
-                                        builder: (context, attendanceSnap) {
-                                          final progress =
-                                              progressSnap.data ?? [];
-                                          final assignments =
-                                              assignmentsSnap.data ?? [];
-                                          final results =
-                                              resultsSnap.data ?? [];
-                                          final classTerms =
-                                              termsSnap.data ?? [];
-                                          final exercises =
-                                              exercisesSnap.data ?? [];
-                                          final lessonsByOwnerId = lessonsSnap
-                                                  .data ??
-                                              const <String, List<Lesson>>{};
-                                          final lessons = lessonsByOwnerId
-                                              .values
-                                              .expand((e) => e)
-                                              .toList();
-                                          final sessions =
-                                              sessionsSnap.data ?? [];
-                                          final attendance =
-                                              attendanceSnap.data ?? [];
-
-                                          final exercisesById = {
-                                            for (final e in exercises) e.id: e,
-                                          };
-
-                                          final homeworkOverview =
-                                              TeacherActivityUtils
-                                                  .buildHomeworkOverview(
-                                            students: students,
-                                            assignments: assignments,
-                                            results: results,
-                                            exercisesById: exercisesById,
-                                          );
-                                          final attentionItems =
-                                              TeacherAttentionUtils.buildItems(
-                                            students: students,
-                                            progress: progress,
-                                            assignments: assignments,
-                                            exerciseResults: results,
-                                            classTerms: classTerms,
-                                          );
-                                          final rosters = TeacherStatsUtils
-                                              .buildStudentRosters(
-                                            students: students,
-                                            progress: progress,
-                                            assignments: assignments,
-                                            results: results,
-                                            classTerms: classTerms,
-                                            attendance: attendance,
-                                            lessonsByOwnerId: lessonsByOwnerId,
-                                          );
-                                          final weeklyActivity =
-                                              TeacherActivityUtils
-                                                  .buildWeeklyActivity(
-                                            progress: progress,
-                                            results: results,
-                                          );
-                                          final activityFeed =
-                                              TeacherActivityUtils.buildFeed(
-                                            l: context.l10n,
-                                            students: students,
-                                            progress: progress,
-                                            assignments: assignments,
-                                            exerciseResults: results,
-                                            attendance: attendance,
-                                            sessions: sessions,
-                                            classTerms: classTerms,
-                                            exercisesById: exercisesById,
-                                            lessonsById: {
-                                              for (final l in lessons) l.id: l,
-                                            },
-                                            limit: 100,
-                                          );
-
-                                          return _StatDetailBody(
-                                            kind: kind,
-                                            routes: routes,
-                                            students: students,
-                                            rosters: rosters,
-                                            homeworkOverview: homeworkOverview,
-                                            attentionItems: attentionItems,
-                                            weeklyActivity: weeklyActivity,
-                                            activityFeed: activityFeed,
-                                            sessions: sessions,
-                                            assignments: assignments,
-                                            results: results,
-                                          );
-                                        },
-                                      );
-                                    },
-                                  );
-                                },
-                              );
-                            },
-                          );
-                        },
-                      );
-                    },
-                  );
-                },
-              );
-            },
-          );
-        },
-      ),
+      child: _StatDetailBody(key: ValueKey(kind), kind: kind, routes: routes),
     );
   }
 }
 
-class _StatDetailBody extends StatelessWidget {
-  const _StatDetailBody({
-    required this.kind,
-    required this.routes,
-    required this.students,
-    required this.rosters,
-    required this.homeworkOverview,
-    required this.attentionItems,
-    required this.weeklyActivity,
-    required this.activityFeed,
-    required this.sessions,
-    required this.assignments,
-    required this.results,
-  });
+class _StatDetailBody extends StatefulWidget {
+  const _StatDetailBody({super.key, required this.kind, required this.routes});
 
   final TeacherDashboardStatKind kind;
   final DashboardStatRoutes routes;
-  final List<AppUser> students;
-  final List<StudentRosterSummary> rosters;
-  final HomeworkOverview homeworkOverview;
-  final List<AttentionItem> attentionItems;
-  final List<WeeklyActivityDay> weeklyActivity;
-  final List<TeacherActivityEvent> activityFeed;
-  final List<ClassSession> sessions;
-  final List<ExerciseAssignment> assignments;
-  final List<ExerciseResult> results;
+
+  @override
+  State<_StatDetailBody> createState() => _StatDetailBodyState();
+}
+
+class _StatDetailBodyState extends State<_StatDetailBody> {
+  late final ListPagesService _lists =
+      ListPagesService(context.read<FirestoreService>());
+  final Map<String, List<Lesson>> _lessons = {};
+  PagedController<StudentRosterSummary>? _roster;
+  PagedController<Object?>? _pages;
+  Future<({int total, int done, int overdue})>? _homeworkCounts;
+  Future<List<WeeklyActivityDay>>? _week;
+
+  TeacherDashboardStatKind get kind => widget.kind;
+
+  /// Teachers see their own classes; admins the whole centre.
+  String? get _teacherUid {
+    final user = context.read<AuthService>().appUser;
+    return user != null && user.isTeacher ? user.uid : null;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    final l = context.l10n;
+    switch (kind) {
+      case TeacherDashboardStatKind.students:
+      case TeacherDashboardStatKind.activeThisWeek:
+        final active = kind == TeacherDashboardStatKind.activeThisWeek;
+        _roster = PagedController<StudentRosterSummary>(
+          build: (_) => MappedPageSource<RosterRow, StudentRosterSummary>(
+            _lists.summarySource(
+              orderBy: active ? 'roster.lastActiveMs' : 'nameLower',
+              descending: active,
+              minMs: active
+                  ? DateTime.now()
+                      .subtract(const Duration(days: 7))
+                      .millisecondsSinceEpoch
+                  : null,
+            ),
+            (page) async {
+              await _lists.lessonsFor(page.map((r) => r.student), _lessons);
+              return [
+                for (final r in page)
+                  r.toSummary(l: l, lessonsByOwnerId: _lessons),
+              ];
+            },
+          ),
+        );
+      case TeacherDashboardStatKind.avgQuiz:
+        _pages = PagedController<Object?>(
+            build: (_) => _lists.summarySource(
+                orderBy: 'roster.lessonAvg', descending: true, notNull: true));
+      case TeacherDashboardStatKind.avgPractice:
+        _pages = PagedController<Object?>(
+            build: (_) => _lists.summarySource(
+                orderBy: 'roster.practiceAvg', descending: true, notNull: true));
+      case TeacherDashboardStatKind.sessionsLeft:
+        _pages = PagedController<Object?>(
+            build: (_) =>
+                _lists.summarySource(orderBy: 'roster.sessionsRemaining'));
+      case TeacherDashboardStatKind.needAttention:
+        _pages = PagedController<Object?>(
+            build: (_) => _lists.summarySource(attentionOnly: true));
+      case TeacherDashboardStatKind.homeworkDone:
+        _pages = PagedController<Object?>(
+            build: (_) => _lists.homeworkSource(HomeworkView.done));
+      case TeacherDashboardStatKind.overdue:
+        _pages = PagedController<Object?>(
+            build: (_) => _lists.homeworkSource(HomeworkView.overdue));
+      case TeacherDashboardStatKind.homeworkOverview:
+        _homeworkCounts = _lists.homeworkCounts();
+        _pages = PagedController<Object?>(
+            build: (_) => _lists.homeworkSource(HomeworkView.all));
+      case TeacherDashboardStatKind.weeklyActivity:
+        _week = _lists.weeklyActivity();
+        _pages = PagedController<Object?>(
+            build: (_) =>
+                _lists.weeklyFeedSource(l, teacherUid: _teacherUid));
+      case TeacherDashboardStatKind.classesThisWeek:
+        _pages = PagedController<Object?>(
+            build: (_) =>
+                _lists.classesThisWeekSource(teacherUid: _teacherUid));
+    }
+  }
+
+  @override
+  void dispose() {
+    _roster?.dispose();
+    _pages?.dispose();
+    super.dispose();
+  }
+
+  Widget _description(BuildContext context) => AppCard(
+        child: Text(
+          kind.localizedDescription(context.l10n),
+          style: TextStyle(color: AppColors.textSecondary, height: 1.45),
+        ),
+      );
 
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    return ListView(
-      padding: const EdgeInsets.all(20),
+    final roster = _roster;
+    if (roster != null) {
+      return StudentRosterList(controller: roster, header: _description(context));
+    }
+    final pages = _pages!;
+    final header = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        AppCard(
-          child: Text(
-            kind.localizedDescription(l),
-            style: TextStyle(
-              color: AppColors.textSecondary,
-              height: 1.45,
-            ),
+        _description(context),
+        if (_homeworkCounts != null) ...[
+          const SizedBox(height: 12),
+          _HomeworkCounts(counts: _homeworkCounts!),
+        ],
+        if (_week != null) ...[
+          const SizedBox(height: 12),
+          FutureBuilder<List<WeeklyActivityDay>>(
+            future: _week,
+            builder: (context, snap) => snap.hasData
+                ? WeeklyActivityChart(days: snap.data!)
+                : const LinearProgressIndicator(minHeight: 2),
           ),
-        ),
-        const SizedBox(height: 16),
-        ..._buildContent(context),
+        ],
       ],
     );
-  }
-
-  List<Widget> _buildContent(BuildContext context) {
-    final l = context.l10n;
-    return switch (kind) {
-      TeacherDashboardStatKind.students => [_rosterList(context, rosters)],
-      TeacherDashboardStatKind.activeThisWeek => [
-          _rosterList(context, _activeRosters()),
-        ],
-      TeacherDashboardStatKind.homeworkDone => [
-          _homeworkRows(
-            context,
-            homeworkOverview.rows.where((row) => row.isDone).toList(),
-            emptyTitle: l.teacherDashNoCompletedHomeworkTitle,
-            emptySubtitle: l.teacherDashNoCompletedHomeworkSubtitle,
-          ),
-        ],
-      TeacherDashboardStatKind.overdue => [
-          _homeworkRows(
-            context,
-            homeworkOverview.rows.where((row) => row.isOverdue).toList(),
-            emptyTitle: l.teacherDashNoOverdueTitle,
-            emptySubtitle: l.teacherDashNoOverdueSubtitle,
-          ),
-        ],
-      TeacherDashboardStatKind.avgQuiz => [
-          _scoreList(
-            context,
-            rosters
-                .where((student) => student.avgQuizScore != null)
-                .map(
-                  (student) => _ScoreRow(
-                    studentId: student.studentId,
-                    name: student.staffLabel,
-                    subtitle: student.levelLabel,
-                    score: student.avgQuizScore!,
-                  ),
-                )
-                .toList()
-              ..sort((a, b) => b.score.compareTo(a.score)),
-            emptyTitle: l.teacherDashNoQuizScoresTitle,
-            emptySubtitle: l.teacherDashNoQuizScoresSubtitle,
-          ),
-        ],
-      TeacherDashboardStatKind.avgPractice => [
-          _scoreList(
-            context,
-            _practiceAverages(l),
-            emptyTitle: l.teacherDashNoPracticeScoresTitle,
-            emptySubtitle: l.teacherDashNoPracticeScoresSubtitle,
-          ),
-        ],
-      TeacherDashboardStatKind.sessionsLeft => [
-          _sessionBalanceList(context),
-        ],
-      TeacherDashboardStatKind.classesThisWeek => [
-          _classesThisWeekList(context),
-        ],
-      TeacherDashboardStatKind.needAttention => [
-          _attentionList(context),
-        ],
-      TeacherDashboardStatKind.weeklyActivity => [
-          WeeklyActivityChart(days: weeklyActivity),
-          const SizedBox(height: 16),
-          _weeklyEventList(context),
-        ],
-      TeacherDashboardStatKind.homeworkOverview => [
-          _homeworkSummary(context),
-          const SizedBox(height: 12),
-          _homeworkRows(
-            context,
-            homeworkOverview.rows,
-            emptyTitle: l.teacherDashNoHomeworkTitle,
-            emptySubtitle: l.teacherDashNoHomeworkSubtitle,
-          ),
-        ],
-    };
-  }
-
-  List<StudentRosterSummary> _activeRosters() {
-    final cutoff = DateTime.now().subtract(const Duration(days: 7));
-    return rosters
-        .where(
-          (student) =>
-              student.lastActivityAt != null &&
-              student.lastActivityAt!.isAfter(cutoff),
-        )
-        .toList();
-  }
-
-  List<_ScoreRow> _practiceAverages(AppLocalizations l) {
-    final bestByAssignment = ExerciseUtils.bestScoresByStudentExercise(results);
-    final totals = <String, _PracticeAccumulator>{};
-
-    for (final assignment in assignments) {
-      final key = '${assignment.studentId}_${assignment.exerciseId}';
-      final score = bestByAssignment[key];
-      if (score == null) continue;
-      totals
-          .putIfAbsent(assignment.studentId, _PracticeAccumulator.new)
-          .add(score);
-    }
-
-    final rows = <_ScoreRow>[];
-    for (final roster in rosters) {
-      final total = totals[roster.studentId];
-      if (total == null || total.count == 0) continue;
-      rows.add(
-        _ScoreRow(
-          studentId: roster.studentId,
-          name: roster.staffLabel,
-          subtitle:
-              l.teacherDashExerciseCountLevel(total.count, roster.levelLabel),
-          score: (total.sum / total.count).round(),
+    final (empty, emptyTitle, emptySubtitle) = switch (kind) {
+      TeacherDashboardStatKind.homeworkDone => (
+          Icons.assignment_outlined,
+          l.teacherDashNoCompletedHomeworkTitle,
+          l.teacherDashNoCompletedHomeworkSubtitle
         ),
-      );
-    }
-    rows.sort((a, b) => b.score.compareTo(a.score));
-    return rows;
-  }
-
-  Widget _rosterList(BuildContext context, List<StudentRosterSummary> items) {
-    if (items.isEmpty) {
-      final l = context.l10n;
-      return EmptyState(
-        icon: Icons.people_outline,
-        title: l.teacherDashNoStudentsToShowTitle,
-        subtitle: l.teacherDashNoStudentsToShowSubtitle,
-      );
-    }
-    return StudentRosterList(students: items, padding: EdgeInsets.zero);
-  }
-
-  Widget _homeworkSummary(BuildContext context) {
-    final l = context.l10n;
-    return AppCard(
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: [
-          StatusPill(
-            label: l.teacherDashHomeworkDone(homeworkOverview.completed),
-            color: AppColors.success,
-          ),
-          StatusPill(
-            label: l.teacherDashHomeworkToDo(homeworkOverview.pending),
-            color: AppColors.teal,
-          ),
-          if (homeworkOverview.overdue > 0)
-            StatusPill(
-              label: l.teacherDashHomeworkOverdue(homeworkOverview.overdue),
-              color: AppColors.error,
-            ),
-        ],
+      TeacherDashboardStatKind.overdue => (
+          Icons.assignment_outlined,
+          l.teacherDashNoOverdueTitle,
+          l.teacherDashNoOverdueSubtitle
+        ),
+      TeacherDashboardStatKind.homeworkOverview => (
+          Icons.assignment_outlined,
+          l.teacherDashNoHomeworkTitle,
+          l.teacherDashNoHomeworkSubtitle
+        ),
+      TeacherDashboardStatKind.avgQuiz => (
+          Icons.leaderboard_outlined,
+          l.teacherDashNoQuizScoresTitle,
+          l.teacherDashNoQuizScoresSubtitle
+        ),
+      TeacherDashboardStatKind.avgPractice => (
+          Icons.leaderboard_outlined,
+          l.teacherDashNoPracticeScoresTitle,
+          l.teacherDashNoPracticeScoresSubtitle
+        ),
+      TeacherDashboardStatKind.sessionsLeft => (
+          Icons.event_busy_outlined,
+          l.teacherDashNoSessionPackagesTitle,
+          l.teacherDashNoSessionPackagesSubtitle
+        ),
+      TeacherDashboardStatKind.classesThisWeek => (
+          Icons.event_outlined,
+          l.teacherDashNoClassesThisWeekTitle,
+          l.teacherDashNoClassesThisWeekSubtitle
+        ),
+      TeacherDashboardStatKind.needAttention => (
+          Icons.check_circle_outline,
+          l.teacherDashAllCaughtUp,
+          l.teacherDashNoFollowUp
+        ),
+      TeacherDashboardStatKind.weeklyActivity => (
+          Icons.insights_outlined,
+          l.teacherDashNoActivityTitle,
+          l.teacherDashNoActivitySubtitle
+        ),
+      _ => (Icons.inbox_outlined, null, null),
+    };
+    return ListenableBuilder(
+      listenable: pages,
+      builder: (context, _) => PagedListBody<Object?>(
+        controller: pages,
+        header: header,
+        separator: 8,
+        emptyIcon: empty,
+        emptyTitle: emptyTitle,
+        emptySubtitle: emptySubtitle,
+        itemBuilder: (context, item) => _item(context, item),
       ),
     );
   }
 
-  Widget _homeworkRows(
-    BuildContext context,
-    List<HomeworkOverviewRow> rows, {
-    required String emptyTitle,
-    required String emptySubtitle,
-  }) {
-    if (rows.isEmpty) {
-      return EmptyState(
-        icon: Icons.assignment_outlined,
-        title: emptyTitle,
-        subtitle: emptySubtitle,
-      );
-    }
+  Widget _item(BuildContext context, Object? item) {
     final l = context.l10n;
-
-    return Column(
-      children: [
-        for (final row in rows)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: AppCard(
-              onTap: () => context.push(routes.studentDetail(row.studentId)),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          row.studentName,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          row.exerciseTitle,
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 13,
-                          ),
-                        ),
-                        if (row.dueDate != null) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            ExerciseUtils.dueDateLabel(
-                              row.dueDate,
-                              isOverdue: row.isOverdue,
-                            ),
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: row.isOverdue
-                                  ? AppColors.error
-                                  : AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  if (row.bestScore != null)
-                    Text(
-                      '${row.bestScore}%',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.success,
-                      ),
-                    )
-                  else
-                    StatusPill(
-                      label: row.isOverdue
-                          ? l.teacherDashOverdue
-                          : l.teacherDashPending,
-                      color: row.isOverdue
-                          ? AppColors.error
-                          : AppColors.textSecondary,
-                    ),
-                  const SizedBox(width: 8),
-                  Icon(
-                    Icons.chevron_right,
-                    color: AppColors.textSecondary,
-                  ),
-                ],
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _scoreList(
-    BuildContext context,
-    List<_ScoreRow> rows, {
-    required String emptyTitle,
-    required String emptySubtitle,
-  }) {
-    if (rows.isEmpty) {
-      return EmptyState(
-        icon: Icons.leaderboard_outlined,
-        title: emptyTitle,
-        subtitle: emptySubtitle,
-      );
+    final routes = widget.routes;
+    if (item is HomeworkOverviewRow) return _HomeworkCard(row: item, routes: routes);
+    if (item is TeacherActivityEvent) return _EventCard(event: item, routes: routes);
+    if (item is ClassSession) return _SessionCard(session: item, routes: routes);
+    if (item is RosterRow) {
+      final s = item.toSummary(l: l);
+      switch (kind) {
+        case TeacherDashboardStatKind.avgQuiz:
+          return _ScoreCard(
+            studentId: s.studentId,
+            name: s.staffLabel,
+            subtitle: s.levelLabel,
+            score: item.lessonAvg ?? 0,
+            routes: routes,
+          );
+        case TeacherDashboardStatKind.avgPractice:
+          return _ScoreCard(
+            studentId: s.studentId,
+            name: s.staffLabel,
+            subtitle:
+                l.teacherDashExerciseCountLevel(item.practiceCount, s.levelLabel),
+            score: item.practiceAvg ?? 0,
+            routes: routes,
+          );
+        case TeacherDashboardStatKind.sessionsLeft:
+          return _BalanceCard(summary: s, routes: routes);
+        case TeacherDashboardStatKind.needAttention:
+          return Column(
+            children: [
+              for (final (i, a) in item.attention.indexed) ...[
+                if (i > 0) const SizedBox(height: 8),
+                _AttentionCard(item: a, routes: routes),
+              ],
+            ],
+          );
+        default:
+          return const SizedBox.shrink();
+      }
     }
-
-    return Column(
-      children: [
-        for (final row in rows)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: AppCard(
-              onTap: () => context.push(routes.studentDetail(row.studentId)),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          row.name,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          row.subtitle,
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Text(
-                    '${row.score}%',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 18,
-                      color: AppColors.navy,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Icon(
-                    Icons.chevron_right,
-                    color: AppColors.textSecondary,
-                  ),
-                ],
-              ),
-            ),
-          ),
-      ],
-    );
+    return const SizedBox.shrink();
   }
+}
 
-  Widget _sessionBalanceList(BuildContext context) {
+class _HomeworkCounts extends StatelessWidget {
+  const _HomeworkCounts({required this.counts});
+
+  final Future<({int total, int done, int overdue})> counts;
+
+  @override
+  Widget build(BuildContext context) {
     final l = context.l10n;
-    final items = rosters.toList()
-      ..sort((a, b) => a.sessionsRemaining.compareTo(b.sessionsRemaining));
-
-    if (items.isEmpty) {
-      return EmptyState(
-        icon: Icons.event_busy_outlined,
-        title: l.teacherDashNoSessionPackagesTitle,
-        subtitle: l.teacherDashNoSessionPackagesSubtitle,
-      );
-    }
-
-    return Column(
-      children: [
-        for (final student in items)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: AppCard(
-              onTap: () =>
-                  context.push(routes.studentDetail(student.studentId)),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          student.staffLabel,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        Text(
-                          student.levelLabel,
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  StatusPill(
-                    label: l.teacherDashSessionsLeft(student.sessionsRemaining),
-                    color: student.sessionsRemaining > 0
-                        ? AppColors.teal
-                        : AppColors.error,
-                  ),
-                  const SizedBox(width: 8),
-                  Icon(
-                    Icons.chevron_right,
-                    color: AppColors.textSecondary,
-                  ),
-                ],
-              ),
-            ),
+    return FutureBuilder<({int total, int done, int overdue})>(
+      future: counts,
+      builder: (context, snap) {
+        final c = snap.data;
+        if (c == null) return const LinearProgressIndicator(minHeight: 2);
+        final pending = c.total - c.done - c.overdue;
+        return AppCard(
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              StatusPill(
+                  label: l.teacherDashHomeworkDone(c.done),
+                  color: AppColors.success),
+              StatusPill(
+                  label: l.teacherDashHomeworkToDo(pending),
+                  color: AppColors.teal),
+              if (c.overdue > 0)
+                StatusPill(
+                    label: l.teacherDashHomeworkOverdue(c.overdue),
+                    color: AppColors.error),
+            ],
           ),
-      ],
-    );
-  }
-
-  Widget _classesThisWeekList(BuildContext context) {
-    final l = context.l10n;
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final weekStart = today.subtract(Duration(days: today.weekday - 1));
-    final weekEnd = weekStart.add(const Duration(days: 7));
-
-    final thisWeek = sessions.where((session) {
-      final parsed = DateTime.tryParse(session.sessionDate);
-      if (parsed == null) return false;
-      final day = DateTime(parsed.year, parsed.month, parsed.day);
-      return !day.isBefore(weekStart) && day.isBefore(weekEnd);
-    }).toList()
-      ..sort((a, b) => a.sessionDate.compareTo(b.sessionDate));
-
-    if (thisWeek.isEmpty) {
-      return EmptyState(
-        icon: Icons.event_outlined,
-        title: l.teacherDashNoClassesThisWeekTitle,
-        subtitle: l.teacherDashNoClassesThisWeekSubtitle,
-      );
-    }
-
-    return Column(
-      children: [
-        for (final session in thisWeek)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: AppCard(
-              onTap: routes.sessionDetail == null
-                  ? null
-                  : () => context.push(routes.sessionDetail!(session.id)),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          session.sessionTitle,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          [
-                            _formatSessionDate(session.sessionDate),
-                            session.timeRangeLabel,
-                            if (session.isConcluded) l.teacherDashConcluded,
-                          ].join(' · '),
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Icon(
-                    Icons.chevron_right,
-                    color: AppColors.textSecondary,
-                  ),
-                ],
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _attentionList(BuildContext context) {
-    if (attentionItems.isEmpty) {
-      final l = context.l10n;
-      return EmptyState(
-        icon: Icons.check_circle_outline,
-        title: l.teacherDashAllCaughtUp,
-        subtitle: l.teacherDashNoFollowUp,
-      );
-    }
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return ResponsiveCardGrid(
-          width: constraints.maxWidth,
-          minCardWidth: 280,
-          children: [
-            for (final item in attentionItems)
-              AppCard(
-                onTap: () =>
-                    context.push(routes.studentDetail(item.student.uid)),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                child: Row(
-                  children: [
-                    Icon(
-                      _iconForReason(item.reason),
-                      color: _colorForReason(item.reason),
-                      size: 22,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        item.localizedMessage(context.l10n),
-                        style: const TextStyle(fontWeight: FontWeight.w500),
-                      ),
-                    ),
-                    Icon(
-                      Icons.chevron_right,
-                      color: AppColors.textSecondary,
-                    ),
-                  ],
-                ),
-              ),
-          ],
         );
       },
     );
   }
+}
 
-  Widget _weeklyEventList(BuildContext context) {
-    final cutoff = DateTime.now().subtract(const Duration(days: 7));
-    final events = activityFeed
-        .where((event) => event.occurredAt.isAfter(cutoff))
-        .toList();
+class _HomeworkCard extends StatelessWidget {
+  const _HomeworkCard({required this.row, required this.routes});
 
-    if (events.isEmpty) {
-      final l = context.l10n;
-      return EmptyState(
-        icon: Icons.insights_outlined,
-        title: l.teacherDashNoActivityTitle,
-        subtitle: l.teacherDashNoActivitySubtitle,
-      );
-    }
+  final HomeworkOverviewRow row;
+  final DashboardStatRoutes routes;
 
-    return Column(
-      children: [
-        for (final event in events)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: AppCard(
-              onTap: event.studentId != null
-                  ? () => context.push(routes.studentDetail(event.studentId!))
-                  : event.studentRoute != null
-                      ? () => context.push(event.studentRoute!)
-                      : null,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          event.title,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        if (event.subtitle != null) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            event.subtitle!,
-                            style: TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: 4),
-                        Text(
-                          DateFormat('EEE d MMM · HH:mm')
-                              .format(event.occurredAt),
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    return AppCard(
+      onTap: () => context.push(routes.studentDetail(row.studentId)),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(row.studentName,
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 2),
+                Text(row.exerciseTitle,
+                    style:
+                        TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                if (row.dueDate != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    ExerciseUtils.dueDateLabel(row.dueDate,
+                        isOverdue: row.isOverdue),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: row.isOverdue
+                          ? AppColors.error
+                          : AppColors.textSecondary,
                     ),
                   ),
-                  if (event.studentRoute != null)
-                    Icon(
-                      Icons.chevron_right,
-                      color: AppColors.textSecondary,
-                    ),
                 ],
-              ),
+              ],
             ),
           ),
-      ],
+          if (row.bestScore != null)
+            Text('${row.bestScore}%',
+                style: TextStyle(
+                    fontWeight: FontWeight.w700, color: AppColors.success))
+          else
+            StatusPill(
+              label: row.isOverdue ? l.teacherDashOverdue : l.teacherDashPending,
+              color: row.isOverdue ? AppColors.error : AppColors.textSecondary,
+            ),
+          const SizedBox(width: 8),
+          Icon(Icons.chevron_right, color: AppColors.textSecondary),
+        ],
+      ),
     );
-  }
-
-  static String _formatSessionDate(String raw) {
-    final parsed = DateTime.tryParse(raw);
-    if (parsed == null) return raw;
-    return DateFormat('EEE, d MMM yyyy').format(parsed);
-  }
-
-  static IconData _iconForReason(AttentionReason reason) {
-    return switch (reason) {
-      AttentionReason.overdueExercise => Icons.warning_amber_rounded,
-      AttentionReason.staleAssignment => Icons.assignment_late_outlined,
-      AttentionReason.inactiveStudent => Icons.schedule_outlined,
-      AttentionReason.lowSessions => Icons.event_busy_outlined,
-    };
-  }
-
-  static Color _colorForReason(AttentionReason reason) {
-    return switch (reason) {
-      AttentionReason.overdueExercise => AppColors.error,
-      AttentionReason.staleAssignment => AppColors.error,
-      AttentionReason.inactiveStudent => AppColors.textSecondary,
-      AttentionReason.lowSessions => AppColors.teal,
-    };
   }
 }
 
-class _ScoreRow {
-  const _ScoreRow({
+class _ScoreCard extends StatelessWidget {
+  const _ScoreCard({
     required this.studentId,
     required this.name,
     required this.subtitle,
     required this.score,
+    required this.routes,
   });
 
   final String studentId;
   final String name;
   final String subtitle;
   final int score;
+  final DashboardStatRoutes routes;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      onTap: () => context.push(routes.studentDetail(studentId)),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 2),
+                Text(subtitle,
+                    style:
+                        TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+              ],
+            ),
+          ),
+          Text('$score%',
+              style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 18,
+                  color: AppColors.navy)),
+          const SizedBox(width: 8),
+          Icon(Icons.chevron_right, color: AppColors.textSecondary),
+        ],
+      ),
+    );
+  }
 }
 
-class _PracticeAccumulator {
-  int sum = 0;
-  int count = 0;
+class _BalanceCard extends StatelessWidget {
+  const _BalanceCard({required this.summary, required this.routes});
 
-  void add(int score) {
-    sum += score;
-    count++;
+  final StudentRosterSummary summary;
+  final DashboardStatRoutes routes;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    return AppCard(
+      onTap: () => context.push(routes.studentDetail(summary.studentId)),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(summary.staffLabel,
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                Text(summary.levelLabel,
+                    style:
+                        TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+              ],
+            ),
+          ),
+          StatusPill(
+            label: l.teacherDashSessionsLeft(summary.sessionsRemaining),
+            color: summary.sessionsRemaining > 0
+                ? AppColors.teal
+                : AppColors.error,
+          ),
+          const SizedBox(width: 8),
+          Icon(Icons.chevron_right, color: AppColors.textSecondary),
+        ],
+      ),
+    );
+  }
+}
+
+class _SessionCard extends StatelessWidget {
+  const _SessionCard({required this.session, required this.routes});
+
+  final ClassSession session;
+  final DashboardStatRoutes routes;
+
+  static String _date(String raw) {
+    final parsed = DateTime.tryParse(raw);
+    return parsed == null ? raw : DateFormat('EEE, d MMM yyyy').format(parsed);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    return AppCard(
+      onTap: routes.sessionDetail == null
+          ? null
+          : () => context.push(routes.sessionDetail!(session.id)),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(session.sessionTitle,
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 2),
+                Text(
+                  [
+                    _date(session.sessionDate),
+                    session.timeRangeLabel,
+                    if (session.isConcluded) l.teacherDashConcluded,
+                  ].join(' · '),
+                  style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+          Icon(Icons.chevron_right, color: AppColors.textSecondary),
+        ],
+      ),
+    );
+  }
+}
+
+class _AttentionCard extends StatelessWidget {
+  const _AttentionCard({required this.item, required this.routes});
+
+  final AttentionItem item;
+  final DashboardStatRoutes routes;
+
+  static IconData _icon(AttentionReason reason) => switch (reason) {
+        AttentionReason.overdueExercise => Icons.warning_amber_rounded,
+        AttentionReason.staleAssignment => Icons.assignment_late_outlined,
+        AttentionReason.inactiveStudent => Icons.schedule_outlined,
+        AttentionReason.lowSessions => Icons.event_busy_outlined,
+      };
+
+  static Color _color(AttentionReason reason) => switch (reason) {
+        AttentionReason.overdueExercise => AppColors.error,
+        AttentionReason.staleAssignment => AppColors.error,
+        AttentionReason.inactiveStudent => AppColors.textSecondary,
+        AttentionReason.lowSessions => AppColors.teal,
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      onTap: () => context.push(routes.studentDetail(item.student.uid)),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        children: [
+          Icon(_icon(item.reason), color: _color(item.reason), size: 22),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(item.localizedMessage(context.l10n),
+                style: const TextStyle(fontWeight: FontWeight.w500)),
+          ),
+          Icon(Icons.chevron_right, color: AppColors.textSecondary),
+        ],
+      ),
+    );
+  }
+}
+
+class _EventCard extends StatelessWidget {
+  const _EventCard({required this.event, required this.routes});
+
+  final TeacherActivityEvent event;
+  final DashboardStatRoutes routes;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      onTap: event.studentId != null
+          ? () => context.push(routes.studentDetail(event.studentId!))
+          : null,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(event.title,
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                if (event.subtitle != null) ...[
+                  const SizedBox(height: 2),
+                  Text(event.subtitle!,
+                      style: TextStyle(
+                          color: AppColors.textSecondary, fontSize: 13)),
+                ],
+                const SizedBox(height: 4),
+                Text(DateFormat('EEE d MMM · HH:mm').format(event.occurredAt),
+                    style:
+                        TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+              ],
+            ),
+          ),
+          if (event.studentRoute != null)
+            Icon(Icons.chevron_right, color: AppColors.textSecondary),
+        ],
+      ),
+    );
   }
 }

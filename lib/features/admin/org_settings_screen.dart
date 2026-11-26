@@ -8,6 +8,7 @@ import '../../core/widgets/shell_nested_page.dart';
 import '../../l10n/l10n.dart';
 import '../../models/org_settings.dart';
 import '../../services/firestore_service.dart';
+import '../../services/list_pages_service.dart';
 import '../../services/progress_service.dart';
 import '../../services/promotion_service.dart';
 import '../../services/rooms_service.dart';
@@ -129,6 +130,8 @@ class OrgSettingsScreen extends StatelessWidget {
               const _RebuildSummariesCard(leaderboards: true),
               const SizedBox(height: 12),
               const _RebuildSummariesCard(userSearch: true),
+              const SizedBox(height: 12),
+              const _RebuildSummariesCard(listIndexes: true),
               const SizedBox(height: 10),
               // Build 7: vouchers against the ledger (VC-05).
               const ReconcileVouchersCard(),
@@ -370,7 +373,11 @@ class _RoomsCardState extends State<_RoomsCard> {
 }
 
 class _RebuildSummariesCard extends StatefulWidget {
-  const _RebuildSummariesCard({this.leaderboards = false, this.userSearch = false});
+  const _RebuildSummariesCard(
+      {this.leaderboards = false, this.userSearch = false, this.listIndexes = false});
+
+  /// Build 9 part 2: the same card for **Rebuild list indexes**.
+  final bool listIndexes;
 
   /// Build 9C: the same card for **Rebuild leaderboards**.
   final bool leaderboards;
@@ -390,7 +397,13 @@ class _RebuildSummariesCardState extends State<_RebuildSummariesCard> {
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _busy = true);
     try {
-      if (widget.userSearch) {
+      if (widget.listIndexes) {
+        final r = await ListPagesService(FirestoreService()).rebuildListIndexes();
+        messenger.showSnackBar(SnackBar(
+            content: Text(l.listIndexRebuildDone(
+                (r['sheets'] as num?)?.toInt() ?? 0,
+                (r['exercises'] as num?)?.toInt() ?? 0))));
+      } else if (widget.userSearch) {
         final n = await FirestoreService().rebuildUserSearch();
         messenger.showSnackBar(SnackBar(content: Text(l.orgRebuildUserSearchDone(n))));
       } else if (widget.leaderboards) {
@@ -428,14 +441,18 @@ class _RebuildSummariesCardState extends State<_RebuildSummariesCard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                    widget.userSearch
+                    widget.listIndexes
+                        ? l.listIndexRebuild
+                        : widget.userSearch
                         ? l.orgRebuildUserSearch
                         : widget.leaderboards
                             ? l.orgRebuildLeaderboards
                             : l.progressRebuildTitle,
                     style: const TextStyle(fontWeight: FontWeight.w700)),
                 Text(
-                    widget.userSearch
+                    widget.listIndexes
+                        ? l.listIndexRebuildHint
+                        : widget.userSearch
                         ? l.orgRebuildUserSearchHint
                         : widget.leaderboards
                             ? l.orgRebuildLeaderboardsHint

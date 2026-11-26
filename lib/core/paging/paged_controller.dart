@@ -269,3 +269,125 @@ class ListPageSource<T> implements PageSource<T> {
   @override
   Future<int?> count() async => rows.length;
 }
+
+/// Build 9 part 2: several sources, each newest first, read as one list
+/// (a timeline over attendance, results, payments …). Each page reads at
+/// most `limit` rows from every source and keeps the cursor of each one, so
+/// nothing outside the page is downloaded. [newer] says whether `a` comes
+/// before `b`. The total is the sum of the sources' counts.
+class MergedPageSource<T> implements PageSource<T> {
+  MergedPageSource(this.sources, {required this.newer});
+
+  final List<PageSource<T>> sources;
+  final bool Function(T a, T b) newer;
+
+  @override
+  Future<PageChunk<T>> fetch({Object? after, required int limit}) async {
+    final starts = after is List<Object?> && after.length == sources.length
+        ? after
+        : List<Object?>.filled(sources.length, null);
+    // A source already used up (marked with [_done]) is not read again.
+    final chunks = await Future.wait([
+      for (var i = 0; i < sources.length; i++)
+        identical(starts[i], _done)
+            ? Future.value(PageChunk<T>(const [], const []))
+            : sources[i].fetch(after: starts[i], limit: limit),
+    ]);
+    final pos = List<int>.filled(sources.length, 0);
+    final state = List<Object?>.of(starts);
+    final items = <T>[];
+    final cursors = <Object?>[];
+    while (items.length < limit) {
+      var pick = -1;
+      for (var i = 0; i < chunks.length; i++) {
+        if (pos[i] >= chunks[i].items.length) continue;
+        if (pick < 0 ||
+            newer(chunks[i].items[pos[i]], chunks[pick].items[pos[pick]])) {
+          pick = i;
+        }
+      }
+      if (pick < 0) break;
+      items.add(chunks[pick].items[pos[pick]]);
+      state[pick] = chunks[pick].cursors[pos[pick]];
+      pos[pick]++;
+      // A source that returned less than asked and is now used up.
+      if (pos[pick] == chunks[pick].items.length &&
+          chunks[pick].items.length < limit) {
+        state[pick] = _done;
+      }
+      cursors.add(List<Object?>.of(state));
+    }
+    return PageChunk(items, cursors);
+  }
+
+  @override
+  Future<int?> count() async {
+    final counts = await Future.wait([for (final s in sources) s.count()]);
+    if (counts.any((c) => c == null)) return null;
+    return counts.fold<int>(0, (acc, c) => acc + c!);
+  }
+
+  static const Object _done = _Done();
+}
+
+class _Done {
+  const _Done();
+}
+
+/// Build 9 part 2: a source whose rows are kept only when [keep] says so,
+/// for a query that Firestore cannot narrow further (an OR over flags,
+/// then "not closed"). Reads the inner source in batches until the page is
+/// full or the source ends; use it only over a bounded query (a date range
+/// or flags). The count is unknown.
+class FilteredPageSource<T> implements PageSource<T> {
+  FilteredPageSource(this.inner, this.keep, {this.innerCount = false});
+
+  final PageSource<T> inner;
+  final bool Function(T item) keep;
+
+  /// Report the inner source's count (when [keep] drops only rows that
+  /// should not exist, such as a missing date).
+  final bool innerCount;
+
+  @override
+  Future<PageChunk<T>> fetch({Object? after, required int limit}) async {
+    final items = <T>[];
+    final cursors = <Object?>[];
+    var at = after;
+    while (items.length < limit) {
+      final chunk = await inner.fetch(after: at, limit: limit);
+      for (var i = 0; i < chunk.items.length && items.length < limit; i++) {
+        at = chunk.cursors[i];
+        if (!keep(chunk.items[i])) continue;
+        items.add(chunk.items[i]);
+        cursors.add(at);
+      }
+      if (chunk.items.length < limit) break;
+    }
+    return PageChunk(items, cursors);
+  }
+
+  @override
+  Future<int?> count() async => innerCount ? inner.count() : null;
+}
+
+/// Build 9 part 2: a source whose page is turned into other rows by one
+/// call per page (for example the 25 students of a page joined with their
+/// 25 progress summaries). [map] gets the page in order and must return
+/// one row per input row.
+class MappedPageSource<S, T> implements PageSource<T> {
+  MappedPageSource(this.inner, this.map);
+
+  final PageSource<S> inner;
+  final Future<List<T>> Function(List<S> page) map;
+
+  @override
+  Future<PageChunk<T>> fetch({Object? after, required int limit}) async {
+    final chunk = await inner.fetch(after: after, limit: limit);
+    final rows = chunk.items.isEmpty ? <T>[] : await map(chunk.items);
+    return PageChunk(rows, chunk.cursors);
+  }
+
+  @override
+  Future<int?> count() => inner.count();
+}

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -5,11 +7,14 @@ import 'package:provider/provider.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/constants/exercise_authoring_platform.dart';
+import '../../core/paging/date_range.dart';
+import '../../core/paging/paged_controller.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/utils/exercise_utils.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/app_data_table.dart';
 import '../../core/widgets/exercise_widgets.dart';
+import '../../core/widgets/list_index_banner.dart';
+import '../../core/widgets/paging_bars.dart';
 import '../../core/widgets/table_tools.dart';
 import '../../l10n/l10n.dart';
 import '../../l10n/labels_exercises.dart';
@@ -17,12 +22,11 @@ import '../../models/app_user.dart';
 import '../../models/exercise.dart';
 import '../../models/exercise_assignment.dart';
 import '../../models/exercise_category.dart';
-import '../../models/exercise_result.dart';
 import '../../models/exercise_skill_category.dart';
 import '../../models/exercise_type.dart';
-import '../../models/question_bank_item.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
+import '../../services/list_pages_service.dart';
 import '../../core/widgets/exercise_category_chip.dart';
 import 'exercise_assign_dialog.dart';
 
@@ -52,23 +56,51 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
   Set<String> _selected = {};
   bool _busy = false;
 
-  // Created once: a new stream per build would reset every StreamBuilder
-  // to "waiting" and make the counts flicker after each change.
-  late final Stream<List<Exercise>> _exercises =
-      context.read<FirestoreService>().watchAllExercises();
-  late final Stream<List<ExerciseResult>> _results =
-      context.read<FirestoreService>().watchAllExerciseResults();
-  late final Stream<List<AppUser>> _students =
-      context.read<FirestoreService>().watchAllStudents();
-  late final Stream<List<ExerciseAssignment>> _assignments =
-      context.read<FirestoreService>().watchAllExerciseAssignments();
-  // The bank gives each package its type of exercise.
-  late final Stream<List<QuestionBankItem>> _bank = () {
-    final user = context.read<AuthService>().appUser;
-    return context.read<FirestoreService>().watchQuestionBank(
-          user == null ? '' : AppConstants.contentTeacherId(user),
-        );
-  }();
+  // Build 9 part 2: packages are read a page at a time (newest first, in
+  // the date range); filters and search are queries on the list fields the
+  // functions keep, and each page reads only its own assignments.
+  late final ListPagesService _lists =
+      ListPagesService(context.read<FirestoreService>());
+  Timer? _debounce;
+  late Future<int> _notIndexed = _lists.packagesNotIndexed();
+  late final PagedController<_ExerciseRow> _pages =
+      PagedController<_ExerciseRow>(
+    range: const DateRangeSel.all(),
+    build: (range) => MappedPageSource<(Exercise, String?), _ExerciseRow>(
+      FirestorePageSource(
+        _lists.packageQuery(
+          range,
+          level: _levelFilter,
+          skill: _skillFilter?.value,
+          category: _categoryFilter?.value,
+          search: _search,
+        ),
+        (d) => (Exercise.fromFirestore(d), d.data()?['listCategory'] as String?),
+      ),
+      _rowsOf,
+    ),
+  );
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _pages.dispose();
+    super.dispose();
+  }
+
+  void _reload() {
+    setState(() => _selected = {});
+    _pages.reload();
+  }
+
+  void _onSearch(String v) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 350), () {
+      if (_search == v.trim()) return;
+      _search = v.trim();
+      _reload();
+    });
+  }
 
   String get _base => GoRouterState.of(context).uri.path.startsWith('/admin')
       ? '/admin'
@@ -85,84 +117,54 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
     });
   }
 
-  /// Type of exercise of a package: the first worksheet's (or single
-  /// question's) type in the bank. Older exercises that keep their questions
-  /// inside the document count as plain exercises. Null while the bank is
-  /// still loading or when every worksheet was deleted from it.
-  static ExerciseCategory? _categoryOf(
-    Exercise exercise,
-    Map<String, ExerciseCategory> bySheet,
-    Map<String, ExerciseCategory> byQuestion,
-  ) {
+  /// Type of exercise of a package, from the stored list field (the first
+  /// worksheet's type; "unknown" when its worksheets were deleted).
+  static ExerciseCategory? _categoryOf(Exercise exercise, String? stored) {
     if (!exercise.isPackage) return ExerciseCategory.exercise;
-    for (final code in exercise.bankSheets) {
-      final c = bySheet[code];
-      if (c != null) return c;
-    }
-    for (final id in exercise.bankQuestionIds) {
-      final c = byQuestion[id];
-      if (c != null) return c;
-    }
-    return null;
+    if (stored == null || stored == 'unknown') return null;
+    return ExerciseCategory.fromValue(stored);
   }
 
-  List<_ExerciseRow> _rows({
-    required List<Exercise> exercises,
-    required List<ExerciseResult> results,
-    required List<AppUser> students,
-    required List<ExerciseAssignment> assignments,
-    required List<QuestionBankItem> bank,
-  }) {
-    final byId = {for (final s in students) s.uid: s};
-    final bySheet = <String, ExerciseCategory>{};
-    final byQuestion = <String, ExerciseCategory>{};
-    for (final sheet in QuestionBankSheet.group(bank)) {
-      if (sheet.isSheet) bySheet[sheet.key!] = sheet.category;
-      for (final item in sheet.items) {
-        byQuestion[item.id] = item.category;
-      }
-    }
-    final needle = _search.trim().toLowerCase();
-    final rows = <_ExerciseRow>[];
-    for (final exercise in exercises) {
-      if (_levelFilter != null && exercise.level != _levelFilter) continue;
-      if (_skillFilter != null && exercise.skillCategory != _skillFilter) {
+  /// One page of exercises with their assignment counts (the `done` stamp
+  /// on each assignment says whether the student has a result).
+  Future<List<_ExerciseRow>> _rowsOf(List<(Exercise, String?)> page) async {
+    final byExercise =
+        await _lists.assignmentsFor([for (final p in page) p.$1.id]);
+    return [
+      for (final (exercise, stored) in page)
+        _rowOf(exercise, _categoryOf(exercise, stored),
+            byExercise[exercise.id] ?? const []),
+    ];
+  }
+
+  static _ExerciseRow _rowOf(Exercise exercise, ExerciseCategory? category,
+      List<ExerciseAssignment> assignments) {
+    DateTime? nextDue;
+    var overdue = 0;
+    var completed = 0;
+    for (final a in assignments) {
+      if (a.done == true) {
+        completed++;
         continue;
       }
-      final category = _categoryOf(exercise, bySheet, byQuestion);
-      if (_categoryFilter != null && category != _categoryFilter) continue;
-      if (needle.isNotEmpty &&
-          !'${exercise.title} ${exercise.instructions}'
-              .toLowerCase()
-              .contains(needle)) {
-        continue;
-      }
-      final scores = ExerciseUtils.bestScoresByStudentForExercise(
-        exercise.id,
-        results,
-      );
-      final assigned = <AppUser>[];
-      DateTime? nextDue;
-      var overdue = 0;
-      for (final a in assignments) {
-        if (a.exerciseId != exercise.id) continue;
-        final student = byId[a.studentId];
-        if (student == null) continue;
-        assigned.add(student);
-        final due = a.dueDate;
-        if (due == null || scores.containsKey(a.studentId)) continue;
-        if (a.isOverdue) overdue++;
-        if (nextDue == null || due.isBefore(nextDue)) nextDue = due;
-      }
-      rows.add(_ExerciseRow(
-        exercise: exercise,
-        category: category,
-        assigned: assigned,
-        completed: assigned.where((s) => scores.containsKey(s.uid)).length,
-        nextDue: nextDue,
-        overdue: overdue,
-      ));
+      final due = a.dueDate;
+      if (due == null) continue;
+      if (a.isOverdue) overdue++;
+      if (nextDue == null || due.isBefore(nextDue)) nextDue = due;
     }
+    return _ExerciseRow(
+      exercise: exercise,
+      category: category,
+      assignments: assignments,
+      completed: completed,
+      nextDue: nextDue,
+      overdue: overdue,
+    );
+  }
+
+  /// The page on screen in the order of the clicked column.
+  List<_ExerciseRow> _sorted(List<_ExerciseRow> page) {
+    final rows = [...page];
     final col = _sortColumnId;
     if (col != null) {
       rows.sort((a, b) {
@@ -450,19 +452,19 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
     context.push('$_base/exercise/${exercise.id}/edit', extra: exercise);
   }
 
-  void _showProgress(
-    _ExerciseRow row,
-    List<ExerciseAssignment> assignments,
-    List<ExerciseResult> results,
-    List<AppUser> students,
-  ) {
-    showExerciseHomeworkProgressDialog(
+  /// The names and scores are read when the dialog is opened (one
+  /// exercise's results and the assigned students only).
+  Future<void> _showProgress(_ExerciseRow row) async {
+    final ids = [for (final a in row.assignments) a.studentId];
+    final results = await _lists.resultsOfExercise(row.exercise.id);
+    final students = await _lists.usersById(ids);
+    if (!mounted) return;
+    await showExerciseHomeworkProgressDialog(
       context: context,
       exercise: row.exercise,
-      assignments:
-          assignments.where((a) => a.exerciseId == row.exercise.id).toList(),
+      assignments: row.assignments,
       results: results,
-      students: students,
+      students: students.values.toList(),
     );
   }
 
@@ -501,7 +503,7 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
                 hintText: l.teacherExSearchExercises,
                 isDense: true,
               ),
-              onChanged: (v) => setState(() => _search = v),
+              onChanged: _onSearch,
             ),
           ),
           SizedBox(
@@ -518,7 +520,10 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
                 for (final c in ExerciseCategory.choices(_categoryFilter))
                   DropdownMenuItem(value: c, child: Text(c.localized(l))),
               ],
-              onChanged: (v) => setState(() => _categoryFilter = v),
+              onChanged: (v) {
+                _categoryFilter = v;
+                _reload();
+              },
             ),
           ),
           SizedBox(
@@ -533,7 +538,10 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
                 for (final level in AppConstants.hskLevels)
                   DropdownMenuItem(value: level, child: Text(level)),
               ],
-              onChanged: (v) => setState(() => _levelFilter = v),
+              onChanged: (v) {
+                _levelFilter = v;
+                _reload();
+              },
             ),
           ),
           SizedBox(
@@ -548,14 +556,22 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
                 for (final c in ExerciseSkillCategory.values)
                   DropdownMenuItem(value: c, child: Text(c.localized(l))),
               ],
-              onChanged: (v) => setState(() => _skillFilter = v),
+              onChanged: (v) {
+                _skillFilter = v;
+                _reload();
+              },
             ),
           ),
           ExportCsvButton(
             fileStem: 'exercises',
             label: l.teacherExExportCsv,
             header: _csvHeader(l),
-            rows: () => rows.map((r) => _csvRow(l, r)).toList(),
+            // Build 9: the export follows the filters and the date range,
+            // read in batches (up to 5,000 rows), not the page on screen.
+            rows: () async {
+              final all = await fetchRowsForExport(context, _pages);
+              return [for (final r in all ?? const <_ExerciseRow>[]) _csvRow(l, r)];
+            },
           ),
           if (canManage) ...[
             OutlinedButton.icon(
@@ -577,9 +593,6 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
   List<AppTableColumn<_ExerciseRow>> _columns({
     required bool canManage,
     required AppUser? user,
-    required List<ExerciseAssignment> assignments,
-    required List<ExerciseResult> results,
-    required List<AppUser> students,
   }) {
     final l = context.l10n;
     return [
@@ -661,8 +674,7 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
                       row.assigned.length,
                     ),
                     child: TextButton(
-                      onPressed: () =>
-                          _showProgress(row, assignments, results, students),
+                      onPressed: () => _showProgress(row),
                       style: TextButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         minimumSize: const Size(0, 32),
@@ -707,148 +719,74 @@ class _TeacherExercisesTabState extends State<TeacherExercisesTab> {
     final user = context.watch<AuthService>().appUser;
     final canManage = ExerciseAuthoringPlatform.canManageExercises(user);
 
-    return StreamBuilder<List<Exercise>>(
-      stream: _exercises,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (snapshot.hasError) {
-          return Center(
-            child: Text(
-              snapshot.error.toString(),
-              style: TextStyle(color: AppColors.error),
+    return ListenableBuilder(
+      listenable: _pages,
+      builder: (context, _) {
+        final rows = _sorted(_pages.items);
+        return Column(
+          children: [
+            _buildManageBanner(user),
+            ListIndexBanner(
+              notIndexed: _notIndexed,
+              isAdmin: user?.isAdmin == true,
+              onRebuild: () async {
+                await _lists.rebuildListIndexes();
+                if (!mounted) return;
+                setState(() => _notIndexed = _lists.packagesNotIndexed());
+                _pages.reload();
+              },
             ),
-          );
-        }
-
-        final exercises = snapshot.data ?? [];
-        if (exercises.isEmpty) {
-          return Column(
-            children: [
-              _buildManageBanner(user),
-              Expanded(
-                child: EmptyState(
-                  icon: Icons.fitness_center_outlined,
-                  title: l.teacherExNoExercisesTitle,
-                  subtitle: canManage
-                      ? l.teacherExNoExercisesSubtitle
-                      : l.teacherExNoExercisesSubtitleReadOnly,
-                  action: canManage
-                      ? FilledButton.icon(
-                          onPressed: () => context.push('$_base/exercise/new'),
-                          icon: const Icon(Icons.add, size: 18),
-                          label: Text(l.teacherExNewExercise),
-                        )
+            _toolbar(canManage, rows),
+            _selectionBar(canManage, rows),
+            Expanded(
+              child: PagedListBody<_ExerciseRow>(
+                controller: _pages,
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 80),
+                header: DateRangeBar(
+                  value: _pages.range,
+                  onChanged: (r) {
+                    setState(() => _selected = {});
+                    _pages.setRange(r);
+                  },
+                ),
+                emptyIcon: Icons.fitness_center_outlined,
+                emptyTitle: l.teacherExNoExercisesTitle,
+                emptySubtitle: canManage
+                    ? l.teacherExNoExercisesSubtitle
+                    : l.teacherExNoExercisesSubtitleReadOnly,
+                itemBuilder: (_, __) => const SizedBox.shrink(),
+                body: AppDataTable<_ExerciseRow>(
+                  rows: rows,
+                  sortColumnId: _sortColumnId,
+                  sortAscending: _sortAscending,
+                  onSort: _onSort,
+                  rowKey: (row) => row.exercise.id,
+                  selectedKeys: _selected,
+                  onSelectionChanged: (keys) =>
+                      setState(() => _selected = keys),
+                  onRowTap: canManage
+                      ? (row) {
+                          if (_canEdit(user, row.exercise)) {
+                            _edit(row.exercise);
+                          }
+                        }
                       : null,
+                  columns: _columns(canManage: canManage, user: user),
+                  mobileCardBuilder: (row) => _ExerciseMobileCard(
+                    row: row,
+                    contents: _contentsLabel(l, row.exercise),
+                    canManage: _canEdit(user, row.exercise),
+                    onProgress:
+                        row.assigned.isEmpty ? null : () => _showProgress(row),
+                    onAssign: () =>
+                        showExerciseAssignDialog(context, exercise: row.exercise),
+                    onEdit: () => _edit(row.exercise),
+                    onDelete: () => _confirmDelete(row.exercise),
+                  ),
                 ),
               ),
-            ],
-          );
-        }
-
-        return StreamBuilder<List<ExerciseResult>>(
-          stream: _results,
-          builder: (context, resultsSnap) {
-            return StreamBuilder<List<AppUser>>(
-              stream: _students,
-              builder: (context, studentsSnap) {
-                return StreamBuilder<List<ExerciseAssignment>>(
-                  stream: _assignments,
-                  builder: (context, assignSnap) {
-                    return StreamBuilder<List<QuestionBankItem>>(
-                      stream: _bank,
-                      builder: (context, bankSnap) {
-                        final results = resultsSnap.data ?? [];
-                        final students = studentsSnap.data ?? [];
-                        final assignments =
-                            assignSnap.data ?? const <ExerciseAssignment>[];
-                        final rows = _rows(
-                          exercises: exercises,
-                          results: results,
-                          students: students,
-                          assignments: assignments,
-                          bank: bankSnap.data ?? const <QuestionBankItem>[],
-                        );
-
-                        return Column(
-                          children: [
-                            _buildManageBanner(user),
-                            _toolbar(canManage, rows),
-                            _selectionBar(canManage, rows),
-                            Expanded(
-                              child: rows.isEmpty
-                                  ? EmptyState(
-                                      icon: Icons.filter_alt_off_outlined,
-                                      title: l.bankNoMatchesTitle,
-                                      subtitle: l.bankAdjustFilters,
-                                    )
-                                  : Padding(
-                                      padding: const EdgeInsets.fromLTRB(
-                                          20, 8, 20, 80),
-                                      child: SingleChildScrollView(
-                                        child: AppDataTable<_ExerciseRow>(
-                                          rows: rows,
-                                          sortColumnId: _sortColumnId,
-                                          sortAscending: _sortAscending,
-                                          onSort: _onSort,
-                                          rowKey: (row) => row.exercise.id,
-                                          selectedKeys: _selected,
-                                          onSelectionChanged: (keys) =>
-                                              setState(() => _selected = keys),
-                                          onRowTap: canManage
-                                              ? (row) {
-                                                  if (_canEdit(
-                                                      user, row.exercise)) {
-                                                    _edit(row.exercise);
-                                                  }
-                                                }
-                                              : null,
-                                          columns: _columns(
-                                            canManage: canManage,
-                                            user: user,
-                                            assignments: assignments,
-                                            results: results,
-                                            students: students,
-                                          ),
-                                          mobileCardBuilder: (row) =>
-                                              _ExerciseMobileCard(
-                                            row: row,
-                                            contents:
-                                                _contentsLabel(l, row.exercise),
-                                            canManage:
-                                                _canEdit(user, row.exercise),
-                                            onProgress: row.assigned.isEmpty
-                                                ? null
-                                                : () => _showProgress(
-                                                      row,
-                                                      assignments,
-                                                      results,
-                                                      students,
-                                                    ),
-                                            onAssign: () =>
-                                                showExerciseAssignDialog(
-                                              context,
-                                              exercise: row.exercise,
-                                            ),
-                                            onEdit: () => _edit(row.exercise),
-                                            onDelete: () =>
-                                                _confirmDelete(row.exercise),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  },
-                );
-              },
-            );
-          },
+            ),
+          ],
         );
       },
     );
@@ -860,7 +798,7 @@ class _ExerciseRow {
   const _ExerciseRow({
     required this.exercise,
     required this.category,
-    required this.assigned,
+    required this.assignments,
     required this.completed,
     required this.nextDue,
     required this.overdue,
@@ -871,8 +809,10 @@ class _ExerciseRow {
   /// Type of exercise from the bank; null when unknown.
   final ExerciseCategory? category;
 
-  /// Students the exercise is assigned to (active accounts only).
-  final List<AppUser> assigned;
+  /// The exercise's assignments (one per student).
+  final List<ExerciseAssignment> assignments;
+
+  List<ExerciseAssignment> get assigned => assignments;
 
   /// How many of [assigned] have a result.
   final int completed;

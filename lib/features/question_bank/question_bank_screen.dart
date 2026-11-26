@@ -1,12 +1,18 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/constants/exercise_authoring_platform.dart';
+import '../../core/paging/date_range.dart';
+import '../../core/paging/paged_controller.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/app_data_table.dart';
+import '../../core/widgets/list_index_banner.dart';
+import '../../core/widgets/paging_bars.dart';
 import '../../core/widgets/shell_nested_page.dart';
 import '../../core/widgets/table_tools.dart';
 import '../../l10n/l10n.dart';
@@ -17,6 +23,7 @@ import '../../models/exercise_type.dart';
 import '../../models/question_bank_item.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
+import '../../services/list_pages_service.dart';
 import '../../core/widgets/exercise_category_chip.dart';
 import 'question_bank_ai_import.dart';
 import '../../services/hsk_paper/paper_draft_service.dart';
@@ -54,11 +61,53 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
   Set<String> _selected = {};
   bool _busy = false;
 
-  /// Rows the table shows now, for the CSV export in the header.
-  List<QuestionBankSheet> _visible = const [];
+  // Build 9 part 2: the bank is read a page at a time from the worksheet
+  // index (`bank_sheets`, kept by functions); the filters and the search
+  // box are queries on it, and a worksheet's questions are read only when
+  // it is opened.
+  late final ListPagesService _lists =
+      ListPagesService(context.read<FirestoreService>());
+  Timer? _debounce;
+  late Future<int> _notIndexed = _lists.bankNotIndexed();
+  late final PagedController<BankSheetRow> _pages = PagedController(
+    range: const DateRangeSel.all(),
+    build: (range) => _lists.bankSource(
+      range,
+      category: _filter.category?.value,
+      type: _filter.type?.value,
+      level: _filter.level,
+      search: _filter.search,
+    ),
+  );
 
-  static String _rowKey(QuestionBankSheet sheet) =>
-      sheet.isSheet ? 'sheet:${sheet.key}' : 'question:${sheet.first.id}';
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _pages.dispose();
+    super.dispose();
+  }
+
+  void _setFilter(QuestionBankFilter f) {
+    final searchOnly = f.category == _filter.category &&
+        f.type == _filter.type &&
+        f.level == _filter.level;
+    setState(() {
+      _filter = f;
+      _selected = {};
+    });
+    _debounce?.cancel();
+    _debounce = Timer(Duration(milliseconds: searchOnly ? 350 : 0), _pages.reload);
+  }
+
+  /// The index is written by a function a moment after a change.
+  void _refreshSoon() {
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      if (mounted) _pages.refresh();
+    });
+  }
+
+  static String _rowKey(BankSheetRow sheet) =>
+      sheet.isSheet ? 'sheet:${sheet.key}' : 'question:${sheet.itemId}';
 
   static List<String> _csvHeader(AppLocalizations l) => [
         l.bankCsvWorksheetOrQuestion,
@@ -70,7 +119,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
         l.bankUsed,
       ];
 
-  static List<Object?> _csvRow(AppLocalizations l, QuestionBankSheet sheet) => [
+  static List<Object?> _csvRow(AppLocalizations l, BankSheetRow sheet) => [
         sheet.title,
         sheet.isSheet ? sheet.code : '',
         sheet.category.localized(l),
@@ -80,7 +129,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
         sheet.usageCount,
       ];
 
-  List<QuestionBankSheet> _selectedRows(List<QuestionBankSheet> rows) => [
+  List<BankSheetRow> _selectedRows(List<BankSheetRow> rows) => [
         for (final r in rows)
           if (_selected.contains(_rowKey(r))) r
       ];
@@ -95,6 +144,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
       await action();
       messenger.showSnackBar(SnackBar(content: Text(done)));
       if (mounted) setState(() => _selected = {});
+      _refreshSoon();
     } catch (e) {
       messenger.showSnackBar(
         SnackBar(content: Text(e.toString()), backgroundColor: AppColors.error),
@@ -105,7 +155,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
   }
 
   /// Opens the exercise form with the ticked worksheets already inside.
-  void _newExerciseFrom(List<QuestionBankSheet> picked, AppUser user) {
+  void _newExerciseFrom(List<BankSheetRow> picked, AppUser user) {
     final codes = [
       for (final s in picked)
         if (s.isSheet) s.key!,
@@ -116,7 +166,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
 
   Future<void> _bulkSetCategory(
     FirestoreService firestore,
-    List<QuestionBankSheet> picked,
+    List<BankSheetRow> picked,
   ) async {
     final l = context.l10n;
     final category = await _pickOption<ExerciseCategory>(
@@ -127,7 +177,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
     if (category == null || !mounted) return;
     await _runBulk(
       () => firestore.updateQuestionBankSheet(
-        [for (final s in picked) ...s.items.map((i) => i.id)],
+        [for (final s in picked) ...s.itemIds],
         category: category,
       ),
       l.bankSetTo(_countLabel(l, picked), category.localized(l)),
@@ -136,7 +186,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
 
   Future<void> _bulkSetLevel(
     FirestoreService firestore,
-    List<QuestionBankSheet> picked,
+    List<BankSheetRow> picked,
   ) async {
     final l = context.l10n;
     final level = await _pickOption<String>(
@@ -147,7 +197,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
     if (level == null || !mounted) return;
     await _runBulk(
       () => firestore.updateQuestionBankSheet(
-        [for (final s in picked) ...s.items.map((i) => i.id)],
+        [for (final s in picked) ...s.itemIds],
         level: level,
       ),
       l.bankSetTo(_countLabel(l, picked), level),
@@ -156,7 +206,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
 
   Future<void> _bulkDelete(
     FirestoreService firestore,
-    List<QuestionBankSheet> picked,
+    List<BankSheetRow> picked,
   ) async {
     final l = context.l10n;
     final questions = picked.fold(0, (n, s) => n + s.count);
@@ -183,7 +233,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
     if (ok != true || !mounted) return;
     await _runBulk(
       () => firestore.deleteQuestionBankItems(
-        [for (final s in picked) ...s.items.map((i) => i.id)],
+        [for (final s in picked) ...s.itemIds],
       ),
       l.bankDeleted(_countLabel(l, picked)),
     );
@@ -192,7 +242,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
   /// "2 worksheets and 1 question" for the ticked rows.
   static String _countLabel(
     AppLocalizations l,
-    List<QuestionBankSheet> picked,
+    List<BankSheetRow> picked,
   ) {
     final sheets = picked.where((s) => s.isSheet).length;
     final singles = picked.length - sheets;
@@ -248,7 +298,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
   Widget _selectionBar(
     FirestoreService firestore,
     AppUser user,
-    List<QuestionBankSheet> rows,
+    List<BankSheetRow> rows,
   ) {
     final l = context.l10n;
     final picked = _selectedRows(rows);
@@ -307,7 +357,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
     });
   }
 
-  List<QuestionBankSheet> _sorted(List<QuestionBankSheet> sheets) {
+  List<BankSheetRow> _sorted(List<BankSheetRow> sheets) {
     final col = _sortColumnId;
     if (col == null) return sheets;
     final sorted = [...sheets];
@@ -348,7 +398,11 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
           fileStem: 'question_bank',
           label: l.teacherExExportCsv,
           header: _csvHeader(l),
-          rows: () => _visible.map((s) => _csvRow(l, s)).toList(),
+          // The export follows the filters and dates (up to 5,000 rows).
+          rows: () async {
+            final all = await fetchRowsForExport(context, _pages);
+            return [for (final s in all ?? const <BankSheetRow>[]) _csvRow(l, s)];
+          },
         ),
         const SizedBox(width: 8),
         // Owner 2026-11-24: scans saved as drafts.
@@ -441,69 +495,74 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
               icon: const Icon(Icons.document_scanner_outlined),
               label: Text(l.paperScan),
             ),
-      child: StreamBuilder<List<QuestionBankItem>>(
-        stream: firestore.watchQuestionBank(ownerId),
-        builder: (context, snap) {
-          if (snap.connectionState == ConnectionState.waiting &&
-              !snap.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final all = snap.data ?? const <QuestionBankItem>[];
-          final sheets = QuestionBankSheet.group(all);
+      child: ListenableBuilder(
+        listenable: _pages,
+        builder: (context, _) {
           final l = context.l10n;
-          final rows =
-              _sorted(sheets.where((s) => _filter.matches(s, l: l)).toList());
-          _visible = rows;
-
+          final rows = _sorted(_pages.items);
           return Column(
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                 child: QuestionBankFilterBar(
                   filter: _filter,
-                  onChanged: (f) => setState(() => _filter = f),
+                  onChanged: _setFilter,
                 ),
+              ),
+              ListIndexBanner(
+                notIndexed: _notIndexed,
+                isAdmin: user.isAdmin,
+                onRebuild: () async {
+                  await _lists.rebuildListIndexes();
+                  if (!mounted) return;
+                  setState(() => _notIndexed = _lists.bankNotIndexed());
+                  _pages.reload();
+                },
               ),
               _selectionBar(firestore, user, rows),
               Expanded(
-                child: all.isEmpty
-                    ? EmptyState(
-                        icon: Icons.inventory_2_outlined,
-                        title: l.bankNoWorksheetsTitle,
-                        subtitle: l.bankNoWorksheetsSubtitle,
-                      )
-                    : rows.isEmpty
-                        ? EmptyState(
-                            icon: Icons.filter_alt_off_outlined,
-                            title: l.bankNoMatchesTitle,
-                            subtitle: l.bankAdjustFilters,
-                          )
-                        : Padding(
-                            padding: const EdgeInsets.fromLTRB(20, 8, 20, 80),
-                            child: SingleChildScrollView(
-                              child: AppDataTable<QuestionBankSheet>(
-                                rows: rows,
-                                sortColumnId: _sortColumnId,
-                                sortAscending: _sortAscending,
-                                onSort: _onSort,
-                                rowKey: _rowKey,
-                                selectedKeys: _selected,
-                                onSelectionChanged: (keys) =>
-                                    setState(() => _selected = keys),
-                                onRowTap: (sheet) => _open(ownerId, sheet),
-                                columns: _buildColumns(firestore),
-                                mobileCardBuilder: (sheet) => _SheetCard(
-                                  sheet: sheet,
-                                  onTap: () => _open(ownerId, sheet),
-                                  onEdit: () => _open(ownerId, sheet),
-                                  onDelete: ExerciseAuthoringPlatform
-                                          .canEditBankSheet(user, sheet)
-                                      ? () => _delete(firestore, sheet)
-                                      : null,
-                                ),
-                              ),
-                            ),
-                          ),
+                child: PagedListBody<BankSheetRow>(
+                  controller: _pages,
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 80),
+                  header: DateRangeBar(
+                    value: _pages.range,
+                    onChanged: (r) {
+                      setState(() => _selected = {});
+                      _pages.setRange(r);
+                    },
+                  ),
+                  emptyIcon: _filter.isEmpty
+                      ? Icons.inventory_2_outlined
+                      : Icons.filter_alt_off_outlined,
+                  emptyTitle: _filter.isEmpty
+                      ? l.bankNoWorksheetsTitle
+                      : l.bankNoMatchesTitle,
+                  emptySubtitle: _filter.isEmpty
+                      ? l.bankNoWorksheetsSubtitle
+                      : l.bankAdjustFilters,
+                  itemBuilder: (_, __) => const SizedBox.shrink(),
+                  body: AppDataTable<BankSheetRow>(
+                    rows: rows,
+                    sortColumnId: _sortColumnId,
+                    sortAscending: _sortAscending,
+                    onSort: _onSort,
+                    rowKey: _rowKey,
+                    selectedKeys: _selected,
+                    onSelectionChanged: (keys) =>
+                        setState(() => _selected = keys),
+                    onRowTap: (sheet) => _open(ownerId, sheet),
+                    columns: _buildColumns(firestore),
+                    mobileCardBuilder: (sheet) => _SheetCard(
+                      sheet: sheet,
+                      onTap: () => _open(ownerId, sheet),
+                      onEdit: () => _open(ownerId, sheet),
+                      onDelete: ExerciseAuthoringPlatform.canEditBankRow(
+                              user, sheet)
+                          ? () => _delete(firestore, sheet)
+                          : null,
+                    ),
+                  ),
+                ),
               ),
             ],
           );
@@ -512,7 +571,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
     );
   }
 
-  List<AppTableColumn<QuestionBankSheet>> _buildColumns(
+  List<AppTableColumn<BankSheetRow>> _buildColumns(
     FirestoreService firestore,
   ) {
     final l = context.l10n;
@@ -582,7 +641,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
         width: 200,
         cell: (sheet) => _RowActions(
           onEdit: () => _open(ownerId, sheet),
-          onDelete: ExerciseAuthoringPlatform.canEditBankSheet(user, sheet)
+          onDelete: ExerciseAuthoringPlatform.canEditBankRow(user, sheet)
               ? () => _delete(firestore, sheet)
               : null,
         ),
@@ -590,7 +649,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
     ];
   }
 
-  void _open(String ownerId, QuestionBankSheet sheet) {
+  void _open(String ownerId, BankSheetRow sheet) {
     final user = context.read<AuthService>().appUser;
     if (sheet.isSheet) {
       Navigator.of(context).push(
@@ -601,15 +660,22 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
           ),
         ),
       );
-    } else if (ExerciseAuthoringPlatform.canEditBankItem(user, sheet.first)) {
-      _openEditor(ownerId: ownerId, existing: sheet.first);
+    } else if (sheet.itemId != null) {
+      // A stand-alone question: read it now, open the editor if allowed.
+      _lists.bankItem(sheet.itemId!).then((item) {
+        if (!mounted || item == null) return;
+        if (ExerciseAuthoringPlatform.canEditBankItem(user, item)) {
+          _openEditor(ownerId: ownerId, existing: item);
+        }
+      });
     }
   }
 
   Future<void> _delete(
-      FirestoreService firestore, QuestionBankSheet sheet) async {
+      FirestoreService firestore, BankSheetRow sheet) async {
     if (!sheet.isSheet) {
-      await firestore.deleteQuestionBankItem(sheet.first.id);
+      await firestore.deleteQuestionBankItem(sheet.itemId!);
+      _refreshSoon();
       return;
     }
     final l = context.l10n;
@@ -636,7 +702,8 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
       ),
     );
     if (ok == true) {
-      await firestore.deleteQuestionBankItems(sheet.items.map((i) => i.id));
+      await firestore.deleteQuestionBankItems(sheet.itemIds);
+      _refreshSoon();
     }
   }
 
@@ -656,7 +723,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
 /// question's text in the question face.
 class _TitleCell extends StatelessWidget {
   const _TitleCell({required this.sheet});
-  final QuestionBankSheet sheet;
+  final BankSheetRow sheet;
 
   @override
   Widget build(BuildContext context) {
@@ -710,7 +777,7 @@ class _SheetCard extends StatelessWidget {
     required this.onDelete,
   });
 
-  final QuestionBankSheet sheet;
+  final BankSheetRow sheet;
   final VoidCallback onTap;
   final VoidCallback onEdit;
 

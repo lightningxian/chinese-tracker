@@ -377,3 +377,72 @@ class QuestionBankSheet {
     return 0;
   }
 }
+
+/// Build 9 part 2: one row of the paged question bank, read from
+/// `bank_sheets/{id}` (kept by the `onQuestionBankIndexed` function,
+/// functions/list_index.js): a worksheet, or a stand-alone question. The
+/// questions themselves are read only when the row is opened.
+class BankSheetRow {
+  const BankSheetRow({
+    required this.id,
+    required this.key,
+    required this.itemId,
+    required this.itemIds,
+    required this.title,
+    required this.type,
+    required this.category,
+    required this.level,
+    required this.count,
+    required this.usageCount,
+    required this.missingRecording,
+    required this.creators,
+  });
+
+  final String id;
+
+  /// The sheet code, or null for a stand-alone question.
+  final String? key;
+
+  /// The question's id when [key] is null.
+  final String? itemId;
+  final List<String> itemIds;
+  final String title;
+  final ExerciseType type;
+  final ExerciseCategory category;
+  final String? level;
+  final int count;
+  final int usageCount;
+  final bool missingRecording;
+
+  /// Who created the questions (`createdBy`), without repeats.
+  final List<String> creators;
+
+  bool get isSheet => key != null;
+  String get code => key ?? title;
+
+  /// The Question type column (QuestionBankSheet.typeLabel).
+  String get typeLabel => switch (category) {
+        ExerciseCategory.hskSimulation => 'HSK',
+        ExerciseCategory.standardCourse => 'Standard Course',
+        _ => type.label,
+      };
+
+  factory BankSheetRow.fromFirestore(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
+    final d = doc.data() ?? const <String, dynamic>{};
+    return BankSheetRow(
+      id: doc.id,
+      key: d['key'] as String?,
+      itemId: d['itemId'] as String?,
+      itemIds: [for (final x in (d['itemIds'] as List? ?? const [])) '$x'],
+      title: d['title'] as String? ?? '',
+      type: ExerciseType.fromValue(d['type'] as String?),
+      category: ExerciseCategory.fromValue(d['category'] as String?),
+      level: d['level'] as String?,
+      count: (d['count'] as num?)?.toInt() ?? 0,
+      usageCount: (d['usageCount'] as num?)?.toInt() ?? 0,
+      missingRecording: d['missingRecording'] == true,
+      creators: [for (final x in (d['creators'] as List? ?? const [])) '$x'],
+    );
+  }
+}

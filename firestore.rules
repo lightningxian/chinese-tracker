@@ -453,6 +453,14 @@ service cloud.firestore {
       allow create, update, delete: if isStaff();
     }
 
+    // Build 9 part 2: one index document per worksheet (or stand-alone
+    // question), kept by the onQuestionBankIndexed function; the bank list
+    // reads it a page at a time. Staff only, like the bank itself.
+    match /bank_sheets/{sheetId} {
+      allow read: if isStaff();
+      allow write: if false;
+    }
+
     match /question_bank/{questionId} {
       // Scoped to staff: students never read raw answers.
       allow read: if isStaff();

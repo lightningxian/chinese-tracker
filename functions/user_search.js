@@ -66,4 +66,13 @@ function sameFields(user, fields) {
     u.searchPrefixes.every((x, i) => x === fields.searchPrefixes[i]);
 }
 
-module.exports = {MAX_PREFIX, normalizeQuery, searchFieldsOf, sameFields};
+/** Profile fields the progress summary copies (name, level, on/off …). */
+const SUMMARY_FIELDS = ["active", "status", "level", "name", "nameChinese", "nameIndonesian",
+  "latinName", "termSize", "teacherId"];
+
+function summaryFieldsChanged(before, after) {
+  return SUMMARY_FIELDS.some((k) => JSON.stringify((before || {})[k] ?? null) !==
+    JSON.stringify((after || {})[k] ?? null));
+}
+
+module.exports = {MAX_PREFIX, normalizeQuery, searchFieldsOf, sameFields, summaryFieldsChanged};

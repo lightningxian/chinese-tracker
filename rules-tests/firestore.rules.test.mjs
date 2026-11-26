@@ -701,6 +701,20 @@ describe("registration approval and placement (Build 3)", () => {
   });
 });
 
+// Build 9 part 2: the worksheet index of the question bank.
+describe("bank sheets index (Build 9 part 2)", () => {
+  it("staff read it; students and parents do not; nobody writes it", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "bank_sheets", "s_310901-KK"), { key: "310901-KK", count: 11 });
+    });
+    await assertSucceeds(getDoc(doc(as("teacher1"), "bank_sheets", "s_310901-KK")));
+    await assertSucceeds(getDoc(doc(as("admin1"), "bank_sheets", "s_310901-KK")));
+    await assertFails(getDoc(doc(as("student1"), "bank_sheets", "s_310901-KK")));
+    await assertFails(getDoc(doc(as("parent1"), "bank_sheets", "s_310901-KK")));
+    await assertFails(setDoc(doc(as("admin1"), "bank_sheets", "x"), { key: "x" }));
+  });
+});
+
 // Build 4: the progress summary and teachers' follow-up notes.
 describe("progress summary and notes (Build 4)", () => {
   const seed = async () => {

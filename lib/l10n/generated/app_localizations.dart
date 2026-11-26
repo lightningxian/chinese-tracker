@@ -14807,6 +14807,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'All posts'**
   String get newsAll;
+
+  /// No description provided for @listIndexMissingAdmin.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} packages or worksheets are not in the list index yet. Press Rebuild list indexes once after the update.'**
+  String listIndexMissingAdmin(int count);
+
+  /// No description provided for @listIndexMissingTeacher.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} packages or worksheets are not listed yet. Ask an admin to press Rebuild list indexes once.'**
+  String listIndexMissingTeacher(int count);
+
+  /// No description provided for @listIndexRebuild.
+  ///
+  /// In en, this message translates to:
+  /// **'Rebuild list indexes'**
+  String get listIndexRebuild;
+
+  /// No description provided for @listIndexRebuildHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Writes the worksheet index of the question bank and the list fields of every exercise package (needed once after the Build 9 part 2 update, so these lists can be paged and searched).'**
+  String get listIndexRebuildHint;
+
+  /// No description provided for @listIndexRebuildDone.
+  ///
+  /// In en, this message translates to:
+  /// **'{sheets} worksheets and {exercises} packages indexed.'**
+  String listIndexRebuildDone(int sheets, int exercises);
 }
 
 class _AppLocalizationsDelegate

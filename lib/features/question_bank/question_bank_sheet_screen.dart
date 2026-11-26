@@ -17,6 +17,7 @@ import '../../models/paper_proof_record.dart';
 import '../../models/question_bank_item.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
+import '../../services/list_pages_service.dart';
 import '../../services/hsk_paper/paper_truth.dart';
 import '../../services/question_bank_media_service.dart';
 import '../teacher/exercise_assign_dialog.dart';
@@ -49,8 +50,9 @@ class QuestionBankSheetScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = context.l10n;
     final firestore = context.read<FirestoreService>();
+    // Build 9 part 2: only this worksheet's questions, not the whole bank.
     return StreamBuilder<List<QuestionBankItem>>(
-      stream: firestore.watchQuestionBank(ownerId),
+      stream: ListPagesService(firestore).watchSheet(sheetKey),
       builder: (context, snap) {
         final sheet = QuestionBankSheet.group(snap.data ?? const [])
             .where((s) => s.key == sheetKey)

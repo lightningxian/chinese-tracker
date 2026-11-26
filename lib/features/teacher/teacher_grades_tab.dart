@@ -1,12 +1,16 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../core/paging/date_range.dart';
+import '../../core/paging/paged_controller.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/grade_utils.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/app_data_table.dart';
+import '../../core/widgets/paging_bars.dart';
 import '../../core/widgets/status_pill.dart';
 import '../../l10n/l10n.dart';
 import '../../l10n/labels_classes.dart';
@@ -59,6 +63,58 @@ class _TeacherGradesTabState extends State<TeacherGradesTab> {
     return sorted;
   }
 
+  // Build 9 part 2: the gradebook is read a page at a time in a date
+  // range (the teacher's own grades, as before), one pager for the grades
+  // waiting for a score and one for the recorded ones.
+  PagedController<Grade>? _pending;
+  PagedController<Grade>? _graded;
+  String _teacherId = '';
+  DateRangeSel _range = DateRangeSel.defaultRange;
+
+  PagedController<Grade> _controller(String status) => PagedController<Grade>(
+        range: _range,
+        build: (range) => FirestorePageSource(
+          applyDateRange(
+            FirebaseFirestore.instance
+                .collection(AppConstants.gradesCollection)
+                .where('teacherId', isEqualTo: _teacherId)
+                .where('status', isEqualTo: status)
+                .orderBy('createdAt', descending: true),
+            'createdAt',
+            range,
+          ),
+          Grade.fromFirestore,
+        ),
+      );
+
+  void _ensure(String teacherId) {
+    if (teacherId == _teacherId && _pending != null) return;
+    _teacherId = teacherId;
+    _pending?.dispose();
+    _graded?.dispose();
+    _pending = _controller(GradeStatus.pending.value);
+    _graded = _controller(GradeStatus.graded.value);
+  }
+
+  void _setRange(DateRangeSel r) {
+    setState(() => _range = r);
+    _pending?.setRange(r);
+    _graded?.setRange(r);
+  }
+
+  /// After the form sheet closes (a grade added or scored).
+  void _reload() {
+    _pending?.refresh();
+    _graded?.refresh();
+  }
+
+  @override
+  void dispose() {
+    _pending?.dispose();
+    _graded?.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
@@ -68,61 +124,55 @@ class _TeacherGradesTabState extends State<TeacherGradesTab> {
       return const Center(child: CircularProgressIndicator());
     }
     final teacherId = AppConstants.contentTeacherId(user);
+    _ensure(teacherId);
+    final pending = _pending!;
+    final graded = _graded!;
 
     return Scaffold(
       backgroundColor: AppColors.surface,
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _openGradeSheet(context, teacherId: teacherId),
+        onPressed: () async {
+          await _openGradeSheet(context, teacherId: teacherId);
+          _reload();
+        },
         backgroundColor: AppColors.navy,
         icon: const Icon(Icons.add),
         label: Text(l.teacherGradesNew),
       ),
-      body: StreamBuilder<List<Grade>>(
-        stream: firestore.watchTeacherGrades(teacherId),
-        builder: (context, snap) {
-          if (snap.connectionState == ConnectionState.waiting &&
-              !snap.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final grades = snap.data ?? const <Grade>[];
-          final pending = grades.where((g) => g.isPending).toList();
-          final graded = grades.where((g) => g.isGraded).toList();
-
-          if (grades.isEmpty) {
-            return EmptyState(
-              icon: Icons.grading_outlined,
-              title: l.teacherGradesEmptyTitle,
-              subtitle: l.teacherGradesEmptySubtitle,
-            );
-          }
-
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 96),
-            children: [
-              if (pending.isNotEmpty) ...[
-                SectionHeader(
-                  title: l.teacherGradesPendingHeader(pending.length),
-                ),
-                const SizedBox(height: 10),
-                _gradeTable(context, firestore, pending),
-                const SizedBox(height: 20),
-              ],
-              SectionHeader(title: l.teacherGradesRecorded),
-              if (graded.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Text(
-                    l.teacherGradesNoRecorded,
-                    style: TextStyle(color: AppColors.textSecondary),
-                  ),
-                )
-              else ...[
-                const SizedBox(height: 10),
-                _gradeTable(context, firestore, graded),
-              ],
+      body: ListenableBuilder(
+        listenable: Listenable.merge([pending, graded]),
+        builder: (context, _) => ListView(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 96),
+          children: [
+            DateRangeBar(value: _range, onChanged: _setRange),
+            const SizedBox(height: 16),
+            if (pending.items.isNotEmpty || pending.hasPrevious) ...[
+              SectionHeader(
+                title: l.teacherGradesPendingHeader(
+                    pending.total ?? pending.items.length),
+              ),
+              PagedListBody<Grade>(
+                controller: pending,
+                inline: true,
+                padding: const EdgeInsets.only(top: 10),
+                itemBuilder: (_, __) => const SizedBox.shrink(),
+                body: _gradeTable(context, firestore, pending.items),
+              ),
+              const SizedBox(height: 20),
             ],
-          );
-        },
+            SectionHeader(title: l.teacherGradesRecorded),
+            PagedListBody<Grade>(
+              controller: graded,
+              inline: true,
+              padding: const EdgeInsets.only(top: 10),
+              emptyIcon: Icons.grading_outlined,
+              emptyTitle: l.teacherGradesNoRecorded,
+              emptySubtitle: l.teacherGradesEmptySubtitle,
+              itemBuilder: (_, __) => const SizedBox.shrink(),
+              body: _gradeTable(context, firestore, graded.items),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -138,10 +188,16 @@ class _TeacherGradesTabState extends State<TeacherGradesTab> {
       sortColumnId: _sortColumnId,
       sortAscending: _sortAscending,
       onSort: _onSort,
-      onRowTap: (grade) => _openScoreSheet(context, grade),
+      onRowTap: (grade) async {
+        await _openScoreSheet(context, grade);
+        _reload();
+      },
       mobileCardBuilder: (grade) => _GradeCard(
         grade: grade,
-        onTap: () => _openScoreSheet(context, grade),
+        onTap: () async {
+          await _openScoreSheet(context, grade);
+          _reload();
+        },
       ),
     );
   }

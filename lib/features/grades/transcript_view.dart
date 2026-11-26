@@ -1,10 +1,15 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/constants/app_constants.dart';
+import '../../core/paging/date_range.dart';
+import '../../core/paging/paged_controller.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/grade_utils.dart';
 import '../../core/widgets/app_card.dart';
+import '../../core/widgets/paging_bars.dart';
 import '../../l10n/l10n.dart';
 import '../../l10n/labels_classes.dart';
 import '../../models/evaluation.dart';
@@ -17,92 +22,133 @@ import '../../services/firestore_service.dart';
 /// existing quiz and exercise scores. Newest first, with letter grades.
 ///
 /// Shared by the student's own view and the parent's read-only child view.
-class TranscriptView extends StatelessWidget {
+/// Build 9 part 2: the transcript is one page at a time in a date range,
+/// merged from the three sources (each reads at most a page); the grades
+/// waiting for a score and the published evaluations stay above it.
+class TranscriptView extends StatefulWidget {
   const TranscriptView({super.key, required this.studentId});
 
   final String studentId;
 
   @override
+  State<TranscriptView> createState() => _TranscriptViewState();
+}
+
+class _TranscriptViewState extends State<TranscriptView> {
+  late final FirestoreService _fs = context.read<FirestoreService>();
+  late final Stream<List<Grade>> _pending = FirebaseFirestore.instance
+      .collection(AppConstants.gradesCollection)
+      .where('studentId', isEqualTo: widget.studentId)
+      .where('status', isEqualTo: GradeStatus.pending.value)
+      .orderBy('createdAt', descending: true)
+      .limit(50)
+      .snapshots()
+      .map((s) => s.docs.map(Grade.fromFirestore).toList());
+  late final Stream<List<Evaluation>> _evaluations =
+      _fs.watchStudentEvaluations(widget.studentId, publishedOnly: true);
+  late final PagedController<Object> _pages = PagedController<Object>(
+    range: DateRangeSel.preset(RangePreset.thisYear),
+    build: _source,
+  );
+
+  @override
+  void dispose() {
+    _pages.dispose();
+    super.dispose();
+  }
+
+  static DateTime _dateOf(Object e) => switch (e) {
+        Grade g => g.gradedAt ?? g.createdAt ?? DateTime(1970),
+        ExerciseResult r => r.submittedAt ?? DateTime(1970),
+        QuizResult q => q.submittedAt ?? DateTime(1970),
+        _ => DateTime(1970),
+      };
+
+  PageSource<Object> _source(DateRangeSel range) {
+    final db = FirebaseFirestore.instance;
+    final id = widget.studentId;
+    Query<Map<String, dynamic>> byStudent(String col, String field) =>
+        applyDateRange(
+            db
+                .collection(col)
+                .where('studentId', isEqualTo: id)
+                .orderBy(field, descending: true),
+            field,
+            range);
+    return MergedPageSource<Object>([
+      FirestorePageSource<Object>(
+          applyDateRange(
+              db
+                  .collection(AppConstants.gradesCollection)
+                  .where('studentId', isEqualTo: id)
+                  .where('status', isEqualTo: GradeStatus.graded.value)
+                  .orderBy('createdAt', descending: true),
+              'createdAt',
+              range),
+          Grade.fromFirestore),
+      FirestorePageSource<Object>(
+          byStudent(AppConstants.exerciseResultsCollection, 'submittedAt'),
+          ExerciseResult.fromFirestore),
+      FirestorePageSource<Object>(
+          byStudent(AppConstants.quizResultsCollection, 'submittedAt'),
+          QuizResult.fromFirestore),
+    ], newer: (a, b) => _dateOf(a).isAfter(_dateOf(b)));
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    final firestore = context.read<FirestoreService>();
-
     return StreamBuilder<List<Grade>>(
-      stream: firestore.watchStudentGrades(studentId),
-      builder: (context, gradeSnap) {
-        return StreamBuilder<List<ExerciseResult>>(
-          stream: firestore.watchStudentExerciseResults(studentId),
-          builder: (context, exSnap) {
-            return StreamBuilder<List<QuizResult>>(
-              stream: firestore.watchStudentQuizResults(studentId),
-              builder: (context, quizSnap) {
-                final waiting =
-                    gradeSnap.connectionState == ConnectionState.waiting &&
-                        !gradeSnap.hasData;
-                if (waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                final grades = gradeSnap.data ?? const <Grade>[];
-                final entries = <_TranscriptEntry>[
-                  for (final g in grades) _TranscriptEntry.fromGrade(g, l),
-                  for (final r in (exSnap.data ?? const <ExerciseResult>[]))
-                    _TranscriptEntry.fromExercise(r, l),
-                  for (final q in (quizSnap.data ?? const <QuizResult>[]))
-                    _TranscriptEntry.fromQuiz(q, l),
-                ]..sort((a, b) => b.date.compareTo(a.date));
-
-                final pending = grades.where((g) => g.isPending).toList();
-
-                return StreamBuilder<List<Evaluation>>(
-                  stream: firestore.watchStudentEvaluations(
-                    studentId,
-                    publishedOnly: true,
+      stream: _pending,
+      builder: (context, pendingSnap) => StreamBuilder<List<Evaluation>>(
+        stream: _evaluations,
+        builder: (context, evalSnap) {
+          final pending = pendingSnap.data ?? const <Grade>[];
+          final evaluations = evalSnap.data ?? const <Evaluation>[];
+          return ListenableBuilder(
+            listenable: _pages,
+            builder: (context, _) => ListView(
+              padding: const EdgeInsets.all(20),
+              children: [
+                if (pending.isNotEmpty) ...[
+                  SectionHeader(title: l.transcriptPendingHeader),
+                  for (final g in pending) ...[
+                    _PendingCard(grade: g),
+                    const SizedBox(height: 10),
+                  ],
+                  const SizedBox(height: 12),
+                ],
+                if (evaluations.isNotEmpty) ...[
+                  SectionHeader(title: l.transcriptTeacherEvaluations),
+                  for (final e in evaluations) ...[
+                    _EvaluationCard(evaluation: e),
+                    const SizedBox(height: 10),
+                  ],
+                  const SizedBox(height: 12),
+                ],
+                SectionHeader(title: l.transcriptTitle),
+                PagedListBody<Object>(
+                  controller: _pages,
+                  inline: true,
+                  padding: const EdgeInsets.only(top: 8),
+                  header: DateRangeBar(
+                      value: _pages.range, onChanged: _pages.setRange),
+                  emptyIcon: Icons.grading_outlined,
+                  emptyTitle: l.teacherGradesEmptyTitle,
+                  emptySubtitle: l.transcriptEmptySubtitle,
+                  itemBuilder: (context, e) => _EntryCard(
+                    entry: switch (e) {
+                      Grade g => _TranscriptEntry.fromGrade(g, l),
+                      ExerciseResult r => _TranscriptEntry.fromExercise(r, l),
+                      _ => _TranscriptEntry.fromQuiz(e as QuizResult, l),
+                    },
                   ),
-                  builder: (context, evalSnap) {
-                    final evaluations = evalSnap.data ?? const <Evaluation>[];
-
-                    if (entries.isEmpty && evaluations.isEmpty) {
-                      return EmptyState(
-                        icon: Icons.grading_outlined,
-                        title: l.teacherGradesEmptyTitle,
-                        subtitle: l.transcriptEmptySubtitle,
-                      );
-                    }
-
-                    return ListView(
-                      padding: const EdgeInsets.all(20),
-                      children: [
-                        if (pending.isNotEmpty) ...[
-                          SectionHeader(title: l.transcriptPendingHeader),
-                          for (final g in pending) ...[
-                            _PendingCard(grade: g),
-                            const SizedBox(height: 10),
-                          ],
-                          const SizedBox(height: 12),
-                        ],
-                        if (evaluations.isNotEmpty) ...[
-                          SectionHeader(title: l.transcriptTeacherEvaluations),
-                          for (final e in evaluations) ...[
-                            _EvaluationCard(evaluation: e),
-                            const SizedBox(height: 10),
-                          ],
-                          const SizedBox(height: 12),
-                        ],
-                        SectionHeader(title: l.transcriptTitle),
-                        for (final e in entries.where((e) => !e.isPending)) ...[
-                          _EntryCard(entry: e),
-                          const SizedBox(height: 10),
-                        ],
-                      ],
-                    );
-                  },
-                );
-              },
-            );
-          },
-        );
-      },
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }

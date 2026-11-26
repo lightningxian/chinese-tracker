@@ -124,12 +124,15 @@ class FirestoreService {
     String? role,
     bool? active,
     String search = '',
+    String? level,
   }) {
     Query<Map<String, dynamic>> q = _db
         .collection(AppConstants.usersCollection)
         .where('listed', isEqualTo: true);
     if (role != null) q = q.where('role', isEqualTo: role);
     if (active != null) q = q.where('active', isEqualTo: active);
+    // Build 9 part 2: the teacher's Students tab filters on the HSK level.
+    if (level != null) q = q.where('level', isEqualTo: level);
     final term = UserSearch.normalize(search);
     if (term.isNotEmpty) q = q.where('searchPrefixes', arrayContains: term);
     return q.orderBy('nameLower');

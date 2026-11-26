@@ -2481,5 +2481,10 @@
   "orgRebuildUserSearch": "Susun ulang pencarian pengguna",
   "orgRebuildUserSearchHint": "Menulis indeks pencarian di setiap akun (perlu sekali setelah pembaruan Build 9, agar daftar Pengguna dapat dibagi per halaman dan dicari).",
   "orgRebuildUserSearchDone": "{count} akun ditulis ke indeks pencarian.",
-  "newsAll": "Semua pengumuman"
+  "newsAll": "Semua pengumuman",
+  "listIndexMissingAdmin": "{count} paket atau lembar kerja belum masuk indeks daftar. Tekan Bangun ulang indeks daftar sekali setelah pembaruan.",
+  "listIndexMissingTeacher": "{count} paket atau lembar kerja belum tampil. Minta admin menekan Bangun ulang indeks daftar sekali.",
+  "listIndexRebuild": "Bangun ulang indeks daftar",
+  "listIndexRebuildHint": "Menulis indeks lembar kerja bank soal dan kolom daftar setiap paket latihan (perlu sekali setelah pembaruan Build 9 bagian 2, agar daftar ini bisa dibagi per halaman dan dicari).",
+  "listIndexRebuildDone": "{sheets} lembar kerja dan {exercises} paket diindeks."
 }

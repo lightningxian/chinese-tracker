@@ -346,7 +346,154 @@ function noticeText(id, name, detail) {
   return {title: titles[id] || "Progress warning", body: `${name}: ${detail}`};
 }
 
+// ---------------------------------------------------------------------------
+// Build 9 part 2 (supervisor 2026-11-25, "pagination so it doesn't bloat the
+// website"): the numbers of one row of the teacher's Students list and the
+// dashboard drill-downs, worked out here once instead of in every browser
+// from six whole collections. Same rules as the app's TeacherStatsUtils and
+// TeacherAttentionUtils (lib/core/utils), on Jakarta calendar days.
+// ---------------------------------------------------------------------------
+const STALE_ASSIGNMENT_DAYS = 3;
+const INACTIVE_DAYS = 7;
+const LOW_SESSIONS = 2;
+const ROSTER_LESSONS_MAX = 300;
+
+function dayOf(dateText) {
+  const t = String(dateText || "").slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(t) ? t : null;
+}
+
+/** Active (status active, sessions left) and today within its dates. */
+function termCounts(t, today) {
+  if ((t.status || "active") !== "active") return false;
+  if (!(Number(t.sessionsRemaining) > 0)) return false;
+  const start = dayOf(t.startDate);
+  const end = dayOf(t.deadlineDate);
+  if (!start || !end) return true;
+  return today >= start && today <= end;
+}
+
+function maxMs(...values) {
+  let out = null;
+  for (const v of values) {
+    if (Number.isFinite(v) && (out === null || v > out)) out = v;
+  }
+  return out;
+}
+
+/**
+ * The roster block of `progress_summary` and the "done" stamp of each
+ * assignment.
+ * @param {Object} inputs {assignments: [{id, exerciseId, assignedAtMs,
+ *   dueAtMs, done, bestScore}], exercises: [{exerciseId, score,
+ *   submittedAtMs}], terms, lessons: [{lessonId, completed, score,
+ *   completedAtMs}], attendance: [{attended, joinedAtMs}], user:
+ *   {lessonsPerTerm, level}}
+ * @param {number} nowMs
+ * @return {{roster: Object, stamps: Array<{id, done, bestScore}>}}
+ */
+function rosterOf(inputs, nowMs) {
+  const today = jakartaDate(nowMs);
+  const best = new Map();
+  let lastExerciseMs = null;
+  for (const r of inputs.exercises || []) {
+    const id = String(r.exerciseId || "");
+    const score = Number(r.score);
+    if (id && Number.isFinite(score)) {
+      if (!best.has(id) || score > best.get(id)) best.set(id, score);
+    }
+    lastExerciseMs = maxMs(lastExerciseMs, Number(r.submittedAtMs));
+  }
+  const assignments = inputs.assignments || [];
+  let completed = 0;
+  let overdue = 0;
+  let practiceSum = 0;
+  const attention = [];
+  const stamps = [];
+  for (const a of assignments) {
+    const score = best.has(a.exerciseId) ? Math.round(best.get(a.exerciseId)) : null;
+    const done = score !== null;
+    if (done) {
+      completed += 1;
+      practiceSum += score;
+    } else if (Number.isFinite(a.dueAtMs) && jakartaDate(a.dueAtMs) < today) {
+      overdue += 1;
+      attention.push({reason: "overdueExercise", count: null});
+    } else if (Number.isFinite(a.assignedAtMs)) {
+      const days = Math.floor((nowMs - a.assignedAtMs) / DAY_MS);
+      if (days >= STALE_ASSIGNMENT_DAYS) attention.push({reason: "staleAssignment", count: days});
+    }
+    if (a.id && (a.done !== done || (a.bestScore ?? null) !== score)) {
+      stamps.push({id: a.id, done, bestScore: score});
+    }
+  }
+  const lessons = (inputs.lessons || []).map((p) => ({
+    lessonId: String(p.lessonId || ""),
+    completed: p.completed === true,
+    score: Number.isFinite(Number(p.score)) && p.score !== null ? Number(p.score) : null,
+    completedAtMs: Number.isFinite(Number(p.completedAtMs)) && p.completedAtMs !== null ?
+      Number(p.completedAtMs) : null,
+  }));
+  const scored = lessons.filter((p) => p.score !== null).map((p) => p.score);
+  const lastLessonMs = maxMs(...lessons.filter((p) => p.completed).map((p) => p.completedAtMs));
+  const lastAttendMs = maxMs(...(inputs.attendance || [])
+      .filter((r) => r.attended === true).map((r) => Number(r.joinedAtMs)));
+  const sessions = (inputs.terms || []).filter((t) => termCounts(t, today))
+      .reduce((s, t) => s + Number(t.sessionsRemaining), 0);
+  // Inactive: has done something before, nothing in the last 7 days.
+  const hasHistory = lessons.some((p) => p.completed) || (inputs.exercises || []).length > 0;
+  const lastActivity = maxMs(lastLessonMs, lastExerciseMs);
+  if (hasHistory && (lastActivity === null || lastActivity < nowMs - INACTIVE_DAYS * DAY_MS)) {
+    attention.push({reason: "inactiveStudent", count: INACTIVE_DAYS});
+  }
+  if (sessions <= LOW_SESSIONS) attention.push({reason: "lowSessions", count: sessions});
+  const user = inputs.user || {};
+  const roster = {
+    homeworkAssigned: assignments.length,
+    homeworkCompleted: completed,
+    homeworkOverdue: overdue,
+    practiceAvg: completed ? Math.round(practiceSum / completed) : null,
+    practiceCount: completed,
+    sessionsRemaining: sessions,
+    lessonsCompleted: lessons.filter((p) => p.completed).length,
+    lessonAvg: scored.length ? Math.round(scored.reduce((s, x) => s + x, 0) / scored.length) : null,
+    lessons: lessons.slice(0, ROSTER_LESSONS_MAX),
+    lessonsPerTerm: Number(user.lessonsPerTerm) > 0 ? Number(user.lessonsPerTerm) : 8,
+    rawLevel: user.level ? String(user.level) : null,
+    lastActiveMs: maxMs(lastLessonMs, lastExerciseMs, lastAttendMs),
+    attention,
+    attentionCount: attention.length,
+    hasAttention: attention.length > 0,
+    // The Students list's "needs attention" figure (few sessions or late work).
+    needsAttention: sessions <= LOW_SESSIONS || overdue > 0,
+    dayKey: today,
+  };
+  return {roster, stamps};
+}
+
+const STAMP_KEYS = new Set(["done", "bestScore"]);
+
+function sameValue(a, b) {
+  if (a === b) return true;
+  if (a && typeof a.isEqual === "function") return a.isEqual(b);
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
+/** True when an assignment changed only in the stamp the refresh writes. */
+function onlyStampChanged(before, after) {
+  const keys = new Set([...Object.keys(before || {}), ...Object.keys(after || {})]);
+  for (const k of keys) {
+    if (STAMP_KEYS.has(k)) continue;
+    if (!sameValue((before || {})[k], (after || {})[k])) return false;
+  }
+  return true;
+}
+
 module.exports = {
+  onlyStampChanged,
+  rosterOf,
+  STALE_ASSIGNMENT_DAYS,
+  INACTIVE_DAYS,
   DAY_MS,
   NOTIFY,
   jakartaDate,

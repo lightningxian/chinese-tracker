@@ -158,4 +158,62 @@ void main() {
     expect(const DateRangeSel.all().isAll, isTrue);
     expect(const DateRangeSel.all().startUtc, isNull);
   });
+
+  group('Build 9 part 2 sources', () {
+    Future<List<int>> readAll(PagedController<int> c) async {
+      final out = <int>[...c.items];
+      while (c.hasNext) {
+        await c.next();
+        out.addAll(c.items);
+      }
+      return out;
+    }
+
+    test('a merged timeline reads each source a page at a time, newest first',
+        () async {
+      final a = ListPageSource<int>([50, 40, 30, 20, 10]);
+      final b = ListPageSource<int>([45, 44, 43, 5]);
+      final c = ListPageSource<int>(<int>[]);
+      final merged = MergedPageSource<int>([a, b, c], newer: (x, y) => x > y);
+      final pages = PagedController<int>(
+          build: (_) => merged, pageSize: 3, autoLoad: false);
+      await pages.reload();
+      expect(pages.items, [50, 45, 44]);
+      expect(pages.total, 9);
+      final all = await readAll(pages);
+      expect(all, [50, 45, 44, 43, 40, 30, 20, 10, 5]);
+      // Back one page gives the same rows again.
+      await pages.previous();
+      expect(pages.items, [43, 40, 30]);
+    });
+
+    test('a filtered source fills its page across batches', () async {
+      final inner = ListPageSource<int>([for (var i = 1; i <= 40; i++) i]);
+      final odd = FilteredPageSource<int>(inner, (x) => x.isOdd && x > 10);
+      final pages = PagedController<int>(
+          build: (_) => odd, pageSize: 4, autoLoad: false);
+      await pages.reload();
+      expect(pages.items, [11, 13, 15, 17]);
+      expect(pages.total, isNull);
+      expect(await readAll(pages),
+          [11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39]);
+    });
+
+    test('a mapped source joins each page with one call', () async {
+      var calls = 0;
+      final mapped = MappedPageSource<int, String>(
+          ListPageSource<int>([1, 2, 3, 4, 5]), (page) async {
+        calls++;
+        return [for (final x in page) 'row $x'];
+      });
+      final pages = PagedController<String>(
+          build: (_) => mapped, pageSize: 2, autoLoad: false);
+      await pages.reload();
+      expect(pages.items, ['row 1', 'row 2']);
+      expect(pages.total, 5);
+      await pages.next();
+      expect(pages.items, ['row 3', 'row 4']);
+      expect(calls, 2);
+    });
+  });
 }

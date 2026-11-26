@@ -149,3 +149,67 @@ assert.deepEqual(p.noticesDue({warnings: []}, NOW, {}), [], "a cleared warning s
 assert.deepEqual(p.noticesDue(warned, NOW, {}).find((n) => n.id === 4).roles, ["student", "admin"]);
 
 console.log("test_progress: all passed");
+
+// ---- Build 9 part 2: the roster block (Students list, drill-downs).
+{
+  const r = p.rosterOf({
+    assignments: [
+      {id: "e1_s", exerciseId: "e1", assignedAtMs: daysAgo(10), dueAtMs: daysAgo(5)},
+      {id: "e2_s", exerciseId: "e2", assignedAtMs: daysAgo(10), dueAtMs: daysAgo(5),
+        done: false, bestScore: null},
+      {id: "e3_s", exerciseId: "e3", assignedAtMs: daysAgo(4), dueAtMs: daysAgo(-3)},
+      {id: "e4_s", exerciseId: "e4", assignedAtMs: daysAgo(1)},
+      {id: "e5_s", exerciseId: "e5", assignedAtMs: daysAgo(1), done: true, bestScore: 90},
+    ],
+    exercises: [
+      {exerciseId: "e1", score: 60, submittedAtMs: daysAgo(9)},
+      {exerciseId: "e1", score: 80, submittedAtMs: daysAgo(8)},
+      {exerciseId: "e5", score: 90, submittedAtMs: daysAgo(8)},
+      {exerciseId: "x", score: 10, submittedAtMs: daysAgo(8)},
+    ],
+    terms: [
+      {status: "active", sessionsRemaining: 2, startDate: "2026-11-01", deadlineDate: "2026-12-31"},
+      {status: "active", sessionsRemaining: 5, startDate: "2026-12-01", deadlineDate: "2027-01-31"},
+      {status: "depleted", sessionsRemaining: 0},
+    ],
+    lessons: [
+      {lessonId: "l1", completed: true, score: 70, completedAtMs: daysAgo(20)},
+      {lessonId: "l2", completed: false, score: 90},
+    ],
+    attendance: [{attended: true, joinedAtMs: daysAgo(2)}, {attended: false, joinedAtMs: daysAgo(1)}],
+    user: {level: "HSK 3", lessonsPerTerm: 12},
+  }, NOW);
+  const ro = r.roster;
+  assert.equal(ro.homeworkAssigned, 5);
+  assert.equal(ro.homeworkCompleted, 2, "e1 and e5 have a result");
+  assert.equal(ro.homeworkOverdue, 1, "e2: due 5 days ago, no result");
+  assert.equal(ro.practiceAvg, 85, "best of e1 (80) and e5 (90)");
+  assert.equal(ro.sessionsRemaining, 2, "the December term has not started");
+  assert.equal(ro.lessonsCompleted, 1);
+  assert.equal(ro.lessonAvg, 80, "every lesson with a score, as the app's averageScore");
+  assert.equal(ro.lessonsPerTerm, 12);
+  assert.equal(ro.lastActiveMs, daysAgo(2), "attended class 2 days ago");
+  assert.equal(ro.needsAttention, true);
+  assert.deepEqual(ro.attention.map((a) => a.reason),
+      ["overdueExercise", "staleAssignment", "inactiveStudent", "lowSessions"],
+      "e3 stale after 4 days; no practice or lesson for 8 days; 2 sessions");
+  assert.equal(ro.attention[1].count, 4);
+  assert.equal(ro.attentionCount, 4);
+  // Stamps only where the stored stamp differs (e2 and e5 are already right).
+  assert.deepEqual(r.stamps, [
+    {id: "e1_s", done: true, bestScore: 80},
+    {id: "e3_s", done: false, bestScore: null},
+    {id: "e4_s", done: false, bestScore: null},
+  ]);
+  // A new student: no history, no voucher → only "low sessions" (0 left).
+  const fresh = p.rosterOf({user: {}}, NOW).roster;
+  assert.deepEqual(fresh.attention, [{reason: "lowSessions", count: 0}]);
+  assert.equal(fresh.practiceAvg, null);
+  assert.equal(fresh.lastActiveMs, null);
+  assert.equal(fresh.lessonsPerTerm, 8);
+}
+console.log("roster block: ok");
+assert.equal(p.onlyStampChanged({exerciseId: "e", dueDate: 1}, {exerciseId: "e", dueDate: 1,
+  done: true, bestScore: 80}), true);
+assert.equal(p.onlyStampChanged({exerciseId: "e", dueDate: 1}, {exerciseId: "e", dueDate: 2}), false);
+console.log("assignment stamp check: ok");

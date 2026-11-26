@@ -6,6 +6,79 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-26 — Claude (BUILD chat): Build 9, part 2 — the heavy lists
+
+**What changed**
+- **Shared paging pieces** (`lib/core/paging/paged_controller.dart`):
+  `MergedPageSource` (several newest-first sources read as one list, each a
+  page at a time), `FilteredPageSource` (a bounded query narrowed further in
+  the app) and `MappedPageSource` (a page joined with its 25 names or
+  summaries). `ExportCsvButton` takes an async row source, so a paged list
+  exports its whole range.
+- **Teacher Students tab:** active students by name, 25 a page through the
+  Users search index (search and HSK level are queries); each row's numbers
+  come from the student's `progress_summary` instead of six whole
+  collections. The "need attention" figure is a count.
+- **`progress_summary.roster`** (functions, `progress.rosterOf`): homework
+  assigned / done / late, practice average, sessions left, lessons, last
+  activity and the attention reasons, worked out with the same rules as
+  the app's TeacherStatsUtils / TeacherAttentionUtils. The refresh also
+  stamps each assignment `done` / `bestScore`. New triggers:
+  `onAssignmentWritten`, `onLessonProgressWritten`; a profile change
+  (name, level, on/off, approval) refreshes the summary from
+  `onUserSearchIndex`.
+- **Teacher dashboard drill-downs:** every list paged (students, active
+  this week, quiz / practice averages, sessions left, need attention from
+  the summaries; homework done / late / overview from the assignment
+  stamps with count totals; classes this week; the week's activity as a
+  merged timeline over six bounded sources and its chart from count
+  aggregations).
+- **Admin dashboard drill-downs:** users and active students paged, role
+  counts by aggregation, published packages paged, sign-ups paged in a
+  date range with a six-month count chart, vouchers running out paged,
+  income by month from count + sum aggregations.
+- **Exercise packages:** 25 a page in a date range (all by default);
+  level, skill, type of exercise and search are queries on list fields the
+  new `onExerciseListIndex` function keeps (`listAt`, `listCategory`,
+  `listSkill`, `searchPrefixes`); each page reads only its own assignments;
+  the progress dialog reads one exercise's results when opened; CSV of the
+  whole range.
+- **Question bank:** one row per worksheet from the new `bank_sheets`
+  index (function `onQuestionBankIndexed`, logic in
+  `functions/list_index.js`), 25 a page; type, question type, level and
+  search are queries; a worksheet's questions are read when it is opened
+  (the worksheet screen reads only its own questions).
+- **Staff History timeline**, **teacher Grades** (to score / recorded),
+  **transcript**, **Timetable follow-up** (open requests; sessions needing
+  a hand through one OR query in a date range): paged with the date bar.
+  Upcoming classes read only from today on.
+- **Rebuild list indexes** (Org settings, and a banner on the two lists
+  for admins): `rebuildListIndexes` writes the worksheet index and the
+  package fields once.
+- `bank_sheets` rule: staff read, no client write. 55 composite indexes.
+
+**Why**
+- Supervisor 2026-11-25 ("pagination ... so it doesn't bloat the website");
+  PLAN §4 Build 9 part 2: the screens that streamed whole collections to
+  work out counts.
+
+**For review**
+- Functions: 5 new (82 on live). Rules: one new read rule. Indexes: 55.
+- **Owner after the deploy:** Org settings → **Rebuild list indexes** once,
+  then **Rebuild progress summaries** once (the roster block and the
+  assignment stamps). Until then the package list and the bank show only
+  what was written after the deploy, and Students rows show dashes.
+- Sorting a column orders the rows of the page on screen; the list order
+  is the query's (name, newest first).
+- Search on the bank and packages is by the beginning of a word of the
+  title or code (and of a question's text), not any substring.
+- Package counts now include assignments of students switched off (the
+  old screen dropped them).
+- Tests: `flutter test` 209 pass (2 skipped); `node functions/test_list_index.js`
+  new; `test_progress.js` covers the roster and the stamp; analyzer 16 infos.
+
+---
+
 ## 2026-11-26 — Claude (BUILD chat): Build 9 Then list, part 1 — more lists paged
 
 **What changed**

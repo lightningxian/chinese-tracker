@@ -3703,7 +3703,8 @@ async function refreshProgressSummary(uid) {
   const user = userSnap.data() || {};
   if ((user.role || "student") !== "student") return null;
   const ref = db.collection(PROGRESS_SUMMARY).doc(uid);
-  const [prevSnap, promoSnap, exSnap, attSnap, termSnap, testSnap, noteSnap, histSnap] =
+  const [prevSnap, promoSnap, exSnap, attSnap, termSnap, testSnap, noteSnap, histSnap,
+    assignSnap, lessonSnap] =
     await Promise.all([
       ref.get(),
       db.collection(PROMOTION_PROGRESS).doc(uid).get(),
@@ -3716,6 +3717,9 @@ async function refreshProgressSummary(uid) {
       db.collection(PROGRESS_NOTES).where("studentId", "==", uid)
           .orderBy("createdAt", "desc").limit(1).get(),
       db.collection(USERS).doc(uid).collection("level_history").get(),
+      // Build 9 part 2: the roster block (Students list, drill-downs).
+      db.collection(EXERCISE_ASSIGNMENTS).where("studentId", "==", uid).get(),
+      db.collection(STUDENT_PROGRESS).where("studentId", "==", uid).get(),
     ]);
   const previous = prevSnap.exists ? prevSnap.data() || {} : {};
   const tests = testSnap.docs.map((d) => ({resultId: d.id, ...(d.data() || {})}))
@@ -3755,8 +3759,17 @@ async function refreshProgressSummary(uid) {
     }),
     previous,
   }, Date.now());
+  const rosterIn = await rosterInputs(uid, user, exSnap, attSnap, termSnap, assignSnap,
+      lessonSnap);
+  const {roster, stamps} = progress.rosterOf(rosterIn, Date.now());
+  const chinese = String(user.nameChinese || "").trim();
+  const latin = latinName(user);
   await ref.set({
     ...summary,
+    roster,
+    // Drill-downs list students by the staff label, as the app sorts them.
+    nameLower: (chinese && latin ? `${chinese} (${latin})` : chinese || latin).toLowerCase(),
+    listed: user.active !== false && isApprovedStatus(user.status),
     studentId: uid,
     studentName: latinName(user),
     studentNameChinese: String(user.nameChinese || "").trim(),
@@ -3765,7 +3778,64 @@ async function refreshProgressSummary(uid) {
     notifiedAt: previous.notifiedAt || {},
     updatedAt: FieldValue.serverTimestamp(),
   });
+  await stampAssignments(stamps);
   return summary;
+}
+
+/**
+ * Build 9 part 2: what `progress.rosterOf` needs. Results come from the
+ * newest 200 already read; an assignment whose exercise is not among them
+ * is looked up on its own (a student with a long history).
+ */
+async function rosterInputs(uid, user, exSnap, attSnap, termSnap, assignSnap, lessonSnap) {
+  const exercises = exSnap.docs.map((d) => {
+    const e = d.data() || {};
+    return {exerciseId: e.exerciseId || "", score: e.score, submittedAtMs: msOf(e.submittedAt)};
+  });
+  const seen = new Set(exercises.map((e) => e.exerciseId));
+  const missing = [...new Set(assignSnap.docs.map((d) => String((d.data() || {}).exerciseId || "")))]
+      .filter((id) => id && !seen.has(id));
+  if (exSnap.size >= 200 && missing.length) {
+    const older = await Promise.all(missing.slice(0, 100).map((id) => db.collection(EXERCISE_RESULTS)
+        .where("studentId", "==", uid).where("exerciseId", "==", id).get()));
+    for (const snap of older) {
+      for (const d of snap.docs) {
+        const e = d.data() || {};
+        exercises.push({exerciseId: e.exerciseId || "", score: e.score, submittedAtMs: msOf(e.submittedAt)});
+      }
+    }
+  }
+  return {
+    assignments: assignSnap.docs.map((d) => {
+      const a = d.data() || {};
+      return {id: d.id, exerciseId: String(a.exerciseId || ""), assignedAtMs: msOf(a.assignedAt),
+        dueAtMs: msOf(a.dueDate), done: a.done, bestScore: a.bestScore};
+    }),
+    exercises,
+    terms: termSnap.docs.map((d) => d.data() || {}),
+    lessons: lessonSnap.docs.map((d) => {
+      const x = d.data() || {};
+      return {lessonId: x.lessonId, completed: x.completed, score: x.score,
+        completedAtMs: msOf(x.completedAt)};
+    }),
+    attendance: attSnap.docs.map((d) => {
+      const a = d.data() || {};
+      return {attended: a.attended === true, joinedAtMs: msOf(a.joinedAt)};
+    }),
+    user: {lessonsPerTerm: user.termSize, level: user.level},
+  };
+}
+
+/** Writes `done` / `bestScore` on the assignments whose stamp changed. */
+async function stampAssignments(stamps) {
+  for (let i = 0; i < stamps.length; i += 400) {
+    const batch = db.batch();
+    for (const st of stamps.slice(i, i + 400)) {
+      batch.set(db.collection(EXERCISE_ASSIGNMENTS).doc(st.id),
+          {done: st.done, bestScore: st.bestScore}, {merge: true});
+    }
+    await batch.commit();
+  }
 }
 
 /** A refresh never fails the write that triggered it. */
@@ -3805,6 +3875,21 @@ exports.onClassTermWritten = onDocumentWritten(`${CLASS_TERMS}/{id}`,
     });
 exports.onProgressNoteWritten = onDocumentWritten(`${PROGRESS_NOTES}/{id}`,
     async (event) => safeRefresh(studentIdOfEvent(event), "note"));
+
+/**
+ * Build 9 part 2: an assignment (made, changed, removed) and a lesson
+ * marked done move the roster numbers. The stamp this refresh writes on
+ * an assignment (`done`, `bestScore`) does not start another refresh.
+ */
+exports.onAssignmentWritten = onDocumentWritten(`${EXERCISE_ASSIGNMENTS}/{id}`,
+    async (event) => {
+      const before = event.data && event.data.before.exists ? event.data.before.data() || {} : null;
+      const after = event.data && event.data.after.exists ? event.data.after.data() || {} : null;
+      if (before && after && progress.onlyStampChanged(before, after)) return;
+      await safeRefresh(studentIdOfEvent(event), "assignment");
+    });
+exports.onLessonProgressWritten = onDocumentWritten(`${STUDENT_PROGRESS}/{id}`,
+    async (event) => safeRefresh(studentIdOfEvent(event), "lesson"));
 
 /** Active, approved students (the daily pass and the rebuild). */
 async function activeStudentIds() {
@@ -3934,9 +4019,15 @@ const userSearch = require("./user_search");
 exports.onUserSearchIndex = onDocumentWritten(`${USERS}/{uid}`, async (event) => {
   const after = event.data && event.data.after.exists ? event.data.after.data() : null;
   if (!after) return;
+  const before = event.data.before.exists ? event.data.before.data() || {} : null;
   const fields = userSearch.searchFieldsOf(after);
-  if (userSearch.sameFields(after, fields)) return;
-  await event.data.after.ref.update(fields);
+  if (!userSearch.sameFields(after, fields)) await event.data.after.ref.update(fields);
+  // Build 9 part 2: the drill-downs list students from their summary, so a
+  // name, level, approval or on/off change refreshes it.
+  if ((after.role || "student") === "student" && before &&
+      userSearch.summaryFieldsChanged(before, after)) {
+    await safeRefresh(event.params.uid, "profile");
+  }
 });
 
 /** Admin: writes the search index on every account (once after Build 9). */
@@ -3965,6 +4056,156 @@ exports.rebuildUserSearch = onCall({timeoutSeconds: 540}, async (request) => {
   await writeAudit({action: "users.search.rebuild", actorId: uid, actorName: latinName(profile),
     targetType: "users", targetId: "all", detail: `${written} of ${snap.size}`});
   return {users: snap.size, written};
+});
+
+// ---------------------------------------------------------------------------
+// Build 9 part 2: the question bank and the package list read a page at a
+// time from small index fields kept here (functions/list_index.js).
+// ---------------------------------------------------------------------------
+const listIndex = require("./list_index");
+const BANK_SHEETS = "bank_sheets";
+
+/** The questions of one worksheet (code field, or the code as a tag). */
+async function sheetItems(key) {
+  const [byCode, byTag] = await Promise.all([
+    db.collection(QUESTION_BANK).where("sheetCode", "==", key).get(),
+    db.collection(QUESTION_BANK).where("tags", "array-contains", key).get(),
+  ]);
+  const byId = new Map();
+  for (const d of [...byCode.docs, ...byTag.docs]) {
+    const item = {id: d.id, ...(d.data() || {})};
+    if (listIndex.sheetKeyOf(item) === key) byId.set(d.id, item);
+  }
+  return [...byId.values()];
+}
+
+function sheetDocData(summary) {
+  const {createdAtMs, ...rest} = summary;
+  return {...rest, createdAt: createdAtMs === null ? null : Timestamp.fromMillis(createdAtMs),
+    updatedAt: FieldValue.serverTimestamp()};
+}
+
+/** Rewrites (or removes) the index document of a worksheet / question. */
+async function reindexSheet(key, item) {
+  const id = listIndex.sheetDocId(key, item && item.id);
+  const ref = db.collection(BANK_SHEETS).doc(id);
+  const items = key ? await sheetItems(key) : (item ? [item] : []);
+  const summary = listIndex.sheetSummaryOf(key, items);
+  const before = await ref.get();
+  if (!summary) {
+    if (before.exists) await ref.delete();
+    return {id, category: null, changedCategory: before.exists};
+  }
+  await ref.set(sheetDocData(summary));
+  const old = before.exists ? (before.data() || {}).category : null;
+  return {id, category: summary.category, changedCategory: old !== summary.category};
+}
+
+/** The type of exercise of a package: its first worksheet's (or question's). */
+async function packageCategory(e) {
+  for (const key of e.bankSheets || []) {
+    const s = await db.collection(BANK_SHEETS).doc(listIndex.sheetDocId(key)).get();
+    if (s.exists) return String((s.data() || {}).category || "exercise");
+  }
+  for (const qid of e.bankQuestionIds || []) {
+    const q = await db.collection(QUESTION_BANK).doc(qid).get();
+    if (q.exists) return String((q.data() || {}).category || "exercise");
+  }
+  return null;
+}
+
+async function reindexExercise(ref, data) {
+  const e = data || {};
+  const fields = listIndex.exerciseListFieldsOf(e, await packageCategory(e), Date.now());
+  if (listIndex.sameListFields(e, fields)) return false;
+  await ref.update({...fields, listAt: Timestamp.fromMillis(fields.listAt)});
+  return true;
+}
+
+exports.onQuestionBankIndexed = onDocumentWritten(`${QUESTION_BANK}/{id}`, async (event) => {
+  const before = event.data && event.data.before.exists ?
+    {id: event.params.id, ...(event.data.before.data() || {})} : null;
+  const after = event.data && event.data.after.exists ?
+    {id: event.params.id, ...(event.data.after.data() || {})} : null;
+  const keyBefore = before ? listIndex.sheetKeyOf(before) : undefined;
+  const keyAfter = after ? listIndex.sheetKeyOf(after) : undefined;
+  const jobs = [];
+  if (keyAfter !== undefined) jobs.push([keyAfter, keyAfter ? null : after]);
+  if (keyBefore !== undefined && keyBefore !== keyAfter) {
+    // Left its sheet, or a stand-alone question joined a sheet / was removed.
+    jobs.push([keyBefore, keyBefore ? null : {id: event.params.id, gone: true}]);
+  }
+  for (const [key, item] of jobs) {
+    try {
+      if (!key && item && item.gone) {
+        await db.collection(BANK_SHEETS).doc(listIndex.sheetDocId(null, item.id)).delete();
+        continue;
+      }
+      const r = await reindexSheet(key, item);
+      if (key && r.changedCategory) {
+        const ex = await db.collection(EXERCISES).where("bankSheets", "array-contains", key).get();
+        for (const d of ex.docs) await reindexExercise(d.ref, d.data());
+      }
+    } catch (err) {
+      logger.error(`bank index ${key || event.params.id}`, err);
+    }
+  }
+});
+
+exports.onExerciseListIndex = onDocumentWritten(`${EXERCISES}/{id}`, async (event) => {
+  if (!event.data || !event.data.after.exists) return;
+  try {
+    await reindexExercise(event.data.after.ref, event.data.after.data());
+  } catch (err) {
+    logger.error(`exercise index ${event.params.id}`, err);
+  }
+});
+
+/** Admin: builds the worksheet index and the package list fields (once). */
+exports.rebuildListIndexes = onCall({timeoutSeconds: 540, memory: "1GiB"}, async (request) => {
+  const {profile} = await requireCaller(request);
+  if (profile.role !== "admin") {
+    throw new HttpsError("permission-denied", "Only admins rebuild the list indexes.");
+  }
+  const bank = await db.collection(QUESTION_BANK).get();
+  const groups = new Map();
+  for (const d of bank.docs) {
+    const item = {id: d.id, ...(d.data() || {})};
+    const key = listIndex.sheetKeyOf(item);
+    const id = listIndex.sheetDocId(key, d.id);
+    if (!groups.has(id)) groups.set(id, {key, items: []});
+    groups.get(id).items.push(item);
+  }
+  const existing = await db.collection(BANK_SHEETS).select().get();
+  let writer = db.batch();
+  let n = 0;
+  const flush = async (force) => {
+    if (n >= 300 || (force && n)) {
+      await writer.commit();
+      writer = db.batch();
+      n = 0;
+    }
+  };
+  for (const [id, g] of groups) {
+    writer.set(db.collection(BANK_SHEETS).doc(id), sheetDocData(listIndex.sheetSummaryOf(g.key, g.items)));
+    n += 1;
+    await flush(false);
+  }
+  let removed = 0;
+  for (const d of existing.docs) {
+    if (groups.has(d.id)) continue;
+    writer.delete(d.ref);
+    removed += 1;
+    n += 1;
+    await flush(false);
+  }
+  await flush(true);
+  const exercises = await db.collection(EXERCISES).get();
+  let indexed = 0;
+  for (const d of exercises.docs) {
+    if (await reindexExercise(d.ref, d.data())) indexed += 1;
+  }
+  return {sheets: groups.size, removed, exercises: exercises.size, indexed};
 });
 
 // ---------------------------------------------------------------------------

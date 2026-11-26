@@ -8,6 +8,8 @@ class ExerciseAssignment {
     required this.teacherId,
     this.assignedAt,
     this.dueDate,
+    this.done,
+    this.bestScore,
   });
 
   final String id;
@@ -16,6 +18,12 @@ class ExerciseAssignment {
   final String teacherId;
   final DateTime? assignedAt;
   final DateTime? dueDate;
+
+  /// Build 9 part 2: stamped by the progress-summary refresh (functions):
+  /// whether the student has a result for the exercise, and the best
+  /// score. Null on an assignment not stamped yet.
+  final bool? done;
+  final int? bestScore;
 
   bool get isOverdue {
     if (dueDate == null) return false;
@@ -37,6 +45,8 @@ class ExerciseAssignment {
       teacherId: data['teacherId'] as String? ?? '',
       assignedAt: (data['assignedAt'] as Timestamp?)?.toDate(),
       dueDate: (data['dueDate'] as Timestamp?)?.toDate(),
+      done: data['done'] as bool?,
+      bestScore: (data['bestScore'] as num?)?.round(),
     );
   }
 

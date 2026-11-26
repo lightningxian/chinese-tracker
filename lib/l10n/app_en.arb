@@ -3296,5 +3296,13 @@
   "orgRebuildUserSearchHint": "Writes the search index on every account (needed once after the Build 9 update, so the Users list can be paged and searched).",
   "orgRebuildUserSearchDone": "{count} accounts written to the search index.",
   "@orgRebuildUserSearchDone": {"placeholders": {"count": {"type": "int"}}},
-  "newsAll": "All posts"
+  "newsAll": "All posts",
+  "listIndexMissingAdmin": "{count} packages or worksheets are not in the list index yet. Press Rebuild list indexes once after the update.",
+  "@listIndexMissingAdmin": {"placeholders":{"count":{"type":"int"}}},
+  "listIndexMissingTeacher": "{count} packages or worksheets are not listed yet. Ask an admin to press Rebuild list indexes once.",
+  "@listIndexMissingTeacher": {"placeholders":{"count":{"type":"int"}}},
+  "listIndexRebuild": "Rebuild list indexes",
+  "listIndexRebuildHint": "Writes the worksheet index of the question bank and the list fields of every exercise package (needed once after the Build 9 part 2 update, so these lists can be paged and searched).",
+  "listIndexRebuildDone": "{sheets} worksheets and {exercises} packages indexed.",
+  "@listIndexRebuildDone": {"placeholders":{"sheets":{"type":"int"},"exercises":{"type":"int"}}}
 }

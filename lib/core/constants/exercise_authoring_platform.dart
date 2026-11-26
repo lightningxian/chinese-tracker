@@ -36,6 +36,13 @@ abstract final class ExerciseAuthoringPlatform {
       canManageBank(user) ||
       (canManageExercises(user) && item.createdBy == user!.uid);
 
+  /// Build 9 part 2: a row of the paged bank (its creators are stored).
+  static bool canEditBankRow(AppUser? user, BankSheetRow row) =>
+      canManageBank(user) ||
+      (canManageExercises(user) &&
+          row.creators.isNotEmpty &&
+          row.creators.every((c) => c == user!.uid));
+
   /// A worksheet: every question must be the teacher's own.
   static bool canEditBankSheet(AppUser? user, QuestionBankSheet sheet) =>
       canManageBank(user) ||

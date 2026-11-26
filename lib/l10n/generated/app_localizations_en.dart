@@ -9031,4 +9031,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get newsAll => 'All posts';
+
+  @override
+  String listIndexMissingAdmin(int count) {
+    return '$count packages or worksheets are not in the list index yet. Press Rebuild list indexes once after the update.';
+  }
+
+  @override
+  String listIndexMissingTeacher(int count) {
+    return '$count packages or worksheets are not listed yet. Ask an admin to press Rebuild list indexes once.';
+  }
+
+  @override
+  String get listIndexRebuild => 'Rebuild list indexes';
+
+  @override
+  String get listIndexRebuildHint =>
+      'Writes the worksheet index of the question bank and the list fields of every exercise package (needed once after the Build 9 part 2 update, so these lists can be paged and searched).';
+
+  @override
+  String listIndexRebuildDone(int sheets, int exercises) {
+    return '$sheets worksheets and $exercises packages indexed.';
+  }
 }

@@ -15,59 +15,51 @@ import '../../services/cohort_report_service.dart';
 import '../../services/firestore_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/file_download.dart' as file_download;
+import '../paging/paged_controller.dart';
 import 'app_card.dart';
 import 'app_data_table.dart';
 import 'export_report_card.dart';
+import 'paging_bars.dart';
 import 'responsive_card_grid.dart';
 import 'status_pill.dart';
 
+/// Build 9 part 2: the students table, a page at a time. The page comes
+/// from [controller] (the teacher's Students tab reads `users` and joins
+/// each page with its `progress_summary`; the drill-downs read the
+/// summaries). Column sorting orders the rows of the page on screen.
 class StudentRosterList extends StatefulWidget {
   const StudentRosterList({
     super.key,
-    required this.students,
+    required this.controller,
+    this.header,
     this.padding = const EdgeInsets.all(20),
+    this.inline = false,
   });
 
-  final List<StudentRosterSummary> students;
-  final EdgeInsetsGeometry padding;
+  final PagedController<StudentRosterSummary> controller;
+  final Widget? header;
+  final EdgeInsets padding;
+
+  /// Drawn inside a caller's own scrolling list.
+  final bool inline;
 
   @override
   State<StudentRosterList> createState() => _StudentRosterListState();
 }
 
 class _StudentRosterListState extends State<StudentRosterList> {
-  String _query = '';
-  String? _level;
-  String _sortId = 'name';
+  String? _sortId;
   bool _sortAscending = true;
 
   /// "HSK 3 · 8 lessons/term" → "HSK 3".
   static String _levelOf(StudentRosterSummary s) =>
       s.levelLabel.split('·').first.trim();
 
-  static bool _needsAttention(StudentRosterSummary s) =>
-      s.sessionsRemaining <= 2 || s.homeworkOverdue > 0;
-
-  List<String> get _levels {
-    final set = {for (final s in widget.students) _levelOf(s)}
-      ..removeWhere((l) => l.isEmpty);
-    return set.toList()..sort();
-  }
-
-  List<StudentRosterSummary> get _visible {
-    final q = _query.trim().toLowerCase();
-    final rows = widget.students.where((s) {
-      if (_level != null && _levelOf(s) != _level) return false;
-      if (q.isNotEmpty &&
-          !s.staffLabel.toLowerCase().contains(q) &&
-          !s.name.toLowerCase().contains(q)) {
-        return false;
-      }
-      return true;
-    }).toList();
-
+  List<StudentRosterSummary> _sorted(List<StudentRosterSummary> page) {
+    final id = _sortId;
+    if (id == null) return page;
     int compare(StudentRosterSummary a, StudentRosterSummary b) {
-      switch (_sortId) {
+      switch (id) {
         case 'sessions':
           return a.sessionsRemaining.compareTo(b.sessionsRemaining);
         case 'quiz':
@@ -84,8 +76,8 @@ class _StudentRosterListState extends State<StudentRosterList> {
       }
     }
 
-    rows.sort((a, b) => _sortAscending ? compare(a, b) : compare(b, a));
-    return rows;
+    return [...page]
+      ..sort((a, b) => _sortAscending ? compare(a, b) : compare(b, a));
   }
 
   void _onSort(String id) {
@@ -105,150 +97,122 @@ class _StudentRosterListState extends State<StudentRosterList> {
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    if (widget.students.isEmpty) {
-      return EmptyState(
-        icon: Icons.people_outline,
-        title: l.cohortNoStudentsTitle,
-        subtitle: l.cohortNoStudentsSubtitle,
-      );
-    }
-
-    final rows = _visible;
-    final attention = widget.students.where(_needsAttention).length;
-
-    return Padding(
-      padding: widget.padding,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _RosterToolbar(
-            levels: _levels,
-            selectedLevel: _level,
-            onLevel: (l) => setState(() => _level = l),
-            onQuery: (q) => setState(() => _query = q),
-            total: widget.students.length,
-            shown: rows.length,
-            attention: attention,
-          ),
-          const SizedBox(height: 14),
-          if (rows.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 32),
-              child: Center(
-                child: Text(
-                  l.cohortNoMatch,
-                  style: TextStyle(color: AppColors.textSecondary),
+    return ListenableBuilder(
+      listenable: widget.controller,
+      builder: (context, _) => PagedListBody<StudentRosterSummary>(
+        controller: widget.controller,
+        header: widget.header,
+        padding: widget.padding,
+        inline: widget.inline,
+        emptyIcon: Icons.people_outline,
+        emptyTitle: l.cohortNoStudentsTitle,
+        emptySubtitle: l.cohortNoStudentsSubtitle,
+        itemBuilder: (_, __) => const SizedBox.shrink(),
+        body: AppDataTable<StudentRosterSummary>(
+          rows: _sorted(widget.controller.items),
+          sortColumnId: _sortId,
+          sortAscending: _sortAscending,
+          onSort: _onSort,
+          onRowTap: (s) => _open(context, s),
+          mobileBreakpoint: 760,
+          columns: [
+            AppTableColumn(
+              id: 'name',
+              label: l.commonStudent,
+              flex: 3,
+              sortable: true,
+              cell: (s) => _StudentIdentity(student: s),
+            ),
+            AppTableColumn(
+              id: 'level',
+              label: l.cohortLevel,
+              width: 90,
+              sortable: true,
+              cell: (s) =>
+                  Text(_levelOf(s), style: const TextStyle(fontSize: 13)),
+            ),
+            AppTableColumn(
+              id: 'term',
+              label: l.cohortThisTerm,
+              width: 120,
+              cell: (s) => Text(s.termProgressLabel,
+                  style: const TextStyle(fontSize: 13)),
+            ),
+            AppTableColumn(
+              id: 'homework',
+              label: l.cohortHomework,
+              flex: 2,
+              cell: (s) => Text(
+                s.homeworkLocalized(l),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: s.homeworkOverdue > 0
+                      ? AppColors.error
+                      : AppColors.textPrimary,
+                  fontWeight:
+                      s.homeworkOverdue > 0 ? FontWeight.w600 : FontWeight.w400,
                 ),
-              ),
-            )
-          else
-            AppDataTable<StudentRosterSummary>(
-              rows: rows,
-              sortColumnId: _sortId,
-              sortAscending: _sortAscending,
-              onSort: _onSort,
-              onRowTap: (s) => _open(context, s),
-              mobileBreakpoint: 760,
-              columns: [
-                AppTableColumn(
-                  id: 'name',
-                  label: l.commonStudent,
-                  flex: 3,
-                  sortable: true,
-                  cell: (s) => _StudentIdentity(student: s),
-                ),
-                AppTableColumn(
-                  id: 'level',
-                  label: l.cohortLevel,
-                  width: 90,
-                  sortable: true,
-                  cell: (s) =>
-                      Text(_levelOf(s), style: const TextStyle(fontSize: 13)),
-                ),
-                AppTableColumn(
-                  id: 'term',
-                  label: l.cohortThisTerm,
-                  width: 120,
-                  cell: (s) => Text(s.termProgressLabel,
-                      style: const TextStyle(fontSize: 13)),
-                ),
-                AppTableColumn(
-                  id: 'homework',
-                  label: l.cohortHomework,
-                  flex: 2,
-                  cell: (s) => Text(
-                    s.homeworkLocalized(l),
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: s.homeworkOverdue > 0
-                          ? AppColors.error
-                          : AppColors.textPrimary,
-                      fontWeight: s.homeworkOverdue > 0
-                          ? FontWeight.w600
-                          : FontWeight.w400,
-                    ),
-                  ),
-                ),
-                AppTableColumn(
-                  id: 'quiz',
-                  label: l.cohortQuizAvg,
-                  width: 90,
-                  sortable: true,
-                  alignment: Alignment.centerRight,
-                  cell: (s) => Text(
-                    s.avgQuizScore == null ? '—' : '${s.avgQuizScore}%',
-                    style: const TextStyle(
-                        fontSize: 13,
-                        fontFeatures: [FontFeature.tabularFigures()]),
-                  ),
-                ),
-                AppTableColumn(
-                  id: 'sessions',
-                  label: l.cohortSessionsLeft,
-                  width: 120,
-                  sortable: true,
-                  cell: (s) => _SessionsPill(remaining: s.sessionsRemaining),
-                ),
-                AppTableColumn(
-                  id: 'active',
-                  label: l.cohortLastActive,
-                  width: 100,
-                  sortable: true,
-                  cell: (s) => Text(
-                    s.lastActivityLocalized(l),
-                    style:
-                        TextStyle(fontSize: 13, color: AppColors.textSecondary),
-                  ),
-                ),
-                AppTableColumn(
-                  id: 'go',
-                  label: '',
-                  width: 32,
-                  alignment: Alignment.centerRight,
-                  cell: (_) => Icon(Icons.chevron_right,
-                      size: 18, color: AppColors.textSecondary),
-                ),
-              ],
-              mobileCardBuilder: (s) => _StudentRosterCard(
-                student: s,
-                level: _levelOf(s),
-                onTap: () => _open(context, s),
               ),
             ),
-        ],
+            AppTableColumn(
+              id: 'quiz',
+              label: l.cohortQuizAvg,
+              width: 90,
+              sortable: true,
+              alignment: Alignment.centerRight,
+              cell: (s) => Text(
+                s.avgQuizScore == null ? '—' : '${s.avgQuizScore}%',
+                style: const TextStyle(
+                    fontSize: 13, fontFeatures: [FontFeature.tabularFigures()]),
+              ),
+            ),
+            AppTableColumn(
+              id: 'sessions',
+              label: l.cohortSessionsLeft,
+              width: 120,
+              sortable: true,
+              cell: (s) => _SessionsPill(remaining: s.sessionsRemaining),
+            ),
+            AppTableColumn(
+              id: 'active',
+              label: l.cohortLastActive,
+              width: 100,
+              sortable: true,
+              cell: (s) => Text(
+                s.lastActivityLocalized(l),
+                style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+              ),
+            ),
+            AppTableColumn(
+              id: 'go',
+              label: '',
+              width: 32,
+              alignment: Alignment.centerRight,
+              cell: (_) => Icon(Icons.chevron_right,
+                  size: 18, color: AppColors.textSecondary),
+            ),
+          ],
+          mobileCardBuilder: (s) => _StudentRosterCard(
+            student: s,
+            level: _levelOf(s),
+            onTap: () => _open(context, s),
+          ),
+        ),
       ),
     );
   }
 }
 
-class _RosterToolbar extends StatelessWidget {
-  const _RosterToolbar({
+/// The Students tab's filters: a search box (a query on the Users search
+/// index), the HSK levels, and the counts of the whole list.
+class StudentRosterToolbar extends StatelessWidget {
+  const StudentRosterToolbar({
+    super.key,
     required this.levels,
     required this.selectedLevel,
     required this.onLevel,
     required this.onQuery,
     required this.total,
-    required this.shown,
     required this.attention,
   });
 
@@ -256,18 +220,17 @@ class _RosterToolbar extends StatelessWidget {
   final String? selectedLevel;
   final ValueChanged<String?> onLevel;
   final ValueChanged<String> onQuery;
-  final int total;
-  final int shown;
-  final int attention;
+  final int? total;
+  final int? attention;
 
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    final summary = StringBuffer(l.cohortStudentCount(total));
-    if (shown != total) summary.write(' · ${l.cohortShownCount(shown)}');
-    if (attention > 0) {
-      summary.write(' · ${l.cohortNeedAttentionCount(attention)}');
-    }
+    final parts = <String>[
+      if (total != null) l.cohortStudentCount(total!),
+      if ((attention ?? 0) > 0) l.cohortNeedAttentionCount(attention!),
+    ];
+    final warn = (attention ?? 0) > 0;
 
     return Wrap(
       spacing: 12,
@@ -287,32 +250,32 @@ class _RosterToolbar extends StatelessWidget {
             ),
           ),
         ),
-        if (levels.length > 1)
-          Wrap(
-            spacing: 6,
-            children: [
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            ChoiceChip(
+              label: Text(l.cohortAllLevels),
+              selected: selectedLevel == null,
+              onSelected: (_) => onLevel(null),
+            ),
+            for (final lv in levels)
               ChoiceChip(
-                label: Text(l.cohortAllLevels),
-                selected: selectedLevel == null,
-                onSelected: (_) => onLevel(null),
+                label: Text(lv),
+                selected: selectedLevel == lv,
+                onSelected: (_) => onLevel(selectedLevel == lv ? null : lv),
               ),
-              for (final l in levels)
-                ChoiceChip(
-                  label: Text(l),
-                  selected: selectedLevel == l,
-                  onSelected: (_) => onLevel(selectedLevel == l ? null : l),
-                ),
-            ],
-          ),
-        Text(
-          summary.toString(),
-          style: TextStyle(
-            fontSize: 13,
-            color:
-                attention > 0 ? AppColors.chipAmberFg : AppColors.textSecondary,
-            fontWeight: FontWeight.w500,
-          ),
+          ],
         ),
+        if (parts.isNotEmpty)
+          Text(
+            parts.join(' · '),
+            style: TextStyle(
+              fontSize: 13,
+              color: warn ? AppColors.chipAmberFg : AppColors.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
       ],
     );
   }
