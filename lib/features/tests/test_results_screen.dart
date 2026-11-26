@@ -3,8 +3,11 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/paging/date_range.dart';
+import '../../core/paging/paged_controller.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
+import '../../core/widgets/paging_bars.dart';
 import '../../core/widgets/shell_nested_page.dart';
 import '../../l10n/l10n.dart';
 import '../../models/app_user.dart';
@@ -34,73 +37,84 @@ class TestResultsScreen extends StatefulWidget {
 
 class _TestResultsScreenState extends State<TestResultsScreen> {
   late String? _codeId = widget.codeId;
+  late final AppUser _user = context.read<AuthService>().appUser!;
+  late final Stream<List<TestCode>> _codes = TestService().watchCodes();
+
+  /// Build 9 Then list: 25 results a page in a date range (all dates by
+  /// default: a code's results span months); the code is a query filter.
+  late final PagedController<TestResult> _pages = PagedController<TestResult>(
+    build: (range) => TestService().resultSource(range,
+        codeId: _codeId, openedBy: _user.isAdmin ? null : _user.uid),
+    range: const DateRangeSel.all(),
+  );
+
+  @override
+  void dispose() {
+    _pages.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    final user = context.read<AuthService>().appUser!;
-    final service = TestService();
     return ShellNestedPage(
       embedded: widget.embedded,
       title: l.testsResultsTitle,
-      child: StreamBuilder<List<TestResult>>(
-        stream: service.watchResults(openedBy: user.isAdmin ? null : user.uid),
-        builder: (context, snap) {
-          if (!snap.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final all = snap.data!;
-          final codes = {for (final r in all) r.codeId: r.code}.entries.toList()
-            ..sort((a, b) => a.value.compareTo(b.value));
-          final shown =
-              _codeId == null ? all : all.where((r) => r.codeId == _codeId);
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              if (codes.isNotEmpty)
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    ChoiceChip(
-                      label: Text(l.testsAllCodes),
-                      selected: _codeId == null,
-                      onSelected: (_) => setState(() => _codeId = null),
-                    ),
-                    for (final c in codes)
-                      ChoiceChip(
-                        label: Text(c.value),
-                        selected: _codeId == c.key,
-                        onSelected: (_) => setState(() => _codeId = c.key),
+      child: StreamBuilder<List<TestCode>>(
+        stream: _codes,
+        builder: (context, codesSnap) {
+          final codes = codesSnap.data ?? const <TestCode>[];
+          return ListenableBuilder(
+            listenable: _pages,
+            builder: (context, _) => PagedListBody<TestResult>(
+              controller: _pages,
+              padding: const EdgeInsets.all(16),
+              separator: 8,
+              emptyIcon: Icons.fact_check_outlined,
+              emptyTitle: l.testsResultsEmptyTitle,
+              emptySubtitle: l.testsResultsEmptySubtitle,
+              header: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 220,
+                        child: DropdownButtonFormField<String?>(
+                          initialValue: _codeId,
+                          isExpanded: true,
+                          decoration: InputDecoration(
+                              labelText: l.testsAllCodes, isDense: true),
+                          items: [
+                            DropdownMenuItem<String?>(
+                                value: null, child: Text(l.testsAllCodes)),
+                            for (final c in codes)
+                              DropdownMenuItem<String?>(value: c.id, child: Text(c.code)),
+                          ],
+                          onChanged: (v) {
+                            setState(() => _codeId = v);
+                            _pages.reload();
+                          },
+                        ),
                       ),
-                  ],
-                ),
-              if (_codeId != null) ...[
-                const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: OutlinedButton.icon(
-                    onPressed: () => context.push(
-                        '${widget.basePath}/leaderboard/${Uri.encodeComponent(_codeId!)}'),
-                    icon: const Icon(Icons.emoji_events_outlined),
-                    label: Text(l.leaderboardShort),
+                      if (_codeId != null)
+                        OutlinedButton.icon(
+                          onPressed: () => context.push(
+                              '${widget.basePath}/leaderboard/${Uri.encodeComponent(_codeId!)}'),
+                          icon: const Icon(Icons.emoji_events_outlined),
+                          label: Text(l.leaderboardShort),
+                        ),
+                    ],
                   ),
-                ),
-              ],
-              const SizedBox(height: 12),
-              if (shown.isEmpty)
-                EmptyState(
-                  icon: Icons.fact_check_outlined,
-                  title: l.testsResultsEmptyTitle,
-                  subtitle: l.testsResultsEmptySubtitle,
-                )
-              else
-                for (final r in shown)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: _ResultRow(result: r, basePath: widget.basePath),
-                  ),
-            ],
+                  const SizedBox(height: 10),
+                  DateRangeBar(value: _pages.range, onChanged: _pages.setRange),
+                ],
+              ),
+              itemBuilder: (context, r) => _ResultRow(result: r, basePath: widget.basePath),
+            ),
           );
         },
       ),

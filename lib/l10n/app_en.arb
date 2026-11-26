@@ -3295,5 +3295,6 @@
   "orgRebuildUserSearch": "Rebuild user search",
   "orgRebuildUserSearchHint": "Writes the search index on every account (needed once after the Build 9 update, so the Users list can be paged and searched).",
   "orgRebuildUserSearchDone": "{count} accounts written to the search index.",
-  "@orgRebuildUserSearchDone": {"placeholders": {"count": {"type": "int"}}}
+  "@orgRebuildUserSearchDone": {"placeholders": {"count": {"type": "int"}}},
+  "newsAll": "All posts"
 }

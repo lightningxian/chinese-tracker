@@ -3,8 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/paging/date_range.dart';
+import '../../core/paging/paged_controller.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
+import '../../core/widgets/paging_bars.dart';
 import '../../l10n/l10n.dart';
 import '../../models/app_user.dart';
 import '../../models/leaderboard.dart';
@@ -29,12 +32,17 @@ class StudentTestsTab extends StatefulWidget {
 class _StudentTestsTabState extends State<StudentTestsTab> {
   final _token = TextEditingController();
   final _service = TestService();
+  late final PagedController<TestResult> _results = PagedController<TestResult>(
+    build: (range) => _service.resultSource(range, studentId: widget.student.uid),
+    range: DateRangeSel.preset(RangePreset.thisYear),
+  );
   late final _progress = PromotionService().watchProgress(widget.student.uid);
   late final _placement = PromotionService().watchPlacement(widget.student.uid);
 
   @override
   void dispose() {
     _token.dispose();
+    _results.dispose();
     super.dispose();
   }
 
@@ -171,29 +179,19 @@ class _StudentTestsTabState extends State<StudentTestsTab> {
           ),
         ),
         const SizedBox(height: 8),
-        StreamBuilder<List<TestResult>>(
-          stream: _service.watchMyResults(widget.student.uid),
-          builder: (context, snap) {
-            if (!snap.hasData) {
-              return const Padding(
-                padding: EdgeInsets.all(24),
-                child: Center(child: CircularProgressIndicator()),
-              );
-            }
-            final results = snap.data!;
-            if (results.isEmpty) {
-              return EmptyState(
-                icon: Icons.emoji_events_outlined,
-                title: l.testsMyResultsEmptyTitle,
-                subtitle: l.testsMyResultsEmptySubtitle,
-              );
-            }
-            return Column(
-              children: [
-                for (final r in results)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: AppCard(
+        // Build 9 Then list: 25 results a page in a date range.
+        ListenableBuilder(
+          listenable: _results,
+          builder: (context, _) => PagedListBody<TestResult>(
+            controller: _results,
+            inline: true,
+            padding: EdgeInsets.zero,
+            separator: 8,
+            emptyIcon: Icons.emoji_events_outlined,
+            emptyTitle: l.testsMyResultsEmptyTitle,
+            emptySubtitle: l.testsMyResultsEmptySubtitle,
+            header: DateRangeBar(value: _results.range, onChanged: _results.setRange),
+            itemBuilder: (context, r) => AppCard(
                       onTap: () => context.push('/student/test-result/${r.id}'),
                       child: Row(
                         children: [
@@ -258,10 +256,7 @@ class _StudentTestsTabState extends State<StudentTestsTab> {
                         ],
                       ),
                     ),
-                  ),
-              ],
-            );
-          },
+          ),
         ),
       ],
     );

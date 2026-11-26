@@ -14801,6 +14801,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} accounts written to the search index.'**
   String orgRebuildUserSearchDone(int count);
+
+  /// No description provided for @newsAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All posts'**
+  String get newsAll;
 }
 
 class _AppLocalizationsDelegate

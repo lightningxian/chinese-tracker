@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 
+import '../core/paging/date_range.dart';
 import '../core/paging/paged_controller.dart';
 import '../models/app_user.dart';
 import '../models/leaderboard.dart';
@@ -114,6 +115,18 @@ class PromotionService {
 
   /// Declined recommendations, newest first (admin; owner 2026-11-24 may
   /// promote anyway).
+  /// Build 9 Then list: declined recommendations, newest first, a page at
+  /// a time in [range] (index status + createdAt).
+  PageSource<LevelPromotion> declinedSource(DateRangeSel range) => FirestorePageSource(
+      applyDateRange(
+          _db
+              .collection('level_promotions')
+              .where('status', isEqualTo: 'declined')
+              .orderBy('createdAt', descending: true),
+          'createdAt',
+          range),
+      LevelPromotion.fromDoc);
+
   Stream<List<LevelPromotion>> watchDeclined({int limit = 20}) => _db
       .collection('level_promotions')
       .where('status', isEqualTo: 'declined')

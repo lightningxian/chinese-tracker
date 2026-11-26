@@ -4,6 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/paging/date_range.dart';
+import '../core/paging/paged_controller.dart';
 import '../models/exercise_skill_category.dart';
 import '../models/placement.dart';
 import '../models/question_bank_item.dart';
@@ -189,6 +191,29 @@ class TestService implements TestPlayBackend {
 
   /// Staff: every session (admin) or the ones the teacher opened, newest
   /// first.
+  /// Build 9 Then list: sessions, newest first, in [range], a page at a
+  /// time (a teacher: their own). Index openedBy + createdAt.
+  PageSource<TestSession> sessionSource(DateRangeSel range, {String? openedBy}) {
+    Query<Map<String, dynamic>> q = _db.collection(sessionsCollection);
+    if (openedBy != null) q = q.where('openedBy', isEqualTo: openedBy);
+    return FirestorePageSource(
+        applyDateRange(q.orderBy('createdAt', descending: true), 'createdAt', range),
+        TestSession.fromDoc);
+  }
+
+  /// Build 9 Then list: results, newest first, in [range] (one code, a
+  /// teacher's own sessions, or one student's). Indexes on finishedAt.
+  PageSource<TestResult> resultSource(DateRangeSel range,
+      {String? codeId, String? openedBy, String? studentId}) {
+    Query<Map<String, dynamic>> q = _db.collection(resultsCollection);
+    if (codeId != null) q = q.where('codeId', isEqualTo: codeId);
+    if (openedBy != null) q = q.where('openedBy', isEqualTo: openedBy);
+    if (studentId != null) q = q.where('studentId', isEqualTo: studentId);
+    return FirestorePageSource(
+        applyDateRange(q.orderBy('finishedAt', descending: true), 'finishedAt', range),
+        TestResult.fromDoc);
+  }
+
   Stream<List<TestSession>> watchSessions({String? openedBy}) {
     Query<Map<String, dynamic>> q = _db.collection(sessionsCollection);
     if (openedBy != null) q = q.where('openedBy', isEqualTo: openedBy);

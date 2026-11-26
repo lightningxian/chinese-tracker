@@ -9028,4 +9028,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String orgRebuildUserSearchDone(int count) {
     return '$count accounts written to the search index.';
   }
+
+  @override
+  String get newsAll => 'All posts';
 }

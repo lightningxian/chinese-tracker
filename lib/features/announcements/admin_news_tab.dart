@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/paging/paged_controller.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
+import '../../core/widgets/paging_bars.dart';
 import '../../l10n/l10n.dart';
 import '../../services/auth_service.dart';
 import 'announcements.dart';
@@ -20,8 +22,23 @@ class AdminNewsTab extends StatefulWidget {
 }
 
 class _AdminNewsTabState extends State<AdminNewsTab> {
-  late final Stream<List<Announcement>> _recent = AnnouncementService().watchRecent();
-  bool _showPast = false;
+  // Build 9 Then list: what shows now (few) stays live; every post is read
+  // 25 a page in a date range.
+  late final Stream<List<Announcement>> _active = AnnouncementService().watchActive();
+  late final PagedController<Announcement> _pages = PagedController<Announcement>(
+    build: (range) => AnnouncementService().allSource(range),
+  );
+
+  @override
+  void dispose() {
+    _pages.dispose();
+    super.dispose();
+  }
+
+  Future<void> _edit({Announcement? existing}) async {
+    await AnnouncementDialog.show(context, byName: _byName, existing: existing);
+    if (mounted) _pages.refresh();
+  }
 
   String get _byName => context.read<AuthService>().appUser?.name ?? '';
 
@@ -42,7 +59,10 @@ class _AdminNewsTabState extends State<AdminNewsTab> {
         ],
       ),
     );
-    if (ok == true) await AnnouncementService().delete(a.id);
+    if (ok == true) {
+      await AnnouncementService().delete(a.id);
+      _pages.refresh();
+    }
   }
 
   @override
@@ -51,72 +71,78 @@ class _AdminNewsTabState extends State<AdminNewsTab> {
     final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
     final wide = MediaQuery.sizeOf(context).width >= 900;
     return StreamBuilder<List<Announcement>>(
-      stream: _recent,
+      stream: _active,
       builder: (context, snap) {
-        final all = snap.data ?? const <Announcement>[];
-        final active = all.where((a) => a.activeOn(today)).toList();
-        final past = all.where((a) => !a.activeOn(today)).toList();
-        return ListView(
-          padding: EdgeInsets.all(wide ? 32 : 16),
-          children: [
-            Row(
+        final active = (snap.data ?? const <Announcement>[])
+            .where((a) => a.activeOn(today))
+            .toList()
+          ..sort((a, b) => (b.createdAt ?? DateTime(0)).compareTo(a.createdAt ?? DateTime(0)));
+        return ListenableBuilder(
+          listenable: _pages,
+          builder: (context, _) => PagedListBody<Announcement>(
+            controller: _pages,
+            padding: EdgeInsets.all(wide ? 32 : 16),
+            emptyIcon: Icons.campaign_outlined,
+            header: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(l.newsTitle,
-                          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
-                      const SizedBox(height: 4),
-                      Text(l.newsIntro,
-                          style: TextStyle(color: AppColors.textSecondary, height: 1.4)),
-                    ],
-                  ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(l.newsTitle,
+                              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+                          const SizedBox(height: 4),
+                          Text(l.newsIntro,
+                              style: TextStyle(color: AppColors.textSecondary, height: 1.4)),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    FilledButton.icon(
+                      onPressed: () => _edit(),
+                      icon: const Icon(Icons.campaign_outlined, size: 18),
+                      label: Text(l.announcementNew),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                FilledButton.icon(
-                  onPressed: () => AnnouncementDialog.show(context, byName: _byName),
-                  icon: const Icon(Icons.campaign_outlined, size: 18),
-                  label: Text(l.announcementNew),
-                ),
+                const SizedBox(height: 20),
+                _SectionLabel(text: l.newsActive(active.length)),
+                const SizedBox(height: 8),
+                if (!snap.hasData)
+                  const LinearProgressIndicator()
+                else if (active.isEmpty)
+                  AppCard(
+                    padding: const EdgeInsets.all(20),
+                    child: Text(l.announcementsNone,
+                        style: TextStyle(color: AppColors.textSecondary)),
+                  )
+                else
+                  for (final a in active)
+                    _NewsCard(
+                      announcement: a,
+                      onEdit: a.isClosure || a.isOpened ? null : () => _edit(existing: a),
+                      onDelete: () => _delete(a),
+                    ),
+                const SizedBox(height: 20),
+                _SectionLabel(text: l.newsAll),
+                const SizedBox(height: 8),
+                DateRangeBar(value: _pages.range, onChanged: _pages.setRange),
               ],
             ),
-            const SizedBox(height: 20),
-            _SectionLabel(text: l.newsActive(active.length)),
-            const SizedBox(height: 8),
-            if (!snap.hasData)
-              const LinearProgressIndicator()
-            else if (active.isEmpty)
-              AppCard(
-                padding: const EdgeInsets.all(20),
-                child: Text(l.announcementsNone,
-                    style: TextStyle(color: AppColors.textSecondary)),
-              )
-            else
-              for (final a in active)
-                _NewsCard(
-                  announcement: a,
-                  onEdit: a.isClosure || a.isOpened
-                      ? null
-                      : () => AnnouncementDialog.show(context, byName: _byName, existing: a),
-                  onDelete: () => _delete(a),
-                ),
-            if (past.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton.icon(
-                  onPressed: () => setState(() => _showPast = !_showPast),
-                  icon: Icon(_showPast ? Icons.expand_less : Icons.expand_more),
-                  label: Text(l.newsPast(past.length)),
-                ),
-              ),
-              if (_showPast)
-                for (final a in past)
-                  _NewsCard(announcement: a, faded: true, onDelete: () => _delete(a)),
-            ],
-          ],
+            separator: 0,
+            itemBuilder: (context, a) => _NewsCard(
+              announcement: a,
+              faded: !a.activeOn(today),
+              onEdit: a.isClosure || a.isOpened || !a.activeOn(today)
+                  ? null
+                  : () => _edit(existing: a),
+              onDelete: () => _delete(a),
+            ),
+          ),
         );
       },
     );

@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/paging/date_range.dart';
+import '../../core/paging/paged_controller.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../l10n/l10n.dart';
@@ -90,6 +92,12 @@ class AnnouncementService {
       .snapshots()
       .map((s) => s.docs.map(Announcement.fromDoc).toList()
         ..sort((a, b) => a.toDate.compareTo(b.toDate)));
+
+  /// Build 9 Then list: every post, newest first, in [range], a page at a
+  /// time (the admin's News page).
+  PageSource<Announcement> allSource(DateRangeSel range) => FirestorePageSource(
+      applyDateRange(_col.orderBy('createdAt', descending: true), 'createdAt', range),
+      Announcement.fromDoc);
 
   /// The admin's News page: the latest [limit], newest first.
   Stream<List<Announcement>> watchRecent({int limit = 40}) => _col

@@ -4,8 +4,11 @@ import 'package:provider/provider.dart';
 
 import '../../core/constants/app_constants.dart';
 
+import '../../core/paging/date_range.dart';
+import '../../core/paging/paged_controller.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
+import '../../core/widgets/paging_bars.dart';
 import '../../core/widgets/shell_nested_page.dart';
 import '../../l10n/l10n.dart';
 import '../../models/app_user.dart';
@@ -60,7 +63,12 @@ class _PromotionScreenState extends State<PromotionScreen> {
   final _vm = PromotionViewModel();
   late final _waiting = _vm.service.watchWaiting();
   late final _minCodes = _vm.service.watchMinCodes();
-  late final _declined = _vm.service.watchDeclined();
+  /// Build 9 Then list: declined recommendations, 25 a page, all dates.
+  late final PagedController<LevelPromotion> _declined =
+      PagedController<LevelPromotion>(
+    build: (range) => _vm.service.declinedSource(range),
+    range: const DateRangeSel.all(),
+  );
   bool _showDeclined = false;
 
   /// Owner 2026-11-24 (Q12): promote straight away, optionally for one
@@ -92,6 +100,7 @@ class _PromotionScreenState extends State<PromotionScreen> {
   @override
   void dispose() {
     _vm.dispose();
+    _declined.dispose();
     super.dispose();
   }
 
@@ -254,11 +263,11 @@ class _PromotionScreenState extends State<PromotionScreen> {
                 );
               },
             ),
-            StreamBuilder<List<LevelPromotion>>(
-              stream: _declined,
-              builder: (context, snap) {
-                final list = snap.data ?? const <LevelPromotion>[];
-                if (list.isEmpty) return const SizedBox.shrink();
+            ListenableBuilder(
+              listenable: _declined,
+              builder: (context, _) {
+                final total = _declined.total ?? _declined.items.length;
+                if (total == 0 && !_declined.loading) return const SizedBox.shrink();
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -268,39 +277,41 @@ class _PromotionScreenState extends State<PromotionScreen> {
                       child: TextButton.icon(
                         onPressed: () => setState(() => _showDeclined = !_showDeclined),
                         icon: Icon(_showDeclined ? Icons.expand_less : Icons.expand_more),
-                        label: Text(l.promotionDeclinedList(list.length)),
+                        label: Text(l.promotionDeclinedList(total)),
                       ),
                     ),
                     if (_showDeclined)
-                      for (final p in list)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: AppCard(
-                            padding: const EdgeInsets.fromLTRB(14, 10, 10, 10),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(AppUser.staffLabelOf(p.studentNameChinese, p.studentName),
-                                          style: const TextStyle(fontWeight: FontWeight.w700)),
-                                      Text('${p.fromLevel} → ${p.toLevel} · ${p.declineReason}',
-                                          style: TextStyle(
-                                              color: AppColors.textSecondary, fontSize: 12)),
-                                    ],
-                                  ),
+                      PagedListBody<LevelPromotion>(
+                        controller: _declined,
+                        inline: true,
+                        padding: EdgeInsets.zero,
+                        separator: 8,
+                        itemBuilder: (context, p) => AppCard(
+                          padding: const EdgeInsets.fromLTRB(14, 10, 10, 10),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(AppUser.staffLabelOf(p.studentNameChinese, p.studentName),
+                                        style: const TextStyle(fontWeight: FontWeight.w700)),
+                                    Text('${p.fromLevel} → ${p.toLevel} · ${p.declineReason}',
+                                        style: TextStyle(
+                                            color: AppColors.textSecondary, fontSize: 12)),
+                                  ],
                                 ),
-                                OutlinedButton(
-                                  onPressed: _vm.busyId == 'manual'
-                                      ? null
-                                      : () => _promote(studentId: p.studentId, toLevel: p.toLevel),
-                                  child: Text(l.promoteAnyway),
-                                ),
-                              ],
-                            ),
+                              ),
+                              OutlinedButton(
+                                onPressed: _vm.busyId == 'manual'
+                                    ? null
+                                    : () => _promote(studentId: p.studentId, toLevel: p.toLevel),
+                                child: Text(l.promoteAnyway),
+                              ),
+                            ],
                           ),
                         ),
+                      ),
                   ],
                 );
               },

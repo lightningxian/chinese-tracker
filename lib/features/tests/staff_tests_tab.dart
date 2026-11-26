@@ -3,8 +3,10 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/paging/paged_controller.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
+import '../../core/widgets/paging_bars.dart';
 import '../../l10n/l10n.dart';
 import '../../models/app_user.dart';
 import '../../models/leaderboard.dart';
@@ -56,7 +58,6 @@ class StaffTestsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    final service = TestService();
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -136,85 +137,87 @@ class StaffTestsTab extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        StreamBuilder<List<TestSession>>(
-          stream: service.watchSessions(
-              openedBy: user.isAdmin ? null : user.uid),
-          builder: (context, snap) {
-            if (!snap.hasData) {
-              return const Padding(
-                padding: EdgeInsets.all(24),
-                child: Center(child: CircularProgressIndicator()),
-              );
-            }
-            final sessions = snap.data!;
-            if (sessions.isEmpty) {
-              return EmptyState(
-                icon: Icons.timer_outlined,
-                title: l.testsSessionsEmptyTitle,
-                subtitle: l.testsSessionsEmptySubtitle,
-              );
-            }
-            final fmt = DateFormat.yMMMd().add_Hm();
-            return Column(
-              children: [
-                for (final s in sessions)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: AppCard(
-                      onTap: () => context.push('$_base/supervise/${s.id}'),
-                      child: Row(
-                        children: [
-                          Icon(
-                            s.isOpen ? Icons.radio_button_checked : Icons.check,
-                            color: s.isOpen
-                                ? AppColors.success
-                                : AppColors.textSecondary,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '${s.code} · ${s.level}',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.navy,
-                                  ),
-                                ),
-                                Text(
-                                  [
-                                    if (s.createdAt != null)
-                                      fmt.format(s.createdAt!),
-                                    s.openedByName,
-                                    s.isOpen
-                                        ? l.testsSessionOpen
-                                        : l.testsSessionClosed,
-                                  ].join(' · '),
-                                  style: TextStyle(
-                                    color: AppColors.textSecondary,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Icon(Icons.chevron_right,
-                              color: AppColors.textSecondary),
-                        ],
-                      ),
-                    ),
-                  ),
-              ],
-            );
-          },
-        ),
+        // Build 9 Then list: 25 sessions a page in a date range.
+        _SessionsList(user: user, base: _base),
       ],
     );
   }
 }
 
-/// Pick a code and the clock mode for a new session.
+class _SessionsList extends StatefulWidget {
+  const _SessionsList({required this.user, required this.base});
+
+  final AppUser user;
+  final String base;
+
+  @override
+  State<_SessionsList> createState() => _SessionsListState();
+}
+
+class _SessionsListState extends State<_SessionsList> {
+  late final PagedController<TestSession> _pages = PagedController<TestSession>(
+    build: (range) => TestService().sessionSource(range,
+        openedBy: widget.user.isAdmin ? null : widget.user.uid),
+  );
+
+  @override
+  void dispose() {
+    _pages.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final fmt = DateFormat.yMMMd().add_Hm();
+    return ListenableBuilder(
+      listenable: _pages,
+      builder: (context, _) => PagedListBody<TestSession>(
+        controller: _pages,
+        inline: true,
+        padding: EdgeInsets.zero,
+        separator: 8,
+        emptyIcon: Icons.timer_outlined,
+        emptyTitle: l.testsSessionsEmptyTitle,
+        emptySubtitle: l.testsSessionsEmptySubtitle,
+        header: DateRangeBar(value: _pages.range, onChanged: _pages.setRange),
+        itemBuilder: (context, s) => AppCard(
+          onTap: () => context.push('${widget.base}/supervise/${s.id}'),
+          child: Row(
+            children: [
+              Icon(
+                s.isOpen ? Icons.radio_button_checked : Icons.check,
+                color: s.isOpen ? AppColors.success : AppColors.textSecondary,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${s.code} · ${s.level}',
+                      style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.navy),
+                    ),
+                    Text(
+                      [
+                        if (s.createdAt != null) fmt.format(s.createdAt!),
+                        s.openedByName,
+                        s.isOpen ? l.testsSessionOpen : l.testsSessionClosed,
+                      ].join(' · '),
+                      style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: AppColors.textSecondary),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _OpenSessionDialog extends StatefulWidget {
   const _OpenSessionDialog({required this.codes, this.error});
 

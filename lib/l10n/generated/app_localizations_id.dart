@@ -8977,4 +8977,7 @@ class AppLocalizationsId extends AppLocalizations {
   String orgRebuildUserSearchDone(int count) {
     return '$count akun ditulis ke indeks pencarian.';
   }
+
+  @override
+  String get newsAll => 'Semua pengumuman';
 }
