@@ -2452,6 +2452,26 @@ Any time:
 
 ## 6. Build reports (newest first, written by the BUILD chat)
 
+### 2026-11-26 — Build 9, session 2 (Must 3: Payments, Users, marking queue, History) — release v0.1.44
+
+- **Done:** Must 3. Payments (range, status and item as queries, count and
+  total by aggregation, CSV of the range), Users (role, status and search
+  as queries through a per-account search index; Approval reads only the
+  registrations and teachers), marking queue (range, opens on all dates),
+  student and parent History (visits paged in a range, vouchers read their
+  classes when opened). Shared pieces only; no page has its own paging code.
+- **Owner after the deploy:** Users → the red banner's **Rebuild user
+  search** button (or Org settings) once, and Org settings → **Rebuild
+  leaderboards** once if not done yet.
+- **Checked:** emulator walk of the four screens; flutter test 204; node
+  suites; analyzer 16 infos. Deployed indexes (10 new), functions (77) and
+  hosting. Rules unchanged.
+- **Left from the inventory (Then list), for a later session:** Vouchers,
+  News, Timetable follow-up, test sessions and test results lists,
+  declined promotions, question bank, exercise packages, teacher Students
+  and Grades, student exercise results and test results, transcript, the
+  bell list, the staff History timeline, dashboard drill-downs.
+
 ### 2026-11-26 — Build 9D test-code retakes (owner: "Keep in Tests", "First sitting counts") — release v0.1.43
 
 - A student sits a code again only in a **new session** (new token); the

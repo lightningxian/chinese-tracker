@@ -6,6 +6,53 @@ edge cases, and any manual/deploy steps still required).
 
 ---
 
+## 2026-11-26 — Claude (BUILD chat): Build 9 session 2 — Payments, Users, marking queue, History paged
+
+**What changed**
+- **Payments (admin):** invoices are read 25 a page, newest first, in a date
+  range (default this month); status and price item are query filters (the
+  item list comes from the Price list); the count and the total are server
+  aggregations (`count`, `sum('amount')`); Discarded is its own query; the
+  CSV follows the range and filters; student labels are read for the page
+  only (no longer every student).
+- **Users (admin):** 25 a page by name; role chips, status and **search are
+  queries**. The new trigger `onUserSearchIndex` keeps `nameLower`,
+  `searchPrefixes` (beginnings of the Latin name, each word, the Chinese
+  name, the e-mail) and `listed` (false for a student waiting for approval
+  or rejected) on each account, and `active: true` where it was missing;
+  `rebuildUserSearch` (admin) writes them on old accounts: Org settings →
+  **Rebuild user search**, or the button in the Users banner that counts the
+  accounts not indexed yet. The Approval chip reads only the waiting and
+  rejected students and the teachers. Parents' children are read for the
+  page; a student's parent comes from `linkedParentName`.
+- **Marking queue:** 25 a page with a date range (opens on all dates so an
+  old answer is not hidden); a mark reloads the page; the Tests tab badge
+  is a count.
+- **History (student and parent):** the class visits are read 25 a page
+  in a date range (default this month); each voucher reads its classes when
+  opened (`termVisits`), instead of every class of the student up front.
+- Shared pieces: `PagedListBody` takes a whole-page `body` (tables) and an
+  `inline` mode (inside the parent's overview); `DateRangeSel.all()`.
+- 10 composite indexes (invoices 2, users 8). Seed: 40 invoices this month
+  and 30 open marking items.
+
+**Why**
+- Supervisor 2026-11-25 (owner's points 10 and 13), Build 9 Must 3.
+
+**For review**
+- New functions `onUserSearchIndex` and `rebuildUserSearch` (77 on live).
+  **Rules unchanged**. After the deploy an admin presses **Rebuild user
+  search** once; until then the Users list shows only accounts written since
+  the deploy and says how many are missing.
+- Old invoices without `status` or `createdAt` do not appear in the paged
+  list (every invoice written by the app has both).
+- Tests: `flutter test` 204 pass; node suites (new `test_user_search.js`);
+  analyzer 16 infos. Checked on the emulator: Payments "1–25 of 44" with
+  the total, Users search finds a student not on page 1, the marking queue,
+  the student History with its range and a voucher's lazy list.
+
+---
+
 ## 2026-11-26 — Claude (BUILD chat): Build 9D test codes — a second sitting, the first counts
 
 **What changed**
